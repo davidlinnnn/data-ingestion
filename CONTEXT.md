@@ -43,8 +43,16 @@ A stable logical knowledge-object incarnation discovered within one Source Insta
 _Avoid_: current document, current row set
 
 **Asset Metadata Version**:
-An immutable version of mutable Asset-level classification and descriptive metadata, selected independently of the Asset's permanent identity.
-_Avoid_: mutable Asset fields
+An immutable, Asset-qualified complete version of mutable descriptive metadata such as title, domain taxonomy, and display properties. It is selected independently of Asset identity, never influences Canonicalization, and never participates in Effective Access Policy; access-affecting attributes belong in Governance Binding Versions.
+_Avoid_: mutable Asset fields, Security Classification, policy metadata
+
+**Asset Metadata Head**:
+The Asset Metadata Version currently selected for one Asset, or explicit zero. A historical eligible version is not an arbitrary substitute for the selected Head.
+_Avoid_: latest metadata, mutable Asset fields
+
+**Asset Metadata Head Selection Event**:
+The immutable linearizable compare-and-select decision that selects an Asset Metadata Head after fencing the prior selection event, candidate identity and digest, schema, attestation, eligibility, withdrawal, and Asset Metadata lineage Eligibility Epoch. It creates a new freshness boundary even when reselecting the same Version and requires no Revision Delta.
+_Avoid_: metadata pointer update, metadata Revision Delta
 
 **Source Revision**:
 An immutable captured observation of one Asset at a source version or observation point, explicitly classified as present, deleted, or unavailable.
@@ -65,20 +73,24 @@ The append-only directed acyclic graph of immutable Revisions and their source-n
 _Avoid_: mutable revision history, revision-number ordering
 
 **Source Head**:
-The Source Revision currently selected by the Control Plane as an Asset's active source state.
+The eligible `present` Source Revision, or explicit zero, currently selected by the Control Plane as an Asset's active source state. A `deleted` or `unavailable` Source Revision is causal evidence, never itself Head.
 _Avoid_: latest observed revision
 
 **Canonical Head**:
-The Canonical Revision currently selected by the Control Plane as an Asset's active canonical state. It is computed from Head Selection Events rather than stored as a mutable Asset field.
+The Canonical Revision, or explicit zero, currently selected by the Control Plane as an Asset's active canonical state. It is computed from Head Selection Events rather than stored as a mutable Asset field.
 _Avoid_: current revision field
 
 **Head Selection Event**:
-An immutable, auditable, linearizable compare-and-select decision that selects a Source Head, Canonical Head, or Published View Head with its expected prior Heads, eligibility epoch, actor, reason, and time.
-_Avoid_: pointer update
+An immutable, auditable, linearizable compare-and-select decision that selects a Source Head, Canonical Head, or Published View Head. It fences the expected prior Head and exact prior selection-event identity, candidate identity and digest or cause selecting zero, typed transition evidence, every applicable Eligibility Epoch, authority, actor, reason, and time. Reselecting the same object creates a new event and freshness boundary.
+_Avoid_: pointer update, generic transition Delta
+
+**Source Transition Evidence**:
+The immutable Asset-qualified lineage-and-authority record required by Source Head selection. It binds the prior Head and selection event, candidate or zero, triggering Source Revision, Source Instance and Asset incarnation, disposition, capture and producer attestations, ancestry or observation order, continuity, and any deletion, reinstatement, or correction authority. It is not a source-content diff.
+_Avoid_: Source Revision Delta, absence-as-deletion, source rollback
 
 **Revision Delta**:
-An immutable lifecycle artifact that totally and disjointly accounts for every predecessor and successor Element and Relationship across one Head transition. It records cardinality-valid additions, deletions, changes, splits, merges, and explicitly unresolved correspondences without modifying either Revision.
-_Avoid_: inferred ID reuse, partial diff
+The immutable canonical content-transition artifact that totally and disjointly accounts for every predecessor and successor Element and Relationship. It records cardinality-valid additions, deletions, changes, splits, merges, and explicitly unresolved correspondences without modifying either Revision. A temporary zero Head caused by non-content ineligibility has no fabricated deletion Delta; its selector predecessor and the Delta's semantic predecessor remain distinct.
+_Avoid_: inferred ID reuse, partial diff, generic Head transition Delta
 
 **Element Correspondence**:
 An explicit Revision Delta mapping between revision-scoped Canonical Elements. Reusing the same local element identity across Revisions does not establish correspondence.
@@ -216,8 +228,8 @@ The governed authorization boundary that scopes enterprise principals and resour
 _Avoid_: tenant
 
 **Security Classification**:
-A source-preserved and enterprise-normalized sensitivity attribute that may restrict Effective Access Policy but never grant access by itself.
-_Avoid_: Canonical Element Kind
+A source-preserved and enterprise-normalized sensitivity attribute carried only by a Governance Binding Version. It may restrict Effective Access Policy but never grant access by itself and is not Asset Metadata.
+_Avoid_: Canonical Element Kind, descriptive taxonomy, Asset Metadata
 
 **Derived Governance Policy**:
 The intersection of the Effective Access Policies of every evidence item supporting a derived object, followed by any additional producer or enterprise restrictions. It requires complete evidence lineage and can never broaden access.
@@ -272,6 +284,10 @@ _Avoid_: ad hoc projection, closed Retrieval/Graph/Wiki universe, vector project
 A versioned specification of how Canonical Knowledge is transformed into one Projection Type. It is legal only if it consumes Canonical Knowledge alone, names both a Projection Definition Owner and a Published View Owner, and honors the same governance, lineage, and deletion-propagation obligations as a platform-standard definition. A definition that reconciles what other definitions say is an ordinary definition rematerializing from Canonical Knowledge, never an importer of another view's published units.
 _Avoid_: pipeline config, use-case schema, Foundation Standard Registration, Owned Canonical Extension, projection-consuming projection
 
+**Projection Definition Version**:
+One immutable, owner-approved version of a Projection Definition that freezes its complete transitive set of exact output-influencing dependencies. A successor embeds its predecessor, every dependency change, reason, deterministic applicability scope, and whether each change is comparability-affecting. Publishing a successor dependency does not adopt it; adoption creates candidate lineage and never changes a serving Head by itself.
+_Avoid_: mutable dependency bundle, generic projection version, latest model
+
 **Structural Property**:
 A Foundation-registered, ancestor-applicable aspect of Canonical Knowledge structure that a projection must account for. The initial set is containment, ordinal, and tabular-geometry.
 _Avoid_: fidelity dimension, flatten-check, payload field, native relationship type, association
@@ -289,20 +305,32 @@ The stable logical identity of one governed, addressable projection product that
 _Avoid_: index, wiki site, knowledge graph
 
 **Published View Version**:
-An immutable, consumer-visible publication of one Published View, composed of an Aggregate Manifest, never overwritten in place, and declaring the Projection Definition identity, version, and platform-standard versus domain-owned status. Immutability forbids overwrite, not Custody Purge of its bytes or identifying composition.
+An immutable, consumer-visible publication of one Published View, composed of an Aggregate Manifest, never overwritten in place, and declaring the Projection Definition identity, version, and platform-standard versus domain-owned status. It remains exactly rebuildable while its complete Reconstruction Closure is lawfully retained. Immutability forbids overwrite, not Custody Purge of its bytes or identifying composition; purging any required closure member ends the exact historical Version's rebuildability.
 _Avoid_: latest run, live index overwrite
 
 **Published View Head**:
-The Published View Version currently selected by the Control Plane as a Published View's serving state. It is computed from Head Selection Events rather than stored as a mutable field.
+The Published View Version, or explicit zero, currently selected by the Control Plane as a Published View's serving state. It is computed from Head Selection Events rather than stored as a mutable field.
 _Avoid_: current index, current projection
+
+**Publication Transition Evidence**:
+The immutable shard-level transition manifest required by Published View Head selection. It binds prior semantic and candidate Aggregate Manifests, totally classifies shard membership as retained, added, removed, rematerialized, attested-reused, or carried-forward, and carries the required Runs, Coverage Reports, attestations, policy, Definition transition, impact selection, exact dependencies, and fences.
+_Avoid_: generic transition Delta, pointer swap, unaccounted rollback
 
 **Materialization Run**:
 One execution of a Projection Definition against one Materialization Input Manifest, with no access to any Source. Its output may be selected into a Published View Version or left unselected as ineligible; it is never itself the External Consumer contract.
 _Avoid_: published job, pipeline as the consumer unit
 
 **Materialization Input Manifest**:
-The complete immutable set of Canonical Revision addresses, Enrichment Overlay Versions, Governance Binding Versions, Relationship Resolution Bindings, Projection Definition version, contract and schema versions, technical dependency versions, and Eligibility Epochs from which one materialization result is produced. Nothing outside the manifest may influence the result.
+The complete immutable set of Canonical Revision addresses, Enrichment Overlay Versions, any declared Asset Metadata Version with its exact Head Selection Event, Governance Binding Versions, Relationship Resolution Bindings, Projection Definition Version, contract and schema versions, complete output-influencing technical dependencies, and Eligibility Epochs from which one materialization result is produced. Nothing outside the manifest may influence the result.
 _Avoid_: Canonical Revision plus hidden dependencies
+
+**Reconstruction Closure**:
+The complete transitive set of lawfully retained artifacts required to execute and verify a digest-exact reproduction of one Published View Version: its Aggregate Manifest, exact Materialization Input Manifests, Projection Definition Version, expected Published Shard identities and digests, every declared Canonical Revision, Overlay, Asset Metadata Version and Head Selection Event, Governance Binding, relationship, contract, schema, model, runtime, executable artifact, and technical dependency that influenced output, and every value needed to eliminate output-affecting nondeterminism. Current serving eligibility is not part of the definition.
+_Avoid_: currently eligible inputs, source fallback, best-effort dependency set
+
+**Rebuild Verification**:
+An attributed, purpose-bound, non-publishing Control Plane replay of a lawfully retained Reconstruction Closure under Operational Custody. It may read retained but currently ineligible dependencies, must reproduce the exact Published Shard bytes and digests and Aggregate Manifest composition, and creates a new audit identity without creating a new Published View Version. Its outputs are ineligible, never consumer-visible, and belong to the same purge set as their inputs. A Legal Erasure Event or Retention Expiry Event fences new and in-flight verification unless a separately authorized Legal Hold purpose permits it; Custody Purge cannot complete while any verification copy remains recoverable.
+_Avoid_: Materialization Run rebuild mode, republish, semantic-equivalence check, serving restoration
 
 **Publication Policy**:
 A versioned rule, declared by the Published View Owner, that states whether dependency-stale Versions of that view may continue serving. It never overrides Fail-Closed Governance, and absent a declared policy a stale Version stops serving.
@@ -347,7 +375,7 @@ The Wiki Published View Version's consumer-visible artifact: a synthesis documen
 _Avoid_: wiki site, unsourced page, claim-level redaction
 
 **Published Shard**:
-The immutable contribution of one Asset to one Published View Version, sharded per Asset because Effective Access Policy is Asset-scoped. A shard is superseded by a new shard version, never overwritten. A unit inferred from several Assets is held once, in the shard of its lowest-ordered contributing Asset, with every other contributor declared as a dependency of that shard.
+The immutable contribution of one Asset to one Published View Version. Sharding provides deterministic incremental composition and dependency cuts; it does not define policy scope. Each Governed Observation Unit is governed from its complete evidence intersection. A shard is superseded, never overwritten. A unit inferred from several Assets is held once in the lowest-ordered contributing Asset's shard, with every other contributor declared as a dependency.
 _Avoid_: index partition, mutable segment file, replicated unit, non-Asset shard class
 
 **Aggregate Manifest**:
@@ -365,27 +393,27 @@ _Avoid_: consumer canonical API, ungoverned canonical access, operator read, Can
 ## Accountability
 
 **Projection Definition Owner**:
-The party accountable for the semantic content of a Projection Definition, including semantic change and deprecation.
+The party accountable for semantic creation, change, dependency adoption, and deprecation of a Projection Definition. It may delegate execution but not decision accountability. For Graph it is the Ontology Steward; for Wiki it is the Knowledge Publisher.
 
 **Published View Owner**:
-The single party accountable for publishing, rolling back, and retiring one Published View.
+The single party accountable for publishing, rolling back, discretionarily unpublishing, and retiring one Published View. For Wiki it is the Knowledge Publisher; for Graph it may differ from the Ontology Steward.
 
 **Ontology Steward**:
-The named party accountable for the semantic claims of one Graph Projection Definition. Scope may be shared or domain-specific. Those claims do not bind any other definition.
+The named party that is also Projection Definition Owner for one Graph Projection Definition. It is accountable for that definition's semantic claims, changes, dependency adoption, and deprecation; its Published View Owner may differ. A transfer requires a new Projection Definition Version and never rewrites historical attribution.
 _Avoid_: Enterprise Ontology Steward, Domain Ontology Steward, entity resolution office
 
 **Knowledge Publisher**:
-The named domain owner accountable for a Wiki Published View's synthesis rules, citation policy, release, and retirement. No Wiki Published View exists without one.
+The named accountable party that is both Projection Definition Owner and Published View Owner for one Wiki Published View. It owns synthesis rules, citation policy, semantic change, dependency adoption, publication, Rollback, and retirement. All three roles transfer together with a new Definition Version and atomic re-attestation of the serving Wiki Published Bundle.
 _Avoid_: Wiki owner, content team
 
 ## Review
 
 **Architecture Baseline Endorsement**:
-The recorded state that the three review constituencies have all accepted one immutable HLD commit as decision-complete for architecture.
+The recorded state that the three review constituencies have all accepted one immutable repository commit containing both the Architecture Baseline and Narrative HLD as decision-complete for architecture.
 _Avoid_: program approval, budget approval, production authorization, compliance certification
 
 **Review Record**:
-The GitHub issue bound to one HLD commit that holds the acceptance criteria, required scenario walkthroughs, and the three reviewer outcomes.
+The GitHub issue bound to one immutable repository commit containing both companion documents that holds the acceptance criteria, required scenario walkthroughs, blocking objections, follow-ups, and three reviewer outcomes.
 
 **Enterprise Architecture Reviewer**:
 The accountable role that endorses document authority, boundaries, consistency, and architecture-level decision completeness.

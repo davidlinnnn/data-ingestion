@@ -13,11 +13,11 @@
 
 # Part I — Document Authority and Framing
 
-> **Authority: document framing.** This part defines how to interpret the baseline.
+> **Authority: document framing.** This part defines how to interpret and scope the baseline. Any binding requirement in this part explicitly names the normative authority level to which it belongs.
 
 ## 1. Purpose
 
-This document is the decision-complete target architecture reference for the **Enterprise AI Data Foundation** and its first bounded delivery domain, the **Knowledge Platform**. It explains the logical contracts, responsibilities, trust boundaries, and consumer-observable behavior that later logical and physical designs MUST preserve.
+This document is the decision-complete target architecture reference for the **Enterprise AI Data Foundation** and its first bounded delivery domain, the **Knowledge Platform**. It explains the logical contracts, responsibilities, trust boundaries, and consumer-observable behavior preserved by later logical and physical designs.
 
 It is not an implementation plan. It does not choose physical schemas, APIs, products, vendors, storage engines, deployment topologies, delivery increments, or numeric service levels.
 
@@ -49,9 +49,10 @@ External Sources
 ┌──────────────────────────────────────────────────────────────────┐
 │ Knowledge Platform                                               │
 │                                                                  │
-│ Source Integration → Canonicalization → Canonical Knowledge      │
-│                                      → Materialization            │
-│                                      → Governed Publication       │
+│ Source Integration → Canonicalization                             │
+│                    → Canonicalization Write Interface             │
+│                    → Canonical Knowledge → Materialization        │
+│                                          → Published Views        │
 │                                                                  │
 │ Cross-cutting: lifecycle, policy, lineage, registries, audit     │
 └───────────────────────────────────┬──────────────────────────────┘
@@ -69,11 +70,13 @@ The Knowledge Platform owns source integration, knowledge ingestion and canonica
 
 ## 4. Goals
 
-The target architecture MUST:
+> **Non-normative traceability goals.** These goals explain the outcomes traced by the binding requirements in Parts II and III; they create no independent requirement.
+
+The target architecture is intended to:
 
 - preserve source-faithful multimodal content, structure, policy provenance, and lineage in durable Canonical Knowledge;
 - decouple source evolution from projection evolution;
-- make every legal projection rebuildable without source access;
+- keep each Published View Version exactly reproducible without Source access while its complete Reconstruction Closure is lawfully retained;
 - enforce source and enterprise policy at canonical read, materialization, publication, and query boundaries;
 - make change, deletion, denial, and lineage observable without leaking protected information;
 - admit independently owned projection semantics without weakening platform invariants;
@@ -98,7 +101,7 @@ The following architecture forks are explicitly rejected:
 - treating a Tombstone as legal erasure;
 - treating vector representation as a Projection Type rather than a Retrieval Mode.
 
-A coordinated release that packages several Published View Versions MAY exist for operational convenience. It MUST remain optional packaging: each view retains its identity, owner, policy, lifecycle, and serving contract, and the package MUST NOT become a global serving unit.
+Under the **Normative Knowledge Platform target**, a coordinated release that packages several Published View Versions MAY exist for operational convenience. It MUST remain optional packaging: each view retains its identity, owner, policy, lifecycle, and serving contract, and the package MUST NOT become a global serving unit.
 
 ## 6. Decision traceability
 
@@ -174,7 +177,7 @@ Every published Governed Observation Unit MUST carry complete Evidence Lineage t
 
 ### 9.3 Rebuildability
 
-Every Published View Version MUST be reproducible from its immutable Aggregate Manifest, the exact Materialization Input Manifests it names, and its Projection Definition. A Materialization Run MUST NOT access a Source. Every projection MUST rebuild from Canonical Knowledge and declared dependencies alone.
+Every Published View Version MUST remain digest-exactly reproducible without Source access while its complete Reconstruction Closure is lawfully retained in platform custody. Current serving eligibility does not weaken that obligation. Rebuild Verification MUST be purpose-bound, non-publishing, and fenced from erasure and expiry. Custody Purge of any required closure member ends the affected historical Version's rebuildability obligation because rebuilding it afterward is forbidden.
 
 ### 9.4 Deletion propagation
 
@@ -182,7 +185,7 @@ Source deletion MUST create lineage-scoped Tombstones and close dependent eligib
 
 ### 9.5 Canonicalization quality
 
-The five-primitive envelope and validated Typed Payloads MUST preserve source fidelity without lowest-common-denominator flattening. The Coverage Report MUST gate both address-level coverage and declared structural reduction. Undeclared reduction is a defect. Every Canonical Head transition MUST have a Revision Delta that totally accounts for predecessor and successor Elements and Relationships.
+The five-primitive envelope and validated Typed Payloads MUST preserve source fidelity without lowest-common-denominator flattening. The Coverage Report MUST gate both address-level coverage and declared structural reduction. Undeclared reduction is a defect. Every canonical content-state transition MUST have a Revision Delta that totally accounts for predecessor and successor Elements and Relationships; non-content selection changes use their required typed transition evidence instead.
 
 ---
 
@@ -198,6 +201,9 @@ External Sources
       ▼
 Source Integration
       │  captured content, source policy, artifacts, disposition
+      ▼
+Canonicalization
+      │  source-faithful revision candidate
       ▼
 Canonicalization Write Interface
       │  platform-attested atomic Canonical Revision
@@ -278,7 +284,7 @@ An Enrichment Overlay has a stable stream identity. Each Enrichment Overlay Vers
 
 A Source Instance is one immutable external tenant, repository, or equivalent source security domain. Reconfiguration MUST NOT reassign a Source Instance to another external domain.
 
-An Asset is one permanent source-object incarnation within one Source Instance. Mutable descriptive or classification metadata MUST be independently versioned. Reuse of a source-native identifier creates a new Asset unless the Source proves continuity. Multi-source Assets are prohibited; composition across sources occurs in materialization.
+An Asset is one permanent source-object incarnation within one Source Instance. Mutable descriptive Asset-level metadata MUST be independently versioned and MUST NOT influence Effective Access Policy or Canonicalization. Access-affecting source and enterprise attributes, including Security Classification, belong exclusively in Governance Binding Versions. Reuse of a source-native identifier creates a new Asset unless the Source proves continuity. Multi-source Assets are prohibited; composition across sources occurs in materialization.
 
 A Source Revision is an immutable captured observation with an explicit `present`, `deleted`, or `unavailable` Source Revision Disposition. A confirmed deletion requires authoritative evidence and a guarded decision.
 
@@ -423,7 +429,7 @@ Each Canonical Revision declares exactly one canonical contract version. Mixed e
 
 Source content, native structure, native relationships, artifacts, or canonical source metadata changes create a Source Revision and may lead to a Canonical Revision. Re-canonicalization because of canonicalizer, contract, schema, or defect correction creates a new Canonical Revision against the existing Source Revision.
 
-Derived understanding changes create an Enrichment Overlay Version. Governance changes create a Governance Binding Version. Projection Definition, model, ontology, synthesis, or technical dependency changes create new materialization and publication lineage. None of those changes rewrites canonical content.
+Descriptive Asset-level changes create an Asset Metadata Version. Derived understanding changes create an Enrichment Overlay Version. Governance changes, including Security Classification changes, create a Governance Binding Version. Adopting an output-influencing model, ontology, synthesis, or technical dependency creates a new Projection Definition Version and may lead to new materialization and publication lineage. None of those changes rewrites canonical content.
 
 Capture retries with the same source-native revision identity and digest are idempotent. A new source-native revision identity remains a new Source Revision even when its digest matches.
 
@@ -433,15 +439,41 @@ Source and Canonical Revision Lineage MUST be append-only directed acyclic graph
 
 Revision creation never implies selection. Source Head, Canonical Head, and Published View Head are computed from immutable Head Selection Events, not mutable fields.
 
-An Asset has at most one Source Head and at most one Canonical Head. Zero Heads is an explicit selected state for deleted or unavailable content, not a missing pointer or invitation to infer "latest."
+An Asset has at most one Source Head and at most one Canonical Head. Zero Head is an explicit selected state, not a missing pointer or invitation to infer "latest."
 
-Each Head Selection Event MUST be a linearizable compare-and-select decision that atomically checks expected prior Heads, candidate eligibility and withdrawal, the complete transition Delta, all selector and dependency Eligibility Epochs, actor, reason, and time. Concurrent or late work remains an immutable candidate but MUST NOT overwrite a changed Head.
+Each Head Selection Event MUST be a linearizable compare-and-select decision that atomically verifies:
 
-Replay of an older Source Revision MAY create a historical candidate but MUST NOT auto-promote. Canonical rollback is limited to an eligible Canonical Revision derived from the current Source Head and requires a prior-Head-to-candidate Delta. Restoring older source content requires a new Source Revision or an explicit correction of a proven false deletion.
+- the expected prior Head value, including explicit zero, and exact prior Head Selection Event identity;
+- the exact candidate identity and digest, or exact cause selecting zero;
+- the identity and digest of the required typed transition evidence;
+- candidate eligibility and withdrawal state;
+- every selector and dependency Eligibility Epoch bound by the operation;
+- platform validation of the transition evidence; and
+- actor authority, attributed reason, and time.
 
-### 14.3 Revision Deltas and Element Correspondence
+Prepared evidence authorizes nothing by itself. A failed fence, authority check, validation, or compare-and-select creates no selection event. Reselecting the same object always creates a new Head Selection Event and freshness boundary. Every dependant on selected state MUST bind the exact selection event as well as the selected object and Eligibility Epoch, so an `A → B → A` cycle cannot make old work current.
 
-Every Canonical Head transition MUST have an immutable Revision Delta that totally and disjointly accounts for every predecessor and successor Element and Relationship:
+There is no universal transition Delta. Source Head uses Source Transition Evidence, Canonical Head uses Revision Delta when a canonical content-state transition exists, and Published View Head uses Publication Transition Evidence. A zero selection caused only by eligibility closure or owner unpublication references that event rather than fabricating content deletion.
+
+### 14.3 Source and publication transition evidence
+
+Source Head selects only an eligible `present` Source Revision or explicit zero. A `deleted` or `unavailable` Source Revision remains immutable causal evidence and is never itself Head.
+
+**Source Transition Evidence** is an immutable, Asset-qualified lineage-and-authority record rather than a source-content diff. It binds the expected prior Head and selection event, selected candidate or zero, triggering Source Revision identity and digest, Source Instance and Asset incarnation, disposition, capture and producer attestations, transition class, native ancestry or immutable observation order, continuity evidence, and any deletion, reinstatement, or false-deletion-correction authority. Timeout, denial, failed capture, or other absence does not change Source Head by itself. Selecting zero for unavailability or authoritative deletion requires an explicit guarded lifecycle decision under declared source-selection policy.
+
+Historical replay is not Source rollback. Restoration after deletion requires a new reinstating Source Revision or explicit correction of a proven false deletion. Native locator reuse without continuity proof remains a new Asset incarnation.
+
+**Publication Transition Evidence** is an immutable shard-level transition manifest binding the prior semantic Published View Version and candidate Version through their exact Aggregate Manifests. It totally accounts for shard membership as retained, added, removed, rematerialized, attested-reused, or carried-forward, and binds the required Runs, two-axis Coverage Reports, Semantic Equivalence Attestations, Publication Policy, Projection Definition Version transition declaration, impact selection, exact dependencies, and eligibility fences.
+
+Rollback is fully accounted rather than treated as pointer movement: shards leaving the selected set are removed, shards re-entering from the prior Version are added with their original immutable evidence, and identical membership is retained. After safety or owner unpublication, a replacement selection compares-and-selects from zero while its Publication Transition Evidence compares the candidate with the last selected nonzero Version in that lineage; only first publication uses an empty semantic baseline. Only the Published View Owner may publish, roll back, discretionarily unpublish, or retire. An eligibility-closing event may atomically clear Head through the platform safety path but selects no replacement and fabricates no owner decision.
+
+### 14.4 Revision Deltas and Element Correspondence
+
+Revision Delta is reserved for canonical content-state transitions. Initial selection compares empty state with the candidate; supersession or rollback compares the semantic predecessor Canonical Revision with the candidate; genuine whole-Asset deletion compares the selected Canonical Revision with empty state; and reinstatement after genuine deletion compares empty state with the new Revision.
+
+A Canonical Head clear caused by Retraction, withdrawal, or another non-content eligibility closure references that event and MUST NOT fabricate an all-deleted Revision Delta. On recovery from a temporary clear, the Head selector compares from zero while the Revision Delta compares against the last selected nonzero Canonical Revision on the chosen lineage. Selector predecessor and semantic predecessor MUST therefore be explicit and distinct.
+
+Every Revision Delta MUST immutably, totally, and disjointly account for every predecessor and successor Element and Relationship:
 
 - unchanged `1→1`;
 - modified `1→1`;
@@ -451,11 +483,13 @@ Every Canonical Head transition MUST have an immutable Revision Delta that total
 - added `0→1`;
 - explicitly unresolved.
 
-Each mapping records reason and producer or algorithm version. Local Element identity reuse creates no continuity. Element Correspondence exists only through the Delta. Unresolved or incomplete correspondence MUST block automatic re-anchoring, deletion inference, and automatic publication.
+Each mapping records reason and producer or algorithm version. Local Element identity reuse creates no continuity. Element Correspondence exists only through the Delta. Unresolved or incomplete correspondence MUST block automatic re-anchoring, deletion inference, and automatic publication. A selected canonical candidate MUST be eligible and derived from the current Source Head.
+
+Canonicalization Execution produces ordinary Revision-to-Revision Deltas. During guarded authoritative whole-Asset deletion only, the Control Plane MAY atomically emit a platform-validated one-sided deletion Delta from the selected Canonical Revision's immutable object inventory. This grants no authority to author ordinary canonical diffs. The Delta, Tombstone, eligibility closure, and affected zero-Head selections MUST linearize as one safety transition.
 
 A Semantic Equivalence Attestation MAY prove equivalence between distinct Revisions for an explicit scope, contract and schema versions, digest algorithm, and attestor. Reuse is legal only when that scope covers every input on which the Projection Definition depends and a rebound or re-derived two-axis Coverage Report passes. The attestation MAY authorize a new immutable reuse binding, but MUST NOT merge identities, refresh an old Published View silently, retarget a reference, or reuse purged data.
 
-### 14.4 Overlay selection and relationship resolution
+### 14.5 Overlay selection and relationship resolution
 
 There is no global Overlay Head. A versioned Overlay Selection Policy selects exact eligible Enrichment Overlay Versions for one Canonical Revision and purpose from complete dependency footprints. Selection is frozen into the Materialization Input Manifest.
 
@@ -467,7 +501,17 @@ A Relationship Resolution Binding maps an immutable cross-Asset Canonical Relati
 
 The source-side relationship MUST be re-canonicalized only when the source assertion itself changes; advancing a resolved target does not rewrite Canonical Core.
 
-### 14.5 Tombstone, retraction, and restoration
+### 14.6 Asset Metadata selection and dependency
+
+An Asset Metadata Version is an immutable, Asset-qualified complete version with immutable identity and digest, schema version, producer and provenance attestation, creation attribution, eligibility, and withdrawal state. Updates mint versions. Each Asset has at most one selected Asset Metadata Head; zero Head is explicit, and a historical eligible version is not an arbitrary substitute.
+
+A dedicated immutable Asset Metadata Head Selection Event performs a linearizable compare-and-select. It atomically verifies the expected prior Metadata Head and prior selection event, candidate ownership, identity and digest, schema compatibility, attestation, eligibility and withdrawal, and current Asset Metadata lineage Eligibility Epoch, then records candidate, actor, reason, and time. Asset Metadata selection requires no Revision Delta. Reselecting the same Version creates a new selection event.
+
+A Projection Definition MAY declare Asset Metadata as an input only when descriptive fields affect output or presentation. A dependant Materialization Input Manifest MUST bind the exact Asset Metadata Version, current Eligibility Epoch, and exact Asset Metadata Head Selection Event. Published Shards and Evidence Lineage preserve that dependency, and an Aggregate Manifest MUST keep it reconstructable through its Run and input-manifest references. No consumer may use Asset Metadata implicitly.
+
+An ordinary Asset Metadata selection leaves the predecessor eligible but marks every declared dependant dependency-stale. Serving then follows Publication Policy. Retraction, withdrawal, applicable Tombstone, Legal Erasure Event, or Retention Expiry Event closes eligibility, advances the Asset Metadata lineage Eligibility Epoch, and immediately makes every dependant Run, shard, Published View Version, and Protected Observation unavailable. Publication Policy cannot override that closure. A security relabel is a Governance Binding change and follows Security Invalidation Event rules, never this metadata lifecycle.
+
+### 14.7 Tombstone, retraction, and restoration
 
 A Tombstone is immutable and records the deleting Source Revision, Delta edge, selected lineage path, event time, and attributed reason. It preserves history and MUST NOT mutate other branches.
 
@@ -500,6 +544,8 @@ Governance Binding Versions change independently of canonical content. Connector
 
 Source labels MUST be preserved and may map to enterprise classifications. Classification may restrict but MUST NOT grant. Unresolved principals, mappings, encrypted labels, or unsupported constructs MUST fail closed.
 
+Security Classification and every access-affecting source or enterprise attribute MUST live in Governance Binding Versions. Asset Metadata is descriptive only and MUST NOT grant, restrict, or otherwise participate in calculating Effective Access Policy.
+
 A source whose policy cannot be faithfully normalized is a **Native Policy Asset**. It MAY publish only through federation under the end-user identity when that path preserves the native semantics; otherwise it MUST be excluded. Connector-level visibility and anonymous links MUST NOT be flattened into a consumer audience or interpreted as enterprise-public permission.
 
 Source owners own source authorization policy. Security and Data Governance own enterprise mappings, classifications, restrictions, and native-policy approval. The Knowledge Platform owns normalization, identity integration, policy evaluation, enforcement, and auditability. Projection and Published View owners MAY add restrictions and MUST NOT remove them.
@@ -516,7 +562,7 @@ Every derived or compound unit MUST carry complete Evidence Lineage and a Derive
 
 The Policy Decision Service is authoritative for every Protected Observation on Published View and Governed Canonical Read paths. Projection-local policy data is an optimization only.
 
-The read-side linearization point is the commit of an immutable Authorization Decision for one Protected Observation. Each commit MUST observe the current Eligibility Epoch of every dependency of that observation, including affected Asset lineage, Governance Binding lineage, Enterprise Identity Spine, technical dependencies, and Published View Version. Unknown currency is not current.
+The read-side linearization point is the commit of an immutable Authorization Decision for one Protected Observation. Each commit MUST observe the current Eligibility Epoch of every dependency of that observation, including affected Asset lineage, any Asset Metadata lineage whose descriptive content the observation carries, Governance Binding lineage, Enterprise Identity Spine, technical dependencies, and Published View Version. Asset Metadata remains a content dependency, not policy input. Unknown currency is not current.
 
 Each observation requires a new commit. Cached policy results MAY be input to a new commit only when all exact policy and identity versions and every dependency epoch still match. A request snapshot, time-bounded lease, session grant, pre-authorized URL, or CDN decision MUST NOT authorize future observations.
 
@@ -539,7 +585,7 @@ The following operations MUST remain distinct:
 - **Custody Purge:** cryptographic or physical destruction that makes every platform-held copy in the named set unrecoverable.
 - **Non-Sensitive Erasure Record:** a non-consumer control-plane record of completion containing time, admitting actor, legal basis, hold identifiers, and a non-reversible scope count.
 
-The purge set MUST include Source and Canonical Revisions, Enrichment Overlay Versions, Published Shards, identifying Aggregate Manifest composition, artifacts, caches, replicas, backups, platform-held Knowledge Consumption References, and Authorization Decision Evidence when their evidence or content would re-identify a named object. A Wiki Published Bundle is purged as one unit. Subject-wide discovery is an attributed Control Plane review that produces the named set, not an automatic graph walk.
+The purge set MUST include Source and Canonical Revisions, Asset Metadata Versions, Enrichment Overlay Versions, Published Shards, identifying Aggregate Manifest composition, Reconstruction Closure members, Rebuild Verification copies, artifacts, caches, replicas, backups, platform-held Knowledge Consumption References, and Authorization Decision Evidence when their evidence or content would re-identify a named object. A Wiki Published Bundle is purged as one unit. Subject-wide discovery is an attributed Control Plane review that produces the named set, not an automatic graph walk.
 
 Redaction creates a successor Source or Canonical Revision through the ordinary append-only lifecycle; it MUST NOT edit immutable history in place. Published View immutability forbids overwrite but MUST NOT prevent Custody Purge of bytes or identifying composition.
 
@@ -562,7 +608,13 @@ An external execution path meeting those gates still requires exception review. 
 
 The Knowledge Platform owns type contracts, standard implementations, execution, validation, versioning, enforcement, lineage, and deletion propagation. It owns the standard Retrieval definition. It does not own graph meaning, Wiki truth, or application-specific retrieval semantics.
 
-The Projection Definition Owner owns semantic creation, change, and deprecation. The Published View Owner owns publication, Rollback, and retirement. Every Graph definition has an Ontology Steward. Every Wiki Published View has one Knowledge Publisher; Wiki is an offered type, not a required default peer of Retrieval.
+The Projection Definition Owner owns semantic creation, change, and deprecation. The Published View Owner owns publication, Rollback, and retirement.
+
+For each Graph Projection Definition, the Ontology Steward and Projection Definition Owner MUST be the same accountable party; its Published View Owner MAY differ. For each Wiki Published View, the Knowledge Publisher, Projection Definition Owner, and Published View Owner MUST be the same accountable party. Wiki is an offered type, not a required default peer of Retrieval. Co-location means one accountable organizational principal, not necessarily one person.
+
+Delegation is execution-only. Every approval, attestation, and Head Selection Event MUST record both acting principal and accountable party. Accountability transfer is immutable, explicitly accepted, prospective, and never rewrites history. A new Graph Ontology Steward requires a new Projection Definition Version. Wiki transfers all three roles together; transfer, the new Definition Version, and the new Knowledge Publisher's re-attestation of the serving Wiki Published Bundle MUST commit atomically or ownership remains unchanged.
+
+Graph publication and definition lifecycles remain independent. Rollback to a still-eligible Version requires no renewed semantic approval while its Projection Definition Version remains active. Published View retirement does not deprecate a Projection Definition, and definition deprecation does not retire or unselect an already-serving eligible Head.
 
 ### 16.2 Complete Materialization Input Manifest
 
@@ -572,6 +624,7 @@ The manifest MUST name:
 
 - every Canonical Revision address;
 - exact eligible Enrichment Overlay Versions selected by policy or governed override; an override MUST pass the same eligibility and epoch checks and MUST NOT hand-pin an ineligible version;
+- when the Projection Definition declares descriptive metadata as an input, the exact Asset Metadata Version, its Eligibility Epoch, and the Asset Metadata Head Selection Event that selected it;
 - Governance Binding Versions;
 - Relationship Resolution Bindings;
 - Projection Definition identity and version;
@@ -579,17 +632,36 @@ The manifest MUST name:
 - every model, ontology, synthesis, and technical dependency version;
 - the current Eligibility Epoch of every eligibility-bearing dependency.
 
-An incomplete manifest is invalid before execution. Standard Retrieval consumes exactly one Canonical Revision per Run. Graph and Wiki MAY consume many. Every custom Projection Definition MUST declare its input cardinality. Every type MUST accept only eligible Revisions and at most one selected Revision per Asset lineage.
+Before execution, platform validation MUST prove that the manifest is complete and conforms exactly to its Projection Definition Version; substituted, additional, or omitted output-influencing dependencies are invalid. Standard Retrieval consumes exactly one Canonical Revision per Run. Graph and Wiki MAY consume many. Every custom Projection Definition MUST declare its input cardinality. Every type MUST accept only eligible Revisions and at most one selected Revision per Asset lineage.
 
-### 16.3 Publication fencing
+### 16.3 Projection Definition versions and dependency transitions
+
+Adopting any successor embedding, ontology, synthesis, model, runtime, executable artifact, or other dependency that can influence output MUST mint a new immutable Projection Definition Version. That Version freezes the complete transitive set of exact output-influencing dependency identities and versions. The Projection Definition Owner approves adoption; a producer or platform executor may publish a dependency or prepare a candidate but cannot adopt it. Publishing a successor dependency alone changes no definition, staleness, serving state, or Head.
+
+Every successor Projection Definition Version MUST embed a transition declaration naming its predecessor, every direct and transitive dependency added, removed, or replaced, the attributed reason, deterministic applicability scope, and whether each change is comparability-affecting. Embedding space, segmentation semantics, ontology mapping, Identity Minting Rule, and preserve-versus-reduce change on an in-scope Structural Property are always comparability-affecting. A definition MAY add stricter cases but MUST NOT remove these. Missing, inconsistent, or unprovable scope or classification defaults to comparability-affecting whole-view impact.
+
+Impact selection is computed from exact reverse dependencies:
+
+- a changed or withdrawn dependency affects every Projection Definition Version that names it directly or transitively;
+- every Run, Published Shard, and Published View Version whose immutable manifest binds it is affected;
+- a newly introduced dependency uses the successor Definition Version's declared applicability scope; and
+- when the platform cannot prove a narrower complete set, the affected set is the entire Published View.
+
+The owner MAY broaden impact but MUST NOT exclude an exact reverse reference. Every comparability-affecting transition rematerializes every shard under the successor Definition Version; Carry-Forward and Semantic Equivalence Attestation reuse are forbidden. For a validated non-comparability transition, every affected shard MUST be rematerialized. An unaffected still-eligible shard MAY receive a new immutable reuse binding only under a Semantic Equivalence Attestation covering the complete definition delta and changed dependency set, with the two-axis Coverage Report rebound or re-derived. This is attested reuse, not Carry-Forward.
+
+Adoption creates candidate lineage only. After required rematerialization or attested reuse passes manifest validation, eligibility fencing, and Coverage Report gates, the platform MAY assemble a new Published View Version under the successor Definition Version. Only the Published View Owner may select it. Definition deprecation blocks new Runs and new Head selections under that definition but does not unselect an already-serving eligible Head.
+
+Withdrawal closes the exact dependency version's eligibility, advances its Eligibility Epoch, and immediately makes every bound Run, shard, Published View Version, Aggregate Manifest, and Protected Observation ineligible. Publication Policy cannot override withdrawal, and late work MUST fail its fence. Recovery requires an owner-approved successor Definition Version, validated impact selection, required rematerialization or permitted attested reuse, a new immutable Published View Version, and a Published View Owner Head Selection Event. The platform selects no replacement and fabricates no retirement decision.
+
+### 16.4 Publication fencing
 
 A Run captures dependency epochs before execution and MUST atomically revalidate every exact dependency before publication. A pre-execution failure aborts with no output. A completed Run that fails the fence remains audit-visible but unselected and ineligible. Late work MUST NOT publish across a Tombstone, Retraction Event, Security Invalidation Event, erasure event, or dependency withdrawal.
 
-A technical dependency withdrawal closes affected eligibility and requires a new projection version. It MUST NOT silently overwrite or semantically relabel a live Published View.
+A technical dependency withdrawal follows §16.3. It MUST NOT silently overwrite or semantically relabel a live Published View.
 
 A Tombstone MUST close every Published View Version containing the affected Asset's shard, including previously selected Versions, and every shard carrying a Canonical Relationship into the tombstoned Asset. An Element Tombstone closes eligibility of its shard rather than creating ordinary staleness. Reconstruction of a safe Version remains the Published View Owner's act.
 
-### 16.4 Published View identity and composition
+### 16.5 Published View identity and composition
 
 A Published View is the stable logical projection product. A Published View Version is immutable, consumer-visible, and selected only by a Head Selection Event.
 
@@ -597,7 +669,28 @@ Each Version MUST declare its Projection Definition identity and version and whe
 
 A Published Shard is one Asset's immutable contribution and is superseded rather than overwritten. A native cross-Asset Graph Edge is placed in the asserting Asset's shard, and its Relationship Resolution Binding is a declared dependency of that shard. A definition-inferred multi-Asset unit is stored once in the lowest-ordered contributing Asset's shard, with all other contributors as dependencies.
 
-### 16.5 Publication Policy, Carry-Forward, and Rollback
+### 16.6 Rebuildability and Rebuild Verification
+
+Every Published View Version MUST remain exactly rebuildable while its complete Reconstruction Closure is lawfully retained in platform custody, whether or not the Version is selected or serving-eligible. Lawful retention requires an applicable retention basis or Legal Hold, including bounded custody needed to complete an accepted erasure or expiry workflow.
+
+The Reconstruction Closure is the complete transitive set required to execute and verify the historical result without Source access:
+
+- the Aggregate Manifest and expected Published Shard identities and digests;
+- every exact Materialization Input Manifest and Projection Definition Version;
+- every Canonical Revision, Enrichment Overlay Version, Asset Metadata Version and selection event when used, Governance Binding Version, Relationship Resolution Binding, contract and schema version, model, runtime, executable artifact, and technical dependency that influenced output; and
+- every declared value required to eliminate output-affecting nondeterminism.
+
+Nothing outside that closure may influence reproduction. A hidden runtime, seed, model artifact, ordering input, or undeclared dependency is a rebuildability defect.
+
+Historical replay is an attributed, purpose-bound, non-publishing **Rebuild Verification** under Operational Custody, not a Materialization Run. It MAY read retained but currently ineligible closure members for that authorized purpose, but its output is ineligible, never consumer-visible, has a new verification-attempt audit identity, and joins the same purge set as its inputs. Success requires exact Published Shard bytes and digests and exact Aggregate Manifest composition; semantic or contract equivalence is insufficient. It grants no serving eligibility, restoration, Rollback, consumer access, or Head selection.
+
+Acceptance of a Legal Erasure Event or Retention Expiry Event MUST reject new verification and stop in-flight verification before it creates recoverable output. A separately authorized Legal Hold purpose is the only exception; it does not restore serving or make verification output publishable. Custody Purge MUST NOT complete while any verification copy remains recoverable.
+
+Purging any required closure member ends the exact rebuildability obligation for the affected historical Version because post-purge reconstruction is forbidden. In a mixed-Asset Version, every evidence-dependent shard and identifying Aggregate Manifest composition is purged; independent shards outside the purge set MAY remain rebuildable while their own closures remain lawfully retained. Survivors do not redact or mutate immutable history. They may enter a successor Version only through a newly validated Aggregate Manifest, normal coverage and eligibility gates, a legal rematerialization or reuse path, and Published View Owner Head selection.
+
+After purge, the Non-Sensitive Erasure Record and non-identifying identity-nonreuse reservation MUST NOT retain exact manifests, raw addresses, per-object digests, dependency lists, or other evidence that identifies the subject or reconstructs purged content or composition.
+
+### 16.7 Publication Policy, Carry-Forward, and Rollback
 
 Dependency staleness fails closed by default. A stale Version MAY serve only under an explicit versioned Publication Policy from its Published View Owner. That policy MUST NOT override Fail-Closed Governance or permit service through eligibility-closing events.
 
@@ -607,7 +700,7 @@ Rollback is a Head Selection Event selecting a still-eligible prior Published Vi
 
 Embedding space, segmentation semantics, ontology mapping, Identity Minting Rule, and preserve-versus-reduce changes are categorically comparability-affecting. They require a complete new Version across all shards. A definition MAY add further comparability-affecting cases but MUST NOT remove these.
 
-### 16.6 Two-axis Coverage Report gate
+### 16.8 Two-axis Coverage Report gate
 
 Every Materialization Run MUST produce one Coverage Report as a hard publication gate.
 
@@ -664,7 +757,7 @@ Every Node and Edge identity is qualified by its Graph Projection Definition and
 
 The definition's deterministic Identity Minting Rule derives Node identity from its evidence within one definition version. It promises stable diffing across Published View Versions of that definition version and promises nothing across definition versions. A reduced evidence set MUST mint a different identity rather than widen the old unit's policy.
 
-A Graph Edge is likewise definition-qualified, typed by its Ontology Steward, bound to endpoints from the same definition, and distinguished as native-mapped or definition-inferred. Native-mapped edges carry assertion evidence and use the asserting Asset's shard. Definition-inferred units cite every contributing evidence item and use the inferred-unit placement rule in §16.4.
+A Graph Edge is likewise definition-qualified, typed by its Ontology Steward, bound to endpoints from the same definition, and distinguished as native-mapped or definition-inferred. Native-mapped edges carry assertion evidence and use the asserting Asset's shard. Definition-inferred units cite every contributing evidence item and use the inferred-unit placement rule in §16.5.
 
 No shared identity space, required mapping, Foundation `same-as`, conflict detector, or cross-view identity index exists. The platform neither compares nor gates independently owned definitions on their agreement. Ontology Steward claims bind only their definition. A reconciliation graph is an ordinary owned Graph Projection Definition that rematerializes from Canonical Knowledge and mints its own identities; it MUST NOT import another Published View's units.
 
@@ -765,10 +858,10 @@ All criteria MUST be verifiable; missing any one is a fail:
 
 Contract completeness is judged primarily from this Baseline. [HLD.md](HLD.md) provides evidence for strategy, scope, rationale, and cross-document consistency. Prototypes and implementation evidence are not required. The Review Record MUST walk:
 
-1. **New source revision:** a new Source Revision passes platform-attested canonicalization, immutable selection and Delta checks, and publication fencing into at least two materializations; Retrieval and Graph suffice.
+1. **New source revision:** a new Source Revision passes Source Transition Evidence, platform-attested canonicalization, canonical Revision Delta and immutable selection checks, and publication fencing into at least two materializations; Retrieval and Graph suffice.
 2. **Permission revocation or deletion:** a governance change or deletion advances affected Eligibility Epochs, closes dependent eligibility, defeats cache and in-flight future observations, and prevents every Published View and query path from disclosing the data.
 3. **Result trace:** a consumer follows a published unit's Evidence Lineage through exact Canonical Element Addresses and Enrichment Overlay Versions to its Canonical Revision and originating Source Revision.
-4. **Projection dependency change:** changing an embedding, ontology, or synthesis dependency rematerializes only the affected Projection Definition, produces a new projection version and Published View Version, and never silently overwrites a live Version.
+4. **Projection dependency change:** owner adoption of a changed embedding, ontology, synthesis, or other output-influencing dependency mints a successor Projection Definition Version, selects the complete affected set from exact reverse dependencies, performs required rematerialization or permitted attested reuse, produces a new Published View Version, and never silently overwrites a live Version.
 5. **New consumer onboarding:** a new External Consumer uses a registered Published View interface without implementing source integration, source parsing, or canonicalization.
 
 ## 24. Review Record, endorsement, and re-review

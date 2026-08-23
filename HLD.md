@@ -74,19 +74,22 @@ Know → Apply → Learn → Improve
 **Improve** means using governed evidence from that experience to strengthen both AI systems and enterprise knowledge.
 
 ```text
-Canonical Knowledge
-        │
-        ▼
-Governed Published Interfaces
-        │
-        ▼
-External Consumers
-        │
-        ▼
-Future Canonical Experience
-        │
-        ├── AI improvement
-        └── Knowledge improvement
+┌──────────────────────────────────────────────────────────┐
+│ Knowledge Platform                                       │
+│ Canonical Knowledge → Materialization → Published Views  │
+└────────────────────────────┬─────────────────────────────┘
+                             │
+                             ▼
+                 Governed Published Interfaces
+                             │
+                             ▼
+                    External Consumers
+                             │
+                             ▼
+              Future Canonical Experience
+                             │
+                             ├── AI improvement
+                             └── Knowledge improvement
 ```
 
 The loop is broader than retrieval-augmented generation or any individual AI application. It frames knowledge and experience as separate reusable assets whose lineage can be connected. The Baseline defines the [two canonical domains](ARCHITECTURE-BASELINE.md#7-two-canonical-domains) and limits the current Knowledge-side bridge to the [Knowledge Consumption Reference](ARCHITECTURE-BASELINE.md#8-knowledge-consumption-reference).
@@ -105,16 +108,19 @@ The current focus is the knowledge-side lifecycle:
 External Sources
       │
       ▼
-Knowledge Platform
-      │
-      ▼
-Canonical Knowledge
-      │
-      ▼
-Governed Published Interfaces
-      │
-      ▼
-External Consumers
+┌──────────────────────────────────────────────────────────┐
+│ Knowledge Platform                                       │
+│ Source Integration → Canonicalization                    │
+│                    → Canonicalization Write Interface    │
+│                    → Canonical Knowledge                 │
+│                    → Materialization → Published Views   │
+└────────────────────────────┬─────────────────────────────┘
+                             │
+                             ▼
+                 Governed Published Interfaces
+                             │
+                             ▼
+                    External Consumers
 ```
 
 Future Canonical Experience remains outside the Knowledge Platform boundary. Keeping the domains separate allows the program to focus on governed knowledge capability while retaining a coherent long-term direction for versioning, lineage, policy, lifecycle, provenance, observability, and artifact management.
@@ -137,6 +143,8 @@ External Sources
 │        ↓                                                     │
 │ Canonicalization                                             │
 │        ↓                                                     │
+│ Canonicalization Write Interface                             │
+│        ↓                                                     │
 │ Canonical Knowledge                                          │
 │        ↓                                                     │
 │ Materialization                                              │
@@ -155,6 +163,8 @@ External Sources
 
 External Sources remain outside the Knowledge Platform. The platform crosses a configured and governed acquisition boundary to discover and capture Assets, Source Revisions, artifacts, and policy provenance. A Source is an input boundary, not a platform component.
 
+Source and enterprise access attributes, including Security Classification, travel through versioned Governance Bindings. Mutable Asset Metadata is a separate descriptive lifecycle for facts such as title, domain taxonomy, and display properties. It neither determines access nor changes Canonical Knowledge; a Published View uses it only when its Projection Definition declares that dependency.
+
 ## 5.2 Canonical Knowledge
 
 The Knowledge Platform interprets source content and structure into source-faithful, versioned Canonical Knowledge. It preserves reusable multimodal information, evidence, lineage, and governance context before any particular consumer strategy is applied.
@@ -166,6 +176,8 @@ Canonical Knowledge is the durable boundary between source understanding and pro
 Materialization turns declared Canonical Knowledge inputs into independently owned and versioned Published Views. Retrieval, Graph, and Wiki provide the initial interface families; future types can be registered without changing the boundary.
 
 Each Published View is consumed through its Governed Published Interface. Views retain separate identities, ownership, lifecycle, policy, and serving semantics. A coordinated package can group several view versions for operational convenience, but it remains optional packaging rather than a global serving unit.
+
+Projection semantics and publication remain separate decisions. An accountable Projection Definition Owner adopts each immutable definition version and its complete output-influencing dependency set; an accountable Published View Owner selects an eligible immutable Published View Version. A dependency producer or platform executor can prepare candidates but cannot silently change what a live view means or serves.
 
 The detailed publication model lives in the Baseline's [materialization and publication contract](ARCHITECTURE-BASELINE.md#16-materialization-and-publication-contract).
 
@@ -191,13 +203,13 @@ This supports enterprise search, retrieval-augmented applications, and agents fr
 
 Graph Published Views support independently owned graph meanings, typed nodes and edges, evidence-backed claims, and governance at observable graph units. Different Graph definitions can serve different domains without forcing one enterprise-wide semantic identity.
 
-Graph consumers can traverse and reason over a governed published product while its semantic claims remain attributable to the relevant Ontology Steward. See the Baseline's [Graph interface](ARCHITECTURE-BASELINE.md#172-graph).
+For each Graph definition, its Ontology Steward is also its Projection Definition Owner, while a different Published View Owner can independently decide publication, rollback, and retirement. Graph consumers can traverse and reason over a governed published product while its semantic claims remain attributable to the relevant Ontology Steward. See the Baseline's [Graph interface](ARCHITECTURE-BASELINE.md#172-graph).
 
 ## 6.3 Wiki and reading experiences
 
 Wiki Published Views support governed synthesis with citations and accountable publication. Reading-product presentation, navigation, and interaction remain External Consumer concerns.
 
-This separates synthesis accountability from presentation, and it allows a reading experience to evolve without changing Canonical Knowledge. See the Baseline's [Wiki interface](ARCHITECTURE-BASELINE.md#173-wiki).
+The Knowledge Publisher is the accountable Projection Definition Owner and Published View Owner for a Wiki: synthesis meaning, release, rollback, and retirement therefore have one decision path, while the platform only executes and validates. This separates synthesis accountability from presentation, and it allows a reading experience to evolve without changing Canonical Knowledge. See the Baseline's [Wiki interface](ARCHITECTURE-BASELINE.md#173-wiki).
 
 ## 6.4 Agents and AI applications
 
@@ -209,13 +221,15 @@ The current Knowledge-side bridge for future execution lineage is the Knowledge 
 
 Governance travels with knowledge from source acquisition through publication and observation. This creates a consistent place to preserve source-policy provenance, apply enterprise restrictions, explain access outcomes, and respond to permission change, deletion, retention, and erasure.
 
-The intended value is not merely central policy storage. It is consistent enforcement across canonical reads, materialization, publication, and query while preventing protected content or even protected existence from leaking through alternate paths. The Baseline defines the [governance, authorization, and erasure model](ARCHITECTURE-BASELINE.md#15-governance-authorization-and-erasure) in detail.
+The intended value is not merely central policy storage. It is consistent enforcement across canonical reads, materialization, publication, and query while preventing protected content or even protected existence from leaking through alternate paths. Effective Access Policy is evaluated for each observable unit from Governance Binding evidence and its full evidence intersection; descriptive Asset Metadata is not a policy authority. The Baseline defines the [governance, authorization, and erasure model](ARCHITECTURE-BASELINE.md#15-governance-authorization-and-erasure) in detail.
 
 ## 6.6 Rebuildability, change, and lineage
 
-Canonical Knowledge and immutable dependency records make Published Views reproducible without returning to a Source. A change to a retrieval representation, graph meaning, or synthesis approach can produce a new view lineage without rewriting canonical history.
+Canonical Knowledge and complete immutable dependency records make a Published View Version exactly reproducible without returning to a Source while its full Reconstruction Closure is lawfully retained. A purpose-bound Rebuild Verification can prove the historical bytes and composition without publishing them. Custody Purge deliberately ends rebuildability where required inputs or identifying composition must become unrecoverable.
 
-Source change, projection change, policy change, deletion, and withdrawal remain distinguishable. Consumers can observe meaningful freshness and availability states, while operators and reviewers can trace a published result back through Canonical Knowledge to the originating Source Revision. The governing lifecycle is summarized by the Baseline's [cross-cutting invariants](ARCHITECTURE-BASELINE.md#9-binding-cross-cutting-invariant-families) and detailed in its [revision lifecycle](ARCHITECTURE-BASELINE.md#14-revision-selection-and-dependency-lifecycle).
+Source change, canonical content change, metadata change, projection change, policy change, deletion, and withdrawal remain distinguishable. Source, Canonical, and Published View Head selections carry state-specific transition evidence, so replay, rollback, safety unpublication, and genuine deletion cannot be confused. Adopting an output-influencing projection dependency creates a new Projection Definition Version with a declared impact and rematerialization or attested-reuse path; publishing the dependency alone changes no live view.
+
+Consumers can observe meaningful freshness and availability states, while operators and reviewers can trace a published result back through Canonical Knowledge to the originating Source Revision. The governing lifecycle is summarized by the Baseline's [cross-cutting invariants](ARCHITECTURE-BASELINE.md#9-binding-cross-cutting-invariant-families) and detailed in its [revision lifecycle](ARCHITECTURE-BASELINE.md#14-revision-selection-and-dependency-lifecycle).
 
 ---
 
@@ -251,19 +265,25 @@ The AI improvement path asks:
 > **How can AI systems perform better?**
 
 ```text
-Canonical Knowledge and Published Views
-                  │
-                  ▼
-          AI / Agent Execution
-                  │
-                  ▼
-       Future Canonical Experience
-                  │
-                  ▼
-      Evaluation and curated learning
-                  │
-                  ▼
-         Improved models and agents
+┌──────────────────────┐
+│ Knowledge Platform   │
+│ Published Views      │
+└──────────┬───────────┘
+           │
+           ▼
+Governed Published Interfaces
+       │
+       ▼
+AI / Agent Execution
+       │
+       ▼
+Future Canonical Experience
+       │
+       ▼
+Evaluation and curated learning
+       │
+       ▼
+Improved models and agents
 ```
 
 Experience can support evaluation, analytics, failure analysis, and governed training-data curation. It also makes it possible to ask which governed knowledge, model, prompt, and tools participated in an execution without collapsing knowledge and experience into one domain.
@@ -275,22 +295,28 @@ The knowledge improvement path asks:
 > **How can enterprise knowledge itself become better?**
 
 ```text
-Canonical Knowledge and Published Views
-                  │
-                  ▼
-          Knowledge Consumption
-                  │
-                  ▼
-       Future Canonical Experience
-                  │
-                  ▼
-        Knowledge Quality Signals
-                  │
-                  ▼
-       Accountable Knowledge Curation
-                  │
-                  ▼
-        Improved governed knowledge
+┌──────────────────────┐
+│ Knowledge Platform   │
+│ Published Views      │
+└──────────┬───────────┘
+           │
+           ▼
+Governed Published Interfaces
+       │
+       ▼
+External Consumers
+       │
+       ▼
+Future Canonical Experience
+       │
+       ▼
+Knowledge Quality Signals
+       │
+       ▼
+Accountable Knowledge Curation
+       │
+       ▼
+Improved governed knowledge
 ```
 
 Signals can include missing knowledge, stale results, conflicting sources, repeated corrections, weak retrieval coverage, or areas that repeatedly require excessive cross-source reasoning. These signals inform accountable curation; they do not rewrite Canonical Knowledge in place. Improvement returns through normal source or canonical lifecycle events with preserved lineage.
