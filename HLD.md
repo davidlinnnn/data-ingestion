@@ -1,810 +1,235 @@
 # Enterprise AI Data Foundation
-## Target Architecture Baseline
+## Narrative High-Level Design
 ### Knowledge Platform as First Delivery Domain
 
-**Document status:** Candidate architecture baseline
-**Audience:** enterprise architecture, security and data governance, and AI consumer architecture reviewers
+**Document status:** Explanatory companion
+**Audience:** strategy and delivery stakeholders
+
+> **Companion document**
+>
+> [ARCHITECTURE-BASELINE.md](ARCHITECTURE-BASELINE.md) is the sole normative source for the coordinated documents. This HLD explains the strategy, scope, rationale, target value, and future direction behind that Baseline. If the documents conflict, the Architecture Baseline governs.
 
 ---
 
-# Part I — Document Authority and Framing
+# 1. Purpose and reading guide
 
-> **Authority: document framing.** This part defines how to interpret the baseline.
+This HLD explains why the **Enterprise AI Data Foundation** exists, how the **Knowledge Platform** establishes its knowledge-side foundation, and how that work can support a longer-term Knowledge Loop.
 
-## 1. Purpose
+Read this document to understand:
 
-This document is the decision-complete target architecture reference for the **Enterprise AI Data Foundation** and its first bounded delivery domain, the **Knowledge Platform**. It explains the logical contracts, responsibilities, trust boundaries, and consumer-observable behavior that later logical and physical designs MUST preserve.
+- the enterprise problem and strategic intent;
+- the role of Canonical Knowledge in separating source understanding from consumption;
+- the target journey from external Sources to governed use;
+- the value expected for Retrieval, Graph, Wiki, agents, governance, and rebuildability;
+- the future direction for Canonical Experience and improvement loops; and
+- the handoff from architecture explanation to architecture review and later delivery planning.
 
-It is not an implementation plan. It does not choose physical schemas, APIs, products, vendors, storage engines, deployment topologies, delivery increments, or numeric service levels.
+This is an explanation, not an architecture reference or an implementation plan. It summarizes outcomes without redefining contracts. The [Architecture Baseline](ARCHITECTURE-BASELINE.md#part-i--document-authority-and-framing) contains the binding boundaries, lifecycle rules, policy semantics, validation rules, publication controls, and review criteria.
 
-The architecture addresses a recurring enterprise problem: heterogeneous sources are repeatedly acquired, parsed, governed, and transformed by isolated AI solutions. That duplication creates inconsistent source interpretation, fragmented policy enforcement, incomplete lineage, silent information loss, and projections that cannot be rebuilt without returning to the source.
-
-The target pattern is:
-
-> **Canonicalize reusable source knowledge once; publish many independently governed projections.**
-
-## 2. Authority levels
-
-The document has three explicit authority levels:
-
-1. **Normative Foundation baseline.** Binding architecture-shaping invariants shared by Foundation domains. These requirements use **MUST** and **MUST NOT**.
-2. **Normative Knowledge Platform target.** Binding logical architecture for the first delivery domain. It baselines the full target, not an MVP or delivery sequence.
-3. **Informative future direction.** Descriptive direction for Canonical Experience and the Knowledge Loop. It introduces no Foundation or Knowledge Platform requirements.
-
-The normative parts are an architecture baseline only. Endorsement does not authorize funding, delivery, production, or final security or compliance certification.
-
-## 3. Scope and boundary
-
-The Knowledge Platform boundary is consistent in every view:
-
-```text
-External Sources
-      │
-      ▼
-┌──────────────────────────────────────────────────────────────────┐
-│ Knowledge Platform                                               │
-│                                                                  │
-│ Source Integration → Canonicalization → Canonical Knowledge      │
-│                                      → Materialization            │
-│                                      → Governed Publication       │
-│                                                                  │
-│ Cross-cutting: lifecycle, policy, lineage, registries, audit     │
-└───────────────────────────────────┬──────────────────────────────┘
-                                    │
-                                    ▼
-                    Governed Published Interfaces
-                                    │
-                                    ▼
-                           External Consumers
-```
-
-External source systems are inputs, not platform components. Consumer applications, agent runtimes, reading experiences, query behavior, reasoning, context construction, and generation are outside the Knowledge Platform.
-
-The Knowledge Platform owns source integration, knowledge ingestion and canonicalization, Canonical Knowledge, materialization mechanisms, governed publication and internal access interfaces, and the cross-cutting Control Plane.
-
-## 4. Goals
-
-The target architecture MUST:
-
-- preserve source-faithful multimodal content, structure, policy provenance, and lineage in durable Canonical Knowledge;
-- decouple source evolution from projection evolution;
-- make every legal projection rebuildable without source access;
-- enforce source and enterprise policy at canonical read, materialization, publication, and query boundaries;
-- make change, deletion, denial, and lineage observable without leaking protected information;
-- admit independently owned projection semantics without weakening platform invariants;
-- provide stable Knowledge-side references that a future Canonical Experience domain can record.
-
-## 5. Non-goals and rejected forks
-
-The baseline does not define workflow or messaging products, storage engines, query engines, databases, deployment patterns, parser or model vendors, embedding models, concrete schemas, endpoint definitions, OpenAPI or MCP contracts, retry algorithms, retrieval tuning, numeric SLOs, roadmaps, staffing, or cost.
-
-It is not a threat model, a final compliance certification, a delivery RACI, or an authorization for production.
-
-The following architecture forks are explicitly rejected:
-
-- a one-bag Canonical Knowledge Envelope or extensible property bag as the durable canonical contract;
-- content-hash identity for Canonical Elements or Canonical Revisions;
-- a Foundation-wide or enterprise entity-resolution or semantic identity spine;
-- External Consumer time travel or a historical Published View interface;
-- a global knowledge release as the serving unit;
-- a concrete Context Gateway OpenAPI over canonical units for External Consumers;
-- source re-parsing by a projection or External Consumer;
-- session grants or bounded leases that authorize future Protected Observations;
-- treating a Tombstone as legal erasure;
-- treating vector representation as a Projection Type rather than a Retrieval Mode.
-
-A coordinated release that packages several Published View Versions MAY exist for operational convenience. It MUST remain optional packaging: each view retains its identity, owner, policy, lifecycle, and serving contract, and the package MUST NOT become a global serving unit.
-
-## 6. Decision traceability
-
-The architecture ties each major decision to a problem or constraint:
-
-- the closed canonical envelope and registries address incompatible source representations without lowest-common-denominator flattening;
-- append-only revisions, complete deltas, manifests, and evidence lineage address auditability and replay ambiguity;
-- differentiated projection ownership addresses the fact that graph meaning and synthesis truth are domain accountabilities;
-- fail-closed policy evaluation addresses source-policy diversity and asynchronous governance change;
-- immutable Published View Versions and publication fencing address late work, silent overwrite, and unsafe rollback;
-- two-axis Coverage Reports address both silent omission and silent structural reduction;
-- closed graph identity spaces prevent one owner from imposing semantic identity on another;
-- explicit erasure operations separate logical lifecycle history from legal unrecoverability.
+Target delivery in this HLD describes capability and value only. It does not set a roadmap, sequence, dates, staffing, budget, backlog, concrete APIs, vendors, deployment choices, costs, or numeric service levels.
 
 ---
 
-# Part II — Enterprise AI Data Foundation Baseline
+# 2. Why the Foundation exists
 
-> **Authority: normative Foundation baseline.**
+Enterprise knowledge is spread across documents, structured records, business systems, APIs, images, diagrams, tables, audio, and other multimodal Sources. AI solutions often need the same upstream work: source acquisition, parsing, structural reconstruction, policy interpretation, versioning, and provenance.
 
-## 7. Two canonical domains
+When each solution repeats that work, the enterprise gets:
 
-The Foundation contains two separate canonical domains:
+- duplicated source processing;
+- incompatible interpretations of the same content and structure;
+- fragmented governance and lineage;
+- tight coupling between source changes and consumer techniques;
+- silent loss of information needed by later use cases; and
+- derived products that cannot be rebuilt without returning to a Source.
 
-- **Canonical Knowledge** represents what the enterprise knows from governed external sources.
-- **Canonical Experience** may represent what the enterprise can learn from AI and agent execution.
+The Foundation addresses this by treating reusable knowledge as a durable enterprise asset rather than a temporary by-product of one application. The core pattern is simple:
 
-The domains MUST remain logically separate. Each MUST canonicalize reusable data before downstream specialization. They MUST use compatible capability categories for versioning, lineage, policy, lifecycle, provenance, observability, and artifact management, but this requirement MUST NOT be interpreted as one shared physical service or one shared data model.
+> **Understand governed source knowledge once, preserve it as Canonical Knowledge, and publish independently governed views for different forms of use.**
 
-Cross-domain lineage and policy semantics MUST be compatible. The only Knowledge-side linkage promised by this baseline is the Knowledge Consumption Reference in §8.
+This separates two questions:
 
-## 8. Knowledge Consumption Reference
+> **Source understanding:** What information and structure does the Source provide?
 
-A **Knowledge Consumption Reference** is a persistable, non-authorizing address bundle copied by an observer from the Governed Observation Unit it actually observed. The Knowledge Platform does not mint a token, grant, event, or special envelope.
+> **Knowledge consumption:** How should a particular consumer retrieve, relate, synthesize, or present that knowledge?
 
-A complete reference has:
-
-1. a required consumption referent: Published View, Published View Version, and the Governed Observation Unit identity inside that Version; and
-2. optional lineage referents: Canonical Element Addresses and Enrichment Overlay Versions copied from that unit's Evidence Lineage.
-
-For Retrieval, the unit identity is shard-version-qualified. For Graph, it names a Graph Node or Graph Edge. For Wiki, it names the Wiki Published Bundle. A later registered Projection Type MUST follow the same rule. Carry-Forward does not collapse identity: the same Retrieval Segment appearing in two Published View Versions yields two consumption references. A Head is never a referent.
-
-Consumption referents resolve only through Published View interfaces and only while current serving eligibility, Publication Policy, and Fail-Closed Governance allow. Tombstone, Retraction Event, Security Invalidation Event, erasure-pending, erasure-complete, and impermissible dependency staleness are unavailable. Historical Published View Version resolution is not an External Consumer interface.
-
-Lineage referents resolve only through Governed Canonical Read and only for its named roles. Tombstoned addresses may remain historically resolvable under a new Authorization Decision; erasure-pending and erasure-complete MUST return unavailable with no identifying stub.
-
-A stored reference is not a grant. Every dereference is a new Protected Observation requiring a new Authorization Decision. A platform-held reference, and any copied address, digest, Artifact Reference, Source Evidence, or bytes that can re-identify its subject, MUST be included when a Legal Erasure Event or Retention Expiry Event names that subject's purge set. Semantic Equivalence Attestation MUST NOT retarget a stored reference or authorize reuse after Custody Purge.
-
-Ingesting or publishing a Knowledge Consumption Reference in platform custody is itself a Protected Observation of the referenced object's existence. Published View, Published View Version, and Governed Observation Unit identities MUST never be reused. After Custody Purge, the platform MUST retain only a non-identifying reservation sufficient to prevent reuse; it MUST NOT retain the raw address as that reservation.
-
-## 9. Binding cross-cutting invariant families
-
-The following five families are binding across all legal Knowledge Platform paths.
-
-### 9.1 Governance and leakage
-
-- Source authorization MUST be the access ceiling.
-- Effective Access Policy MUST intersect that ceiling with enterprise restrictions, including purpose, consent, and residency.
-- Materialization and query MUST fail closed.
-- Every Protected Observation, including an embedding or existence claim, MUST receive a Policy Decision Service decision committed against current Eligibility Epochs.
-- Every derived object MUST carry the intersection of all evidence policies plus any additional restrictions.
-- External Consumers MUST use Published View interfaces only.
-
-### 9.2 Lineage
-
-Every published Governed Observation Unit MUST carry complete Evidence Lineage through fully qualified Canonical Element Addresses and exact Enrichment Overlay Versions to Canonical and Source Revisions. Canonical Core writes MUST be platform-attested.
-
-### 9.3 Rebuildability
-
-Every Published View Version MUST be reproducible from its immutable Aggregate Manifest, the exact Materialization Input Manifests it names, and its Projection Definition. A Materialization Run MUST NOT access a Source. Every projection MUST rebuild from Canonical Knowledge and declared dependencies alone.
-
-### 9.4 Deletion propagation
-
-Source deletion MUST create lineage-scoped Tombstones and close dependent eligibility. Security Invalidation Events MUST advance affected Eligibility Epochs and stop serving until enforcement is current. Legal Erasure Events and Retention Expiry Events MUST close eligibility before Custody Purge makes all platform-held copies unrecoverable. A Tombstone MUST NOT be treated as erasure.
-
-### 9.5 Canonicalization quality
-
-The five-primitive envelope and validated Typed Payloads MUST preserve source fidelity without lowest-common-denominator flattening. The Coverage Report MUST gate both address-level coverage and declared structural reduction. Undeclared reduction is a defect. Every Canonical Head transition MUST have a Revision Delta that totally accounts for predecessor and successor Elements and Relationships.
+Canonical Knowledge sits between those concerns. Source integrations can evolve without embedding one retrieval or synthesis strategy, while Published Views can evolve without reconnecting to or re-parsing Sources. The detailed boundary and responsibilities are defined in the Baseline's [scope](ARCHITECTURE-BASELINE.md#3-scope-and-boundary) and [logical architecture](ARCHITECTURE-BASELINE.md#10-logical-architecture-and-responsibilities).
 
 ---
 
-# Part III — Knowledge Platform Target Architecture
+# 3. Know → Apply → Learn → Improve
 
-> **Authority: normative Knowledge Platform target.**
-
-## 10. Logical architecture and responsibilities
-
-```text
-External Sources
-      │
-      ▼
-Source Integration
-      │  captured content, source policy, artifacts, disposition
-      ▼
-Canonicalization Write Interface
-      │  platform-attested atomic Canonical Revision
-      ▼
-Canonical Knowledge
-      │  Core + separately versioned Enrichment Overlays
-      ▼
-Materialization Runs
-      │  immutable manifests, fencing, Coverage Reports
-      ▼
-Published View Versions
-      │  Retrieval | Graph | Wiki | registered future types
-      ▼
-Governed Published Interfaces
-      │
-      ▼
-External Consumers
-
-Control Plane: identities, registries, Heads, epochs, policy, lineage,
-               invalidation, publication, erasure, and audit
-```
-
-### 10.1 Source Integration
-
-Source Integration owns configured acquisition boundaries, Source Instances, discovery, capture, change and deletion evidence, source-native identifiers, source policy provenance, and Artifact References. It MUST distinguish confirmed deletion from empty content, denial, timeout, and other unavailability.
-
-It does not own canonical semantics, projection semantics, or consumer behavior.
-
-### 10.2 Canonicalization
-
-Canonicalization owns source parsing, reconstruction, normalization, and atomic creation of source-faithful Canonical Revisions. It alone may write Canonical Core through the Canonicalization Write Interface.
-
-It MUST NOT embed retrieval segmentation, embedding choices, graph ontology, or synthesis strategy in Canonical Knowledge.
-
-### 10.3 Canonical Knowledge
-
-Canonical Knowledge is the durable, versioned contract between source understanding and projection semantics. It owns the closed canonical envelope, Core, Enrichment Overlays, source evidence, governance references, and canonical lineage.
-
-### 10.4 Materialization and publication
-
-Materialization transforms declared Canonical Knowledge inputs into independently versioned Published Views. It owns execution mechanism, validation, coverage, policy derivation, lineage propagation, and publication fencing. It MUST NOT access or re-parse a Source.
-
-Published View Owners own Head selection, rollback, and retirement. The platform may immediately close eligibility for safety, policy, deletion, or withdrawn dependencies; it MUST NOT fabricate owner publication as the remedy.
-
-### 10.5 External Consumers
-
-External Consumers own query formulation, retrieval strategy, ranking and blending, graph traversal and path planning, reading experience, context construction, tool use, reasoning, and generation. They MUST NOT reconnect to enterprise sources or parse them independently.
-
-Retrieved text and other published content MUST be treated as untrusted input to generators. Publication eligibility and authorization do not make content safe instructions; prompt-injection and content-trust controls remain consumer responsibilities.
-
-### 10.6 Control Plane
-
-The Control Plane owns lifecycle decisions and their auditability: registry versions, execution identity, Revision Lineage, Head Selection Events, Revision Deltas, Overlay selection, Governance and Relationship Resolution Bindings, manifests, epochs, invalidation, publication state, and erasure state.
-
-It coordinates what is eligible and selected. It does not decide graph meaning, synthesis truth, or application reasoning.
-
-## 11. Canonical Knowledge logical contract
-
-### 11.1 Closed envelope and Core boundary
-
-The canonical envelope has exactly five primitives:
-
-1. **Asset**
-2. **Source Revision**
-3. **Canonical Revision**
-4. **Canonical Element**
-5. **Canonical Relationship**
-
-Enrichment Overlay, Artifact Reference, Source Evidence, Payload Binding, and Governance Binding are first-class contract types but MUST NOT be treated as additional envelope primitives.
-
-**Canonical Core** contains source-faithful facts already available in machine-readable source form. Examples include native text, native tables, alt text, hyperlinks, explicit hierarchy, source-explicit ordering, raw spans, and geometry.
-
-Reconstructed or interpreted understanding MUST be an **Enrichment Overlay**, including OCR text, visual table reconstruction, generated image descriptions, inferred hierarchy, inferred reading order, and competing transcriptions. The deciding test is whether the value adds judgment not explicit in the source; use of a model alone does not decide the boundary, and decoding or format conversion alone does not force an Overlay.
-
-An Enrichment Overlay has a stable stream identity. Each Enrichment Overlay Version MUST have an immutable version identity, exactly one bound Canonical Revision, fully qualified same-Revision targets, a required Payload Binding, platform-generated producer and run attribution, creation time, a Governance Binding reference, and complete dependencies. It MAY carry complex derived structure in its Typed Payload and schema-defined confidence, but MUST NOT mint Canonical Elements or Canonical Relationships. Cross-Asset inferred semantics belong to materialization.
-
-### 11.2 Identity and incarnation
-
-A Source Instance is one immutable external tenant, repository, or equivalent source security domain. Reconfiguration MUST NOT reassign a Source Instance to another external domain.
-
-An Asset is one permanent source-object incarnation within one Source Instance. Mutable descriptive or classification metadata MUST be independently versioned. Reuse of a source-native identifier creates a new Asset unless the Source proves continuity. Multi-source Assets are prohibited; composition across sources occurs in materialization.
-
-A Source Revision is an immutable captured observation with an explicit `present`, `deleted`, or `unavailable` Source Revision Disposition. A confirmed deletion requires authoritative evidence and a guarded decision.
-
-A Canonical Revision identity denotes one successful Canonicalization Execution. Every successful execution MUST mint a new, Asset-qualified identity even if its output is semantically or byte-equivalent to an earlier result. Failed executions mint none. Identity MUST NOT be derived from a content hash or reused.
-
-A Canonical Element identity is revision-local. Its fully qualified Canonical Element Address is:
-
-```text
-(Asset identity, Canonical Revision identity, revision-local Element identity)
-```
-
-Every relationship endpoint, Overlay target, citation, Evidence Lineage reference, and canonical locator MUST use that full address. A bare Element identity MUST NOT cross a Revision boundary.
-
-### 11.3 Concise primitive contracts
-
-The following are logical fields, not a physical schema or API:
-
-- **Asset:** permanent Asset identity, governed Asset kind, Source Instance and source-object references, current Governance Binding reference, independently versioned Asset Metadata, and optional identity-level Payload Binding. It has no mutable current-revision field.
-- **Source Revision:** Asset-qualified identity, Source Revision Disposition, source-native or connector-minted version reference, capture time, integrity digest, capture attestation, Governance Binding reference, and Artifact References.
-- **Canonical Revision:** Asset-qualified execution identity, exactly one Source Revision address, canonical contract version, Canonicalization Attestation, creation time, integrity digest, governance manifest, Elements, and Relationships.
-- **Canonical Element:** revision-local identity, registered Element Kind, required Payload Binding, optional same-Revision parent address, conditional source-explicit ordinal, one or more Source Evidence locators, Governance Binding reference, and Artifact References.
-- **Canonical Relationship:** revision-local identity and declaring Revision, registered Relationship Type, fully qualified endpoints, Source Evidence, Governance Binding reference, and optional Payload Binding.
-
-A Canonical Relationship is a source-native assertion. It MAY span Assets, but both immutable endpoints MUST exist when it is created. It MUST NOT float to a Head or silently retarget. An unresolved external target is a typed Source Reference, not a dangling Relationship.
-
-Every cross-Asset assertion MUST also have a stable source-side relationship identity and locally owned source anchor, plus the Relationship Type's symmetry and deduplication rules. The connector mints the stable identity or anchor when the source does not supply one. These are source facts distinct from the revision-local canonical identity.
-
-### 11.4 Payload, evidence, and artifact contracts
-
-A Payload Binding has exactly:
-
-- a stable namespaced semantic payload type;
-- an immutable payload schema reference;
-- the value that validated against that schema.
-
-A payload is typed only when the registry recognizes its type and schema, permits that attachment position, and validation succeeds. Asset MAY carry an identity-level Payload Binding; Canonical Element and Enrichment Overlay Version require one; Canonical Relationship MAY carry one. Source Revision and Canonical Revision have closed metadata and MUST NOT accept arbitrary payloads.
-
-Source Evidence binds an Element, Relationship, Overlay, or Artifact Reference to one Source Revision through one or more typed, schema-validated locators. Initial locator families are page region, text span, record key, record position, schema member or column, source-object reference, JSON Pointer, temporal range, and artifact region. Record position is Revision-scoped and MUST NOT establish stable identity.
-
-An Artifact Reference carries artifact identity, media type, integrity digest, byte size, governed logical retrieval reference, Source Evidence, and Governance Binding reference. Binary bytes MUST NOT be inlined in the canonical envelope. The digest verifies integrity and MUST NOT be treated as a globally dereferenceable identity. A source-exposed image, audio object, video, or attachment becomes a Canonical Element only when it is meaningful source structure; that Element references the Artifact Reference for bytes.
-
-### 11.5 Platform-attested writes
-
-Canonical Core MUST be writable only through a platform-controlled Canonicalization Write Interface. The Control Plane binds each execution to one Asset, one Source Revision, writer identity, canonicalizer identity and version, canonical contract version, and execution identity.
-
-The platform creates an immutable Canonicalization Attestation containing the attestation identity, Source and Canonical Revision addresses, writer-service identity, canonicalizer identity and version, contract version, execution identity, and issuance time. A caller MUST NOT submit or override its origin. The baseline requires authoritative immutable attestation; it does not require a cryptographic signature.
-
-Model-assisted canonicalization receives no broader Core rights. Reconstructive or interpretive output uses the Enrichment Overlay write path. Materialization has read-only access to Canonical Knowledge.
-
-## 12. Governed registries and initial taxonomy
-
-### 12.1 Registry responsibilities
-
-Element Kinds, Relationship Types, Typed Payload schemas, and Source Evidence locator schemas MUST be governed, namespaced, versioned registrations. Every registration and every immutable schema version MUST name an accountable owner. Every specialized Element Kind MUST declare exactly one Standard Canonical Element Ancestor. Every payload schema version MUST declare its permitted attachment kinds. Unknown registrations, schemas, or attachment positions MUST be rejected.
-
-A Relationship Type declares owner, semantics, directionality or symmetry, valid endpoint kinds, and permitted payload schemas.
-
-Registration has three levels:
-
-1. **Standard Canonical Element Ancestors** provide cross-family fallback.
-2. **Foundation Standard Registrations** provide reusable source-family kinds and payload contracts safe for multiple connectors and consumers.
-3. **Owned Canonical Extensions** contain vendor- or domain-specific meaning in owned namespaces and degrade through one declared ancestor.
-
-The five and only initial Standard Canonical Element Ancestors are:
-
-- `container`
-- `text`
-- `record`
-- `field`
-- `media`
-
-The ancestor set is the initial closed fallback vocabulary. The registered Element Kind set remains extensible.
-
-### 12.2 Initial Foundation Element Kinds
-
-- **Document/layout:** document and section → `container`; heading, paragraph, caption → `text`; table and figure → `container`; row → `record`; cell → `field`.
-- **Structured data:** dataset → `container`; column and value → `field`; record → `record`.
-- **SaaS/API object graph:** collection → `container`; object → `record`; field → `field`.
-- **Multimodal:** image, audio, video, and attachment → `media`.
-
-Page and spatial coordinates remain Source Evidence. Foreign keys remain Canonical Relationships. Vendor concepts remain Owned Canonical Extensions. Generated transcripts and descriptions remain Enrichment Overlays.
-
-### 12.3 Initial Foundation payload contracts
-
-Initial payload contracts are logical and MAY omit optional values:
-
-- `document`: optional source title, language, role;
-- `document-section`: optional source role and identifier;
-- `text-block`: required source-native text; optional language and source style;
-- `table`: optional source role and identifier;
-- `row`: optional source role;
-- `cell`: required value; optional native type, row span, column span, header scope;
-- `figure`: optional source role and identifier;
-- `dataset`: required source-native name; optional dataset type;
-- `column`: required name; optional native type, nullability, key role;
-- `record`: optional source record type;
-- `typed-value`: required value; optional field name and native type;
-- `object-collection`: optional source object type;
-- `object`: required source object type; optional source-native key;
-- `media`: optional source role, filename, dimensions, duration, channels, source-native text alternative.
-
-These payloads MUST contain source-family facts only. Identity, provenance, location, governance, and artifact metadata already present in common contracts MUST NOT be duplicated.
-
-### 12.4 Owned Canonical Extension gate
-
-An Owned Canonical Extension MUST have:
-
-- a unique owned namespace and named owner;
-- exactly one Standard Canonical Element Ancestor;
-- a stable semantic payload type and immutable schema version;
-- explicit permitted attachment kinds;
-- explicit Source Evidence requirements;
-- no duplicate common contract fields;
-- no weakening of the Canonical Core versus Enrichment Overlay boundary;
-- a passing fallback behavior for consumers that understand only the ancestor.
-
-An ownerless, orphaned, unregistered, or incorrectly promoted extension MUST be refused.
-
-## 13. Atomic validation and contract versioning
-
-A Canonical Revision is the atomic validation boundary. Before accepting it, the platform MUST validate:
-
-- unique revision-local identities;
-- registered kinds, types, schemas, and attachment positions;
-- Payload Binding conformance;
-- existing, same-Revision, acyclic parents;
-- non-conflicting source-explicit sibling ordinals;
-- Source Evidence binding and Artifact Reference resolvability;
-- Relationship endpoint existence and type constraints;
-- attestation consistency;
-- required Governance Bindings.
-
-Any failure MUST reject the entire Canonical Revision with object-level errors. Partial Canonical Revisions are forbidden.
-
-Each Enrichment Overlay Version validates independently and atomically: its targets, target kinds, payload, producer and execution attestation, dependency footprint, and governance references MUST conform. Failure does not invalidate Core, but the Overlay Version MUST remain unpublished.
-
-Each Canonical Revision declares exactly one canonical contract version. Mixed envelope versions and in-place upgrades are forbidden. Re-canonicalization under a newer contract creates a new Canonical Revision. Published schema versions are immutable. Consumers and materializers MUST declare supported contract and schema versions and fail explicitly rather than silently discard unknown envelope fields.
-
-## 14. Revision, selection, and dependency lifecycle
-
-### 14.1 Independent lifecycle axes
-
-Source content, native structure, native relationships, artifacts, or canonical source metadata changes create a Source Revision and may lead to a Canonical Revision. Re-canonicalization because of canonicalizer, contract, schema, or defect correction creates a new Canonical Revision against the existing Source Revision.
-
-Derived understanding changes create an Enrichment Overlay Version. Governance changes create a Governance Binding Version. Projection Definition, model, ontology, synthesis, or technical dependency changes create new materialization and publication lineage. None of those changes rewrites canonical content.
-
-Capture retries with the same source-native revision identity and digest are idempotent. A new source-native revision identity remains a new Source Revision even when its digest matches.
-
-### 14.2 Append-only lineage and Head selection
-
-Source and Canonical Revision Lineage MUST be append-only directed acyclic graphs. Source-native ancestry is preserved; when unavailable, the platform records immutable observation sequence rather than inferring order from wall-clock time. Canonical derivation names exactly one Source Revision; lifecycle supersession is a separate edge.
-
-Revision creation never implies selection. Source Head, Canonical Head, and Published View Head are computed from immutable Head Selection Events, not mutable fields.
-
-An Asset has at most one Source Head and at most one Canonical Head. Zero Heads is an explicit selected state for deleted or unavailable content, not a missing pointer or invitation to infer "latest."
-
-Each Head Selection Event MUST be a linearizable compare-and-select decision that atomically checks expected prior Heads, candidate eligibility and withdrawal, the complete transition Delta, all selector and dependency Eligibility Epochs, actor, reason, and time. Concurrent or late work remains an immutable candidate but MUST NOT overwrite a changed Head.
-
-Replay of an older Source Revision MAY create a historical candidate but MUST NOT auto-promote. Canonical rollback is limited to an eligible Canonical Revision derived from the current Source Head and requires a prior-Head-to-candidate Delta. Restoring older source content requires a new Source Revision or an explicit correction of a proven false deletion.
-
-### 14.3 Revision Deltas and Element Correspondence
-
-Every Canonical Head transition MUST have an immutable Revision Delta that totally and disjointly accounts for every predecessor and successor Element and Relationship:
-
-- unchanged `1→1`;
-- modified `1→1`;
-- split `1→N`;
-- merged `N→1`;
-- deleted `1→0`;
-- added `0→1`;
-- explicitly unresolved.
-
-Each mapping records reason and producer or algorithm version. Local Element identity reuse creates no continuity. Element Correspondence exists only through the Delta. Unresolved or incomplete correspondence MUST block automatic re-anchoring, deletion inference, and automatic publication.
-
-A Semantic Equivalence Attestation MAY prove equivalence between distinct Revisions for an explicit scope, contract and schema versions, digest algorithm, and attestor. Reuse is legal only when that scope covers every input on which the Projection Definition depends and a rebound or re-derived two-axis Coverage Report passes. The attestation MAY authorize a new immutable reuse binding, but MUST NOT merge identities, refresh an old Published View silently, retarget a reference, or reuse purged data.
-
-### 14.4 Overlay selection and relationship resolution
-
-There is no global Overlay Head. A versioned Overlay Selection Policy selects exact eligible Enrichment Overlay Versions for one Canonical Revision and purpose from complete dependency footprints. Selection is frozen into the Materialization Input Manifest.
-
-Confidence values from different Overlay producers MUST NOT be ranked as globally comparable unless both the Overlay schema and the Overlay Selection Policy define their comparability.
-
-Automatic re-anchoring is allowed only when every dependency maps unchanged `1→1` and producer, model, schema, and re-anchor rule remain eligible. Re-anchoring creates a new candidate Overlay Version and never selects it implicitly. Split, merge, modification, deletion, unresolved mapping, or incomplete dependencies require recomputation or accountable confirmation.
-
-A Relationship Resolution Binding maps an immutable cross-Asset Canonical Relationship assertion to an eligible target on a selected target lineage. It MAY advance through unambiguous Element Correspondence without rewriting the source-side Revision. Split, merge, deleted, or unresolved targets MUST remain unresolved rather than guessed.
-
-The source-side relationship MUST be re-canonicalized only when the source assertion itself changes; advancing a resolved target does not rewrite Canonical Core.
-
-### 14.5 Tombstone, retraction, and restoration
-
-A Tombstone is immutable and records the deleting Source Revision, Delta edge, selected lineage path, event time, and attributed reason. It preserves history and MUST NOT mutate other branches.
-
-For partial deletion, a successor Canonical Revision omits deleted objects, its Delta accounts for every deleted Element, descendant, and Relationship, and object Tombstones make the transition explicit. For authoritative whole-Asset deletion, acceptance of the deleted Source Revision MUST atomically create the Asset Tombstone, close prior canonical eligibility, clear Canonical Head, and install an invalidation barrier. Safety MUST NOT wait for an empty deleting Canonical Revision.
-
-A Retraction Event atomically closes a Revision or selected Overlay Version's eligibility, clears or replaces selection, and invalidates dependants without deleting history or silently falling back.
-
-A proven restoration creates a new Source Revision with explicit reinstatement lineage. Native locator reuse without continuity proof creates a new Asset incarnation. Corrections are append-only events.
-
-Selectedness, freshness, eligibility, withdrawal, and presence are orthogonal facts. A non-deletion Source, Canonical, Overlay, Governance, or Relationship Resolution Head or selection advance marks every dependant dependency-stale and needing evaluation; it does not by itself close eligibility. Ineligible or retracted objects are unavailable. Ordinary staleness MAY serve only under explicit Publication Policy. Historical address resolvability is separate and remains governed by current policy, retention, hold, and erasure.
-
-## 15. Governance, authorization, and erasure
-
-### 15.1 Policy authority and normalization
-
-The **Source Authorization Ceiling** is the maximum audience allowed by current source policy. The **Effective Access Policy** is the intersection of that ceiling with every applicable enterprise restriction, including purpose, consent, residency, classification, domain, and further owner restrictions. Enterprise policy MAY narrow and MUST NOT widen source authorization.
-
-An Enterprise Security Domain is a hard authorization scope. Access across Enterprise Security Domains MUST require an explicit governed relationship; shared infrastructure, identity mapping, or source visibility MUST NOT imply cross-domain access.
-
-Every Governance Binding Version MUST retain:
-
-- raw source-policy provenance;
-- normalized ReBAC relationships;
-- source and enterprise security-domain context;
-- enterprise identity mappings and attributes;
-- classification, purpose, consent, residency, and other restrictions;
-- deny-overrides-permit semantics.
-
-Governance Binding Versions change independently of canonical content. Connector or ingestion identity confers Acquisition Authority only and MUST NOT define the audience. Operational Custody MUST NOT confer consumer access. Published Views have no implicit administrator bypass. Break-glass or legal-hold inspection MUST use a separate, purpose-bound, time-limited, audited Control Plane workflow and does not create ordinary consumer authorization.
-
-Source labels MUST be preserved and may map to enterprise classifications. Classification may restrict but MUST NOT grant. Unresolved principals, mappings, encrypted labels, or unsupported constructs MUST fail closed.
-
-A source whose policy cannot be faithfully normalized is a **Native Policy Asset**. It MAY publish only through federation under the end-user identity when that path preserves the native semantics; otherwise it MUST be excluded. Connector-level visibility and anonymous links MUST NOT be flattened into a consumer audience or interpreted as enterprise-public permission.
-
-Source owners own source authorization policy. Security and Data Governance own enterprise mappings, classifications, restrictions, and native-policy approval. The Knowledge Platform owns normalization, identity integration, policy evaluation, enforcement, and auditability. Projection and Published View owners MAY add restrictions and MUST NOT remove them.
-
-### 15.2 Protected Observations and derived policy
-
-A Protected Observation is anything a principal can learn, including content, existence, discoverability, counts, relationships, inferred identity, inferred claims, snippets, summaries, citations, and embeddings or other retrieval representations.
-
-The smallest independently observable semantic unit is a Governed Observation Unit. If an output cannot safely omit an unauthorized part, the whole output is one unit.
-
-Every derived or compound unit MUST carry complete Evidence Lineage and a Derived Governance Policy equal to the intersection of every supporting evidence item's Effective Access Policy, followed by any additional producer or enterprise restriction. A projection MUST NOT widen access. Native-mapped Graph Edges include their assertion evidence and both endpoint evidence. Definition-inferred Graph Edges include every contributing item and both endpoint evidence. A Wiki Published Bundle is governed as one inseparable unit.
-
-### 15.3 Policy Decision Service and read-side linearization
-
-The Policy Decision Service is authoritative for every Protected Observation on Published View and Governed Canonical Read paths. Projection-local policy data is an optimization only.
-
-The read-side linearization point is the commit of an immutable Authorization Decision for one Protected Observation. Each commit MUST observe the current Eligibility Epoch of every dependency of that observation, including affected Asset lineage, Governance Binding lineage, Enterprise Identity Spine, technical dependencies, and Published View Version. Unknown currency is not current.
-
-Each observation requires a new commit. Cached policy results MAY be input to a new commit only when all exact policy and identity versions and every dependency epoch still match. A request snapshot, time-bounded lease, session grant, pre-authorized URL, or CDN decision MUST NOT authorize future observations.
-
-Every cause that closes an eligibility-bearing dependency—including a Tombstone, Retraction Event, Security Invalidation Event, Legal Erasure Event, Retention Expiry Event, or technical dependency withdrawal—MUST advance that dependency's Eligibility Epoch. Epochs are per dependency, not platform-global or split by cause.
-
-A Security Invalidation Event is a governance or identity change that may make prior output overexposed. It denies every principal on affected units until enforcement is current; unaffected units MAY continue serving. A pure access grant is not a Security Invalidation Event and need not advance an epoch. Security invalidation does not require content re-ingestion.
-
-In a batch, an already committed observation may finish; later observations require new decisions. On a stream, an ordinary item-level deny MAY omit that item. A currency gap or Security Invalidation Event affecting a remaining item MUST pause or terminate the stream with an attributable governance reason; it MUST NOT be silently skipped. A cache or replica with mismatched versions or epochs produces a miss or denial, never an allow.
-
-Every allow, deny, and fail-closed outcome MUST have Authorization Decision Evidence sufficient to explain principal, observation, dependency epochs, policy and identity versions, source provenance, enterprise restrictions, reason, and evaluation time, subject to erasure.
-
-### 15.4 Distinct deletion and erasure operations
-
-The following operations MUST remain distinct:
-
-- **Tombstone:** closes selected-lineage serving eligibility while preserving history and retained bytes. Historical resolution may remain possible under a new Authorization Decision.
-- **Legal Erasure Event:** an attributed lawful request naming retained objects and every evidence-dependent object; it immediately closes eligibility and remains incomplete until Custody Purge completes.
-- **Retention Expiry Event:** the same eligibility-close-then-purge lifecycle under a distinct attributed retention basis.
-- **Legal Hold:** blocks Custody Purge and retention destruction. It does not restore ordinary serving eligibility or grant access.
-- **Custody Purge:** cryptographic or physical destruction that makes every platform-held copy in the named set unrecoverable.
-- **Non-Sensitive Erasure Record:** a non-consumer control-plane record of completion containing time, admitting actor, legal basis, hold identifiers, and a non-reversible scope count.
-
-The purge set MUST include Source and Canonical Revisions, Enrichment Overlay Versions, Published Shards, identifying Aggregate Manifest composition, artifacts, caches, replicas, backups, platform-held Knowledge Consumption References, and Authorization Decision Evidence when their evidence or content would re-identify a named object. A Wiki Published Bundle is purged as one unit. Subject-wide discovery is an attributed Control Plane review that produces the named set, not an automatic graph walk.
-
-Redaction creates a successor Source or Canonical Revision through the ordinary append-only lifecycle; it MUST NOT edit immutable history in place. Published View immutability forbids overwrite but MUST NOT prevent Custody Purge of bytes or identifying composition.
-
-Erasure or expiry is incomplete while any platform-held copy remains recoverable, including a backup awaiting normal expiry. After completion, Published View interfaces and Governed Canonical Read MUST return unavailable with no content or identifying stub. A Non-Sensitive Erasure Record MUST NOT identify the subject or reconstruct content. Re-ingest of the same source-native identity after purge creates a new Asset incarnation.
-
-## 16. Materialization and publication contract
-
-### 16.1 Projection Types and legal definitions
-
-Projection Types are open by governed registration. The initial standard types are **Retrieval**, **Graph**, and **Wiki**. A registration MUST name an owner, define its Published View interface and Governed Observation Units, declare Coverage Report scopes, define a default Structural Reduction Profile, and identify the Structural Properties its interface can express. No Projection Type may publish semantic identity spanning Projection Definitions.
-
-A Projection Definition is legal only when it:
-
-- consumes Canonical Knowledge alone and has no Source access;
-- names a Projection Definition Owner and Published View Owner;
-- declares all semantic and technical dependencies;
-- honors the same governance, lineage, coverage, fencing, and deletion-propagation obligations.
-
-An external execution path meeting those gates still requires exception review. The authorization shape of a custom-materializer runtime principal is explicitly deferred to later logical design; exception approval is not a Canonical Knowledge read grant, and no such runtime may operate until its governed, address-qualified input path is approved. Re-parsing a Source or publishing without owners is invalid.
-
-The Knowledge Platform owns type contracts, standard implementations, execution, validation, versioning, enforcement, lineage, and deletion propagation. It owns the standard Retrieval definition. It does not own graph meaning, Wiki truth, or application-specific retrieval semantics.
-
-The Projection Definition Owner owns semantic creation, change, and deprecation. The Published View Owner owns publication, Rollback, and retirement. Every Graph definition has an Ontology Steward. Every Wiki Published View has one Knowledge Publisher; Wiki is an offered type, not a required default peer of Retrieval.
-
-### 16.2 Complete Materialization Input Manifest
-
-A Materialization Run is a function only of its Projection Definition and complete immutable Materialization Input Manifest. Nothing outside the manifest may influence output.
-
-The manifest MUST name:
-
-- every Canonical Revision address;
-- exact eligible Enrichment Overlay Versions selected by policy or governed override; an override MUST pass the same eligibility and epoch checks and MUST NOT hand-pin an ineligible version;
-- Governance Binding Versions;
-- Relationship Resolution Bindings;
-- Projection Definition identity and version;
-- canonical contract, payload, locator, and relationship schema versions;
-- every model, ontology, synthesis, and technical dependency version;
-- the current Eligibility Epoch of every eligibility-bearing dependency.
-
-An incomplete manifest is invalid before execution. Standard Retrieval consumes exactly one Canonical Revision per Run. Graph and Wiki MAY consume many. Every custom Projection Definition MUST declare its input cardinality. Every type MUST accept only eligible Revisions and at most one selected Revision per Asset lineage.
-
-### 16.3 Publication fencing
-
-A Run captures dependency epochs before execution and MUST atomically revalidate every exact dependency before publication. A pre-execution failure aborts with no output. A completed Run that fails the fence remains audit-visible but unselected and ineligible. Late work MUST NOT publish across a Tombstone, Retraction Event, Security Invalidation Event, erasure event, or dependency withdrawal.
-
-A technical dependency withdrawal closes affected eligibility and requires a new projection version. It MUST NOT silently overwrite or semantically relabel a live Published View.
-
-A Tombstone MUST close every Published View Version containing the affected Asset's shard, including previously selected Versions, and every shard carrying a Canonical Relationship into the tombstoned Asset. An Element Tombstone closes eligibility of its shard rather than creating ordinary staleness. Reconstruction of a safe Version remains the Published View Owner's act.
-
-### 16.4 Published View identity and composition
-
-A Published View is the stable logical projection product. A Published View Version is immutable, consumer-visible, and selected only by a Head Selection Event.
-
-Each Version MUST declare its Projection Definition identity and version and whether the definition is platform-standard or domain-owned. It is composed by an immutable **Aggregate Manifest** naming exact Published Shard identities and digests, contributing Runs, input-manifest digests, and every carried-forward shard.
-
-A Published Shard is one Asset's immutable contribution and is superseded rather than overwritten. A native cross-Asset Graph Edge is placed in the asserting Asset's shard, and its Relationship Resolution Binding is a declared dependency of that shard. A definition-inferred multi-Asset unit is stored once in the lowest-ordered contributing Asset's shard, with all other contributors as dependencies.
-
-### 16.5 Publication Policy, Carry-Forward, and Rollback
-
-Dependency staleness fails closed by default. A stale Version MAY serve only under an explicit versioned Publication Policy from its Published View Owner. That policy MUST NOT override Fail-Closed Governance or permit service through eligibility-closing events.
-
-Carry-Forward is permitted only for freshness fence-outs. A Version MAY compose the last still-eligible shard, marked dependency-stale in its Aggregate Manifest, when Publication Policy permits and definition versions are comparability-compatible. Carry-Forward MUST NOT apply to eligibility loss or to a shard that failed either Coverage Report axis.
-
-Rollback is a Head Selection Event selecting a still-eligible prior Published View Version. It MUST NOT resurrect content or dependencies whose eligibility has closed.
-
-Embedding space, segmentation semantics, ontology mapping, Identity Minting Rule, and preserve-versus-reduce changes are categorically comparability-affecting. They require a complete new Version across all shards. A definition MAY add further comparability-affecting cases but MUST NOT remove these.
-
-### 16.6 Two-axis Coverage Report gate
-
-Every Materialization Run MUST produce one Coverage Report as a hard publication gate.
-
-**Axis 1 — address-level coverage.** Every input in the Projection Type's declared scopes MUST be classified as covered, explicitly excluded for a Foundation-registered reason, or unrepresentable with a reason after Standard Ancestor degradation was attempted. Required scopes are:
-
-- all Canonical Element Addresses for every type;
-- all Enrichment Overlay Versions for every type;
-- native Canonical Relationship types and instances for Graph;
-- citations for Wiki.
-
-An unaccounted input blocks publication. A Graph definition MUST declare every observed native Relationship Type as mapped or `explicitly-unmapped`; an unresolved target is a Relationship Resolution Binding gap, not a mapping. An unmapped or unresolved relationship MUST NOT be inferred automatically.
-
-**Axis 2 — structural reduction.** Every applicable occurrence among covered Core Elements MUST be reported as preserved or declared-reduced under the frozen Structural Reduction Profile. When a Projection Definition does not declare a profile, it MUST copy its Projection Type default into that definition version at authoring; live lookup of the type default is forbidden. Undeclared or contradicted reduction blocks the Run.
-
-Initial Foundation-registered, ancestor-applicable Structural Properties are:
-
-- containment: each `parentAddress` pair;
-- ordinal: each covered parent with two or more source-explicit ordered children;
-- `tabular-geometry`: each covered field carrying row span, column span, or header scope.
-
-Initial Foundation-registered reduction reasons are `interface-linearization`, `synthesis-reduction`, `definition-omitted-structure`, and `absorbed-into-parent-unit`. Definitions MUST NOT mint their own properties or reasons.
-
-The standard profiles are:
-
-| Structural Property | Retrieval | Graph | Wiki |
-|---|---|---|---|
-| containment | `interface-linearization` | preserve | `synthesis-reduction` |
-| ordinal | `interface-linearization` | out of scope | `synthesis-reduction` |
-| `tabular-geometry` | `interface-linearization` | out of scope | `synthesis-reduction` |
-
-Retrieval and Wiki MUST NOT claim preserve. Graph MAY declare `definition-omitted-structure` for containment. Preserve means the published interface exposes named Governed Observation Units that witness the occurrence; merely using structure as transform input is insufficient, and a preserve claim for a property the interface cannot express fails the Run. For Graph containment, the witness is a steward-typed Graph Edge whose evidence includes both addresses. The platform MUST NOT mint a containment edge.
-
-The platform may infer `absorbed-into-parent-unit` only when a `field` child is not its own published unit and its address appears on a unit that also evidences its parent. Object-to-field and row-to-cell may absorb. Table-to-row, section-to-paragraph, collection-to-object, and aggregation of text, media, or records MUST NOT.
-
-The structural gate is per occurrence with per-shard rollups. Overlay-internal structure is outside this axis; Overlay Version coverage remains on Axis 1. Semantic Equivalence reuse MUST carry a valid two-axis Coverage Report.
-
-A reduced Governed Observation Unit carries the registered reason when its evidence is observable to the principal. The complete report is visible to the platform and Projection Definition Owner and, as applicable, the Ontology Steward or Knowledge Publisher. The Published View Owner receives eligibility and reason codes, not protected addresses. Version-level counts are not an External Consumer contract because counts and existence are Protected Observations.
-
-## 17. Standard Published View interfaces
-
-Every published unit MUST expose its stable unit identity, Published View Version context, Projection Definition version, freshness and eligibility semantics, complete Evidence Lineage, Core-versus-Overlay contribution, and Derived Governance Policy. The Policy Decision Service remains authoritative at observation time.
-
-### 17.1 Retrieval
-
-Retrieval publishes shard-version-qualified **Retrieval Segments**. A Segment contains a passage, supported lexical, dense, vector-similarity, or hybrid Retrieval Modes, relevant layout or spatial evidence, exact Canonical Element Addresses and Enrichment Overlay Versions, and Derived Governance Policy.
-
-Segmentation and retrieval representation are materialization responsibilities. Query rewriting, strategy, blending, reranking, context assembly, and generation belong to External Consumers. Enterprise search is an External Consumer of Retrieval, not a separate Projection Type.
-
-### 17.2 Graph
-
-Graph publishes Governed Observation Units as Graph Nodes and Graph Edges. It does not publish a traversal or query engine. Every Node and Edge MUST carry an Ontology-Steward-governed type and declare whether it is native-mapped or definition-inferred.
-
-Every Node and Edge identity is qualified by its Graph Projection Definition and a definition-local identity. A Canonical Element Address is evidence, never semantic identity.
-
-The definition's deterministic Identity Minting Rule derives Node identity from its evidence within one definition version. It promises stable diffing across Published View Versions of that definition version and promises nothing across definition versions. A reduced evidence set MUST mint a different identity rather than widen the old unit's policy.
-
-A Graph Edge is likewise definition-qualified, typed by its Ontology Steward, bound to endpoints from the same definition, and distinguished as native-mapped or definition-inferred. Native-mapped edges carry assertion evidence and use the asserting Asset's shard. Definition-inferred units cite every contributing evidence item and use the inferred-unit placement rule in §16.4.
-
-No shared identity space, required mapping, Foundation `same-as`, conflict detector, or cross-view identity index exists. The platform neither compares nor gates independently owned definitions on their agreement. Ontology Steward claims bind only their definition. A reconciliation graph is an ordinary owned Graph Projection Definition that rematerializes from Canonical Knowledge and mints its own identities; it MUST NOT import another Published View's units.
-
-The Foundation does not mandate merged-node modelling or separate endpoint nodes plus an inferred edge. That choice belongs to the Graph Projection Definition and its Ontology Steward.
-
-**Evidence Overlap**—equality of fully qualified Canonical Element Addresses or Enrichment Overlay Versions in Evidence Lineage—is the only cross-view join an External Consumer may assume. It implies shared cited evidence, not Node equality, Edge equality, or type agreement.
-
-No Graph Node may exist without evidence. The existence and type of a definition-inferred unit are Protected Observations governed at the full evidence intersection.
-
-### 17.3 Wiki
-
-Wiki publishes one **Wiki Published Bundle** per Published View Version: a synthesis document with a mandatory citation set and Knowledge Publisher attestation. The entire Bundle is one Governed Observation Unit because omission of an unauthorized claim could leave inferable residue and invalidate its attestation.
-
-Synthesis and citation policy are materialization responsibilities. Reading-product presentation, navigation, context assembly, and generation are External Consumer responsibilities.
-
-## 18. Access boundaries and observable semantics
-
-External Consumers MUST use standardized Published View interfaces only. They receive no Canonical Knowledge interface, historical-version time-travel promise, Coverage Report contents, canonical-unit API, or Control Plane erasure record.
-
-**Governed Canonical Read** is an internal, Canonical-Element-Address-qualified interface for exactly these roles:
-
-- Projection Definition Owner;
-- Ontology Steward;
-- Knowledge Publisher.
-
-Each read is a Protected Observation evaluated against that principal's Effective Access Policy. Published View Owner, platform operator, Operational Custody, External Consumer, and future Canonical Experience are not added as read roles.
-
-Published View interfaces MUST make version, source evidence, Evidence Lineage, policy outcome, freshness, and eligibility semantics observable without revealing unauthorized details. Consumers MUST be able to distinguish:
-
-- a new immutable Version from an in-place change, which is forbidden;
-- ordinary staleness permitted by Publication Policy from policy or deletion ineligibility;
-- a denied observation from an empty successful result where safe;
-- a stream termination or pause caused by governance currency;
-- deletion or retraction unavailability from normal freshness;
-- a rebuilt definition version from an older Version;
-- a structural-reduction reason carried by an observed unit.
-
-External Consumers MUST NOT receive platform-wide or Version-level protected counts merely to explain those states.
-
----
-
-# Part IV — Architecture Acceptance and Endorsement
-
-> **Authority: normative Knowledge Platform target.** These criteria define decision-complete architecture endorsement.
-
-## 19. Review constituencies and outcomes
-
-Three independent gates MUST pass:
-
-- **Enterprise Architecture Reviewer:** authority levels, boundaries, responsibility completeness, consistency, traceability, and decision completeness.
-- **Security and Data Governance Reviewer:** policy provenance, normalization limits, enforcement, revocation and deletion, lineage, audit, and trust boundaries. If security and data governance are separate offices, both sign this single gate.
-- **AI Consumer Architecture Reviewer:** External Consumer contracts, projection-type responsibility split, and observable lifecycle semantics across representative Retrieval, Graph, Wiki, and agent use cases.
-
-Roles are accountable review roles, not named people or a delivery RACI. Any constituency may block only on its published criteria.
-
-Each criterion outcome is:
-
-- **pass**;
-- **pass-with-follow-up**, allowed only for detail already outside this baseline and never for architecture-shaping ambiguity;
-- **fail**.
-
-An unresolved blocking objection means the baseline is not endorsed.
-
-## 20. Enterprise architecture gate
-
-All criteria MUST be verifiable; missing any one is a fail:
-
-- normative Foundation baseline, normative Knowledge Platform target, and informative future direction are explicitly separated;
-- Foundation, Knowledge Platform, External Sources, and External Consumers have one consistent boundary;
-- layer responsibilities, data lifecycles, and interfaces have no gap or overlap;
-- every architecture-shaping decision is resolved or explicitly deferred without blocking the next design phase;
-- diagrams, prose, principles, and terms agree;
-- architecture decisions are traceable to a goal, problem, or constraint.
-
-## 21. Security and data governance gate
-
-All criteria MUST be verifiable; missing any one is a fail:
-
-- source policy, classification, ownership, and tenancy are preserved and traceable;
-- normalization limits, and constructs that cannot be losslessly normalized, have an explicit handling path;
-- every canonical, materialization, publication, and query path enforces governance;
-- permission change, revocation, deletion, and tombstones invalidate Published Views and stop leakage on query paths;
-- lineage, version, audit accountability, and trust boundaries are explicit;
-- the HLD states required controls and invariants; it does not pretend to be a threat model or final compliance certification.
-
-## 22. AI consumer architecture gate
-
-All criteria MUST be verifiable; missing any one is a fail:
-
-- External Consumers have standardized Published View interfaces only; Governed Canonical Read exists as a governed internal interface, not an External Consumer interface;
-- responsibility boundaries are explicit for Retrieval, Graph, and Wiki as an offered Projection Type that cannot exist without a Knowledge Publisher; Wiki is not required as a default peer of Retrieval;
-- consumers can obtain version, source, lineage, policy, and freshness;
-- consumers must not re-connect to or re-parse enterprise sources;
-- rebuild, change, deletion, and denied-access semantics are observable;
-- the HLD does not promise concrete APIs, products, numeric SLOs, or retrieval tuning.
-
-## 23. Required logical scenario walkthroughs
-
-Evidence is this HLD plus five logical walkthroughs; prototypes and implementation evidence are not required. The Review Record MUST walk:
-
-1. **New source revision:** a new Source Revision passes platform-attested canonicalization, immutable selection and Delta checks, and publication fencing into at least two materializations; Retrieval and Graph suffice.
-2. **Permission revocation or deletion:** a governance change or deletion advances affected Eligibility Epochs, closes dependent eligibility, defeats cache and in-flight future observations, and prevents every Published View and query path from disclosing the data.
-3. **Result trace:** a consumer follows a published unit's Evidence Lineage through exact Canonical Element Addresses and Enrichment Overlay Versions to its Canonical Revision and originating Source Revision.
-4. **Projection dependency change:** changing an embedding, ontology, or synthesis dependency rematerializes only the affected Projection Definition, produces a new projection version and Published View Version, and never silently overwrites a live Version.
-5. **New consumer onboarding:** a new External Consumer uses a registered Published View interface without implementing source integration, source parsing, or canonicalization.
-
-## 24. Review Record, endorsement, and re-review
-
-Each candidate HLD commit MUST have one GitHub issue titled:
-
-```text
-Architecture baseline review — <version/commit>
-```
-
-Architecture Baseline Endorsement means that one immutable HLD commit is decision-complete enough for later logical design and for physical design that remains outside this baseline. The **Review Record** binds that commit, these criteria, the five walkthroughs, the three outcomes, blocking objections, and non-blocking follow-ups.
-
-Each accountable reviewer records pass, pass-with-follow-up, or fail, with date and rationale as a traceable comment. Only when all three gates endorse may the Review Record be marked **Architecture Baseline Endorsed**.
-
-A later HLD commit requires a new review when it changes:
-
-- system or responsibility boundaries;
-- canonical or publication contracts;
-- governance, security, or lifecycle invariants;
-- normative architecture principles;
-- consumer-observable behavior.
-
-Copy edits and non-semantic diagram changes do not require re-review.
-
----
-
-# Part V — Canonical Experience and the Knowledge Loop
-
-> **Authority: informative future direction.** This part creates no new Foundation or Knowledge Platform requirements.
-
-## 25. Strategic direction
-
-The Enterprise AI Data Foundation may eventually support a Knowledge Loop:
+The long-term value of the Foundation is a **Knowledge Loop**:
 
 ```text
 Know → Apply → Learn → Improve
 ```
 
-Canonical Knowledge can support governed human and AI use. AI and agent execution can produce observations about tasks, model interactions, knowledge consumption, tool calls, actions, outcomes, and feedback. A future Canonical Experience domain may preserve reusable execution observations and support evaluation, analytics, training-data curation, failure analysis, and knowledge-quality improvement.
+**Know** means turning governed source information into durable Canonical Knowledge and useful Published Views.
 
-## 26. Proposed Canonical Experience lifecycle
+**Apply** means people, applications, and AI systems using those Published Views in retrieval, reasoning, reading, and operational work.
+
+**Learn** means observing what happened during AI and agent execution: which knowledge was used, what tools and actions were involved, what outcome followed, and what feedback was received.
+
+**Improve** means using governed evidence from that experience to strengthen both AI systems and enterprise knowledge.
+
+```text
+Canonical Knowledge
+        │
+        ▼
+Governed Published Interfaces
+        │
+        ▼
+External Consumers
+        │
+        ▼
+Future Canonical Experience
+        │
+        ├── AI improvement
+        └── Knowledge improvement
+```
+
+The loop is broader than retrieval-augmented generation or any individual AI application. It frames knowledge and experience as separate reusable assets whose lineage can be connected. The Baseline defines the [two canonical domains](ARCHITECTURE-BASELINE.md#7-two-canonical-domains) and limits the current Knowledge-side bridge to the [Knowledge Consumption Reference](ARCHITECTURE-BASELINE.md#8-knowledge-consumption-reference).
+
+---
+
+# 4. Knowledge Platform as the current first delivery domain
+
+The **Knowledge Platform** is the first bounded architecture domain of the Enterprise AI Data Foundation. It covers source integration through governed publication of knowledge projections. Knowledge ingestion is one capability inside that domain.
+
+This is the program's current architecture and delivery positioning. It is explicitly not a statement about implementation maturity, completion, production readiness, or the order in which capabilities will be delivered.
+
+The current focus is the knowledge-side lifecycle:
+
+```text
+External Sources
+      │
+      ▼
+Knowledge Platform
+      │
+      ▼
+Canonical Knowledge
+      │
+      ▼
+Governed Published Interfaces
+      │
+      ▼
+External Consumers
+```
+
+Future Canonical Experience remains outside the Knowledge Platform boundary. Keeping the domains separate allows the program to focus on governed knowledge capability while retaining a coherent long-term direction for versioning, lineage, policy, lifecycle, provenance, observability, and artifact management.
+
+---
+
+# 5. Target journey: Sources to governed use
+
+The target journey turns heterogeneous external information into governed, reusable knowledge without binding that knowledge to one consumer.
+
+```text
+External Sources
+      │
+      │  governed acquisition and source change
+      ▼
+┌──────────────────────────────────────────────────────────────┐
+│ Knowledge Platform                                           │
+│                                                              │
+│ Source Integration                                           │
+│        ↓                                                     │
+│ Canonicalization                                             │
+│        ↓                                                     │
+│ Canonical Knowledge                                          │
+│        ↓                                                     │
+│ Materialization                                              │
+│        ↓                                                     │
+│ Published Views                                              │
+└───────────────────────────────┬──────────────────────────────┘
+                                │
+                                ▼
+             Governed Published Interfaces
+                                │
+                                ▼
+                     External Consumers
+```
+
+## 5.1 External Sources
+
+External Sources remain outside the Knowledge Platform. The platform crosses a configured and governed acquisition boundary to discover and capture Assets, Source Revisions, artifacts, and policy provenance. A Source is an input boundary, not a platform component.
+
+## 5.2 Canonical Knowledge
+
+The Knowledge Platform interprets source content and structure into source-faithful, versioned Canonical Knowledge. It preserves reusable multimodal information, evidence, lineage, and governance context before any particular consumer strategy is applied.
+
+Canonical Knowledge is the durable boundary between source understanding and projection semantics. Derived understanding can remain distinct from source-faithful facts, allowing both to evolve with attributable lineage. The Baseline defines the detailed [Canonical Knowledge logical contract](ARCHITECTURE-BASELINE.md#11-canonical-knowledge-logical-contract).
+
+## 5.3 Published Views and governed interfaces
+
+Materialization turns declared Canonical Knowledge inputs into independently owned and versioned Published Views. Retrieval, Graph, and Wiki provide the initial interface families; future types can be registered without changing the boundary.
+
+Each Published View is consumed through its Governed Published Interface. Views retain separate identities, ownership, lifecycle, policy, and serving semantics. A coordinated package can group several view versions for operational convenience, but it remains optional packaging rather than a global serving unit.
+
+The detailed publication model lives in the Baseline's [materialization and publication contract](ARCHITECTURE-BASELINE.md#16-materialization-and-publication-contract).
+
+## 5.4 External Consumers
+
+External Consumers include applications, agent runtimes, enterprise search, and reading experiences. They use Governed Published Interfaces and own query formulation, retrieval strategy, ranking, graph traversal, presentation, context construction, reasoning, tool use, and generation.
+
+Published knowledge remains untrusted input when used by a generator. Authorization and publication indicate that content is eligible to be observed; they do not turn source-derived text into safe instructions. Consumers retain responsibility for prompt-injection and content-trust controls.
+
+---
+
+# 6. Target capability and value outcomes
+
+The Knowledge Platform creates shared capability while leaving consumer-specific behavior and semantic ownership in the right places. These are target outcomes, not delivery increments.
+
+## 6.1 Retrieval
+
+Retrieval Published Views make governed passages available for lexical, dense, vector-similarity, or hybrid retrieval while retaining source evidence and lineage. Consumer applications can choose query rewriting, blending, reranking, and context assembly without embedding those choices in Canonical Knowledge.
+
+This supports enterprise search, retrieval-augmented applications, and agents from the same source-understanding foundation. See the Baseline's [Retrieval interface](ARCHITECTURE-BASELINE.md#171-retrieval).
+
+## 6.2 Graph
+
+Graph Published Views support independently owned graph meanings, typed nodes and edges, evidence-backed claims, and governance at observable graph units. Different Graph definitions can serve different domains without forcing one enterprise-wide semantic identity.
+
+Graph consumers can traverse and reason over a governed published product while its semantic claims remain attributable to the relevant Ontology Steward. See the Baseline's [Graph interface](ARCHITECTURE-BASELINE.md#172-graph).
+
+## 6.3 Wiki and reading experiences
+
+Wiki Published Views support governed synthesis with citations and accountable publication. Reading-product presentation, navigation, and interaction remain External Consumer concerns.
+
+This separates synthesis accountability from presentation, and it allows a reading experience to evolve without changing Canonical Knowledge. See the Baseline's [Wiki interface](ARCHITECTURE-BASELINE.md#173-wiki).
+
+## 6.4 Agents and AI applications
+
+Agents can use one or more Published Views without implementing source integration, parsing, or canonicalization. Stable view and lineage context helps an agent or application explain what governed knowledge informed its work.
+
+The current Knowledge-side bridge for future execution lineage is the Knowledge Consumption Reference. It records the identity of what was actually observed without becoming a grant or introducing a new read path.
+
+## 6.5 Governance and trust
+
+Governance travels with knowledge from source acquisition through publication and observation. This creates a consistent place to preserve source-policy provenance, apply enterprise restrictions, explain access outcomes, and respond to permission change, deletion, retention, and erasure.
+
+The intended value is not merely central policy storage. It is consistent enforcement across canonical reads, materialization, publication, and query while preventing protected content or even protected existence from leaking through alternate paths. The Baseline defines the [governance, authorization, and erasure model](ARCHITECTURE-BASELINE.md#15-governance-authorization-and-erasure) in detail.
+
+## 6.6 Rebuildability, change, and lineage
+
+Canonical Knowledge and immutable dependency records make Published Views reproducible without returning to a Source. A change to a retrieval representation, graph meaning, or synthesis approach can produce a new view lineage without rewriting canonical history.
+
+Source change, projection change, policy change, deletion, and withdrawal remain distinguishable. Consumers can observe meaningful freshness and availability states, while operators and reviewers can trace a published result back through Canonical Knowledge to the originating Source Revision. The governing lifecycle is summarized by the Baseline's [cross-cutting invariants](ARCHITECTURE-BASELINE.md#9-binding-cross-cutting-invariant-families) and detailed in its [revision lifecycle](ARCHITECTURE-BASELINE.md#14-revision-selection-and-dependency-lifecycle).
+
+---
+
+# 7. Future Canonical Experience and the complete Knowledge Loop
+
+Canonical Experience is future direction, not part of the current Knowledge Platform target. It represents a separate canonical domain for reusable observations of AI and agent execution.
+
+Potential observations include task context, model interactions, knowledge use, tool calls, actions, outputs, outcomes, feedback, and evaluation. These observations can contain confidential source-derived content, user data, sensitive tool output, failures, and low-quality behavior. Capture alone does not make them suitable for training or evaluation; future architecture needs explicit policy, privacy, quality, and curation boundaries.
 
 ```text
 AI and Agent Execution
           │
           ▼
-Experience Capture
+Future Experience Capture
           │
           ▼
 Canonical Experience
@@ -813,34 +238,82 @@ Canonical Experience
 Policy, Privacy, and Quality Curation
           │
           ├── Evaluation and Analytics
-          ├── Training Dataset Materialization
+          ├── Curated Training Data
           └── Knowledge Quality Signals
 ```
 
-Captured experience would not automatically be training-eligible. It may contain confidential source-derived content, user data, tool output, failures, and low-quality behavior. A future design would need explicit policy and curation.
+The future domain can use compatible capability categories with Canonical Knowledge while retaining separate semantics and data models. Detailed Canonical Experience contracts, materializations, retention rules, and delivery choices remain future architecture work.
 
-## 27. Knowledge improvement direction
+## 7.1 AI improvement loop
 
-Future analysis may derive signals such as missing knowledge, stale results, source conflict, repeated correction, or weak coverage. Those signals may inform accountable knowledge curation and create new source or canonical lifecycle events; they would not rewrite Canonical Knowledge in place.
+The AI improvement path asks:
 
-The Knowledge Consumption Reference is the existing normative Knowledge-side bridge. This future direction does not add a new Knowledge identity, resolver, consumer role, or serving promise.
-
-## 28. End-to-end lineage direction
-
-The compatible lineage model may eventually support:
+> **How can AI systems perform better?**
 
 ```text
-Source Revision
-      ↓
-Canonical Knowledge
-      ↓
-Published View Version and Governed Observation Unit
-      ↓
-Knowledge Consumption Reference
-      ↓
-Canonical Experience
-      ↓
-Evaluation, Analytics, or Curated Dataset
+Canonical Knowledge and Published Views
+                  │
+                  ▼
+          AI / Agent Execution
+                  │
+                  ▼
+       Future Canonical Experience
+                  │
+                  ▼
+      Evaluation and curated learning
+                  │
+                  ▼
+         Improved models and agents
 ```
 
-This direction may help explain which governed knowledge influenced an execution and which experience informed later improvement. Detailed Canonical Experience contracts, materializations, retention, and delivery remain future architecture work.
+Experience can support evaluation, analytics, failure analysis, and governed training-data curation. It also makes it possible to ask which governed knowledge, model, prompt, and tools participated in an execution without collapsing knowledge and experience into one domain.
+
+## 7.2 Knowledge improvement loop
+
+The knowledge improvement path asks:
+
+> **How can enterprise knowledge itself become better?**
+
+```text
+Canonical Knowledge and Published Views
+                  │
+                  ▼
+          Knowledge Consumption
+                  │
+                  ▼
+       Future Canonical Experience
+                  │
+                  ▼
+        Knowledge Quality Signals
+                  │
+                  ▼
+       Accountable Knowledge Curation
+                  │
+                  ▼
+        Improved governed knowledge
+```
+
+Signals can include missing knowledge, stale results, conflicting sources, repeated corrections, weak retrieval coverage, or areas that repeatedly require excessive cross-source reasoning. These signals inform accountable curation; they do not rewrite Canonical Knowledge in place. Improvement returns through normal source or canonical lifecycle events with preserved lineage.
+
+## 7.3 The Knowledge-side bridge
+
+The **Knowledge Consumption Reference** is the existing normative Knowledge-side bridge between an observed Published View unit and possible future Canonical Experience. It can preserve which governed unit was actually observed and selected evidence references from that unit.
+
+This future narrative adds no identity, resolver, read role, or serving promise. It does not extend access from Canonical Experience into Canonical Knowledge. Any future end-to-end lineage design builds from the Baseline's existing reference and governance boundaries.
+
+---
+
+# 8. Relationship to architecture review and delivery planning
+
+The two companion documents serve different purposes:
+
+- **ARCHITECTURE-BASELINE.md** is the sole normative source and the primary evidence for contract completeness.
+- **HLD.md** explains strategy, scope, rationale, target value, future direction, and cross-document consistency.
+
+Architecture review binds one immutable repository commit containing both companions. The Baseline defines the review constituencies, acceptance gates, and five required logical scenario walkthroughs. The Review Record stores the executed walkthrough evidence, blocking objections and follow-ups, and each reviewer's outcome: pass, pass-with-follow-up, or fail.
+
+See the Baseline's [review model](ARCHITECTURE-BASELINE.md#19-review-constituencies-and-outcomes), [required walkthroughs](ARCHITECTURE-BASELINE.md#23-required-logical-scenario-walkthroughs), and [Review Record rules](ARCHITECTURE-BASELINE.md#24-review-record-endorsement-and-re-review).
+
+Endorsement establishes a decision-complete architecture baseline. It does not authorize funding, production, or final security or compliance certification. Later logical design, physical design, and delivery planning follow separately and can make choices that remain within the endorsed boundaries.
+
+When a Baseline contract changes an architecture promise summarized here, the same repository commit updates both companions. The existing re-review triggers continue to apply; a pure narrative or copy edit prompts re-review only when it changes a boundary, architecture promise, normative principle, or consumer-observable meaning.
