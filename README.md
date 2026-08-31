@@ -189,14 +189,16 @@ This baseline does not choose or promise:
 ## Current status
 
 The coordinated architecture-review candidate is
-[`1acfc9a`](https://github.com/davidlinnnn/data-ingestion/commit/1acfc9ac29b922c64f9efe9b51586be1993d09a8)
+[`babda22`](https://github.com/davidlinnnn/data-ingestion/commit/babda22bfc0eeb06bed5a6af7d94717f648c5265)
 on the
-[`architecture-baseline-review-1acfc9a`](https://github.com/davidlinnnn/data-ingestion/tree/architecture-baseline-review-1acfc9a)
-review branch.
+[`architecture-baseline-review-babda22`](https://github.com/davidlinnnn/data-ingestion/tree/architecture-baseline-review-babda22)
+review branch. It supersedes candidate `1acfc9a`: the HLD is restructured
+around the existing ingestion pipeline's limits, and the Baseline now
+separates frozen invariants from provisional mechanism contracts (Baseline
+authority levels).
 
-The candidate passed its readiness audit. Formal Architecture Baseline
-Endorsement is still pending in
-[`Architecture baseline review — 1acfc9a`](https://github.com/davidlinnnn/data-ingestion/issues/29).
+Formal Architecture Baseline Endorsement is pending in
+[`Architecture baseline review — babda22`](https://github.com/davidlinnnn/data-ingestion/issues/29).
 The Review Record requires independent outcomes from:
 
 - the Enterprise Architecture Reviewer;
@@ -216,6 +218,9 @@ compliance certification.
   source for boundaries, contracts, lifecycle rules, governance, publication,
   consumer interfaces, and review criteria.
 - [`CONTEXT.md`](CONTEXT.md) — canonical domain glossary.
+- [`docs/registries/foundation-seed-registrations.md`](docs/registries/foundation-seed-registrations.md)
+  — governed registry seed data for initial Element Kinds, payload contracts,
+  and Source Evidence locator families.
 - [`docs/diagrams/knowledge-loop.md`](docs/diagrams/knowledge-loop.md) —
   editable Mermaid representation of the complete Knowledge Loop.
 - [Architecture wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/1)
