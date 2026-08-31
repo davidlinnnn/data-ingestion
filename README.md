@@ -29,6 +29,14 @@ enterprise gets duplicated processing, inconsistent source interpretation,
 fragmented governance, incomplete lineage, and derived products that cannot be
 reliably rebuilt.
 
+The enterprise's existing shared ingestion pipeline avoided that duplication
+but exhibits the mirror-image failure mode: without a durable canonical
+boundary, consumer-specific preparation — chunking, embedding, summarization,
+agent-specific transforms — has accumulated inside one ingestion flow,
+coupling every consumer's lifecycle to every other's. Both failure modes share
+one root cause: no durable knowledge layer between source understanding and
+knowledge consumption. [`HLD.md`](HLD.md) tells this story in full.
+
 The Foundation separates **source understanding** from **knowledge
 consumption**. Source information is first preserved as durable Canonical
 Knowledge. Independently owned Published Views can then evolve for different
@@ -201,8 +209,9 @@ compliance certification.
 
 ## Documentation
 
-- [`HLD.md`](HLD.md) — explanatory narrative covering purpose, strategy,
-  target value, current positioning, and the complete Knowledge Loop.
+- [`HLD.md`](HLD.md) — explanatory narrative covering background, the limits
+  of the existing ingestion pipeline, strategy, target value, current
+  positioning, and the complete Knowledge Loop.
 - [`ARCHITECTURE-BASELINE.md`](ARCHITECTURE-BASELINE.md) — sole normative
   source for boundaries, contracts, lifecycle rules, governance, publication,
   consumer interfaces, and review criteria.

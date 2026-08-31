@@ -29,10 +29,33 @@ The target pattern is:
 
 ## 2. Authority levels
 
-This Baseline has two explicit normative authority levels:
+This Baseline has three explicit authority levels:
 
 1. **Normative Foundation baseline.** Binding architecture-shaping invariants shared by Foundation domains. These requirements use **MUST** and **MUST NOT**.
 2. **Normative Knowledge Platform target.** Binding logical architecture for the first delivery domain. It baselines the full target, not an MVP or delivery sequence.
+3. **Provisional mechanism contract.** Binding design intent for a mechanism that honors a normative invariant. An implementation MUST NOT silently contradict a provisional contract, but the contract is expected to be revised from implementation feedback. Revising a provisional passage within its invariants does not by itself trigger re-review; promoting one to normative authority does (§24).
+
+Provisional passages are marked in place. Everything in Parts II and III not so marked carries the enclosing Part's normative authority. The provisional passages and their validation events are:
+
+| Provisional passage | Validation event |
+|---|---|
+| §8 per-type referent forms, resolution behavior, post-purge reservation | Canonical Experience domain design |
+| §14.2 Head Selection Event verified-field enumeration | First Retrieval tracer bullet |
+| §14.3 transition-evidence field composition | First Retrieval tracer bullet |
+| §14.4 correspondence case taxonomy and predecessor mechanics | First canonicalizer producing Revision Deltas |
+| §14.5 re-anchoring and resolution-advance conditions | First Enrichment Overlay producer |
+| §14.6 Asset Metadata selection machinery (entire section) | First metadata-dependent Projection Definition |
+| §15.3 batch, stream, cache, and replica mechanics | First governed serving implementation |
+| §16.3 impact-selection computation and attested-reuse mechanics | First Projection Definition version transition |
+| §16.5 inferred-unit shard placement | First Graph Projection Definition |
+| §16.6 Rebuild Verification workflow | First rebuild capability design |
+| §16.7 Carry-Forward composition mechanics | First Publication Policy implementation |
+| §16.8 Axis 2 structural-reduction machinery | First Retrieval and Graph materializers |
+| §17.2 Identity Minting Rule mechanics | First Graph Projection Definition |
+
+The **first Retrieval tracer bullet** is one end-to-end path from Source Integration through Canonicalization, Canonical Knowledge, one standard Retrieval Projection Definition, publication, and governed query.
+
+Registry seed content — the initial Foundation Element Kinds, payload contracts, and Source Evidence locator families — is governed registry data under §12.1, maintained in [docs/registries/foundation-seed-registrations.md](docs/registries/foundation-seed-registrations.md). It is not frozen baseline text, and a seed change that satisfies every §12 gate does not trigger re-review.
 
 Broader future direction for Canonical Experience and the Knowledge Loop is in the companion [Narrative HLD](HLD.md). That explanatory direction creates no Foundation or Knowledge Platform requirements.
 
@@ -148,15 +171,19 @@ A complete reference has:
 1. a required consumption referent: Published View, Published View Version, and the Governed Observation Unit identity inside that Version; and
 2. optional lineage referents: Canonical Element Addresses and Enrichment Overlay Versions copied from that unit's Evidence Lineage.
 
+A stored reference is not a grant. Every dereference is a new Protected Observation requiring a new Authorization Decision. A platform-held reference, and any copied address, digest, Artifact Reference, Source Evidence, or bytes that can re-identify its subject, MUST be included when a Legal Erasure Event or Retention Expiry Event names that subject's purge set. Semantic Equivalence Attestation MUST NOT retarget a stored reference or authorize reuse after Custody Purge.
+
+Ingesting or publishing a Knowledge Consumption Reference in platform custody is itself a Protected Observation of the referenced object's existence. Published View, Published View Version, and Governed Observation Unit identities MUST never be reused.
+
+> **Provisional mechanism contract (§2).** The remainder of this section — per-type referent forms, resolution behavior, and the post-purge non-reuse reservation mechanism — is provisional. **Validation event:** Canonical Experience domain design.
+
 For Retrieval, the unit identity is shard-version-qualified. For Graph, it names a Graph Node or Graph Edge. For Wiki, it names the Wiki Published Bundle. A later registered Projection Type MUST follow the same rule. Carry-Forward does not collapse identity: the same Retrieval Segment appearing in two Published View Versions yields two consumption references. A Head is never a referent.
 
 Consumption referents resolve only through Published View interfaces and only while current serving eligibility, Publication Policy, and Fail-Closed Governance allow. Tombstone, Retraction Event, Security Invalidation Event, erasure-pending, erasure-complete, and impermissible dependency staleness are unavailable. Historical Published View Version resolution is not an External Consumer interface.
 
 Lineage referents resolve only through Governed Canonical Read and only for its named roles. Tombstoned addresses may remain historically resolvable under a new Authorization Decision; erasure-pending and erasure-complete MUST return unavailable with no identifying stub.
 
-A stored reference is not a grant. Every dereference is a new Protected Observation requiring a new Authorization Decision. A platform-held reference, and any copied address, digest, Artifact Reference, Source Evidence, or bytes that can re-identify its subject, MUST be included when a Legal Erasure Event or Retention Expiry Event names that subject's purge set. Semantic Equivalence Attestation MUST NOT retarget a stored reference or authorize reuse after Custody Purge.
-
-Ingesting or publishing a Knowledge Consumption Reference in platform custody is itself a Protected Observation of the referenced object's existence. Published View, Published View Version, and Governed Observation Unit identities MUST never be reused. After Custody Purge, the platform MUST retain only a non-identifying reservation sufficient to prevent reuse; it MUST NOT retain the raw address as that reservation.
+After Custody Purge, the platform MUST retain only a non-identifying reservation sufficient to prevent reuse; it MUST NOT retain the raw address as that reservation.
 
 ## 9. Binding cross-cutting invariant families
 
@@ -322,7 +349,7 @@ A Payload Binding has exactly:
 
 A payload is typed only when the registry recognizes its type and schema, permits that attachment position, and validation succeeds. Asset MAY carry an identity-level Payload Binding; Canonical Element and Enrichment Overlay Version require one; Canonical Relationship MAY carry one. Source Revision and Canonical Revision have closed metadata and MUST NOT accept arbitrary payloads.
 
-Source Evidence binds an Element, Relationship, Overlay, or Artifact Reference to one Source Revision through one or more typed, schema-validated locators. Initial locator families are page region, text span, record key, record position, schema member or column, source-object reference, JSON Pointer, temporal range, and artifact region. Record position is Revision-scoped and MUST NOT establish stable identity.
+Source Evidence binds an Element, Relationship, Overlay, or Artifact Reference to one Source Revision through one or more typed, schema-validated locators. The initial locator families are registry seed data maintained in [docs/registries/foundation-seed-registrations.md](docs/registries/foundation-seed-registrations.md). Record position is Revision-scoped and MUST NOT establish stable identity.
 
 An Artifact Reference carries artifact identity, media type, integrity digest, byte size, governed logical retrieval reference, Source Evidence, and Governance Binding reference. Binary bytes MUST NOT be inlined in the canonical envelope. The digest verifies integrity and MUST NOT be treated as a globally dereferenceable identity. A source-exposed image, audio object, video, or attachment becomes a Canonical Element only when it is meaningful source structure; that Element references the Artifact Reference for bytes.
 
@@ -360,33 +387,15 @@ The ancestor set is the initial closed fallback vocabulary. The registered Eleme
 
 ### 12.2 Initial Foundation Element Kinds
 
-- **Document/layout:** document and section → `container`; heading, paragraph, caption → `text`; table and figure → `container`; row → `record`; cell → `field`.
-- **Structured data:** dataset → `container`; column and value → `field`; record → `record`.
-- **SaaS/API object graph:** collection → `container`; object → `record`; field → `field`.
-- **Multimodal:** image, audio, video, and attachment → `media`.
+The initial Foundation Element Kind registrations are registry seed data under §12.1, maintained in [docs/registries/foundation-seed-registrations.md](docs/registries/foundation-seed-registrations.md). Each binds to one of the five Standard Canonical Element Ancestors and passes every §12 gate; the set is expected to be revised by the first real connectors.
 
-Page and spatial coordinates remain Source Evidence. Foreign keys remain Canonical Relationships. Vendor concepts remain Owned Canonical Extensions. Generated transcripts and descriptions remain Enrichment Overlays.
+The boundary rules remain normative: page and spatial coordinates remain Source Evidence. Foreign keys remain Canonical Relationships. Vendor concepts remain Owned Canonical Extensions. Generated transcripts and descriptions remain Enrichment Overlays.
 
 ### 12.3 Initial Foundation payload contracts
 
-Initial payload contracts are logical and MAY omit optional values:
+The initial Foundation payload contract registrations are registry seed data under §12.1, maintained in [docs/registries/foundation-seed-registrations.md](docs/registries/foundation-seed-registrations.md). Field-level contents are expected to be revised by the first real connectors and consumers.
 
-- `document`: optional source title, language, role;
-- `document-section`: optional source role and identifier;
-- `text-block`: required source-native text; optional language and source style;
-- `table`: optional source role and identifier;
-- `row`: optional source role;
-- `cell`: required value; optional native type, row span, column span, header scope;
-- `figure`: optional source role and identifier;
-- `dataset`: required source-native name; optional dataset type;
-- `column`: required name; optional native type, nullability, key role;
-- `record`: optional source record type;
-- `typed-value`: required value; optional field name and native type;
-- `object-collection`: optional source object type;
-- `object`: required source object type; optional source-native key;
-- `media`: optional source role, filename, dimensions, duration, channels, source-native text alternative.
-
-These payloads MUST contain source-family facts only. Identity, provenance, location, governance, and artifact metadata already present in common contracts MUST NOT be duplicated.
+The content constraint remains normative: these payloads MUST contain source-family facts only. Identity, provenance, location, governance, and artifact metadata already present in common contracts MUST NOT be duplicated.
 
 ### 12.4 Owned Canonical Extension gate
 
@@ -441,7 +450,11 @@ Revision creation never implies selection. Source Head, Canonical Head, and Publ
 
 An Asset has at most one Source Head and at most one Canonical Head. Zero Head is an explicit selected state, not a missing pointer or invitation to infer "latest."
 
-Each Head Selection Event MUST be a linearizable compare-and-select decision that atomically verifies:
+Each Head Selection Event MUST be a linearizable, fenced, evidenced, attributed, and auditable compare-and-select decision.
+
+> **Provisional mechanism contract (§2).** The exact verified-field enumeration below is provisional; the fenced linearizable-decision requirement above is normative. **Validation event:** first Retrieval tracer bullet.
+
+It atomically verifies:
 
 - the expected prior Head value, including explicit zero, and exact prior Head Selection Event identity;
 - the exact candidate identity and digest, or exact cause selecting zero;
@@ -459,6 +472,8 @@ There is no universal transition Delta. Source Head uses Source Transition Evide
 
 Source Head selects only an eligible `present` Source Revision or explicit zero. A `deleted` or `unavailable` Source Revision remains immutable causal evidence and is never itself Head.
 
+> **Provisional mechanism contract (§2).** The field-level composition of the two evidence records below is provisional. Normative regardless: each Head kind carries typed, immutable, platform-validated transition evidence; selecting zero for deletion or unavailability requires an explicit guarded decision; historical replay is not Source rollback; and rollback is fully accounted rather than pointer movement. **Validation event:** first Retrieval tracer bullet.
+
 **Source Transition Evidence** is an immutable, Asset-qualified lineage-and-authority record rather than a source-content diff. It binds the expected prior Head and selection event, selected candidate or zero, triggering Source Revision identity and digest, Source Instance and Asset incarnation, disposition, capture and producer attestations, transition class, native ancestry or immutable observation order, continuity evidence, and any deletion, reinstatement, or false-deletion-correction authority. Timeout, denial, failed capture, or other absence does not change Source Head by itself. Selecting zero for unavailability or authoritative deletion requires an explicit guarded lifecycle decision under declared source-selection policy.
 
 Historical replay is not Source rollback. Restoration after deletion requires a new reinstating Source Revision or explicit correction of a proven false deletion. Native locator reuse without continuity proof remains a new Asset incarnation.
@@ -470,6 +485,8 @@ Rollback is fully accounted rather than treated as pointer movement: shards leav
 ### 14.4 Revision Deltas and Element Correspondence
 
 Revision Delta is reserved for canonical content-state transitions. Initial selection compares empty state with the candidate; supersession or rollback compares the semantic predecessor Canonical Revision with the candidate; genuine whole-Asset deletion compares the selected Canonical Revision with empty state; and reinstatement after genuine deletion compares empty state with the new Revision.
+
+> **Provisional mechanism contract (§2).** The predecessor-selection mechanics in the next paragraph and the correspondence case taxonomy below are provisional. Normative regardless (§9.5): every canonical content transition is totally accounted, local identity reuse creates no correspondence, no eligibility closure fabricates a deletion Delta, and unresolved correspondence blocks automatic re-anchoring, deletion inference, and automatic publication. **Validation event:** first canonicalizer producing Revision Deltas.
 
 A Canonical Head clear caused by Retraction, withdrawal, or another non-content eligibility closure references that event and MUST NOT fabricate an all-deleted Revision Delta. On recovery from a temporary clear, the Head selector compares from zero while the Revision Delta compares against the last selected nonzero Canonical Revision on the chosen lineage. Selector predecessor and semantic predecessor MUST therefore be explicit and distinct.
 
@@ -495,6 +512,8 @@ There is no global Overlay Head. A versioned Overlay Selection Policy selects ex
 
 Confidence values from different Overlay producers MUST NOT be ranked as globally comparable unless both the Overlay schema and the Overlay Selection Policy define their comparability.
 
+> **Provisional mechanism contract (§2).** The re-anchoring and resolution-advance conditions below are provisional. Normative regardless: re-anchoring never selects implicitly, and split, merged, deleted, or unresolved targets remain unresolved rather than guessed. **Validation event:** first Enrichment Overlay producer.
+
 Automatic re-anchoring is allowed only when every dependency maps unchanged `1→1` and producer, model, schema, and re-anchor rule remain eligible. Re-anchoring creates a new candidate Overlay Version and never selects it implicitly. Split, merge, modification, deletion, unresolved mapping, or incomplete dependencies require recomputation or accountable confirmation.
 
 A Relationship Resolution Binding maps an immutable cross-Asset Canonical Relationship assertion to an eligible target on a selected target lineage. It MAY advance through unambiguous Element Correspondence without rewriting the source-side Revision. Split, merge, deleted, or unresolved targets MUST remain unresolved rather than guessed.
@@ -502,6 +521,8 @@ A Relationship Resolution Binding maps an immutable cross-Asset Canonical Relati
 The source-side relationship MUST be re-canonicalized only when the source assertion itself changes; advancing a resolved target does not rewrite Canonical Core.
 
 ### 14.6 Asset Metadata selection and dependency
+
+> **Provisional mechanism contract (§2).** This entire section is provisional. Normative regardless: descriptive Asset Metadata never influences Canonicalization or Effective Access Policy (§11.2, §15.1), no consumer uses it implicitly, and eligibility closure on a metadata dependency propagates like every other closure (§9.4). **Validation event:** first Projection Definition that declares Asset Metadata as an input.
 
 An Asset Metadata Version is an immutable, Asset-qualified complete version with immutable identity and digest, schema version, producer and provenance attestation, creation attribution, eligibility, and withdrawal state. Updates mint versions. Each Asset has at most one selected Asset Metadata Head; zero Head is explicit, and a historical eligible version is not an arbitrary substitute.
 
@@ -569,6 +590,8 @@ Each observation requires a new commit. Cached policy results MAY be input to a 
 Every cause that closes an eligibility-bearing dependency—including a Tombstone, Retraction Event, Security Invalidation Event, Legal Erasure Event, Retention Expiry Event, or technical dependency withdrawal—MUST advance that dependency's Eligibility Epoch. Epochs are per dependency, not platform-global or split by cause.
 
 A Security Invalidation Event is a governance or identity change that may make prior output overexposed. It denies every principal on affected units until enforcement is current; unaffected units MAY continue serving. A pure access grant is not a Security Invalidation Event and need not advance an epoch. Security invalidation does not require content re-ingestion.
+
+> **Provisional mechanism contract (§2).** The batch, stream, cache, and replica mechanics in the next paragraph are provisional. Normative regardless: every observation requires a fresh Authorization Decision commit against current Eligibility Epochs, a governance currency gap is never silently skipped, and mismatched versions or epochs never produce an allow. **Validation event:** first governed serving implementation.
 
 In a batch, an already committed observation may finish; later observations require new decisions. On a stream, an ordinary item-level deny MAY omit that item. A currency gap or Security Invalidation Event affecting a remaining item MUST pause or terminate the stream with an attributable governance reason; it MUST NOT be silently skipped. A cache or replica with mismatched versions or epochs produces a miss or denial, never an allow.
 
@@ -640,6 +663,8 @@ Adopting any successor embedding, ontology, synthesis, model, runtime, executabl
 
 Every successor Projection Definition Version MUST embed a transition declaration naming its predecessor, every direct and transitive dependency added, removed, or replaced, the attributed reason, deterministic applicability scope, and whether each change is comparability-affecting. Embedding space, segmentation semantics, ontology mapping, Identity Minting Rule, and preserve-versus-reduce change on an in-scope Structural Property are always comparability-affecting. A definition MAY add stricter cases but MUST NOT remove these. Missing, inconsistent, or unprovable scope or classification defaults to comparability-affecting whole-view impact.
 
+> **Provisional mechanism contract (§2).** The impact-selection computation and attested-reuse mechanics in the next two paragraphs are provisional. Normative regardless: adoption mints immutable Projection Definition Versions, publishing a dependency is never adoption, the categorical comparability-affecting list stands, an unprovable narrower set defaults to whole-view impact, and an owner never excludes an exact reverse reference. **Validation event:** first Projection Definition version transition.
+
 Impact selection is computed from exact reverse dependencies:
 
 - a changed or withdrawn dependency affects every Projection Definition Version that names it directly or transitively;
@@ -667,7 +692,11 @@ A Published View is the stable logical projection product. A Published View Vers
 
 Each Version MUST declare its Projection Definition identity and version and whether the definition is platform-standard or domain-owned. It is composed by an immutable **Aggregate Manifest** naming exact Published Shard identities and digests, contributing Runs, input-manifest digests, and every carried-forward shard.
 
-A Published Shard is one Asset's immutable contribution and is superseded rather than overwritten. A native cross-Asset Graph Edge is placed in the asserting Asset's shard, and its Relationship Resolution Binding is a declared dependency of that shard. A definition-inferred multi-Asset unit is stored once in the lowest-ordered contributing Asset's shard, with all other contributors as dependencies.
+A Published Shard is one Asset's immutable contribution and is superseded rather than overwritten.
+
+> **Provisional mechanism contract (§2).** The shard-placement rules in the next paragraph are provisional. **Validation event:** first Graph Projection Definition.
+
+A native cross-Asset Graph Edge is placed in the asserting Asset's shard, and its Relationship Resolution Binding is a declared dependency of that shard. A definition-inferred multi-Asset unit is stored once in the lowest-ordered contributing Asset's shard, with all other contributors as dependencies.
 
 ### 16.6 Rebuildability and Rebuild Verification
 
@@ -682,6 +711,8 @@ The Reconstruction Closure is the complete transitive set required to execute an
 
 Nothing outside that closure may influence reproduction. A hidden runtime, seed, model artifact, ordering input, or undeclared dependency is a rebuildability defect.
 
+> **Provisional mechanism contract (§2).** The Rebuild Verification workflow in the next two paragraphs is provisional. Normative regardless (§9.3, §15.4): a Published View Version remains exactly reproducible while its closure is lawfully retained, verification output is never consumer-visible, and Custody Purge cannot complete while any verification copy remains recoverable. **Validation event:** first rebuild capability design.
+
 Historical replay is an attributed, purpose-bound, non-publishing **Rebuild Verification** under Operational Custody, not a Materialization Run. It MAY read retained but currently ineligible closure members for that authorized purpose, but its output is ineligible, never consumer-visible, has a new verification-attempt audit identity, and joins the same purge set as its inputs. Success requires exact Published Shard bytes and digests and exact Aggregate Manifest composition; semantic or contract equivalence is insufficient. It grants no serving eligibility, restoration, Rollback, consumer access, or Head selection.
 
 Acceptance of a Legal Erasure Event or Retention Expiry Event MUST reject new verification and stop in-flight verification before it creates recoverable output. A separately authorized Legal Hold purpose is the only exception; it does not restore serving or make verification output publishable. Custody Purge MUST NOT complete while any verification copy remains recoverable.
@@ -693,6 +724,8 @@ After purge, the Non-Sensitive Erasure Record and non-identifying identity-nonre
 ### 16.7 Publication Policy, Carry-Forward, and Rollback
 
 Dependency staleness fails closed by default. A stale Version MAY serve only under an explicit versioned Publication Policy from its Published View Owner. That policy MUST NOT override Fail-Closed Governance or permit service through eligibility-closing events.
+
+> **Provisional mechanism contract (§2).** The Carry-Forward composition mechanics in the next paragraph are provisional. Normative regardless: staleness fails closed absent an explicit Publication Policy, no policy overrides an eligibility-closing event, and Rollback never resurrects closed eligibility. **Validation event:** first Publication Policy implementation.
 
 Carry-Forward is permitted only for freshness fence-outs. A Version MAY compose the last still-eligible shard, marked dependency-stale in its Aggregate Manifest, when Publication Policy permits and definition versions are comparability-compatible. Carry-Forward MUST NOT apply to eligibility loss or to a shard that failed either Coverage Report axis.
 
@@ -712,6 +745,8 @@ Every Materialization Run MUST produce one Coverage Report as a hard publication
 - citations for Wiki.
 
 An unaccounted input blocks publication. A Graph definition MUST declare every observed native Relationship Type as mapped or `explicitly-unmapped`; an unresolved target is a Relationship Resolution Binding gap, not a mapping. An unmapped or unresolved relationship MUST NOT be inferred automatically.
+
+> **Provisional mechanism contract (§2).** Axis 2 below — the Structural Property taxonomy, standard profiles, preserve-witness rules, absorption rules, and the per-occurrence gate — is provisional. Normative regardless (§9.5): undeclared structural reduction is a defect, and a Run that cannot account for declared structure does not publish. Axis 1 above remains fully normative. **Validation event:** first Retrieval and Graph materializers.
 
 **Axis 2 — structural reduction.** Every applicable occurrence among covered Core Elements MUST be reported as preserved or declared-reduced under the frozen Structural Reduction Profile. When a Projection Definition does not declare a profile, it MUST copy its Projection Type default into that definition version at authoring; live lookup of the type default is forbidden. Undeclared or contradicted reduction blocks the Run.
 
@@ -754,6 +789,8 @@ Segmentation and retrieval representation are materialization responsibilities. 
 Graph publishes Governed Observation Units as Graph Nodes and Graph Edges. It does not publish a traversal or query engine. Every Node and Edge MUST carry an Ontology-Steward-governed type and declare whether it is native-mapped or definition-inferred.
 
 Every Node and Edge identity is qualified by its Graph Projection Definition and a definition-local identity. A Canonical Element Address is evidence, never semantic identity.
+
+> **Provisional mechanism contract (§2).** The Identity Minting Rule determinism mechanics in the next paragraph are provisional, except its final sentence: that a reduced evidence set mints a different identity rather than widening the old unit's policy is a normative governance requirement. **Validation event:** first Graph Projection Definition.
 
 The definition's deterministic Identity Minting Rule derives Node identity from its evidence within one definition version. It promises stable diffing across Published View Versions of that definition version and promises nothing across definition versions. A reduced evidence set MUST mint a different identity rather than widen the old unit's policy.
 
@@ -812,6 +849,8 @@ Three independent gates MUST pass:
 - **AI Consumer Architecture Reviewer:** External Consumer contracts, projection-type responsibility split, and observable lifecycle semantics across representative Retrieval, Graph, Wiki, and agent use cases.
 
 Roles are accountable review roles, not named people or a delivery RACI. Any constituency may block only on its published criteria.
+
+Gates endorse normative content. A provisional mechanism contract (§2) is reviewed for consistency with the invariants it serves, not endorsed as frozen; a reviewer may block on a provisional passage only when it contradicts a normative invariant.
 
 Each criterion outcome is:
 
@@ -887,3 +926,5 @@ A later commit containing either companion requires a new review when it changes
 - consumer-observable behavior.
 
 Pure narrative or copy edits require re-review only when they alter a boundary, promise, normative principle, or consumer-observable meaning. Non-semantic diagram changes do not require re-review.
+
+A change confined to provisional mechanism contracts (§2) or registry seed data requires no new review while it does not contradict a normative invariant. Promoting a provisional passage to normative authority requires a new review of the affected gates.
