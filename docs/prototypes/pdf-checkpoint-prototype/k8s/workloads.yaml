@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: coordinator
+  namespace: pdf-checkpoint-prototype
+  labels: {app: pdf-coordinator}
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: internal-a2a-vs6-local-worker2
+  containers:
+  - name: experiment
+    image: pdf-checkpoint-prototype:linux-v2
+    imagePullPolicy: Never
+    command: [/experiment/.venv/bin/python, -c, 'import time; time.sleep(86400)']
+    env:
+    - {name: AWS_ACCESS_KEY_ID, value: prototype-local}
+    - {name: AWS_SECRET_ACCESS_KEY, value: prototype-local-only-password}
+    - {name: AWS_DEFAULT_REGION, value: us-east-1}
+    - {name: TEMPORAL_ADDRESS, value: temporal:7233}
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {memory: 5Gi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: pdf-checkpoint-prototype
+spec:
+  replicas: 0
+  selector:
+    matchLabels: {app: pdf-worker}
+  template:
+    metadata:
+      labels: {app: pdf-worker}
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: internal-a2a-vs6-local-worker2
+      containers:
+      - name: worker
+        image: pdf-checkpoint-prototype:linux-v2
+        imagePullPolicy: Never
+        env:
+        - {name: AWS_ACCESS_KEY_ID, value: prototype-local}
+        - {name: AWS_SECRET_ACCESS_KEY, value: prototype-local-only-password}
+        - {name: AWS_DEFAULT_REGION, value: us-east-1}
+        - {name: TEMPORAL_ADDRESS, value: temporal:7233}
+        - {name: PDF_STORE_PREFIX, value: linux-normal-final}
+        - {name: PDF_TASK_QUEUE, value: pdf-linux-normal-final}
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {memory: 5Gi}

@@ -1,0 +1,38 @@
+{"workflow_id": "linux-v1-normal-1789124729433443051", "started": 1789124729.442626}
+temporalio.exceptions.ApplicationError: RuntimeError: child exit 1: Traceback (most recent call last):
+  File "/experiment/k8s/fault_entry.py", line 27, in <module>
+    runpy.run_path(str(ROOT/'ocr_component.py'), run_name='__main__')
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/experiment/ocr_component.py", line 22, in <module>
+    assert item['captions'] == [{'$ref': '#/texts/54'}]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+
+The above exception was the direct cause of the following exception:
+
+temporalio.exceptions.ActivityError: Activity task failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/experiment/k8s/driver.py", line 31, in <module>
+    asyncio.run(main())
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/experiment/k8s/driver.py", line 18, in main
+    result=await handle.result()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/client.py", line 2988, in result
+    raise WorkflowFailureError(
+temporalio.client.WorkflowFailureError: Workflow execution failed
+command terminated with exit code 1

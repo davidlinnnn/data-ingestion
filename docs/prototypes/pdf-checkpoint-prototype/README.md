@@ -2,7 +2,9 @@
 
 This is a real Python/Docling experiment for `docs/design/pdf-checkpoint-prototype-brief.md`.
 It is not production code and its JSON is not a Canonical Knowledge schema.
-See [VERDICT.md](VERDICT.md) for measured results, stop-condition decisions and gaps.
+See [VERDICT.md](VERDICT.md) for the original local measurements. The subsequent
+[Kubernetes extension verdict](k8s/VERDICT.md) records real Pod-loss/shared-storage
+results, overhead and remaining limits; [its runbook](k8s/README.md) reproduces that gate.
 
 ## Run the reconstruction gate
 
@@ -105,3 +107,5 @@ The original transcription mistake and its separate correction are preserved in
 
 Stop the development server with Ctrl-C when finished. Do not delete scratch before
 preserving any evidence you need. No production code or canonical schema is changed.
+
+Performance diagnosis: [matched direct/Temporal and cold/warm measurements](performance/REPORT.md) explain the normal-path cost without attributing the whole slowdown to Temporal.
