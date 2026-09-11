@@ -1,0 +1,94 @@
+Completing activity as failed ({'activity_id': '1', 'activity_type': 'produce', 'attempt': 1, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-final-1', 'workflow_run_id': '01a08fdf-a769-707d-a7ec-6b880e0544b7', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 151, in produce
+    raise RuntimeError('Persistence succeeded; Activity completion acknowledgement deliberately withheld')
+RuntimeError: Persistence succeeded; Activity completion acknowledgement deliberately withheld
+Completing activity as failed ({'activity_id': '2', 'activity_type': 'produce', 'attempt': 1, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-final-1', 'workflow_run_id': '01a08fdf-a769-707d-a7ec-6b880e0544b7', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 111, in produce
+    await child(args,out)
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 80, in child
+    raise RuntimeError(f'Injected or real child failure {code}: {out}')
+RuntimeError: Injected or real child failure 75: /Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/8a42219ca83123f038368df4f6bbd814e7d6ab2efeb6dc13a8ce14f31eb62352/pdf-checkpoint-final-1-1
+Completing activity as failed ({'activity_id': '12', 'activity_type': 'produce', 'attempt': 1, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-final-1', 'workflow_run_id': '01a08fdf-a769-707d-a7ec-6b880e0544b7', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 134, in produce
+    await child(args,out)
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 80, in child
+    raise RuntimeError(f'Injected or real child failure {code}: {out}')
+RuntimeError: Injected or real child failure 74: /Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/cca37158190633ded8bddad95fbd11106010139edbde7bd7043753d0a991490a/pdf-checkpoint-final-1-1
+Completing activity as failed ({'activity_id': '13', 'activity_type': 'produce', 'attempt': 1, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-final-1', 'workflow_run_id': '01a08fdf-a769-707d-a7ec-6b880e0544b7', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 144, in produce
+    raise RuntimeError('OCR completed but output not registered; retry independently')
+RuntimeError: OCR completed but output not registered; retry independently
+{
+  "groups": [
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/923041a36bfe93bd1cf23ce8ac46b96fe58f1e45461c20b140f13cbb6366d5a8/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/8a42219ca83123f038368df4f6bbd814e7d6ab2efeb6dc13a8ce14f31eb62352/pdf-checkpoint-final-1-2",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/611423917dce8c7e93c5cb86307560b3264664e0cb53afca17d7c78ad616c257/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/3bacff0d6b5958bc13219ca024fa8360b8a97c435ab4179f2c1faef825440ff9/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/39598e7b82072b4765a329bc95ca8bd2280f063659530c98e79b0b7b85ea027f/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/7fdd9f3b437953dd818b6a992a54060f49efbb1a8342a38c3ac43d844ef906ad/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/238ee36da8f5cd3ed43ffb335de9b83de8ffd397447e3d45b97c1da9ffb9b41a/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/33dda84b3c78da6b72de5847aaa35b42b43dfd6370c17399c11ebfeb5d560640/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/f580fdb2ef7505abfa242335fc06f585f03775f88a08cf60f9c5f7ae391a69f7/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/36ffc7099a83989fc82b1c67e48b9ed5961e4f7bdc1146418e6f2c4ae533563d/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/85b1591bc147484bc347a10a608ed85125efe642e105a900663979db7106d11a/pdf-checkpoint-final-1-1"
+  ],
+  "ocr": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/5a0d480d4ad7f44ae47a3fbc43ddd001be46db9c9877037461f40e5f3cb77267/pdf-checkpoint-final-1-2",
+  "parsed": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/cca37158190633ded8bddad95fbd11106010139edbde7bd7043753d0a991490a/pdf-checkpoint-final-1-2"
+}
+{
+  "groups": [
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/923041a36bfe93bd1cf23ce8ac46b96fe58f1e45461c20b140f13cbb6366d5a8/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/8a42219ca83123f038368df4f6bbd814e7d6ab2efeb6dc13a8ce14f31eb62352/pdf-checkpoint-final-1-2",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/611423917dce8c7e93c5cb86307560b3264664e0cb53afca17d7c78ad616c257/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/3bacff0d6b5958bc13219ca024fa8360b8a97c435ab4179f2c1faef825440ff9/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/39598e7b82072b4765a329bc95ca8bd2280f063659530c98e79b0b7b85ea027f/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/7fdd9f3b437953dd818b6a992a54060f49efbb1a8342a38c3ac43d844ef906ad/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/238ee36da8f5cd3ed43ffb335de9b83de8ffd397447e3d45b97c1da9ffb9b41a/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/33dda84b3c78da6b72de5847aaa35b42b43dfd6370c17399c11ebfeb5d560640/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/f580fdb2ef7505abfa242335fc06f585f03775f88a08cf60f9c5f7ae391a69f7/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/36ffc7099a83989fc82b1c67e48b9ed5961e4f7bdc1146418e6f2c4ae533563d/pdf-checkpoint-final-1-1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/85b1591bc147484bc347a10a608ed85125efe642e105a900663979db7106d11a/pdf-checkpoint-final-1-1"
+  ],
+  "ocr": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/5a0d480d4ad7f44ae47a3fbc43ddd001be46db9c9877037461f40e5f3cb77267/pdf-checkpoint-final-1-2",
+  "parsed": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/temporal-store-final/attempts/cca37158190633ded8bddad95fbd11106010139edbde7bd7043753d0a991490a/pdf-checkpoint-final-1-2"
+}

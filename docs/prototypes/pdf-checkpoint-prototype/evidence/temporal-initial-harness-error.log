@@ -1,0 +1,68 @@
+Completing activity as failed ({'activity_id': '1', 'activity_type': 'produce', 'attempt': 1, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-trial-1', 'workflow_run_id': '01a08fdc-17e5-76ab-bc02-9fd244da0bdf', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 97, in produce
+    record('started', kind=kind, identity=identity, attempt=attempt, spec=spec)
+TypeError: record() got multiple values for argument 'kind'
+Completing activity as failed ({'activity_id': '1', 'activity_type': 'produce', 'attempt': 2, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-trial-1', 'workflow_run_id': '01a08fdc-17e5-76ab-bc02-9fd244da0bdf', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 97, in produce
+    record('started', kind=kind, identity=identity, attempt=attempt, spec=spec)
+TypeError: record() got multiple values for argument 'kind'
+Completing activity as failed ({'activity_id': '1', 'activity_type': 'produce', 'attempt': 3, 'namespace': 'default', 'task_queue': 'pdf-checkpoint-prototype', 'workflow_id': 'pdf-checkpoint-trial-1', 'workflow_run_id': '01a08fdc-17e5-76ab-bc02-9fd244da0bdf', 'workflow_type': 'Recovery'})
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 97, in produce
+    record('started', kind=kind, identity=identity, attempt=attempt, spec=spec)
+TypeError: record() got multiple values for argument 'kind'
+temporalio.exceptions.ApplicationError: TypeError: record() got multiple values for argument 'kind'
+
+The above exception was the direct cause of the following exception:
+
+temporalio.exceptions.ActivityError: Activity task failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 180, in <module>
+    asyncio.run(main())
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/recovery.py", line 173, in main
+    result=await handle.result()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.temporal-venv/lib/python3.12/site-packages/temporalio/client.py", line 2988, in result
+    raise WorkflowFailureError(
+temporalio.client.WorkflowFailureError: Workflow execution failed
