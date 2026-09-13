@@ -28,9 +28,11 @@ class SourceRequest:
 
 class Execution:
     def __init__(self, source: SourceRequest, store: Store, scratch: Path,
-                 heartbeat=lambda detail: None):
+                 heartbeat=lambda detail: None, child_timeout=540):
         self.source, self.store, self.scratch = source, store, scratch
         self.heartbeat = heartbeat
+        self.child_timeout = child_timeout
+        self.observation = {}
 
     async def child(self, module, request, out):
         """One request per interpreter; S1 explores safe process reuse separately."""
@@ -40,10 +42,11 @@ class Execution:
                 stdout=log, stderr=log, start_new_session=True)
             communication = asyncio.create_task(process.communicate(json.dumps(request).encode()))
             try:
-                while not communication.done():
-                    self.heartbeat({'pid': process.pid})
-                    await asyncio.wait({communication}, timeout=1)
-                await communication
+                async with asyncio.timeout(self.child_timeout):
+                    while not communication.done():
+                        self.heartbeat({'pid': process.pid, 'durable_completion': False})
+                        await asyncio.wait({communication}, timeout=1)
+                    await communication
                 if process.returncode:
                     raise RuntimeError((out/'process.log').read_text()[-4000:])
             finally:
@@ -93,7 +96,9 @@ class Execution:
         identity = digest(json.dumps({'operation': operation, 'source': source.source_sha256,
             'source_revision': source.source_revision, 'method': source.method, 'producer': producer}, sort_keys=True).encode())
         if await asyncio.to_thread(self.store.resolve, identity):
+            self.observation = {'reused': True}
             return identity
+        self.observation = {'reused': False}
         self.scratch.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix='pdf-', dir=self.scratch) as tmp:
             out = Path(tmp)
