@@ -33,3 +33,11 @@ Pod absence and each tracked container's runtime absence, with bounded inspectio
 calls. Errors retain the flock. Both independent reviewers confirmed this
 correction with no outstanding finding. Failed fault timing and scheduling trials
 remain excluded in `evidence/EXPLORATORY.md`.
+
+The phased scenario at `8e67d96` preserved the required interactions while avoiding
+an unqualified simultaneous 14-Pod claim. Spec review requested actual Temporal
+poller proof rather than Pod readiness alone. The final supplementary run requires
+fresh poller identities matching current Pod names/UIDs on both Workflow and both
+OCR queues before and after each method request; sealing checks all mappings.
+The reviewer confirmed that correction. The main matrix, supplementary poller
+cases, full suite and checked cross-release comparison subsequently passed.

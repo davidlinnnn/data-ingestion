@@ -3,10 +3,13 @@ import asyncio
 import json
 import sys
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 import boto3
 from temporalio.client import Client
-from temporalio.api.enums.v1 import EventType
+from temporalio.api.enums.v1 import EventType, TaskQueueType
+from temporalio.api.taskqueue.v1 import TaskQueue
+from temporalio.api.workflowservice.v1 import DescribeTaskQueueRequest
 from pdf_processing.object_store import Store, digest
 from pdf_processing.routing import submission
 
@@ -24,6 +27,29 @@ async def main():
     store = Store(s3,'t08','rollout')
     def read(identity,name):
         return json.loads(store.read_artifact(next(f for f in store.resolve(identity)['files'] if f['name']==name)))
+    async def capture_pollers(label):
+        expected=json.loads(Path('/tmp/t08-expected-population.json').read_text())
+        observed=[]
+        for release_name, route in routes.items():
+            for stage,kind in (('workflow',TaskQueueType.TASK_QUEUE_TYPE_WORKFLOW),('component_ocr',TaskQueueType.TASK_QUEUE_TYPE_ACTIVITY)):
+                prefix='t08-'+release_name+'-'+stage.replace('_','-')+'-'
+                pods=[p for p in expected if p['name'].startswith(prefix)]
+                assert len(pods)==1,(prefix,pods)
+                deadline=asyncio.get_running_loop().time()+60
+                while True:
+                    description=await client.workflow_service.describe_task_queue(DescribeTaskQueueRequest(
+                        namespace=client.namespace,task_queue=TaskQueue(name=route['queues'][stage]),task_queue_type=kind))
+                    now=datetime.now(timezone.utc)
+                    pollers=[{'identity':p.identity,'last_access_time':p.last_access_time.ToJsonString()}
+                        for p in description.pollers if p.identity.endswith('@'+pods[0]['name']) and
+                        -5 <= now.timestamp()-(p.last_access_time.seconds+p.last_access_time.nanos/1e9) <= 120]
+                    if pollers:break
+                    assert asyncio.get_running_loop().time()<deadline,(release_name,stage,'No current Pod poller')
+                    await asyncio.sleep(.5)
+                observed.append({'release':release_name,'stage':stage,'queue':route['queues'][stage],
+                    'pod':pods[0]['name'],'uid':pods[0]['uid'],'pollers':pollers})
+        (OUT/(label+'-pollers.json')).write_text(json.dumps({'observed_at':datetime.now(timezone.utc).isoformat(),'queues':observed},indent=2))
+
     if command == 'init':
         abandoned=[]
         async for execution in client.list_workflows("ExecutionStatus = 'Running'"):
@@ -46,6 +72,7 @@ async def main():
         print('No accepted execution remains open before quiescent-stage drain')
     elif command == 'submit':
         case, version = args
+        if case in ('new','mixed'):await capture_pollers(case+'-before')
         request = {**json.loads((OUT/'source.json').read_text()),'request_id':'t08-'+case+'-'+uuid.uuid4().hex}
         if case in ('loss','drain'):request['source_revision'] += ':'+case
         payload = payload_for(request,routes[version])
@@ -111,6 +138,7 @@ async def main():
             'producer':final['provenance']['producer'],'ocr':ocr,'activities':activities,
             'run_id':history.events[0].workflow_execution_started_event_attributes.original_execution_run_id}
         (OUT/(case+'.json')).write_text(json.dumps(report,indent=2))
+        if case in ('new','mixed'):await capture_pollers(case+'-after')
         print(case+': PASS',flush=True)
     elif command == 'negative':
         route=routes['v1']

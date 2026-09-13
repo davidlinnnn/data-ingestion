@@ -41,6 +41,15 @@ def quiesce():
 def driver(*args):
     return k('exec','coordinator','--','env','PYTHONPATH=/tmp/t08-code',PYTHON,'/tmp/t08-verify.py',*args)
 
+def copy_results():
+    reader="import json,pathlib; print(json.dumps({p.name:p.read_text() for p in pathlib.Path('/tmp/t08-results').glob('*.json')}))"
+    files=json.loads(k('exec','coordinator','--',PYTHON,'-c',reader))
+    (OUT/'results').mkdir(exist_ok=True)
+    for name,value in files.items():
+        assert Path(name).name==name and name.endswith('.json')
+        (OUT/'results'/name).write_text(value)
+
+
 def scale(version,stages,replicas):
     for stage in stages:k('scale','deployment/t08-'+version+'-'+stage.replace('_','-'),'--replicas='+str(replicas))
 
@@ -64,6 +73,7 @@ def population(label):
         'resources':[c.get('resources') for c in p['spec']['containers']]}
         for p in pods if p['metadata']['name'].startswith('t08-')]
     (OUT/(label+'-population.json')).write_text(json.dumps(data,indent=2))
+    k('cp',str(OUT/(label+'-population.json')),'coordinator:/tmp/t08-expected-population.json')
 
 
 def inject(case,graceful):
@@ -123,64 +133,68 @@ for p in Path('/scratch').glob('activity-*/pdf-*/process.log'):
         time.sleep(.15)
     raise RuntimeError('No real native stage observed for fault injection')
 
-with open('/private/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:
-    while True:
-        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB);break
-        except BlockingIOError:
-            print('Waiting for shared qualification lock; no inference running in T08.',flush=True);time.sleep(10)
-    try:
-        print('T08 qualification lock acquired',flush=True)
-        package={p.name:p.read_text() for p in (ROOT/'src/pdf_processing').glob('*.py')}
-        writer="import json,sys,pathlib,shutil; p=pathlib.Path('/tmp/t08-code/pdf_processing'); shutil.rmtree(p,ignore_errors=True); p.mkdir(parents=True); [(p/n).write_text(s) for n,s in json.load(sys.stdin).items()]"
-        subprocess.run(['kubectl','--request-timeout=15s','-n',NS,'exec','-i','coordinator','--',PYTHON,'-c',writer],input=json.dumps(package),text=True,check=True)
-        k('cp',str(ROOT/'tests/pdf_processing/t08/verify.py'),'coordinator:/tmp/t08-verify.py')
-        scale('v1',('workflow',*STAGES),0)
-        driver('init');print(driver('submit','queued','v1'),flush=True)
-        state=json.loads(driver('progress','queued'))
-        assert state['status']=='RUNNING' and not state['scheduled'],state
-        (OUT/'queued-before-workers.json').write_text(json.dumps(state,indent=2))
-        scale('v1',('workflow','prepare'),1)
-        deadline=time.monotonic()+60
+def main():
+    with open('/private/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:
         while True:
+            try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB);break
+            except BlockingIOError:
+                print('Waiting for shared qualification lock; no inference running in T08.',flush=True);time.sleep(10)
+        try:
+            print('T08 qualification lock acquired',flush=True)
+            package={p.name:p.read_text() for p in (ROOT/'src/pdf_processing').glob('*.py')}
+            writer="import json,sys,pathlib,shutil; p=pathlib.Path('/tmp/t08-code/pdf_processing'); shutil.rmtree(p,ignore_errors=True); p.mkdir(parents=True); [(p/n).write_text(s) for n,s in json.load(sys.stdin).items()]"
+            subprocess.run(['kubectl','--request-timeout=15s','-n',NS,'exec','-i','coordinator','--',PYTHON,'-c',writer],input=json.dumps(package),text=True,check=True)
+            k('cp',str(ROOT/'tests/pdf_processing/t08/verify.py'),'coordinator:/tmp/t08-verify.py')
+            scale('v1',('workflow',*STAGES),0)
+            driver('init');print(driver('submit','queued','v1'),flush=True)
             state=json.loads(driver('progress','queued'))
-            expected_queue=json.loads((OUT/'routes.json').read_text())['v1']['queues']['group']
-            if state['pending']==[{'stage':'group','started':False,'queue':expected_queue}]:break
-            assert time.monotonic()<deadline, state
-            time.sleep(.5)
-        (OUT/'queued-before-parser.json').write_text(json.dumps(state,indent=2))
-        scale('v1',STAGES,1);ready('v1')
-        print(driver('result','queued'),flush=True)
-        print(driver('submit','loss','v1'),flush=True);inject('loss',False)
-        print(driver('result','loss'),flush=True);ready('v2',('workflow',))
-        print(driver('submit','drain','v1'),flush=True);inject('drain',True)
-        print(driver('result','drain'),flush=True)
-        # Only drain quiescent stages. Their immutable releases remain retained,
-        # and capacity is restored before admitting further requests to them.
-        print(driver('idle'),flush=True)
-        idle_stages=tuple(s for s in STAGES if s!='component_ocr')
-        scale('v1',idle_stages,0);absent('v1',idle_stages)
-        scale('v2',STAGES,1);ready('v2')
-        population('new-method')
-        print(driver('submit','new','v2'),flush=True)
-        print(driver('result','new'),flush=True)
-        print(driver('idle'),flush=True)
-        scale('v2',idle_stages,0);absent('v2',idle_stages)
-        scale('v1',idle_stages,1);ready('v1')
-        population('old-method')
-        print(driver('submit','mixed','v1'),flush=True)
-        print(driver('result','mixed'),flush=True)
-        print(driver('idle'),flush=True)
-        scale('v1',('group','assembly','select','finalize'),0)
-        absent('v1',('group','assembly','select','finalize'))
-        scale('v2',('prepare',),1);ready('v2',('prepare',))
-        print(driver('negative'),flush=True)
-        k('cp','coordinator:/tmp/t08-results',str(OUT/'results'))
-        pods=json.loads(k('get','pods','-o','json'))
-        (OUT/'pods.json').write_text(json.dumps([{'name':p['metadata']['name'],'uid':p['metadata']['uid'],
-            'containers':p['status'].get('containerStatuses',[]),
-            'resources':[c.get('resources') for c in p['spec']['containers']],
-            'volumes':p['spec'].get('volumes',[])} for p in pods['items']],indent=2))
-    finally:
-        quiesce()
-        fcntl.flock(lock,fcntl.LOCK_UN)
-        print('T08 qualification lock released',flush=True)
+            assert state['status']=='RUNNING' and not state['scheduled'],state
+            (OUT/'queued-before-workers.json').write_text(json.dumps(state,indent=2))
+            scale('v1',('workflow','prepare'),1)
+            deadline=time.monotonic()+60
+            while True:
+                state=json.loads(driver('progress','queued'))
+                expected_queue=json.loads((OUT/'routes.json').read_text())['v1']['queues']['group']
+                if state['pending']==[{'stage':'group','started':False,'queue':expected_queue}]:break
+                assert time.monotonic()<deadline, state
+                time.sleep(.5)
+            (OUT/'queued-before-parser.json').write_text(json.dumps(state,indent=2))
+            scale('v1',STAGES,1);ready('v1')
+            print(driver('result','queued'),flush=True)
+            print(driver('submit','loss','v1'),flush=True);inject('loss',False)
+            print(driver('result','loss'),flush=True);ready('v2',('workflow',))
+            print(driver('submit','drain','v1'),flush=True);inject('drain',True)
+            print(driver('result','drain'),flush=True)
+            # Only drain quiescent stages. Their immutable releases remain retained,
+            # and capacity is restored before admitting further requests to them.
+            print(driver('idle'),flush=True)
+            idle_stages=tuple(s for s in STAGES if s!='component_ocr')
+            scale('v1',idle_stages,0);absent('v1',idle_stages)
+            scale('v2',STAGES,1);ready('v2')
+            population('new-method')
+            print(driver('submit','new','v2'),flush=True)
+            print(driver('result','new'),flush=True)
+            print(driver('idle'),flush=True)
+            scale('v2',idle_stages,0);absent('v2',idle_stages)
+            scale('v1',idle_stages,1);ready('v1')
+            population('old-method')
+            print(driver('submit','mixed','v1'),flush=True)
+            print(driver('result','mixed'),flush=True)
+            print(driver('idle'),flush=True)
+            scale('v1',('group','assembly','select','finalize'),0)
+            absent('v1',('group','assembly','select','finalize'))
+            scale('v2',('prepare',),1);ready('v2',('prepare',))
+            print(driver('negative'),flush=True)
+            copy_results()
+            pods=json.loads(k('get','pods','-o','json'))
+            (OUT/'pods.json').write_text(json.dumps([{'name':p['metadata']['name'],'uid':p['metadata']['uid'],
+                'containers':p['status'].get('containerStatuses',[]),
+                'resources':[c.get('resources') for c in p['spec']['containers']],
+                'volumes':p['spec'].get('volumes',[])} for p in pods['items']],indent=2))
+        finally:
+            quiesce()
+            fcntl.flock(lock,fcntl.LOCK_UN)
+            print('T08 qualification lock released',flush=True)
+
+
+if __name__=='__main__':main()

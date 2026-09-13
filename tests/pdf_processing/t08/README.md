@@ -96,3 +96,13 @@ scenario Worker is hosted by the coordinator. If the host process is forcibly
 killed, a host file lock alone cannot guarantee remote quiescence: stop new trials,
 reacquire the recovery lock and reconcile owned remote resources before proceeding.
 The operator must not equate an API timeout or client exit with worker termination.
+
+The final supplementary `poller_run.py` repeats only cached new/old-method cases
+under the same lock and cleanup rules. `verify.py` requires current Pod-bound,
+fresh Temporal Workflow/OCR poller identities before and after each request.
+`collect.py` checks exact cross-release operations and original bytes without
+exporting content; `seal.py` validates poller/Pod/queue mappings and package hashes.
+`full_suite.py` runs the existing ten-test suite under the same host lock and reaps
+its host children before release. `exploratory.py` preserves excluded trial history
+metadata without replaying it. Release labels v1/v2 both use request schema v3 in
+this matrix; they do not change legacy request completion semantics.

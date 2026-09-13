@@ -14,6 +14,16 @@ pods=json.loads((OUT/'pods.json').read_text())
 loss=json.loads((OUT/'loss-controller.json').read_text())
 assert loss['runtime_container_stopped']
 assert next(p['uid'] for p in pods if p['name'].startswith('t08-v1-workflow-'))!=loss['workflow_pod_uid']
+routes=json.loads((OUT/'routes.json').read_text())
+for case,label in (('new','new-method'),('mixed','old-method')):
+    population={p['uid']:p for p in json.loads((OUT/(label+'-population.json')).read_text())}
+    for when in ('before','after'):
+        pollers=json.loads((OUT/'results'/f'{case}-{when}-pollers.json').read_text())
+        assert len(pollers['queues'])==4
+        for row in pollers['queues']:
+            assert population[row['uid']]['name']==row['pod']
+            assert row['queue']==routes[row['release']]['queues'][row['stage']]
+            assert row['pollers'] and all(p['identity'].endswith('@'+row['pod']) for p in row['pollers'])
 summary={name:{'workflow_id':r['workflow_id'],'run_id':r['run_id'],'request_id':r['request']['request_id'],
     'routing_id':r['result']['routing_id'],'status':r['result']['status'],
     'processing_result':r['result']['processing_result'],
