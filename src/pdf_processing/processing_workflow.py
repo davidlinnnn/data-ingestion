@@ -21,7 +21,7 @@ class PDFProcessing:
     async def run(self, submission: dict) -> dict:
         self.summary['observed_at'] = workflow.now().isoformat()
         request = submission.get('request', {})
-        if not isinstance(request, dict) or request.get('version') != 1:
+        if not isinstance(request, dict) or request.get('version') not in (1, 2):
             self.summary.update(status='failed', error={'category': 'input', 'code': 'invalid_request'})
             return self.summary
         queue = submission.get('activity_queue')
@@ -54,6 +54,26 @@ class PDFProcessing:
             self.summary['steps'].append(result)
             self.summary.update({'status': 'parsed_ready', 'parsed_result': result['parsed_result'],
                                  'observed_at': result['observed_at']})
+            if request['version'] == 1:
+                return self.summary
+            self.summary['status'] = 'selecting'
+            selection = await call({'stage': 'select', 'plan': prepared['plan'],
+                                    'parsed_result': result['parsed_result']})
+            self.summary.update(selection=selection['operation'], selected_components=len(selection['selected']),
+                                registered_components=0, status='enriching')
+            outcomes = []
+            # One scheduled component at a time: bounded history and in-flight work.
+            for component in selection['selected']:
+                outcome = await call({'stage': 'component_ocr', 'plan': prepared['plan'],
+                    'selection': selection['operation'], 'component': component})
+                outcomes.append(outcome['operation'])
+                self.summary['steps'].append(outcome)
+                self.summary.update(registered_components=len(outcomes), observed_at=outcome['observed_at'])
+            self.summary['status'] = 'finalizing'
+            final = await call({'stage': 'finalize', 'plan': prepared['plan'],
+                'selection': selection['operation'], 'outcomes': outcomes})
+            self.summary.update(status='complete', processing_complete=True,
+                                processing_result=final['operation'], observed_at=final['observed_at'])
         except ActivityError as error:
             cause = error.cause
             details = cause.details if isinstance(cause, ApplicationError) else []

@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: workflows, namespace: pdf-t04-validation}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: t04-workflows}}
+  template:
+    metadata: {labels: {app: t04-workflows}}
+    spec:
+      nodeSelector: {kubernetes.io/hostname: internal-a2a-vs6-local-worker2}
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: worker
+        image: pdf-checkpoint-prototype:linux-v2
+        imagePullPolicy: IfNotPresent
+        command: [/experiment/.venv/bin/python, /driver/worker.py]
+        env:
+        - {name: PYTHONPATH, value: /app}
+        - {name: WORKER_ROLE, value: workflow}
+        - {name: TEMPORAL_ADDRESS, value: 'temporal:7233'}
+        - {name: TASK_QUEUE, value: t04-workflows}
+        resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {memory: 512Mi}}
+        volumeMounts:
+        - {name: code, mountPath: /app/pdf_processing}
+        - {name: driver, mountPath: /driver}
+      volumes:
+      - {name: code, configMap: {name: t04-package}}
+      - {name: driver, configMap: {name: t04-driver}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: activities, namespace: pdf-t04-validation}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: t04-activities}}
+  template:
+    metadata: {labels: {app: t04-activities}}
+    spec:
+      nodeSelector: {kubernetes.io/hostname: internal-a2a-vs6-local-worker2}
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: worker
+        image: pdf-checkpoint-prototype:linux-v2
+        imagePullPolicy: IfNotPresent
+        command: [/experiment/.venv/bin/python, /driver/worker.py]
+        env:
+        - {name: PYTHONPATH, value: /app}
+        - {name: WORKER_ROLE, value: activity}
+        - {name: TEMPORAL_ADDRESS, value: 'temporal:7233'}
+        - {name: TASK_QUEUE, value: t04-pdf}
+        - {name: OBJECT_ENDPOINT, value: 'http://objects:9000'}
+        - {name: OBJECT_BUCKET, value: t04}
+        - {name: OBJECT_PREFIX, value: final}
+        - {name: AWS_ACCESS_KEY_ID, value: prototype-local}
+        - {name: AWS_SECRET_ACCESS_KEY, value: prototype-local-only-password}
+        - {name: MODEL_CACHE, value: /experiment/PROTOTYPE-wipe-me/hf}
+        - {name: PROFILE_FILE, value: /driver/native-v1.json}
+        - {name: LIMITS, value: '{"max_bytes":4194304,"max_pages":100,"max_page_pixels":20000000,"preflight_seconds":30,"child_seconds":540}'}
+        resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 5Gi}}
+        volumeMounts:
+        - {name: code, mountPath: /app/pdf_processing}
+        - {name: driver, mountPath: /driver}
+        - {name: scratch, mountPath: /scratch}
+      volumes:
+      - {name: code, configMap: {name: t04-package}}
+      - {name: driver, configMap: {name: t04-driver}}
+      - {name: scratch, emptyDir: {sizeLimit: 1Gi}}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: coordinator, namespace: pdf-t04-validation}
+spec:
+  nodeSelector: {kubernetes.io/hostname: internal-a2a-vs6-local-worker2}
+  containers:
+  - name: coordinator
+    image: pdf-checkpoint-prototype:linux-v2
+    imagePullPolicy: IfNotPresent
+    command: [/bin/sh, -c, 'sleep infinity']
+    env:
+    - {name: PYTHONPATH, value: /app}
+    - {name: AWS_ACCESS_KEY_ID, value: prototype-local}
+    - {name: AWS_SECRET_ACCESS_KEY, value: prototype-local-only-password}
+    volumeMounts:
+    - {name: code, mountPath: /app/pdf_processing}
+    - {name: driver, mountPath: /driver}
+    - {name: fixtures, mountPath: /fixtures}
+  volumes:
+  - {name: code, configMap: {name: t04-package}}
+  - {name: driver, configMap: {name: t04-driver}}
+  - {name: fixtures, configMap: {name: t04-fixtures}}

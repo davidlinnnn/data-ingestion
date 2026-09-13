@@ -44,6 +44,7 @@ Store(s3_client, bucket, prefix), scratch, heartbeat)` and await `produce` with
 `kind=group`, then `kind=assembly`, then `kind=ocr`. For real-service verification,
 see the acceptance runbook under `tests/pdf_processing`.
 
+<<<<<<< HEAD
 ## Recovery storage operations (T03)
 
 `Store.resolve` returns `None` only for absent registration. It validates the
@@ -71,3 +72,22 @@ writers are quiescent. Truncation or corruption suppresses orphan classification
 Listed live versions provide a byte lower bound, not physical disk usage or all
 historical object versions; monitor provider disk/PVC capacity separately. Shared
 GC and canonical retention ownership remain deferred.
+=======
+## Required component OCR (T04)
+
+Existing version-1 requests still finish at internal `parsed_ready`. For the complete
+processing path, submit a new request identity with `version: 2` and
+`completion: required_picture_ocr_v1`, retaining the immutable source reference,
+digest, Source Revision reference and published profile fields. The completion
+target is part of the frozen request; do not reuse a request ID to change it.
+
+The workflow persists all assembled PictureItem candidates under a versioned rule,
+schedules one required OCR at a time, and returns `processing_complete: true` only
+after the final processing-result registration validates all dependencies. Follow
+`processing_result` to the manifest, then each `enrichments[].operation` to its OCR
+JSON and matching crop artifact. Large text/image bytes are not Temporal payloads.
+A successful result has `canonical_accepted: false`; its extraction quality remains
+separate from execution completion. Unsupported selected crop geometry or exhausted
+required OCR fails processing. See the T04 acceptance instructions for the bounded
+coordinate/rendering support and evidence.
+>>>>>>> codex/pdf-t04-component-ocr

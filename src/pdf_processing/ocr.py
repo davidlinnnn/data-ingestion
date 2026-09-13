@@ -16,32 +16,49 @@ def execute(request):
     from rapidocr.utils.output import RapidOCROutput
     import rapidocr
 
+    assert rapidocr.__file__ is not None
     parsed, source, out = (Path(request[k]) for k in ('parsed', 'pdf', 'out'))
     out.mkdir(parents=True, exist_ok=True)
     sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
-    doc = json.loads(parsed.read_text())
-    item = next(p for p in doc['pictures'] if p['self_ref'] == request['component'])
-    if len(item['prov']) != 1:
-        raise ValueError('This extraction seam requires single-page picture provenance')
-    prov = item['prov'][0]
-    with pdfium.PdfDocument(source) as pdf:
-        page = pdf[prov['page_no'] - 1]
-        try:
-            b = prov['bbox']
-            w, h = page.get_size()
-            if b['coord_origin'] != 'BOTTOMLEFT':
-                raise ValueError('This extraction seam supports BOTTOMLEFT picture coordinates')
-            box = (b['l'], h-b['t'], b['r'], h-b['b'])
-            assert 0 <= box[0] < box[2] <= w and 0 <= box[1] < box[3] <= h
-            def pixels(value):
-                return Image.open(io.BytesIO(base64.b64decode(value['image']['uri'].split(',')[1])))
-            page_pixels = pixels(doc['pages'][str(prov['page_no'])])
-            original_crop = pixels(item)
-            assert page_pixels.crop(box).tobytes() == original_crop.tobytes()
-            scale = request.get('scale', 3)
-            crop = page.render(scale=scale).to_pil().crop(tuple(x*scale for x in box))
-        finally:
-            page.close()
+    try:
+        doc = json.loads(parsed.read_text())
+        item = next(p for p in doc['pictures'] if p['self_ref'] == request['component'])
+        if len(item['prov']) != 1:
+            raise ValueError('This extraction seam requires single-page picture provenance')
+        prov = item['prov'][0]
+        with pdfium.PdfDocument(source) as pdf:
+            page = pdf[prov['page_no'] - 1]
+            try:
+                b = prov['bbox']
+                w, h = page.get_size()
+                scale = request.get('scale', 3)
+                if w*h*scale*scale > request.get('max_render_pixels', 20_000_000):
+                    raise ValueError('component_render_pixel_limit')
+                if page.get_rotation() != 0 or tuple(page.get_bbox()) != (0, 0, w, h):
+                    raise ValueError('unsupported_rotated_or_cropped_page')
+                if b['coord_origin'] == 'BOTTOMLEFT':
+                    box = (b['l'], h-b['t'], b['r'], h-b['b'])
+                elif b['coord_origin'] == 'TOPLEFT':
+                    box = (b['l'], b['t'], b['r'], b['b'])
+                else:
+                    raise ValueError('unsupported_coordinate_origin')
+                assert 0 <= box[0] < box[2] <= w and 0 <= box[1] < box[3] <= h
+                def pixels(value):
+                    return Image.open(io.BytesIO(base64.b64decode(value['image']['uri'].split(',')[1])))
+                page_pixels = pixels(doc['pages'][str(prov['page_no'])])
+                original_crop = pixels(item)
+                assert page_pixels.size == (round(w), round(h))
+                # PDFium accepts fractional scale; its unannotated default infers int.
+                rendered = page.render(scale=1.5)  # pyright: ignore[reportArgumentType]
+                assert rendered.to_pil().resize(page_pixels.size).convert('RGB').tobytes() == page_pixels.convert('RGB').tobytes()
+                rendered.close()
+                assert page_pixels.crop(box).tobytes() == original_crop.tobytes()
+                crop = page.render(scale=scale).to_pil().crop(tuple(x*scale for x in box))
+            finally:
+                page.close()
+    except (ValueError, AssertionError, KeyError, StopIteration, IndexError):
+        (out/'failure.json').write_text(json.dumps({'category': 'integrity', 'code': 'invalid_component_crop'}))
+        raise
     crop.save(out/'figure.png')
     t = time.perf_counter()
     result = RapidOCR()(crop)
@@ -62,4 +79,5 @@ def execute(request):
     }
     (out/'ocr.json').write_text(json.dumps(report, indent=2))
 
-if __name__ == '__main__': execute(json.load(sys.stdin))
+if __name__ == '__main__':
+    execute(json.load(sys.stdin))
