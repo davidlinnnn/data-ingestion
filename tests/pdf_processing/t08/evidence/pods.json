@@ -1,0 +1,1145 @@
+[
+  {
+    "name": "coordinator",
+    "uid": "a66c0d68-3c48-4087-8c25-3393872a193e",
+    "containers": [
+      {
+        "containerID": "containerd://e34d8e54bce6421d5155400f46e9f48a8ffa0e46375fbce75e438ec01955ee53",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {},
+        "name": "coordinator",
+        "ready": true,
+        "resources": {},
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T13:45:54Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/fixtures",
+            "name": "fixtures"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-ctnp8",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {}
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "t08-package"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "t08-driver"
+        },
+        "name": "driver"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "t08-fixtures"
+        },
+        "name": "fixtures"
+      },
+      {
+        "name": "kube-api-access-ctnp8",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "objects-8865c4db6-h49jg",
+    "uid": "a88b05d5-8602-4f42-9971-2d11a0d87ef1",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        },
+        "containerID": "containerd://245bdf84e6a3e113dfd01141307b46dc779372501c1acd5a0c6949cdeb50ae8d",
+        "image": "docker.io/minio/minio:latest",
+        "imageID": "docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "lastState": {},
+        "name": "minio",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T13:45:57Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/data",
+            "name": "data"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-x5cn8",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "name": "data",
+        "persistentVolumeClaim": {
+          "claimName": "object-data"
+        }
+      },
+      {
+        "name": "kube-api-access-x5cn8",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "t08-v1-component-ocr-7766d7fb74-lkjdm",
+    "uid": "b1d315be-52f4-4a86-8eb7-11f4172b3a78",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        },
+        "containerID": "containerd://1e5fc3cb4164454d8738111bec8dc1b9927791a989340d7544f37d587c2e27c8",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "64Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T14:25:03Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-9ftgj",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "package-08bb77ed507519abccf5"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "release-718b7142bd838e596eb3"
+        },
+        "name": "driver"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "1Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-9ftgj",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "t08-v1-prepare-5f76cdc589-gk6mf",
+    "uid": "5940a3d0-ca52-40d5-981d-872dffc2ccab",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        },
+        "containerID": "containerd://ace9c67f94a6f7e5870a92c506555505c744564320dd0525d0a2f61595202c7b",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "64Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T14:27:00Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-7bnpq",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "package-08bb77ed507519abccf5"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "release-718b7142bd838e596eb3"
+        },
+        "name": "driver"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "1Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-7bnpq",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "t08-v1-workflow-57b5fc7947-bt6vt",
+    "uid": "91f2b570-2d30-4477-844b-ef664bc60cf2",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        },
+        "containerID": "containerd://da3c6eaa4906bd7df791d2c533264dd2fb63ed43b0c9d53cc789404be9ecc19b",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "64Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T14:25:28Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-hwvtd",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "package-08bb77ed507519abccf5"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "release-718b7142bd838e596eb3"
+        },
+        "name": "driver"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "1Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-hwvtd",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "t08-v2-component-ocr-57748ff466-p8gtj",
+    "uid": "5361c570-e3d0-454f-b4e8-0ccb9d547363",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        },
+        "containerID": "containerd://4cc0add1dd9fe7c7efbbaf64d58d4b2339df46d246e15a4cb415633952af32d4",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "64Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T14:26:55Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-9wrjs",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "package-08bb77ed507519abccf5"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "release-57a9fd36c7085684b100"
+        },
+        "name": "driver"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "1Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-9wrjs",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "t08-v2-prepare-786c9974fc-jqndd",
+    "uid": "cd86120b-dee0-4963-8433-59a11572232c",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        },
+        "containerID": "containerd://01d9e4ee4d58bc197aad0629764b93b49ae61e17b09f2ad5beb4af9b3e8b16e9",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "64Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T14:27:06Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-9m9hh",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "package-08bb77ed507519abccf5"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "release-57a9fd36c7085684b100"
+        },
+        "name": "driver"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "1Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-9m9hh",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "t08-v2-workflow-78669b7d7-hqg9h",
+    "uid": "6b76d62c-e275-4713-8a83-f1b51056a6c9",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        },
+        "containerID": "containerd://6fa6077b5a40803624178922f0726695f111366238bfc60c36291a5d78e781be",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "64Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T14:25:28Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-qhbbc",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "64Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "package-08bb77ed507519abccf5"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "release-57a9fd36c7085684b100"
+        },
+        "name": "driver"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "1Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-qhbbc",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "temporal-bf44c7c45-lrcgw",
+    "uid": "a97b92b6-4e66-4753-9417-7629a766f8b8",
+    "containers": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        },
+        "containerID": "containerd://9ae11349681d627400203a34b1f550aa5abab7d9900db86f12699fbeac1c05cf",
+        "image": "docker.io/temporalio/temporal:1.8.3",
+        "imageID": "docker.io/temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+        "lastState": {},
+        "name": "temporal",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T13:45:57Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 1000,
+            "supplementalGroups": [
+              1000
+            ],
+            "uid": 1000
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/data",
+            "name": "data"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-ftsg7",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "limits": {
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "name": "data",
+        "persistentVolumeClaim": {
+          "claimName": "temporal-data"
+        }
+      },
+      {
+        "name": "kube-api-access-ftsg7",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

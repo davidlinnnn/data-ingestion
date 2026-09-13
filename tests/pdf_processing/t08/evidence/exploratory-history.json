@@ -1,0 +1,221 @@
+[
+  {
+    "case": "baseline_missing_route",
+    "qualification": "excluded",
+    "workflow_id": "t08-red-missing-routing",
+    "run_id": "01a09b04-b483-7721-86c7-7637b198745b",
+    "temporal_status": "COMPLETED",
+    "request": {
+      "version": 3
+    },
+    "workflow_queue": "t08-workflows",
+    "started_at": "2026-09-13T13:46:11.971468129Z",
+    "last_event_at": "2026-09-13T13:46:12.013421921Z",
+    "scheduled_stages": [
+      {
+        "stage": "prepare",
+        "queue": "t08-pdf",
+        "scheduled_at": "2026-09-13T13:46:11.989196504Z"
+      }
+    ]
+  },
+  {
+    "case": "api_timeout",
+    "qualification": "excluded",
+    "workflow_id": "t08-queued-9032f8d597a54707a8ba8880b7f7ae02",
+    "run_id": "01a09b0b-9745-73b7-a51b-7f01b7418466",
+    "temporal_status": "COMPLETED",
+    "request": {
+      "artifact": {
+        "key": "rollout/sources/multiple.pdf",
+        "name": "multiple.pdf",
+        "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+        "version_id": "2c0efafe-874e-4d96-97a0-b5e185e4a257"
+      },
+      "completion": "required_evidence_v1",
+      "profile": "native-v1",
+      "request_id": "t08-queued-9032f8d597a54707a8ba8880b7f7ae02",
+      "routing_id": "efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+      "source_revision": "synthetic:t08:multiple",
+      "version": 3
+    },
+    "workflow_queue": "t08-v1-workflow-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+    "started_at": "2026-09-13T13:53:43.237244168Z",
+    "last_event_at": "2026-09-13T13:56:16.828491889Z",
+    "scheduled_stages": [
+      {
+        "stage": "prepare",
+        "queue": "t08-v1-prepare-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:53:44.819028460Z"
+      },
+      {
+        "stage": "group",
+        "queue": "t08-v1-group-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:53:45.277315752Z"
+      },
+      {
+        "stage": "assembly",
+        "queue": "t08-v1-assembly-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:54:03.748921428Z"
+      },
+      {
+        "stage": "select",
+        "queue": "t08-v1-select-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:56:13.346994470Z"
+      },
+      {
+        "stage": "component_ocr",
+        "queue": "t08-v1-component_ocr-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:56:13.441616220Z"
+      },
+      {
+        "stage": "component_ocr",
+        "queue": "t08-v1-component_ocr-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:56:15.207663638Z"
+      },
+      {
+        "stage": "finalize",
+        "queue": "t08-v1-finalize-efc0d656ae33e11c823cba12b8a29c95c000a9e7b0fcc200b545e74e1c512774",
+        "scheduled_at": "2026-09-13T13:56:16.281171638Z"
+      }
+    ]
+  },
+  {
+    "case": "scheduling_stall",
+    "qualification": "excluded",
+    "workflow_id": "t08-loss-fb14abbbbc4b4a75957d597308ee6748",
+    "run_id": "01a09b15-ffea-7ae1-ae6a-ef77e8c9e2fc",
+    "temporal_status": "TERMINATED",
+    "request": {
+      "artifact": {
+        "key": "rollout/sources/multiple.pdf",
+        "name": "multiple.pdf",
+        "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+        "version_id": "9b1dd43a-6e94-46b8-b558-3f9d90bf24a0"
+      },
+      "completion": "required_evidence_v1",
+      "profile": "native-v1",
+      "request_id": "t08-loss-fb14abbbbc4b4a75957d597308ee6748",
+      "routing_id": "718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+      "source_revision": "synthetic:t08:multiple:loss",
+      "version": 3
+    },
+    "workflow_queue": "t08-v1-workflow-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+    "started_at": "2026-09-13T14:05:05.386714167Z",
+    "last_event_at": "2026-09-13T14:11:00.896592179Z",
+    "scheduled_stages": [
+      {
+        "stage": "prepare",
+        "queue": "t08-v1-prepare-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:05:05.404188834Z"
+      },
+      {
+        "stage": "group",
+        "queue": "t08-v1-group-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:05:05.476294542Z"
+      }
+    ]
+  },
+  {
+    "case": "finished_before_loss",
+    "qualification": "excluded",
+    "workflow_id": "t08-loss-613824947d7d49df976829ba695978fc",
+    "run_id": "01a09b1b-d779-7a76-b970-7b5e574d2fa0",
+    "temporal_status": "COMPLETED",
+    "request": {
+      "artifact": {
+        "key": "rollout/sources/multiple.pdf",
+        "name": "multiple.pdf",
+        "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+        "version_id": "1a9ab9bf-f762-4684-a009-2b8eddaf331b"
+      },
+      "completion": "required_evidence_v1",
+      "profile": "native-v1",
+      "request_id": "t08-loss-613824947d7d49df976829ba695978fc",
+      "routing_id": "718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+      "source_revision": "synthetic:t08:multiple:loss",
+      "version": 3
+    },
+    "workflow_queue": "t08-v1-workflow-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+    "started_at": "2026-09-13T14:11:28.249686803Z",
+    "last_event_at": "2026-09-13T14:11:38.332127002Z",
+    "scheduled_stages": [
+      {
+        "stage": "prepare",
+        "queue": "t08-v1-prepare-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:28.263760303Z"
+      },
+      {
+        "stage": "group",
+        "queue": "t08-v1-group-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:28.336241595Z"
+      },
+      {
+        "stage": "assembly",
+        "queue": "t08-v1-assembly-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:30.437244887Z"
+      },
+      {
+        "stage": "select",
+        "queue": "t08-v1-select-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:36.342360293Z"
+      },
+      {
+        "stage": "component_ocr",
+        "queue": "t08-v1-component_ocr-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:36.382888126Z"
+      },
+      {
+        "stage": "component_ocr",
+        "queue": "t08-v1-component_ocr-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:37.257964251Z"
+      },
+      {
+        "stage": "finalize",
+        "queue": "t08-v1-finalize-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:11:38.022640127Z"
+      }
+    ]
+  },
+  {
+    "case": "fourteen_pod_transport_stall",
+    "qualification": "excluded",
+    "workflow_id": "t08-loss-ef632569c0f04d7c8b8e6182b583f46c",
+    "run_id": "01a09b21-21f1-73a4-a23b-af81c7e19522",
+    "temporal_status": "TERMINATED",
+    "request": {
+      "artifact": {
+        "key": "rollout/sources/multiple.pdf",
+        "name": "multiple.pdf",
+        "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+        "version_id": "aec07c14-2aa8-4177-81fc-2c7179c22236"
+      },
+      "completion": "required_evidence_v1",
+      "profile": "native-v1",
+      "request_id": "t08-loss-ef632569c0f04d7c8b8e6182b583f46c",
+      "routing_id": "718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+      "source_revision": "synthetic:t08:multiple:loss",
+      "version": 3
+    },
+    "workflow_queue": "t08-v1-workflow-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+    "started_at": "2026-09-13T14:17:14.993239380Z",
+    "last_event_at": "2026-09-13T14:25:00.396952712Z",
+    "scheduled_stages": [
+      {
+        "stage": "prepare",
+        "queue": "t08-v1-prepare-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:17:15.011266588Z"
+      },
+      {
+        "stage": "group",
+        "queue": "t08-v1-group-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:17:15.079524672Z"
+      },
+      {
+        "stage": "assembly",
+        "queue": "t08-v1-assembly-718b7142bd838e596eb3ccf235f7183f42028d0408637c7e1946468fa45b85e8",
+        "scheduled_at": "2026-09-13T14:17:43.221425796Z"
+      }
+    ]
+  }
+]
