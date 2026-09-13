@@ -32,9 +32,23 @@ async def main(args):
         print('Uploaded immutable versioned fixtures'); return
     sources = json.loads((out/'requests.json').read_text())
     async def run(request, suffix=''):
-        return await client.execute_workflow(PDFProcessing.run,
+        handle = await client.start_workflow(PDFProcessing.run,
             {'request':request,'activity_queue':args.activity_queue},
             id='t02-'+uuid.uuid4().hex+suffix, task_queue=args.workflow_queue)
+        result = await handle.result()
+        assert await handle.query(PDFProcessing.progress) == result, 'Query disagrees with terminal result'
+        assert result['observed_at']
+        if suffix == '-mismatch':
+            history = await handle.fetch_history()
+            starts = [event.activity_task_started_event_attributes.attempt for event in history.events if event.HasField('activity_task_started_event_attributes')]
+            assert starts and max(starts)==1, starts
+        return result
+    if args.mode == 'mismatch':
+        request = {**sources['native-review.pdf'], 'request_id': 't02:runtime-mismatch'}
+        result = await run(request, '-mismatch')
+        assert result['status']=='failed' and result['registered_pages']==0, result
+        assert result['error']=={'category':'method','code':'worker_method_mismatch'}, result
+        (out/'mismatch.json').write_text(json.dumps(result,indent=2)); print('Method mismatch permanently rejected'); return
     if args.mode == 'invalid':
         cases = [('invalid_request', {'version':99}),
             ('invalid_pdf',sources['invalid.pdf']),('password_required',sources['password.pdf']),
@@ -43,6 +57,9 @@ async def main(args):
         mismatch = json.loads(json.dumps(sources['native-review.pdf']))
         mismatch['request_id'] += '-mismatch'; mismatch['artifact']['sha256'] = '0'*64
         cases.append(('digest_mismatch', mismatch))
+        missing = json.loads(json.dumps(sources['native-review.pdf']))
+        missing['request_id'] += '-missing'; missing['artifact']['key'] += '-missing'
+        cases.append(('source_missing', missing))
         results = []
         for code, request in cases:
             result = await run(request)
@@ -71,7 +88,7 @@ async def main(args):
             texts = ' '.join(t.get('text','') for t in document['texts'])
             for n in range(1,4): assert f'T02 native contract fixture page {n}' in texts
         if args.mode=='reuse':
-            assert all(step['reused'] for step in result['steps']), result
+            assert all(step['reused'] and step['storage']['put_bytes']==0 for step in result['steps']), result
             previous = json.loads((out/'native.json').read_text())[name]
             assert result['parsed_result']==previous['parsed_result']
         results[name]=result
@@ -87,5 +104,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     for name in ('temporal','workflow-queue','activity-queue','endpoint','bucket','prefix','out','fixtures'):
         parser.add_argument('--'+name, required=True)
-    parser.add_argument('--mode',choices=['setup','invalid','native','reuse'],required=True)
+    parser.add_argument('--mode',choices=['setup','invalid','native','reuse','mismatch'],required=True)
     asyncio.run(main(parser.parse_args()))

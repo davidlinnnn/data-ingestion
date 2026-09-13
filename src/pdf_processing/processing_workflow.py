@@ -19,14 +19,15 @@ class PDFProcessing:
 
     @workflow.run
     async def run(self, submission: dict) -> dict:
+        self.summary['observed_at'] = workflow.now().isoformat()
         request = submission.get('request', {})
         if not isinstance(request, dict) or request.get('version') != 1:
-            return {**self.summary, 'status': 'failed',
-                    'error': {'category': 'input', 'code': 'invalid_request'}}
+            self.summary.update(status='failed', error={'category': 'input', 'code': 'invalid_request'})
+            return self.summary
         queue = submission.get('activity_queue')
         if not isinstance(queue, str) or not queue:
-            return {**self.summary, 'status': 'failed',
-                    'error': {'category': 'input', 'code': 'invalid_activity_queue'}}
+            self.summary.update(status='failed', error={'category': 'input', 'code': 'invalid_activity_queue'})
+            return self.summary
 
         async def call(value):
             return await workflow.execute_activity('pdf_processing_step_v1', value, task_queue=queue,

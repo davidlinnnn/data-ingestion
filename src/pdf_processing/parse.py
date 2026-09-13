@@ -17,6 +17,7 @@ import threading
 import time
 
 from dataclasses import dataclass
+from .execution import ChildFailure
 
 @dataclass(frozen=True)
 class ParseRequest:
@@ -208,7 +209,8 @@ def execute(request: ParseRequest):
             manifest = json.loads((saved / "complete.json").read_text())
             assert manifest["source_sha256"] == sha(request.pdf)
             assert manifest["method_sha256"] == sha(saved / "method.json")
-            assert json.loads((saved / "method.json").read_text()) == method()
+            if json.loads((saved / "method.json").read_text()) != method():
+                raise ChildFailure("method", "worker_method_mismatch")
             pages = []
             for entry in manifest["pages"]:
                 path = saved / "checkpoints" / entry["file"]
@@ -263,7 +265,8 @@ def execute(request: ParseRequest):
     event("model_initialization", [], time.perf_counter() - t)
     current_method = method()
     if request.expected_method is not None:
-        assert current_method == request.expected_method, "Method differs from requested attribution"
+        if current_method != request.expected_method:
+            raise ChildFailure("method", "worker_method_mismatch")
     write(request.out / "method.json", current_method)
     if request.mode == "warmup":
         return
@@ -290,4 +293,16 @@ def execute(request: ParseRequest):
 
 
 if __name__ == "__main__":
-    execute(ParseRequest.from_json(json.load(sys.stdin)))
+    request = ParseRequest.from_json(json.load(sys.stdin))
+    try:
+        execute(request)
+    except Exception as error:
+        if isinstance(error, ChildFailure):
+            category, code = error.category, error.code
+        elif isinstance(error, AssertionError) and request.mode == 'restore':
+            category, code = 'integrity', 'checkpoint_validation_failed'
+        else:
+            category, code = 'parser', 'parser_execution_failed'
+        request.out.mkdir(parents=True, exist_ok=True)
+        (request.out/'failure.json').write_text(json.dumps({'version': 1, 'category': category, 'code': code}))
+        raise SystemExit(1)

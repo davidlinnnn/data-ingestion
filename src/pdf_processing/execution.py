@@ -16,6 +16,12 @@ import tempfile
 from .object_store import Store, digest
 
 
+class ChildFailure(RuntimeError):
+    def __init__(self, category, code):
+        super().__init__(code)
+        self.category, self.code = category, code
+
+
 @dataclass(frozen=True)
 class SourceRequest:
     pdf: Path
@@ -48,7 +54,11 @@ class Execution:
                         await asyncio.wait({communication}, timeout=1)
                     await communication
                 if process.returncode:
-                    raise RuntimeError((out/'process.log').read_text()[-4000:])
+                    failure = Path(request['out'])/'failure.json'
+                    if failure.is_file():
+                        detail = json.loads(failure.read_text())
+                        raise ChildFailure(detail['category'], detail['code'])
+                    raise RuntimeError('child_process_failed')
             finally:
                 if process.returncode is None:
                     os.killpg(process.pid, signal.SIGKILL)

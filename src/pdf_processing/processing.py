@@ -14,7 +14,7 @@ from typing import NoReturn
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
-from .execution import Execution, SourceRequest
+from .execution import ChildFailure, Execution, SourceRequest
 from .object_store import digest
 
 
@@ -167,8 +167,7 @@ class Processing:
                                  'groups': operation.get('groups', [])}}
             identity = await execution.produce(contract)
             result = {'operation': identity, 'stage': operation['kind'], 'reused': execution.observation['reused'],
-                'observed_at': observed(), 'seconds': time.monotonic()-started,
-                'storage': {key: self.store.io[key]-before[key] for key in before}}
+                'observed_at': observed()}
             if operation['kind'] == 'assembly':
                 # Full reconstruction is not enrichment completion or canonical acceptance.
                 delivered = root/'delivered'
@@ -202,6 +201,8 @@ class Processing:
             return await self.execute(value)
         except ApplicationError:
             raise
+        except ChildFailure as error:
+            reject(error.code, error.category)
         except AssertionError:
             reject('artifact_or_method_validation_failed', 'integrity')
         except TimeoutError:
