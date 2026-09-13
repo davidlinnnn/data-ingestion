@@ -89,3 +89,9 @@ A successful result has `canonical_accepted: false`; its extraction quality rema
 separate from execution completion. Unsupported selected crop geometry or exhausted
 required OCR fails processing. See the T04 acceptance instructions for the bounded
 coordinate/rendering support and evidence.
+
+## Merged execution gate
+
+T03/T04/T05 integration and fresh OCR shutdown are verified in
+`tests/pdf_processing/integration`. Enrichment uses checked storage reads; worker
+shutdown reaps fresh children before removing owned `activity-*` and `ocr-*` scratch.
