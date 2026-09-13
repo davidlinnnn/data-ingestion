@@ -12,6 +12,14 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 
 
+async def cleanup_fresh_work():
+    from pdf_processing.execution import stop_fresh_children
+    await stop_fresh_children()
+    for pattern in ('activity-*', 'ocr-*'):
+        for path in Path(os.environ.get('SCRATCH', '/scratch')).glob(pattern):
+            shutil.rmtree(path, ignore_errors=True)
+
+
 async def main():
     client = await Client.connect(os.environ['TEMPORAL_ADDRESS'])
     parser = None
@@ -61,8 +69,7 @@ async def main():
             # worker process is the final isolation unit after the drain deadline.
             if parser is not None:
                 await parser.stop('drain_deadline')
-            for path in Path(os.environ.get('SCRATCH', '/scratch')).glob('activity-*'):
-                shutil.rmtree(path, ignore_errors=True)
+            await cleanup_fresh_work()
             print(json.dumps({'event':'forced_worker_exit', 'reason':'drain_deadline'}), flush=True)
             os._exit(75)
         await running
@@ -71,6 +78,7 @@ async def main():
         await asyncio.gather(stopping, return_exceptions=True)
         if parser is not None:
             await parser.close()
+        await cleanup_fresh_work()
 
 
 async def entrypoint():

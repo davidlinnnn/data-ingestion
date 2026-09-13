@@ -16,6 +16,20 @@ import tempfile
 from .object_store import Store, StoreFailure, digest
 
 
+# Owned by this worker's event loop; fresh OCR/preflight/assembly are also children.
+_fresh_children = set()
+
+
+async def stop_fresh_children():
+    for process in tuple(_fresh_children):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        await asyncio.wait_for(process.wait(), 5)
+        _fresh_children.discard(process)
+
+
 class ChildFailure(RuntimeError):
     def __init__(self, category, code):
         super().__init__(code)
@@ -47,9 +61,17 @@ class Execution:
             self.observation['parser'] = await self.child_runner.run(request, out, self.heartbeat, self.child_timeout)
             return
         with (out/'process.log').open('wb') as log:
-            process = await asyncio.create_subprocess_exec(
+            spawning = asyncio.create_task(asyncio.create_subprocess_exec(
                 sys.executable, '-m', module, stdin=asyncio.subprocess.PIPE,
-                stdout=log, stderr=log, start_new_session=True)
+                stdout=log, stderr=log, start_new_session=True))
+            try:
+                process = await asyncio.shield(spawning)
+            except asyncio.CancelledError:
+                process = await spawning
+                _fresh_children.add(process)
+                await stop_fresh_children()
+                raise
+            _fresh_children.add(process)
             communication = asyncio.create_task(process.communicate(json.dumps(request).encode()))
             try:
                 async with asyncio.timeout(self.child_timeout):
@@ -64,9 +86,12 @@ class Execution:
                         raise ChildFailure(detail['category'], detail['code'])
                     raise RuntimeError('child_process_failed')
             finally:
-                if process.returncode is None:
+                try:
                     os.killpg(process.pid, signal.SIGKILL)
-                    await process.wait()
+                except ProcessLookupError:
+                    pass
+                await asyncio.wait_for(process.wait(), 5)
+                _fresh_children.discard(process)
                 if not communication.done():
                     communication.cancel()
                     await asyncio.gather(communication, return_exceptions=True)

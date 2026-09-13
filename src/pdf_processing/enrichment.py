@@ -30,9 +30,7 @@ class Enrichment:
         entries = [item for item in manifest['files'] if item['name'] == name]
         if len(entries) != 1:
             reject('required_artifact_missing', 'integrity')
-        data = self.store.get(entries[0]['key'])
-        if digest(data) != entries[0]['sha256']:
-            reject('artifact_digest_mismatch', 'integrity')
+        data = self.store.read_artifact(entries[0])
         return json.loads(data)
 
     async def run(self, value):

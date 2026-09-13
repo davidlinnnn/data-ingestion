@@ -44,7 +44,6 @@ Store(s3_client, bucket, prefix), scratch, heartbeat)` and await `produce` with
 `kind=group`, then `kind=assembly`, then `kind=ocr`. For real-service verification,
 see the acceptance runbook under `tests/pdf_processing`.
 
-<<<<<<< HEAD
 ## Recovery storage operations (T03)
 
 `Store.resolve` returns `None` only for absent registration. It validates the
@@ -72,7 +71,7 @@ writers are quiescent. Truncation or corruption suppresses orphan classification
 Listed live versions provide a byte lower bound, not physical disk usage or all
 historical object versions; monitor provider disk/PVC capacity separately. Shared
 GC and canonical retention ownership remain deferred.
-=======
+
 ## Required component OCR (T04)
 
 Existing version-1 requests still finish at internal `parsed_ready`. For the complete
@@ -90,4 +89,3 @@ A successful result has `canonical_accepted: false`; its extraction quality rema
 separate from execution completion. Unsupported selected crop geometry or exhausted
 required OCR fails processing. See the T04 acceptance instructions for the bounded
 coordinate/rendering support and evidence.
->>>>>>> codex/pdf-t04-component-ocr
