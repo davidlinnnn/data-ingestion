@@ -33,7 +33,7 @@ async def main(args):
     sources = json.loads((out/'requests.json').read_text())
     async def run(request, suffix=''):
         handle = await client.start_workflow(PDFProcessing.run,
-            {'request':request,'activity_queue':args.activity_queue},
+            {'request':request,'activity_queue':'' if suffix=='-missing-queue' else args.activity_queue},
             id='t02-'+uuid.uuid4().hex+suffix, task_queue=args.workflow_queue)
         result = await handle.result()
         assert await handle.query(PDFProcessing.progress) == result, 'Query disagrees with terminal result'
@@ -60,7 +60,9 @@ async def main(args):
         missing = json.loads(json.dumps(sources['native-review.pdf']))
         missing['request_id'] += '-missing'; missing['artifact']['key'] += '-missing'
         cases.append(('source_missing', missing))
-        results = []
+        no_queue = await run({'version':1}, '-missing-queue')
+        assert no_queue['error']=={'category':'input','code':'invalid_activity_queue'}, no_queue
+        results = [no_queue]
         for code, request in cases:
             result = await run(request)
             assert result['status']=='failed' and result['registered_pages']==0, result
@@ -68,19 +70,25 @@ async def main(args):
             results.append(result)
         (out/'invalid.json').write_text(json.dumps(results,indent=2)); print('Invalid cases passed'); return
     store = Store(s3,args.bucket,args.prefix)
+    def read(key):
+        data = store.get(key)
+        assert data is not None, 'Referenced artifact is absent'
+        return data
     results = {}
     for name in ('native-review.pdf','llm-survey-2303.18223v1.pdf'):
         result = await run(sources[name])
         assert result['status']=='parsed_ready' and not result['processing_complete'] and not result['canonical_accepted'], result
         assert result['registered_pages'] == (3 if name=='native-review.pdf' else 51), result
         manifest = store.resolve(result['parsed_result'])
+        assert manifest is not None
         item = next(i for i in manifest['files'] if i['name']=='parsed-result.json')
-        delivery = json.loads(store.get(item['key']))
+        delivery = json.loads(read(item['key']))
         assert delivery['pages']==result['registered_pages'] and len(delivery['page_groups'])==(1 if name=='native-review.pdf' else 11)
         assembly = store.resolve(delivery['assembly'])
-        metrics = json.loads(store.get(next(i['key'] for i in assembly['files'] if i['name']=='metrics.json')))
+        assert assembly is not None
+        metrics = json.loads(read(next(i['key'] for i in assembly['files'] if i['name']=='metrics.json')))
         assert not any(v for k,v in metrics['page_stage_inputs'].items() if k.endswith('Model')), metrics
-        document_bytes = store.get(next(i['key'] for i in assembly['files'] if i['name']=='document.json'))
+        document_bytes = read(next(i['key'] for i in assembly['files'] if i['name']=='document.json'))
         document = json.loads(document_bytes)
         if name=='llm-survey-2303.18223v1.pdf':
             assert digest(document_bytes)=='fd45828175ad659df5b25d90a6c463adc43ddc8c813737d98e1ae6f583d71aab', 'Historical native document changed'

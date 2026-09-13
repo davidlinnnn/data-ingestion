@@ -56,3 +56,11 @@ sources supplied through an external type-check directory. Do not install tools 
 the measured runtime (the full package inventory is part of the frozen method).
 The full slice suite is invalid → native → replacement → reuse after final code fixes;
 the existing T01 scan-restoration test also protects the modified fresh-child seam.
+
+The review-required incompatible-method check uses a separate Activity Deployment
+and queue (`t02-mismatch` in the recorded run) with a test-only profile whose declared
+Docling package version is deliberately wrong. Keep its source prefix the same and
+submit `--mode mismatch --activity-queue t02-mismatch`. The driver checks the typed
+permanent failure and Temporal history's Activity attempt numbers. Never apply that
+profile to the normal workers. `verify_attribution.py` checks stored accepted plans
+against mounted producer files for the recorded `qualified` prefix.
