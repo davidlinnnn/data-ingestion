@@ -1,12 +1,12 @@
 # Native PDF processing workers
 
-This slice delivers `parsed_ready`: complete internal parsing and assembly, **not**
-processing completion, selected OCR completion, or canonical acceptance. The caller
-uses the versioned request through `PDFProcessing` on the Workflow queue and supplies
-an explicitly configured Activity queue. There is no HTTP admission or public task
-identity/deduplication promise here.
+The core retains v1 `parsed_ready`, v2 required picture OCR completion, and v3
+required source-evidence completion. All successful results keep canonical
+acceptance false. New rollout-managed work uses the [explicit release routing
+contract](#explicit-compatible-worker-rollouts-t08) below; the historical
+`PDFProcessing` type remains available on its retained queues.
 
-## Interface
+## Legacy submission interface
 
 Submit a dictionary with `request` and `activity_queue`. The request contains:
 
@@ -20,8 +20,8 @@ Submit a dictionary with `request` and `activity_queue`. The request contains:
 The immutable request plan stores source, resolved profile/runtime/model identities,
 producer hashes, five-page sequential groups, page dimensions, limits and creation
 time. A repeated internal request ID must describe the same request. Reuse checks
-integrity and exact profile/producer/limits. This deliberately conservative policy is
-not selective OCR-only compatibility or rollout routing; T07/T08 own those changes.
+integrity and exact profile/producer/limits. Accepted request IDs retain that exact requirement. New request IDs can reuse
+compatible parsing/assembly under T07; explicit release routing is described below.
 Large method inventories and document bytes remain in object storage.
 
 `PDFProcessing.progress` and its final return expose `registered_pages`, stage,
@@ -86,10 +86,10 @@ The executable local qualification manifest is under `tests/pdf_processing/t05`.
 Its image tag, node pin and development credentials are test-only. The T02 manifest
 is frozen historical evidence, not the deployment recipe for current warm workers.
 
-Changing these budgets requires updating Pod grace and revalidating shutdown. The
-current forced cleanup owns `activity-*` scratch; integration with T04's `ocr-*`
-scratch and fresh OCR children needs a merged shutdown test before claiming OCR
-cleanup. This branch does not establish that combined guarantee.
+Changing these budgets requires updating Pod grace and revalidating shutdown.
+Current cleanup owns both `activity-*` and `ocr-*` scratch and reaps supervised
+native and fresh OCR children. The [merged lifecycle gate](../../tests/pdf_processing/integration/evidence/VERDICT.md)
+records bounded active-OCR/publication shutdown and replacement evidence.
 
 ## Extension rules
 
@@ -112,7 +112,9 @@ to substitute a newer method. A temporarily absent Pod on an already retained
 release is recoverable queued work; retain and restore that release's workers.
 
 `routing.release(binding, images, prefix)` builds the explicit version-1 manifest.
-The binding contains SHA-256 fingerprints of the complete profile, producer map,
+`retained_releases` maps exact release IDs to manifests whose images, models and
+configuration the submitting operator has retained. An unknown ID is rejected as
+`routing_unavailable` before any Workflow is submitted. The binding contains SHA-256 fingerprints of the complete profile, producer map,
 limits and model inventory, plus exact bucket/prefix. `images` maps `workflow`,
 `prepare`, `group`, `assembly`, `select`, `component_ocr` and `finalize` to retained
 immutable image digests. Every queue name includes the whole release identity.

@@ -40,6 +40,10 @@ async def main():
             'source_revision':'synthetic:t08:multiple',
             'artifact':{'key':key,'name':'multiple.pdf','sha256':digest(data),'version_id':saved['VersionId']}}
         (OUT/'source.json').write_text(json.dumps(request))
+    elif command == 'idle':
+        open_runs=[execution.id async for execution in client.list_workflows("ExecutionStatus = 'Running'")]
+        assert not open_runs,open_runs
+        print('No accepted execution remains open before quiescent-stage drain')
     elif command == 'submit':
         case, version = args
         request = {**json.loads((OUT/'source.json').read_text()),'request_id':'t08-'+case+'-'+uuid.uuid4().hex}
@@ -94,7 +98,7 @@ async def main():
             assert step['routing_id']==route['id'] and step['task_queue']==route['queues'][step['worker_stage']]
         if case in ('new','mixed'):
             assert all(s['reused'] for s in result['steps'] if s['stage'] in ('group','assembly'))
-        if case=='loss':
+        if case in ('loss','drain'):
             assert any(s['attempt']>=2 for s in result['steps'] if s['stage']=='group'),result
         history = await handle.fetch_history()
         activities=[]
@@ -110,6 +114,12 @@ async def main():
         print(case+': PASS',flush=True)
     elif command == 'negative':
         route=routes['v1']
+        try:
+            submission(json.loads((OUT/'queued-request.json').read_text())['request'], 'unavailable', retained)
+        except ValueError as error:
+            assert str(error)=='routing_unavailable'
+            (OUT/'unavailable.json').write_text(json.dumps({'status':'rejected_before_submission','code':str(error)}))
+        else:raise AssertionError('Unavailable release accepted')
         for case in ('missing','malformed','inconsistent','conflict'):
             old=json.loads((OUT/'queued-request.json').read_text())['request']
             if case=='conflict':

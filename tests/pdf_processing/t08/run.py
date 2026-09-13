@@ -8,6 +8,12 @@ from releases import NS, ROOT, STAGES
 
 OUT=ROOT/'tests/pdf_processing/t08/evidence'
 PYTHON='/experiment/.venv/bin/python'
+retiring_containers=[]
+
+
+def running_containers(node):
+    value=subprocess.check_output(['docker','exec',node,'crictl','ps','-o','json'],text=True,timeout=20)
+    return {c['id'] for c in json.loads(value)['containers']}
 
 def k(*args):
     return subprocess.check_output(['kubectl','--request-timeout=15s','-n',NS,*args],text=True,timeout=1800)
@@ -21,10 +27,12 @@ def quiesce():
             scale('v2',('workflow',*STAGES),0)
             pods=json.loads(k('get','pods','-o','json'))['items']
             active=[p['metadata']['name'] for p in pods if p['metadata']['name'].startswith('t08-')]
-            if not active:
+            running_by_node={node:running_containers(node) for node,_ in retiring_containers}
+            remaining=[identity for node,identity in retiring_containers if identity in running_by_node[node]]
+            if not active and not remaining:
                 print('T08 remote workers confirmed stopped; coordinator is client-only.',flush=True)
                 return
-            print('Waiting for T08 worker termination: '+str(active),flush=True)
+            print('Waiting for T08 worker termination: '+str({'pods':active,'containers':remaining}),flush=True)
         except Exception as error:
             print('T08 cleanup uncertain; retaining qualification lock: '+str(error),flush=True)
         time.sleep(5)
@@ -36,8 +44,27 @@ def driver(*args):
 def scale(version,stages,replicas):
     for stage in stages:k('scale','deployment/t08-'+version+'-'+stage.replace('_','-'),'--replicas='+str(replicas))
 
-def ready(version):
-    for stage in ('workflow',*STAGES):k('rollout','status','deployment/t08-'+version+'-'+stage.replace('_','-'),'--timeout=90s')
+def ready(version,stages=('workflow',*STAGES)):
+    for stage in stages:k('rollout','status','deployment/t08-'+version+'-'+stage.replace('_','-'),'--timeout=90s')
+
+def absent(version,stages):
+    names={'t08-'+version+'-'+s.replace('_','-') for s in stages}
+    deadline=time.monotonic()+90
+    while True:
+        pods=json.loads(k('get','pods','-o','json'))['items']
+        if not any(p['metadata'].get('labels',{}).get('app') in names for p in pods):return
+        assert time.monotonic()<deadline, 'Quiescent-stage drain timed out'
+        time.sleep(.5)
+
+
+def population(label):
+    pods=json.loads(k('get','pods','-o','json'))['items']
+    data=[{'name':p['metadata']['name'],'uid':p['metadata']['uid'],
+        'images':p['status'].get('containerStatuses',[]),
+        'resources':[c.get('resources') for c in p['spec']['containers']]}
+        for p in pods if p['metadata']['name'].startswith('t08-')]
+    (OUT/(label+'-population.json')).write_text(json.dumps(data,indent=2))
+
 
 def inject(case,graceful):
     started=time.monotonic()
@@ -69,10 +96,12 @@ for p in Path('/scratch').glob('activity-*/pdf-*/process.log'):
                     'node':pod['spec']['nodeName'],'native_event':json.loads(probe)}
                 # The new release coexists while accepted old work is in flight.
                 if case=='loss':
-                    scale('v2',('workflow',*STAGES),1)
+                    scale('v2',('workflow',),1)
                     old_workflow=json.loads(k('get','pods','-l','app=t08-v1-workflow','-o','json'))['items'][0]
                     record['workflow_pod_uid']=old_workflow['metadata']['uid']
                     k('delete','pod',old_workflow['metadata']['name'],'--wait=false')
+                retiring_containers.append((record['node'],record['container_id']))
+                (OUT/(case+'-controller.json')).write_text(json.dumps(record,indent=2))
                 delete_started=time.monotonic()
                 opts=() if graceful else ('--grace-period=0','--force')
                 k('delete','pod',pod['metadata']['name'],'--wait=false',*opts)
@@ -84,8 +113,7 @@ for p in Path('/scratch').glob('activity-*/pdf-*/process.log'):
                 record['deletion_seconds']=time.monotonic()-delete_started
                 # Force-deleted API objects alone do not prove native processes exited.
                 while True:
-                    runtime=json.loads(subprocess.check_output(['docker','exec',record['node'],'crictl','ps','-o','json'],text=True))
-                    if not any(c['id']==record['container_id'] for c in runtime['containers']):break
+                    if record['container_id'] not in running_containers(record['node']):break
                     assert time.monotonic()-delete_started<65, 'Old container still running'
                     time.sleep(.5)
                 record['runtime_container_stopped']=True
@@ -123,12 +151,28 @@ with open('/private/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:
         scale('v1',STAGES,1);ready('v1')
         print(driver('result','queued'),flush=True)
         print(driver('submit','loss','v1'),flush=True);inject('loss',False)
-        print(driver('result','loss'),flush=True);ready('v2')
-        print(driver('submit','new','v2'),flush=True)
-        print(driver('submit','mixed','v1'),flush=True)
-        print(driver('result','new'),flush=True);print(driver('result','mixed'),flush=True)
+        print(driver('result','loss'),flush=True);ready('v2',('workflow',))
         print(driver('submit','drain','v1'),flush=True);inject('drain',True)
         print(driver('result','drain'),flush=True)
+        # Only drain quiescent stages. Their immutable releases remain retained,
+        # and capacity is restored before admitting further requests to them.
+        print(driver('idle'),flush=True)
+        idle_stages=tuple(s for s in STAGES if s!='component_ocr')
+        scale('v1',idle_stages,0);absent('v1',idle_stages)
+        scale('v2',STAGES,1);ready('v2')
+        population('new-method')
+        print(driver('submit','new','v2'),flush=True)
+        print(driver('result','new'),flush=True)
+        print(driver('idle'),flush=True)
+        scale('v2',idle_stages,0);absent('v2',idle_stages)
+        scale('v1',idle_stages,1);ready('v1')
+        population('old-method')
+        print(driver('submit','mixed','v1'),flush=True)
+        print(driver('result','mixed'),flush=True)
+        print(driver('idle'),flush=True)
+        scale('v1',('group','assembly','select','finalize'),0)
+        absent('v1',('group','assembly','select','finalize'))
+        scale('v2',('prepare',),1);ready('v2',('prepare',))
         print(driver('negative'),flush=True)
         k('cp','coordinator:/tmp/t08-results',str(OUT/'results'))
         pods=json.loads(k('get','pods','-o','json'))

@@ -49,6 +49,11 @@ T06's AIMA association/order limitation remains unqualified.
 
 ## Bounded matrix
 
+The [predeclared phased scenario](SCENARIO.md) is authoritative for the final run.
+It limits simultaneous Pod footprint while preserving mixed real OCR workers and
+both Workflow populations. Stages drain only after all accepted executions finish;
+the controller restores required workers before accepting later work.
+
 - Submit old work before any old Workflow/Activity worker polls; then start only
   Workflow/preflight so parsing is queued before its compatible worker starts.
 - Complete that accepted request with its frozen old release and read checked
@@ -56,7 +61,8 @@ T06's AIMA association/order limitation remains unqualified.
 - Submit another old request, observe and immediately SIGSTOP a real active native parser stage, start the new
   release and force-delete only the old parsing Pod. The old queue's replacement
   must finish a later Activity attempt; the new worker cannot consume that queue.
-- Submit new-method and old-method requests with both populations present. The
+- Submit new-method and old-method requests in the predeclared phases with both
+  Workflow and OCR populations present. The
   new method reuses compatible old parsing/assembly while creating current
   request-bound OCR/evidence/final results.
 - Delete an old parsing Pod gracefully with its real native child paused, record Pod

@@ -25,3 +25,11 @@ The harness also deletes the old Workflow Pod during in-flight old parsing to
 exercise Workflow replacement alongside Activity retry. Final runtime acceptance
 is recorded separately in `evidence/VERDICT.md`; pending measurements were never
 represented as a passing review result. Standards: 0 outstanding; Spec: 0 outstanding.
+
+A later harness review of `9d9d83a` identified a cleanup failure path after forced
+Pod deletion: runtime inspection could fail while the Pod object was already gone.
+Fault targets are now recorded before deletion; retrying cleanup requires both
+Pod absence and each tracked container's runtime absence, with bounded inspection
+calls. Errors retain the flock. Both independent reviewers confirmed this
+correction with no outstanding finding. Failed fault timing and scheduling trials
+remain excluded in `evidence/EXPLORATORY.md`.
