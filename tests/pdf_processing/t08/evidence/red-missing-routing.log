@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "<string>", line 7, in <module>
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+{'canonical_accepted': False, 'error': {'category': 'input', 'code': 'invalid_request'}, 'observed_at': '2026-09-13T13:46:12.007810+00:00', 'processing_complete': False, 'registered_pages': 0, 'status': 'failed', 'steps': [], 'version': 1}
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "<string>", line 6, in main
+AssertionError: Baseline does not require a frozen route
+command terminated with exit code 1

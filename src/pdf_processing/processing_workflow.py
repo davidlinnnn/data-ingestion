@@ -30,12 +30,8 @@ class PDFProcessing:
             return self.summary
 
         async def call(value):
-            return await workflow.execute_activity('pdf_processing_step_v1', value, task_queue=queue,
-                start_to_close_timeout=timedelta(minutes=12),
-                schedule_to_close_timeout=timedelta(minutes=40),
-                heartbeat_timeout=timedelta(seconds=15),
-                retry_policy=RetryPolicy(initial_interval=timedelta(seconds=2),
-                    maximum_interval=timedelta(seconds=10), maximum_attempts=3))
+            return await self.call(value, submission)
+
         try:
             prepared = await call({'stage': 'prepare', 'request': request})
             self.summary.update({'plan': prepared['plan'], 'pages': prepared['pages'], 'status': 'parsing',
@@ -81,3 +77,11 @@ class PDFProcessing:
             self.summary.update({'status': 'failed', 'error': failure,
                                  'observed_at': workflow.now().isoformat()})
         return self.summary
+
+    async def call(self, value, submission):
+        return await workflow.execute_activity('pdf_processing_step_v1', value, task_queue=submission['activity_queue'],
+            start_to_close_timeout=timedelta(minutes=12),
+            schedule_to_close_timeout=timedelta(minutes=40),
+            heartbeat_timeout=timedelta(seconds=15),
+            retry_policy=RetryPolicy(initial_interval=timedelta(seconds=2),
+                maximum_interval=timedelta(seconds=10), maximum_attempts=3))

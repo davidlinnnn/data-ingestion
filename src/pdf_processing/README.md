@@ -234,3 +234,24 @@ OCR report `method`) is the v2 stage dependency record, with `contract`, `stage`
 OCR descriptor; the outer request versions and T06 content-evidence schema are
 unchanged. Consumers should read the declared contract, not infer method identity
 from the complete environment snapshot.
+
+## Frozen worker routing (T08)
+
+New rollout-managed submissions use `PDFRolloutProcessing` with a retained explicit
+release from `routing.submission`. The request stores a compact immutable
+`routing_id`; its Workflow history stores the full content-addressed mapping of
+Workflow and all separately deployed Activity stages to queues/images and exact
+profile/producer/model/limit/store bindings. Versioned queues isolate worker
+populations. A changed method is a new release and new request identity; compatible
+parse/assembly registrations remain reusable under T07's checked dependency rules.
+
+`prepare`, `group`, `assembly`, `select`, `component_ocr` and `finalize` each have
+an explicit queue. Required source evidence remains inside finalization. Activity
+workers verify their stage and request/plan routing before executing. Missing or
+inconsistent routes fail explicitly and never resolve to the newest worker. The
+historical `PDFProcessing` path remains for exact retained legacy workers.
+
+See the [deployment and retirement contract](../../deploy/pdf-processing/README.md#explicit-compatible-worker-rollouts-t08)
+and [bounded real-service qualification](../../tests/pdf_processing/t08/README.md).
+All v1/v2/v3 completion, T06 fidelity limitations and T07 sidecar rules still apply;
+this does not qualify an arbitrary model/package upgrade or final packaging #46.

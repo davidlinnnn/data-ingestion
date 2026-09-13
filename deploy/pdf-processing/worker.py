@@ -22,13 +22,29 @@ async def cleanup_fresh_work():
 
 async def main():
     client = await Client.connect(os.environ['TEMPORAL_ADDRESS'])
+    route = None
+    if os.environ.get('ROUTING_FILE'):
+        from pdf_processing.routing import validate
+        route = validate(json.loads(Path(os.environ['ROUTING_FILE']).read_text()))
     parser = None
     grace = int(os.environ.get('DRAIN_SECONDS', '30'))
     options = {'task_queue': os.environ['TASK_QUEUE'],
                'graceful_shutdown_timeout': timedelta(seconds=grace)}
     if os.environ['WORKER_ROLE'] == 'workflow':
         from pdf_processing.processing_workflow import PDFProcessing
-        options['workflows'] = [PDFProcessing]
+        if route is None:
+            options['workflows'] = [PDFProcessing]
+        else:
+            from pdf_processing.rollout_workflow import PDFRolloutProcessing
+            from pdf_processing.routing import fingerprint
+            from pdf_processing.object_store import digest
+            import pdf_processing
+            producer = {p.name: digest(p.read_bytes()) for p in Path(pdf_processing.__file__).parent.glob('*.py')}
+            if (os.environ['TASK_QUEUE'] != route['queues']['workflow'] or
+                    os.environ['WORKER_IMAGE'] != route['images']['workflow'] or
+                    fingerprint(producer) != route['binding']['producer']):
+                raise ValueError('worker_routing_mismatch')
+            options['workflows'] = [PDFRolloutProcessing]
     elif os.environ['WORKER_ROLE'] == 'activity':
         import boto3
         from botocore.config import Config
@@ -45,7 +61,13 @@ async def main():
             os.environ.get('SCRATCH', '/scratch'), os.environ['MODEL_CACHE'],
             json.loads(Path(os.environ['PROFILE_FILE']).read_text()),
             json.loads(os.environ['LIMITS']) if os.environ.get('LIMITS') else None, child_runner=parser)
-        options.update(activities=[processing.run], max_concurrent_activities=1)
+        run = processing.run
+        if route is not None:
+            from pdf_processing.routed_activity import RoutedActivity
+            routed = RoutedActivity(processing, route, os.environ['WORKER_STAGE'],
+                os.environ['TASK_QUEUE'], os.environ['WORKER_IMAGE'])
+            run = routed.run
+        options.update(activities=[run], max_concurrent_activities=1)
     else:
         raise ValueError('WORKER_ROLE must be workflow or activity')
     stop = asyncio.Event()

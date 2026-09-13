@@ -98,3 +98,74 @@ registrations; incompatible shape changes get a new contract version. `parsed_re
 never becomes downstream delivery merely by renaming it: required OCR and final
 processing validation must finish first. #32 decides canonical mapping/acceptance and
 retention ownership; #31 decides HTTP admission/status and infrastructure durability.
+
+## Explicit compatible-worker rollouts (T08)
+
+For new rollout-managed requests use `PDFRolloutProcessing` and
+`pdf_processing.routing.submission(request, release_id, retained_releases)`. Select an exact
+maintainer-published release; there is no `latest` lookup. The returned submission
+includes the immutable manifest and adds its `routing_id` to the captured request.
+Start the Workflow on `release['queues']['workflow']`. Validate the selected release
+against the retained deployment inventory before accepting new work. A missing
+release/image/model or unprovisioned queue is unavailable routing, not permission
+to substitute a newer method. A temporarily absent Pod on an already retained
+release is recoverable queued work; retain and restore that release's workers.
+
+`routing.release(binding, images, prefix)` builds the explicit version-1 manifest.
+The binding contains SHA-256 fingerprints of the complete profile, producer map,
+limits and model inventory, plus exact bucket/prefix. `images` maps `workflow`,
+`prepare`, `group`, `assembly`, `select`, `component_ocr` and `finalize` to retained
+immutable image digests. Every queue name includes the whole release identity.
+No independently deployed stage falls back to a shared latest queue. Required
+source evidence is produced inside `finalize`; it is not a separately deployed
+Activity in this baseline. A future split needs its own explicit stage/queue.
+
+Each stage Deployment uses the existing entrypoint with `ROUTING_FILE`,
+`WORKER_IMAGE` (matching the Pod image), `TASK_QUEUE`, and Activity `WORKER_STAGE`.
+Keep the manifest/profile/package immutable. The Workflow worker checks its queue,
+image declaration and package. Every Activity worker additionally checks full
+profile/producer/limits/models/store bindings and refuses another stage, release
+or request-plan binding. The parser/OCR's existing runtime/model verification
+remains in force. Runtime image enforcement belongs to deployment provenance:
+`WORKER_IMAGE` is an operator declaration, not a container introspection mechanism.
+Build the package and entrypoint into an immutable image in normal deployment;
+qualification uses immutable ConfigMaps over the pinned runtime and records both.
+
+The historical `PDFProcessing` type and no-`ROUTING_FILE` worker mode remain available
+for retained legacy queues. Never place that legacy mode on a rollout-managed
+queue. T07 accepted requests still require their exact old profile/producer/limits;
+they cannot be imported into a T08 worker by adding a routing ID. Keep their old
+images/config/models and queues until they meet retirement criteria. T07 checked
+compatibility sidecars are mandatory for reusable native checkpoints; pre-T07
+registrations are not automatically imported.
+
+### Old-worker retirement
+
+A successful Kubernetes rollout is not retirement authorization. For each release:
+
+1. Fence **new** submissions to that release in the internal submitting operator's
+   published inventory. Preserve its manifest and accepted request IDs. The internal
+   seam has no public admission/status DB; the operator must enforce this fence.
+2. Inspect Temporal for all open executions on its exact Workflow queue, including
+   queued Workflow tasks, pending/retrying Activities, timers, cancellation/drain and
+   replacement work. Retain workers for every stage while any such execution exists.
+   Check all submitters and repeated observations after fencing; visibility is
+   eventually consistent and one empty list is not a transactional proof.
+3. Require every accepted execution to reach a checked complete result, explicit
+   terminal failure or deliberately handled cancellation. Verify registered results
+   remain readable and no unfinished required OCR/evidence is reported complete.
+   For interrupted workers wait for child/scratch cleanup or confirmed Pod exit;
+   recover on the **same** queues, image/model/config. Account for late publication.
+4. Only then drain polling via normal SIGTERM and remove old replicas. Retain the
+   release artifacts for any supported retry/reset/replay or restoration window.
+   A reset after physical retirement requires restoring that exact release first;
+   never reset onto the new release. Define that support/retention window explicitly.
+5. Do not garbage-collect shared checkpoints, source/evidence bytes or canonical
+   consumer artifacts as part of worker retirement. Their lifecycle is separate.
+
+See the [T08 runbook](../../tests/pdf_processing/t08/README.md) for the executable
+isolated rollout and bounded evidence. Existing 12min/40min/15s/3-attempt Activity
+budgets apply; a missing Activity worker eventually yields explicit budget failure.
+A Workflow worker itself must remain available for accepted queued executions and
+for publishing terminal outcomes. T08 does not establish an outage SLO or calibrated
+aggregate memory/concurrency limits; #44/#45 and final packaging #46 remain separate.
