@@ -13,7 +13,7 @@ import signal
 import sys
 import tempfile
 
-from .compatibility import CONTRACT, parsing_method
+from .compatibility import CONTRACT, methods_match
 from .object_store import Store, StoreFailure, digest
 
 
@@ -116,8 +116,7 @@ class Execution:
             manifest = json.loads((out/'complete.json').read_text())
             if (manifest['format'] != 'PROTOTYPE-document-v1' or manifest['status'] != 'success'
                     or manifest['source_sha256'] != self.source.source_sha256
-                    or (parsing_method(json.loads((out/'method.json').read_text())) != parsing_method(self.source.method)
-                        if compatibility is not None else json.loads((out/'method.json').read_text()) != self.source.method)
+                    or not methods_match(json.loads((out/'method.json').read_text()), self.source.method, compatibility is not None)
                     or manifest['method_sha256'] != digest((out/'method.json').read_bytes())):
                 raise ValueError()
             if compatibility is not None and json.loads((out/'compatibility.json').read_text()) != compatibility:
@@ -170,7 +169,7 @@ class Execution:
                     if operation['kind'] == 'group':
                         self.verify_group(saved, operation['start'], operation['end'], checkpoint)
                     elif (json.loads((saved/'compatibility.json').read_text()) != checkpoint
-                          or parsing_method(json.loads((saved/'method.json').read_text())) != parsing_method(source.method)):
+                          or not methods_match(json.loads((saved/'method.json').read_text()), source.method, True)):
                         raise StoreFailure('integrity', 'reuse_method_mismatch')
             self.observation = {'reused': True}
             return identity

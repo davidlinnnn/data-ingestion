@@ -37,3 +37,14 @@ Only request/operation metadata, producer/environment hashes and bounded reports
 are committed. Full JSON, images, source files and checkpoints remain in local
 MinIO. A real restore intentionally performs document assembly for the isolated
 restore check; the OCR-only end-to-end request performs neither parsing nor assembly.
+
+`collect.py` reads actual Temporal histories after the matrix and writes only run
+IDs, queues, request IDs, event counts and Activity type names. It does not export
+history payloads. The matrix's `profile` and `producer` fields identify each runtime
+variant; only the declared OCR/legacy-adapter/parser file differs in those cases.
+
+The driver records Python's real `subprocess.Popen` audit events (module names
+only). Compatible request cases assert that no parse/assembly child was launched;
+the OCR-change case additionally requires exactly four OCR child launches. This
+instrumentation observes actual subprocess launches and does not replace the
+parser, worker, storage adapter or any production collaborator.

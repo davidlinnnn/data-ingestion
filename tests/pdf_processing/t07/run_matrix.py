@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parents[3]
 NS='pdf-t07-validation'
 def k(*args,**kw):return subprocess.run(['kubectl','-n',NS,*args],check=True,**kw)
 k('cp',str(ROOT/'tests/pdf_processing/t07/matrix.py'),'coordinator:/tmp/t07-matrix.py')
-for case in sys.argv[1:] or ('baseline','ocr','unrelated','policy','revision','bytes','group-plan','parser-implementation','parser'):
+for case in sys.argv[1:] or ('baseline','ocr','unrelated','policy','revision','bytes','group-plan','parser-implementation','parser','legacy-v1','legacy-v2','unauthorized'):
     package={p.name:p.read_text() for p in (ROOT/'src/pdf_processing').glob('*.py')}
     if case=='ocr':package['ocr.py']=package['ocr.py'].replace("'seconds_including_engine_load':", "'qualification_implementation': 't07-b',\n        'seconds_including_engine_load':")
     if case=='unrelated':package['temporal.py']+='\nQUALIFICATION_REVISION = "unrelated-t07-b"\n'

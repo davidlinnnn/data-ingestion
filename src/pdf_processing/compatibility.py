@@ -8,13 +8,15 @@ import copy
 CONTRACT = 'pdf-stage-dependencies-v2'
 _TRANSPORT = {'boto3', 'botocore', 's3transfer', 'temporalio', 'pytest', 'pyright', 'pip', 'uv'}
 _NATIVE_INACTIVE = {'rapidocr', 'onnxruntime', 'coloredlogs', 'humanfriendly', 'pyclipper'}
+_NATIVE_ONLY = {'docling', 'docling-core', 'docling-parse', 'docling-ibm-models',
+                'torch', 'torchvision', 'transformers', 'safetensors', 'tokenizers'}
 _FILES = {
     'group': ('parse.py', 'execution.py', 'compatibility.py', 'supervision.py', 'warm_child.py'),
     'assembly': ('parse.py', 'execution.py', 'compatibility.py'),
-    'selection': ('enrichment.py', 'compatibility.py'),
-    'ocr': ('ocr.py', 'enrichment.py', 'execution.py', 'compatibility.py'),
-    'evidence': ('evidence.py', 'enrichment.py', 'execution.py', 'compatibility.py'),
-    'finalize': ('enrichment.py', 'compatibility.py'),
+    'selection': ('enrichment.py', 'processing.py', 'compatibility.py'),
+    'ocr': ('ocr.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),
+    'evidence': ('evidence.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),
+    'finalize': ('enrichment.py', 'processing.py', 'compatibility.py'),
 }
 
 
@@ -34,6 +36,21 @@ def parsing_method(method):
     return value
 
 
+def enrichment_runtime(method, ocr):
+    # Both children consume serialized JSON, not Docling models. OCR is fixed to
+    # ONNX; evidence only renders regions. Unknown packages remain conservative.
+    ignored = _TRANSPORT | _NATIVE_ONLY | (set() if ocr else _NATIVE_INACTIVE)
+    return {'python': method['python'], 'platform': method['platform'],
+            'packages': {k: v for k, v in method['packages'].items()
+                         if k.lower().replace('_', '-') not in ignored},
+            'model_artifacts': {k: v for k, v in method['model_artifacts'].items()
+                                if ocr and k.startswith('rapidocr/')}}
+
+
+def methods_match(saved, current, scoped=False):
+    return parsing_method(saved) == parsing_method(current) if scoped else saved == current
+
+
 def dependencies(stage, profile, producer):
     """Closed stage vocabulary; new output-affecting code belongs in this contract."""
     result = {'contract': CONTRACT, 'stage': stage,
@@ -43,10 +60,10 @@ def dependencies(stage, profile, producer):
     elif stage == 'selection':
         result['policy'] = 'all-picture-items-v1'
     elif stage == 'ocr':
-        result['method'] = profile['method']
+        result['method'] = enrichment_runtime(profile['method'], True)
         result['policy'] = profile.get('picture_ocr', {'render_scale': 3})
     elif stage == 'evidence':
-        result['method'] = parsing_method(profile['method'])
+        result['method'] = enrichment_runtime(profile['method'], False)
         result['policy'] = profile.get('content_evidence', {'version': 'typed-source-evidence-v1', 'reviews': {}})
     elif stage == 'finalize':
         result['policy'] = 'required-work-barrier-v3'

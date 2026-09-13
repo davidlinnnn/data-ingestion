@@ -15,6 +15,13 @@ from pdf_processing.execution import Execution,SourceRequest,ChildFailure
 
 OUT=Path('/tmp/t07-matrix');OUT.mkdir(exist_ok=True)
 scenario=sys.argv[1]
+launched_modules=[]
+def audit(event, arguments):
+    if event=='subprocess.Popen':
+        argv=arguments[1]
+        if isinstance(argv,(list,tuple)) and '-m' in argv:
+            launched_modules.append(argv[argv.index('-m')+1])
+sys.addaudithook(audit)
 
 async def main():
     s3=boto3.client('s3',endpoint_url='http://objects:9000');store=Store(s3,'t07','final')
@@ -33,6 +40,14 @@ async def main():
         (OUT/'source.json').write_text(json.dumps(request))
     else:request=json.loads((OUT/'source.json').read_text())
     request={**request,'request_id':uuid.uuid4().hex}
+    if scenario=='legacy-v1':
+        request['version']=1;request.pop('completion')
+    if scenario=='legacy-v2':
+        request.update(version=2,completion='required_picture_ocr_v1')
+    if scenario=='unauthorized':
+        data=Path('/tmp/t07-two.pdf').read_bytes();key='outside/sources/two.pdf'
+        saved=s3.put_object(Bucket='t07',Key=key,Body=data)
+        request['artifact']={**request['artifact'],'key':key,'version_id':saved['VersionId']}
     if scenario=='ocr':
         profile['picture_ocr']={'render_scale':4}
         # Native parsing never constructs an OCR model with do_ocr=False.
@@ -56,8 +71,17 @@ async def main():
             refused=await client.execute_workflow(PDFProcessing.run,{'request':frozen,'activity_queue':queue},id=uuid.uuid4().hex,task_queue='t07-workflows')
             assert refused['status']=='failed' and refused['error']['code']=='worker_method_mismatch',refused
         result=await client.execute_workflow(PDFProcessing.run,{'request':request,'activity_queue':queue},id=uuid.uuid4().hex,task_queue='t07-workflows')
-        report={'scenario':scenario,'request':request,'result':result,'producer':processing.producer,'profile':profile}
+        report={'scenario':scenario,'request':request,'result':result,'producer':processing.producer,'profile':profile,
+                'child_process_modules':list(launched_modules)}
         (OUT/(scenario+'.json')).write_text(json.dumps(report,indent=2))
+        if scenario=='unauthorized':
+            assert result['status']=='failed' and result['error']['code']=='invalid_source_reference',result
+            print('Equal source bytes outside authorized prefix rejected: PASS');return
+        if scenario=='legacy-v1':
+            assert result['status']=='parsed_ready' and not result['processing_complete'],result
+            assert all(s['reused'] for s in result['steps'])
+            assert read(result['parsed_result'],'parsed-result.json')['source']==request
+            print('v1 parsed_ready with compatible reuse: PASS');return
         if scenario=='parser':
             assert result['status']=='failed' and result['error']['code']=='worker_method_mismatch',result
             print('Unsupported parser change explicitly rejected without fallback: PASS');return
@@ -65,8 +89,11 @@ async def main():
         final=read(result['processing_result'],'processing-result.json')
         assert final['source']==request and not final['canonical_accepted'] and final['processing_complete']
         assert final['provenance']['profile']==profile and final['provenance']['producer']==processing.producer
-        evidence=read(final['content_evidence'],'content-evidence.json')
-        assert evidence['source']==request
+        if request['version']==3:
+            evidence=read(final['content_evidence'],'content-evidence.json')
+            assert evidence['source']==request
+        else:
+            assert final['version']==1 and 'content_evidence' not in final
         if scenario=='policy':
             assert evidence['formula_coverage']=='source_reviewed_regions'
             assert evidence['source_review']==profile['content_evidence']['reviews'][request['artifact']['sha256']]
@@ -77,14 +104,16 @@ async def main():
         report['ocr']=[{k:x[k] for k in ('source_sha256','render_scale','crop_sha256','method','producer','outcome')} for x in ocr]
         if scenario!='baseline':
             baseline=json.loads((OUT/'baseline.json').read_text())
-            should_reuse=scenario in ('ocr','unrelated','policy')
+            should_reuse=scenario in ('ocr','unrelated','policy','legacy-v2')
             assert all(s['reused']==should_reuse for s in result['steps'] if s['stage'] in ('group','assembly')),result
             assert result['parsed_result']!=baseline['result']['parsed_result']
             assert result['processing_result']!=baseline['result']['processing_result']
             if should_reuse:
+                assert 'pdf_processing.parse' not in launched_modules,launched_modules
                 assert final['assembly']==baseline['final']['assembly']
                 assert all('parser' not in s for s in result['steps'] if s['stage']=='group')
             if scenario=='ocr':
+                assert launched_modules.count('pdf_processing.ocr')==4,launched_modules
                 assert all(x['render_scale']==4 for x in ocr)
                 assert all(not s['reused'] for s in result['steps'] if s['stage']=='component_ocr')
                 assert all(x.get('qualification_implementation')=='t07-b' for x in ocr)

@@ -177,7 +177,7 @@ producer set and limits; upgrading a worker does not silently alter accepted wor
 | Parsing | Exact captured object reference (including name/version), source revision, full group plan/range, native parser method, parse/execution/warm-child/supervision implementation and compatibility contract. |
 | Assembly | Same source and plan, ordered exact group registrations, compatible checkpoint producer, assembly implementation and native method. |
 | Selection | Current request/parsed binding, immutable all-picture policy and selection implementation. |
-| OCR | Current selection/component, OCR implementation, full declared runtime/model method, render-scale recipe; v3 cropbox semantics remain bound through the selection's request. |
+| OCR | Current selection/component, OCR implementation, active runtime/RapidOCR models, render-scale recipe; v3 cropbox semantics remain bound through the selection's request. |
 | Evidence | Current request/parsed/assembly binding, typed traversal/evidence implementation, native/rendering dependencies and complete evidence policy including reviewed regions, representation dispositions, coordinates and original-source mapping. |
 | Finalization | Current request, exact selection, all durable required outcomes, v3 content evidence, finalization implementation and full accepted provenance. |
 
@@ -191,7 +191,10 @@ It is not a generic method registry or an authorization interface.
 The native method retains Python/platform, unknown packages, native model files,
 backend, option types and all active options. For `do_ocr=False` only, RapidOCR
 models/options and the explicitly enumerated inactive OCR packages are excluded.
-Known transport/tooling packages are excluded from parsing identity. Everything
+Known transport/tooling packages are excluded from stage compatibility identity.
+OCR/evidence consume serialized JSON: their runtime projection excludes native
+Docling/Torch implementations and parser options/models; only OCR retains RapidOCR
+models. Rendering and unknown package dependencies remain conservative. Everything
 else remains conservative. Scanned parsing retains OCR dependencies. Adding a new
 output-affecting dependency requires updating the stage contract; an unknown
 package is never assumed irrelevant. OCR configuration currently permits only
@@ -224,3 +227,10 @@ alone grant no access. Original-source evidence reads obey the same prefix scope
 The v1/v2/v3 completion contracts and T06 quality limitations remain unchanged,
 including the unqualified AIMA non-contiguous paragraph/note association and total
 body order. `canonical_accepted` remains false.
+
+Within these new internal registrations, `selection.ocr_method` (and the copied
+OCR report `method`) is the v2 stage dependency record, with `contract`, `stage`,
+`producer`, `method` and `policy` fields. It replaces the earlier internal ad-hoc
+OCR descriptor; the outer request versions and T06 content-evidence schema are
+unchanged. Consumers should read the declared contract, not infer method identity
+from the complete environment snapshot.

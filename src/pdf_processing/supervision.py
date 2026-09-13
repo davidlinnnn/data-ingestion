@@ -115,11 +115,8 @@ class WarmParser:
                         if kind == 'failure':
                             raise ChildFailure(row['category'], row['code'])
                         if kind == 'ready':
-                            from .compatibility import parsing_method
-                            compatible = row.get('method') == request['expected_method']
-                            if request.get('checkpoint_compatibility') is not None:
-                                compatible = parsing_method(row['method']) == parsing_method(request['expected_method'])
-                            if not compatible:
+                            from .compatibility import methods_match
+                            if not methods_match(row.get('method'), request['expected_method'], request.get('checkpoint_compatibility') is not None):
                                 raise ChildFailure('method', 'worker_method_mismatch')
                             self.observation['ready'] = True
                         elif kind == 'progress':

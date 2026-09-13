@@ -10,8 +10,7 @@ for name in ('storage','temporal'):
  data=(root/f'docs/prototypes/pdf-checkpoint-prototype/performance/{name}.yaml').read_text().replace('pdf-checkpoint-performance',ns)
  subprocess.run(['kubectl','apply','-f','-'],input=data,text=True,check=True)
 apply({'apiVersion':'v1','kind':'ConfigMap','metadata':{'name':'t07-package','namespace':ns},'data':{p.name:p.read_text() for p in (root/'src/pdf_processing').glob('*.py')}})
-profile_path=pathlib.Path('/private/tmp/t07-profile.json')
-old={'native-v1.json':profile_path.read_text() if profile_path.exists() else (root/'deploy/pdf-processing/profiles/native-v1.json').read_text()}
+old={'native-v1.json':(root/'deploy/pdf-processing/profiles/native-v1.json').read_text()}
 old['worker.py']=(root/'deploy/pdf-processing/worker.py').read_text()
 old['verify.py']=(root/'tests/pdf_processing/t07/reprocess.py').read_text()
 apply({'apiVersion':'v1','kind':'ConfigMap','metadata':{'name':'t07-driver','namespace':ns},'data':old})
