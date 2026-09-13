@@ -1,7 +1,8 @@
 """Fresh-process Docling extraction; checkpoint format remains prototype-internal.
 
 Derived from the pinned experiment. No source, store or method is selected at import.
-Use one request per process: stage guards instrument Docling classes process-wide.
+Fresh execution installs guards once. The private warm protocol rebinds request-local
+state around one sequential capture converter; assembly always runs fresh.
 """
 import collections
 import hashlib
@@ -40,7 +41,9 @@ class ParseRequest:
         return cls(**value)
 
 
-def execute(request: ParseRequest):
+def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: None):
+    if receive is not None and (request.mode != 'capture' or not request.checkpoint_only or request.scan):
+        raise ChildFailure('method', 'unsupported_warm_profile')
     if request.mode not in ('baseline', 'capture', 'restore', 'warmup'):
         raise ValueError('Unsupported execution mode')
     if request.out.exists() and any(request.out.iterdir()):
@@ -90,6 +93,8 @@ def execute(request: ParseRequest):
             with (request.out / "events.jsonl").open("a") as f:
                 f.write(json.dumps(value) + "\n")
                 f.flush()
+        if stage != "model_initialization":
+            notify("progress", stage=stage, pages=pages)
         print(json.dumps(value), flush=True)
     
     
@@ -115,6 +120,7 @@ def execute(request: ParseRequest):
                 if forbid:
                     raise AssertionError(f"Repeated page stage: {_name}")
                 t = time.perf_counter()
+                event("stage_enter", [p.page_no for p in pages], 0, native_stage=_name)
                 try:
                     yield from _original(self, conv_res, iter(pages))
                 finally:
@@ -264,32 +270,49 @@ def execute(request: ParseRequest):
     converter.initialize_pipeline(bm.InputFormat.PDF)
     event("model_initialization", [], time.perf_counter() - t)
     current_method = method()
-    if request.expected_method is not None:
-        if current_method != request.expected_method:
-            raise ChildFailure("method", "worker_method_mismatch")
-    write(request.out / "method.json", current_method)
-    if request.mode == "warmup":
-        return
-    t = time.perf_counter()
-    result = converter.convert(request.pdf, page_range=(request.start, request.end))
-    elapsed = time.perf_counter() - t
-    assert result.status == bm.ConversionStatus.SUCCESS, result.errors
-    result.document.save_as_json(request.out / "document.json")
-    (request.out / "document.md").write_text(result.document.export_to_markdown())
-    counts = collections.Counter()
-    seconds = collections.Counter()
-    for e in events:
-        counts[e["stage"]] += len(e["pages"])
-        seconds[e["stage"]] += e["seconds"]
-    report = {"pid": os.getpid(), "mode": request.mode, "wall_seconds": time.perf_counter()-started,
-              "convert_seconds": elapsed, "peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-              "rss_units": "bytes" if sys.platform == "darwin" else "KiB", "page_stage_inputs": dict(counts),
-              "stage_seconds_sum_not_wall": dict(seconds), "source_sha256": sha(request.pdf),
-              "document_sha256": sha(request.out / "document.json"),
-              "labels": dict(collections.Counter(str(getattr(item, "label")) for item, _ in result.document.iterate_items() if hasattr(item, "label"))),
-              "errors": [e.model_dump(mode="json") for e in result.errors]}
-    write(request.out / "metrics.json", report)
-    print(json.dumps(report, indent=2))
+    original_scan, original_cache = request.scan, request.model_cache
+    while True:
+        if receive is not None:
+            if request.mode != 'capture' or not request.checkpoint_only or request.scan or request.scan != original_scan or request.model_cache != original_cache:
+                raise ChildFailure('method', 'unsupported_warm_profile')
+        request.out.mkdir(parents=True, exist_ok=True)
+        if request.expected_method is not None:
+            if current_method != request.expected_method:
+                raise ChildFailure("method", "worker_method_mismatch")
+        notify("ready", method=current_method)
+        write(request.out / "method.json", current_method)
+        if request.mode == "warmup":
+            return
+        t = time.perf_counter()
+        result = converter.convert(request.pdf, page_range=(request.start, request.end))
+        elapsed = time.perf_counter() - t
+        assert result.status == bm.ConversionStatus.SUCCESS, result.errors
+        result.document.save_as_json(request.out / "document.json")
+        (request.out / "document.md").write_text(result.document.export_to_markdown())
+        counts = collections.Counter()
+        seconds = collections.Counter()
+        for e in events:
+            counts[e["stage"]] += len(e["pages"])
+            seconds[e["stage"]] += e["seconds"]
+        report = {"pid": os.getpid(), "mode": request.mode, "wall_seconds": time.perf_counter()-started,
+                  "convert_seconds": elapsed, "peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                  "rss_units": "bytes" if sys.platform == "darwin" else "KiB", "page_stage_inputs": dict(counts),
+                  "stage_seconds_sum_not_wall": dict(seconds), "source_sha256": sha(request.pdf),
+                  "document_sha256": sha(request.out / "document.json"),
+                  "labels": dict(collections.Counter(str(getattr(item, "label")) for item, _ in result.document.iterate_items() if hasattr(item, "label"))),
+                  "errors": [e.model_dump(mode="json") for e in result.errors]}
+        write(request.out / "metrics.json", report)
+        print(json.dumps(report, indent=2))
+        notify('done', memory={'peak_rss': report['peak_rss_bytes'], 'units': report['rss_units']})
+        if receive is None:
+            return
+        request = receive()
+        if request is None:
+            return
+        if request.out.exists() and any(request.out.iterdir()):
+            raise ChildFailure('integrity', 'output_directory_not_fresh')
+        events.clear()
+        started = time.perf_counter()
 
 
 if __name__ == "__main__":
