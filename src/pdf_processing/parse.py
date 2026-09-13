@@ -19,6 +19,7 @@ import time
 
 from dataclasses import dataclass
 from .execution import ChildFailure
+from .compatibility import parsing_method, dependencies
 
 @dataclass(frozen=True)
 class ParseRequest:
@@ -32,6 +33,7 @@ class ParseRequest:
     end: int = 9223372036854775807
     checkpoint_only: bool = False
     expected_method: dict | None = None
+    checkpoint_compatibility: dict | None = None
 
     @classmethod
     def from_json(cls, value):
@@ -213,9 +215,15 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
             saved = request.checkpoint
             assert saved is not None
             manifest = json.loads((saved / "complete.json").read_text())
+            assert manifest["format"] == "PROTOTYPE-document-v1"
             assert manifest["source_sha256"] == sha(request.pdf)
             assert manifest["method_sha256"] == sha(saved / "method.json")
-            if json.loads((saved / "method.json").read_text()) != method():
+            saved_method = json.loads((saved / "method.json").read_text())
+            compatible = saved_method == method()
+            if request.checkpoint_compatibility is not None:
+                compatible = (json.loads((saved / "compatibility.json").read_text()) == request.checkpoint_compatibility
+                              and parsing_method(saved_method) == parsing_method(method()))
+            if not compatible:
                 raise ChildFailure("method", "worker_method_mismatch")
             pages = []
             for entry in manifest["pages"]:
@@ -270,6 +278,10 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
     converter.initialize_pipeline(bm.InputFormat.PDF)
     event("model_initialization", [], time.perf_counter() - t)
     current_method = method()
+    if request.checkpoint_compatibility is not None:
+        producer = {p.name: sha(p) for p in Path(__file__).parent.glob('*.py')}
+        if request.checkpoint_compatibility != dependencies('group', {'method': current_method}, producer):
+            raise ChildFailure('method', 'checkpoint_producer_mismatch')
     original_scan, original_cache = request.scan, request.model_cache
     while True:
         if receive is not None:
@@ -277,10 +289,13 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
                 raise ChildFailure('method', 'unsupported_warm_profile')
         request.out.mkdir(parents=True, exist_ok=True)
         if request.expected_method is not None:
-            if current_method != request.expected_method:
+            if (parsing_method(current_method) != parsing_method(request.expected_method)
+                    if request.checkpoint_compatibility is not None else current_method != request.expected_method):
                 raise ChildFailure("method", "worker_method_mismatch")
         notify("ready", method=current_method)
         write(request.out / "method.json", current_method)
+        if request.checkpoint_compatibility is not None:
+            write(request.out / "compatibility.json", request.checkpoint_compatibility)
         if request.mode == "warmup":
             return
         t = time.perf_counter()

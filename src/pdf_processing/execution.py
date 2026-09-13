@@ -13,6 +13,7 @@ import signal
 import sys
 import tempfile
 
+from .compatibility import CONTRACT, parsing_method
 from .object_store import Store, StoreFailure, digest
 
 
@@ -110,13 +111,16 @@ class Execution:
             path.write_bytes(data)
         return manifest
 
-    def verify_group(self, out, start, end):
+    def verify_group(self, out, start, end, compatibility=None):
         try:
             manifest = json.loads((out/'complete.json').read_text())
             if (manifest['format'] != 'PROTOTYPE-document-v1' or manifest['status'] != 'success'
                     or manifest['source_sha256'] != self.source.source_sha256
-                    or json.loads((out/'method.json').read_text()) != self.source.method
+                    or (parsing_method(json.loads((out/'method.json').read_text())) != parsing_method(self.source.method)
+                        if compatibility is not None else json.loads((out/'method.json').read_text()) != self.source.method)
                     or manifest['method_sha256'] != digest((out/'method.json').read_bytes())):
+                raise ValueError()
+            if compatibility is not None and json.loads((out/'compatibility.json').read_text()) != compatibility:
                 raise ValueError()
             pages, evidence = [], set()
             for entry in manifest['pages']:
@@ -150,7 +154,24 @@ class Execution:
         producer = {p.name: digest(p.read_bytes()) for p in Path(__file__).parent.glob('*.py')}
         identity = digest(json.dumps({'operation': operation, 'source': source.source_sha256,
             'source_revision': source.source_revision, 'method': source.method, 'producer': producer}, sort_keys=True).encode())
+        scoped = operation.get('contract') == CONTRACT
+        checkpoint = operation['dependencies']['checkpoint'] if scoped else None
+        if scoped:
+            identity = digest(json.dumps(operation, sort_keys=True).encode())
         if await asyncio.to_thread(self.store.resolve, identity):
+            if scoped:
+                with tempfile.TemporaryDirectory(prefix='reuse-', dir=self.scratch) as tmp:
+                    saved = Path(tmp)
+                    await asyncio.to_thread(self.materialize, identity, saved)
+                    attribution = json.loads((saved/'attribution.json').read_text())
+                    if (attribution['operation'] != operation or attribution['source_revision'] != source.source_revision
+                            or attribution['source_sha256'] != source.source_sha256):
+                        raise StoreFailure('integrity', 'reuse_attribution_mismatch')
+                    if operation['kind'] == 'group':
+                        self.verify_group(saved, operation['start'], operation['end'], checkpoint)
+                    elif (json.loads((saved/'compatibility.json').read_text()) != checkpoint
+                          or parsing_method(json.loads((saved/'method.json').read_text())) != parsing_method(source.method)):
+                        raise StoreFailure('integrity', 'reuse_method_mismatch')
             self.observation = {'reused': True}
             return identity
         self.observation = {'reused': False}
@@ -159,12 +180,13 @@ class Execution:
             out = Path(tmp)
             result = out/'result'
             request = {'pdf': str(source.pdf), 'model_cache': str(source.model_cache),
-                'out': str(result), 'scan': source.scan, 'expected_method': source.method}
+                'out': str(result), 'scan': source.scan, 'expected_method': source.method,
+                'checkpoint_compatibility': checkpoint}
             kind = operation['kind']
             if kind == 'group':
                 await self.child('pdf_processing.parse', {**request, 'mode': 'capture',
                     'start': operation['start'], 'end': operation['end'], 'checkpoint_only': True}, out)
-                self.verify_group(result, operation['start'], operation['end'])
+                self.verify_group(result, operation['start'], operation['end'], checkpoint)
             elif kind == 'assembly':
                 merged = out/'merged'
                 (merged/'checkpoints').mkdir(parents=True)
@@ -173,17 +195,29 @@ class Execution:
                     group = out/'inputs'/str(i)
                     await asyncio.to_thread(self.materialize, group_id, group)
                     current = json.loads((group/'complete.json').read_text())
+                    numbers = [json.loads((group/'checkpoints'/p['file']).read_text())['page_no'] for p in current['pages']]
+                    self.verify_group(group, min(numbers), max(numbers), checkpoint)
                     if manifest is None:
                         manifest = {**current, 'pages': [], 'confidence': {**current['confidence'], 'pages': {}}}
                         (merged/'method.json').write_bytes((group/'method.json').read_bytes())
-                    manifest['pages'] += current['pages']
+                        if checkpoint is not None:
+                            (merged/'compatibility.json').write_text(json.dumps(checkpoint))
                     manifest['confidence']['pages'].update(current['confidence']['pages'])
                     for path in (group/'checkpoints').iterdir():
                         target = merged/'checkpoints'/path.name
                         if target.exists(): raise ValueError('Duplicate checkpoint page')
-                        target.write_bytes(path.read_bytes())
+                        raw = path.read_bytes()
+                        if path.suffix == '.json' and current['method_sha256'] != manifest['method_sha256']:
+                            # Each original was verified above. Normalize only the transient
+                            # merge envelope; immutable originals retain full environment hashes.
+                            page = json.loads(raw)
+                            page['method_sha256'] = manifest['method_sha256']
+                            raw = json.dumps(page, sort_keys=True).encode()
+                        target.write_bytes(raw)
+                    manifest['pages'] += [{**entry, 'sha256': digest((merged/'checkpoints'/entry['file']).read_bytes())}
+                                          for entry in current['pages']]
                 (merged/'complete.json').write_text(json.dumps(manifest))
-                self.verify_group(merged, operation['start'], operation['end'])
+                self.verify_group(merged, operation['start'], operation['end'], checkpoint)
                 await self.child('pdf_processing.parse', {**request, 'mode': 'restore',
                     'checkpoint': str(merged), 'start': operation['start'], 'end': operation['end']}, out)
                 try:

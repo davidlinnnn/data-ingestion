@@ -160,3 +160,67 @@ versioned selection/method and must join the completion barrier before success.
 T07 owns compatibility/reuse policy; canonical delivery/schema and public admission
 are separate tracks. See [T06 validation](../../tests/pdf_processing/t06/README.md)
 for qualified pages, limitations and actual replacement evidence.
+
+## Stage compatibility and deliberate reprocessing (T07)
+
+`pdf-stage-dependencies-v2` is an internal operation identity transition. A new
+request ID creates a new frozen plan and new source/request-bound parsed, selection,
+OCR, evidence and final result bindings. It can reference an existing compatible
+page-group and assembly registration. The old artifacts are never rewritten and
+are attributed to their original producers. The new final manifest retains the
+new frozen full profile and producer map in `provenance`; these are not compatibility
+identities. Existing request IDs still require their exact accepted worker profile,
+producer set and limits; upgrading a worker does not silently alter accepted work.
+
+| Stage | Compatibility dependencies |
+|---|---|
+| Parsing | Exact captured object reference (including name/version), source revision, full group plan/range, native parser method, parse/execution/warm-child/supervision implementation and compatibility contract. |
+| Assembly | Same source and plan, ordered exact group registrations, compatible checkpoint producer, assembly implementation and native method. |
+| Selection | Current request/parsed binding, immutable all-picture policy and selection implementation. |
+| OCR | Current selection/component, OCR implementation, full declared runtime/model method, render-scale recipe; v3 cropbox semantics remain bound through the selection's request. |
+| Evidence | Current request/parsed/assembly binding, typed traversal/evidence implementation, native/rendering dependencies and complete evidence policy including reviewed regions, representation dispositions, coordinates and original-source mapping. |
+| Finalization | Current request, exact selection, all durable required outcomes, v3 content evidence, finalization implementation and full accepted provenance. |
+
+Selection, OCR and evidence payloads embed request-bound references. They deliberately
+receive new registrations for a new request even when their content is unchanged;
+T07 promises inference/assembly reuse, not cross-request enrichment payload reuse.
+Relevant policy/producer changes cannot inherit stale final results. The small
+`compatibility.py` module owns the closed stage vocabulary and dependency projection.
+It is not a generic method registry or an authorization interface.
+
+The native method retains Python/platform, unknown packages, native model files,
+backend, option types and all active options. For `do_ocr=False` only, RapidOCR
+models/options and the explicitly enumerated inactive OCR packages are excluded.
+Known transport/tooling packages are excluded from parsing identity. Everything
+else remains conservative. Scanned parsing retains OCR dependencies. Adding a new
+output-affecting dependency requires updating the stage contract; an unknown
+package is never assumed irrelevant. OCR configuration currently permits only
+`picture_ocr: {render_scale: <positive number up to 6>}`; the default remains 3.
+The operator may set positive `group_pages`; its resulting complete plan participates
+in parsing and assembly identity. Unsupported parser options fail method validation;
+they never select a fallback parser.
+
+The persisted page/document serialization remains `PROTOTYPE-page-v1` /
+`PROTOTYPE-document-v1`. New registrations also require a hashed
+`compatibility.json` sidecar declaring the checkpoint producer and projected native
+method. Reuse validates it, complete coverage, full saved method hash and checked
+artifact bytes. The restore child independently compares the declared producer
+against its actual code/runtime projection before loading saved pages. Mixed full
+environments with equal declared compatibility may be combined: after validating
+each original group, only the transient merge envelope's method hash and page
+entry digests are normalized to the first group. The originals and their full
+provenance remain immutable; assembled values and image bytes are not transformed.
+
+Pre-T07 outer registrations are not automatically imported into the v2 namespace.
+A checkpoint without the sidecar is not eligible for v2 reuse; no legacy producer
+migration is declared. The older standalone T01 execution path retains exact-method
+validation for historical/scanned regression use. Unknown formats and undeclared
+producer transitions fail. This is an internal compatibility transition, not a
+claim that old T06 plans can resume on a changed worker.
+
+Every request still supplies an authorized, versioned captured input inside the
+configured source prefix and passes a fresh checked source read. Matching bytes
+alone grant no access. Original-source evidence reads obey the same prefix scope.
+The v1/v2/v3 completion contracts and T06 quality limitations remain unchanged,
+including the unqualified AIMA non-contiguous paragraph/note association and total
+body order. `canonical_accepted` remains false.

@@ -14,6 +14,7 @@ from typing import NoReturn
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
+from .compatibility import CONTRACT, dependencies
 from .execution import ChildFailure, Execution, SourceRequest
 from .object_store import digest, StoreFailure, storage_failure
 
@@ -42,11 +43,18 @@ class Processing:
             raise ValueError('All provisional limits must be positive integers')
         if profile['id'] != 'native-v1' or profile['method']['options']['do_ocr'] is not False:
             raise ValueError('T02 only supports the pinned native-v1 profile without parsing OCR')
+        if type(profile.get('group_pages', 5)) is not int or profile.get('group_pages', 5) <= 0:
+            raise ValueError('group_pages must be a positive integer')
+        ocr = profile.get('picture_ocr', {'render_scale': 3})
+        if set(ocr) != {'render_scale'} or type(ocr['render_scale']) not in (int, float) or not 0 < ocr['render_scale'] <= 6:
+            raise ValueError('Unsupported picture OCR recipe')
         self.producer = {p.name: digest(p.read_bytes()) for p in Path(__file__).parent.glob('*.py')}
         self.scratch.mkdir(parents=True, exist_ok=True)
 
     def read_source(self, request, path):
         ref = request['artifact']
+        if not ref['key'].startswith(self.store.prefix+'sources/') or ref['version_id'] == 'null':
+            reject('invalid_source_reference')
         started = time.monotonic()
         try:
             response = self.store.client.get_object(Bucket=self.store.bucket,
@@ -136,15 +144,24 @@ class Processing:
                 reject(inspection['error'])
             pages = inspection['pages']
             plan = {'version': 1, 'request': request, 'profile': self.profile,
-                'producer_contract': 'pdf-operation-v1', 'checkpoint_format': 'PROTOTYPE-page-v1',
+                'producer_contract': CONTRACT, 'checkpoint_format': 'PROTOTYPE-page-v1',
                 'pages': pages, 'page_sizes': inspection['page_sizes'], 'source_bytes': size,
-                'groups': [[n, min(n+4, pages)] for n in range(1, pages+1, 5)],
+                'groups': [[n, min(n+self.profile.get('group_pages', 5)-1, pages)]
+                           for n in range(1, pages+1, self.profile.get('group_pages', 5))],
                 'limits': self.limits, 'producer': self.producer, 'created_at': observed()}
             await asyncio.to_thread(self.store.publish, identity, {'plan.json': encoded(plan)})
             accepted = await asyncio.to_thread(self.load_plan, identity)
             if accepted['request'] != request:
                 reject('request_identity_conflict')
             return {'plan': identity, 'pages': accepted['pages'], 'groups': accepted['groups'], 'observed_at': observed()}
+
+    def operation_contract(self, plan, operation):
+        request = plan['request']
+        return {**operation, 'contract': CONTRACT,
+            'dependencies': {'source': request['artifact'], 'source_revision': request['source_revision'],
+                'group_plan': plan['groups'],
+                'stage': dependencies(operation['kind'], plan['profile'], plan['producer']),
+                'checkpoint': dependencies('group', plan['profile'], plan['producer'])}}
 
     async def execute(self, value):
         started = time.monotonic()
@@ -157,6 +174,11 @@ class Processing:
         elif operation['kind'] == 'assembly':
             if operation['start'] != 1 or operation['end'] != plan['pages'] or len(operation['groups']) != len(plan['groups']):
                 reject('operation_outside_plan', 'integrity')
+            expected = [digest(json.dumps(self.operation_contract(plan,
+                {'kind': 'group', 'start': start, 'end': end}), sort_keys=True).encode())
+                for start, end in plan['groups']]
+            if operation['groups'] != expected:
+                reject('group_plan_mismatch', 'integrity')
         else:
             reject('unsupported_stage')
         with tempfile.TemporaryDirectory(prefix='activity-', dir=self.scratch) as tmp:
@@ -167,9 +189,7 @@ class Processing:
             source = SourceRequest(pdf, request['source_revision'], request['artifact']['sha256'],
                                    plan['profile']['method'], self.model_cache)
             execution = Execution(source, self.store, root, activity.heartbeat, plan['limits']['child_seconds'], child_runner=self.child_runner)
-            contract = {**operation, 'contract': 'pdf-operation-v1', 'plan': value['plan'],
-                'dependencies': {'source': request['artifact'], 'profile': digest(encoded(plan['profile'])),
-                                 'groups': operation.get('groups', [])}}
+            contract = self.operation_contract(plan, operation)
             identity = await execution.produce(contract)
             result = {'operation': identity, 'stage': operation['kind'], 'reused': execution.observation['reused'],
                 'observed_at': observed()}
@@ -188,7 +208,7 @@ class Processing:
                     'page_groups': operation['groups'], 'assembly': identity,
                     'evidence_contract': 'Each group registration includes hashed page JSON and page image; assembly includes Docling document JSON and Markdown.',
                     'created_at': observed()}
-                result_id = 'pdf-parsed-v1:'+identity
+                result_id = 'pdf-parsed-v2:'+digest(encoded({'assembly': identity, 'plan': value['plan']}))
                 await asyncio.to_thread(self.store.publish, result_id, {'parsed-result.json': encoded(manifest)})
                 result['parsed_result'] = result_id
             result.update(seconds=time.monotonic()-started, observed_at=observed(),

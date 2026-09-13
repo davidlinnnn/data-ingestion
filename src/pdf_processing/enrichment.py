@@ -8,6 +8,7 @@ from pathlib import Path
 import tempfile
 
 from .object_store import digest
+from .compatibility import dependencies
 
 
 def validate_coverage(selected, outcomes):
@@ -56,8 +57,8 @@ class Enrichment:
                 'parsed_result': parsed_id, 'assembly': parsed['assembly'], 'source': plan['request'],
                 'parsed_sha256': digest(encoded(document)), 'candidates': candidates, 'selected': selected,
                 'excluded': [{'kind': 'page_render', 'reason': 'not_a_picture_item'}],
-                'ocr_method': {'engine': 'RapidOCR', 'render_scale': 3, 'producer': plan['producer'],
-                               'runtime': plan['profile']['method']}, 'concurrency': 1}
+                'dependencies': dependencies('selection', plan['profile'], plan['producer']),
+                'ocr_method': dependencies('ocr', plan['profile'], plan['producer']), 'concurrency': 1}
             identity = 'pdf-selection-v1:' + digest(encoded(selection))
             await asyncio.to_thread(self.store.publish, identity, {'selection.json': encoded(selection)})
             return {'operation': identity, 'selected': selected, 'observed_at': observed()}
@@ -83,7 +84,8 @@ class Enrichment:
                     await execution.child('pdf_processing.ocr', {'parsed': str(root/'parsed'/'document.json'),
                         'pdf': str(pdf), 'out': str(root/'result'), 'component': component,
                         'max_render_pixels': plan['limits']['max_page_pixels'],
-                        'allow_cropbox': request['version'] == 3}, root)
+                        'allow_cropbox': request['version'] == 3,
+                        'scale': plan['profile'].get('picture_ocr', {'render_scale': 3})['render_scale']}, root)
                     report = json.loads((root/'result'/'ocr.json').read_text())
                     if (report['source_sha256'] != request['artifact']['sha256'] or report['component'] != component
                             or report['parsed_result_sha256'] != digest((root/'parsed'/'document.json').read_bytes())):
@@ -141,7 +143,9 @@ class Enrichment:
             'plan': value['plan'], 'source': plan['request'], 'parsed_result': selection['parsed_result'],
             'assembly': selection['assembly'], 'selection': value['selection'], 'enrichments': outcomes,
             'required_work': {'pages': plan['pages'], 'components': len(outcomes), 'ocr': coverage},
-            'quality_accepted': False}
+            'quality_accepted': False,
+            'dependencies': dependencies('finalize', plan['profile'], plan['producer']),
+            'provenance': {'profile': plan['profile'], 'producer': plan['producer']}}
         if plan['request']['version'] == 3:
             final['version'] = 2
             final['content_evidence'] = await self.content_evidence(plan, selection, document)
@@ -157,7 +161,7 @@ class Enrichment:
         review = policy.get('reviews', {}).get(request['artifact']['sha256'], {})
         identity = 'pdf-evidence-v1:' + digest(encoded({'assembly': selection['assembly'],
             'parsed_result': selection['parsed_result'], 'source': request, 'policy': policy,
-            'producer': plan['producer']}))
+            'dependencies': dependencies('evidence', plan['profile'], plan['producer'])}))
         if await asyncio.to_thread(self.store.resolve, identity) is not None:
             return identity
         with tempfile.TemporaryDirectory(prefix='activity-evidence-', dir=self.processing.scratch) as tmp:
