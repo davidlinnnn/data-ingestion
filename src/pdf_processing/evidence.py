@@ -106,8 +106,16 @@ def execute(request):
                     if request.get('original_pdf'):
                         original_number = review['original_pages'][str(number)]
                         with pdfium.PdfDocument(request['original_pdf']) as original_pdf:
+                            if type(original_number) is not int or not 1 <= original_number <= len(original_pdf):
+                                raise ValueError('invalid_original_page_number')
                             original_page = original_pdf[original_number-1]
                             try:
+                                ow, oh = original_page.get_size()
+                                if (not all(math.isfinite(v) and v > 0 for v in (ow, oh)) or
+                                        math.ceil(ow*scale)*math.ceil(oh*scale) > request['max_render_pixels']):
+                                    raise ValueError('original_evidence_pixel_limit')
+                                if original_page.get_rotation() != 0 or abs(ow-width) > .01 or abs(oh-height) > .01:
+                                    raise ValueError('original_page_geometry_mismatch')
                                 original_bitmap = original_page.render(scale=scale)
                                 try:
                                     original_image = original_bitmap.to_pil()
@@ -140,6 +148,11 @@ def execute(request):
                     'bbox_top_left_points': box, 'page_artifact': page['artifact'],
                     'page_sha256': page['sha256'], 'crop_recipe': {'scale': 3, 'box_pixels': [x*3 for x in box]}})
             records.append(record)
+        if any(r['actual_type'] == 'formula' and not r['regions'] for r in records):
+            raise ValueError('formula_evidence_missing')
+        review_ids = [a['id'] for a in review.get('regions', [])]
+        if len(review_ids) != len(set(review_ids)):
+            raise ValueError('duplicate_review_id')
         formulas = [{'refs': [r['ref']], 'classification': 'parser_formula_label', 'regions': r['regions'],
                      'interpretation': 'not_performed'} for r in records if r['actual_type'] == 'formula']
         observations = []
@@ -156,7 +169,7 @@ def execute(request):
                         'page_artifact': page['artifact'], 'page_sha256': page['sha256'],
                         'crop_recipe': {'scale': 3, 'box_pixels': [x*3 for x in box]}}
             if annotation['kind'] == 'formula':
-                formulas = [f for f in formulas if not (set(f['refs']) & set(refs))]
+                formulas = [f for f in formulas if f['classification'] != 'parser_formula_label' or not (set(f['refs']) & set(refs))]
                 formulas.append({'review_id': annotation['id'], 'refs': refs, 'classification': 'source_reviewed_occurrence',
                     'regions': [evidence], 'interpretation': 'not_performed', 'actual_types_preserved': True})
             elif annotation['kind'] == 'representation':
@@ -165,6 +178,9 @@ def execute(request):
                     'text_rewritten': False})
             else:
                 raise ValueError('unsupported_review_kind')
+        expected_formula_ids = {a['id'] for a in review.get('regions', []) if a['kind'] == 'formula'}
+        if {f['review_id'] for f in formulas if 'review_id' in f} != expected_formula_ids:
+            raise ValueError('incomplete_reviewed_formula_coverage')
         manifest = {'version': 1, 'source': request['source'], 'parsed_result': request['parsed_result'],
             'assembly': request['assembly'], 'document_sha256': hashlib.sha256(parsed_path.read_bytes()).hexdigest(),
             'policy': request['policy'], 'source_review': review,

@@ -75,7 +75,17 @@ async def main():
             oracle=json.loads(Path('/tmp/t06-oracles/new-source-oracle.json').read_text())
             expected=next(x for x in oracle if x['source_id']=='10')['regions']
             texts=[norm(x['text']) for x in report['items'] if x.get('text')]
-            for region in expected:assert norm(region['expected_text']) in texts,region['id']
+            for region in expected:
+                l,t,r,b=region['bbox'];pieces=[]
+                for item in report['items']:
+                    if not item.get('text'):continue
+                    for g in item['regions']:
+                        x1,y1,x2,y2=g['bbox_top_left_points']
+                        if g['page']==1 and l<=(x1+x2)/2<=r and t<=(y1+y2)/2<=b:
+                            pieces.append((y1,x1,item['text']));break
+                # A source textbox may be split into several typed child items.
+                actual=' '.join(x[2] for x in sorted(pieces))
+                assert norm(region['expected_text'])==norm(actual),(region['id'],actual)
             assert len(expected)==27,len(expected)
             checks['complete_textboxes']=len(expected)
         (out/(sid+'-document.json')).write_bytes(raw)
