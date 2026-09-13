@@ -34,7 +34,7 @@ def execute(request):
                 scale = request.get('scale', 3)
                 if w*h*scale*scale > request.get('max_render_pixels', 20_000_000):
                     raise ValueError('component_render_pixel_limit')
-                if page.get_rotation() != 0 or tuple(page.get_bbox()) != (0, 0, w, h):
+                if page.get_rotation() != 0 or (not request.get('allow_cropbox', False) and tuple(page.get_bbox()) != (0, 0, w, h)):
                     raise ValueError('unsupported_rotated_or_cropped_page')
                 if b['coord_origin'] == 'BOTTOMLEFT':
                     box = (b['l'], h-b['t'], b['r'], h-b['b'])

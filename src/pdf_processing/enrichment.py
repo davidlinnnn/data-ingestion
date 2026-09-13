@@ -82,7 +82,8 @@ class Enrichment:
                     await asyncio.to_thread(execution.materialize, selection['assembly'], root/'parsed')
                     await execution.child('pdf_processing.ocr', {'parsed': str(root/'parsed'/'document.json'),
                         'pdf': str(pdf), 'out': str(root/'result'), 'component': component,
-                        'max_render_pixels': plan['limits']['max_page_pixels']}, root)
+                        'max_render_pixels': plan['limits']['max_page_pixels'],
+                        'allow_cropbox': request['version'] == 3}, root)
                     report = json.loads((root/'result'/'ocr.json').read_text())
                     if (report['source_sha256'] != request['artifact']['sha256'] or report['component'] != component
                             or report['parsed_result_sha256'] != digest((root/'parsed'/'document.json').read_bytes())):
@@ -141,6 +142,49 @@ class Enrichment:
             'assembly': selection['assembly'], 'selection': value['selection'], 'enrichments': outcomes,
             'required_work': {'pages': plan['pages'], 'components': len(outcomes), 'ocr': coverage},
             'quality_accepted': False}
+        if plan['request']['version'] == 3:
+            final['version'] = 2
+            final['content_evidence'] = await self.content_evidence(plan, selection, document)
         identity = 'pdf-complete-v1:' + digest(encoded(final))
         await asyncio.to_thread(self.store.publish, identity, {'processing-result.json': encoded(final)})
         return {'operation': identity, 'stage': 'finalize', 'observed_at': observed()}
+
+    async def content_evidence(self, plan, selection, document):
+        from .processing import encoded
+        from .execution import Execution, SourceRequest
+        policy = plan['profile'].get('content_evidence', {'version': 'typed-source-evidence-v1', 'reviews': {}})
+        request = plan['request']
+        review = policy.get('reviews', {}).get(request['artifact']['sha256'], {})
+        identity = 'pdf-evidence-v1:' + digest(encoded({'assembly': selection['assembly'],
+            'parsed_result': selection['parsed_result'], 'source': request, 'policy': policy,
+            'producer': plan['producer']}))
+        if await asyncio.to_thread(self.store.resolve, identity) is not None:
+            return identity
+        with tempfile.TemporaryDirectory(prefix='activity-evidence-', dir=self.processing.scratch) as tmp:
+            root = Path(tmp)
+            pdf = root/request['artifact']['name']
+            await asyncio.to_thread(self.processing.read_source, request, pdf)
+            original = review.get('original_source')
+            original_path = root/'original.pdf'
+            if original:
+                await asyncio.to_thread(self.processing.read_source, original, original_path)
+            parsed_path = root/'document.json'
+            registration = await asyncio.to_thread(self.store.resolve, selection['assembly'])
+            entry = next(f for f in registration['files'] if f['name'] == 'document.json')
+            parsed_path.write_bytes(await asyncio.to_thread(self.store.read_artifact, entry))
+            source = SourceRequest(pdf, request['source_revision'], request['artifact']['sha256'],
+                                   plan['profile']['method'], self.processing.model_cache)
+            execution = Execution(source, self.store, root, child_timeout=plan['limits']['child_seconds'])
+            await execution.child('pdf_processing.evidence', {'pdf': str(pdf), 'parsed': str(parsed_path),
+                'out': str(root/'result'), 'source': request, 'parsed_result': selection['parsed_result'],
+                'assembly': selection['assembly'], 'review': review, 'policy': policy['version'],
+                'original_pdf': str(original_path) if original else None,
+                'renderer_version': plan['profile']['method']['packages']['pypdfium2'],
+                'max_render_pixels': plan['limits']['max_page_pixels']}, root)
+            files = {p.name: p.read_bytes() for p in (root/'result').iterdir() if p.is_file()}
+            files['source.pdf'] = pdf.read_bytes()
+            if original:
+                files['original-source.pdf'] = original_path.read_bytes()
+            await asyncio.to_thread(self.store.publish, identity, files)
+        await asyncio.to_thread(self.store.resolve, identity)
+        return identity

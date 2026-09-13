@@ -89,9 +89,11 @@ class Processing:
 
     def validate_request(self, request):
         try:
-            if request['version'] not in (1, 2) or request['profile'] != self.profile['id']:
+            if request['version'] not in (1, 2, 3) or request['profile'] != self.profile['id']:
                 reject('invalid_request')
             if request['version'] == 2 and request.get('completion') != 'required_picture_ocr_v1':
+                reject('invalid_completion_target')
+            if request['version'] == 3 and request.get('completion') != 'required_evidence_v1':
                 reject('invalid_completion_target')
             for key in ('request_id', 'source_revision'):
                 if not isinstance(request[key], str) or not 0 < len(request[key]) <= 256:

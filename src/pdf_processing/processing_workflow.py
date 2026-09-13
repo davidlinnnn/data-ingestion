@@ -21,7 +21,7 @@ class PDFProcessing:
     async def run(self, submission: dict) -> dict:
         self.summary['observed_at'] = workflow.now().isoformat()
         request = submission.get('request', {})
-        if not isinstance(request, dict) or request.get('version') not in (1, 2):
+        if not isinstance(request, dict) or request.get('version') not in (1, 2, 3):
             self.summary.update(status='failed', error={'category': 'input', 'code': 'invalid_request'})
             return self.summary
         queue = submission.get('activity_queue')
