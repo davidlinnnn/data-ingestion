@@ -43,3 +43,31 @@ For a small in-process integration, construct `Execution(SourceRequest(...),
 Store(s3_client, bucket, prefix), scratch, heartbeat)` and await `produce` with
 `kind=group`, then `kind=assembly`, then `kind=ocr`. For real-service verification,
 see the acceptance runbook under `tests/pdf_processing`.
+
+## Recovery storage operations (T03)
+
+`Store.resolve` returns `None` only for absent registration. It validates the
+versioned manifest, one attempt namespace, unique safe artifact names, lengths
+and application SHA-256 on each referenced read. `StoreFailure` distinguishes
+`integrity` (committed bytes/manifest invalid), `configuration` (access/bucket
+configuration) and `storage` (retryable service/transport unavailability).
+Processing maps the first two to permanent failures. There is no automatic repair.
+
+Publication uses immutable attempt keys and conditional registration. Ambiguous
+write responses reconcile by read; concurrent losers validate and return the
+winner. Observably different attempted payload sets are retained in diagnostic
+records. Nothing in this adapter changes a Workflow's terminal state.
+
+Operators can run `python -m pdf_processing.object_store --max-objects 10000
+--capacity-bytes <prefix-budget>` with the worker's `OBJECT_ENDPOINT`,
+`OBJECT_BUCKET`, `OBJECT_PREFIX` and credential environment. It performs read-only
+bounded inventory: registration/artifact counts, invalid registrations, observed
+bytes and orphan candidates. Exit 2 reports corrupt registration or exceeded
+logical capacity; exit 3 means the listing was incomplete and needs a larger
+observation budget. Never treat orphan candidates as deletion authorization.
+
+The inventory is not a transactional snapshot; compare exact counts only while
+writers are quiescent. Truncation or corruption suppresses orphan classification.
+Listed live versions provide a byte lower bound, not physical disk usage or all
+historical object versions; monitor provider disk/PVC capacity separately. Shared
+GC and canonical retention ownership remain deferred.
