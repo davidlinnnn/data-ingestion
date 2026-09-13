@@ -20,7 +20,6 @@ class SupervisionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(parser.observation['termination_reason'], 'child_startup_deadline')
             self.assertTrue(parser.observation['forced_kill'])
 
-if __name__ == '__main__': unittest.main()
 
 class ProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def test_correlated_requests_reuse_process_and_mismatch_fails_closed(self):
@@ -75,3 +74,6 @@ while True: time.sleep(.1)
             with self.assertRaises(asyncio.CancelledError): await task
             self.assertIsNone(parser.process)
             self.assertTrue(parser.observation['forced_kill'])
+
+if __name__ == '__main__':
+    unittest.main()

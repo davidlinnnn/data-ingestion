@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import signal
 import shutil
+import traceback
 
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -72,5 +73,18 @@ async def main():
             await parser.close()
 
 
+async def entrypoint():
+    # asyncio.run otherwise waits for default-executor threads after main returns.
+    # A cancelled publication may still be blocked in a transport call. Once SDK
+    # drain and child cleanup have finished, the process is the isolation limit.
+    try:
+        await main()
+    except BaseException:
+        traceback.print_exc()
+        os._exit(1)
+    print(json.dumps({'event': 'worker_shutdown_complete'}), flush=True)
+    os._exit(0)
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(entrypoint())

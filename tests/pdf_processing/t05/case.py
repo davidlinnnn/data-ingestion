@@ -11,7 +11,7 @@ async def main(name):
     source=json.loads(Path('/tmp/t05-run/requests.json').read_text())[filename]
     source['request_id']='t05:'+name
     client=await Client.connect('temporal:7233')
-    handle=await client.start_workflow(PDFProcessing.run,{'request':source,'activity_queue':'t05-pdf'},id='t05-'+name,task_queue='t05-workflows')
+    handle=await client.start_workflow(PDFProcessing.run,{'request':source,'activity_queue':sys.argv[2] if len(sys.argv)>2 else 't05-pdf'},id='t05-'+name,task_queue='t05-workflows')
     result=await handle.result()
     history=await handle.fetch_history()
     attempts=[e.activity_task_started_event_attributes.attempt for e in history.events if e.HasField('activity_task_started_event_attributes')]
