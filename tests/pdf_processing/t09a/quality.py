@@ -31,24 +31,51 @@ def check(sid, trial):
                     (9,'DEPTH-LIMITED-SEARCH','3.17'),(10,'ITERATIVE-DEEPENING-SEARCH','3.18')]
         pairs = []
         code_oracle = json.loads((ORACLES/'aima-code.json').read_text())
+        # Source-backed follow-up audits the actual split/merged items as retained;
+        # a missing CodeItem alone is not evidence that algorithm text was lost.
+        audited_refs = {3:list(range(43,64)),5:[109,113],9:[299,300],10:list(range(310,315))}
+        caption_refs = {3:64,5:114,9:301,10:315}
         for page,name,number in expected:
-            item = next(x for x in report['items'] if x['actual_type']=='code' and name in x['text'] and any(r['page']==page for r in x['regions']))
-            assert any(number in typed[c['$ref']]['text'] for c in item['captions'])
+            matches = [x for x in report['items'] if x.get('text') and name in x['text']
+                       and any(r['page']==page for r in x['regions'])]
             source = next(x for x in code_oracle if x['processed_page']==page)
-            equal = ''.join(item['text'].split())==''.join(source['source_native_text'].split())
-            pairs.append({'processed_page':page,'algorithm':name,'caption_number':number,'ref':item['ref'],
+            code = next((x for x in matches if x['actual_type']=='code'),None)
+            pair = bool(code and any(number in typed[c['$ref']]['text'] for c in code['captions']))
+            actual_items=[typed['#/texts/'+str(n)] for n in audited_refs[page]]
+            pieces=[x['text'] for x in actual_items]
+            if page==5:
+                # Only original-page-103 charspan belongs to the algorithm header.
+                span=next(r['provenance']['charspan'] for r in actual_items[0]['regions'] if r['page']==page)
+                pieces[0]=pieces[0][span[0]:span[1]]
+            equal = ''.join(''.join(pieces).split())==''.join(source['source_native_text'].split())
+            caption=typed['#/texts/'+str(caption_refs[page])]
+            pairs.append({'processed_page':page,'algorithm':name,'caption_number':number,
+                'matching_typed_refs':[{'ref':x['ref'],'type':x['actual_type']} for x in matches],
+                'declared_code_caption_expectation_met':pair,
                 'complete_sequence_matches_source_native_layer_whitespace_only':equal,
-                'source_font_control_character':source['source_font_control_character']})
+                'actual_content_refs':[{'ref':x['ref'],'type':x['actual_type'],'captions':x['captions']} for x in actual_items],
+                'caption_disposition':{'ref':caption['ref'],'actual_type':caption['actual_type']},
+                'sequence_audit':'concatenate actual retained items in audited source order; uniform-cost header uses its own provenance charspan; whitespace only',
+                'source_font_control_character':source['source_font_control_character'],
+                'quality_status':'passed_declared_pair_and_sequence' if pair and equal else 'unqualified_algorithm_structure_or_representation'})
         checks['source_reviewed_algorithm_caption_pairs'] = pairs
+        checks['algorithm_quality_gate'] = 'open' if any(not p['declared_code_caption_expectation_met'] or not p['complete_sequence_matches_source_native_layer_whitespace_only'] for p in pairs) else 'passed'
         observations = report['representation_observations']
         assert any(x.get('review_id',x.get('id'))=='uniform-cost-symbols' for x in observations), observations
         checks['region_representation_uncertainty'] = True
         # Source page 103 ends a sentence continued on 104. This checks that join,
         # not total body/marginalia order or all mathematical typography.
-        join = next(x for x in report['items'] if x.get('text') and 'second path' in x['text'] and 'Bucharest with cost' in x['text'])
-        assert {r['page'] for r in join['regions']} == {5,6}
-        assert join['text'].index('second path') < join['text'].index('Bucharest with cost')
-        checks['contiguous_103_104_sentence_join'] = {'ref':join['ref'],'pages':[103,104]}
+        join = next(x for x in report['items'] if x.get('text') and 'second path' in x['text']
+                    and any(r['page']==5 for r in x['regions']))
+        parts = [{'page':r['page'],'charspan':r['provenance']['charspan']} for r in join['regions']]
+        joined_correctly = join['text'].find('to Bucharest with cost',join['text'].index('second path')) > join['text'].index('second path')
+        checks['contiguous_103_104_sentence_join'] = {'ref':join['ref'],'original_pages':[103,104],
+            'parts':parts,'declared_expectation_met':joined_correctly,
+            'expected_continuation_ref':'#/texts/131',
+            'expected_continuation_prefix':'to Bucharest with cost',
+            'incorrectly_joined_margin_label':'DEPTH-FIRST SEARCH',
+            'status':'passed' if joined_correctly else 'unqualified_paragraph_margin_association'}
+        checks['source_quality_gate'] = 'open' if checks['algorithm_quality_gate']=='open' or not joined_correctly else 'passed'
     if sid=='09':
         equations = [x for x in report['formula_occurrences'] if x.get('review_id','').startswith('eq')]
         assert {x['review_id'] for x in equations}=={'eq1','eq2','eq3','eq4','eq5','eq6'}

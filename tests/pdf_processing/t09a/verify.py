@@ -58,6 +58,14 @@ async def main():
     metadata = {'trial':trial,'sid':sid,'workflow_id':handle.id,'request':request,'started':started,'finished':time.time(),'result':result,
         'verifier_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
     (root/(trial+'.json')).write_text(json.dumps(metadata,indent=2))
+    if '--expect-failure' in sys.argv:
+        expected = sys.argv[sys.argv.index('--expect-failure')+1]
+        assert result['status']=='failed' and result['error']['code']==expected
+        assert result['processing_complete'] is False and result['canonical_accepted'] is False
+        metadata['checks']={'explicit_failure':expected,'all_prior_steps_reused':all(x['reused'] for x in result['steps'])}
+        (root/(trial+'.json')).write_text(json.dumps(metadata,indent=2))
+        print(json.dumps(metadata['checks']),flush=True)
+        return
     assert result['status']=='complete', result.get('error')
     assert result['processing_complete'] and result['canonical_accepted'] is False
     final = json.loads(read(result['processing_result'],'processing-result.json'))

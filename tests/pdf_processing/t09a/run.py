@@ -56,6 +56,8 @@ def run_trial(sid,trial,restart,driver_args=None):
         k('rollout','restart','deployment/activities')
         k('rollout','status','deployment/activities','--timeout=90s')
     worker = pod()
+    before_worker=json.loads(k('get','pod',worker,'-o','json'))
+    before_restarts=sum(s['restartCount'] for s in before_worker['status']['containerStatuses'])
     k('cp',str(ROOT/'tests/pdf_processing/t09a/sample.py'),worker+':/tmp/sample.py')
     k('exec',worker,'--','rm','-f','/tmp/t09a-stop-sampling','/tmp/t09a-samples.jsonl')
     sample_output = (OUT/(trial+'-live-samples.jsonl')).open('w')
@@ -63,6 +65,7 @@ def run_trial(sid,trial,restart,driver_args=None):
     inventory(trial+'-before')
     started = time.time()
     process = None
+    observation={'trial':trial,'worker':worker,'started':started,'restart_count_before':before_restarts}
     try:
         with (OUT/(trial+'.log')).open('w') as log:
             process = subprocess.Popen(['kubectl','-n',NS,'exec','coordinator','--',PYTHON,'/tmp/t09a-test/verify.py',sid,trial]+(['--attach'] if trial=='interrupted-native' else [])+(driver_args or []),stdout=log,stderr=subprocess.STDOUT)
@@ -79,16 +82,27 @@ def run_trial(sid,trial,restart,driver_args=None):
         try:
             k('exec',worker,'--','touch','/tmp/t09a-stop-sampling')
             sampler.wait(timeout=15)
+            observation['sampler_exit_code']=sampler.returncode
+            if sampler.stderr is not None:
+                (OUT/(trial+'-sampler-stderr.txt')).write_bytes(sampler.stderr.read())
             k('cp',worker+':/tmp/t09a-samples.jsonl',str(OUT/(trial+'-samples.jsonl')))
-            (OUT/(trial+'-worker.json')).write_text(k('get','pod',worker,'-o','json'))
+            after_worker=json.loads(k('get','pod',worker,'-o','json'))
+            (OUT/(trial+'-worker.json')).write_text(json.dumps(after_worker))
+            observation['restart_count_after']=sum(s['restartCount'] for s in after_worker['status']['containerStatuses'])
+            observation['continuous_observation']=sampler.returncode==0 and observation['restart_count_after']==before_restarts and (OUT/(trial+'-samples.jsonl')).exists()
         except subprocess.SubprocessError as error:
+            observation['continuous_observation']=False
             (OUT/(trial+'-sampling-error.txt')).write_text(type(error).__name__)
         finally:
             if sampler.poll() is None: sampler.terminate()
             sample_output.close()
         inventory(trial+'-after')
-        (OUT/(trial+'-controller.json')).write_text(json.dumps({'trial':trial,'worker':worker,'started':started,'finished':time.time()}))
+        observation['finished']=time.time()
+        (OUT/(trial+'-controller.json')).write_text(json.dumps(observation))
     print((OUT/(trial+'.log')).read_text(),flush=True)
+    if not observation.get('continuous_observation',False):
+        quiesce()
+        raise RuntimeError('Incomplete/restarted measurement; stop sequence and retain evidence: '+trial)
 
 if __name__ == '__main__':
     with open('/private/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:

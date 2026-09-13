@@ -1,5 +1,10 @@
 # T09a long-workload qualification
 
+**Current verdict: partial/open.** Read [REPORT.md](REPORT.md) and
+[REVIEW.md](REVIEW.md) before resuming. The warm sequence suffered global OOM kills;
+the drain trial is incomplete and owned Activity workers are quiescent. Do not
+restart the retained queued workflow without main-task reconciliation.
+
 Use the predeclared [plan](PLAN.md), fixed T07 baseline and existing local Linux
 runtime. No public source PDFs, full parsed documents or crops belong in this folder.
 The complete result seam is v3 required_evidence_v1; canonical_accepted stays false.
@@ -34,6 +39,15 @@ The complete result seam is v3 required_evidence_v1; canonical_accepted stays fa
    ten seconds. Compare both series and record their independent sampling gaps. `memory.peak`
    includes Pod lifetime; `memory.current` maxima describe the sample interval.
    `summarize.py` reports observations; it does not automatically declare support.
+8. Separate locked controllers cover `evidence_fix.py`, `negative_window.py`,
+   `profile_transition.py`, `fault.py`, `reuse.py` and `full_suite.py`. Replay keeps
+   baseline and changed producers separate. The latter two are deferred and unrun;
+   the fault trial is interrupted, not passed. `full_suite.py` requires the retained
+   prototype Python and reaps owned descendants before unlocking.
+9. `seal.py` copies only the deliberate metadata export and produces attribution
+   summaries/private observation hashes. Raw PDFs, document text and OCR text never
+   enter its exported evidence. Rerun the scoped typecheck and validate evidence
+   hashes after editing; do not label deferred runtime checks passed.
 
 Host-controller raw inventories stay under `/private/tmp/t09a-controller`. They
 include API errors, host process metadata and node/Pod stats throughout trials.
