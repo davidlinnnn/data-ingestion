@@ -37,10 +37,12 @@ async def main():
     # Each modified profile/plan is isolated and gets a new selection identity.
     # Shared parsing and OCR inputs remain immutable. These are adversarial adapter
     # inputs, not new qualified public profiles.
-    for case in ('shared_item','duplicate_id','invalid_original_page','oversize_original','unmatched_region','missing_formula_region'):
+    for case in ('filename_collision','shared_item','duplicate_id','invalid_original_page','oversize_original','unmatched_region','missing_formula_region'):
         plan=json.loads(json.dumps(original_plan));profile=plan['profile'];review=profile['content_evidence']['reviews'][plan['request']['artifact']['sha256']]
         expected=None
-        if case=='shared_item':
+        if case=='filename_collision':
+            plan['request']['artifact']['name']='original.pdf'
+        elif case=='shared_item':
             eq=next(x for x in review['regions'] if x['id']=='eq2')
             review['regions'].append({**eq,'id':'eq2-separate-reviewed-occurrence'})
         elif case=='duplicate_id':
@@ -60,7 +62,7 @@ async def main():
         # Clone full linked inputs for finalization without changing actual source/OCR.
         plan_id='pdf-plan-v1:'+uuid.uuid4().hex;plan['producer']=processing.producer
         store.publish(plan_id,{'plan.json':encoded(plan)})
-        parsed=read(selection['parsed_result'],'parsed-result.json');parsed['plan']=plan_id
+        parsed=read(selection['parsed_result'],'parsed-result.json');parsed['plan']=plan_id;parsed['source']=plan['request']
         changed_assembly=None
         if case=='missing_formula_region':
             doc=read(selection['assembly'],'document.json')
@@ -69,14 +71,14 @@ async def main():
             store.publish(changed_assembly,{'document.json':encoded(doc)})
             parsed['assembly']=changed_assembly
         parsed_id='negative-parsed:'+uuid.uuid4().hex;store.publish(parsed_id,{'parsed-result.json':encoded(parsed)})
-        selected={**selection,'plan':plan_id,'parsed_result':parsed_id}
+        selected={**selection,'plan':plan_id,'parsed_result':parsed_id,'source':plan['request']}
         if changed_assembly:
             selected['assembly']=changed_assembly;selected['parsed_sha256']=digest(encoded(doc))
         selection_id='negative-selection:'+uuid.uuid4().hex;store.publish(selection_id,{'selection.json':encoded(selected)})
         outcomes=[]
         for outcome in final['enrichments']:
             manifest=store.resolve(outcome['operation']);files={f['name']:store.read_artifact(f) for f in manifest['files']}
-            ocr=json.loads(files['ocr.json']);ocr.update(selection=selection_id,parsed_result=parsed_id)
+            ocr=json.loads(files['ocr.json']);ocr.update(selection=selection_id,parsed_result=parsed_id,source=plan['request'])
             files['ocr.json']=encoded(ocr);identity='negative-ocr:'+uuid.uuid4().hex;store.publish(identity,files);outcomes.append(identity)
         queue='t06-negative-'+uuid.uuid4().hex
         async with Worker(client,task_queue=queue,workflows=[Finalize],activities=[processing.run]):
@@ -86,7 +88,9 @@ async def main():
             else:
                 delivered=read(actual['operation'],'processing-result.json');evidence=read(delivered['content_evidence'],'content-evidence.json')
                 ids=[x.get('review_id') for x in evidence['formula_occurrences']]
-                assert 'eq2' in ids and 'eq2-separate-reviewed-occurrence' in ids,ids
+                assert 'eq2' in ids,ids
+                if case=='shared_item':assert 'eq2-separate-reviewed-occurrence' in ids,ids
+                if case=='filename_collision':assert evidence['source']['artifact']['name']=='original.pdf'
             history=await handle.fetch_history()
             attempts=[e.activity_task_started_event_attributes.attempt for e in history.events if e.HasField('activity_task_started_event_attributes')]
             assert attempts==[1],attempts

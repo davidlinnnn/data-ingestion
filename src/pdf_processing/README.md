@@ -95,3 +95,68 @@ coordinate/rendering support and evidence.
 T03/T04/T05 integration and fresh OCR shutdown are verified in
 `tests/pdf_processing/integration`. Enrichment uses checked storage reads; worker
 shutdown reaps fresh children before removing owned `activity-*` and `ocr-*` scratch.
+
+## Typed content and source evidence (T06)
+
+Use a **new immutable request identity**, `version: 3`, and
+`completion: required_evidence_v1` for the evidence-bearing completion path.
+Version 1 retains `parsed_ready`; version 2 retains required picture OCR. Version 3
+finishes only after all selected picture OCR and source-evidence publication have
+succeeded. Failed required evidence does not become a successful processing result.
+`processing_complete` still does not mean canonical acceptance or quality approval.
+
+Resolve the returned `processing_result` with `Store.resolve`, read its
+`processing-result.json` via `Store.read_artifact`, and follow `content_evidence`
+to its registered `content-evidence.json`. These are internal operation identities,
+not HTTP URLs or canonical schema IDs. Follow the registration's checked file refs
+for `source.pdf`, optional `original-source.pdf`, and `page-N.png`; never build a
+local worker path or guess an object key. The final manifest also retains assembly,
+parsed-result, selection and required OCR references. Do not delete their artifacts
+when a Temporal run ends: consumer lifetime and shared GC remain separate work.
+
+The assembly's original `document.json` bytes are unchanged and hash-bound in the
+content manifest. Its full graph is the typed authority, including tables/cells,
+body/furniture, parent/caption links and PictureItem children. The added `items`
+index visits each reference once and preserves unlinked content; it does not make
+traversal into a universal reading-order guarantee. Preserve provenance `charspan`
+when an item crosses regions/pages. A CodeItem stays code, not a PictureItem;
+caption and source evidence do not imply executable indentation/AST. Parser links
+are retained; nearby body/note association is not inferred as a canonical fact.
+
+Every retained region references a persisted page image and its SHA-256, TOPLEFT
+page-local PDF-point rectangle, and a scale-3 pixel crop recipe. Page metadata
+records dimensions, original/processed page number, effective box/CropBox, rotation,
+renderer version and scale. Evidence rendering accepts rotation 0 and enforces the
+configured pixel budget. The version-3 picture OCR path additionally accepts tested
+nonzero CropBox origins, preserving source/picture pixel checks; v1/v2 geometry
+behavior is unchanged. This is bounded geometry support, not arbitrary PDF support.
+
+A frozen maintainer profile may add `content_evidence` with
+`version: typed-source-evidence-v1` and `reviews` keyed by **exact processed PDF
+SHA-256**. Each review carries that source digest, `original_pages` mapping from
+processed page-number strings to original physical page integers, and optional
+`original_source` containing Source Revision plus immutable artifact reference.
+When original bytes are supplied, mapped page geometry and rendered pixels must
+match the processed derivative; both sources are retained. No page map is guessed.
+
+Review `regions` contain unique `id`, `kind` (`formula` or `representation`),
+processed `page`, and `bbox` (`l,t,r,b,coord_origin`). Representation regions also
+supply a `reason`. See the source-bound fixture preparation script for executable
+examples. This is a reviewed test/profile extension point, not client-authorized
+formula annotations or a universally qualified source classifier.
+
+`formula_occurrences` includes parser FormulaItem candidates and source-reviewed
+occurrences, including formulas classified as TextItem. Distinct reviewed IDs may
+share a typed ref. Actual types/text are never rewritten. Coverage is `unreviewed`
+without a source review; a reviewed inventory qualifies only its declared scope,
+not every formula in an arbitrary document. Missing readable formula regions and
+unresolvable required review regions fail explicitly. Known representation differences
+are separate region-bound `textual_or_mathematical_representation_unconfirmed`
+observations, with exact source/result and readable evidence. They are not silent
+symbol normalizations or declarations of mathematical equivalence.
+
+LaTeX interpretation is not implemented. A future required enrichment needs a new
+versioned selection/method and must join the completion barrier before success.
+T07 owns compatibility/reuse policy; canonical delivery/schema and public admission
+are separate tracks. See [T06 validation](../../tests/pdf_processing/t06/README.md)
+for qualified pages, limitations and actual replacement evidence.

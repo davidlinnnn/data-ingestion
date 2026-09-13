@@ -162,7 +162,9 @@ class Enrichment:
             return identity
         with tempfile.TemporaryDirectory(prefix='activity-evidence-', dir=self.processing.scratch) as tmp:
             root = Path(tmp)
-            pdf = root/request['artifact']['name']
+            # Separate fixed scratch paths: a client filename such as original.pdf
+            # must not alias the retained original source during derivative checks.
+            pdf = root/'source.pdf'
             await asyncio.to_thread(self.processing.read_source, request, pdf)
             original = review.get('original_source')
             original_path = root/'original.pdf'

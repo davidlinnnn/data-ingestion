@@ -1,5 +1,5 @@
 """Independent uninterrupted parsing versus reconstructed real delivery, no scoring normalization."""
-import asyncio,json,subprocess
+import asyncio,json,subprocess,sys
 from pathlib import Path
 
 async def main():
@@ -9,7 +9,8 @@ async def main():
         out=Path('/tmp/t06-fresh')/sid
         request={'mode':'baseline','pdf':'/tmp/t06-fixtures/'+sid+'.pdf','out':str(out),
             'model_cache':'/experiment/PROTOTYPE-wipe-me/hf','expected_method':profile['method']}
-        with (root/(sid+'-baseline.log')).open('wb') as log:
+        if '--existing-baselines' not in sys.argv:
+          with (root/(sid+'-baseline.log')).open('wb') as log:
             subprocess.run(['/experiment/.venv/bin/python','-m','pdf_processing.parse'],input=json.dumps(request).encode(),stdout=log,stderr=log,check=True,timeout=540)
         expected=json.loads((out/'document.json').read_text())
         actual=json.loads((root/(sid+'-document.json')).read_text())
