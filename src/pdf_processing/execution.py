@@ -13,7 +13,7 @@ import signal
 import sys
 import tempfile
 
-from .object_store import Store, digest
+from .object_store import Store, StoreFailure, digest
 
 
 class ChildFailure(RuntimeError):
@@ -75,29 +75,45 @@ class Execution:
             name = item['name']
             if name.startswith('/') or '..' in name.split('/'):
                 raise ValueError('Invalid artifact path')
-            data = self.store.get(item['key'])
-            assert digest(data) == item['sha256']
+            data = self.store.read_artifact(item)
             path = out/name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)
         return manifest
 
     def verify_group(self, out, start, end):
-        manifest = json.loads((out/'complete.json').read_text())
-        assert manifest['source_sha256'] == self.source.source_sha256
-        assert json.loads((out/'method.json').read_text()) == self.source.method
-        assert manifest['method_sha256'] == digest((out/'method.json').read_bytes())
-        pages = []
-        for entry in manifest['pages']:
-            path = out/'checkpoints'/entry['file']
-            assert digest(path.read_bytes()) == entry['sha256']
-            page = json.loads(path.read_text())
-            assert page['method_sha256'] == manifest['method_sha256']
-            assert page['source_sha256'] == manifest['source_sha256']
-            assert digest((path.parent/page['visual']['file']).read_bytes()) == page['visual']['sha256']
-            pages.append(page['page_no'])
-        assert pages == list(range(start, end+1))
-        return manifest
+        try:
+            manifest = json.loads((out/'complete.json').read_text())
+            if (manifest['format'] != 'PROTOTYPE-document-v1' or manifest['status'] != 'success'
+                    or manifest['source_sha256'] != self.source.source_sha256
+                    or json.loads((out/'method.json').read_text()) != self.source.method
+                    or manifest['method_sha256'] != digest((out/'method.json').read_bytes())):
+                raise ValueError()
+            pages, evidence = [], set()
+            for entry in manifest['pages']:
+                if Path(entry['file']).name != entry['file']:
+                    raise ValueError()
+                path = out/'checkpoints'/entry['file']
+                if digest(path.read_bytes()) != entry['sha256']:
+                    raise ValueError()
+                page = json.loads(path.read_text())
+                visual = page['visual']['file']
+                if (page['format'] != 'PROTOTYPE-page-v1'
+                        or page['method_sha256'] != manifest['method_sha256']
+                        or page['source_sha256'] != manifest['source_sha256']
+                        or Path(visual).name != visual or visual in evidence
+                        or digest((path.parent/visual).read_bytes()) != page['visual']['sha256']
+                        or set(page['assembled']) != {'elements', 'headers', 'body'}
+                        or any(not isinstance(v, list) for v in page['assembled'].values())
+                        or page['size']['width'] <= 0 or page['size']['height'] <= 0):
+                    raise ValueError()
+                evidence.add(visual)
+                pages.append(page['page_no'])
+            if pages != list(range(start, end+1)):
+                raise ValueError()
+            return manifest
+        except (ValueError, KeyError, TypeError, OSError):
+            raise StoreFailure('integrity', 'checkpoint_coverage_invalid') from None
 
     async def produce(self, operation):
         source = self.source
@@ -141,6 +157,12 @@ class Execution:
                 self.verify_group(merged, operation['start'], operation['end'])
                 await self.child('pdf_processing.parse', {**request, 'mode': 'restore',
                     'checkpoint': str(merged), 'start': operation['start'], 'end': operation['end']}, out)
+                try:
+                    document = json.loads((result/'document.json').read_text())
+                    if sorted(int(n) for n in document['pages']) != list(range(operation['start'], operation['end']+1)):
+                        raise ValueError()
+                except (ValueError, KeyError, TypeError, OSError):
+                    raise StoreFailure('integrity', 'assembly_coverage_invalid') from None
             elif kind == 'ocr':
                 parsed = out/'parsed'
                 await asyncio.to_thread(self.materialize, operation['parsed'], parsed)

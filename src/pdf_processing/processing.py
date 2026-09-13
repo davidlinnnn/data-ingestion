@@ -15,7 +15,7 @@ from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
 from .execution import ChildFailure, Execution, SourceRequest
-from .object_store import digest
+from .object_store import digest, StoreFailure, storage_failure
 
 
 def encoded(value):
@@ -28,7 +28,7 @@ def observed():
 
 def reject(code, category='input') -> NoReturn:
     raise ApplicationError(code, {'category': category, 'code': code},
-                           type=category, non_retryable=category in ('input', 'integrity', 'method'))
+                           type=category, non_retryable=category in ('input', 'integrity', 'method', 'configuration'))
 
 
 class Processing:
@@ -63,7 +63,7 @@ class Processing:
             code = getattr(error, 'response', {}).get('Error', {}).get('Code')
             if code in ('NoSuchKey', 'NoSuchVersion', '404'):
                 reject('source_missing')
-            raise
+            raise storage_failure(error) from None
         if len(data) > self.limits['max_bytes']:
             reject('byte_limit')
         if digest(data) != ref['sha256']:
@@ -81,7 +81,7 @@ class Processing:
         files = [item for item in registration['files'] if item['name'] == 'plan.json']
         if len(files) != 1:
             reject('plan_invalid', 'integrity')
-        plan = json.loads(self.store.get(files[0]['key']))
+        plan = json.loads(self.store.read_artifact(files[0]))
         if plan['profile'] != self.profile or plan['producer'] != self.producer or plan['limits'] != self.limits:
             reject('worker_method_mismatch', 'method')
         return plan
@@ -201,6 +201,8 @@ class Processing:
             return await self.execute(value)
         except ApplicationError:
             raise
+        except StoreFailure as error:
+            reject(error.code, error.category)
         except ChildFailure as error:
             reject(error.code, error.category)
         except AssertionError:
