@@ -1,6 +1,5 @@
 """Real captured-source submission/result assertions; no production collaborators replaced."""
 import asyncio
-import copy
 import json
 import sys
 import uuid
@@ -26,6 +25,12 @@ async def main():
     def read(identity,name):
         return json.loads(store.read_artifact(next(f for f in store.resolve(identity)['files'] if f['name']==name)))
     if command == 'init':
+        abandoned=[]
+        async for execution in client.list_workflows("ExecutionStatus = 'Running'"):
+            assert execution.id.startswith('t08-'), execution.id
+            await client.get_workflow_handle(execution.id).terminate('Superseded exploratory T08 trial; excluded from acceptance')
+            abandoned.append(execution.id)
+        (OUT/('abandoned-'+uuid.uuid4().hex+'.json')).write_text(json.dumps(abandoned))
         if not any(b['Name']=='t08' for b in s3.list_buckets()['Buckets']):s3.create_bucket(Bucket='t08')
         s3.put_bucket_versioning(Bucket='t08',VersioningConfiguration={'Status':'Enabled'})
         data = Path('/fixtures/multiple.pdf').read_bytes()
@@ -52,7 +57,16 @@ async def main():
         history = await handle.fetch_history()
         names = [EventType.Name(e.event_type) for e in history.events]
         scheduled = [e.activity_task_scheduled_event_attributes.activity_type.name for e in history.events if e.HasField('activity_task_scheduled_event_attributes')]
-        print(json.dumps({'status':description.status.name,'events':names,'scheduled':scheduled}))
+        pending = {}
+        for e in history.events:
+            if e.HasField('activity_task_scheduled_event_attributes'):
+                value=json.loads(e.activity_task_scheduled_event_attributes.input.payloads[0].data)
+                pending[e.event_id]={'stage':value.get('operation',{}).get('kind',value['stage']), 'started':False,'queue':e.activity_task_scheduled_event_attributes.task_queue.name}
+            elif e.HasField('activity_task_started_event_attributes'):
+                pending[e.activity_task_started_event_attributes.scheduled_event_id]['started']=True
+            elif e.HasField('activity_task_completed_event_attributes'):
+                pending.pop(e.activity_task_completed_event_attributes.scheduled_event_id,None)
+        print(json.dumps({'status':description.status.name,'events':names,'scheduled':scheduled,'pending':list(pending.values())}))
     elif command == 'result':
         case = args[0]
         record = json.loads((OUT/(case+'-request.json')).read_text())
@@ -66,6 +80,16 @@ async def main():
         assert final['provenance']['profile']['picture_ocr']['render_scale']==(3 if record['version']=='v1' else 4)
         assert 'content_evidence' in final
         read(final['content_evidence'],'content-evidence.json')
+        selected=read(final['selection'],'selection.json')
+        ocr=[]
+        for item in final['enrichments']:
+            report=read(item['operation'],'ocr.json')
+            assert report['source']==record['request']
+            assert report['method']==selected['ocr_method']
+            assert report['render_scale']==(3 if record['version']=='v1' else 4)
+            expected={k.split('/')[-1]:v for k,v in final['provenance']['profile']['method']['model_artifacts'].items() if k.startswith('rapidocr/')}
+            assert report['producer']['model_sha256']==expected
+            ocr.append({k:report[k] for k in ('component','source_sha256','parsed_result_sha256','render_scale','crop_sha256','producer','method','outcome')})
         for step in result['steps']:
             assert step['routing_id']==route['id'] and step['task_queue']==route['queues'][step['worker_stage']]
         if case in ('new','mixed'):
@@ -80,13 +104,13 @@ async def main():
                 activities.append({'type':a.activity_type.name,'queue':a.task_queue.name,'event_id':e.event_id})
         assert {a['queue'] for a in activities}=={route['queues'][s] for s in ('prepare','group','assembly','select','component_ocr','finalize')}
         report = {**record,'result':result,'profile':final['provenance']['profile'],
-            'producer':final['provenance']['producer'],'activities':activities,
+            'producer':final['provenance']['producer'],'ocr':ocr,'activities':activities,
             'run_id':history.events[0].workflow_execution_started_event_attributes.original_execution_run_id}
         (OUT/(case+'.json')).write_text(json.dumps(report,indent=2))
         print(case+': PASS',flush=True)
     elif command == 'negative':
         route=routes['v1']
-        for case in ('missing','inconsistent','conflict'):
+        for case in ('missing','malformed','inconsistent','conflict'):
             old=json.loads((OUT/'queued-request.json').read_text())['request']
             if case=='conflict':
                 payload=payload_for({k:v for k,v in old.items() if k!='routing_id'},routes['v2'])
@@ -94,6 +118,7 @@ async def main():
             else:
                 payload=payload_for(old,route);queue=route['queues']['workflow']
                 if case=='missing':payload.pop('routing')
+                elif case=='malformed':payload['request']=[]
                 else:payload['routing']['queues']['component_ocr']='latest'
             r=await client.execute_workflow('PDFRolloutProcessing',payload,id='t08-negative-'+uuid.uuid4().hex,task_queue=queue)
             assert r['status']=='failed',r

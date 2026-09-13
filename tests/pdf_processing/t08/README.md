@@ -53,13 +53,13 @@ T06's AIMA association/order limitation remains unqualified.
   Workflow/preflight so parsing is queued before its compatible worker starts.
 - Complete that accepted request with its frozen old release and read checked
   final/evidence references.
-- Submit another old request, observe a real native parser stage, start the new
+- Submit another old request, observe and immediately SIGSTOP a real active native parser stage, start the new
   release and force-delete only the old parsing Pod. The old queue's replacement
   must finish a later Activity attempt; the new worker cannot consume that queue.
 - Submit new-method and old-method requests with both populations present. The
   new method reuses compatible old parsing/assembly while creating current
   request-bound OCR/evidence/final results.
-- Delete an old parsing Pod gracefully during a real native stage, record Pod
+- Delete an old parsing Pod gracefully with its real native child paused, record Pod
   retirement time under the 60s grace, and require eventual complete delivery.
 - Reject missing/tampered routes and accepted request-ID reuse under another method.
 
@@ -74,3 +74,19 @@ preflight30s, one Activity slot per stage Pod, sequential groups/components per
 request, SDK drain30s/Pod60s/TERM5s/reap5s. Splitting queues permits concurrency
 across requests; it does not establish calibrated aggregate capacity. #44/#45 own
 sustained isolation and calibrated operating bounds; #46 still consumes T08 and T09b.
+
+Qualification scheduling reservations are 256Mi for each retained warm parser and
+64Mi for the other stage/Workflow Pods, all with the inherited 5Gi memory limit.
+The inherited 256Mi-per-Pod reservation exhausted schedulable space when both
+seven-Pod releases coexisted in this shared local cluster; that trial was stopped
+and excluded. These smaller reservations permit this bounded fixture experiment;
+they are not measured production reservations or a recommended aggregate limit.
+#44/#45 retain ownership of calibrated resource settings.
+
+The controller holds the host flock through retrying cleanup API calls and waits
+for every owned worker Pod to disappear. Forced loss additionally checks the old
+container is absent from the node runtime's running-container inventory. No
+scenario Worker is hosted by the coordinator. If the host process is forcibly
+killed, a host file lock alone cannot guarantee remote quiescence: stop new trials,
+reacquire the recovery lock and reconcile owned remote resources before proceeding.
+The operator must not equate an API timeout or client exit with worker termination.

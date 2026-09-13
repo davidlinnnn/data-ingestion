@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'src'))
-from pdf_processing.routing import fingerprint, release, STAGES
+from pdf_processing.routing import fingerprint, release, release_binding, STAGES
 NS = 'pdf-t08-validation'
 IMAGE = 'docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0'
 
@@ -29,9 +29,7 @@ def main():
     for version,scale in (('v1',3),('v2',4)):
         profile = json.loads((ROOT/'deploy/pdf-processing/profiles/native-v1.json').read_text())
         profile['picture_ocr'] = {'render_scale':scale}
-        binding = {'profile':fingerprint(profile),'producer':fingerprint(producer),
-            'limits':fingerprint(limits),'models':fingerprint(profile['method']['model_artifacts']),
-            'store':{'bucket':'t08','prefix':'rollout/'}}
+        binding = release_binding(profile, producer, limits, 't08', 'rollout/')
         route = release(binding, {s:IMAGE for s in ('workflow',*STAGES)}, 't08-'+version)
         routes[version] = route
         config = 'release-'+route['id'][:20]
@@ -45,6 +43,9 @@ def main():
                 if v.get('configMap',{}).get('name') == 't08-driver':v['configMap']['name']=config
             c = spec['containers'][0]
             c['image'] = IMAGE
+            # Qualification scheduling reservations; not calibrated production bounds.
+            # Only group workers retain a native converter between Activities.
+            c['resources']['requests']['memory'] = '256Mi' if stage=='group' else '64Mi'
             env = {e['name']:e for e in c['env']}
             values = {'TASK_QUEUE':route['queues'][stage], 'WORKER_ROLE':'workflow' if stage=='workflow' else 'activity',
                 'WORKER_STAGE':stage,'WORKER_IMAGE':IMAGE,'ROUTING_FILE':'/driver/route.json',

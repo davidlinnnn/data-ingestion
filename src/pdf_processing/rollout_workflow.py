@@ -12,6 +12,8 @@ class PDFRolloutProcessing(PDFProcessing):
     async def run(self, submission: dict) -> dict:
         try:
             route = validate(submission['routing'])
+            if not isinstance(submission.get('request'), dict):
+                raise ValueError('invalid_routing')
             if (workflow.info().task_queue != route['queues']['workflow'] or
                     submission['request'].get('routing_id') != route['id']):
                 raise ValueError('invalid_routing')

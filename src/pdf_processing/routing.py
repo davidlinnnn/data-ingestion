@@ -15,6 +15,12 @@ def fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
+def release_binding(profile, producer, limits, bucket, prefix):
+    return {'profile': fingerprint(profile), 'producer': fingerprint(producer),
+        'limits': fingerprint(limits), 'models': fingerprint(profile['method']['model_artifacts']),
+        'store': {'bucket': bucket, 'prefix': prefix}}
+
+
 def release(binding, images, prefix):
     """Build a maintainer manifest after images/profile/models have been retained."""
     value = {'contract': CONTRACT, 'binding': binding, 'images': images, 'prefix': prefix}

@@ -2,15 +2,9 @@
 import asyncio
 from temporalio import activity
 from .processing import reject
-from .routing import validate, fingerprint, stage_for, STAGES
+from .routing import validate, release_binding, stage_for, STAGES
 from .object_store import StoreFailure
 
-
-def binding(processing):
-    return {'profile': fingerprint(processing.profile), 'producer': fingerprint(processing.producer),
-        'limits': fingerprint(processing.limits),
-        'models': fingerprint(processing.profile['method']['model_artifacts']),
-        'store': {'bucket': processing.store.bucket, 'prefix': processing.store.prefix}}
 
 
 class RoutedActivity:
@@ -18,7 +12,8 @@ class RoutedActivity:
         self.processing = processing
         self.route = validate(route)
         self.stage = stage
-        if (binding(processing) != route['binding'] or stage not in STAGES or
+        if (release_binding(processing.profile, processing.producer, processing.limits,
+                processing.store.bucket, processing.store.prefix) != route['binding'] or stage not in STAGES or
                 queue != route['queues'][stage] or image != route['images'][stage]):
             raise ValueError('worker_routing_mismatch')
 
