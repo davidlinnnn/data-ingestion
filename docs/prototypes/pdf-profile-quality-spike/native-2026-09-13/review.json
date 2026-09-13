@@ -1,0 +1,145 @@
+{
+  "typed_source_caption_links": [
+    {
+      "source_id": "06",
+      "page": 4,
+      "expected_caption": "Figure 2",
+      "expected_bbox": [
+        70,
+        80,
+        535,
+        305
+      ],
+      "matches": [
+        {
+          "ref": "#/pictures/0",
+          "type": "picture",
+          "caption_references": [
+            {
+              "$ref": "#/texts/1"
+            }
+          ],
+          "page": 4,
+          "actual_top_left_bbox": [
+            60.92380142211914,
+            84.3405532836914,
+            533.2265014648438,
+            302.372314453125
+          ],
+          "source_region_iou": 0.9474145913139509
+        }
+      ]
+    },
+    {
+      "source_id": "07",
+      "page": 5,
+      "expected_caption": "Figure 3",
+      "expected_bbox": [
+        100,
+        310,
+        520,
+        690
+      ],
+      "matches": [
+        {
+          "ref": "#/pictures/0",
+          "type": "picture",
+          "caption_references": [
+            {
+              "$ref": "#/texts/4"
+            }
+          ],
+          "page": 5,
+          "actual_top_left_bbox": [
+            103.34727478027344,
+            308.7491455078125,
+            513.7459716796875,
+            688.9620361328125
+          ],
+          "source_region_iou": 0.9713464037978892
+        }
+      ]
+    },
+    {
+      "source_id": "08",
+      "page": 86,
+      "expected_caption": "Figure 3.1",
+      "expected_bbox": [
+        100,
+        70,
+        508,
+        268
+      ],
+      "matches": [
+        {
+          "ref": "#/texts/11",
+          "type": "code",
+          "caption_references": [
+            {
+              "$ref": "#/texts/12"
+            }
+          ],
+          "page": 86,
+          "actual_top_left_bbox": [
+            112.55998200000002,
+            82.43676100000005,
+            416.43953673999994,
+            254.13555227110157
+          ],
+          "source_region_iou": 0.6458674024665592
+        }
+      ]
+    },
+    {
+      "source_id": "08",
+      "page": 87,
+      "expected_caption": "Figure 3.2",
+      "expected_bbox": [
+        102,
+        65,
+        508,
+        312
+      ],
+      "matches": [
+        {
+          "ref": "#/pictures/0",
+          "type": "picture",
+          "caption_references": [
+            {
+              "$ref": "#/texts/6"
+            }
+          ],
+          "page": 87,
+          "actual_top_left_bbox": [
+            101.34070587158203,
+            64.62293243408203,
+            506.9231872558594,
+            314.51434326171875
+          ],
+          "source_region_iou": 0.9842396913097762
+        }
+      ]
+    }
+  ],
+  "oracle_review": [
+    {
+      "source_id": "08",
+      "page": 87,
+      "status": "Invalid hand transcription; excluded, not retroactively passed",
+      "reason": "Predeclared paragraph incorrectly says elements of a problem; magnified source and native text both say elements define a problem and. No evidence of faulty source layer from this mismatch."
+    },
+    {
+      "source_id": "08",
+      "page": 104,
+      "status": "Exact character check fails; semantic completeness not adjudicated",
+      "reason": "Parser uses hyphen instead of em dash, retains footnote marker6 and variant epsilonϵ vs handwrittenε. These differences are preserved; no normalization-based pass substituted."
+    },
+    {
+      "source_id": "07",
+      "page": 5,
+      "status": "Order anchor is ambiguous",
+      "reason": "Figure3 also appears in body cross-reference; first-occurrence pass does not establish caption position. Typed caption relationship is checked independently."
+    }
+  ],
+  "adoption": "Inconclusive pending reviewed completeness/representation criteria and PPT sample; no current v1 blocker inferred from deferred scanned/faulty-layer scopes."
+}
