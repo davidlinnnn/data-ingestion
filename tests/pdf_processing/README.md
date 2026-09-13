@@ -37,3 +37,15 @@ runbook; T03/S1 add fault qualification of the new boundaries.
 
 Large outputs and process logs stay in the explicit output directory and shared
 prefix. Compact validation results are recorded with the implementation evidence.
+
+After the real-service gate, check the outputs against the fixed historical Linux
+baseline, not only against the newly extracted uninterrupted conversion:
+
+```sh
+python tests/pdf_processing/verify_historical.py /tmp/t01-run-unique
+```
+
+Both historical full-document SHA-256 values are retained under `evidence`, derived
+from the archived Linux native/scanned baseline at commit `85925fa`. A mismatch is
+a regression gate, not permission to refresh the expected values. This gate is for
+the pinned Linux runtime/fixtures; other platforms must be qualified explicitly.
