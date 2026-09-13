@@ -7,7 +7,7 @@ run=subprocess.Popen(['kubectl','-n',ns,'exec','coordinator','--','/experiment/.
 start=time.monotonic()
 injected=set()
 while time.monotonic()-start<60:
-    pod=json.loads(k('get','pods','-l','app=t05-activities','-o','json'))['items'][0]['metadata']['name']
+    pod=next(p['metadata']['name'] for p in json.loads(k('get','pods','-l','app=t05-activities','-o','json'))['items'] if not p['metadata'].get('deletionTimestamp') and p['status'].get('phase')=='Running')
     probe=k('exec',pod,'--','/experiment/.venv/bin/python','-c', '''from pathlib import Path
 import json
 for p in Path('/scratch').glob('activity-*/pdf-*/process.log'):

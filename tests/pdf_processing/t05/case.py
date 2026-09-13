@@ -15,6 +15,11 @@ async def main(name):
     result=await handle.result()
     history=await handle.fetch_history()
     attempts=[e.activity_task_started_event_attributes.attempt for e in history.events if e.HasField('activity_task_started_event_attributes')]
+    identities=[e.activity_task_started_event_attributes.identity for e in history.events if e.HasField('activity_task_started_event_attributes')]
+    if name.startswith('pod'):
+        assert max(attempts)>=2 and len(set(identities))>=2, (attempts,identities)
+    if name.startswith('drain'):
+        assert max(attempts)==1 and len(set(identities))>=2, (attempts,identities)
     store=Store(boto3.client('s3',endpoint_url='http://objects:9000'),'t05',source['artifact']['key'].split('/sources/')[0])
     if name.startswith('exhaust'):
         assert result['status']=='failed' and result['error']['category']=='parser',result

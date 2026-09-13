@@ -59,3 +59,10 @@ asyncio handler still performs normal SDK drain. Test-only local progress 8 s,
 TERM 1 s and reap 3 s make a short stopped-child case finite. **Remove these
 settings for full-paper validation:** a real table stage exceeded 8 s and correctly
 exposed that experimental budget as unsuitable for the full native workload.
+
+Diagnostic field semantics: `pid` / `request_id` / `ready` describe the current
+request; `exit_code` / `termination_reason` retain the last terminated child.
+`forced_kill` resets for each new request; consult the retained exit reason/code
+and external signal controller when attributing an earlier escalation. `restarts`
+counts process starts including the initial spawn. These are diagnostics, not
+checkpoint completion or a statement that a running child has exited.
