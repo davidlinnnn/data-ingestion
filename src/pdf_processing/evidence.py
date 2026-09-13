@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import sys
+import unicodedata
 
 
 def graph_items(document):
@@ -52,7 +53,7 @@ def graph_items(document):
     return ordered
 
 
-def top_left(box, width, height):
+def top_left(box, width, height, *, allow_zero_width=False):
     if box['coord_origin'] == 'BOTTOMLEFT':
         result = [box['l'], height-box['t'], box['r'], height-box['b']]
     elif box['coord_origin'] == 'TOPLEFT':
@@ -61,14 +62,18 @@ def top_left(box, width, height):
         raise ValueError('unknown_coordinate_origin')
     if not all(math.isfinite(x) for x in result):
         raise ValueError('invalid_region')
-    if not (0 <= result[0] < result[2] <= width and 0 <= result[1] < result[3] <= height):
+    horizontal = 0 <= result[0] < result[2] <= width
+    if allow_zero_width and 0 <= result[0] == result[2] <= width:
+        horizontal = True
+    if not (horizontal and 0 <= result[1] < result[3] <= height):
         raise ValueError('region_outside_page')
     return result
 
 
 def overlap(a, b):
     area = max(0, min(a[2], b[2])-max(a[0], b[0])) * max(0, min(a[3], b[3])-max(a[1], b[1]))
-    return area / ((a[2]-a[0])*(a[3]-a[1]))
+    source_area = (a[2]-a[0])*(a[3]-a[1])
+    return area / source_area if source_area > 0 else 0
 
 
 def execute(request):
@@ -86,7 +91,7 @@ def execute(request):
         review = request['review']
         if review and review['source_sha256'] != request['source']['artifact']['sha256']:
             raise ValueError('review_source_mismatch')
-        pages, records = {}, []
+        pages, records, geometry_observations = {}, [], []
         with pdfium.PdfDocument(request['pdf']) as pdf:
             for number in sorted(int(n) for n in document['pages']):
                 page = pdf[number-1]
@@ -143,10 +148,28 @@ def execute(request):
                 'representation': 'not_independently_validated', 'text_empty': node.get('text') == ''}
             for prov in node.get('prov', []):
                 page = pages[str(prov['page_no'])]
-                box = top_left(prov['bbox'], *page['size_points'])
-                record['regions'].append({'page': prov['page_no'], 'provenance': prov,
+                # Some PDF fonts expose a combining slash as a separate zero-width
+                # TextItem. Preserve it; never turn the neighboring '=' into '≠'.
+                text = node.get('text')
+                combining = (record['actual_type'] == 'text' and isinstance(text, str)
+                             and bool(text) and all(unicodedata.combining(c) for c in text))
+                box = top_left(prov['bbox'], *page['size_points'], allow_zero_width=combining)
+                region = {'page': prov['page_no'], 'provenance': prov,
                     'bbox_top_left_points': box, 'page_artifact': page['artifact'],
-                    'page_sha256': page['sha256'], 'crop_recipe': {'scale': 3, 'box_pixels': [x*3 for x in box]}})
+                    'page_sha256': page['sha256'], 'crop_recipe': {'scale': 3, 'box_pixels': [x*3 for x in box]}}
+                if box[0] == box[2]:
+                    # The reported line is not a usable crop. Full-page evidence
+                    # avoids inventing a glyph width or associating it to a neighbor.
+                    width, height = page['size_points']
+                    region['geometry_status'] = 'zero_width_combining_mark'
+                    region['crop_recipe'] = {'scale': 3, 'box_pixels': [0, 0, width*3, height*3],
+                                             'scope': 'full_page_context'}
+                    geometry_observations.append({'origin': 'parser_zero_width_combining_mark',
+                        'refs': [node['self_ref']], 'regions': [region],
+                        'status': 'textual_or_mathematical_representation_unconfirmed',
+                        'reason': 'Isolated combining mark has zero-width parser provenance; precise localization and glyph association are unconfirmed. Full-page source context retained.',
+                        'text_rewritten': False})
+                record['regions'].append(region)
             records.append(record)
         if any(r['actual_type'] == 'formula' and not r['regions'] for r in records):
             raise ValueError('formula_evidence_missing')
@@ -155,7 +178,7 @@ def execute(request):
             raise ValueError('duplicate_review_id')
         formulas = [{'refs': [r['ref']], 'classification': 'parser_formula_label', 'regions': r['regions'],
                      'interpretation': 'not_performed'} for r in records if r['actual_type'] == 'formula']
-        observations = []
+        observations = geometry_observations
         for annotation in review.get('regions', []):
             page = pages[str(annotation['page'])]
             box = top_left(annotation['bbox'], *page['size_points'])

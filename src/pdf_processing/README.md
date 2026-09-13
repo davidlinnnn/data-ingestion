@@ -234,3 +234,25 @@ OCR report `method`) is the v2 stage dependency record, with `contract`, `stage`
 OCR descriptor; the outer request versions and T06 content-evidence schema are
 unchanged. Consumers should read the declared contract, not infer method identity
 from the complete environment snapshot.
+
+### Zero-width combining-mark source evidence (T09a)
+
+Some AIMA native-font inequality slashes are separate U+0338 TextItems with an
+in-page, zero-width bounding box. The original JSON, item text and provenance stay
+unchanged. For a text item containing only combining marks, a zero-width box with
+positive height may now retain `geometry_status: zero_width_combining_mark` and an
+explicit `crop_recipe.scope: full_page_context`. The recipe addresses the full
+persisted page image; the original `bbox_top_left_points` remains the reported
+zero-width line. **It is not a localized glyph crop.** Consumers must use the declared
+recipe and geometry status, not infer crop extent or inequality semantics from the
+reported line. Source/result/page image hashes retain normal integrity binding.
+
+A region-bound `parser_zero_width_combining_mark` representation observation says
+that glyph association is unconfirmed. No mark is merged into a neighboring CodeItem,
+no equality is rewritten as inequality, and no reading-order/algorithm interpretation
+is approved. Full-page context preserves readable evidence despite uncertain
+localization. Ordinary zero-area items, zero-height/reversed/out-of-page boxes and
+all zero-area source-reviewed annotation boxes still fail. Zero-area parser lines
+cannot satisfy a reviewed formula/representation overlap claim. Required work and
+canonical acceptance semantics remain unchanged; new evidence producer hashes
+require new accepted request IDs under the T07 transition contract.
