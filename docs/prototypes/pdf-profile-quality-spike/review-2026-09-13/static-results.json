@@ -1,0 +1,825 @@
+{
+  "mode": "Existing-artifact-only reassessment; proposed oracles are not user-approved or retroactively passing original probes.",
+  "original_plans": {
+    "native": "ad2e08ab9cfddb97a6fe1fc6f1b20fe231e482cc236645b60c5795e7928ef6c6",
+    "tc": "e8217b298574f01931d6e54d25098995361c05de3051ab3e9d9425c423866509"
+  },
+  "pages": [
+    {
+      "source_id": "06",
+      "physical_page": 4,
+      "printed_page": 4,
+      "parsed_sha256": "c29272540c33d3000148a9684f2031d22f82d9f0fece641c946106ede16ae7c2",
+      "nonempty_body_items": 51,
+      "typed_items": []
+    },
+    {
+      "source_id": "06",
+      "physical_page": 5,
+      "printed_page": 5,
+      "parsed_sha256": "56844edaaabd8455457d72b273b6eda6dac0e9fa87e97b764cf3b2076825f1de",
+      "nonempty_body_items": 9,
+      "typed_items": [
+        {
+          "ref": "#/texts/7",
+          "type": "formula",
+          "pages": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "06",
+      "physical_page": 8,
+      "printed_page": 8,
+      "parsed_sha256": "1070cfe108212d1e0ec8d4dc2dc1d6faa20a6f0a13a80dd3e706005465014e44",
+      "nonempty_body_items": 3,
+      "typed_items": []
+    },
+    {
+      "source_id": "07",
+      "physical_page": 3,
+      "printed_page": 3,
+      "parsed_sha256": "ed04798dc8c2460ddb23da1ec2a5b1116db9296cf260fc5895dcc0ee5f8b1d2d",
+      "nonempty_body_items": 3,
+      "typed_items": []
+    },
+    {
+      "source_id": "07",
+      "physical_page": 5,
+      "printed_page": 5,
+      "parsed_sha256": "931e1127a676e5499724fc6ecce952c0af51623d2f76455818fa953e2b650cab",
+      "nonempty_body_items": 66,
+      "typed_items": []
+    },
+    {
+      "source_id": "08",
+      "physical_page": 86,
+      "printed_page": 67,
+      "parsed_sha256": "b30acfb79c293d16db5fc4a3b727dca8bc18f7b9d8ef84377daffa61a0346553",
+      "nonempty_body_items": 15,
+      "typed_items": [
+        {
+          "ref": "#/texts/11",
+          "type": "code",
+          "pages": [
+            86
+          ]
+        },
+        {
+          "ref": "#/texts/15",
+          "type": "formula",
+          "pages": [
+            86
+          ]
+        },
+        {
+          "ref": "#/texts/18",
+          "type": "footnote",
+          "pages": [
+            86
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "08",
+      "physical_page": 87,
+      "printed_page": 68,
+      "parsed_sha256": "a241f791503423f0b8d26200fd7aed6ed486d3177dad8b353d1b01d837424d1c",
+      "nonempty_body_items": 54,
+      "typed_items": [
+        {
+          "ref": "#/texts/55",
+          "type": "footnote",
+          "pages": [
+            87
+          ]
+        },
+        {
+          "ref": "#/texts/56",
+          "type": "footnote",
+          "pages": [
+            87
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "08",
+      "physical_page": 104,
+      "printed_page": 85,
+      "parsed_sha256": "43699200321db9e450ead0891df85bf4803f2fa582f5557940280634d35c037b",
+      "nonempty_body_items": 11,
+      "typed_items": [
+        {
+          "ref": "#/texts/12",
+          "type": "footnote",
+          "pages": [
+            104
+          ]
+        },
+        {
+          "ref": "#/texts/13",
+          "type": "footnote",
+          "pages": [
+            104
+          ]
+        }
+      ]
+    }
+  ],
+  "code_proposed_oracle": {
+    "ref": "#/texts/11",
+    "status": "proposal_for_review_not_approved_acceptance",
+    "checks": [
+      {
+        "expected": "persistent",
+        "found_in_order": true
+      },
+      {
+        "expected": "seq",
+        "found_in_order": true
+      },
+      {
+        "expected": "state",
+        "found_in_order": true
+      },
+      {
+        "expected": "goal",
+        "found_in_order": true
+      },
+      {
+        "expected": "problem",
+        "found_in_order": true
+      },
+      {
+        "expected": "state ← UPDATE-STATE",
+        "found_in_order": true
+      },
+      {
+        "expected": "if seq is empty then",
+        "found_in_order": true
+      },
+      {
+        "expected": "goal ← FORMULATE-GOAL",
+        "found_in_order": true
+      },
+      {
+        "expected": "problem ← FORMULATE-PROBLEM",
+        "found_in_order": true
+      },
+      {
+        "expected": "seq ← SEARCH",
+        "found_in_order": true
+      },
+      {
+        "expected": "if seq = failure then return a null action",
+        "found_in_order": true
+      },
+      {
+        "expected": "action ← FIRST",
+        "found_in_order": true
+      },
+      {
+        "expected": "seq ← REST",
+        "found_in_order": true
+      },
+      {
+        "expected": "return action",
+        "found_in_order": true
+      }
+    ],
+    "caption_refs": [
+      {
+        "$ref": "#/texts/12"
+      }
+    ],
+    "limitation": "Whitespace comparison verifies token order only; block indentation/branch association needs source-aware review, not an executable-code claim."
+  },
+  "corrected_paragraph_proposal": {
+    "source_id": "08",
+    "page": 87,
+    "status": "new_review_proposal_original_invalid_oracle_preserved",
+    "expected": "The preceding elements define a problem and can be gathered into a single data structure that is given as input to a problem-solving algorithm. A solution to a problem is an action sequence that leads from the initial state to a goal state. Solution quality is measured by the path cost function, and an optimal solution has the lowest path cost among all solutions.",
+    "exact_existing_text_item_matches": [
+      "#/texts/52"
+    ]
+  },
+  "footnotes_and_margin_notes": {
+    "footnotes": [
+      {
+        "ref": "#/texts/12",
+        "text": "6 NoOp , or 'no operation,' is the name of an assembly language instruction that does nothing.",
+        "has_source_provenance": true
+      },
+      {
+        "ref": "#/texts/13",
+        "text": "7 Here, and throughout the book, the 'star' in C ∗ means an optimal value for C .",
+        "has_source_provenance": true
+      }
+    ],
+    "margin_note_refs": [
+      "#/texts/3"
+    ],
+    "native_text_order": "Margin note appears before body in export; not accepted as semantic reading order.",
+    "decision_pending": "Meaningful Greek/dash/superscript representation, footnote markers and margin-note association must be reviewed without silent normalization."
+  },
+  "unchanged_structural_results": {
+    "tables": [
+      {
+        "source_id": "06",
+        "page": 8,
+        "tables": [
+          {
+            "ref": "#/tables/0",
+            "rows": 26,
+            "cols": 8,
+            "expected": {
+              "source_id": "06",
+              "page": 8,
+              "expected_rows": 26,
+              "expected_cols": 8,
+              "association": "Five model blocks, each spanning five method rows; header=Model,Method,LiveMath,SealQA,SpreadSheet,OfficeQA,ALFWorld,Avg.",
+              "cells": [
+                {
+                  "row": 5,
+                  "col": 7,
+                  "value": "38.5"
+                },
+                {
+                  "row": 10,
+                  "col": 7,
+                  "value": "47.4"
+                },
+                {
+                  "row": 25,
+                  "col": 7,
+                  "value": "68.1"
+                }
+              ]
+            },
+            "cells": [
+              {
+                "row": 5,
+                "col": 7,
+                "value": "38.5",
+                "actual": [
+                  "38.5"
+                ],
+                "found": true
+              },
+              {
+                "row": 10,
+                "col": 7,
+                "value": "47.4",
+                "actual": [
+                  "47.4"
+                ],
+                "found": true
+              },
+              {
+                "row": 25,
+                "col": 7,
+                "value": "68.1",
+                "actual": [
+                  "68.1"
+                ],
+                "found": true
+              }
+            ],
+            "spans": [
+              {
+                "row": 1,
+                "col": 0,
+                "rowspan": 5,
+                "colspan": 1
+              },
+              {
+                "row": 6,
+                "col": 0,
+                "rowspan": 5,
+                "colspan": 1
+              },
+              {
+                "row": 11,
+                "col": 0,
+                "rowspan": 5,
+                "colspan": 1
+              },
+              {
+                "row": 16,
+                "col": 0,
+                "rowspan": 5,
+                "colspan": 1
+              },
+              {
+                "row": 21,
+                "col": 0,
+                "rowspan": 5,
+                "colspan": 1
+              }
+            ],
+            "bboxes": [
+              {
+                "l": 74.58954620361328,
+                "t": 757.9561767578125,
+                "r": 520.3599243164062,
+                "b": 411.7696533203125,
+                "coord_origin": "BOTTOMLEFT"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "source_id": "07",
+        "page": 3,
+        "tables": [
+          {
+            "ref": "#/tables/0",
+            "rows": 15,
+            "cols": 4,
+            "expected": {
+              "source_id": "07",
+              "page": 3,
+              "expected_rows": 15,
+              "expected_cols": 4,
+              "association": "14 model rows plus header; model/year aligned with innovation, tasks and framework",
+              "cells": [
+                {
+                  "row": 1,
+                  "col": 0,
+                  "value": "YOLOv1 (2015)"
+                },
+                {
+                  "row": 14,
+                  "col": 0,
+                  "value": "YOLOv26 (2025)"
+                },
+                {
+                  "row": 1,
+                  "col": 3,
+                  "value": "Darknet"
+                }
+              ]
+            },
+            "cells": [
+              {
+                "row": 1,
+                "col": 0,
+                "value": "YOLOv1 (2015)",
+                "actual": [
+                  "YOLOv1 (2015) [8]"
+                ],
+                "found": true
+              },
+              {
+                "row": 14,
+                "col": 0,
+                "value": "YOLOv26 (2025)",
+                "actual": [
+                  "YOLOv26 (2025) (Source Link)"
+                ],
+                "found": true
+              },
+              {
+                "row": 1,
+                "col": 3,
+                "value": "Darknet",
+                "actual": [
+                  "Darknet"
+                ],
+                "found": true
+              }
+            ],
+            "spans": [],
+            "bboxes": [
+              {
+                "l": 72.99989318847656,
+                "t": 704.1840286254883,
+                "r": 539.5537719726562,
+                "b": 318.9151306152344,
+                "coord_origin": "BOTTOMLEFT"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "typed_relationships": [
+      {
+        "source_id": "06",
+        "page": 4,
+        "expected_caption": "Figure 2",
+        "expected_bbox": [
+          70,
+          80,
+          535,
+          305
+        ],
+        "matches": [
+          {
+            "ref": "#/pictures/0",
+            "type": "picture",
+            "caption_references": [
+              {
+                "$ref": "#/texts/1"
+              }
+            ],
+            "page": 4,
+            "actual_top_left_bbox": [
+              60.92380142211914,
+              84.3405532836914,
+              533.2265014648438,
+              302.372314453125
+            ],
+            "source_region_iou": 0.9474145913139509
+          }
+        ]
+      },
+      {
+        "source_id": "07",
+        "page": 5,
+        "expected_caption": "Figure 3",
+        "expected_bbox": [
+          100,
+          310,
+          520,
+          690
+        ],
+        "matches": [
+          {
+            "ref": "#/pictures/0",
+            "type": "picture",
+            "caption_references": [
+              {
+                "$ref": "#/texts/4"
+              }
+            ],
+            "page": 5,
+            "actual_top_left_bbox": [
+              103.34727478027344,
+              308.7491455078125,
+              513.7459716796875,
+              688.9620361328125
+            ],
+            "source_region_iou": 0.9713464037978892
+          }
+        ]
+      },
+      {
+        "source_id": "08",
+        "page": 86,
+        "expected_caption": "Figure 3.1",
+        "expected_bbox": [
+          100,
+          70,
+          508,
+          268
+        ],
+        "matches": [
+          {
+            "ref": "#/texts/11",
+            "type": "code",
+            "caption_references": [
+              {
+                "$ref": "#/texts/12"
+              }
+            ],
+            "page": 86,
+            "actual_top_left_bbox": [
+              112.55998200000002,
+              82.43676100000005,
+              416.43953673999994,
+              254.13555227110157
+            ],
+            "source_region_iou": 0.6458674024665592
+          }
+        ]
+      },
+      {
+        "source_id": "08",
+        "page": 87,
+        "expected_caption": "Figure 3.2",
+        "expected_bbox": [
+          102,
+          65,
+          508,
+          312
+        ],
+        "matches": [
+          {
+            "ref": "#/pictures/0",
+            "type": "picture",
+            "caption_references": [
+              {
+                "$ref": "#/texts/6"
+              }
+            ],
+            "page": 87,
+            "actual_top_left_bbox": [
+              101.34070587158203,
+              64.62293243408203,
+              506.9231872558594,
+              314.51434326171875
+            ],
+            "source_region_iou": 0.9842396913097762
+          }
+        ]
+      }
+    ]
+  },
+  "tc_evidence": {
+    "native": {
+      "modern_content_anchors_found": 9,
+      "modern_content_anchors_total": 23,
+      "screenshot_anchors_not_in_native_control": [
+        {
+          "source_id": "03",
+          "page": 3,
+          "anchor": "我的專區",
+          "found": false
+        },
+        {
+          "source_id": "03",
+          "page": 3,
+          "anchor": "最新公告",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "實習檢核",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "媒合評估",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "專案緣起",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "最新消息",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "使用者登入",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "查詢資料使用注意說明",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "確認同意",
+          "found": false
+        }
+      ],
+      "screenshot_anchors_confounded_by_native_prose": [
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "儲存",
+          "found": true
+        },
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "個人簡要自述登打作業",
+          "found": true
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "忘記密碼",
+          "found": true
+        }
+      ],
+      "invalid_transcription_anchors": [
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "機關代碼",
+          "found": false
+        }
+      ]
+    },
+    "mixed": {
+      "modern_content_anchors_found": 23,
+      "modern_content_anchors_total": 23,
+      "screenshot_anchors_not_in_native_control": [
+        {
+          "source_id": "03",
+          "page": 3,
+          "anchor": "我的專區",
+          "found": false
+        },
+        {
+          "source_id": "03",
+          "page": 3,
+          "anchor": "最新公告",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "實習檢核",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "媒合評估",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "專案緣起",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "最新消息",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "使用者登入",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "查詢資料使用注意說明",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "確認同意",
+          "found": false
+        }
+      ],
+      "screenshot_anchors_confounded_by_native_prose": [
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "儲存",
+          "found": true
+        },
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "個人簡要自述登打作業",
+          "found": true
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "忘記密碼",
+          "found": true
+        }
+      ],
+      "invalid_transcription_anchors": [
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "機關代碼",
+          "found": false
+        }
+      ]
+    },
+    "scanned": {
+      "modern_content_anchors_found": 23,
+      "modern_content_anchors_total": 23,
+      "screenshot_anchors_not_in_native_control": [
+        {
+          "source_id": "03",
+          "page": 3,
+          "anchor": "我的專區",
+          "found": false
+        },
+        {
+          "source_id": "03",
+          "page": 3,
+          "anchor": "最新公告",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "實習檢核",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "媒合評估",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "專案緣起",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 6,
+          "anchor": "最新消息",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "使用者登入",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "查詢資料使用注意說明",
+          "found": false
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "確認同意",
+          "found": false
+        }
+      ],
+      "screenshot_anchors_confounded_by_native_prose": [
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "儲存",
+          "found": true
+        },
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "個人簡要自述登打作業",
+          "found": true
+        },
+        {
+          "source_id": "04",
+          "page": 7,
+          "anchor": "忘記密碼",
+          "found": true
+        }
+      ],
+      "invalid_transcription_anchors": [
+        {
+          "source_id": "03",
+          "page": 4,
+          "anchor": "機關代碼",
+          "found": false
+        }
+      ]
+    },
+    "crop_diagnostics": {
+      "found": 11,
+      "total": 12,
+      "scope": "Manual 3x page-render crops; not production-selected components or complete image transcription."
+    },
+    "valid_crop_subset": {
+      "found": 11,
+      "total": 11,
+      "excluded": "03 page4 機關代碼 was a transcription error; source visually says 機關代號. Preserve original 11/12 result, exclude invalid anchor without substituting a passing ground truth after recognition."
+    },
+    "invalid_probes": [
+      {
+        "source_id": "03",
+        "page": 4,
+        "probe": "reading_order",
+        "reason": "說明 is a substring of earlier 操作說明; first-occurrence matching creates an invalid order failure. Excluded rather than changing ground truth after recognition."
+      },
+      {
+        "source_id": "05",
+        "page": 1,
+        "probe": "reading_order",
+        "reason": "No ordered anchors were specified; vacuous True is not a measured historical reading-order pass."
+      }
+    ],
+    "unavailable_metric": "Discarded zero-valued experimental raw-cell introspection; intermediate parser cells were not validly observed by this runner. No attribution of missing text to OCR vs layout is made. All reported recognition-content scores use per-page public Docling export or independent crop OCR."
+  }
+}
