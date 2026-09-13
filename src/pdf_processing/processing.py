@@ -32,8 +32,9 @@ def reject(code, category='input') -> NoReturn:
 
 
 class Processing:
-    def __init__(self, store, scratch, model_cache, profile, limits=None):
+    def __init__(self, store, scratch, model_cache, profile, limits=None, child_runner=None):
         self.store, self.scratch = store, Path(scratch)
+        self.child_runner = child_runner
         self.model_cache, self.profile = Path(model_cache), profile
         self.limits = limits or {'max_bytes': 100*1024*1024, 'max_pages': 100,
             'max_page_pixels': 20_000_000, 'preflight_seconds': 30, 'child_seconds': 540}
@@ -163,13 +164,15 @@ class Processing:
             await asyncio.to_thread(self.read_source, request, pdf)
             source = SourceRequest(pdf, request['source_revision'], request['artifact']['sha256'],
                                    plan['profile']['method'], self.model_cache)
-            execution = Execution(source, self.store, root, activity.heartbeat, plan['limits']['child_seconds'])
+            execution = Execution(source, self.store, root, activity.heartbeat, plan['limits']['child_seconds'], child_runner=self.child_runner)
             contract = {**operation, 'contract': 'pdf-operation-v1', 'plan': value['plan'],
                 'dependencies': {'source': request['artifact'], 'profile': digest(encoded(plan['profile'])),
                                  'groups': operation.get('groups', [])}}
             identity = await execution.produce(contract)
             result = {'operation': identity, 'stage': operation['kind'], 'reused': execution.observation['reused'],
                 'observed_at': observed()}
+            if 'parser' in execution.observation:
+                result['parser'] = execution.observation['parser']
             if operation['kind'] == 'assembly':
                 # Full reconstruction is not enrichment completion or canonical acceptance.
                 delivered = root/'delivered'

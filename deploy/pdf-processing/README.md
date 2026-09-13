@@ -1,4 +1,4 @@
-# T02 native PDF processing
+# Native PDF processing workers
 
 This slice delivers `parsed_ready`: complete internal parsing and assembly, **not**
 processing completion, selected OCR completion, or canonical acceptance. The caller
@@ -39,7 +39,7 @@ password requirement, invalid PDF, digest and configured size/page/pixel violati
 fail before inference. Confirmed bad registration does not silently become a miss.
 No shared artifacts are automatically deleted. Scratch uses `TemporaryDirectory`;
 process cancellation/deadline kills and reaps its process group. Pod-local scratch
-is an `emptyDir`. The warm lifecycle and stronger late-writer races remain T05/T03.
+is an `emptyDir`. Warm native parsing is supervised by T05; stronger late-writer races remain T03.
 
 ## Bounded initial settings
 
@@ -50,9 +50,15 @@ quality, memory, latency or production support promises.
 
 Preflight child deadline 30 s; parsing/assembly child deadline 540 s. Activity
 start-to-close 12 min, schedule-to-close 40 min, heartbeat 15 s, at most 3 attempts
-with 2–10 s retry backoff. Local children have hard deadlines; true no-progress
-supervision is a later warm-lifecycle concern. The deployment drains for 15 s inside
-30 s Pod termination grace, then cancels and reaps unfinished fresh children.
+with 2–10 s retry backoff. Warm native parsing uses a provisional 120 s startup
+allowance, 180 s local no-progress allowance and the frozen 540 s hard deadline.
+The current deployment uses **30 s SDK drain inside 60 s Pod termination grace**.
+SDK shutdown stops polling, then cancels unfinished Activities at the drain limit.
+A separate 35 s shutdown wait bounds a stuck SDK shutdown; parser TERM/reap adds
+at most 5 s + 5 s, leaving 15 s within Pod grace for scheduling and cleanup.
+After child cleanup the entrypoint exits explicitly, so cancelled thread-backed
+publication cannot extend lifetime via asyncio's default-executor shutdown.
+Unregistered late outputs remain unfinished; process exit never declares success.
 One Activity slot runs at once. T09 calibrates these values together.
 
 ## Runtime and deployment
@@ -73,10 +79,17 @@ Workflow code does not import or initialize Docling, model caches, or object sto
 Both roles handle SIGTERM; mount bounded `emptyDir` scratch on `/scratch` and inject
 credentials through your cluster's secret mechanism.
 
-The executable local validation manifest and instructions are under
-`tests/pdf_processing/t02`. Its image tag, node pin, dev Temporal and local MinIO
-credentials are explicitly test-only; they do not qualify production HA, IAM or
-worker-version upgrades.
+Use `workers.yaml` as the current deployment template: replace its image digest,
+namespace, service addresses and Secret name with reviewed environment values.
+It explicitly records the 60/30/5/5 second Pod/drain/TERM/reap configuration.
+The executable local qualification manifest is under `tests/pdf_processing/t05`.
+Its image tag, node pin and development credentials are test-only. The T02 manifest
+is frozen historical evidence, not the deployment recipe for current warm workers.
+
+Changing these budgets requires updating Pod grace and revalidating shutdown. The
+current forced cleanup owns `activity-*` scratch; integration with T04's `ocr-*`
+scratch and fresh OCR children needs a merged shutdown test before claiming OCR
+cleanup. This branch does not establish that combined guarantee.
 
 ## Extension rules
 

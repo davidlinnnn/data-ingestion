@@ -34,14 +34,18 @@ class SourceRequest:
 
 class Execution:
     def __init__(self, source: SourceRequest, store: Store, scratch: Path,
-                 heartbeat=lambda detail: None, child_timeout=540):
+                 heartbeat=lambda detail: None, child_timeout=540, child_runner=None):
         self.source, self.store, self.scratch = source, store, scratch
         self.heartbeat = heartbeat
         self.child_timeout = child_timeout
         self.observation = {}
+        self.child_runner = child_runner
 
     async def child(self, module, request, out):
         """One request per interpreter; S1 explores safe process reuse separately."""
+        if self.child_runner is not None and module == 'pdf_processing.parse' and request.get('mode') == 'capture':
+            self.observation['parser'] = await self.child_runner.run(request, out, self.heartbeat, self.child_timeout)
+            return
         with (out/'process.log').open('wb') as log:
             process = await asyncio.create_subprocess_exec(
                 sys.executable, '-m', module, stdin=asyncio.subprocess.PIPE,
