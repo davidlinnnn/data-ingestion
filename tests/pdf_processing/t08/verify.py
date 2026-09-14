@@ -85,6 +85,7 @@ async def main():
         record = json.loads((OUT/(args[0]+'-request.json')).read_text())
         handle = client.get_workflow_handle(record['workflow_id'])
         description = await handle.describe()
+        assert description.status is not None, 'Temporal description has no status'
         history = await handle.fetch_history()
         names = [EventType.Name(e.event_type) for e in history.events]
         scheduled = [e.activity_task_scheduled_event_attributes.activity_type.name for e in history.events if e.HasField('activity_task_scheduled_event_attributes')]

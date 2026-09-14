@@ -1,0 +1,292 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{},\"name\":\"integration-0914\",\"namespace\":\"pdf-t08-validation\"},\"spec\":{\"containers\":[{\"command\":[\"sh\",\"-c\",\"/experiment/.venv/bin/python /check/runtime.py \\u003e /tmp/integration.log 2\\u003e\\u00261; echo $? \\u003e /tmp/integration.exit; sleep infinity\"],\"env\":[{\"name\":\"PYTHONPATH\",\"value\":\"/app\"},{\"name\":\"AWS_ACCESS_KEY_ID\",\"value\":\"prototype-local\"},{\"name\":\"AWS_SECRET_ACCESS_KEY\",\"value\":\"prototype-local-only-password\"}],\"image\":\"docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"coordinator\",\"resources\":{\"limits\":{\"cpu\":\"4\",\"memory\":\"5Gi\"},\"requests\":{\"cpu\":\"100m\",\"memory\":\"256Mi\"}},\"terminationMessagePath\":\"/dev/termination-log\",\"terminationMessagePolicy\":\"File\",\"volumeMounts\":[{\"mountPath\":\"/app/pdf_processing\",\"name\":\"code\"},{\"mountPath\":\"/check\",\"name\":\"driver\"},{\"mountPath\":\"/fixtures\",\"name\":\"fixtures\"},{\"mountPath\":\"/scratch\",\"name\":\"scratch\"}]}],\"dnsPolicy\":\"ClusterFirst\",\"enableServiceLinks\":true,\"nodeName\":\"internal-a2a-vs6-local-worker2\",\"nodeSelector\":{\"kubernetes.io/hostname\":\"internal-a2a-vs6-local-worker2\"},\"preemptionPolicy\":\"PreemptLowerPriority\",\"priority\":0,\"restartPolicy\":\"Never\",\"schedulerName\":\"default-scheduler\",\"securityContext\":{},\"serviceAccount\":\"default\",\"serviceAccountName\":\"default\",\"terminationGracePeriodSeconds\":60,\"tolerations\":[{\"effect\":\"NoExecute\",\"key\":\"node.kubernetes.io/not-ready\",\"operator\":\"Exists\",\"tolerationSeconds\":300},{\"effect\":\"NoExecute\",\"key\":\"node.kubernetes.io/unreachable\",\"operator\":\"Exists\",\"tolerationSeconds\":300}],\"volumes\":[{\"configMap\":{\"defaultMode\":420,\"name\":\"integration-0914-package\"},\"name\":\"code\"},{\"configMap\":{\"defaultMode\":420,\"name\":\"integration-0914-driver\"},\"name\":\"driver\"},{\"configMap\":{\"defaultMode\":420,\"name\":\"t08-fixtures\"},\"name\":\"fixtures\"},{\"emptyDir\":{\"sizeLimit\":\"2Gi\"},\"name\":\"scratch\"}]}}\n"
+    },
+    "creationTimestamp": "2026-09-14T09:56:58Z",
+    "generation": 1,
+    "name": "integration-0914",
+    "namespace": "pdf-t08-validation",
+    "resourceVersion": "572844",
+    "uid": "4fd10233-8156-4a44-8d5c-ff093510cf6a"
+  },
+  "spec": {
+    "containers": [
+      {
+        "command": [
+          "sh",
+          "-c",
+          "/experiment/.venv/bin/python /check/runtime.py > /tmp/integration.log 2>&1; echo $? > /tmp/integration.exit; sleep infinity"
+        ],
+        "env": [
+          {
+            "name": "PYTHONPATH",
+            "value": "/app"
+          },
+          {
+            "name": "AWS_ACCESS_KEY_ID",
+            "value": "prototype-local"
+          },
+          {
+            "name": "AWS_SECRET_ACCESS_KEY",
+            "value": "prototype-local-only-password"
+          }
+        ],
+        "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "imagePullPolicy": "IfNotPresent",
+        "name": "coordinator",
+        "resources": {
+          "limits": {
+            "cpu": "4",
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "terminationMessagePath": "/dev/termination-log",
+        "terminationMessagePolicy": "File",
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/check",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/fixtures",
+            "name": "fixtures"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-vw9q2",
+            "readOnly": true
+          }
+        ]
+      }
+    ],
+    "dnsPolicy": "ClusterFirst",
+    "enableServiceLinks": true,
+    "nodeName": "internal-a2a-vs6-local-worker2",
+    "nodeSelector": {
+      "kubernetes.io/hostname": "internal-a2a-vs6-local-worker2"
+    },
+    "preemptionPolicy": "PreemptLowerPriority",
+    "priority": 0,
+    "restartPolicy": "Never",
+    "schedulerName": "default-scheduler",
+    "securityContext": {},
+    "serviceAccount": "default",
+    "serviceAccountName": "default",
+    "terminationGracePeriodSeconds": 60,
+    "tolerations": [
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/not-ready",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      },
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/unreachable",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      }
+    ],
+    "volumes": [
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "integration-0914-package"
+        },
+        "name": "code"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "integration-0914-driver"
+        },
+        "name": "driver"
+      },
+      {
+        "configMap": {
+          "defaultMode": 420,
+          "name": "t08-fixtures"
+        },
+        "name": "fixtures"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "2Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "name": "kube-api-access-vw9q2",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-14T09:56:59Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "PodReadyToStartContainers"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-14T09:56:58Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "Initialized"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-14T09:56:59Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-14T09:56:59Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "ContainersReady"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-14T09:56:58Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "PodScheduled"
+      }
+    ],
+    "containerStatuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "containerID": "containerd://9ae0de7f389865a361e951a61c3280e05b454006c40353f396914c01ff7a627e",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "coordinator",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "cpu": "4",
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-14T09:56:59Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/check",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/fixtures",
+            "name": "fixtures"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-vw9q2",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ],
+    "hostIP": "172.19.0.5",
+    "hostIPs": [
+      {
+        "ip": "172.19.0.5"
+      }
+    ],
+    "observedGeneration": 1,
+    "phase": "Running",
+    "podIP": "10.244.1.54",
+    "podIPs": [
+      {
+        "ip": "10.244.1.54"
+      }
+    ],
+    "qosClass": "Burstable",
+    "startTime": "2026-09-14T09:56:58Z"
+  }
+}

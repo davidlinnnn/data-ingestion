@@ -1,0 +1,204 @@
+{
+  "request": {
+    "version": 3,
+    "completion": "required_evidence_v1",
+    "profile": "native-v1",
+    "request_id": "integration-0914-08e78baf620b43ea83ab74692052aef0",
+    "source_revision": "synthetic:integration-0914:multiple",
+    "artifact": {
+      "key": "integration-0914/sources/8ffa8b527f9f47cc86bc71b33a6b93bd.pdf",
+      "name": "multiple.pdf",
+      "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+      "version_id": "7eed5eca-06d8-4469-ab8d-7be9d8e8395e"
+    },
+    "routing_id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+  },
+  "route": {
+    "contract": "pdf-explicit-routing-v1",
+    "binding": {
+      "profile": "900c286c9a047729e98a620ab284c53c009b603e515138edd6c521cad733656a",
+      "producer": "24358a7430a9799f7e9e85a21e88254c72d5706ceb767d94cfb268225db36e80",
+      "limits": "8626b68ab25bd426d0658fe23ca6d6b23c18cff03a365b31412885efc3a3bf6b",
+      "models": "737c633d29fa855ee860d44c3b55e7400016d3b0685ae960d9c0be091ff135d6",
+      "store": {
+        "bucket": "t08",
+        "prefix": "integration-0914/"
+      }
+    },
+    "images": {
+      "workflow": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "prepare": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "group": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "assembly": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "select": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "component_ocr": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "finalize": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0"
+    },
+    "prefix": "integration-0914",
+    "id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+    "queues": {
+      "workflow": "integration-0914-workflow-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+      "prepare": "integration-0914-prepare-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+      "group": "integration-0914-group-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+      "assembly": "integration-0914-assembly-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+      "select": "integration-0914-select-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+      "component_ocr": "integration-0914-component_ocr-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+      "finalize": "integration-0914-finalize-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    }
+  },
+  "producer": {
+    "compatibility.py": "80fd4f0d10e1ce55d14d4597be2c002d56223b4cbe8ffd1e99948f5059c27034",
+    "rollout_workflow.py": "9e5af1af0659186f279d45e92c96ee46e84f7fd737394a1ed33edbb3ef07f8b6",
+    "execution.py": "f6a6be4fdda73e87308eb14335cbd9455473f4edeeac0034dc76c03c5f40326d",
+    "__init__.py": "0618cd3d1c2dcb31f3d55be51482527ae8b04da932147c6d3a247a2921352712",
+    "supervision.py": "4b3978d0c4710dda90335af866b6f73a6ab889bd714258f5c6cf5e22bfd3d135",
+    "evidence.py": "a41c167c23d008b0765eca2c12f26728cb77c2664c12ca1405c9d0690dfa5cc7",
+    "enrichment.py": "60ea31862bd5879d9c01982e04ad834f35d34c24d6cd08e0c6ecbb30695ea5ca",
+    "warm_child.py": "75c325385496c43d417c73597ace32183dbbdbf97fac41c9608810b2a9f38657",
+    "ocr.py": "1f8e665bb0d034bce21dbbf9526866533579c9f7c7009e50a2d31a58dfdb831e",
+    "routed_activity.py": "bd69b51a52c2a48225149697091e34d6214225b794f8b82765737fc863b45944",
+    "preflight.py": "13f08bb6d335d9cc3f67ce7c762411eda69f8371136f2ffdf7a552cfcc7a1122",
+    "temporal.py": "5a3c5b2f5514ca7d793b6d69d0ed00c52b778dbe54e5af5f5b9a17c0d50beb12",
+    "processing.py": "1ae6cec65068e87dd37599dd45db6aaa0340308464f6345017c080ec0e509a85",
+    "routing.py": "eeb6b8e6265e003b737c300a3a5f37461c6e0e24923282cda4a3319629ddd282",
+    "processing_workflow.py": "11b35c2d17e889447b1921d4bdece45ffe841b479d5d1c54f647b275ecb782c0",
+    "parse.py": "d30f88af0347e4275d3d2ea0a31e5a77cbe7714cad3b82cc40e1553399348c9d",
+    "object_store.py": "22d6d25d9e037d622aa7c681451d37543276287076f4bdef2f5fdcc50a2ce907"
+  },
+  "result": {
+    "canonical_accepted": false,
+    "error": null,
+    "observed_at": "2026-09-14T09:57:21.595790+00:00",
+    "pages": 1,
+    "parsed_result": "pdf-parsed-v2:206224197a77434766b98cb06d0d9fa0f8a8a2edc7e379464bc611d4ac3532a2",
+    "plan": "pdf-plan-v1:080d9775cc713bd3c64282b4ac2390ecb0964f728b077273c9ef1b8e52dd62b3",
+    "processing_complete": true,
+    "processing_result": "pdf-complete-v1:aa5cc39ff0f4ca52ce82ec2f6a34f71691b052f1c33255429b35d8f62c25c6ab",
+    "registered_components": 2,
+    "registered_pages": 1,
+    "routing_id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+    "selected_components": 2,
+    "selection": "pdf-selection-v1:cd0510dc89a2396be1b2562512f90804c7da075c50ca1beab036751981b39bd2",
+    "status": "complete",
+    "steps": [
+      {
+        "attempt": 1,
+        "observed_at": "2026-09-14T09:57:12.374307+00:00",
+        "operation": "8afd3b12254fdb29293cb7c32a9fc0a19eb9e849afbe861f038e7d4040eee157",
+        "reused": false,
+        "routing_id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "seconds": 11.96863479699823,
+        "stage": "group",
+        "storage": {
+          "get_bytes": 234081,
+          "get_seconds": 0.022833706010715105,
+          "put_bytes": 94863,
+          "put_seconds": 0.03019058401696384
+        },
+        "task_queue": "integration-0914-group-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "worker_stage": "group"
+      },
+      {
+        "attempt": 1,
+        "observed_at": "2026-09-14T09:57:17.910669+00:00",
+        "operation": "c3b5cad4c5cf50be191145d1bebb16e7ff0b63e11180d4c37c5eab63355c29f9",
+        "parsed_result": "pdf-parsed-v2:206224197a77434766b98cb06d0d9fa0f8a8a2edc7e379464bc611d4ac3532a2",
+        "reused": false,
+        "routing_id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "seconds": 5.516023877004045,
+        "stage": "assembly",
+        "storage": {
+          "get_bytes": 720210,
+          "get_seconds": 0.05492733597930055,
+          "put_bytes": 123130,
+          "put_seconds": 0.02444220798497554
+        },
+        "task_queue": "integration-0914-assembly-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "worker_stage": "assembly"
+      },
+      {
+        "attempt": 1,
+        "component": "#/pictures/0",
+        "observed_at": "2026-09-14T09:57:19.854928+00:00",
+        "operation": "pdf-component-v1:3b9bf55a42b7e0638d59cb89da0a6a41e2ad6d164f36242d59d0242d8bc6ce80",
+        "outcome": "text_detected",
+        "reused": false,
+        "routing_id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "stage": "component_ocr",
+        "task_queue": "integration-0914-component_ocr-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "worker_stage": "component_ocr"
+      },
+      {
+        "attempt": 1,
+        "component": "#/pictures/1",
+        "observed_at": "2026-09-14T09:57:21.255990+00:00",
+        "operation": "pdf-component-v1:b78ec2ef5b37d1955a744ec7174bf2555fcf7125383b1532a8e5f9e81eb28e8f",
+        "outcome": "text_detected",
+        "reused": false,
+        "routing_id": "25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "stage": "component_ocr",
+        "task_queue": "integration-0914-component_ocr-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da",
+        "worker_stage": "component_ocr"
+      }
+    ],
+    "version": 1
+  },
+  "required_ocr_count": 2,
+  "activities": [
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-prepare-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    },
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-group-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    },
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-assembly-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    },
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-select-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    },
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-component_ocr-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    },
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-component_ocr-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    },
+    {
+      "type": "pdf_processing_routed_step_v1",
+      "queue": "integration-0914-finalize-25c5a1c8b702e4bd5c7a392d1e201c43076e17e512e492bdde5cc3828f6686da"
+    }
+  ],
+  "negatives": {
+    "missing": {
+      "canonical_accepted": false,
+      "error": {
+        "category": "configuration",
+        "code": "invalid_routing"
+      },
+      "processing_complete": false,
+      "registered_pages": 0,
+      "status": "failed",
+      "steps": [],
+      "version": 1
+    },
+    "malformed": {
+      "canonical_accepted": false,
+      "error": {
+        "category": "configuration",
+        "code": "invalid_routing"
+      },
+      "processing_complete": false,
+      "registered_pages": 0,
+      "status": "failed",
+      "steps": [],
+      "version": 1
+    }
+  },
+  "scope": "Single Pod, fresh child execution; not multi-Pod rollout or resource qualification"
+}

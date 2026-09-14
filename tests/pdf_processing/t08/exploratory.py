@@ -18,6 +18,7 @@ async def main():
     for case,identity in CASES.items():
         handle=client.get_workflow_handle(identity)
         description=await handle.describe()
+        assert description.status is not None, 'Temporal description has no status'
         history=await handle.fetch_history()
         first=history.events[0].workflow_execution_started_event_attributes
         payload=json.loads(first.input.payloads[0].data)
