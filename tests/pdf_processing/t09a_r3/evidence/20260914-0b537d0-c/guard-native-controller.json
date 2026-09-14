@@ -1,0 +1,73 @@
+{
+  "trial": "guard-native",
+  "sid": "native",
+  "started": 1789390036.581068,
+  "status": "failed_or_interrupted",
+  "pod": "r2-activities-20260914-0b537d0-c-5f6c5d4bd6-2b7wh",
+  "pod_uid": "80bbe037-124e-4c2c-9c20-f2a80916e324",
+  "before": [
+    {
+      "allocatedResources": {
+        "cpu": "100m",
+        "memory": "256Mi"
+      },
+      "containerID": "containerd://8690070794bee2213677bb757df3046c923db0ff1a1e30d6d6a83e00197dc857",
+      "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+      "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "lastState": {},
+      "name": "worker",
+      "ready": true,
+      "resources": {
+        "limits": {
+          "cpu": "4",
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        }
+      },
+      "restartCount": 0,
+      "started": true,
+      "state": {
+        "running": {
+          "startedAt": "2026-09-14T12:47:17Z"
+        }
+      },
+      "user": {
+        "linux": {
+          "gid": 0,
+          "supplementalGroups": [
+            0
+          ],
+          "uid": 0
+        }
+      },
+      "volumeMounts": [
+        {
+          "mountPath": "/app/pdf_processing",
+          "name": "code"
+        },
+        {
+          "mountPath": "/driver",
+          "name": "driver"
+        },
+        {
+          "mountPath": "/scratch",
+          "name": "scratch"
+        },
+        {
+          "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "name": "kube-api-access-6p44z",
+          "readOnly": true,
+          "recursiveReadOnly": "Disabled"
+        }
+      ]
+    }
+  ],
+  "oom_before": 28,
+  "submitted_at": 1789390038.166414,
+  "error": "Sampler ended before complete workflow",
+  "finished": 1789390054.054961,
+  "continuous_observation": false
+}

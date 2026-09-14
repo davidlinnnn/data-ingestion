@@ -1,0 +1,229 @@
+{
+  "verifier": "d96ac0e593c78c5ecee5a4690fc89b3d1f10d8f582f59e63ca22c09409173471",
+  "run_id": "20260914-0b537d0-c",
+  "producer": "d8d29e345a6f6c072354db07d91983a95be399a9fd913d1ef9693b5764f35d5b",
+  "driver": "91092b44aef505a1e427368107bedd9e77f8406c876a1312ee4576a7de22b9aa",
+  "effective_specs": {
+    "activities": {
+      "containers": [
+        {
+          "command": [
+            "/experiment/.venv/bin/python",
+            "/driver/gate.py"
+          ],
+          "env": [
+            {
+              "name": "PYTHONPATH",
+              "value": "/app"
+            },
+            {
+              "name": "WORKER_ROLE",
+              "value": "activity"
+            },
+            {
+              "name": "TEMPORAL_ADDRESS",
+              "value": "temporal:7233"
+            },
+            {
+              "name": "TASK_QUEUE",
+              "value": "t09a-r2-20260914-0b537d0-c-pdf"
+            },
+            {
+              "name": "OBJECT_ENDPOINT",
+              "value": "http://objects:9000"
+            },
+            {
+              "name": "OBJECT_BUCKET",
+              "value": "t09a"
+            },
+            {
+              "name": "OBJECT_PREFIX",
+              "value": "final"
+            },
+            {
+              "name": "AWS_ACCESS_KEY_ID",
+              "value": "<REDACTED>"
+            },
+            {
+              "name": "AWS_SECRET_ACCESS_KEY",
+              "value": "<REDACTED>"
+            },
+            {
+              "name": "MODEL_CACHE",
+              "value": "/experiment/PROTOTYPE-wipe-me/hf"
+            },
+            {
+              "name": "PROFILE_FILE",
+              "value": "/driver/native-v1.json"
+            },
+            {
+              "name": "LIMITS",
+              "value": "{\"max_bytes\": 104857600, \"max_pages\": 51, \"max_page_pixels\": 20000000, \"preflight_seconds\": 30, \"child_seconds\": 540}"
+            },
+            {
+              "name": "DRAIN_SECONDS",
+              "value": "30"
+            },
+            {
+              "name": "PARSER_BUDGETS",
+              "value": "{\"startup_seconds\":120,\"no_progress_seconds\":180,\"terminate_seconds\":5,\"reap_seconds\":5,\"max_requests\":20}"
+            }
+          ],
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "imagePullPolicy": "IfNotPresent",
+          "name": "worker",
+          "resources": {
+            "limits": {
+              "cpu": "4",
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "volumeMounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/scratch",
+              "name": "scratch"
+            }
+          ]
+        }
+      ],
+      "dnsPolicy": "ClusterFirst",
+      "nodeSelector": {
+        "kubernetes.io/hostname": "internal-a2a-vs6-local-worker2"
+      },
+      "restartPolicy": "Always",
+      "schedulerName": "default-scheduler",
+      "securityContext": {},
+      "terminationGracePeriodSeconds": 60,
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-r2-code-d8d29e345a6f6c07"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-r2-driver-91092b44aef505a1"
+          },
+          "name": "driver"
+        },
+        {
+          "emptyDir": {
+            "sizeLimit": "2Gi"
+          },
+          "name": "scratch"
+        }
+      ]
+    },
+    "workflows": {
+      "containers": [
+        {
+          "command": [
+            "/experiment/.venv/bin/python",
+            "/driver/worker.py"
+          ],
+          "env": [
+            {
+              "name": "PYTHONPATH",
+              "value": "/app"
+            },
+            {
+              "name": "WORKER_ROLE",
+              "value": "workflow"
+            },
+            {
+              "name": "TEMPORAL_ADDRESS",
+              "value": "temporal:7233"
+            },
+            {
+              "name": "TASK_QUEUE",
+              "value": "t09a-r2-20260914-0b537d0-c-workflows"
+            }
+          ],
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "imagePullPolicy": "IfNotPresent",
+          "name": "worker",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "volumeMounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            }
+          ]
+        }
+      ],
+      "dnsPolicy": "ClusterFirst",
+      "nodeSelector": {
+        "kubernetes.io/hostname": "internal-a2a-vs6-local-worker2"
+      },
+      "restartPolicy": "Always",
+      "schedulerName": "default-scheduler",
+      "securityContext": {},
+      "terminationGracePeriodSeconds": 60,
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-r2-code-d8d29e345a6f6c07"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-r2-driver-91092b44aef505a1"
+          },
+          "name": "driver"
+        }
+      ]
+    }
+  },
+  "images": {
+    "activities": {
+      "content_id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+      "repo_digest": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    },
+    "workflows": {
+      "content_id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+      "repo_digest": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      }
+    }
+  }
+}
