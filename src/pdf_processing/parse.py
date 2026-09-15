@@ -52,6 +52,17 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
         raise ValueError('Output directory must be fresh')
     if request.mode == 'restore' and request.checkpoint is None:
         raise ValueError('Restore requires checkpoint')
+    from .continuation import METHOD, ContinuationPredictor
+    actual_continuation = None
+    continuation = (request.expected_method or {}).get('continuation')
+    if continuation is not None:
+        actual_continuation = {
+            'version': METHOD,
+            'sha256': hashlib.sha256(Path(__file__).with_name('continuation.py').read_bytes()).hexdigest(),
+        }
+        if continuation != actual_continuation:
+            raise ChildFailure('method', 'unsupported_continuation_method')
+
     os.environ['HF_HOME'] = str(request.model_cache)
     os.environ.setdefault('OMP_NUM_THREADS', '4')
     started = time.perf_counter()
@@ -160,7 +171,13 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
                                   for k, v in data.items()})
     
     
-    class CapturePipeline(StandardPdfPipeline):
+    class SelectedPipeline(StandardPdfPipeline):
+        def _init_models(self):
+            super()._init_models()
+            if continuation is not None:
+                self.reading_order_model.ro_model = ContinuationPredictor()
+
+    class CapturePipeline(SelectedPipeline):
         def _release_page_resources(self, item):
             page = item.payload
             if page is not None and page.assembled is not None:
@@ -207,6 +224,8 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
         def _init_models(self):
             # Only assembly is constructed; no page inference models or OCR engines exist.
             self.reading_order_model = ReadingOrderModel(options=ReadingOrderOptions())
+            if continuation is not None:
+                self.reading_order_model.ro_model = ContinuationPredictor()
             self.keep_images = True
             self.keep_backend = False
     
@@ -262,7 +281,8 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
         models = {str(p.relative_to(request.model_cache)): sha(p) for p in sorted((request.model_cache).glob("hub/models--*/snapshots/**/*")) if p.is_file()}
         import rapidocr
         models.update({"rapidocr/" + p.name: sha(p) for p in (Path(rapidocr.__file__).parent / "models").glob("*.onnx")})
-        return {"format": "PROTOTYPE-page-v1", "python": platform.python_version(),
+        return {**({"continuation": actual_continuation} if continuation is not None else {}),
+                "format": "PROTOTYPE-page-v1", "python": platform.python_version(),
                 "platform": platform.platform(), "packages": packages, "model_artifacts": models,
                 "options": options(request.scan).model_dump(mode="json", serialize_as_any=True),
                 "option_types": {k: type(getattr(options(request.scan), k)).__name__ for k in ("ocr_options", "layout_options", "table_structure_options")},
@@ -270,7 +290,7 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
     
     request.out.mkdir(parents=True, exist_ok=True)
     instrument(request.mode == "restore")
-    pipeline = {"baseline": StandardPdfPipeline, "warmup": StandardPdfPipeline,
+    pipeline = {"baseline": SelectedPipeline, "warmup": SelectedPipeline,
                 "capture": CapturePipeline, "restore": RestorePipeline}[request.mode]
     converter = DocumentConverter(format_options={bm.InputFormat.PDF: PdfFormatOption(
         pipeline_cls=pipeline, pipeline_options=options(request.scan))})
