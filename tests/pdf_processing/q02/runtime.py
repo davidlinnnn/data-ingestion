@@ -102,7 +102,7 @@ async def main():
                 except WorkflowFailureError as error:
                     cause = error
                     while getattr(cause, 'cause', None) is not None:
-                        cause = cause.cause
+                        cause = getattr(cause, 'cause')
                     failure = str(cause)
                     result = None
                 assert (result is not None) == expected_success, (case, failure)
@@ -130,7 +130,11 @@ async def main():
                     record['retry_same_final'] = True
                 else:
                     listing = s3.list_objects_v2(Bucket='t07', Prefix=store.prefix+'registered/')
-                    ids = [json.loads(store.get(o['Key']))['operation'] for o in listing.get('Contents', [])]
+                    ids = []
+                    for obj in listing.get('Contents', []):
+                        raw_registration = store.get(obj['Key'])
+                        assert raw_registration is not None, 'Listed registration disappeared'
+                        ids.append(json.loads(raw_registration)['operation'])
                     assert not any(i.startswith('pdf-complete-') for i in ids)
                     record['complete_registration_absent'] = True
                 history = await handle.fetch_history()
