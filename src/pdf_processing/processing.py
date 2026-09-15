@@ -48,6 +48,14 @@ class Processing:
         ocr = profile.get('picture_ocr', {'render_scale': 3})
         if set(ocr) != {'render_scale'} or type(ocr['render_scale']) not in (int, float) or not 0 < ocr['render_scale'] <= 6:
             raise ValueError('Unsupported picture OCR recipe')
+        from .relationships import POLICY, validate_policy
+        evidence = profile.get('content_evidence', {'version': 'typed-source-evidence-v1'})
+        if evidence['version'] == POLICY:
+            if set(evidence) != {'version', 'reviews', 'relationships'}:
+                raise ValueError('invalid_relationship_evidence_policy')
+            validate_policy(evidence['relationships'])
+        elif evidence['version'] != 'typed-source-evidence-v1':
+            raise ValueError('unsupported_evidence_policy')
         self.producer = {p.name: digest(p.read_bytes()) for p in Path(__file__).parent.glob('*.py')}
         self.scratch.mkdir(parents=True, exist_ok=True)
 
@@ -103,6 +111,13 @@ class Processing:
                 reject('invalid_completion_target')
             if request['version'] == 3 and request.get('completion') != 'required_evidence_v1':
                 reject('invalid_completion_target')
+            from .relationships import POLICY
+            if self.profile.get('content_evidence', {}).get('version') == POLICY:
+                if request['version'] != 3:
+                    reject('relationships_require_evidence_completion')
+                coverage = self.profile['content_evidence']['relationships']['coverage']
+                if coverage['mode'] == 'selected_regions' and coverage['source_sha256'] != request['artifact']['sha256']:
+                    reject('relationship_coverage_source_mismatch')
             for key in ('request_id', 'source_revision'):
                 if not isinstance(request[key], str) or not 0 < len(request[key]) <= 256:
                     reject('invalid_request')

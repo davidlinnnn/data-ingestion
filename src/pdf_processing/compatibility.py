@@ -15,8 +15,8 @@ _FILES = {
     'assembly': ('continuation.py', 'parse.py', 'execution.py', 'compatibility.py'),
     'selection': ('enrichment.py', 'processing.py', 'compatibility.py'),
     'ocr': ('ocr.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),
-    'evidence': ('evidence.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),
-    'finalize': ('enrichment.py', 'processing.py', 'compatibility.py'),
+    'evidence': ('relationships.py', 'relationship_method.py', 'evidence.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),
+    'finalize': ('relationships.py', 'relationship_method.py', 'evidence.py', 'enrichment.py', 'processing.py', 'compatibility.py'),
 }
 
 
@@ -67,4 +67,7 @@ def dependencies(stage, profile, producer):
         result['policy'] = profile.get('content_evidence', {'version': 'typed-source-evidence-v1', 'reviews': {}})
     elif stage == 'finalize':
         result['policy'] = 'required-work-barrier-v3'
+        if profile.get('content_evidence', {}).get('version') == 'typed-source-relationships-v2':
+            result['policy'] = {'version': 'required-relationships-barrier-v1',
+                                'evidence': profile['content_evidence']}
     return result

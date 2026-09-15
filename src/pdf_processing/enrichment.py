@@ -149,6 +149,9 @@ class Enrichment:
         if plan['request']['version'] == 3:
             final['version'] = 2
             final['content_evidence'] = await self.content_evidence(plan, selection, document)
+            if plan['profile'].get('content_evidence', {}).get('version') == 'typed-source-relationships-v2':
+                final['relationships'] = await self.relationship_evidence(plan, selection, document, final['content_evidence'])
+                final['required_work']['relationships'] = 'finished'
         identity = 'pdf-complete-v1:' + digest(encoded(final))
         await asyncio.to_thread(self.store.publish, identity, {'processing-result.json': encoded(final)})
         return {'operation': identity, 'stage': 'finalize', 'observed_at': observed()}
@@ -184,6 +187,7 @@ class Enrichment:
             await execution.child('pdf_processing.evidence', {'pdf': str(pdf), 'parsed': str(parsed_path),
                 'out': str(root/'result'), 'source': request, 'parsed_result': selection['parsed_result'],
                 'assembly': selection['assembly'], 'review': review, 'policy': policy['version'],
+                'relationships': policy.get('relationships'),
                 'original_pdf': str(original_path) if original else None,
                 'renderer_version': plan['profile']['method']['packages']['pypdfium2'],
                 'max_render_pixels': plan['limits']['max_page_pixels']}, root)
@@ -193,4 +197,40 @@ class Enrichment:
                 files['original-source.pdf'] = original_path.read_bytes()
             await asyncio.to_thread(self.store.publish, identity, files)
         await asyncio.to_thread(self.store.resolve, identity)
+        return identity
+
+
+    async def relationship_evidence(self, plan, selection, document, evidence_id):
+        from .processing import encoded, reject
+        from .relationships import validate
+        policy = plan['profile']['content_evidence']['relationships']
+        report = await asyncio.to_thread(self.read, evidence_id, 'relationships.json')
+        content = await asyncio.to_thread(self.read, evidence_id, 'content-evidence.json')
+        try:
+            if (content['source'] != plan['request'] or content['parsed_result'] != selection['parsed_result']
+                    or content['assembly'] != selection['assembly']
+                    or content['policy'] != plan['profile']['content_evidence']['version']
+                    or content['document_sha256'] != digest(encoded(document))):
+                raise ValueError('relationship_evidence_attribution_mismatch')
+            validate(report, document, plan['request'], selection['parsed_result'], selection['assembly'], policy)
+            # Store.resolve verifies every retained page/source byte, including reuse.
+            registration = await asyncio.to_thread(self.store.resolve, evidence_id)
+            files = {f['name']: f for f in registration['files']}
+            if files['source.pdf']['sha256'] != plan['request']['artifact']['sha256']:
+                raise ValueError('relationship_retained_source_mismatch')
+            if set(content['pages']) != set(document['pages']):
+                raise ValueError('relationship_page_evidence_missing')
+            for page in content['pages'].values():
+                if files[page['artifact']]['sha256'] != page['sha256']:
+                    raise ValueError('relationship_page_evidence_mismatch')
+        except (ValueError, KeyError, TypeError, IndexError) as error:
+            reject(str(error), 'integrity')
+        binding = {'version': 1, 'content_evidence': evidence_id, 'relationships': report,
+                   'dependencies': dependencies('evidence', plan['profile'], plan['producer'])}
+        identity = 'pdf-relationships-v1:' + digest(encoded(binding))
+        await asyncio.to_thread(self.store.publish, identity, {'relationships.json': encoded(binding)})
+        # Resolve the authoritative winner, even after a concurrent publication.
+        accepted = await asyncio.to_thread(self.read, identity, 'relationships.json')
+        if accepted != binding:
+            reject('relationship_registration_conflict', 'integrity')
         return identity

@@ -86,7 +86,8 @@ def execute(request):
         parsed_path = Path(request['parsed'])
         document = json.loads(parsed_path.read_text())
         items = graph_items(document)
-        if request['policy'] != 'typed-source-evidence-v1':
+        from .relationships import POLICY, build
+        if request['policy'] not in ('typed-source-evidence-v1', POLICY):
             raise ValueError('unsupported_evidence_policy')
         review = request['review']
         if review and review['source_sha256'] != request['source']['artifact']['sha256']:
@@ -214,6 +215,10 @@ def execute(request):
             'representation_observations': observations, 'reading_order': 'source-backed; traversal_is_not_reading_order',
             'note_associations': 'parser_links_only; other_associations_unconfirmed', 'canonical_accepted': False}
         (out/'content-evidence.json').write_bytes(encoded(manifest))
+        if request['policy'] == POLICY:
+            relationships = build(document, request['source'], request['parsed_result'],
+                                  request['assembly'], request['relationships'])
+            (out/'relationships.json').write_bytes(encoded(relationships))
     except (ValueError, KeyError, TypeError, IndexError) as error:
         (out/'failure.json').write_text(json.dumps({'category': 'integrity', 'code': str(error)}))
         raise ChildFailure('integrity', str(error)) from error
