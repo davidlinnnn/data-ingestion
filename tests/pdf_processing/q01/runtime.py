@@ -10,13 +10,7 @@ import json
 from pathlib import Path
 import uuid
 
-import boto3
-from temporalio.client import Client
-from temporalio.worker import Worker
-
 from pdf_processing.object_store import Store, digest
-from pdf_processing.processing import Processing
-from pdf_processing.processing_workflow import PDFProcessing
 
 
 def verify_continuation(document):
@@ -34,6 +28,12 @@ def verify_continuation(document):
 
 
 async def main(args):
+    import boto3
+    from temporalio.client import Client
+    from temporalio.worker import Worker
+    from pdf_processing.processing import Processing
+    from pdf_processing.processing_workflow import PDFProcessing
+
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=False)
     profile = json.loads(Path(args.profile).read_text())

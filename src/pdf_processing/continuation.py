@@ -43,6 +43,13 @@ def predict_merges(ordered):
     for a in ordered:
         if a.label != 'text' or not re.fullmatch(r'.+([a-z,\-\u00AD])\s*', a.text):
             continue
+        al, _, ar, ab = geometry(a)
+        if any(c.page_no == a.page_no and c.cid != a.cid
+               and c.label not in ('page_header', 'page_footer', 'footnote')
+               and geometry(c)[3] > ab
+               and min(geometry(c)[2], ar)-max(geometry(c)[0], al) > .5*(ar-al)
+               for c in ordered):
+            continue
         candidates = [b for b in ordered if b.cid != a.cid and boundary_pair(a, b)
                       and b.label not in ('page_header', 'page_footer', 'footnote')]
         # Select the first geometric column entrance, regardless of text label.

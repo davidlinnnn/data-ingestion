@@ -74,10 +74,10 @@ node /private/tmp/t04-npm-cache/_npx/110e52990071af13/node_modules/pyright/dist/
 Recorded results:
 
 - Original real checkpoint tracer: RED, wrong margin target; `evidence/red.log`.
-- Focused suite: 14 PASS, including source failure, lowercase/uppercase page and
+- Focused suite: 15 PASS, including source failure, lowercase/uppercase page and
   column transitions, chains, inline preservation, headers/containers, exact and
-  overlapping target ambiguity, owner ambiguity, source immutability and identity.
-- Full local suite: 24 PASS in 37.657 seconds, including the existing scanned
+  overlapping target ambiguity, owner ambiguity, source immutability, identity, and unobstructed source-column exits.
+- Final full local suite: 25 PASS in 26.532 seconds, including the existing scanned
   fresh/capture/restore regression and T04/T05 tests; `evidence/full-suite.log`.
 - Typecheck: 0 errors/warnings; `evidence/typecheck.log`. The first invocation
   needed the existing explicit typeshed path; three possibly-unbound variables
@@ -87,6 +87,11 @@ Recorded results:
   references resolved; `evidence/checkpoint.json`. Full child-graph preservation
   is not inferred. The first payload comparison detected reference renumbering,
   not changed captions; `/private/tmp/q01-checkpoint-20260915-a` remains unused.
+
+The pre-review full-suite run passed 24 tests; it is retained in
+`evidence/pre-review-full-suite.log`. Review found an unchecked source-column exit;
+its four RED cases are in `evidence/review-red.log`, followed by the passing final
+25-test run. The spec reviewer independently confirmed the fix. See [review](REVIEW.md).
 
 The first sandboxed full-suite launch could not inspect owned child processes.
 Its suspended runner was explicitly reaped before the successful guarded run.

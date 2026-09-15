@@ -98,3 +98,15 @@ class Preservation(unittest.TestCase):
         a = element(1, 2, 'First.', (100, 60, 500, 100))
         b = element(2, 2, 'Second.', (101, 61, 499, 101))
         self.assertEqual(predict_merges([p, a, b]), {})
+
+    def test_intervening_content_blocks_column_exit(self):
+        for label in ('text', 'key_value_region'):
+            for target_page, target_box in ((2, (100, 60, 500, 100)),
+                                           (1, (320, 60, 560, 100))):
+                with self.subTest(label=label, target_page=target_page):
+                    owner_box = (100, 650, 500, 700) if target_page == 2 else (30, 650, 270, 700)
+                    barrier_box = (owner_box[0], 710, owner_box[2], 760)
+                    p = element(0, 1, 'unfinished prose', owner_box)
+                    barrier = element(1, 1, 'Following content.', barrier_box, label)
+                    target = element(2, target_page, 'Continuation.', target_box)
+                    self.assertEqual(predict_merges([p, barrier, target]), {})

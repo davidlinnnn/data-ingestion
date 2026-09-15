@@ -31,7 +31,8 @@ for the explicitly selected `column-edge-continuation-v1` method. They describe 
 bounded heuristic, not a universal document contract. Preserve upstream joins
 between horizontally adjacent, vertically overlapping same-page fragments. Reject
 overlapping alternative entrances as well as exact ties, multiple owners and
-intervening body/header/container regions. Uppercase successors remain valid.
+intervening body/header/container regions at the destination and later content
+in the source column. Uppercase successors remain valid.
 
 The table/picture comparison initially failed on renumbered caption references.
 Resolving those references to their unchanged text/type/provenance confirms equal
