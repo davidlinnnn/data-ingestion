@@ -6,6 +6,7 @@ No shared worker/deployment is changed; all writes use a fresh Q02 prefix.
 """
 import asyncio
 import copy
+import fcntl
 from datetime import timedelta
 import importlib.metadata
 import json
@@ -40,8 +41,12 @@ class FinalBoundary:
 async def main():
     out = Path(os.environ['Q02_OUTPUT'])
     out.mkdir(parents=True, exist_ok=False)
-    s3 = boto3.client('s3', endpoint_url='http://127.0.0.1:19002')
-    client = await Client.connect('127.0.0.1:17233')
+    s3 = boto3.client('s3', endpoint_url=os.environ['Q02_ENDPOINT'])
+    client = await Client.connect(os.environ['Q02_TEMPORAL'])
+    bucket = os.environ['Q02_BUCKET']
+    prefix_root = os.environ['Q02_PREFIX'].strip('/')
+    assert prefix_root and s3.get_bucket_versioning(Bucket=bucket).get('Status') == 'Enabled'
+    assert not s3.list_objects_v2(Bucket=bucket, Prefix=prefix_root+'/', MaxKeys=1).get('Contents')
     run_id = uuid.uuid4().hex
     results = []
     source = Path('/private/tmp/t09a-fixtures/08.pdf').read_bytes()
@@ -54,8 +59,8 @@ async def main():
     # the real supervised evidence child. Mutations are fault-injected registrations.
     original_files = None
     for case in ['valid', 'split', 'allowed_unknown', 'required_missing', 'missing_output', 'missing_ocr'] + FAILURES:
-        prefix = f'q02/{run_id}/{case}'
-        store = Store(s3, 't07', prefix)
+        prefix = f'{prefix_root}/{run_id}/{case}'
+        store = Store(s3, bucket, prefix)
         prof = profile()
         prof['method']['packages']['pypdfium2'] = importlib.metadata.version('pypdfium2')
         if case == 'allowed_unknown':
@@ -63,7 +68,7 @@ async def main():
                 'coverage': {'mode': 'unknown'}, 'unresolved': 'allow_unknown'}
         if case == 'required_missing':
             prof['content_evidence']['relationships']['coverage']['regions'][0]['required_count'] = 2
-        saved = s3.put_object(Bucket='t07', Key=store.prefix+'sources/source.pdf', Body=source)
+        saved = s3.put_object(Bucket=bucket, Key=store.prefix+'sources/source.pdf', Body=source)
         request = {'version': 3, 'completion': 'required_evidence_v1', 'profile': 'native-v1',
                    'request_id': uuid.uuid4().hex, 'source_revision': 'q02:retained-aima',
                    'artifact': {'sha256': SOURCE, 'key': store.prefix+'sources/source.pdf',
@@ -95,7 +100,7 @@ async def main():
             expected_success = case in ('valid', 'split', 'allowed_unknown')
             async with Worker(client, task_queue=queue, workflows=[FinalBoundary], activities=[processing.run],
                               workflow_runner=UnsandboxedWorkflowRunner(), max_concurrent_activities=1):
-                handle = await client.start_workflow(FinalBoundary.run, value, id='q02-'+uuid.uuid4().hex, task_queue=queue)
+                handle = await client.start_workflow(FinalBoundary.run, value, id='q02-'+uuid.uuid4().hex, task_queue=queue, execution_timeout=timedelta(minutes=5))
                 failure = None
                 try:
                     result = await handle.result()
@@ -125,11 +130,11 @@ async def main():
                         registration = store.resolve(final['content_evidence'])
                         original_files = {f['name']: store.read_artifact(f) for f in registration['files']}
                     # A retry revalidates all durable bytes at the same final boundary.
-                    retry = await client.execute_workflow(FinalBoundary.run, value, id='q02-'+uuid.uuid4().hex, task_queue=queue)
+                    retry = await client.execute_workflow(FinalBoundary.run, value, id='q02-'+uuid.uuid4().hex, task_queue=queue, execution_timeout=timedelta(minutes=5))
                     assert retry['operation'] == result['operation']
                     record['retry_same_final'] = True
                 else:
-                    listing = s3.list_objects_v2(Bucket='t07', Prefix=store.prefix+'registered/')
+                    listing = s3.list_objects_v2(Bucket=bucket, Prefix=store.prefix+'registered/')
                     ids = []
                     for obj in listing.get('Contents', []):
                         raw_registration = store.get(obj['Key'])
@@ -146,4 +151,9 @@ async def main():
     print('Runtime report:', out/'runtime.json')
 
 
-if __name__ == '__main__': asyncio.run(main())
+if __name__ == '__main__':
+    if os.environ.get('Q02_CAPACITY_APPROVED') != '1':
+        raise SystemExit('Coordinate the runtime window before running the fault matrix')
+    with open('/private/tmp/data-ingestion-pdf-qualification.lock', 'a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        asyncio.run(asyncio.wait_for(main(), timeout=int(os.environ.get('Q02_TIMEOUT_SECONDS', '1800'))))

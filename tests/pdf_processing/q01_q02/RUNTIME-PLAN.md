@@ -1,6 +1,8 @@
 # Joint Q01 + Q02 runtime acceptance plan
 
 This is a plan, not an executed result or authorization to change shared services.
+Driver preparation is now implemented: see `DRIVER.md` for cases A–D and the
+parameterized E matrix. Runtime admission and all measured outcomes remain open.
 Authority: #48, #49 and specification #47. Q03 symbol decisions and Q04 broad
 cross-fixture/recovery qualification are separate. One coordinating owner runs the
 serial matrix; original sessions can assist with harness preparation but must not
