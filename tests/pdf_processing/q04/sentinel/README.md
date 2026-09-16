@@ -1,4 +1,11 @@
-# Keynote sentinel — stopped by capacity guard
+# Keynote sentinel history
+
+A subsequent, separately authorized high-capacity process-mode sentinel passed
+fresh/restored/replay. See
+[high-capacity-b/RESULTS.md](high-capacity-b/RESULTS.md). The first failed run
+below remains preserved and is not overwritten.
+
+## First attempt — stopped by capacity guard
 
 The single authorized process-mode attempt on 2026-09-16 stopped during fresh
 when VM PSI full avg10 reached **0.18**, above the frozen maximum of **0**.

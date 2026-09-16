@@ -4,6 +4,11 @@ Status: **review only; no pause or sentinel is authorized**. Existing PSI,
 memory, cgroup, OOM, telemetry-gap and time limits stay unchanged. This proposal
 does not inherit the Q03 trial D or prior Q04 pause authorization.
 
+Subsequent history: main later paused the exact 32 Deployments, and the user
+separately authorized one new window. The bounded Keynote sentinel passed; see
+[`../sentinel/high-capacity-b/RESULTS.md`](../sentinel/high-capacity-b/RESULTS.md).
+This proposal itself remains non-authorizing.
+
 ## Read-only findings
 
 At 2026-09-16 14:53:24 UTC, the shared Linux VM had 7.748 GiB total and
