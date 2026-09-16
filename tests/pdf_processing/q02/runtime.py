@@ -49,7 +49,7 @@ async def main():
     assert not s3.list_objects_v2(Bucket=bucket, Prefix=prefix_root+'/', MaxKeys=1).get('Contents')
     run_id = uuid.uuid4().hex
     results = []
-    source = Path('/private/tmp/t09a-fixtures/08.pdf').read_bytes()
+    source = Path(os.environ.get('Q02_PDF', '/private/tmp/t09a-fixtures/08.pdf')).read_bytes()
     assert digest(source) == SOURCE
     from docling_core.types.doc import DoclingDocument
     # Match production save_as_json aliases/precision; raw retained replay is immutable.
@@ -154,6 +154,6 @@ async def main():
 if __name__ == '__main__':
     if os.environ.get('Q02_CAPACITY_APPROVED') != '1':
         raise SystemExit('Coordinate the runtime window before running the fault matrix')
-    with open('/private/tmp/data-ingestion-pdf-qualification.lock', 'a+') as lock:
+    with open(os.environ.get('PDF_QUALIFICATION_LOCK', '/tmp/data-ingestion-pdf-qualification.lock'), 'a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         asyncio.run(asyncio.wait_for(main(), timeout=int(os.environ.get('Q02_TIMEOUT_SECONDS', '1800'))))

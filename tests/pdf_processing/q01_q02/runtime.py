@@ -164,7 +164,7 @@ async def main(args):
             raw = read(final['assembly'], 'document.json')
             verify_continuation(json.loads(raw))
             evidence = json.loads(read(final['content_evidence'], 'content-evidence.json'))
-            assert evidence['document_sha256'] == digest(encoded(json.loads(raw))) and evidence['source'] == request
+            assert evidence['document_sha256'] == digest(raw) and evidence['source'] == request
             binding = json.loads(read(final['relationships'], 'relationships.json'))
             assert binding['content_evidence'] == final['content_evidence']
             verify_delivery(json.loads(raw), binding['relationships'], request, final['parsed_result'],
@@ -208,6 +208,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not args.capacity_approved or (args.case != 'fresh' and not args.fresh_evidence) or args.timeout <= 0:
         parser.error('A coordinated capacity window, positive timeout and prior evidence for reuse are required')
-    with open('/private/tmp/data-ingestion-pdf-qualification.lock', 'a+') as lock:
+    with open(os.environ.get('PDF_QUALIFICATION_LOCK', '/tmp/data-ingestion-pdf-qualification.lock'), 'a+') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         asyncio.run(main(args))

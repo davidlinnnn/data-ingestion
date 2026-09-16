@@ -1,5 +1,7 @@
 # Joint runtime driver — prepared, not runtime qualified
 
+> Runtime status update: see [2026-09-16 results](RUNTIME-RESULTS.md). Historical preparation findings below are retained; the bounded A–E matrix has now passed after the documented hash correction.
+
 The driver and offline oracles are ready for capacity admission. No actual native,
 OCR, Temporal or storage experiment was executed while preparing this driver.
 Production remains the combined source inventory in `evidence/producer.json`.

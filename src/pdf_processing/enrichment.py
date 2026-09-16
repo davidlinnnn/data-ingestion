@@ -207,10 +207,15 @@ class Enrichment:
         report = await asyncio.to_thread(self.read, evidence_id, 'relationships.json')
         content = await asyncio.to_thread(self.read, evidence_id, 'content-evidence.json')
         try:
+            assembly = await asyncio.to_thread(self.store.resolve, selection['assembly'])
+            documents = [f for f in assembly['files'] if f['name'] == 'document.json']
+            if len(documents) != 1:
+                raise ValueError('relationship_assembly_document_missing')
+            # Evidence hashes the retained serialized artifact, not a re-encoding.
             if (content['source'] != plan['request'] or content['parsed_result'] != selection['parsed_result']
                     or content['assembly'] != selection['assembly']
                     or content['policy'] != plan['profile']['content_evidence']['version']
-                    or content['document_sha256'] != digest(encoded(document))):
+                    or content['document_sha256'] != documents[0]['sha256']):
                 raise ValueError('relationship_evidence_attribution_mismatch')
             validate(report, document, plan['request'], selection['parsed_result'], selection['assembly'], policy)
             # Store.resolve verifies every retained page/source byte, including reuse.

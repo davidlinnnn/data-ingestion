@@ -2,9 +2,10 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 
-BASELINE = Path('/private/tmp/aima-p2-main-recheck-20260915/baseline-document.json')
+BASELINE = Path(os.environ.get('Q02_BASELINE', '/private/tmp/aima-p2-main-recheck-20260915/baseline-document.json'))
 SOURCE = 'b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980'
 
 

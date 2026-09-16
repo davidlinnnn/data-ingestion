@@ -1,5 +1,7 @@
 # Q01 + Q02 static integration review
 
+> Runtime status update: see [2026-09-16 results](RUNTIME-RESULTS.md). Historical preparation findings below are retained; the bounded A–E matrix has now passed after the documented hash correction.
+
 Status: static integration PASS within the scope below; runtime acceptance OPEN.
 No inference, Temporal submission, Kubernetes workload, shared-service change,
 push or main-checkout integration was performed during this review.

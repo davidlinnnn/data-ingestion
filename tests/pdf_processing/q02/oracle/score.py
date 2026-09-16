@@ -3,6 +3,7 @@ from collections import Counter
 import difflib
 import hashlib
 import json
+import os
 from pathlib import Path
 from .role_oracle import coverage, expected_roles, roles_and_order
 from .source_segments import segments, digest
@@ -38,7 +39,7 @@ def score(doc, report):
     validate_binding(doc, report)
     parts = segments(doc)
     items = {i['self_ref']: i for i in doc['texts']}
-    transcripts = json.loads(Path('/private/tmp/t09a-code-oracle.json').read_text())
+    transcripts = json.loads(Path(os.environ.get('Q02_SOURCE_ORACLE', '/private/tmp/t09a-code-oracle.json')).read_text())
     caption_oracle = json.loads((ROOT/'caption-oracle.json').read_text())
     historical_hashes = json.loads((ROOT.parents[1]/'t09a/evidence/code-source-oracle.json').read_text())
     results = []

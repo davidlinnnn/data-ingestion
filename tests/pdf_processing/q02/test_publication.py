@@ -32,12 +32,12 @@ def profile():
             'content_evidence': {'version': POLICY, 'reviews': {}, 'relationships': policy()}}
 
 
-def seed(processing, doc, request):
+def seed(processing, doc, request, document_bytes=None):
     store = processing.store
     plan = {'profile': processing.profile, 'producer': processing.producer, 'limits': processing.limits,
             'request': request, 'pages': len(doc['pages']), 'groups': [[1, len(doc['pages'])]]}
     store.publish('plan', {'plan.json': encoded(plan)})
-    store.publish('assembly', {'document.json': encoded(doc)})
+    store.publish('assembly', {'document.json': document_bytes if document_bytes is not None else encoded(doc)})
     checkpoints = {'complete.json': encoded({'source_sha256': SOURCE,
         'pages': [{'file': f'{i}.json'} for i in range(1, len(doc['pages'])+1)]})}
     checkpoints.update({f'checkpoints/{i}.json': encoded({'page_no': i}) for i in range(1, len(doc['pages'])+1)})
@@ -63,17 +63,19 @@ class Publication(unittest.IsolatedAsyncioTestCase):
             processing = Processing(store, tmp, tmp, prof)
             doc = document()
             request = {'version': 3, 'source_revision': 'private-replay', 'artifact': {'sha256': SOURCE}}
-            plan, selection = seed(processing, doc, request)
+            document_bytes = json.dumps(doc, indent=2).encode() if case in ('formatted_json', 'wrong_document_digest') else encoded(doc)
+            plan, selection = seed(processing, doc, request, document_bytes)
             report = build(doc, request, 'parsed', 'assembly', prof['content_evidence']['relationships'])
             report = mutate(report, case, doc)
             content = {'source': request, 'parsed_result': 'parsed', 'assembly': 'assembly', 'policy': POLICY,
-                       'document_sha256': digest(encoded(doc)), 'pages': {}}
+                       'document_sha256': digest(document_bytes), 'pages': {}}
             # Fast test source/pages are synthetic; real rendering is covered by runtime driver.
             files = {'relationships.json': encoded(report)}
             for n in doc['pages']:
                 data = b'page evidence fixture'
                 files[f'page-{n}.png'] = data
                 content['pages'][n] = {'artifact': f'page-{n}.png', 'sha256': digest(data)}
+            if case == 'wrong_document_digest': content['document_sha256'] = digest(encoded(doc))
             files['content-evidence.json'] = encoded(content)
             source = __import__('pathlib').Path('/private/tmp/t09a-fixtures/08.pdf').read_bytes()
             self.assertEqual(digest(source), SOURCE)
@@ -91,7 +93,7 @@ class Publication(unittest.IsolatedAsyncioTestCase):
                 'dependencies': dependencies('evidence', prof, processing.producer)}))
             store.publish(identity, files)
             value = {'stage': 'finalize', 'plan': 'plan', 'selection': 'selection-with-ocr' if case == 'missing_ocr' else 'selection', 'outcomes': []}
-            if case in ('valid', 'split', 'allowed_unknown'):
+            if case in ('valid', 'split', 'allowed_unknown', 'formatted_json'):
                 result = await Enrichment(processing).run(value)
                 final = Enrichment(processing).read(result['operation'], 'processing-result.json')
                 self.assertTrue(final['processing_complete'])
@@ -104,6 +106,9 @@ class Publication(unittest.IsolatedAsyncioTestCase):
                     await Enrichment(processing).run(value)
                 registrations = [json.loads(v)['operation'] for k, v in store.client.objects.items() if '/registered/' in k]
                 self.assertFalse(any(i.startswith('pdf-complete-') for i in registrations))
+
+    async def test_formatted_json_delivery(self): await self.attempt('formatted_json')
+    async def test_wrong_document_digest_rejected(self): await self.attempt('wrong_document_digest')
 
     async def test_valid_delivery(self): await self.attempt('valid')
     async def test_split_ranges_delivered(self): await self.attempt('split')
