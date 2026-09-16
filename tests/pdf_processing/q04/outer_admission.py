@@ -18,7 +18,9 @@ class OuterAdmissionRejected(ValueError):
         self.fatal = fatal
 
 
-class _CallbackDeadlineExceeded(TimeoutError):
+class _CallbackDeadlineExceeded(BaseException):
+    """Internal alarm control flow that ordinary callback handlers cannot swallow."""
+
     pass
 
 
@@ -27,7 +29,7 @@ class _CallbackWatchdogUnavailable(RuntimeError):
 
 
 def _call_with_timeout(operation, timeout_seconds):
-    """Interrupt one local callback before it can consume the reserved deadline."""
+    """Bound one cooperative local callback with the remaining alarm budget."""
     if timeout_seconds <= 0:
         raise _CallbackDeadlineExceeded("no callback budget remains")
     if threading.current_thread() is not threading.main_thread():
@@ -39,13 +41,18 @@ def _call_with_timeout(operation, timeout_seconds):
     def expired(_signum, _frame):
         raise _CallbackDeadlineExceeded("capacity callback exceeded remaining budget")
 
-    signal.signal(signal.SIGALRM, expired)
-    signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+    handler_installed = False
     try:
+        signal.signal(signal.SIGALRM, expired)
+        handler_installed = True
+        signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
         return operation()
     finally:
-        signal.setitimer(signal.ITIMER_REAL, 0)
-        signal.signal(signal.SIGALRM, previous_handler)
+        if handler_installed:
+            try:
+                signal.setitimer(signal.ITIMER_REAL, 0)
+            finally:
+                signal.signal(signal.SIGALRM, previous_handler)
 
 
 @dataclass(frozen=True)

@@ -75,8 +75,10 @@ Future outer capacity-owner admission uses the independently testable procedure 
 for at most 180 seconds while seeking one continuous 60-second 4.5 GiB/zero-PSI
 interval. Ordinary misses reset that interval; fatal telemetry, OOM or ownership
 conditions reject immediately. Observation consumes the same lease as the workload
-and cleanup reserve. This bounded pre-work wait does not retry a workflow. Historical
-sentinel runners and their evidence are not rewritten.
+and cleanup reserve. Its in-process POSIX alarm assumes cooperative local callbacks;
+callbacks that catch `BaseException` or can defer Python signal delivery require an
+external process supervisor before runtime use. This bounded pre-work wait does not
+retry a workflow. Historical sentinel runners and their evidence are not rewritten.
 
 Default **process mode** runs on a coordinated Linux host with `/proc` and cgroup-v2
 telemetry. It starts/terminates only its owned qualification worker. This is actual

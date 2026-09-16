@@ -34,13 +34,25 @@ coordinator identity drift, or reservation/ownership drift. They do not wait for
 recovery. A future runner must make its identity callback verify the expected
 coordinator UID and the live reservation holder PID/create-time pair on every
 sample. Both adapters use bounded local reads only; they must not perform a network
-call. The helper arms a POSIX real-time watchdog with the monotonic budget remaining
+call. The helper arms a POSIX real-time alarm with the monotonic budget remaining
 before identity verification, sampling and evidence persistence, then rechecks the
-monotonic deadline after each step. It interrupts a blocked callback at the cutoff
-and does not start sampling if identity verification used the remaining observation
-or lease budget. The helper therefore runs in the coordinator driver's main thread
-and rejects if another real-time timer is already active. Loss of `kubectl exec` is
-also failure, never admission success.
+monotonic deadline after each step. Handler installation and timer arming are inside
+the same `try/finally` restoration scope, so an alarm delivered while the timer is
+being armed still cancels the timer and restores the prior handler. The helper does
+not start sampling if identity verification uses the remaining observation or lease
+budget. It runs in the coordinator driver's main thread and rejects if another
+real-time timer is already active. Loss of `kubectl exec` is also failure, never
+admission success.
+
+This alarm has a cooperative callback contract. Its internal timeout control flow
+inherits directly from `BaseException`, so a callback may handle ordinary
+`Exception` failures without swallowing the timeout. Admission callbacks must not
+catch `BaseException` or use a bare `except`, and must not enter native code that can
+defer Python signal delivery beyond the remaining budget. The in-process alarm is
+therefore not a hard deadline for arbitrary or hostile callback code. Any future
+adapter that cannot satisfy this contract must run in a separately supervised
+process whose parent enforces the cutoff and termination before its result can be
+used for admission; this helper does not provide that external supervisor.
 
 ## Lease accounting
 

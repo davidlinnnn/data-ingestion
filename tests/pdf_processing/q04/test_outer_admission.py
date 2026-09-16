@@ -1,9 +1,12 @@
 """Deterministic outer capacity-owner admission tests; no live runtime or inference."""
 
 from dataclasses import replace
+import signal
 import time
 import unittest
+from unittest.mock import patch
 
+import outer_admission
 from outer_admission import (
     OuterAdmissionPolicy,
     OuterAdmissionRejected,
@@ -382,6 +385,52 @@ class OuterAdmission(unittest.TestCase):
                 record=lambda _row: time.sleep(1),
             )
         self.assertEqual(len(caught.exception.samples), 1)
+
+    def test_timer_expiry_while_arming_restores_handler_and_cancels_timer(self):
+        previous_handler = signal.getsignal(signal.SIGALRM)
+        timer_values = []
+
+        def expire_while_arming(_kind, seconds):
+            timer_values.append(seconds)
+            if seconds > 0:
+                signal.getsignal(signal.SIGALRM)(signal.SIGALRM, None)
+            return (0.0, 0.0)
+
+        try:
+            with patch.object(
+                outer_admission.signal,
+                "setitimer",
+                side_effect=expire_while_arming,
+            ):
+                with self.assertRaisesRegex(
+                    OuterAdmissionRejected, "observation deadline"
+                ):
+                    self.observe(lambda: self.row())
+
+            self.assertEqual(signal.getsignal(signal.SIGALRM), previous_handler)
+            self.assertGreater(timer_values[0], 0)
+            self.assertEqual(timer_values[-1], 0)
+        finally:
+            signal.signal(signal.SIGALRM, previous_handler)
+
+    def test_callback_cannot_swallow_deadline_with_exception_handler(self):
+        swallowed = False
+
+        def catches_exception():
+            nonlocal swallowed
+            try:
+                signal.raise_signal(signal.SIGALRM)
+            except Exception:
+                swallowed = True
+
+        with self.assertRaisesRegex(
+            OuterAdmissionRejected, "observation deadline"
+        ) as caught:
+            self.observe(lambda: self.row(), verify_identity=catches_exception)
+
+        self.assertFalse(caught.exception.fatal)
+        self.assertFalse(swallowed)
+        self.assertEqual(caught.exception.samples, [])
 
 
 if __name__ == "__main__":
