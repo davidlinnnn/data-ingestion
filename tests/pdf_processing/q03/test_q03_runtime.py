@@ -35,6 +35,21 @@ class RuntimeContracts(unittest.TestCase):
                     'pages': {'9': {'physical_page': 9, 'artifact': 'page-9.png',
                                     'sha256': digest(b'offline page placeholder')}}})}
 
+    def test_application_classification_preserves_outer_boundary(self):
+        from temporalio.exceptions import ApplicationError
+        from types import SimpleNamespace
+        diagnostic = ApplicationError('representation_release_gate', type='ValueError')
+        boundary = ApplicationError('representation_release_gate', type='integrity', non_retryable=True)
+        boundary.__cause__ = diagnostic
+        wrapped = SimpleNamespace(cause=SimpleNamespace(cause=boundary))
+        self.assertIs(runtime.application_failure(wrapped), boundary)
+        self.assertIs(runtime.application_failure(boundary), boundary)
+        self.assertIsNone(runtime.application_failure(ValueError('unclassified')))
+        # An outer unexpected application failure must not be bypassed.
+        unexpected = ApplicationError('unexpected', type='parser')
+        unexpected.__cause__ = boundary
+        self.assertIs(runtime.application_failure(unexpected), unexpected)
+
     def test_matrix_has_22_unique_cases_and_seven_independent_gates(self):
         cases = list(runtime.scenarios())
         self.assertEqual(len(cases), 22)

@@ -1,8 +1,8 @@
 # Q03: four bounded algorithm structures and representation dispositions
 
 Implements the local portion of #50 / specification #47, based on
-`4571eea1c6492de7c097fe3fa6ce99494c34dbef`. K8s qualification is **NOT RUN** for
-this producer. No #50, Q04 or #44 release acceptance follows from local tests.
+`4571eea1c6492de7c097fe3fa6ce99494c34dbef`. K8s qualification is **PARTIAL**, with remaining matrix gates for
+this producer. See [runtime results](RUNTIME-RESULTS.md). No #50, Q04 or #44 release acceptance follows from local tests.
 See [runtime admission plan](RUNTIME-PLAN.md) and [source review](SOURCE-REVIEW.md).
 
 ## Interface contract

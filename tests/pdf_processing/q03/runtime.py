@@ -38,6 +38,16 @@ class Q03FinalBoundary:
             retry_policy=RetryPolicy(maximum_attempts=1))
 
 
+def application_failure(error):
+    """Return the outer application classification, preserving nested diagnostics."""
+    from temporalio.exceptions import ApplicationError
+    while error is not None:
+        if isinstance(error, ApplicationError):
+            return error
+        error = getattr(error, 'cause', None)
+    return None
+
+
 def scenarios():
     yield 'valid', None
     yield 'split', None
@@ -225,9 +235,7 @@ async def run(args):
                     hook = EvidenceInterruption(store, processing.scratch, evidence_id, SOURCE,
                                                 digest(raw), case_out/'interruption', timeout=args.interrupt_timeout)
                     observation, failure = await interrupted_call(hook, lambda: execute('interrupted'))
-                    cause = failure
-                    while (next_cause := getattr(cause, 'cause', None)) is not None:
-                        cause = next_cause
+                    cause = application_failure(failure)
                     assert isinstance(failure, WorkflowFailureError), failure
                     assert isinstance(cause, ApplicationError) and cause.type == 'parser', cause
                     assert str(cause).endswith('execution_failed'), cause
@@ -249,9 +257,7 @@ async def run(args):
                 try:
                     result = await execute('initial')
                 except WorkflowFailureError as error:
-                    cause = error
-                    while (next_cause := getattr(cause, 'cause', None)) is not None:
-                        cause = next_cause
+                    cause = application_failure(error)
                     record['failure'] = str(cause)
                     (case_out/'failure.json').write_bytes(encoded(record))
                     assert case not in ('valid', 'split', 'interrupted-evidence'), record
