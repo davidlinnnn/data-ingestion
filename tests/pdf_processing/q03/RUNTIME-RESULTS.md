@@ -51,7 +51,7 @@ An initial sandboxed run could not inspect processes (`psutil`/`sysctl`), causin
 six interruption-test errors/failures; the same suite passed outside that
 restriction. This is not a new complete Q01/Q02/Q03 suite count.
 
-## Capacity and cleanup
+## Trials A–C: capacity and cleanup
 
 Authorized window: at most 30 minutes; pause only the 20 existing Deployments in
 `pdf-t03-validation` through `pdf-t07-validation` (activities/workflows/objects/
@@ -64,7 +64,7 @@ processes remained. PVCs/data were preserved. Global OOM count remained 28.
 The coordinator has no per-Pod resource limits. These results qualify only the
 controlled shared-VM setup, not production resource sizing or isolation.
 
-## Evidence and next run
+## Trials A–C: evidence and historical next-run plan
 
 [`evidence/runtime-20260916/manifest.json`](evidence/runtime-20260916/manifest.json)
 contains production/harness hashes, verified case summaries, workflow IDs and
@@ -74,7 +74,7 @@ are alongside it. Private PDF/image/text/history bundles remain at
 coordinator under `/tmp/q03-20260916-a/results` and `...-b/results`.
 Do not publish copyrighted fixture bytes or raw extracted text.
 
-Next: coordinate a fresh capacity window meeting the existing 3 GiB/60-second
+Historical plan after trial C (completed by trial D below): coordinate a fresh capacity window meeting the existing 3 GiB/60-second
 admission rule. Run the corrected 22-case matrix using RUNTIME-PLAN.md and
 INTERRUPTION.md, a new output directory and object prefix, plus all three
 PYTHONPATH roots (`src`, Q02 tests, Q03 tests). Seven independent symbol gates

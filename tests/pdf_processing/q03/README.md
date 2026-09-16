@@ -105,10 +105,10 @@ Bounded support is BFS (original 101 / 3.11), uniform-cost (103 / 3.14), depth-l
 99–110 Source Revision. There is no universal discovery, AST, LaTeX enrichment,
 mathematical reconstruction, new canonical schema or expanded layout/language claim.
 
-Final local checks: **66 tests PASS**, typecheck **0 errors / 0 warnings**. Both
+Initial local checks (historical): **66 tests PASS**, typecheck **0 errors / 0 warnings**. Both
 code-review axes have no remaining local findings after the PNG-decoding and
-numeric-metadata fixes; see [review](REVIEW.md). These checks do not close the
-explicit runtime gates above.
+numeric-metadata fixes; see [review](REVIEW.md). These local checks alone did not close the runtime gates; see the later
+[runtime qualification results](RUNTIME-RESULTS.md).
 
 ## Interrupted required evidence follow-up
 
@@ -119,5 +119,6 @@ typecheck **0 errors / 0 warnings**. Seven hook tests cover actual child interru
 recovery/replay, refusal/timeout, delayed stop and overlapping cancellation cleanup.
 Production inventory is unchanged from the initial Q03 commit. Follow-up evidence
 is bound by `evidence/interruption/manifest.json`; the original evidence remains
-historical. Actual Temporal/shared-storage/K8s qualification is **NOT RUN** and
-requires newly coordinated capacity.
+historical. Subsequent Temporal/shared-storage qualification completed in trial D;
+see [runtime results](RUNTIME-RESULTS.md). Pod-loss and general deployment sizing
+are outside this bounded qualification.

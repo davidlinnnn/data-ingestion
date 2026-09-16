@@ -44,6 +44,7 @@ calls production derivation and is not imported by production. Re-running it is
 not authorization to accept a new discrepancy; a new source review/profile version
 is required when scope or decisions change.
 
-Runtime acceptance of these decisions for the new immutable producer is pending.
+Bounded runtime acceptance of these decisions is recorded in [runtime results](RUNTIME-RESULTS.md),
+with four full-request cases and all 22 finalization matrix cases passing.
 No historical failure, source byte, candidate artifact or accepted request is
 rewritten, and the earlier Q01/Q02 runtime PASS is not extended to these cases.
