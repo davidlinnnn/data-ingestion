@@ -1,0 +1,55 @@
+# Q04 phase-one handoff (#51)
+
+Base: `6d929e101a865f9e4bf887ace9dbb2866617dcae`, published
+`codex/pdf-checkpoint-prototype`. Work is isolated on `codex/q04-acceptance`.
+Scope: preparation, immutable-evidence reconciliation and local validation.
+**Q04 runtime acceptance is NOT COMPLETE. No new Temporal/K8s trial was run.**
+#44 remains the final acceptance gate; #45 owns calibration and #46 packaging.
+
+Read [stage impact and evidence reuse](STAGE-IMPACT.md), then the
+[executable acceptance plan](ACCEPTANCE-PLAN.md). `fixtures.json` pins the six
+existing captured inputs, original Source Revisions and page mappings; it contains
+no PDF/text/image payload. `audit.py` checks the actual production dependency
+contract, producer equality, R3 seal, fixture bytes and optionally private Q03
+artifacts. It has no cluster, subprocess or inference operations and refuses to
+overwrite its output. Missing inputs/hash drift fail; omitting private artifacts
+records null, never a successful private-artifact check.
+
+## Reproduce preparation
+
+From this worktree, with the retained environment and private fixtures available:
+
+```sh
+python3 tests/pdf_processing/q04/audit.py \
+  --fixtures /private/tmp/t09a-fixtures \
+  --private-full /private/tmp/q03-results-20260916-a \
+  --private-matrix /private/tmp/q03-results-20260916-d/matrix \
+  --out /private/tmp/q04-NEW-audit.json
+
+export PDF_TEST_FIXTURE_ROOT=/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH=src:/private/tmp/q02-deps:tests/pdf_processing/q02:tests/pdf_processing/q03
+PDF_PYTHON=/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python
+"$PDF_PYTHON" -m unittest discover -s tests/pdf_processing/q03 -p test_q03_compatibility.py
+"$PDF_PYTHON" tests/pdf_processing/q03/run_suite.py
+```
+
+The full suite uses local models/rendering and owned subprocesses, including a
+small scanned restoration fixture; it is not a six-fixture inference trial.
+Existing process supervision requires OS process inspection. Do not run competing
+local qualification suites concurrently. See `evidence/` for this run's outputs.
+No production files, prior reports, failed trials or raw artifacts are edited.
+
+## Handoff limits
+
+The new harness is a preparation audit, not a six-fixture runtime orchestrator.
+Existing Q03 drivers are executable for AIMA and the finalization matrix. Existing
+R3 cross-fixture/warm/drain drivers require the explicit adaptation in the plan
+before running against Q04; their historical profiles, hardcoded paths and old
+AIMA scorer must not be reused as current acceptance. No claim is made that those
+remaining runtime adapters or new output reviews have been completed.
+
+This phase can be reviewed/integrated independently. Request a new capacity window
+only after the main session reviews the plan and the runtime adapter is ready.
+No previous service-pause authorization carries forward. No ticket closure,
+branch publication or merge is performed by this handoff.
