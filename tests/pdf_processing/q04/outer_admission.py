@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 import math
+import signal
+import threading
 import time
 
 
@@ -14,6 +16,36 @@ class OuterAdmissionRejected(ValueError):
         self.samples = samples
         self.resets = resets
         self.fatal = fatal
+
+
+class _CallbackDeadlineExceeded(TimeoutError):
+    pass
+
+
+class _CallbackWatchdogUnavailable(RuntimeError):
+    pass
+
+
+def _call_with_timeout(operation, timeout_seconds):
+    """Interrupt one local callback before it can consume the reserved deadline."""
+    if timeout_seconds <= 0:
+        raise _CallbackDeadlineExceeded("no callback budget remains")
+    if threading.current_thread() is not threading.main_thread():
+        raise _CallbackWatchdogUnavailable("callback watchdog requires main thread")
+    if signal.getitimer(signal.ITIMER_REAL) != (0.0, 0.0):
+        raise _CallbackWatchdogUnavailable("an existing real-time timer is active")
+    previous_handler = signal.getsignal(signal.SIGALRM)
+
+    def expired(_signum, _frame):
+        raise _CallbackDeadlineExceeded("capacity callback exceeded remaining budget")
+
+    signal.signal(signal.SIGALRM, expired)
+    signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+    try:
+        return operation()
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 @dataclass(frozen=True)
@@ -89,6 +121,19 @@ def observe_capacity(
     def reject(reason, *, fatal):
         raise OuterAdmissionRejected(reason, samples=list(rows), resets=resets, fatal=fatal)
 
+    def bounded(operation, unavailable_reason):
+        remaining = deadline - monotonic()
+        if remaining <= 0:
+            reject(deadline_reason, fatal=False)
+        try:
+            return _call_with_timeout(operation, remaining)
+        except _CallbackDeadlineExceeded:
+            reject(deadline_reason, fatal=False)
+        except _CallbackWatchdogUnavailable as error:
+            reject("callback watchdog unavailable: " + str(error), fatal=True)
+        except Exception as error:
+            reject(unavailable_reason + str(error), fatal=True)
+
     if deadline - started_monotonic < policy.continuous_seconds:
         reject("insufficient capacity lease for admission, work and cleanup", fatal=True)
 
@@ -96,18 +141,12 @@ def observe_capacity(
         now_monotonic = monotonic()
         if now_monotonic > deadline:
             reject(deadline_reason, fatal=False)
-        try:
-            verify_identity()
-        except Exception as error:
-            reject("identity or ownership drift: " + str(error), fatal=True)
+        bounded(verify_identity, "identity or ownership drift: ")
         if monotonic() > deadline:
             reject(deadline_reason, fatal=False)
-        try:
-            row = sample()
-        except Exception as error:
-            reject("telemetry unavailable: " + str(error), fatal=True)
-        record(row)
+        row = bounded(sample, "telemetry unavailable: ")
         rows.append(row)
+        bounded(lambda: record(row), "telemetry persistence unavailable: ")
         now_wall = wall_time()
         observed_monotonic = monotonic()
         required = (

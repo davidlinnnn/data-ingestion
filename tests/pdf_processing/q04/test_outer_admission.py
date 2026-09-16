@@ -1,6 +1,7 @@
 """Deterministic outer capacity-owner admission tests; no live runtime or inference."""
 
 from dataclasses import replace
+import time
 import unittest
 
 from outer_admission import (
@@ -117,17 +118,21 @@ class OuterAdmission(unittest.TestCase):
 
         self.assertFalse(caught.exception.fatal)
         self.assertEqual(self.clock.monotonic(), 180)
-        self.assertEqual(len(recorded), 181)
+        self.assertEqual(len(recorded), 180)
 
-    def test_qualifying_interval_may_finish_exactly_at_observation_deadline(self):
+    def test_qualifying_interval_at_deadline_rejects_without_persistence_budget(self):
         def sample():
+            if self.clock.monotonic() == 179:
+                self.clock.sleep(1)
             return self.row(available=100 if self.clock.monotonic() >= 120 else 99)
 
-        result, _ = self.observe(sample, lease_seconds=500)
+        with self.assertRaisesRegex(
+            OuterAdmissionRejected, "observation deadline"
+        ) as caught:
+            self.observe(sample, lease_seconds=500)
 
-        self.assertTrue(result["passed"])
-        self.assertEqual(result["observed_seconds"], 180)
-        self.assertEqual(result["continuous_seconds"], 60)
+        self.assertFalse(caught.exception.fatal)
+        self.assertEqual(len(caught.exception.samples), 180)
 
     def test_sample_completing_after_deadline_cannot_pass(self):
         policy = replace(
@@ -142,8 +147,7 @@ class OuterAdmission(unittest.TestCase):
         def sample():
             nonlocal calls
             calls += 1
-            if calls == 2:
-                self.clock.sleep(0.1)
+            self.clock.sleep(1.1)
             return self.row()
 
         with self.assertRaisesRegex(OuterAdmissionRejected, "observation deadline"):
@@ -316,12 +320,68 @@ class OuterAdmission(unittest.TestCase):
         self.assertTrue(caught.exception.fatal)
         self.assertFalse(called)
 
-    def test_exact_lease_boundary_preserves_work_and_cleanup_reserves(self):
+    def test_exact_lease_boundary_rejects_without_persistence_budget(self):
         policy = replace(self.policy, observation_seconds=60)
-        result, _ = self.observe(lambda: self.row(), lease_seconds=200, policy=policy)
 
-        self.assertTrue(result["passed"])
-        self.assertEqual(result["observed_seconds"], 60)
+        def sample():
+            if self.clock.monotonic() == 59:
+                self.clock.sleep(1)
+            return self.row()
+
+        with self.assertRaisesRegex(OuterAdmissionRejected, "deadline") as caught:
+            self.observe(sample, lease_seconds=200, policy=policy)
+
+        self.assertFalse(caught.exception.fatal)
+        self.assertEqual(len(caught.exception.samples), 60)
+
+    def test_blocked_callback_is_interrupted_by_remaining_deadline(self):
+        policy = OuterAdmissionPolicy(
+            available_bytes=100,
+            continuous_seconds=0.01,
+            observation_seconds=0.02,
+            sample_interval_seconds=0.001,
+            max_sample_gap_seconds=1,
+            max_cgroup_bytes=500,
+            expected_vm_oom_kill=7,
+            expected_cgroup_oom_kill=0,
+            minimum_work_seconds=0.01,
+            cleanup_seconds=0.01,
+        )
+        started = time.monotonic()
+        with self.assertRaisesRegex(OuterAdmissionRejected, "observation deadline"):
+            observe_capacity(
+                policy,
+                lease_ends_at=time.time() + 1,
+                sample=lambda: self.row(timestamp=time.time()),
+                verify_identity=lambda: time.sleep(1),
+                record=lambda _row: None,
+            )
+        self.assertLess(time.monotonic() - started, 0.5)
+
+    def test_blocked_evidence_write_is_interrupted_and_sample_remains_attached(self):
+        policy = OuterAdmissionPolicy(
+            available_bytes=100,
+            continuous_seconds=0.01,
+            observation_seconds=0.02,
+            sample_interval_seconds=0.001,
+            max_sample_gap_seconds=1,
+            max_cgroup_bytes=500,
+            expected_vm_oom_kill=7,
+            expected_cgroup_oom_kill=0,
+            minimum_work_seconds=0.01,
+            cleanup_seconds=0.01,
+        )
+        with self.assertRaisesRegex(
+            OuterAdmissionRejected, "observation deadline"
+        ) as caught:
+            observe_capacity(
+                policy,
+                lease_ends_at=time.time() + 1,
+                sample=lambda: self.row(timestamp=time.time()),
+                verify_identity=lambda: None,
+                record=lambda _row: time.sleep(1),
+            )
+        self.assertEqual(len(caught.exception.samples), 1)
 
 
 if __name__ == "__main__":

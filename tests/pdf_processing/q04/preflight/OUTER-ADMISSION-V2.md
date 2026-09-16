@@ -23,19 +23,24 @@ workflow. The current proposed outer policy is:
 
 A low-memory or positive-PSI sample resets the continuous interval. Every sample
 before and after a reset remains in the append-only JSONL evidence. Passing samples
-on opposite sides of a reset are never added together. A sample at the exact
-monotonic observation deadline may complete the interval; no later sample is read.
+on opposite sides of a reset are never added together. Identity verification,
+sampling and evidence persistence must all finish before the monotonic cutoff. A
+sample that finishes exactly at the cutoff is attached to the rejection but cannot
+qualify because no budget remains to persist it through the normal evidence adapter.
 
 The following conditions reject immediately: new VM or cgroup OOM, unavailable,
 incomplete, stale, future-dated or over-gap telemetry, cgroup ceiling violation,
 coordinator identity drift, or reservation/ownership drift. They do not wait for
 recovery. A future runner must make its identity callback verify the expected
 coordinator UID and the live reservation holder PID/create-time pair on every
-sample. Both adapters must use bounded local reads only; they must not perform an
-unbounded network call. The helper rechecks the monotonic deadline after identity
-verification and after sampling, and it does not start sampling if identity
-verification used the remaining observation or lease budget. Loss of `kubectl
-exec` is also failure, never admission success.
+sample. Both adapters use bounded local reads only; they must not perform a network
+call. The helper arms a POSIX real-time watchdog with the monotonic budget remaining
+before identity verification, sampling and evidence persistence, then rechecks the
+monotonic deadline after each step. It interrupts a blocked callback at the cutoff
+and does not start sampling if identity verification used the remaining observation
+or lease budget. The helper therefore runs in the coordinator driver's main thread
+and rejects if another real-time timer is already active. Loss of `kubectl exec` is
+also failure, never admission success.
 
 ## Lease accounting
 
