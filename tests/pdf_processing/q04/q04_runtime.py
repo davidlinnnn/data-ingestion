@@ -121,6 +121,37 @@ class Run:
                         final = json.loads(self.store.read_artifact(file))
                         require(final['plan'] != plan, 'failed work left a complete registration')
 
+    async def retain_failure(self, target, error, injection, handle, task, request, audit_publication):
+        # Durable original cause precedes every fallible cleanup/evidence operation.
+        write(target/'failure.json', {'type': type(error).__name__, 'reason': str(error), 'injection': injection})
+        outcomes = {}
+        async def attempt(name, operation):
+            try:
+                await operation()
+                outcomes[name] = {'ok': True}
+            except BaseException as failure:
+                outcomes[name] = {'ok': False, 'type': type(failure).__name__, 'reason': str(failure)}
+            write(target/(name+'-outcome.json'), outcomes[name])
+        async def cancel():
+            await asyncio.wait_for(self.cancel_owned(handle), 30)
+            self.active = None
+        async def settle():
+            if not task.done():
+                task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        async def publication():
+            if audit_publication:
+                await asyncio.to_thread(self.no_complete, request)
+        async def history():
+            (target/'failure-history.json').write_text((await asyncio.wait_for(handle.fetch_history(), 20)).to_json())
+        await attempt('cancel', cancel)
+        await attempt('result-task', settle)
+        await attempt('worker-stop', self.host.stop)
+        await attempt('publication', publication)
+        await attempt('history', history)
+        write(target/'cleanup.json', outcomes)
+        return outcomes
+
     async def trial(self, sid, mode, label, previous=None):
         from pdf_processing.processing_workflow import PDFProcessing
         from temporalio.converter import DataConverter
@@ -209,6 +240,8 @@ class Run:
                 require(old_plan is not None, 'old accepted plan disappeared')
                 retained_plan = json.loads(self.store.read_artifact(next(f for f in old_plan['files'] if f['name'] == 'plan.json')))
                 require(retained_plan['profile'] == previous['profile'], 'old profile mutated')
+                (target/'history.json').write_text((await handle.fetch_history()).to_json())
+                self.active = None
                 metadata.update(result=result, verified=True)
                 write(target/'accepted.json', metadata)
                 return metadata
@@ -217,6 +250,7 @@ class Run:
             if previous and mode != 'invalidation':
                 require(json.loads((Path(previous['directory'])/'document.json').read_text()) == json.loads((target/'document.json').read_text()), 'full typed document differs')
             history = await handle.fetch_history()
+            (target/'history.json').write_text(history.to_json())
             if mode == 'drain':
                 require(injection is not None, 'drain injection missed')
                 scheduled, attempts = {}, []
@@ -238,22 +272,18 @@ class Run:
             metadata.update(result=result, accepted=accepted, resource=coverage, verified=True,
                 directory=str(target), workflow_id=workflow_id)
             write(target/'accepted.json', metadata)
+            self.active = None
             return metadata
         except BaseException as error:
-            await self.cancel_owned(handle)
-            await asyncio.gather(task, return_exceptions=True)
-            # Stop parsing before auditing failure artifacts; no publication can race this check.
-            await self.host.stop()
-            if mode != 'old-request' and (result is None or result.get('status') != 'complete'):
-                await asyncio.to_thread(self.no_complete, request)
-            write(target/'failure.json', {'type': type(error).__name__, 'reason': str(error), 'injection': injection})
+            outcomes = await self.retain_failure(target, error, injection, handle, task, request,
+                mode != 'old-request' and (result is None or result.get('status') != 'complete'))
+            failures = [name for name, outcome in outcomes.items() if not outcome['ok']]
+            if failures:
+                raise RuntimeError(f'{type(error).__name__}: {error}; cleanup/evidence failures: {", ".join(failures)}') from error
             if mode == 'guard' and injection and str(error) == 'resource telemetry lost':
                 write(target/'guard-accepted.json', {'expected_failure': str(error), 'owned_runtime_stopped': True, 'complete_registration_absent': True})
                 return {'verified': True, 'expected_failure': str(error)}
             raise
-        finally:
-            (target/'history.json').write_text((await handle.fetch_history()).to_json())
-            self.active = None
 
 
 async def main(args):
@@ -348,10 +378,24 @@ async def main(args):
                     await run.trial('native', args.phase, args.phase+'-native', previous('native'))
         await host.stop()
         write(trial_root/'phase-complete.json', {'phase': args.phase, 'fixtures': args.fixture, 'status': 'PASS bounded phase only', 'time': time.time()})
+    except BaseException as error:
+        write(trial_root/'phase-failure.json', {'type': type(error).__name__, 'reason': str(error)})
+        raise
     finally:
+        # A failed cancellation must never prevent the independent owned-host stop.
+        errors = {}
         if run.active:
-            await run.cancel_owned(run.active)
-        await host.stop()
+            try:
+                await asyncio.wait_for(run.cancel_owned(run.active), 30)
+            except BaseException as error:
+                errors['cancel'] = str(error)
+        try:
+            await host.stop()
+        except BaseException as error:
+            errors['worker-stop'] = str(error)
+        write(trial_root/'phase-cleanup.json', {'errors': errors})
+        if errors and sys.exc_info()[0] is None:
+            raise RuntimeError('phase cleanup failed: '+str(errors))
 
 
 if __name__ == '__main__':

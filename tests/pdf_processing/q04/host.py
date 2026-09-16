@@ -24,6 +24,7 @@ class Host:
         self.pod = None
         self.log = None
         self.current = root
+        self.worker_command = None
 
     def kubectl(self, *args, body=None):
         return subprocess.check_output(['kubectl', '--request-timeout=10s', '-n', self.config['pod_namespace'], *args], input=body, text=True, timeout=20)
@@ -44,6 +45,7 @@ class Host:
         self.current = self.root/f'worker-{self.generation}'
         command = [self.config['python'], str(Path(__file__).with_name('worker.py')),
             '--config', str(self.config_path), '--out', str(self.current), '--generation', str(self.generation)]
+        self.worker_command = list(command)
         if self.config.get('pod_namespace'):
             self.pod = await asyncio.to_thread(self.inventory)
             command = ['kubectl', '-n', self.config['pod_namespace'], 'exec', self.pod['metadata']['name'], '--', *command]
@@ -108,8 +110,89 @@ print(json.dumps({'forced':True,'owned_pids':[x.pid for x in children]+[pid]}))
         output = subprocess.check_output(command, text=True, timeout=15)
         (self.current/'forced-cleanup.json').write_text(output)
 
+    def stop_remote(self):
+        # A kubectl launcher is a transport, not the lifetime of its remote worker.
+        # Read the original Pod directly: failed readiness must not block cleanup.
+        if self.pod is None or self.worker_command is None:
+            raise ValueError('missing remote ownership')
+        pod = json.loads(self.kubectl('get', 'pod', self.pod['metadata']['name'], '-o', 'json'))
+        require(pod['metadata']['uid'] == self.pod['metadata']['uid'], 'Pod identity changed; cleanup remains pending')
+        identity = self.current/'ownership.json'
+        owner = json.loads(identity.read_text()) if identity.exists() else None
+        script = """import json,os,psutil,signal,sys,time
+command,owner,timeout=json.loads(sys.argv[1]),json.loads(sys.argv[2]),float(sys.argv[3])
+owned=[]
+for p in psutil.process_iter():
+ try:
+  if p.uids().real==os.getuid() and p.status()!=psutil.STATUS_ZOMBIE and p.cmdline()==command: owned.append(p)
+ except psutil.NoSuchProcess: pass
+assert len(owned)<=1, 'ambiguous exact worker command'
+if owner:
+ for p in owned: assert p.pid==owner['pid'] and p.create_time()==owner['created']
+tracked=[]
+for p in owned:
+ tracked.extend(p.children(recursive=True));tracked.append(p)
+ try: p.send_signal(signal.SIGTERM)
+ except psutil.NoSuchProcess: pass
+def live(processes):
+ result=[]
+ for p in processes:
+  try:
+   if p.is_running() and p.status()!=psutil.STATUS_ZOMBIE: result.append(p)
+  except psutil.NoSuchProcess: pass
+ return result
+deadline=time.monotonic()+timeout
+alive=live(tracked)
+while alive and time.monotonic()<deadline:
+ time.sleep(.05);alive=live(alive)
+forced=bool(alive)
+for p in reversed(alive):
+ try: p.kill()
+ except psutil.NoSuchProcess: pass
+_,alive=psutil.wait_procs(alive,timeout=5)
+assert not [p for p in alive if p.status()!=psutil.STATUS_ZOMBIE], 'owned processes remain'
+for p in psutil.process_iter():
+ try:
+  if p.uids().real==os.getuid() and p.status()!=psutil.STATUS_ZOMBIE: assert p.cmdline()!=command, 'worker still present'
+ except psutil.NoSuchProcess: pass
+print(json.dumps({'worker_absent':True,'forced':forced,'owned_pids':[p.pid for p in tracked],'identity_published':owner is not None}))
+"""
+        command = ['kubectl', '-n', self.config['pod_namespace'], 'exec', self.pod['metadata']['name'], '--',
+            self.config['python'], '-c', script, json.dumps(self.worker_command), json.dumps(owner), str(self.config['drain_seconds']+45)]
+        output = subprocess.check_output(command, text=True, timeout=self.config['drain_seconds']+65)
+        outcome = json.loads(output)
+        require(outcome['worker_absent'], 'remote cleanup incomplete')
+        # Root exists even when startup failed before the worker created its directory.
+        with (self.root/f'remote-cleanup-{self.generation}-{time.time_ns()}.json').open('x') as stream:
+            json.dump(outcome, stream)
+        return outcome
+
     async def stop(self):
         if self.process is None:
+            return
+        if self.pod:
+            # Keep process/Pod/command ownership on every uncertain cleanup path.
+            outcome = await asyncio.to_thread(self.stop_remote)
+            try:
+                await asyncio.to_thread(self.process.wait, 10)
+            except subprocess.TimeoutExpired:
+                self.process.terminate()
+                await asyncio.to_thread(self.process.wait, 10)
+                raise RuntimeError('remote worker absence verified; transport did not exit; child/scratch proof pending')
+            returncode = self.process.returncode
+            if self.log:
+                self.log.close()
+            proof = self.current/'stopped.json'
+            require(proof.exists(), 'worker absent but child/scratch cleanup remains pending')
+            stopped = json.loads(proof.read_text())
+            require(stopped['parser_absent'] and stopped['scratch_absent'], 'worker cleanup incomplete; ownership retained')
+            require(stopped['generation'] == self.generation, 'cleanup generation mismatch')
+            identity = self.current/'ownership.json'
+            if identity.exists():
+                require(stopped['pid'] == json.loads(identity.read_text())['pid'], 'cleanup owner mismatch')
+            self.process = None
+            require(not outcome['forced'], 'forced remote cleanup; graceful qualification failed')
+            require(returncode == 0, 'worker transport failed; remote cleanup verified')
             return
         if self.process.poll() is None:
             identity = self.current/'ready.json'
@@ -132,16 +215,20 @@ print(json.dumps({'forced':True,'owned_pids':[x.pid for x in children]+[pid]}))
                 await asyncio.to_thread(self.process.wait, 10)
                 if self.log:
                     self.log.close()
-                self.process = None
-                raise RuntimeError('forced worker cleanup; graceful qualification failed')
+                raise RuntimeError('forced worker cleanup; scratch proof pending; graceful qualification failed')
         if self.log:
             self.log.close()
         returncode = self.process.returncode
+        proof = self.current/'stopped.json'
+        require(proof.exists(), 'worker absent but child/scratch cleanup remains pending')
+        stopped = json.loads(proof.read_text())
+        require(stopped['parser_absent'] and stopped['scratch_absent'], 'worker cleanup incomplete')
+        require(stopped['generation'] == self.generation, 'cleanup generation mismatch')
+        identity = self.current/'ownership.json'
+        if identity.exists():
+            require(stopped['pid'] == json.loads(identity.read_text())['pid'], 'cleanup owner mismatch')
         self.process = None
         require(returncode == 0, 'worker failed; retain logs and do not accept run')
-        stopped = json.loads((self.current/'stopped.json').read_text())
-        require(stopped['parser_absent'] and stopped['scratch_absent'], 'worker cleanup incomplete')
-        self.process = None
 
     async def drain(self, child_pid):
         old = self.pod

@@ -71,6 +71,37 @@ class Controller(unittest.IsolatedAsyncioTestCase):
                 running=False
                 await observer
 
+    async def test_original_failure_survives_all_cleanup_failures(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            called = []
+            async def stop():
+                self.assertEqual(json.loads((root/'failure.json').read_text())['reason'], 'original injection')
+                called.append('stop')
+                raise RuntimeError('forced cleanup')
+            async def history():
+                called.append('history')
+                raise RuntimeError('history transport')
+            async def cancel(handle):
+                called.append('cancel')
+                raise RuntimeError('cancel transport')
+            def publication(request):
+                called.append('publication')
+                raise RuntimeError('scan transport')
+            run = Run({}, {}, root, None, None, SimpleNamespace(stop=stop))
+            run.cancel_owned = cancel
+            run.no_complete = publication
+            handle = SimpleNamespace(fetch_history=history)
+            run.active = handle
+            task = asyncio.create_task(asyncio.sleep(60))
+            outcomes = await run.retain_failure(root, ValueError('original injection'), {'kind':'test'}, handle, task, {}, True)
+            self.assertEqual(called, ['cancel', 'stop', 'publication', 'history'])
+            self.assertTrue(task.cancelled())
+            self.assertIs(run.active, handle)  # outer cleanup can retry an unconfirmed cancellation
+            self.assertEqual([k for k,v in outcomes.items() if not v['ok']], ['cancel','worker-stop','publication','history'])
+            self.assertEqual(json.loads((root/'failure.json').read_text())['type'], 'ValueError')
+            self.assertEqual(json.loads((root/'cleanup.json').read_text()), outcomes)
+
     async def test_stale_telemetry_and_changed_worker_are_not_accepted(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)

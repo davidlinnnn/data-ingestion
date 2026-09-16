@@ -100,7 +100,15 @@ On failures, retain histories/partial artifacts, cancel only the owned workflow,
 stop the owned worker and check for forbidden complete publication if required
 work did not complete. Emergency force cleanup verifies PID creation time and
 owned ancestry; it fails graceful qualification and retains a cleanup record.
-Any failed/unavailable remote cleanup remains an explicit error, never a PASS.
+The original failure is recorded before cleanup. Cancellation, task settlement,
+worker stop, publication audit and history capture each retain independent outcomes;
+one failure cannot suppress the remaining attempts. Any failed/unavailable remote
+cleanup remains an explicit error, never a PASS. Remote ownership is checked even
+when the local `kubectl exec` launcher has already exited; an uncertain cleanup
+retains its ownership state for retry. Before ownership publication, cleanup uses
+the exact unique launch command in the original Pod UID. A missing parent alone
+is not complete cleanup: missing child/scratch proof retains pending ownership
+and requires resolution before any subsequent qualification.
 No PDF/PVC/object deletion or historical replica mutation exists in the adapter.
 
 ## Commands after main approves scope and capacity

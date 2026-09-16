@@ -8,10 +8,11 @@ directories for complete-graph regression. Original bytes remain unchanged.
 
 ## Local evidence
 
-- Combined local PDF + Q04 suite: **93 tests PASS**, 61.315 seconds;
-  `evidence/adapter-full-suite.log`. Includes 74 existing PDF regressions and 19
+- Combined local PDF + Q04 suite: **101 tests PASS**, 59.257 seconds;
+  `evidence/adapter-full-suite-final.log`. Includes 74 existing PDF regressions and 27
   Q04 checks, real local source rendering and owned sleeping-process cleanup.
-- New harness typecheck: **0 errors/warnings**. CLI help works without services;
+- New harness typecheck: **0 errors/warnings**,
+  `evidence/adapter-typecheck-final-complete.log`. CLI help works without services;
   missing capacity acknowledgement is rejected before any source/service access.
 - Private bundle integrity: all six original/captured PDFs, six full graph
   expectations, six source-oracle files and harness/producer hashes verified.
@@ -26,6 +27,8 @@ directories for complete-graph regression. Original bytes remain unchanged.
   terminates only a real owned sleeping process tree and preserves an unrelated
   sleeping process. These are local harness proofs, not resource/drain qualification.
 
+The initial 93-test run and intermediate 99-test review run are preserved in
+`adapter-full-suite.log` and `adapter-full-suite-reviewed.log`.
 The initial RED import, platform/process-inspection restriction, source-coordinate
 conversion mistake, and intermediate typecheck failures are retained as separate
 logs. AIMA anchors were corrected to compare TOPLEFT checkpoint geometry with
@@ -33,9 +36,25 @@ BOTTOMLEFT document geometry using the recorded page height; no source text,
 fixture, accepted edge or production code changed. The q04 driver uses the unique
 module name `q04_runtime` to avoid historical `runtime.py` test-import collisions.
 
-`evidence/phase-two-local.json` binds the final harness, producer, private input
-bundle and retained graph/oracle hashes. Earlier bundle snapshots are preparation
+`evidence/phase-two-local.json` preserves the initial implementation bindings.
+`evidence/phase-two-local-reviewed.json` preserves the first review snapshot.
+`evidence/phase-two-local-final.json` binds the final harness, producer,
+private input bundle and retained graph/oracle hashes. Earlier bundle snapshots are preparation
 history; verify or regenerate a new bundle whenever harness bytes change.
+
+## Review corrections
+
+[REVIEW-PHASE-TWO.md](REVIEW-PHASE-TWO.md) records the two independent reviews.
+Cleanup findings were fixed: disconnected remote launchers still trigger owned
+worker cleanup, and the original failure survives independent cleanup/history
+failures. A normal remote exit is allowed to finish before judging its launcher.
+Uncertain cleanup keeps ownership for retry; no failed cleanup can qualify PASS.
+A missing parent is insufficient: child/scratch absence must also be proven before
+ownership is cleared. A surviving orphan parser leaves cleanup explicitly pending.
+Local transport regressions include exact command isolation, unpublished worker
+identity, changed Pod UID, retry and graceful launcher exit. They emulate an
+isolated Pod process inventory around actual local sleeping processes, without
+accessing Kubernetes.
 
 ## Main-session decision before execution
 
