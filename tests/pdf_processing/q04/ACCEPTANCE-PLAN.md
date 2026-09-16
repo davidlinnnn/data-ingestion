@@ -23,7 +23,7 @@ regions; only compare newly qualified fresh/restored/warm outputs for equality.
 | native | Fixed 51-page paper | All 51 pages, complete graph/tables/furniture/pictures and required OCR | Pending fresh/restored; warm and drain representative |
 | 06 | Full WikiSkill | Retained full table-cell audit, row/column spans and real captions | Pending fresh/restored/warm |
 | 07 | Full YOLO | Retained full table-cell audit and localized control-character uncertainty | Pending fresh/restored/warm |
-| 08 | AIMA original 99–110 | Seven reviewed continuation deltas; four complete algorithms on 101/103/107/108, exact headers/body/captions, Q03 seven localized symbol dispositions | Q03 full fresh/reuse/replay/evidence reusable; pending integrated warm/recovery |
+| 08 | AIMA original 99–110 | Four false associations removed, one true continuation added, three legitimate inline joins retained; four complete algorithms on 101/103/107/108, exact headers/body/captions, Q03 seven localized symbol dispositions | Q03 full fresh/reuse/replay/evidence reusable; pending integrated warm/recovery |
 | 09 | ACL original 2–4 | All six reviewed equations, eq2 remains TextItem, exact typed text/captions and source-linked uncertainty | Pending fresh/restored/replay |
 | 10 | Single Keynote export page | All 27 independently reviewed textboxes and source geometry | Pending fresh/restored/replay; preflight sentinel |
 
