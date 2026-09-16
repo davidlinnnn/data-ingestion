@@ -249,6 +249,57 @@ class OuterAdmission(unittest.TestCase):
         self.assertEqual(len(caught.exception.samples), 1)
         self.assertEqual(self.clock.monotonic(), 1)
 
+    def test_identity_check_crossing_deadline_does_not_start_sampling(self):
+        cases = {
+            "observation": {
+                "advance": 181,
+                "lease": 500,
+                "reason": "observation deadline",
+            },
+            "work-and-cleanup": {
+                "advance": 61,
+                "lease": 200,
+                "reason": "workload and cleanup reserve",
+            },
+        }
+        for label, case in cases.items():
+            with self.subTest(label=label):
+                self.clock = FakeClock()
+                sampled = False
+
+                def verify():
+                    self.clock.sleep(case["advance"])
+
+                def sample():
+                    nonlocal sampled
+                    sampled = True
+                    return self.row()
+
+                with self.assertRaisesRegex(
+                    OuterAdmissionRejected, case["reason"]
+                ):
+                    self.observe(
+                        sample,
+                        lease_seconds=case["lease"],
+                        verify_identity=verify,
+                    )
+
+                self.assertFalse(sampled)
+                self.assertEqual(self.clock.monotonic(), case["advance"])
+
+    def test_sample_crossing_lease_cutoff_cannot_pass(self):
+        def sample():
+            self.clock.sleep(61)
+            return self.row()
+
+        with self.assertRaisesRegex(
+            OuterAdmissionRejected, "workload and cleanup reserve"
+        ) as caught:
+            self.observe(sample, lease_seconds=200)
+
+        self.assertFalse(caught.exception.fatal)
+        self.assertEqual(len(caught.exception.samples), 1)
+
     def test_cleanup_and_work_reserve_must_fit_before_observation(self):
         called = False
 

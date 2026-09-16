@@ -31,7 +31,11 @@ incomplete, stale, future-dated or over-gap telemetry, cgroup ceiling violation,
 coordinator identity drift, or reservation/ownership drift. They do not wait for
 recovery. A future runner must make its identity callback verify the expected
 coordinator UID and the live reservation holder PID/create-time pair on every
-sample. Loss of `kubectl exec` is also failure, never admission success.
+sample. Both adapters must use bounded local reads only; they must not perform an
+unbounded network call. The helper rechecks the monotonic deadline after identity
+verification and after sampling, and it does not start sampling if identity
+verification used the remaining observation or lease budget. Loss of `kubectl
+exec` is also failure, never admission success.
 
 ## Lease accounting
 

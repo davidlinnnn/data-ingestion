@@ -76,6 +76,11 @@ def observe_capacity(
         - policy.minimum_work_seconds
     )
     deadline = min(observation_deadline, latest_work_start)
+    deadline_reason = (
+        "insufficient workload and cleanup reserve after capacity observation"
+        if latest_work_start < observation_deadline
+        else "outer capacity observation deadline expired"
+    )
     rows = []
     resets = 0
     streak_started = None
@@ -90,11 +95,13 @@ def observe_capacity(
     while True:
         now_monotonic = monotonic()
         if now_monotonic > deadline:
-            reject("outer capacity observation deadline expired", fatal=False)
+            reject(deadline_reason, fatal=False)
         try:
             verify_identity()
         except Exception as error:
             reject("identity or ownership drift: " + str(error), fatal=True)
+        if monotonic() > deadline:
+            reject(deadline_reason, fatal=False)
         try:
             row = sample()
         except Exception as error:
@@ -148,7 +155,7 @@ def observe_capacity(
         if row["memory_current"] > policy.max_cgroup_bytes:
             reject("cgroup budget exceeded", fatal=True)
         if observed_monotonic > deadline:
-            reject("outer capacity observation deadline expired", fatal=False)
+            reject(deadline_reason, fatal=False)
 
         qualifies = (
             row["available"] >= policy.available_bytes
@@ -176,5 +183,5 @@ def observe_capacity(
 
         now_monotonic = monotonic()
         if now_monotonic >= deadline:
-            reject("outer capacity observation deadline expired", fatal=False)
+            reject(deadline_reason, fatal=False)
         sleep(min(policy.sample_interval_seconds, deadline - now_monotonic))
