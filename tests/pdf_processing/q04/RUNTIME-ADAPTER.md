@@ -70,6 +70,14 @@ the whole admission period. Active guards check every recorded sample, VM/cgroup
 OOM, memory/PSI, worker health and telemetry freshness. No new work runs in the
 reserved cleanup tail of the approved window.
 
+Future outer capacity-owner admission uses the independently testable procedure in
+[`preflight/OUTER-ADMISSION-V2.md`](preflight/OUTER-ADMISSION-V2.md). It may observe
+for at most 180 seconds while seeking one continuous 60-second 4.5 GiB/zero-PSI
+interval. Ordinary misses reset that interval; fatal telemetry, OOM or ownership
+conditions reject immediately. Observation consumes the same lease as the workload
+and cleanup reserve. This bounded pre-work wait does not retry a workflow. Historical
+sentinel runners and their evidence are not rewritten.
+
 Default **process mode** runs on a coordinated Linux host with `/proc` and cgroup-v2
 telemetry. It starts/terminates only its owned qualification worker. This is actual
 Temporal/shared-storage worker-process recovery; it does **not** qualify Pod loss.
