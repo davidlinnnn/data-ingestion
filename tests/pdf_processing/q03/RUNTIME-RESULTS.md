@@ -1,8 +1,10 @@
 # Q03 runtime qualification — 2026-09-16
 
-**INCOMPLETE.** Four full-request cases and three of 22 finalization matrix cases
-passed. Nineteen matrix cases still require acceptance. Do not close #50 or
-release Q04/#51 from these results.
+**Bounded runtime qualification PASS after trial D.** Four full-request cases
+from trial A and all 22 finalization matrix cases from trial D passed with
+identical production hashes. Publication and #50 closure still require mainline
+reconciliation; no ticket was changed by this run. Earlier incomplete trial
+records below are preserved as history.
 
 Production is unchanged from `17e34fd`; the tested candidate was `48f4f0a`.
 All production file hashes match `evidence/producer.json`. This reconciliation
@@ -81,3 +83,26 @@ three lightweight successes is acceptable; do not rerun native inference merely
 for the test-harness correction. Revalidate producer hashes before reusing the
 four full-case proofs. Preserve failed-trial records and restore services again.
 Only after matrix completion, review the combined evidence for #50 acceptance.
+
+
+## Follow-up trial D — completed
+
+The user authorized pausing the additional idle historical services. Saved UIDs
+and replicas cover T01–T08, S1 and integration namespaces; coordinators, PVCs and
+T09a were retained. Admission passed with roughly 4.6 GiB available, zero memory
+PSI and unchanged OOM count 28. The corrected driver completed **22/22** cases,
+including all seven independent symbol gates and twelve negative cases. Gates
+verified retained source/evidence and absent complete registration. Interruption,
+retry and replay were rerun successfully. Full native inference was not repeated.
+
+All original Deployment replicas were restored. All eleven Temporal namespaces
+were idle and all eleven object readiness endpoints passed afterward. See
+`evidence/runtime-20260916/d-manifest.json`, `d-state.json`, telemetry and health
+checks. Private evidence is `/private/tmp/q03-results-20260916-d/matrix`.
+The former next-run instructions describe the prior incomplete state; remaining
+work is mainline reconciliation/publication, not another qualification matrix.
+
+A separately authorized application repair recreated two missing reference-
+inventory JetStream streams via its existing idempotent bootstrap. It did not
+change PDF processing or artifacts. Runtime recovered to 2/2 Ready. Its NATS
+storage durability remains a separate infrastructure follow-up.
