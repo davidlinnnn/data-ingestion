@@ -228,10 +228,16 @@ class Enrichment:
             for page in content['pages'].values():
                 if files[page['artifact']]['sha256'] != page['sha256']:
                     raise ValueError('relationship_page_evidence_mismatch')
+            representation_evidence = None
+            if 'representation' in policy:
+                representation_evidence = await asyncio.to_thread(
+                    self.representation_evidence, report, content, files, document)
         except (ValueError, KeyError, TypeError, IndexError) as error:
             reject(str(error), 'integrity')
         binding = {'version': 1, 'content_evidence': evidence_id, 'relationships': report,
                    'dependencies': dependencies('evidence', plan['profile'], plan['producer'])}
+        if representation_evidence is not None:
+            binding['representation_evidence'] = representation_evidence
         identity = 'pdf-relationships-v1:' + digest(encoded(binding))
         await asyncio.to_thread(self.store.publish, identity, {'relationships.json': encoded(binding)})
         # Resolve the authoritative winner, even after a concurrent publication.
@@ -239,3 +245,41 @@ class Enrichment:
         if accepted != binding:
             reject('relationship_registration_conflict', 'integrity')
         return identity
+
+    def representation_evidence(self, report, content, files, document):
+        """Readable local source views; isolated glyphs only get full-page context."""
+        import io
+        import math
+        from PIL import Image
+        checked = set()
+        result = []
+        for relation in report['resolved']:
+            representation = relation['representation']
+            locators = [representation['evidence']] + [s['evidence'] for s in representation['isolated_symbols']]
+            views = []
+            for locator in locators:
+                number = locator['page']
+                page = content['pages'][str(number)]
+                size = document['pages'][str(number)]['size']
+                expected_size = [math.ceil(size['width']*3), math.ceil(size['height']*3)]
+                if (type(page['physical_page']) is not int or page['physical_page'] != number
+                        or page['size_points'] != [size['width'], size['height']]
+                        or page['pixel_dimensions'] != expected_size or page['renderer']['scale'] != 3):
+                    raise ValueError('representation_page_attribution_mismatch')
+                if number not in checked:
+                    data = self.store.read_artifact(files[page['artifact']])
+                    try:
+                        with Image.open(io.BytesIO(data)) as image:
+                            if image.format != 'PNG' or list(image.size) != expected_size:
+                                raise ValueError('representation_page_geometry_mismatch')
+                            image.verify()
+                        # PNG.verify checks chunk integrity, not pixel decoding.
+                        with Image.open(io.BytesIO(data)) as image:
+                            image.load()
+                    except (OSError, SyntaxError) as error:
+                        raise ValueError('representation_source_evidence_unreadable') from error
+                    checked.add(number)
+                views.append({**locator, 'page_artifact': page['artifact'], 'page_sha256': page['sha256'],
+                              'crop_recipe': {'scale': 3, 'box_pixels': [x*3 for x in locator['box']]}})
+            result.append({'relationship': relation['id'], 'review_id': representation['review_id'], 'views': views})
+        return result

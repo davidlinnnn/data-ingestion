@@ -39,14 +39,29 @@ def verify_continuation(document):
     assert len(matches) == 1, 'Required source continuation missing or wrongly joined'
 
 
-def verify_delivery(document, report, source, parsed, assembly, policy):
+def verify_delivery(document, report, source, parsed, assembly, policy, expected_count=2):
     verify_continuation(document)
     validate(report, document, source, parsed, assembly, policy)
-    assert len(report['resolved']) == 2 and not report['unresolved']
+    assert len(report['resolved']) == expected_count and not report['unresolved']
     candidate = copy.deepcopy(report['candidates'])
     candidate['relationships'] = [{**r, 'disposition': 'candidate'} for r in report['resolved']]
     verdicts = score(document, candidate)
-    assert len(verdicts) >= 2 and all(v['structure_pass'] for v in verdicts[:2])
+    assert len(verdicts) >= expected_count and all(v['structure_pass'] for v in verdicts[:expected_count])
+
+
+def qualification_policy(qualification, evidence_variant=False):
+    if qualification == 'q03':
+        sys.path.insert(0, str(ROOT/'tests/pdf_processing/q03'))
+        from q03_fixtures import policy
+        value = policy()
+        if evidence_variant:
+            value['representation']['reviews'][0]['reason'] += ' Evidence-only identity qualification variant.'
+        return value
+    assert qualification == 'q01-q02', 'Unsupported qualification'
+    value = relationship_policy()
+    if evidence_variant:
+        value['unresolved'] = 'allow_unknown'
+    return value
 
 
 def verify_work(result, selection, final, fresh):
@@ -76,12 +91,11 @@ async def main(args):
     producer = {p.name: digest(p.read_bytes()) for p in (ROOT/'src/pdf_processing').glob('*.py')}
     frozen = json.loads(Path(args.producer).read_text())
     assert producer == frozen['producer'], 'Re-freeze changed producer'
+    qualification = getattr(args, 'qualification', 'q01-q02')
     profile['content_evidence'] = {**profile.get('content_evidence', {}),
-        'version': 'typed-source-relationships-v2', 'relationships': relationship_policy()}
+        'version': 'typed-source-relationships-v2',
+        'relationships': qualification_policy(qualification, args.case == 'evidence')}
     profile['content_evidence'].setdefault('reviews', {})
-    if args.case == 'evidence':
-        profile['content_evidence']['relationships']['unresolved'] = 'allow_unknown'
-
     assert profile['method']['continuation']['version'] == 'column-edge-continuation-v1'
     pdf = Path(args.pdf).read_bytes()
     assert digest(pdf) == 'b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980'
@@ -95,12 +109,13 @@ async def main(args):
         previous = json.loads(Path(args.fresh_evidence).read_text())
         assert previous['endpoint'] == args.endpoint and previous['bucket'] == args.bucket and previous['prefix'] == args.prefix
         assert previous['verified'] is True and previous['case'] == 'fresh'
+        assert previous.get('qualification', 'q01-q02') == qualification
         assert previous['producer'] == producer
         assert previous['request']['artifact']['sha256'] == digest(pdf)
         profile['content_evidence']['reviews'] = previous['profile']['content_evidence']['reviews']
         expected_profile = copy.deepcopy(previous['profile'])
         if args.case == 'evidence':
-            expected_profile['content_evidence']['relationships']['unresolved'] = 'allow_unknown'
+            expected_profile['content_evidence']['relationships'] = qualification_policy(qualification, True)
         assert {k:v for k,v in profile.items() if k != 'release'} == {k:v for k,v in expected_profile.items() if k != 'release'}
 
     def capture(name, data):
@@ -129,14 +144,14 @@ async def main(args):
             request = previous['request']
             profile = previous['profile']
     if args.case != 'exact':
-        profile['release'] = 'q01-q02-' + digest(encoded({'producer': producer,
+        profile['release'] = qualification + '-' + digest(encoded({'producer': producer,
             'profile': {k:v for k,v in profile.items() if k != 'release'}}))
     processing = Processing(store, out/'scratch', args.model_cache, profile)
     client = await Client.connect(args.temporal)
     queue = 'q01-'+uuid.uuid4().hex
     metadata = {'request': request, 'profile': profile, 'producer': processing.producer, 'queue': queue,
                 'endpoint': args.endpoint, 'bucket': args.bucket, 'prefix': args.prefix, 'topology': args.topology,
-                'pid': os.getpid(), 'case': args.case}
+                'pid': os.getpid(), 'case': args.case, 'qualification': qualification}
     (out/'admission.json').write_text(json.dumps(metadata, indent=2))
 
     def read(identity, name):
@@ -168,7 +183,10 @@ async def main(args):
             binding = json.loads(read(final['relationships'], 'relationships.json'))
             assert binding['content_evidence'] == final['content_evidence']
             verify_delivery(json.loads(raw), binding['relationships'], request, final['parsed_result'],
-                            final['assembly'], profile['content_evidence']['relationships'])
+                            final['assembly'], profile['content_evidence']['relationships'],
+                            expected_count=4 if qualification == 'q03' else 2)
+            if qualification == 'q03':
+                assert len(binding['representation_evidence']) == 4
             selection = json.loads(read(final['selection'], 'selection.json'))
             assert sorted(selection['selected']) == sorted(e['component'] for e in final['enrichments'])
             verify_work(result, selection, final, trial == 'fresh')
@@ -205,6 +223,7 @@ if __name__ == '__main__':
     parser.add_argument('--fresh-evidence')
     parser.add_argument('--timeout', type=int, default=1800)
     parser.add_argument('--capacity-approved', action='store_true')
+    parser.add_argument('--qualification', choices=['q01-q02', 'q03'], default='q01-q02')
     args = parser.parse_args()
     if not args.capacity_approved or (args.case != 'fresh' and not args.fresh_evidence) or args.timeout <= 0:
         parser.error('A coordinated capacity window, positive timeout and prior evidence for reuse are required')
