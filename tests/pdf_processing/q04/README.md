@@ -6,6 +6,10 @@ Current phase: runtime adapter implemented and locally checked; see [RUNTIME-ADA
 **Q04 runtime acceptance is NOT COMPLETE.** The single authorized process-mode
 Keynote attempt stopped on its PSI guard during fresh; all services were restored.
 See [sentinel results](sentinel/RESULTS.md).
+The follow-up [offline PSI diagnosis and capacity proposal](diagnosis/README.md)
+narrows the failure to the model-initialization/first-stage boundary and proposes
+an exact, newly reviewable 32-Deployment capacity scope. It grants no pause or
+rerun authority.
 #44 remains the final acceptance gate; #45 owns calibration and #46 packaging.
 
 Read [stage impact and evidence reuse](STAGE-IMPACT.md), then the
