@@ -1,6 +1,8 @@
 # Q04 executable acceptance plan
 
-Status: phase-one local preparation. Runtime rows below remain pending except
+Current implementation: [second-phase runtime adapter](RUNTIME-ADAPTER.md). The preparation plan below is retained for scope and evidence reasoning; its former adapter TODOs are implemented, while runtime results remain pending.
+
+Original status: phase-one local preparation. Runtime rows below remain pending except
 explicitly reused Q03 evidence. Primary seam is the existing versioned processing
 request through actual Temporal Activities and shared object storage; checkpoint
 replay and in-memory transport are supporting seams only. No new service or

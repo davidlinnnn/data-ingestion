@@ -1,8 +1,8 @@
-# Q04 phase-one handoff (#51)
+# Q04 preparation and runtime-adapter handoff (#51)
 
 Base: `6d929e101a865f9e4bf887ace9dbb2866617dcae`, published
 `codex/pdf-checkpoint-prototype`. Work is isolated on `codex/q04-acceptance`.
-Scope: preparation, immutable-evidence reconciliation and local validation.
+Current phase: runtime adapter implemented and locally checked; see [RUNTIME-ADAPTER.md](RUNTIME-ADAPTER.md). Phase-one evidence remains historical and unchanged.
 **Q04 runtime acceptance is NOT COMPLETE. No new Temporal/K8s trial was run.**
 #44 remains the final acceptance gate; #45 owns calibration and #46 packaging.
 
@@ -31,7 +31,7 @@ export PYTHONDONTWRITEBYTECODE=1
 export PYTHONPATH=src:/private/tmp/q02-deps:tests/pdf_processing/q02:tests/pdf_processing/q03
 PDF_PYTHON=/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python
 "$PDF_PYTHON" -m unittest discover -s tests/pdf_processing/q03 -p test_q03_compatibility.py
-"$PDF_PYTHON" tests/pdf_processing/q03/run_suite.py
+"$PDF_PYTHON" tests/pdf_processing/q04/run_suite.py
 ```
 
 The full suite uses local models/rendering and owned subprocesses, including a
@@ -40,16 +40,14 @@ Existing process supervision requires OS process inspection. Do not run competin
 local qualification suites concurrently. See `evidence/` for this run's outputs.
 No production files, prior reports, failed trials or raw artifacts are edited.
 
-## Handoff limits
+## Current handoff
 
-The new harness is a preparation audit, not a six-fixture runtime orchestrator.
-Existing Q03 drivers are executable for AIMA and the finalization matrix. Existing
-R3 cross-fixture/warm/drain drivers require the explicit adaptation in the plan
-before running against Q04; their historical profiles, hardcoded paths and old
-AIMA scorer must not be reused as current acceptance. No claim is made that those
-remaining runtime adapters or new output reviews have been completed.
+The six-fixture runtime adapter and full graph/oracle, mode, warm/resource/drain
+checks are implemented. See [runtime commands and prerequisites](RUNTIME-ADAPTER.md)
+and [second-phase validation](PHASE-TWO-RESULTS.md). `q04_runtime.py --help` is safe
+without service access; runtime execution requires a new externally approved
+capacity file. Main must review process versus Pod scope and topology first.
 
-This phase can be reviewed/integrated independently. Request a new capacity window
-only after the main session reviews the plan and the runtime adapter is ready.
-No previous service-pause authorization carries forward. No ticket closure,
-branch publication or merge is performed by this handoff.
+No live Q04 runtime trial, service pause, ticket closure, branch publication or
+merge is claimed. The stage-impact/reuse decisions remain unchanged because this
+phase changes only qualification harnesses, tests and documentation.
