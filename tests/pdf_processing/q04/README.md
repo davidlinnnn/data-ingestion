@@ -3,7 +3,9 @@
 Base: `6d929e101a865f9e4bf887ace9dbb2866617dcae`, published
 `codex/pdf-checkpoint-prototype`. Work is isolated on `codex/q04-acceptance`.
 Current phase: runtime adapter implemented and locally checked; see [RUNTIME-ADAPTER.md](RUNTIME-ADAPTER.md). Phase-one evidence remains historical and unchanged.
-**Q04 runtime acceptance is NOT COMPLETE. No new Temporal/K8s trial was run.**
+**Q04 runtime acceptance is NOT COMPLETE.** The single authorized process-mode
+Keynote attempt stopped on its PSI guard during fresh; all services were restored.
+See [sentinel results](sentinel/RESULTS.md).
 #44 remains the final acceptance gate; #45 owns calibration and #46 packaging.
 
 Read [stage impact and evidence reuse](STAGE-IMPACT.md), then the
@@ -48,6 +50,7 @@ and [second-phase validation](PHASE-TWO-RESULTS.md). `q04_runtime.py --help` is 
 without service access; runtime execution requires a new externally approved
 capacity file. Main must review process versus Pod scope and topology first.
 
-No live Q04 runtime trial, service pause, ticket closure, branch publication or
-merge is claimed. The stage-impact/reuse decisions remain unchanged because this
-phase changes only qualification harnesses, tests and documentation.
+The single authorized sentinel and its 20 service pauses are recorded in
+[sentinel results](sentinel/RESULTS.md); restored/replay were not reached.
+No ticket closure, branch publication or merge is claimed. The stage-impact/reuse
+decisions remain unchanged; runtime implementation and frozen profiles were not changed.
