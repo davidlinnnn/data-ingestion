@@ -109,3 +109,15 @@ Final local checks: **66 tests PASS**, typecheck **0 errors / 0 warnings**. Both
 code-review axes have no remaining local findings after the PNG-decoding and
 numeric-metadata fixes; see [review](REVIEW.md). These checks do not close the
 explicit runtime gates above.
+
+## Interrupted required evidence follow-up
+
+The missing hook and procedure are now prepared: see [operation procedure](INTERRUPTION.md)
+and [follow-up review](INTERRUPTION-REVIEW.md). The 22-case runtime matrix includes a
+standalone interrupted-evidence case. Final local checks: **73 tests PASS** and
+typecheck **0 errors / 0 warnings**. Seven hook tests cover actual child interruption,
+recovery/replay, refusal/timeout, delayed stop and overlapping cancellation cleanup.
+Production inventory is unchanged from the initial Q03 commit. Follow-up evidence
+is bound by `evidence/interruption/manifest.json`; the original evidence remains
+historical. Actual Temporal/shared-storage/K8s qualification is **NOT RUN** and
+requires newly coordinated capacity.

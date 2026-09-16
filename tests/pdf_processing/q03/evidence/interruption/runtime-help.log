@@ -1,0 +1,29 @@
+usage: runtime.py [-h] --producer PRODUCER --pdf PDF --out OUT --prefix PREFIX
+                  --temporal TEMPORAL --endpoint ENDPOINT --bucket BUCKET
+                  --topology TOPOLOGY [--capacity-approved]
+                  [--timeout TIMEOUT] [--total-timeout TOTAL_TIMEOUT]
+                  [--case {matrix,interrupted-evidence}]
+                  [--interrupt-timeout INTERRUPT_TIMEOUT]
+
+Prepared Q03 seeded-finalization driver; actual Temporal/shared storage NOT
+RUN. Seeds plan, parsed, assembly and empty OCR selection. Only evidence
+rendering and finalization are real. No native parsing, OCR, full-request or
+canonical claim.
+
+options:
+  -h, --help            show this help message and exit
+  --producer PRODUCER
+  --pdf PDF
+  --out OUT
+  --prefix PREFIX
+  --temporal TEMPORAL
+  --endpoint ENDPOINT
+  --bucket BUCKET
+  --topology TOPOLOGY
+  --capacity-approved
+  --timeout TIMEOUT     Per-workflow server deadline in seconds
+  --total-timeout TOTAL_TIMEOUT
+  --case {matrix,interrupted-evidence}
+  --interrupt-timeout INTERRUPT_TIMEOUT
+                        Maximum seconds to observe and interrupt a partially
+                        rendered owned child

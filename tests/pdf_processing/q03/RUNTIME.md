@@ -67,3 +67,12 @@ are diagnostics, not PASS evidence. Actual service compatibility, child executio
 shutdown, fault rejection and retry stability remain **NOT RUN** until admitted
 execution succeeds. Only CLI help and offline syntax compilation were validated
 during preparation.
+
+## Interrupted evidence follow-up
+
+The matrix now contains 22 cases, including `interrupted-evidence`. Run that case
+standalone with `--case interrupted-evidence`; `--interrupt-timeout` bounds the
+observation/injection interval (default 30 seconds). See [INTERRUPTION.md](INTERRUPTION.md)
+for exact readiness, signal ownership, failure/retry expectations, evidence and
+cleanup. Production bytes are unchanged; the hook is separately fingerprinted.
+Actual Temporal/K8s interruption qualification remains NOT RUN.

@@ -24,6 +24,7 @@ from pdf_processing.enrichment import Enrichment
 from fixtures import document, mutate, SOURCE, BASELINE
 from test_publication import seed
 from q03_fixtures import profile
+from interruption import EvidenceInterruption, interrupted_call, registration_operations
 
 
 @workflow.defn
@@ -40,6 +41,7 @@ class Q03FinalBoundary:
 def scenarios():
     yield 'valid', None
     yield 'split', None
+    yield 'interrupted-evidence', None
     for ri, review in enumerate(profile()['content_evidence']['relationships']['representation']['reviews']):
         for stream, declaration in review['streams'].items():
             for di in range(len(declaration['differences'])):
@@ -102,14 +104,7 @@ def retain(store, identity, directory):
 
 
 def absent_complete(store):
-    ids = []
-    # Paginate to exhaustion: first-page absence is not sufficient evidence.
-    for page in store.client.get_paginator('list_objects_v2').paginate(
-            Bucket=store.bucket, Prefix=store.prefix+'registered/'):
-        for item in page.get('Contents', []):
-            raw = store.get(item['Key'])
-            assert raw is not None
-            ids.append(json.loads(raw)['operation'])
+    ids = registration_operations(store)
     assert not any(i.startswith('pdf-complete-') for i in ids), ids
     return ids
 
@@ -144,7 +139,9 @@ async def run(args):
     assert prefix and all(p not in ('', '.', '..') for p in prefix.split('/'))
     metadata = {'scope': __doc__, 'seeded': ['plan', 'parsed', 'assembly', 'group', 'empty OCR selection'],
                 'producer': producer, 'driver_sha256': digest(Path(__file__).read_bytes()),
+                'interruption_hook_sha256': digest(Path(__file__).with_name('interruption.py').read_bytes()),
                 'topology': args.topology, 'capacity_acknowledged': True, 'pid': os.getpid(),
+                'case_selection': args.case,
                 'prefix': prefix, 'run_id': run_id, 'source_sha256': SOURCE,
                 'endpoint': args.endpoint, 'bucket': args.bucket,
                 'review_sha256': digest((Path(__file__).parent/'reviewed-representation.json').read_bytes()),
@@ -157,6 +154,8 @@ async def run(args):
     client = await asyncio.wait_for(Client.connect(args.temporal), 30)
     original_files = None
     for case, gate in scenarios():
+        if args.case != 'matrix' and case != args.case:
+            continue
         assert producer_manifest() == producer, 'Source changed during qualification'
         case_out = out/case
         case_out.mkdir()
@@ -181,7 +180,7 @@ async def run(args):
             evidence_id = 'pdf-evidence-v1:' + digest(encoded({'assembly': 'assembly', 'parsed_result': 'parsed',
                 'source': request, 'policy': case_profile['content_evidence'],
                 'dependencies': dependencies('evidence', case_profile, producer)}))
-            real_child = case == 'valid' or gate is not None
+            real_child = case in ('valid', 'interrupted-evidence') or gate is not None
             if not real_child:
                 assert original_files is not None
                 files = copy.deepcopy(original_files)
@@ -220,6 +219,33 @@ async def run(args):
                         }
                         record.setdefault('history', {})[label] = counts
                         assert counts['scheduled'] == 1, counts
+                if case == 'interrupted-evidence':
+                    assembly_before, assembly_files = retain(store, 'assembly', case_out/'assembly-before-interruption')
+                    assert assembly_files['document.json'] == raw
+                    hook = EvidenceInterruption(store, processing.scratch, evidence_id, SOURCE,
+                                                digest(raw), case_out/'interruption', timeout=args.interrupt_timeout)
+                    observation, failure = await interrupted_call(hook, lambda: execute('interrupted'))
+                    cause = failure
+                    while (next_cause := getattr(cause, 'cause', None)) is not None:
+                        cause = next_cause
+                    assert isinstance(failure, WorkflowFailureError), failure
+                    assert isinstance(cause, ApplicationError) and cause.type == 'parser', cause
+                    assert str(cause).endswith('execution_failed'), cause
+                    assert record['history']['interrupted']['failed'] == 1
+                    assert record['history']['interrupted']['completed'] == 0
+                    assert not Path(observation['scratch']).exists(), 'Failed scratch was not cleaned'
+                    record['interruption'] = observation
+                    record['interrupted_failure'] = str(cause)
+                    record['registrations_after_interruption'] = absent_complete(store)
+                    assert store.resolve(evidence_id) is None
+                    assert store.resolve('assembly') == assembly_before
+                    record['evidence_absent_after_interruption'] = True
+                    record['child_reaped_and_scratch_removed'] = True
+                    record['assembly_registration_unchanged'] = True
+                    assert producer_manifest() == producer
+                    (case_out/'interrupted-failure.json').write_bytes(encoded(record))
+                    # Same accepted plan/request, production code and worker. The
+                    # next actual Activity must spawn a new evidence interpreter.
                 try:
                     result = await execute('initial')
                 except WorkflowFailureError as error:
@@ -228,7 +254,7 @@ async def run(args):
                         cause = next_cause
                     record['failure'] = str(cause)
                     (case_out/'failure.json').write_bytes(encoded(record))
-                    assert case not in ('valid', 'split'), record
+                    assert case not in ('valid', 'split', 'interrupted-evidence'), record
                     assert isinstance(cause, ApplicationError) and cause.type == 'integrity', record
                     if gate: assert 'representation_release_gate' in str(cause)
                     # A gate must have completed real rendering before validation rejects it.
@@ -240,7 +266,7 @@ async def run(args):
                     record['registrations'] = absent_complete(store)
                     record['complete_registration_absent'] = True
                 else:
-                    assert case in ('valid', 'split'), (case, result)
+                    assert case in ('valid', 'split', 'interrupted-evidence'), (case, result)
                     _, final_files = retain(store, result['operation'], case_out/'final')
                     final = json.loads(final_files['processing-result.json'])
                     assert final['processing_complete'] and not final['quality_accepted'] and not final['canonical_accepted']
@@ -279,6 +305,10 @@ async def run(args):
                                for label in ('initial', 'retry'))
                     retried = Enrichment(processing).read(retry['operation'], 'processing-result.json')
                     assert retried == final
+                    if case == 'interrupted-evidence':
+                        complete = [i for i in registration_operations(store) if i.startswith('pdf-complete-')]
+                        assert complete == [result['operation']], complete
+                        record['single_complete_registration'] = complete[0]
                     record.update(final=result['operation'], relationships=final['relationships'],
                                   oracle_scores=verdicts, representation_views=views, retry_same_final=True)
                     if case == 'valid': original_files = evidence_files
@@ -299,10 +329,13 @@ def cli():
     parser.add_argument('--capacity-approved', action='store_true')
     parser.add_argument('--timeout', type=int, default=900, help='Per-workflow server deadline in seconds')
     parser.add_argument('--total-timeout', type=int, default=7200)
+    parser.add_argument('--case', choices=['matrix', 'interrupted-evidence'], default='matrix')
+    parser.add_argument('--interrupt-timeout', type=int, default=30,
+                        help='Maximum seconds to observe and interrupt a partially rendered owned child')
     args = parser.parse_args()
     if not __debug__:
         parser.error('Do not use python -O; verification uses assertions')
-    if not args.capacity_approved or args.timeout <= 0 or args.total_timeout <= 0:
+    if not args.capacity_approved or args.timeout <= 0 or args.total_timeout <= 0 or args.interrupt_timeout <= 0:
         parser.error('Coordinated capacity acknowledgement and positive timeouts are required')
     async def bounded():
         from pdf_processing.execution import stop_fresh_children

@@ -48,15 +48,17 @@ thresholds with the capacity owner. Abort admission on insufficient capacity.
    checked parse/assembly and change evidence/final identity. The seeded matrix
    separately changes each disposition to a gate and refuses complete delivery. Use a
    new request ID; never mutate the prior profile or final registration.
-4. **Interrupted required evidence**: interrupt only the owned evidence child or
-   worker after retained assembly exists, restart the same immutable producer,
-   and prove revalidation/retry results in one durable complete output with no
-   premature completion. Capture actual histories and all non-successful trials.
-   No Pod-loss/drain or same-process warm claim may be made unless actually tested.
+4. **Interrupted required evidence**: run `runtime.py --case interrupted-evidence`
+   using the [prepared hook and procedure](INTERRUPTION.md). After retained assembly
+   exists and the owned evidence child has rendered a complete page, interrupt only
+   that child. Require failed work with no evidence/complete publication, then
+   retry the same accepted inputs through a fresh child on the same producer and
+   verify one durable complete output. Preserve all histories and partial evidence.
+   No worker/Pod-loss, drain or process warm-state claim follows.
 
-Matrices 1–3 have prepared executable drivers and offline contract checks. Matrix
-4 still requires an interruption hook and reviewed runtime procedure before execution;
-it is explicit outstanding runtime preparation, not an implied PASS. Q04 still owns the full
+Matrices 1–4 now have prepared executable drivers and local checks. Matrix 4 also
+has real local subprocess-interruption/recovery coverage; its actual Temporal/shared-
+storage/K8s qualification is still NOT RUN. Q04 still owns the full
 six-fixture graph/table/image-child/equation/OCR matrix and remaining affected
 warm/drain/resource qualification. This handoff does not close #44.
 

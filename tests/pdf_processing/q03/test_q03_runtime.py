@@ -35,10 +35,11 @@ class RuntimeContracts(unittest.TestCase):
                     'pages': {'9': {'physical_page': 9, 'artifact': 'page-9.png',
                                     'sha256': digest(b'offline page placeholder')}}})}
 
-    def test_matrix_has_21_unique_cases_and_seven_independent_gates(self):
+    def test_matrix_has_22_unique_cases_and_seven_independent_gates(self):
         cases = list(runtime.scenarios())
-        self.assertEqual(len(cases), 21)
-        self.assertEqual(len({name for name, _ in cases}), 21)
+        self.assertEqual(len(cases), 22)
+        self.assertEqual(len({name for name, _ in cases}), 22)
+        self.assertIn(('interrupted-evidence', None), cases)
         self.assertEqual([gate for _, gate in cases if gate is not None], [
             (2, 'header_body', 0), (2, 'header_body', 1), (2, 'symbol', 0),
             (3, 'header_body', 0), (3, 'caption', 0), (3, 'caption', 1), (3, 'symbol', 0)])
