@@ -10,6 +10,9 @@ proposal following the failed Keynote sentinel:
 - `replay_pressure.py` is a deterministic captured-trace check. It performs no
   service access or inference.
 - `evidence/` contains sanitized event, capacity and identity snapshots.
+- [`acl-v3-b-resource/`](acl-v3-b-resource/) diagnoses the later fixture-09
+  active-cgroup rejection and defines the minimum next telemetry needed before a
+  qualification ceiling or lifecycle change can be reviewed.
 
 No workflow or inference ran, no service was paused, and no production or frozen
 profile code changed during this phase.
