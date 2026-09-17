@@ -1,0 +1,133 @@
+{
+  "verdict": "OUTER_ADMISSION_REJECTED_NO_ACL_WORKFLOW",
+  "runtime_commit": "18be1b3fbcb929921ec986a1a0bf93e4be995b4d",
+  "runner_commit": "fca98b9",
+  "run_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9",
+  "prefix": "q04/keynote-18be1b3-20260916-b/",
+  "attempted_phase": "acl-window-v2-a",
+  "fixture": "09",
+  "original_pages": [
+    2,
+    3,
+    4
+  ],
+  "requested_modes": [
+    "fresh",
+    "restored",
+    "replay"
+  ],
+  "started": 1789651771.966298,
+  "finished": 1789651956.570739,
+  "retry_count": 0,
+  "budgets": {
+    "window_seconds": 1500,
+    "outer_observation_seconds": 180,
+    "outer_continuous_seconds": 60,
+    "workload_seconds": 825,
+    "cleanup_seconds": 300
+  },
+  "outer_admission": {
+    "passed": false,
+    "fatal": false,
+    "reason": "outer capacity observation deadline expired",
+    "samples": 179,
+    "resets": 179,
+    "first_sample_time": 1789651772.1683357,
+    "last_sample_time": 1789651952.1511772,
+    "sample_elapsed_seconds": 179.98284149169922,
+    "required_available_bytes": 4831838208,
+    "available_min_bytes": 4637937664,
+    "available_max_bytes": 4690350080,
+    "best_sample_shortfall_bytes": 141488128,
+    "required_continuous_seconds": 60,
+    "qualifying_samples": 0,
+    "qualifying_runs": 0,
+    "psi_full_avg10_min": 0.0,
+    "psi_full_avg10_max": 0.0,
+    "memory_current_min_bytes": 1197367296,
+    "memory_current_max_bytes": 1198030848,
+    "vm_oom_kill_values": [
+      28
+    ],
+    "cgroup_max_values": [
+      0
+    ],
+    "cgroup_oom_kill_values": [
+      0
+    ]
+  },
+  "per_case_admission": {
+    "required_available_bytes": 3221225472,
+    "required_continuous_seconds": 60,
+    "invoked": false
+  },
+  "frozen_state": {
+    "bundle_sha256": "b729891aa381ae25eef6ec2fbceefcdb43703d441762eafbb388627792833297",
+    "state_sha256_before": "6f83b29e73357e6576643948f18f0be2d461ae7285e433f2c810c5f8d4aca5b7",
+    "state_sha256_after": "6f83b29e73357e6576643948f18f0be2d461ae7285e433f2c810c5f8d4aca5b7",
+    "producer_matches": true,
+    "profile_matches": true,
+    "package_differences": {},
+    "model_artifact_count": 17,
+    "model_differences": {},
+    "keynote_phase_complete": true
+  },
+  "acl_runtime": {
+    "phase_directory_created": false,
+    "log_created": false,
+    "workflows_submitted": 0,
+    "workers_created": 0,
+    "inference_ran": false,
+    "fresh_verified": false,
+    "restored_verified": false,
+    "replay_verified": false,
+    "six_equations_verified": false,
+    "equation_2_text_item_verified": false,
+    "full_graph_verified": false,
+    "source_evidence_verified": false,
+    "required_ocr_verified": false
+  },
+  "cleanup": {
+    "new_owned_workflows": [],
+    "running_after_cleanup": [],
+    "controllers": [],
+    "remaining_owned_cwd_pids": [],
+    "orphans": [],
+    "scratch_remaining": [],
+    "errors": [],
+    "reservation_released": true,
+    "t09a_temporal_healthy": true,
+    "t09a_object_readiness": 200
+  },
+  "held_services": {
+    "expected_closed": 32,
+    "restored_by_runner": false,
+    "before_after_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "replicas_after": 0,
+    "ready_after": 0,
+    "uid_mismatches": [],
+    "remain_main_owned": true
+  },
+  "runner_manifest": {
+    "acl_admission.py": "b4dc71a764dfd8da449f372c4a7bb04fe2d84786293de581053a583abce850bb",
+    "outer_admission.py": "175a9f31fb02d8938c0751eb832dcf4faf35d4262975fc0072536377b363033e"
+  },
+  "private_artifacts": {
+    "lease-state.json": "107369eeffb255effdfdefb63903c9697b3bee8768e8b60eac8c5e136da32073",
+    "capacity.json": "e89ab0913435f208b8110acf206d6468a7966aa3bcf8e93573f6066a9efa2b85",
+    "cleanup.json": "7b4168d89b0503f0e977cbc6e41344cde48ea9b75903c0f439b7facb586ea982",
+    "runtime-precheck.json": "4024fb3e306519517bc73c2db89dfece745a26c6542059508cd79298ee8df4c0",
+    "frozen-precheck.json": "97562e1bc875a15f0418d38afd11155e0ca4f5b74fe266cdf5306812175de158",
+    "frozen-postcheck.json": "06fc7fbe64b03b5e322887c7f5fdd87ddc49a426ab4f8932e0ef36f8557c6424",
+    "health-before.json": "f90517b7c5a8e4dc7bc0cf37ca048512adf04f42b4efc5f0a5edd925a38b3702",
+    "health-after.json": "0511e184d6c8505945c6a109c604436ae4617f69754169f86042fd783eea8db9",
+    "held-services-before.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "held-services-after.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "runner-manifest.json": "847a8c72dabf36eb9dd0df4aaab04fe92f40ad4c123d4da3abc9c0485268f7a3",
+    "remote-evidence.tar": "07887b36fb8e774096e72c5449e0cf133e339626b8efe0f5b36499303bdddc43",
+    "admission-acl-window-v2-a.json": "f4f31a30af441b5309c33f48f42e4e60dbfddb5cfb55562d55bb9a697a87a044",
+    "pre-admission-acl-window-v2-a.jsonl": "3a413949539f6c07e10138cbfc9941a7a29eecfc94cb222d001846760ec2bad3"
+  },
+  "q04_complete": false,
+  "issue_51_closed": false
+}
