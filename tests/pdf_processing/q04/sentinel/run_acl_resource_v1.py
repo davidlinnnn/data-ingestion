@@ -548,6 +548,18 @@ def write_artifact_manifest():
         )
 
 
+def finalize_artifacts(manifest_writer=write_artifact_manifest):
+    """Write the terminal manifest or persist a fail-closed terminal verdict."""
+    try:
+        manifest_writer()
+    except BaseException as error:
+        STATE["errors"].append({"artifact-manifest": str(error)})
+        STATE["measurement_passed"] = False
+        STATE["phase"] = "needs-review"
+        save()
+    return 0 if not STATE["errors"] else 1
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true")
@@ -788,12 +800,7 @@ with open('/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:
                 save()
         if holder_log is not None:
             holder_log.close()
-        try:
-            write_artifact_manifest()
-        except BaseException as error:
-            STATE["errors"].append({"artifact-manifest": str(error)})
-            save()
-    return 0 if not STATE["errors"] else 1
+        return finalize_artifacts()
 
 
 if __name__ == "__main__":

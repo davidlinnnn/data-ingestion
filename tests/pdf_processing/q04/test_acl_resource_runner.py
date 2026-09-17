@@ -31,6 +31,7 @@ from sentinel.run_acl_resource_v1 import (
     build_admission_argv,
     build_capacity,
     build_runtime_command,
+    finalize_artifacts,
     launch_after_admission,
     remote_absence_paths,
     require_launch_budget,
@@ -163,6 +164,67 @@ class AclResourceRunner(unittest.TestCase):
                 self.assertEqual(manifest["artifacts"][0]["name"], "evidence.json")
                 with self.assertRaises(FileExistsError):
                     write_artifact_manifest()
+
+    def test_successful_manifest_preserves_persisted_pass_verdict(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            state = {
+                "phase": "complete",
+                "errors": [],
+                "measurement_passed": True,
+                "cleanup_verified": True,
+                "evidence_captured": True,
+                "services_held_closed": True,
+                "reservation_released": True,
+            }
+            (output / "lease-state.json").write_text(
+                json.dumps(state, indent=2) + "\n"
+            )
+            with (
+                mock.patch.object(resource_runner, "OUT", output),
+                mock.patch.object(resource_runner, "STATE", state),
+            ):
+                exit_code = finalize_artifacts()
+
+            persisted = json.loads((output / "lease-state.json").read_text())
+            self.assertEqual(exit_code, 0)
+            self.assertTrue(persisted["measurement_passed"])
+            self.assertEqual(persisted["phase"], "complete")
+            self.assertTrue((output / "artifact-manifest.json").exists())
+
+    def test_manifest_failure_persists_fail_closed_verdict_and_exit_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            state = {
+                "phase": "complete",
+                "errors": [],
+                "measurement_passed": True,
+                "cleanup_verified": True,
+                "evidence_captured": True,
+                "services_held_closed": True,
+                "reservation_released": True,
+            }
+            (output / "lease-state.json").write_text(
+                json.dumps(state, indent=2) + "\n"
+            )
+
+            def fail_manifest():
+                raise OSError("synthetic manifest write failure")
+
+            with (
+                mock.patch.object(resource_runner, "OUT", output),
+                mock.patch.object(resource_runner, "STATE", state),
+            ):
+                exit_code = finalize_artifacts(fail_manifest)
+
+            persisted = json.loads((output / "lease-state.json").read_text())
+            self.assertEqual(exit_code, 1)
+            self.assertFalse(persisted["measurement_passed"])
+            self.assertEqual(persisted["phase"], "needs-review")
+            self.assertEqual(
+                persisted["errors"],
+                [{"artifact-manifest": "synthetic manifest write failure"}],
+            )
 
     def test_measurement_driver_has_one_literal_fresh_fixture_09_trial(self):
         path = Path(resource_runner.__file__).with_name("acl_fresh_measure.py")
