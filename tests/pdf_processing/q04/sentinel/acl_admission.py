@@ -1,4 +1,4 @@
-"""Cooperative local callbacks for ACL outer admission v2."""
+"""Cooperative local callbacks for versioned ACL outer admission."""
 
 import argparse
 from dataclasses import dataclass
@@ -136,7 +136,9 @@ class AclAdmissionCallbacks:
         self.evidence_stream.flush()
 
 
-def policy_from_capacity(capacity):
+def policy_from_capacity(
+    capacity, *, expected_vm_oom_kill=EXPECTED_VM_OOM_KILL
+):
     required = {
         "admission_seconds": CONTINUOUS_SECONDS,
         "admission_available_bytes": PER_CASE_AVAILABLE_BYTES,
@@ -150,7 +152,7 @@ def policy_from_capacity(capacity):
         "outer_admission_available_bytes": TARGET_AVAILABLE_BYTES,
         "minimum_work_seconds": WORKLOAD_SECONDS,
         "cleanup_seconds": CLEANUP_SECONDS,
-        "expected_vm_oom_kill": EXPECTED_VM_OOM_KILL,
+        "expected_vm_oom_kill": expected_vm_oom_kill,
         "expected_cgroup_oom_kill": EXPECTED_CGROUP_OOM_KILL,
     }
     for name, value in required.items():
@@ -165,7 +167,7 @@ def policy_from_capacity(capacity):
         sample_interval_seconds=SAMPLE_INTERVAL_SECONDS,
         max_sample_gap_seconds=capacity["max_sample_gap_seconds"],
         max_cgroup_bytes=capacity["max_cgroup_bytes"],
-        expected_vm_oom_kill=EXPECTED_VM_OOM_KILL,
+        expected_vm_oom_kill=expected_vm_oom_kill,
         expected_cgroup_oom_kill=EXPECTED_CGROUP_OOM_KILL,
         minimum_work_seconds=WORKLOAD_SECONDS,
         cleanup_seconds=CLEANUP_SECONDS,
@@ -176,13 +178,16 @@ def run_outer_admission(
     capacity,
     callbacks,
     *,
+    expected_vm_oom_kill=EXPECTED_VM_OOM_KILL,
     wall_time=time.time,
     monotonic=time.monotonic,
     sleep=time.sleep,
 ):
     """Run admission before the caller receives permission to launch runtime."""
     return observe_capacity(
-        policy_from_capacity(capacity),
+        policy_from_capacity(
+            capacity, expected_vm_oom_kill=expected_vm_oom_kill
+        ),
         lease_ends_at=capacity["ends_at"],
         sample=callbacks.sample,
         verify_identity=callbacks.verify_identity,
@@ -233,6 +238,9 @@ def main(argv=None):
     parser.add_argument("--coordinator-uid", required=True)
     parser.add_argument("--phase", required=True)
     parser.add_argument("--reservation-token", required=True)
+    parser.add_argument(
+        "--expected-vm-oom-kill", type=int, default=EXPECTED_VM_OOM_KILL
+    )
     args = parser.parse_args(argv)
 
     capacity = json.loads(args.capacity.read_text())
@@ -248,7 +256,11 @@ def main(argv=None):
     with args.evidence.open("x", buffering=1) as stream:
         callbacks = AclAdmissionCallbacks(identity, stream)
         try:
-            summary = run_outer_admission(capacity, callbacks)
+            summary = run_outer_admission(
+                capacity,
+                callbacks,
+                expected_vm_oom_kill=args.expected_vm_oom_kill,
+            )
         except OuterAdmissionRejected as error:
             outcome = {
                 "passed": False,

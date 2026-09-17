@@ -19,6 +19,10 @@ def sample(proc=Path('/proc'), cgroup=Path('/sys/fs/cgroup')):
 
 
 def check_sample(row, initial, limits):
+    if 'expected_vm_oom_kill' in limits:
+        require(initial['vm_oom_kill'] == limits['expected_vm_oom_kill'], 'VM OOM baseline changed')
+    if 'expected_cgroup_oom_kill' in limits:
+        require(initial['memory_events'].get('oom_kill', 0) == limits['expected_cgroup_oom_kill'], 'cgroup OOM baseline changed')
     require(row['available'] >= limits['min_available_bytes'], 'VM memory pressure')
     require(row['psi_full_avg10'] <= limits['max_full_psi'], 'VM PSI pressure')
     require(row['vm_oom_kill'] == initial['vm_oom_kill'], 'new VM OOM')
