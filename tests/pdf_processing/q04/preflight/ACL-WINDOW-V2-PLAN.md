@@ -60,8 +60,14 @@ Bundle verification and the matrix driver both run inside the 825-second timeout
 
 The existing per-case admission and active guards remain unchanged after outer
 admission. Each fresh/restored/replay worker still runs the frozen Q04 60-second
-4.5-GiB/zero-PSI admission, telemetry freshness, memory/cgroup, OOM, worker-health
+3-GiB (3,221,225,472-byte)/zero-PSI admission, telemetry freshness, memory/cgroup,
+OOM, worker-health
 and publication guards.
+
+The capacity record deliberately carries two different thresholds:
+`outer_admission_available_bytes=4,831,838,208` for the pre-work outer observation,
+and `admission_available_bytes=3,221,225,472` for each frozen runtime case. The
+capacity validator rejects either value if changed or conflated.
 
 ## Cooperative callback audit
 

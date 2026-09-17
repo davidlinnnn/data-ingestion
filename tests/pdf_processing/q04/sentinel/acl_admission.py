@@ -21,6 +21,7 @@ WORKLOAD_SECONDS = 825
 CLEANUP_SECONDS = 300
 SAMPLE_INTERVAL_SECONDS = 1
 TARGET_AVAILABLE_BYTES = 4_831_838_208
+PER_CASE_AVAILABLE_BYTES = 3_221_225_472
 EXPECTED_VM_OOM_KILL = 28
 EXPECTED_CGROUP_OOM_KILL = 0
 
@@ -138,7 +139,7 @@ class AclAdmissionCallbacks:
 def policy_from_capacity(capacity):
     required = {
         "admission_seconds": CONTINUOUS_SECONDS,
-        "admission_available_bytes": TARGET_AVAILABLE_BYTES,
+        "admission_available_bytes": PER_CASE_AVAILABLE_BYTES,
         "min_available_bytes": 1_610_612_736,
         "max_cgroup_bytes": 3_221_225_472,
         "max_full_psi": 0,

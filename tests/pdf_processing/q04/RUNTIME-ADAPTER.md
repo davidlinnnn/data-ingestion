@@ -81,6 +81,9 @@ external process supervisor before runtime use. This bounded pre-work wait does 
 retry a workflow. Historical sentinel runners and their evidence are not rewritten.
 The fixture-09-only runner and its 25-minute lease accounting are documented in
 [`preflight/ACL-WINDOW-V2-PLAN.md`](preflight/ACL-WINDOW-V2-PLAN.md).
+For this ACL window, the outer threshold is 4.5 GiB while the unchanged per-case
+runtime admission remains 3 GiB for 60 seconds; the capacity record validates them
+as separate fields.
 
 Default **process mode** runs on a coordinated Linux host with `/proc` and cgroup-v2
 telemetry. It starts/terminates only its owned qualification worker. This is actual

@@ -113,7 +113,7 @@ class AclRunnerV2(unittest.TestCase):
             },
             {
                 "admission_seconds": 60,
-                "admission_available_bytes": TARGET_AVAILABLE_BYTES,
+                "admission_available_bytes": 3_221_225_472,
                 "min_available_bytes": 1_610_612_736,
                 "max_cgroup_bytes": 3_221_225_472,
                 "max_full_psi": 0,
@@ -134,6 +134,29 @@ class AclRunnerV2(unittest.TestCase):
             ValueError, "outer admission contract changed: max_sample_gap_seconds"
         ):
             policy_from_capacity(changed)
+
+    def test_outer_and_per_case_admission_thresholds_are_distinct(self):
+        self.assertEqual(
+            self.capacity["outer_admission_available_bytes"],
+            4_831_838_208,
+        )
+        self.assertEqual(
+            self.capacity["outer_continuous_seconds"],
+            60,
+        )
+        self.assertEqual(
+            self.capacity["outer_observation_seconds"],
+            180,
+        )
+        self.assertEqual(
+            self.capacity["admission_available_bytes"],
+            3_221_225_472,
+        )
+        self.assertEqual(self.capacity["admission_seconds"], 60)
+        self.assertGreater(
+            self.capacity["outer_admission_available_bytes"],
+            self.capacity["admission_available_bytes"],
+        )
 
     def test_identity_sample_and_record_callbacks_propagate_control_interrupts(self):
         callbacks = {
