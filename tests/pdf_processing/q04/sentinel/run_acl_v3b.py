@@ -40,6 +40,7 @@ RELEASE = REMOTE + "/release-reservation-acl-window-v3-b"
 ADMISSION_EVIDENCE = REMOTE + "/pre-admission-acl-window-v3-b.jsonl"
 ADMISSION_RESULT = REMOTE + "/admission-acl-window-v3-b.json"
 RUNNER_DIR = REMOTE + "/runner-acl-window-v3-b"
+DRIVER_LOCK = REMOTE + f"/{PHASE}.driver.lock"
 PYTHON = "/experiment/.venv/bin/python"
 NS = "pdf-t09a-validation"
 CONTEXT = "kind-internal-a2a-vs6-local"
@@ -88,6 +89,21 @@ def build_probe_expectation(bundle):
             REMOTE + "/code/src/pdf_processing",
         ],
         "profile_path": REMOTE + "/inputs/inputs.json",
+    }
+
+
+def remote_absence_paths():
+    """Return every remote v3-b identity that must not predate reservation."""
+    return {
+        "phase_absent": REMOTE + "/state/" + PHASE,
+        "capacity_absent": CAPACITY,
+        "log_absent": REMOTE + "/logs/" + PHASE + ".log",
+        "reservation_absent": RESERVATION,
+        "release_absent": RELEASE,
+        "admission_absent": ADMISSION_EVIDENCE,
+        "admission_result_absent": ADMISSION_RESULT,
+        "runner_absent": RUNNER_DIR,
+        "driver_lock_absent": DRIVER_LOCK,
     }
 
 
@@ -206,6 +222,7 @@ def build_runtime_command(
     capacity=CAPACITY,
     python=PYTHON,
     timeout_program="timeout",
+    driver_lock=DRIVER_LOCK,
 ):
     """Render the two-shell runtime command without interpolated source quoting."""
     verify = (
@@ -234,9 +251,10 @@ def build_runtime_command(
             'export PYTHONPATH="$R/runner-acl-window-v3-b:$R/code/src:'
             '$R/code/tests/pdf_processing/q04:$R/code/tests/pdf_processing/q02:'
             '$R/code/tests/pdf_processing/q03"',
-            'export PDF_QUALIFICATION_LOCK="$R/acl-window-v3-b.driver.lock"',
+            "export PDF_QUALIFICATION_LOCK=" + shlex.quote(driver_lock),
             'cd "$R/code"',
             'test ! -e "$R/state/acl-window-v3-b"',
+            'test ! -e "$PDF_QUALIFICATION_LOCK"',
             shlex.quote(timeout_program)
             + " --signal=INT --kill-after=180s 825s sh -eu -c "
             + shlex.quote(inner)
@@ -439,19 +457,11 @@ value={'run_id':config['run_id'],'prefix':config['prefix'],'bundle':config['bund
  'state_sha256':sha(root/'state/config.json'),'keynote_complete':(root/'state/keynote-window-2/phase-complete.json').exists(),
  'boot_id':Path('/proc/sys/kernel/random/boot_id').read_text().strip(),'pid1_start_ticks':start_ticks(1),
  'vm_oom_kill':fields('/proc/vmstat')['oom_kill'],'cgroup_oom_kill':events['oom_kill'],
- 'qualification_lock_held':lock_held,
- 'phase_absent':not (root/'state/PHASE').exists(),'capacity_absent':not Path(CAPACITY).exists(),
- 'log_absent':not (root/'logs/PHASE.log').exists(),'reservation_absent':not Path(RESERVATION).exists(),
- 'release_absent':not Path(RELEASE).exists(),'admission_absent':not Path(ADMISSION).exists(),
- 'admission_result_absent':not Path(ADMISSION_RESULT).exists(),
- 'runner_absent':not Path(RUNNER).exists()}
+ 'qualification_lock_held':lock_held}
+value.update({name:not Path(path).exists() for name,path in ABSENCE_PATHS.items()})
 print(json.dumps(value))
-""".replace("ROOT", repr(REMOTE)).replace("PHASE", PHASE).replace(
-        "CAPACITY", repr(CAPACITY)
-    ).replace("RESERVATION", repr(RESERVATION)).replace("RELEASE", repr(RELEASE)).replace(
-        "ADMISSION_RESULT", repr(ADMISSION_RESULT)
-    ).replace("ADMISSION", repr(ADMISSION_EVIDENCE)).replace(
-        "RUNNER", repr(RUNNER_DIR)
+""".replace("ROOT", repr(REMOTE)).replace(
+        "ABSENCE_PATHS", repr(remote_absence_paths())
     )
     frozen = json.loads(remote(script, timeout=120))
     (OUT / "frozen-precheck.json").write_text(json.dumps(frozen, indent=2) + "\n")
@@ -459,16 +469,7 @@ print(json.dumps(value))
     assert frozen["bundle"] == REMOTE + "/inputs"
     validate_frozen_artifacts(frozen)
     validate_remote_baseline(frozen)
-    for field in (
-        "phase_absent",
-        "capacity_absent",
-        "log_absent",
-        "reservation_absent",
-        "release_absent",
-        "admission_absent",
-        "admission_result_absent",
-        "runner_absent",
-    ):
+    for field in remote_absence_paths():
         assert frozen[field], field
     return frozen
 

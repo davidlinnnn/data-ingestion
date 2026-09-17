@@ -12,13 +12,16 @@ from sentinel.run_acl_v3b import (
     ADMISSION_EVIDENCE,
     ADMISSION_RESULT,
     CAPACITY,
+    DRIVER_LOCK,
     OUT,
     PHASE,
     RELEASE,
+    REMOTE,
     RESERVATION,
     RUNNER_DIR,
     build_capacity,
     build_runtime_command,
+    remote_absence_paths,
     require_launch_budget,
 )
 
@@ -44,6 +47,16 @@ class AclRunnerV3B(unittest.TestCase):
             self.assertIn("acl-window-v3-b", path)
             self.assertNotIn("acl-window-v3-a", path)
 
+        absence_contract = remote_absence_paths()
+        self.assertEqual(absence_contract["driver_lock_absent"], DRIVER_LOCK)
+        self.assertEqual(DRIVER_LOCK, REMOTE + "/acl-window-v3-b.driver.lock")
+        self.assertTrue(
+            all("acl-window-v3-b" in path for path in absence_contract.values())
+        )
+        self.assertTrue(
+            all("acl-window-v3-a" not in path for path in absence_contract.values())
+        )
+
         self.assertEqual(capacity["outer_admission_available_bytes"], 4_831_838_208)
         self.assertEqual(capacity["outer_observation_seconds"], 180)
         self.assertEqual(capacity["outer_continuous_seconds"], 60)
@@ -67,6 +80,8 @@ class AclRunnerV3B(unittest.TestCase):
         self.assertIn("--kill-after=180s 825s", command)
         self.assertIn("--trial-seconds 180", command)
         self.assertIn("PYTHONSAFEPATH=1", command)
+        self.assertIn("export PDF_QUALIFICATION_LOCK=" + DRIVER_LOCK, command)
+        self.assertIn('test ! -e "$PDF_QUALIFICATION_LOCK"', command)
         self.assertNotIn("--phase init", command)
 
     def test_nested_shell_executes_preflight_then_reaches_runtime_boundary(self):
@@ -87,12 +102,13 @@ class AclRunnerV3B(unittest.TestCase):
             (staged / "telemetry.py").write_text("ORIGIN = 'staged'\n")
             (runtime_dir / "telemetry.py").write_text("ORIGIN = 'frozen'\n")
             (runtime_dir / "q04_runtime.py").write_text(
-                "import json, sys\n"
+                "import json, os, sys\n"
                 "from pathlib import Path\n"
                 "import telemetry\n"
                 "root = Path(sys.argv[sys.argv.index('--bundle') + 1]).parent\n"
                 "(root / 'runtime-boundary.json').write_text(json.dumps({\n"
-                "    'argv': sys.argv[1:], 'telemetry': telemetry.ORIGIN\n"
+                "    'argv': sys.argv[1:], 'telemetry': telemetry.ORIGIN,\n"
+                "    'driver_lock': os.environ['PDF_QUALIFICATION_LOCK']\n"
                 "}, sort_keys=True))\n"
             )
             timeout = root / "timeout"
@@ -106,6 +122,7 @@ class AclRunnerV3B(unittest.TestCase):
                 capacity=str(capacity),
                 python=sys.executable,
                 timeout_program=str(timeout),
+                driver_lock=str(root / "acl-window-v3-b.driver.lock"),
             )
             subprocess.run(
                 ["sh", "-eu", "-c", command],
@@ -119,6 +136,9 @@ class AclRunnerV3B(unittest.TestCase):
             )
             reached = json.loads((root / "runtime-boundary.json").read_text())
             self.assertEqual(reached["telemetry"], "staged")
+            self.assertEqual(
+                reached["driver_lock"], str(root / "acl-window-v3-b.driver.lock")
+            )
             self.assertEqual(
                 reached["argv"],
                 [

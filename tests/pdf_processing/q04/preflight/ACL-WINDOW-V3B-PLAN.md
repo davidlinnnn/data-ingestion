@@ -39,12 +39,16 @@ imports no Docling parser or model.
 | Staged admission code | `/tmp/q04-keynote-18be1b3-20260916-b/runner-acl-window-v3-b` |
 | Runtime state | `/tmp/q04-keynote-18be1b3-20260916-b/state/acl-window-v3-b` |
 | Runtime log | `/tmp/q04-keynote-18be1b3-20260916-b/logs/acl-window-v3-b.log` |
+| Runtime driver lock | `/tmp/q04-keynote-18be1b3-20260916-b/acl-window-v3-b.driver.lock` |
 
-All nine locations and the local evidence root were absent in the 2026-09-17
-14:51 UTC read-only preparation probe. The runner rechecks every location before
-reservation. Local output uses `mkdir` without `exist_ok`; remote capacity,
-reservation, release, admission and staged files use exclusive creation. Any
-collision rejects the attempt without deletion or reuse.
+All nine remote paths and the local evidence root were absent in the 2026-09-17
+read-only preparation probes; the supplemental driver-lock check was captured at
+15:02:33 UTC. The runner rechecks every location before reservation. Local output
+uses `mkdir` without `exist_ok`; remote capacity, reservation, release, admission
+and staged files use exclusive creation. A pre-existing phase, log, driver lock
+or other identity rejects the attempt without deletion or reuse. The runtime
+shell checks the driver-lock path again immediately before its timeout wrapper,
+closing the preparation-to-launch gap for that identity.
 
 ## Frozen state and service fences
 
