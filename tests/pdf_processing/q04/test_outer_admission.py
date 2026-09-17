@@ -6,29 +6,13 @@ import time
 import unittest
 from unittest.mock import patch
 
+from fake_clock import FakeClock
 import outer_admission
 from outer_admission import (
     OuterAdmissionPolicy,
     OuterAdmissionRejected,
     observe_capacity,
 )
-
-
-class FakeClock:
-    def __init__(self):
-        self.wall = 1_000.0
-        self.monotonic_value = 0.0
-
-    def time(self):
-        return self.wall
-
-    def monotonic(self):
-        return self.monotonic_value
-
-    def sleep(self, seconds):
-        self.wall += seconds
-        self.monotonic_value += seconds
-
 
 class OuterAdmission(unittest.TestCase):
     def setUp(self):

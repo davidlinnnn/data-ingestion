@@ -79,6 +79,8 @@ and cleanup reserve. Its in-process POSIX alarm assumes cooperative local callba
 callbacks that catch `BaseException` or can defer Python signal delivery require an
 external process supervisor before runtime use. This bounded pre-work wait does not
 retry a workflow. Historical sentinel runners and their evidence are not rewritten.
+The fixture-09-only runner and its 25-minute lease accounting are documented in
+[`preflight/ACL-WINDOW-V2-PLAN.md`](preflight/ACL-WINDOW-V2-PLAN.md).
 
 Default **process mode** runs on a coordinated Linux host with `/proc` and cgroup-v2
 telemetry. It starts/terminates only its owned qualification worker. This is actual
