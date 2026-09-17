@@ -137,13 +137,16 @@ class AclAdmissionCallbacks:
 
 
 def policy_from_capacity(
-    capacity, *, expected_vm_oom_kill=EXPECTED_VM_OOM_KILL
+    capacity,
+    *,
+    expected_vm_oom_kill=EXPECTED_VM_OOM_KILL,
+    expected_max_cgroup_bytes=3_221_225_472,
 ):
     required = {
         "admission_seconds": CONTINUOUS_SECONDS,
         "admission_available_bytes": PER_CASE_AVAILABLE_BYTES,
         "min_available_bytes": 1_610_612_736,
-        "max_cgroup_bytes": 3_221_225_472,
+        "max_cgroup_bytes": expected_max_cgroup_bytes,
         "max_full_psi": 0,
         "max_sample_gap_seconds": 3,
         "max_replacement_seconds": 90,
@@ -179,6 +182,7 @@ def run_outer_admission(
     callbacks,
     *,
     expected_vm_oom_kill=EXPECTED_VM_OOM_KILL,
+    expected_max_cgroup_bytes=3_221_225_472,
     wall_time=time.time,
     monotonic=time.monotonic,
     sleep=time.sleep,
@@ -186,7 +190,9 @@ def run_outer_admission(
     """Run admission before the caller receives permission to launch runtime."""
     return observe_capacity(
         policy_from_capacity(
-            capacity, expected_vm_oom_kill=expected_vm_oom_kill
+            capacity,
+            expected_vm_oom_kill=expected_vm_oom_kill,
+            expected_max_cgroup_bytes=expected_max_cgroup_bytes,
         ),
         lease_ends_at=capacity["ends_at"],
         sample=callbacks.sample,
@@ -241,6 +247,9 @@ def main(argv=None):
     parser.add_argument(
         "--expected-vm-oom-kill", type=int, default=EXPECTED_VM_OOM_KILL
     )
+    parser.add_argument(
+        "--expected-max-cgroup-bytes", type=int, default=3_221_225_472
+    )
     args = parser.parse_args(argv)
 
     capacity = json.loads(args.capacity.read_text())
@@ -260,6 +269,7 @@ def main(argv=None):
                 capacity,
                 callbacks,
                 expected_vm_oom_kill=args.expected_vm_oom_kill,
+                expected_max_cgroup_bytes=args.expected_max_cgroup_bytes,
             )
         except OuterAdmissionRejected as error:
             outcome = {

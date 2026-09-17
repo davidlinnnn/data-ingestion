@@ -4,6 +4,11 @@ No option below is authorized by this document. Every run needs a new phase,
 paths/prefix, capacity record and explicit main-session window. Keep v3-a/v3-b
 immutable and keep the 32 historical Deployments main-owned and closed.
 
+The fresh-only v1 implementation and exact command are prepared in
+[`../../preflight/ACL-FRESH-RESOURCE-V1-PLAN.md`](../../preflight/ACL-FRESH-RESOURCE-V1-PLAN.md).
+Its provisional 4 GiB sampled ceiling remains a calibration candidate pending a
+new authorization; preparation does not convert it into sizing policy.
+
 ## Recommended first step: measurement-scope calibration
 
 Add qualification-only telemetry outside the frozen producer. Run **fresh fixture

@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 """Remote cleanup constrained to the approved run root and frozen workflow IDs."""
 import asyncio
 import json
@@ -8,7 +9,17 @@ import time
 from pathlib import Path
 
 
-async def main(location):
+def is_owned_controller(args, root, controller_scripts):
+    """Match only a reviewed controller entrypoint bound to this run's state."""
+    return (
+        len(args)>1
+        and args[0]=='/experiment/.venv/bin/python'
+        and any(args[1].endswith(script) for script in controller_scripts)
+        and str(root/'state') in args
+    )
+
+
+async def main(location, controller_scripts=('q04/q04_runtime.py',)):
     import psutil
     root=Path(location)
     evidence=root/('owner-cleanup-'+str(time.time_ns()));evidence.mkdir()
@@ -17,7 +28,7 @@ async def main(location):
     for p in psutil.process_iter():
         try:
             args=p.cmdline()
-            if len(args)>1 and args[0]=='/experiment/.venv/bin/python' and args[1].endswith('q04/q04_runtime.py') and str(root/'state') in args:
+            if is_owned_controller(args, root, controller_scripts):
                 created=p.create_time();p.send_signal(signal.SIGINT)
                 try:await asyncio.to_thread(p.wait,30)
                 except psutil.TimeoutExpired:
