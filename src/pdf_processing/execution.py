@@ -61,6 +61,17 @@ class Execution:
         if self.child_runner is not None and module == 'pdf_processing.parse' and request.get('mode') == 'capture':
             self.observation['parser'] = await self.child_runner.run(request, out, self.heartbeat, self.child_timeout)
             return
+        if self.child_runner is not None and module == 'pdf_processing.parse' and request.get('mode') == 'restore':
+            # The runner owns serialization across every profile queue. Keep
+            # that ownership until the fresh process has exited, not merely
+            # until the previous warm process has been reaped.
+            async with self.child_runner.fresh_child_handoff() as observation:
+                self.observation['parser_handoff'] = observation
+                await self.fresh_child(module, request, out)
+            return
+        await self.fresh_child(module, request, out)
+
+    async def fresh_child(self, module, request, out):
         with (out/'process.log').open('wb') as log:
             spawning = asyncio.create_task(asyncio.create_subprocess_exec(
                 sys.executable, '-m', module, stdin=asyncio.subprocess.PIPE,

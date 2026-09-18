@@ -12,7 +12,7 @@ _NATIVE_ONLY = {'docling', 'docling-core', 'docling-parse', 'docling-ibm-models'
                 'torch', 'torchvision', 'transformers', 'safetensors', 'tokenizers'}
 _FILES = {
     'group': ('continuation.py', 'parse.py', 'execution.py', 'compatibility.py', 'supervision.py', 'warm_child.py'),
-    'assembly': ('continuation.py', 'parse.py', 'execution.py', 'compatibility.py'),
+    'assembly': ('continuation.py', 'parse.py', 'execution.py', 'compatibility.py', 'supervision.py'),
     'selection': ('enrichment.py', 'processing.py', 'compatibility.py'),
     'ocr': ('ocr.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),
     'evidence': ('relationships.py', 'relationship_method.py', 'evidence.py', 'enrichment.py', 'processing.py', 'execution.py', 'compatibility.py'),

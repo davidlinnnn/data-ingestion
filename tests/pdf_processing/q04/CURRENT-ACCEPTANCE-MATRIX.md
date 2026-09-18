@@ -30,9 +30,13 @@ before complete delivery or consumer-oracle evaluation. Attribution B's complete
 250 ms peak samples show that owned anonymous warm-parser and fresh-child memory
 drove the growth, with both processes still live after cancellation. Its required
 controller `cancel_requested` marker was absent, so the attribution contract
-remains incomplete and cannot establish acceptance or a sizing limit. Restored
-and exact replay did not run; no fresh-index entry was created. Cleanup passed
-with zero retry and all 32 historical Deployments remaining closed.
+remains incomplete and cannot establish acceptance or a sizing limit. Its
+complete synchronized samples do prove that warm-parser/fresh-child overlap was
+already present before cancellation and at the first guard breach. A separate
+local lifecycle candidate now reaps the idle warm parser and holds its shared
+ownership lock through the fresh assembly child; it has not run. Restored and
+exact replay did not run; no fresh-index entry was created. Cleanup passed with
+zero retry and all 32 historical Deployments remaining closed.
 Fresh/restored/replay/full-graph rows therefore remain `unproven`.
 
 AIMA's executable identity reconciliation confirms equal source bytes, 20-file
@@ -57,9 +61,9 @@ before acceptance, so its R3 result remains supporting evidence only.
 | Old request remains on original route | **proven** | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Required-relationship interruption/retry/replay | reusable | Q03 trial D owned-child case; no Pod-loss claim |
-| Fixed warm sequence and recycle | unproven | R3 topology only |
+| Fixed warm sequence and recycle | unproven | Lifecycle candidate invalidates the old request-20 PID/recycle sequence; revised behavior is local-only |
 | Bounded process resources for fixtures 09/10 | **proven** | Two small-fixture windows only |
-| Integrated operating bounds | unproven | YOLO attribution identifies owned warm-parser/fresh-child overlap at the guard, but its cancellation marker contract is incomplete; larger fixtures, warm and recovery remain absent |
+| Integrated operating bounds | unproven | Pre-cancel YOLO overlap is diagnosed and a local candidate removes it; no candidate runtime bound exists |
 | Active telemetry-loss guard | unproven | Q04 runtime phase not run |
 | Process drain/recovery | unproven | Q04 runtime phase not run |
 | Pod drain/recovery | unproven | R3 method/topology is reusable; integrated native Pod drain and owned topology remain required |
@@ -77,11 +81,12 @@ relabelled by the later passes. `quality_accepted=false` and
 `canonical_accepted=false` remain explicit; this matrix adds no LaTeX, canonical
 schema or general PDF-quality claim.
 
-The authorized fresh-only attribution-B window has been consumed. Its
-[retained result](sentinel/yolo-attribution-b/RESULTS.md) is a workload guard stop
-and an incomplete measurement because the required controller
-`cancel_requested` marker was absent. Complete samples still narrow the observed
-growth to owned anonymous warm-parser and fresh-child overlap after cancellation.
-Main-session review is next. Any repeat requires a reviewed marker fix, new
-identity and separate authorization. No runtime batch, retry or threshold change
-is currently authorized.
+The attribution-B window remains a retained failure with an incomplete
+measurement contract. Its [lifecycle diagnosis](diagnosis/yolo-attribution-b/ANALYSIS.md)
+uses complete samples to establish warm-parser/fresh-child overlap before
+cancellation and at the initial guard breach. The fixed
+[`q04-yolo-lifecycle-v1` candidate](candidate/yolo-lifecycle-v1/IMPACT.md) has a
+separate producer/bundle identity, local ownership and cleanup tests, and a
+[fresh→restored→replay plan](candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md).
+Main-session candidate review is next. No runtime batch, retry, pure marker
+calibration or threshold change is currently authorized.

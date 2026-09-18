@@ -59,7 +59,7 @@
       },
       "q04_fresh_index": "unproven",
       "oracle_and_full_graph": "unproven",
-      "reason": "Matrix A and attribution B both stopped on the fixed 4 GiB shared-cgroup guard during assembly before complete delivery or consumer/oracle verification. Attribution B captured complete peak samples showing owned anonymous warm-parser and fresh-child overlap, but its required controller cancel_requested marker was absent, so the measurement remains incomplete. Restored and replay did not run; all acceptance rows and fresh-index remain unproven.",
+      "reason": "Matrix A and attribution B both stopped on the fixed 4 GiB shared-cgroup guard during assembly before complete delivery or consumer/oracle verification. Attribution B proves pre-cancel owned warm-parser/fresh-child overlap but remains measurement-incomplete because its controller cancel_requested marker is absent. A new local lifecycle candidate removes that overlap behind the shared parser lock; it has not run. Restored and replay did not run, so all acceptance rows and fresh-index remain unproven.",
       "evidence": [
         "tests/pdf_processing/t06/evidence/VERDICT.md",
         "tests/pdf_processing/q04/STAGE-IMPACT.md",
@@ -68,7 +68,12 @@
         "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/ANALYSIS.md",
         "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/evidence/trace-analysis.json",
         "tests/pdf_processing/q04/sentinel/yolo-attribution-b/RESULTS.md",
-        "tests/pdf_processing/q04/sentinel/yolo-attribution-b/evidence/summary.json"
+        "tests/pdf_processing/q04/sentinel/yolo-attribution-b/evidence/summary.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/ANALYSIS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/evidence/lifecycle-overlap.json",
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/MANIFEST.json",
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md"
       ],
       "attempts": [
         {
@@ -235,10 +240,12 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "R3 proves the supervision topology only. The integrated producer has not run the fixed Wiki-YOLO-AIMA-native-Wiki sequence or request-20 recycle.",
+      "reason": "The lifecycle candidate intentionally reaps the warm parser before each fresh assembly, invalidating the old fixed request-20 PID/recycle sequence. Local ownership/rebuild tests pass, but the revised warm behavior has no runtime acceptance.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
-        "tests/pdf_processing/q04/RUNTIME-ADAPTER.md"
+        "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
+        "tests/pdf_processing/q04/test_yolo_lifecycle_candidate.py"
       ]
     },
     {
@@ -253,13 +260,15 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "Two small fixture windows do not establish a six-fixture, warm or recovery operating envelope. YOLO attribution B again crossed the fixed 4 GiB shared-cgroup guard during assembly. Its complete peak samples attribute the growth to owned anonymous warm-parser and fresh-child overlap, but the missing controller cancel_requested marker keeps the measurement contract incomplete and prevents acceptance or a sizing-limit claim.",
+      "reason": "Two small fixture windows do not establish a six-fixture, warm or recovery operating envelope. Attribution B proves the initial YOLO breach already had pre-cancel owned warm-parser/fresh-child overlap. The local candidate removes that overlap without changing the guard, but only a new candidate run can establish a bound.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
         "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/ANALYSIS.md",
         "tests/pdf_processing/q04/sentinel/yolo-attribution-b/RESULTS.md",
-        "tests/pdf_processing/q04/sentinel/yolo-attribution-b/evidence/summary.json"
+        "tests/pdf_processing/q04/sentinel/yolo-attribution-b/evidence/summary.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/ANALYSIS.md",
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md"
       ]
     },
     {
@@ -308,26 +317,28 @@
     "not_counted_as_pass": true
   },
   "next_step": {
-    "kind": "main_review_attribution_incomplete",
+    "kind": "main_review_yolo_lifecycle_candidate",
     "fixture": "07",
     "pages": 15,
     "modes": [
-      "fresh"
+      "fresh",
+      "restored",
+      "replay"
     ],
     "execution_mode": "process",
-    "result": "tests/pdf_processing/q04/sentinel/yolo-attribution-b/RESULTS.md",
-    "evidence": "tests/pdf_processing/q04/sentinel/yolo-attribution-b/evidence/summary.json",
-    "phase": "yolo-attribution-b",
-    "runner_commit": "1d72b0cc97c6f63f82b0e30703c17934ecb346ab",
+    "candidate_version": "q04-yolo-lifecycle-v1",
+    "candidate_manifest": "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/MANIFEST.json",
+    "impact": "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
+    "validation_plan": "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md",
+    "diagnosis": "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/ANALYSIS.md",
     "runtime_authorized": false,
     "automatic_retry": false,
     "requires_new_identity": true,
-    "requires_reviewed_measurement_fix": true,
+    "requires_candidate_review": true,
     "requires_explicit_capacity_authorization": true,
     "keep_current_guard": true,
     "raise_guard_from_matrix_a": false,
-    "restored_and_replay_gated": true,
-    "preferred_implementation_focus": "bind assembly fresh-child and warm-parser lifetimes to cancellation; prevent their post-cancel overlap before changing any threshold",
-    "minimum_measurement_fix": "emit or observe controller cancel_requested when trial guard cancellation occurs before run.active is cleared"
+    "fresh_failure_stops_later_modes": true,
+    "pure_marker_calibration_required": false
   }
 }

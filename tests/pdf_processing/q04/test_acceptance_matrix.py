@@ -81,22 +81,25 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_step_is_main_review_not_runtime_authorization(self):
+    def test_next_step_is_candidate_review_not_runtime_authorization(self):
         step = self.matrix["next_step"]
-        self.assertEqual(step["kind"], "main_review_attribution_incomplete")
+        self.assertEqual(step["kind"], "main_review_yolo_lifecycle_candidate")
         self.assertEqual(step["fixture"], "07")
-        self.assertEqual(step["modes"], ["fresh"])
+        self.assertEqual(step["modes"], ["fresh", "restored", "replay"])
         self.assertEqual(step["execution_mode"], "process")
-        self.assertEqual(step["phase"], "yolo-attribution-b")
-        self.assertTrue((ROOT / step["result"]).is_file())
-        self.assertTrue((ROOT / step["evidence"]).is_file())
+        self.assertEqual(step["candidate_version"], "q04-yolo-lifecycle-v1")
+        self.assertTrue((ROOT / step["candidate_manifest"]).is_file())
+        self.assertTrue((ROOT / step["impact"]).is_file())
+        self.assertTrue((ROOT / step["validation_plan"]).is_file())
+        self.assertTrue((ROOT / step["diagnosis"]).is_file())
         self.assertFalse(step["runtime_authorized"])
         self.assertFalse(step["automatic_retry"])
-        self.assertTrue(step["requires_reviewed_measurement_fix"])
+        self.assertTrue(step["requires_candidate_review"])
         self.assertTrue(step["requires_explicit_capacity_authorization"])
         self.assertTrue(step["keep_current_guard"])
         self.assertFalse(step["raise_guard_from_matrix_a"])
-        self.assertTrue(step["restored_and_replay_gated"])
+        self.assertTrue(step["fresh_failure_stops_later_modes"])
+        self.assertFalse(step["pure_marker_calibration_required"])
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()
@@ -123,11 +126,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(row[6], fixture["q04_fresh_index"])
 
         step = self.matrix["next_step"]
-        result = (ROOT / step["result"]).read_text()
-        self.assertIn("INCOMPLETE attribution contract", result)
-        self.assertIn("`cancel_requested`", result)
-        self.assertIn("No retry", result)
-        self.assertIn("4 GiB", result)
+        plan = (ROOT / step["validation_plan"]).read_text()
+        self.assertIn("grants no runtime", plan)
+        self.assertIn("Fresh", plan)
+        self.assertIn("Restored/new request", plan)
+        self.assertIn("Exact replay", plan)
+        self.assertIn("4,294,967,296", plan)
+        self.assertIn("no automatic retry", plan)
 
 
 if __name__ == "__main__":

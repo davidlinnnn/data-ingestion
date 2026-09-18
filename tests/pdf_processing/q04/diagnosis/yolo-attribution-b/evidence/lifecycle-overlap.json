@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "source_run_id": "q04-c084987e5c5047f0b9346ab1a26a1d66",
+  "source_outcome": "FRESH_CGROUP_GUARD_ATTRIBUTED_MEASUREMENT_INCOMPLETE",
+  "measurement_complete": false,
+  "guard_bytes": 4294967296,
+  "reported_first_guard_breach": {
+    "time": 1789773300.962838,
+    "memory_current_bytes": 4302082048
+  },
+  "temporal_cancel_requested_at": 1789773301.249849,
+  "assembly_observed_at": 1789773297.7082927,
+  "points": {
+    "before_assembly": {
+      "label": "before_assembly",
+      "sample_index": 345,
+      "time": 1789773297.4483922,
+      "memory_current_bytes": 4004401152,
+      "owned_pss_bytes": 1889032192,
+      "warm_parser_pss_bytes": 1723029504,
+      "fresh_parse_child_pss_bytes": 0,
+      "worker_pss_bytes": 81881088,
+      "warm_parser_pids": [
+        2745
+      ],
+      "fresh_parse_child_pids": [],
+      "worker_pids": [
+        2712
+      ]
+    },
+    "before_first_guard_breach": {
+      "label": "before_first_guard_breach",
+      "sample_index": 358,
+      "time": 1789773300.8094156,
+      "memory_current_bytes": 4286320640,
+      "owned_pss_bytes": 2154210304,
+      "warm_parser_pss_bytes": 1663398912,
+      "fresh_parse_child_pss_bytes": 324588544,
+      "worker_pss_bytes": 82567168,
+      "warm_parser_pids": [
+        2745
+      ],
+      "fresh_parse_child_pids": [
+        2800
+      ],
+      "worker_pids": [
+        2712
+      ]
+    },
+    "at_first_guard_breach": {
+      "label": "at_first_guard_breach",
+      "sample_index": 359,
+      "time": 1789773301.066548,
+      "memory_current_bytes": 4305158144,
+      "owned_pss_bytes": 2173207552,
+      "warm_parser_pss_bytes": 1663398912,
+      "fresh_parse_child_pss_bytes": 343577600,
+      "worker_pss_bytes": 82567168,
+      "warm_parser_pids": [
+        2745
+      ],
+      "fresh_parse_child_pids": [
+        2800
+      ],
+      "worker_pids": [
+        2712
+      ]
+    },
+    "before_cancel": {
+      "label": "before_cancel",
+      "sample_index": 359,
+      "time": 1789773301.066548,
+      "memory_current_bytes": 4305158144,
+      "owned_pss_bytes": 2173207552,
+      "warm_parser_pss_bytes": 1663398912,
+      "fresh_parse_child_pss_bytes": 343577600,
+      "worker_pss_bytes": 82567168,
+      "warm_parser_pids": [
+        2745
+      ],
+      "fresh_parse_child_pids": [
+        2800
+      ],
+      "worker_pids": [
+        2712
+      ]
+    },
+    "peak": {
+      "label": "peak",
+      "sample_index": 369,
+      "time": 1789773303.645834,
+      "memory_current_bytes": 4581400576,
+      "owned_pss_bytes": 2449306624,
+      "warm_parser_pss_bytes": 1655742464,
+      "fresh_parse_child_pss_bytes": 626794496,
+      "worker_pss_bytes": 82601984,
+      "warm_parser_pids": [
+        2745
+      ],
+      "fresh_parse_child_pids": [
+        2800
+      ],
+      "worker_pids": [
+        2712
+      ]
+    },
+    "exit": {
+      "label": "exit",
+      "sample_index": 377,
+      "time": 1789773305.712855,
+      "memory_current_bytes": 2604711936,
+      "owned_pss_bytes": 171177984,
+      "warm_parser_pss_bytes": 0,
+      "fresh_parse_child_pss_bytes": 0,
+      "worker_pss_bytes": 85368832,
+      "warm_parser_pids": [],
+      "fresh_parse_child_pids": [],
+      "worker_pids": [
+        2712
+      ]
+    }
+  },
+  "pre_cancel_overlap_proven": true,
+  "interpretation": "The first synchronized attribution sample after the worker guard breach already contains both warm_parser and fresh_parse_child before Temporal cancellation. The later post-cancel peak is not used to explain the initial breach."
+}

@@ -1,5 +1,6 @@
 """One sequential, correlated native parser process; memory never owns progress."""
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import json
 import os
@@ -29,7 +30,7 @@ class WarmParser:
         self.lock = asyncio.Lock()
         self.closed = False
         self.count = 0
-        self.observation = {'ready': False, 'restarts': 0, 'recycles': 0,
+        self.observation = {'ready': False, 'restarts': 0, 'recycles': 0, 'handoffs': 0,
                             'last_local_progress': None, 'termination_reason': None}
 
     async def stop(self, reason):
@@ -62,6 +63,31 @@ class WarmParser:
         self.closed = True
         async with self.lock:
             await self.stop('worker_shutdown')
+
+    @asynccontextmanager
+    async def fresh_child_handoff(self):
+        """Own parser capacity while one memory-heavy fresh child runs.
+
+        The same lock covers ``run``. A handoff requested during capture waits
+        for that request to finish. The lock remains held until the caller's
+        fresh child has exited, so another queue cannot rebuild the warm parser
+        concurrently. Caller cancellation during the initial reap waits for
+        owned-process cleanup before it is propagated.
+        """
+        async with self.lock:
+            if self.closed:
+                raise ChildFailure('infrastructure', 'worker_draining')
+            if self.process is not None:
+                self.observation['handoffs'] += 1
+                cleanup = asyncio.create_task(self.stop('fresh_child_handoff'))
+                try:
+                    await asyncio.shield(cleanup)
+                except asyncio.CancelledError:
+                    # Process ownership outlives the cancelled caller. Do not
+                    # let scratch teardown race an unreaped warm parser.
+                    await cleanup
+                    raise
+            yield dict(self.observation)
 
     async def run(self, request, out, heartbeat, hard_seconds):
         async with self.lock:

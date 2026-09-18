@@ -2,7 +2,8 @@
 
 Derived from the pinned experiment. No source, store or method is selected at import.
 Fresh execution installs guards once. The private warm protocol rebinds request-local
-state around one sequential capture converter; assembly always runs fresh.
+state around one sequential capture converter. Assembly runs fresh after the idle
+warm parser has been reaped so the two model-heavy processes do not overlap.
 """
 import collections
 import hashlib
