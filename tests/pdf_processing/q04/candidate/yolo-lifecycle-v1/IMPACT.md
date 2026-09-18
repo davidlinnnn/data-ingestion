@@ -5,7 +5,10 @@ Candidate version: `q04-yolo-lifecycle-v1`.
 The candidate bundle is separate from the frozen accepted bundle. Its immutable
 local path is `/private/tmp/q04-inputs-yolo-lifecycle-v1`; the source remains
 `/private/tmp/q04-inputs-option-a-v7`. Fixture PDFs, references, content reviews
-and oracles are byte-identical. Only the producer map in `inputs.json` changes.
+and oracles are byte-identical. The producer and harness hash maps in
+`inputs.json` are regenerated for the candidate; the source bundle is untouched.
+The candidate bundle passes the same `prepare.verify_bundle()` used by runtime
+initialization, including the candidate cancellation adapter.
 
 | Changed source | Behavior | Direct stage identities | Evidence consequence |
 | --- | --- | --- | --- |
@@ -15,9 +18,9 @@ and oracles are byte-identical. Only the producer map in `inputs.json` changes.
 | `parse.py` | Documents the enforced fresh-assembly lifecycle | group, assembly | Hash-bound producer changes conservatively with the behavior |
 
 The full producer manifest SHA-256 is
-`1e910b9109e959bb0ca21b4f81db9a2d933c1bd3e7591f37f38e4d2fa8fbfaa7`.
+`3aed8bf64671d51c0017717d0a6d6cea00c871c48bf3712cadfea7e55ad4eb80`.
 The candidate `inputs.json` SHA-256 is
-`33909167ca5f1a79ab160da7d57fe2ae4bae38507fe21fa78877138cff13dda9`.
+`d94912049083318876bc551c647c82e073c3c4b181aff9626e4984655d20f39d`.
 The exact file map is in [`MANIFEST.json`](MANIFEST.json).
 
 Every new request must be initialized under a new object prefix and derives a

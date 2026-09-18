@@ -52,5 +52,6 @@ library assumptions without evidence that it is needed.
 
 Machine-readable point selection is in
 [`evidence/lifecycle-overlap.json`](evidence/lifecycle-overlap.json). The
-analyzer selects points from the immutable raw archive without rewriting the
-attribution-B result.
+analyzer verifies the raw archive against the SHA-256 retained by the original
+result, records both the result-summary and archive hashes, and selects points
+without rewriting the attribution-B result.

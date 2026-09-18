@@ -9,9 +9,9 @@ fixture-07 window using the `q04-yolo-lifecycle-v1` candidate.
 - Create a new phase, run ID, object prefix, state root, reservation and local
   evidence path. Never reuse `yolo-matrix-a` or `yolo-attribution-b` identities.
 - Stage the candidate bundle whose `inputs.json` SHA-256 is
-  `33909167ca5f1a79ab160da7d57fe2ae4bae38507fe21fa78877138cff13dda9` and
+  `d94912049083318876bc551c647c82e073c3c4b181aff9626e4984655d20f39d` and
   producer-manifest SHA-256 is
-  `1e910b9109e959bb0ca21b4f81db9a2d933c1bd3e7591f37f38e4d2fa8fbfaa7`.
+  `3aed8bf64671d51c0017717d0a6d6cea00c871c48bf3712cadfea7e55ad4eb80`.
 - At init, derive and retain a new profile release from the candidate producer
   and the new prefix's immutable original-source versions. Assert it differs
   from the frozen attribution-B release.
@@ -32,8 +32,9 @@ fixture-07 window using the `q04-yolo-lifecycle-v1` candidate.
   and cgroup OOM counters.
 - Attribution collector: 250 ms target cadence, at most 1 second between
   attribution samples, complete process identity/PSS coverage, and no collector
-  error. Use the corrected cancellation callback mixin so `cancel_requested`
-  surrounds the actual owned-cancel call; callback failure must not skip cleanup.
+  error. Use `candidate/yolo_candidate_measure.py` so `cancel_requested`
+  surrounds the actual `q04_runtime.Run.cancel_owned` call; callback failure
+  must not skip cleanup.
 
 ## Ordered workload
 

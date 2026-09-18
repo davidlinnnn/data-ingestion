@@ -4,12 +4,21 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
+import hashlib
 import json
 from pathlib import Path
 import tarfile
 
 
 TRACE_MEMBER = "./state/yolo-attribution-b/resource-attribution.jsonl"
+
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def epoch(timestamp):
@@ -56,7 +65,10 @@ def point(label, index, row):
     }
 
 
-def analyze(summary, rows):
+def analyze(summary, rows, *, summary_sha256, archive_sha256):
+    expected_archive = summary["private_artifacts"]["remote-evidence.tar"]
+    if archive_sha256 != expected_archive:
+        raise ValueError("remote evidence archive hash mismatch")
     if not rows or any(not row["attribution_complete"] for row in rows):
         raise ValueError("complete attribution rows required")
     guard = summary["workload"]["cgroup_ceiling_bytes"]
@@ -105,6 +117,10 @@ def analyze(summary, rows):
     breach = selected["at_first_guard_breach"]
     return {
         "schema_version": 1,
+        "source_evidence": {
+            "summary_sha256": summary_sha256,
+            "remote_evidence_tar_sha256": archive_sha256,
+        },
         "source_run_id": summary["run_id"],
         "source_outcome": summary["outcome"],
         "measurement_complete": summary["measurement_complete"],
@@ -130,20 +146,35 @@ def analyze(summary, rows):
     }
 
 
+def analyze_files(summary_path, archive_path):
+    summary = json.loads(summary_path.read_text())
+    archive_digest = sha256(archive_path)
+    expected = summary["private_artifacts"]["remote-evidence.tar"]
+    if archive_digest != expected:
+        raise ValueError("remote evidence archive hash mismatch")
+    with tarfile.open(archive_path) as archive:
+        stream = archive.extractfile(TRACE_MEMBER)
+        if stream is None:
+            raise ValueError("attribution trace missing")
+        rows = [json.loads(line) for line in stream]
+    return analyze(
+        summary,
+        rows,
+        summary_sha256=sha256(summary_path),
+        archive_sha256=archive_digest,
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    summary = json.loads(args.summary.read_text())
-    with tarfile.open(args.archive) as archive:
-        stream = archive.extractfile(TRACE_MEMBER)
-        if stream is None:
-            raise ValueError("attribution trace missing")
-        rows = [json.loads(line) for line in stream]
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(analyze(summary, rows), indent=2) + "\n")
+    args.out.write_text(
+        json.dumps(analyze_files(args.summary, args.archive), indent=2) + "\n"
+    )
 
 
 if __name__ == "__main__":

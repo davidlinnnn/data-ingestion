@@ -3,6 +3,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
 
@@ -53,14 +54,28 @@ class YoloOverlapAnalysisTests(unittest.TestCase):
                 "first_guard_breach_bytes": 101,
             },
             "attribution": {"temporal_cancel_requested_at": "1970-01-01T00:00:03+00:00"},
+            "private_artifacts": {"remote-evidence.tar": "archive-sha"},
         }
-        result = module.analyze(summary, rows)
+        result = module.analyze(
+            summary,
+            rows,
+            summary_sha256="summary-sha",
+            archive_sha256="archive-sha",
+        )
         self.assertEqual(result["points"]["before_assembly"]["sample_index"], 1)
         self.assertEqual(result["points"]["before_first_guard_breach"]["sample_index"], 1)
         self.assertEqual(result["points"]["at_first_guard_breach"]["sample_index"], 2)
         self.assertEqual(result["points"]["before_cancel"]["sample_index"], 2)
         self.assertEqual(result["points"]["peak"]["sample_index"], 3)
         self.assertEqual(result["points"]["exit"]["sample_index"], 4)
+
+    def test_tampered_archive_is_rejected_before_trace_is_read(self):
+        summary_path = HERE / "sentinel/yolo-attribution-b/evidence/summary.json"
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "remote-evidence.tar"
+            archive.write_bytes(b"tampered")
+            with self.assertRaisesRegex(ValueError, "archive hash mismatch"):
+                module.analyze_files(summary_path, archive)
 
 
 if __name__ == "__main__":

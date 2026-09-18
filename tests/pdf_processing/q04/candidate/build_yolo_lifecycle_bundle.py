@@ -17,6 +17,10 @@ EXPECTED_CHANGED_PRODUCER_FILES = {
     "parse.py",
     "supervision.py",
 }
+REQUIRED_CANDIDATE_HARNESS_FILES = {
+    "tests/pdf_processing/q04/candidate/yolo_lifecycle.py",
+    "tests/pdf_processing/q04/candidate/yolo_candidate_measure.py",
+}
 
 
 def sha256(path):
@@ -48,6 +52,7 @@ def build(source, destination, producer_root):
     if destination.exists():
         raise ValueError("candidate destination must be absent")
     baseline = json.loads(source_inputs.read_text())
+    repository = producer_root.resolve().parents[1]
     producer = {
         path.name: sha256(path)
         for path in sorted(producer_root.glob("*.py"))
@@ -63,6 +68,13 @@ def build(source, destination, producer_root):
     shutil.copytree(source, destination, copy_function=shutil.copy2)
     candidate = json.loads((destination / "inputs.json").read_text())
     candidate["producer"] = producer
+    harness_names = sorted(
+        set(baseline["test_files"]) | REQUIRED_CANDIDATE_HARNESS_FILES
+    )
+    candidate["test_files"] = {
+        name: sha256(repository / name)
+        for name in harness_names
+    }
     (destination / "inputs.json").write_text(json.dumps(candidate, indent=2) + "\n")
     source_payload = tree_digest(source, exclude={"inputs.json"})
     candidate_payload = tree_digest(destination, exclude={"inputs.json"})
@@ -83,6 +95,12 @@ def build(source, destination, producer_root):
         "producer_manifest_sha256": hashlib.sha256(canonical(producer).encode()).hexdigest(),
         "producer": producer,
         "changed_producer_files": changed,
+        "test_files": candidate["test_files"],
+        "changed_test_files": sorted(
+            name
+            for name in set(baseline["test_files"]) | set(candidate["test_files"])
+            if baseline["test_files"].get(name) != candidate["test_files"].get(name)
+        ),
         "fixture_oracle_payload_unchanged": True,
         "profile_release": "derive a new q04-* release from this producer and the newly captured immutable source versions during candidate init",
         "runtime_authorized": False,

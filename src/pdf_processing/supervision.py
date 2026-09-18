@@ -38,26 +38,26 @@ class WarmParser:
         self.observation.update(ready=False, termination_reason=reason, forced_kill=False, observed_at=now())
         if p is None:
             return
-        try:
-            if p.returncode is None:
+        if p.returncode is None:
+            try:
+                os.killpg(p.pid, signal.SIGCONT)
+                os.killpg(p.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                await asyncio.wait_for(p.wait(), self.terminate_seconds)
+            except TimeoutError:
+                self.observation['forced_kill'] = True
                 try:
-                    os.killpg(p.pid, signal.SIGCONT)
-                    os.killpg(p.pid, signal.SIGTERM)
+                    os.killpg(p.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-                try:
-                    await asyncio.wait_for(p.wait(), self.terminate_seconds)
-                except TimeoutError:
-                    self.observation['forced_kill'] = True
-                    try:
-                        os.killpg(p.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    await asyncio.wait_for(p.wait(), self.reap_seconds)
-            self.observation['exit_code'] = p.returncode
-        finally:
-            self.process = None
-            self.count = 0
+                await asyncio.wait_for(p.wait(), self.reap_seconds)
+        if p.returncode is None:
+            raise RuntimeError('owned parser was not reaped')
+        self.observation['exit_code'] = p.returncode
+        self.process = None
+        self.count = 0
 
     async def close(self):
         self.closed = True

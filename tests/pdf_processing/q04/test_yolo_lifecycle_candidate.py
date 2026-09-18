@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+from pdf_processing import execution as execution_module
 from pdf_processing.execution import Execution, SourceRequest
 from pdf_processing.compatibility import dependencies
 from pdf_processing.supervision import WarmParser
@@ -26,6 +27,24 @@ for line in sys.stdin:
 
 
 class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
+    async def test_failed_reap_retains_process_ownership(self):
+        class NeverReaped:
+            pid = 4242
+            returncode = None
+
+            async def wait(self):
+                await asyncio.Future()
+
+        parser = WarmParser(terminate_seconds=.01, reap_seconds=.01)
+        process = NeverReaped()
+        parser.process = process
+        parser.count = 4
+        with mock.patch("pdf_processing.supervision.os.killpg"):
+            with self.assertRaises(TimeoutError):
+                await parser.stop("synthetic_reap_timeout")
+        self.assertIs(parser.process, process)
+        self.assertEqual(parser.count, 4)
+
     async def test_handoff_waits_for_active_capture_then_rebuilds_on_next_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -176,6 +195,114 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                     )
             self.assertIsNone(parser.process)
             self.assertEqual(parser.observation["termination_reason"], "fresh_child_handoff")
+
+    async def test_cancelled_restore_reaps_fresh_child_releases_lock_and_allows_rebuild(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            warm_child = root / "warm_child.py"
+            warm_child.write_text(READY_DONE_CHILD)
+            blocking_child = root / "blocking_child.py"
+            blocking_child.write_text("import time\ntime.sleep(60)\n")
+            parser = WarmParser(command=[sys.executable, str(warm_child)])
+            request = {"expected_method": {}}
+            await parser.run(request, root, lambda detail: None, 3)
+            pdf = root / "source.pdf"
+            pdf.write_bytes(b"pdf")
+            execution = Execution(
+                SourceRequest(pdf, "rev", "sha", {}, root),
+                object(),
+                root,
+                child_runner=parser,
+            )
+            started = asyncio.Event()
+            create = asyncio.create_subprocess_exec
+            spawned = []
+
+            async def spawn(*_args, **kwargs):
+                process = await create(sys.executable, str(blocking_child), **kwargs)
+                spawned.append(process)
+                started.set()
+                return process
+
+            with mock.patch(
+                "pdf_processing.execution.asyncio.create_subprocess_exec",
+                new=spawn,
+            ):
+                restore = asyncio.create_task(
+                    execution.child(
+                        "pdf_processing.parse",
+                        {"mode": "restore", "out": str(root / "result")},
+                        root,
+                    )
+                )
+                await started.wait()
+                restore.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await restore
+
+            self.assertIsNone(parser.process)
+            self.assertIsNotNone(spawned[0].returncode)
+            self.assertEqual(execution_module._fresh_children, set())
+            rebuilt = await parser.run(request, root, lambda detail: None, 3)
+            self.assertEqual(rebuilt["restarts"], 2)
+            await parser.close()
+
+    async def test_cancelling_one_execution_does_not_kill_another_fresh_child(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            blocking_child = root / "blocking_child.py"
+            blocking_child.write_text("import time\ntime.sleep(60)\n")
+            create = asyncio.create_subprocess_exec
+            spawned = []
+            both_started = asyncio.Event()
+
+            async def spawn(*_args, **kwargs):
+                process = await create(sys.executable, str(blocking_child), **kwargs)
+                spawned.append(process)
+                if len(spawned) == 2:
+                    both_started.set()
+                return process
+
+            def execution(directory):
+                pdf = directory / "source.pdf"
+                pdf.write_bytes(b"pdf")
+                return Execution(
+                    SourceRequest(pdf, "rev", "sha", {}, directory),
+                    object(),
+                    directory,
+                )
+
+            first_root = root / "first"
+            second_root = root / "second"
+            first_root.mkdir()
+            second_root.mkdir()
+            first = execution(first_root)
+            second = execution(second_root)
+            with mock.patch(
+                "pdf_processing.execution.asyncio.create_subprocess_exec",
+                new=spawn,
+            ):
+                first_task = asyncio.create_task(
+                    first.child("pdf_processing.ocr", {}, first_root)
+                )
+                second_task = asyncio.create_task(
+                    second.child("pdf_processing.ocr", {}, second_root)
+                )
+                await both_started.wait()
+                while not first.fresh_children or not second.fresh_children:
+                    await asyncio.sleep(0)
+                first_process = next(iter(first.fresh_children))
+                second_process = next(iter(second.fresh_children))
+                first_task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await first_task
+                self.assertIsNotNone(first_process.returncode)
+                self.assertIsNone(second_process.returncode)
+                self.assertFalse(second_task.done())
+                second_task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await second_task
+            self.assertEqual(execution_module._fresh_children, set())
 
 
 class CandidateIdentityTests(unittest.TestCase):

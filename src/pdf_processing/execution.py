@@ -21,14 +21,20 @@ from .object_store import Store, StoreFailure, digest
 _fresh_children = set()
 
 
-async def stop_fresh_children():
-    for process in tuple(_fresh_children):
+async def _stop_children(children):
+    for process in tuple(children):
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
         await asyncio.wait_for(process.wait(), 5)
+        children.discard(process)
         _fresh_children.discard(process)
+
+
+async def stop_fresh_children():
+    """Worker-shutdown backstop for every fresh child in this event loop."""
+    await _stop_children(_fresh_children)
 
 
 class ChildFailure(RuntimeError):
@@ -55,6 +61,7 @@ class Execution:
         self.child_timeout = child_timeout
         self.observation = {}
         self.child_runner = child_runner
+        self.fresh_children = set()
 
     async def child(self, module, request, out):
         """One request per interpreter; S1 explores safe process reuse separately."""
@@ -80,9 +87,11 @@ class Execution:
                 process = await asyncio.shield(spawning)
             except asyncio.CancelledError:
                 process = await spawning
+                self.fresh_children.add(process)
                 _fresh_children.add(process)
-                await stop_fresh_children()
+                await _stop_children(self.fresh_children)
                 raise
+            self.fresh_children.add(process)
             _fresh_children.add(process)
             communication = asyncio.create_task(process.communicate(json.dumps(request).encode()))
             try:
@@ -103,6 +112,7 @@ class Execution:
                 except ProcessLookupError:
                     pass
                 await asyncio.wait_for(process.wait(), 5)
+                self.fresh_children.discard(process)
                 _fresh_children.discard(process)
                 if not communication.done():
                     communication.cancel()
