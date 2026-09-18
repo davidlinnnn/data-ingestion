@@ -24,14 +24,16 @@ equality. Keynote covers 44 items, all 27 reviewed textboxes, one required OCR
 result and exact graph equality. Their process-resource and cleanup observations
 remain bounded to those fixtures.
 
-YOLO matrix A is a retained failed attempt, not an unrun row and not a partial
-pass. Fresh completed three five-page capture groups, then the fixed 4 GiB shared
-cgroup guard fired after assembly was scheduled while progress read `assembling`.
-Complete delivery and every consumer oracle
-remained unevaluated; restored and exact replay did not run; no fresh-index entry
-was created. Cleanup passed with zero retry and all 32 historical Deployments
-remaining closed. Fresh/restored/replay/full-graph rows therefore remain
-`unproven`.
+YOLO matrix A and attribution B are retained failed attempts, not unrun rows or
+partial passes. Both crossed the fixed 4 GiB shared-cgroup guard during assembly
+before complete delivery or consumer-oracle evaluation. Attribution B's complete
+250 ms peak samples show that owned anonymous warm-parser and fresh-child memory
+drove the growth, with both processes still live after cancellation. Its required
+controller `cancel_requested` marker was absent, so the attribution contract
+remains incomplete and cannot establish acceptance or a sizing limit. Restored
+and exact replay did not run; no fresh-index entry was created. Cleanup passed
+with zero retry and all 32 historical Deployments remaining closed.
+Fresh/restored/replay/full-graph rows therefore remain `unproven`.
 
 AIMA's executable identity reconciliation confirms equal source bytes, 20-file
 producer, method and relationship semantics. It also finds a different full
@@ -57,7 +59,7 @@ before acceptance, so its R3 result remains supporting evidence only.
 | Required-relationship interruption/retry/replay | reusable | Q03 trial D owned-child case; no Pod-loss claim |
 | Fixed warm sequence and recycle | unproven | R3 topology only |
 | Bounded process resources for fixtures 09/10 | **proven** | Two small-fixture windows only |
-| Integrated operating bounds | unproven | YOLO crossed the fixed shared-cgroup guard after assembly scheduling; larger fixtures, warm and recovery remain absent |
+| Integrated operating bounds | unproven | YOLO attribution identifies owned warm-parser/fresh-child overlap at the guard, but its cancellation marker contract is incomplete; larger fixtures, warm and recovery remain absent |
 | Active telemetry-loss guard | unproven | Q04 runtime phase not run |
 | Process drain/recovery | unproven | Q04 runtime phase not run |
 | Pod drain/recovery | unproven | R3 method/topology is reusable; integrated native Pod drain and owned topology remain required |
@@ -75,9 +77,11 @@ relabelled by the later passes. `quality_accepted=false` and
 `canonical_accepted=false` remain explicit; this matrix adds no LaTeX, canonical
 schema or general PDF-quality claim.
 
-No runtime batch is currently authorized. The offline
-[YOLO resource diagnosis](diagnosis/yolo-matrix-a/ANALYSIS.md) recommends one
-fresh-only attribution calibration, still using the current guard, before another
-full matrix. Its [measurement options](diagnosis/yolo-matrix-a/NEXT-MEASUREMENT.md)
-and [prepared attribution-B plan](preflight/yolo-attribution-b/PLAN.md) do not
-authorize a run or a threshold change.
+The authorized fresh-only attribution-B window has been consumed. Its
+[retained result](sentinel/yolo-attribution-b/RESULTS.md) is a workload guard stop
+and an incomplete measurement because the required controller
+`cancel_requested` marker was absent. Complete samples still narrow the observed
+growth to owned anonymous warm-parser and fresh-child overlap after cancellation.
+Main-session review is next. Any repeat requires a reviewed marker fix, new
+identity and separate authorization. No runtime batch, retry or threshold change
+is currently authorized.

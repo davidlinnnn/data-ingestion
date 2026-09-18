@@ -42,6 +42,21 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(yolo_attempt["replay"], "not_run")
         self.assertEqual(yolo_attempt["cleanup"], "proven")
         self.assertEqual(yolo_attempt["retry_count"], 0)
+        attribution_attempt = fixtures["07"]["attempts"][1]
+        self.assertEqual(attribution_attempt["phase"], "yolo-attribution-b")
+        self.assertEqual(
+            attribution_attempt["outcome"],
+            "fresh_cgroup_guard_attributed_measurement_incomplete",
+        )
+        self.assertEqual(
+            attribution_attempt["measurement"],
+            "incomplete_missing_cancel_requested_callback",
+        )
+        self.assertEqual(attribution_attempt["fresh"], "failed_before_complete_delivery")
+        self.assertEqual(attribution_attempt["restored"], "not_run")
+        self.assertEqual(attribution_attempt["replay"], "not_run")
+        self.assertEqual(attribution_attempt["cleanup"], "proven")
+        self.assertEqual(attribution_attempt["retry_count"], 0)
 
     def test_release_gate_statuses_and_evidence_are_reviewable(self):
         allowed = set(self.matrix["status_definitions"])
@@ -66,21 +81,22 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_step_is_offline_recommendation_not_runtime_authorization(self):
+    def test_next_step_is_main_review_not_runtime_authorization(self):
         step = self.matrix["next_step"]
-        self.assertEqual(step["kind"], "fresh_only_attribution_calibration")
+        self.assertEqual(step["kind"], "main_review_attribution_incomplete")
         self.assertEqual(step["fixture"], "07")
         self.assertEqual(step["modes"], ["fresh"])
         self.assertEqual(step["execution_mode"], "process")
         self.assertEqual(step["phase"], "yolo-attribution-b")
-        self.assertTrue((ROOT / step["runner"]).is_file())
-        self.assertTrue((ROOT / step["collector"]).is_file())
-        self.assertTrue((ROOT / step["offline_manifest"]).is_file())
+        self.assertTrue((ROOT / step["result"]).is_file())
+        self.assertTrue((ROOT / step["evidence"]).is_file())
         self.assertFalse(step["runtime_authorized"])
+        self.assertFalse(step["automatic_retry"])
+        self.assertTrue(step["requires_reviewed_measurement_fix"])
         self.assertTrue(step["requires_explicit_capacity_authorization"])
         self.assertTrue(step["keep_current_guard"])
         self.assertFalse(step["raise_guard_from_matrix_a"])
-        self.assertTrue((ROOT / step["plan"]).is_file())
+        self.assertTrue(step["restored_and_replay_gated"])
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()
@@ -107,11 +123,11 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(row[6], fixture["q04_fresh_index"])
 
         step = self.matrix["next_step"]
-        plan = (ROOT / step["plan"]).read_text()
-        self.assertIn("grants no runtime", plan)
-        self.assertIn("fixture 07 **fresh only**", plan)
-        self.assertIn("4,294,967,296 B (4 GiB)", plan)
-        self.assertIn("no automatic retry", plan)
+        result = (ROOT / step["result"]).read_text()
+        self.assertIn("INCOMPLETE attribution contract", result)
+        self.assertIn("`cancel_requested`", result)
+        self.assertIn("No retry", result)
+        self.assertIn("4 GiB", result)
 
 
 if __name__ == "__main__":

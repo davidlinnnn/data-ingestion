@@ -27,3 +27,12 @@ identity/idle checks, unchanged capacity guards, a final five-minute cleanup
 reserve, and restoration of original replicas and health on every exit.
 That direct instruction explicitly superseded the preparation-only restriction.
 Only the later, directly authorized attempt described here executed.
+
+## Other retained Q04 windows
+
+- [YOLO matrix A](yolo-matrix-a/RESULTS.md) stopped on the unchanged 4 GiB
+  shared-cgroup guard before complete delivery.
+- [YOLO attribution B](yolo-attribution-b/RESULTS.md) reproduced the bounded
+  fresh-only guard stop and narrowed the peak to owned warm-parser/fresh-child
+  overlap. Its controller cancellation-marker contract was incomplete, so it
+  is diagnostic evidence rather than an acceptance pass.
