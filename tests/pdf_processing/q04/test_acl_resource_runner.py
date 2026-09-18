@@ -323,18 +323,68 @@ class AclResourceRunner(unittest.TestCase):
             REMOTE + "/runner-acl-fresh-resource-v1/acl_fresh_measure.py",
             "--state",
             REMOTE + "/state",
+            "--name",
+            "acl-fresh-resource-v1",
         ]
-        self.assertTrue(is_owned_controller(args, root, reviewed))
+        self.assertTrue(
+            is_owned_controller(args, root, reviewed, "acl-fresh-resource-v1")
+        )
         self.assertFalse(
             is_owned_controller(
-                [args[0], args[1] + ".copy", "--state", args[3]], root, reviewed
+                [args[0], args[1] + ".copy", *args[2:]],
+                root,
+                reviewed,
+                "acl-fresh-resource-v1",
             )
         )
         self.assertFalse(
             is_owned_controller(
-                [args[0], args[1], "--state", REMOTE + "-other/state"],
+                [
+                    args[0],
+                    args[1],
+                    "--state",
+                    REMOTE + "-other/state",
+                    "--name",
+                    "acl-fresh-resource-v1",
+                ],
                 root,
                 reviewed,
+                "acl-fresh-resource-v1",
+            )
+        )
+        self.assertFalse(is_owned_controller(args, root, reviewed, "old-phase"))
+        self.assertFalse(
+            is_owned_controller(
+                [args[0], "/unowned" + args[1], *args[2:]],
+                root,
+                reviewed,
+                "acl-fresh-resource-v1",
+            )
+        )
+        relative = [
+            args[0],
+            "tests/pdf_processing/q04/q04_runtime.py",
+            "--state",
+            REMOTE + "/state",
+            "--name",
+            "acl-fresh-resource-v1",
+        ]
+        self.assertTrue(
+            is_owned_controller(
+                relative,
+                root,
+                ("q04/q04_runtime.py",),
+                "acl-fresh-resource-v1",
+                cwd=REMOTE + "/code",
+            )
+        )
+        self.assertFalse(
+            is_owned_controller(
+                relative,
+                root,
+                ("q04/q04_runtime.py",),
+                "acl-fresh-resource-v1",
+                cwd=REMOTE + "/other",
             )
         )
         runner_source = Path(resource_runner.__file__).read_text()

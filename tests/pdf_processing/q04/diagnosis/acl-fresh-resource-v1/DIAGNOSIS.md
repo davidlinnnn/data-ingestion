@@ -128,8 +128,18 @@ The future ACL resource runner stages this reviewed `q04_runtime.py` beside its
 driver and places that runner directory first on `PYTHONPATH`; the frozen
 producer tree and bundle remain untouched.
 
+The other five sentinel runners changed only their outer cleanup call to identify
+the phase. They are retained, already-consumed historical harnesses and do not
+stage this pre-submit-intent runtime adapter. They must not be presented as having
+submit-before-record recovery and are not approved for re-execution. A future
+runtime identity must start from a separately reviewed runner after main decides
+the ACL graph disposition.
+
 The fake-client suite covers stale historical typed `NOT_FOUND`, a running
 current record, the intent-backed submit/record gap, unexpected active history,
 an unregistered running discovery, non-typed transport failure, current-owned
-missing, and foreign-run isolation. All tests are local and perform no live
+missing, foreign-run isolation, and cross-owner workflow-ID collision. The
+fake-process suite covers exact current cleanup, retained historical/unowned
+controllers, workers, parsers and scratch, PID reuse, duplicate owner records,
+and ambiguous controller identity. All tests are local and perform no live
 Temporal, parser, inference, Kubernetes, or object-storage operation.
