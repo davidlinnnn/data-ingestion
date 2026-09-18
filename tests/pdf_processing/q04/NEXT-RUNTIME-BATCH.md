@@ -10,9 +10,10 @@ run, AIMA, WikiSkill, native, warm, invalidation, guard, drain or Pod work.
 YOLO is the smallest fixture that has no reusable integrated-producer run. It adds
 six tables with the retained complete 60-cell audit, nine captions, four required
 OCR components and the source-scoped U+0002/discretionary-spacing disposition.
-Keynote and ACL already have accepted Q04 runs. AIMA's 12-page Q03 run is reusable
-after exact identity reconciliation, so repeating it now would close less new
-evidence. WikiSkill is 28 pages and native is 51 pages.
+Keynote and ACL already have accepted Q04 runs. AIMA's 12-page Q03 run remains
+useful historical reference evidence, but its full Q04 profile/harness identity
+differs and its Q04 runtime rows remain open. YOLO still closes the smallest
+wholly unrun integrated fixture. WikiSkill is 28 pages and native is 51 pages.
 
 Historical timing is used only to size the window: R3 fresh YOLO took 46.17
 seconds and sampled 1,916,985,344 cgroup bytes; exact replay took 2.03 seconds.
@@ -45,6 +46,11 @@ reservation, runs the semantic runner only after admission, reserves the cleanup
 tail on every exit and captures the owned evidence. Any change to the launcher,
 semantic runner, bundle, reference, producer, packages, models, profile or source
 state requires a new review.
+
+The retained ACL snapshot has now exercised the generated old-binding, staging
+and init probes offline, plus the launcher's real CLI parser and exact execution
+argv. See `preflight/yolo-matrix-a/OFFLINE-RESULTS.md`. This preflight did not
+start a runtime, workflow or inference and does not authorize the batch.
 
 The exact invocation after a new authorization is:
 

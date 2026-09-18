@@ -51,3 +51,11 @@ original A–C manifest remains INCOMPLETE; trial D supplements rather than rewr
 The Q03 private artifact audit establishes bytes, not an independent source review
 of every artifact. Original source expectations, source regions and uncertainty
 reviews remain the authority; fresh/restored/warm equality alone is insufficient.
+
+R3 drain evidence crosses the same boundary. Its Pod replacement controller,
+exact-UID fencing, old-runtime/scratch observations and attempt-count oracle are
+reusable methods, but every delivery stage feeding its result is affected here.
+The minimum closing evidence remains one integrated-producer native Pod drain;
+process mode can only qualify worker-process recovery. The executable projection
+and exact evidence hashes are recorded in
+[`reconciliation/DRAIN-REQUALIFICATION.md`](reconciliation/DRAIN-REQUALIFICATION.md).

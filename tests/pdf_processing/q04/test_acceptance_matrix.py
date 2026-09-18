@@ -30,8 +30,9 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         for fixture_id in ("09", "10"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"proven"})
             self.assertEqual(fixtures[fixture_id]["q04_fresh_index"], "proven")
-        self.assertEqual(set(fixtures["08"]["modes"].values()), {"reusable"})
+        self.assertEqual(set(fixtures["08"]["modes"].values()), {"unproven"})
         self.assertEqual(fixtures["08"]["q04_fresh_index"], "unproven")
+        self.assertEqual(fixtures["08"]["historical_reference"], "reusable")
         for fixture_id in ("native", "06", "07"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"unproven"})
 

@@ -17,7 +17,9 @@ rerun authority.
 Keynote and ACL windows without treating the remaining fixtures, warm,
 invalidation, resource or recovery rows as complete. The next proposed single
 runtime batch is the [full 15-page YOLO matrix](NEXT-RUNTIME-BATCH.md); that plan
-is preparation only and grants no runtime authority.
+is preparation only and grants no runtime authority. Its generated pre-runtime
+probes have been exercised locally in the
+[YOLO offline preflight](preflight/yolo-matrix-a/OFFLINE-RESULTS.md).
 #44 remains the final acceptance gate; #45 owns calibration and #46 packaging.
 
 Read [stage impact and evidence reuse](STAGE-IMPACT.md), then the
@@ -67,5 +69,12 @@ The first authorized sentinel and its 20 service pauses are retained in
 failed attempt. The later high-capacity Keynote run and ACL Option A window c are
 accepted only for their bounded three-mode fixture rows. All other attempts and
 failures remain separately indexed in the [sentinel history](sentinel/README.md).
-No ticket closure, branch publication or merge is claimed. The stage-impact/reuse
-decisions remain unchanged; runtime implementation and frozen profiles were not changed.
+No ticket closure, branch publication or merge is claimed. Runtime implementation
+and frozen profiles were not changed.
+
+The [AIMA identity reconciliation](reconciliation/AIMA-IDENTITY.md) keeps Q03 as
+bounded historical reference evidence while leaving all Q04 fixture-08 runtime
+rows open. The [drain reconciliation](reconciliation/DRAIN-REQUALIFICATION.md)
+keeps R3's injection/topology method but requires a newly approved integrated
+native Pod drain to close #51. Neither reconciliation authorizes runtime or a
+Deployment change.

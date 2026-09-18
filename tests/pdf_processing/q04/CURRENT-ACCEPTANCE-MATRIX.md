@@ -14,7 +14,7 @@ acceptance.
 | native | 51 pages | unproven | unproven | unproven | unproven | unproven |
 | WikiSkill `06` | 28 pages | unproven | unproven | unproven | unproven | unproven |
 | YOLO `07` | 15 pages | unproven | unproven | unproven | unproven | unproven |
-| AIMA `08` | original 99–110 | reusable | reusable | reusable | reusable | unproven |
+| AIMA `08` | original 99–110 | unproven | unproven | unproven | unproven | unproven |
 | ACL `09` | original 2–4 | **proven** | **proven** | **proven** | **proven** | **proven** |
 | Keynote `10` | one page | **proven** | **proven** | **proven** | **proven** | **proven** |
 
@@ -24,11 +24,12 @@ equality. Keynote covers 44 items, all 27 reviewed textboxes, one required OCR
 result and exact graph equality. Their process-resource and cleanup observations
 remain bounded to those fixtures.
 
-AIMA's Q03 full cases and trial D used the same 20 production hashes and directly
-proved fresh/new-request reuse/exact replay/evidence variation, four structures,
-localized dispositions and required-relationship interruption/retry/replay. This
-is reusable evidence after an exact identity check. It does not create a Q04
-fresh-index entry, warm result, resource envelope or Pod-loss result. Native,
+AIMA's executable identity reconciliation confirms equal source bytes, 20-file
+producer, method and relationship semantics. It also finds a different full
+profile/release, source object identity and Q04 consumer/oracle harness. Q03's
+four structures, localized dispositions and interruption/retry/replay therefore
+remain reusable historical reference evidence, but do not satisfy Q04
+fresh/restored/replay/full-graph rows or create a Q04 fresh-index entry. Native,
 WikiSkill and YOLO have not run under the integrated Q04 producer, so their R3
 results remain supporting evidence only.
 
@@ -38,8 +39,8 @@ results remain supporting evidence only.
 | --- | --- | --- |
 | Immutable source/producer/profile/method/oracle binding | **proven** | Static audit plus accepted Keynote/ACL run identities |
 | Stage-impact and compatibility projection | **proven** | Executable local dependency audit |
-| Six-fixture complete matrix | unproven | Two proven, one reusable, three not run |
-| Corrected AIMA continuation and four algorithms | reusable | Q03 exact-identity scope; Q04 warm index absent |
+| Six-fixture complete matrix | unproven | Two proven; four Q04 fixture rows remain open |
+| Corrected AIMA continuation and four algorithms | reusable reference | Equal source/producer/method; distinct Q04 profile/harness runtime gates remain open |
 | Evidence-only compatible reuse | reusable | Q03 actual Temporal/store case; never copy registrations |
 | Real assembly/method invalidation | unproven | Local harness only |
 | Old request remains on original route | **proven** | ACL window c re-read retained Keynote binding |
@@ -50,7 +51,7 @@ results remain supporting evidence only.
 | Integrated operating bounds | unproven | Larger fixtures, warm and recovery absent |
 | Active telemetry-loss guard | unproven | Q04 runtime phase not run |
 | Process drain/recovery | unproven | Q04 runtime phase not run |
-| Pod drain/recovery | unproven | Owned Pod/shared-path topology missing |
+| Pod drain/recovery | unproven | R3 method/topology is reusable; integrated native Pod drain and owned topology remain required |
 | Supported-bounds report to #44 | unproven | Depends on remaining runtime rows |
 
 The accepted ACL old-binding check proves that an original request still resolves
