@@ -584,6 +584,53 @@ class CleanupProcessTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["current_scratch_remaining"], [str(scratch)])
         self.assertTrue(any("worker_process_audit" in error for error in errors))
 
+    async def test_absent_worker_with_live_reparented_parser_retains_scratch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _, worker_directory = worker(root, "current", 1, 58)
+            parser = FakeProcess(
+                59,
+                ["python", "-m", "pdf_processing.warm_child"],
+                cwd=str(root / "code"),
+            )
+            scratch = worker_directory / "scratch"
+            scratch.mkdir()
+            report, errors = await self.run_cleanup(root, [parser])
+            scratch_exists = scratch.exists()
+        self.assertTrue(parser.running)
+        self.assertEqual(parser.signals, [])
+        self.assertTrue(scratch_exists)
+        self.assertEqual(report["current_scratch_remaining"], [str(scratch)])
+        self.assertEqual(report["workers"][0]["descendant_absence"], "unproven")
+        self.assertTrue(
+            any("worker_descendant_absence_unproven" in error for error in errors)
+        )
+        self.assertTrue(any("unexpected_active_process" in error for error in errors))
+
+    async def test_zombie_worker_with_exact_stopped_proof_allows_scratch_cleanup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            zombie, worker_directory = worker(root, "current", 2, 61)
+            zombie.running = False
+            (worker_directory / "stopped.json").write_text(
+                json.dumps(
+                    {
+                        "pid": 61,
+                        "generation": 2,
+                        "parser_absent": True,
+                        "scratch_absent": False,
+                    }
+                )
+            )
+            scratch = worker_directory / "scratch"
+            scratch.mkdir()
+            report, errors = await self.run_cleanup(root, [zombie])
+            scratch_exists = scratch.exists()
+        self.assertEqual(errors, [])
+        self.assertFalse(scratch_exists)
+        self.assertEqual(report["current_scratch_remaining"], [])
+        self.assertTrue(report["workers"][0]["stopped"]["parser_absent"])
+
     async def test_worker_recorded_by_two_phases_is_never_signalled(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

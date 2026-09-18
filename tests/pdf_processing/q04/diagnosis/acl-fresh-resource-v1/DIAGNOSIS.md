@@ -141,5 +141,6 @@ an unregistered running discovery, non-typed transport failure, current-owned
 missing, foreign-run isolation, and cross-owner workflow-ID collision. The
 fake-process suite covers exact current cleanup, retained historical/unowned
 controllers, workers, parsers and scratch, PID reuse, duplicate owner records,
-and ambiguous controller identity. All tests are local and perform no live
+ambiguous controller identity, reparented parser retention, and exact terminal
+proof before deleting scratch for an already absent worker. All tests are local and perform no live
 Temporal, parser, inference, Kubernetes, or object-storage operation.

@@ -262,6 +262,22 @@ def live(process, psutil):
         return False
 
 
+def stopped_proves_descendant_absence(worker_directory, owner):
+    """Accept only the worker's exact terminal proof for descendant absence."""
+    proof=worker_directory/'stopped.json'
+    if not proof.is_file():
+        return None
+    try:
+        stopped=json.loads(proof.read_text())
+    except (ValueError,json.JSONDecodeError):
+        return None
+    if (stopped.get('pid') != owner['pid']
+            or stopped.get('generation') != owner['generation']
+            or stopped.get('parser_absent') is not True):
+        return None
+    return stopped
+
+
 async def cleanup_processes(psutil, root, current_phase, controller_scripts,
                             report, errors):
     """Mutate only processes and scratch with exact current-phase ownership.
@@ -403,13 +419,30 @@ async def cleanup_processes(psutil, root, current_phase, controller_scripts,
             except psutil.NoSuchProcess:
                 if phase == current_phase:
                     row['scope']='current';row['already_absent']=True
-                    verified_worker_directories.add(path.parent)
+                    stopped=stopped_proves_descendant_absence(path.parent,owner)
+                    row['stopped']=stopped
+                    if stopped is not None:
+                        verified_worker_directories.add(path.parent)
+                    else:
+                        row['descendant_absence']='unproven'
+                        errors.append({'worker_descendant_absence_unproven':row})
                     report['workers'].append(row)
                 continue
             if not live(process,psutil):
                 if phase == current_phase:
                     row['scope']='current';row['already_absent']=True
-                    verified_worker_directories.add(path.parent)
+                    if process.create_time() != owner['created']:
+                        row['scope']='current_dead_pid_reused'
+                        errors.append({'process_ownership_invalid':row})
+                        report['workers'].append(row)
+                        continue
+                    stopped=stopped_proves_descendant_absence(path.parent,owner)
+                    row['stopped']=stopped
+                    if stopped is not None:
+                        verified_worker_directories.add(path.parent)
+                    else:
+                        row['descendant_absence']='unproven'
+                        errors.append({'worker_descendant_absence_unproven':row})
                     report['workers'].append(row)
                 continue
             snapshot=process_snapshot(process)
@@ -591,7 +624,7 @@ async def main(location, controller_scripts=('q04/q04_runtime.py',), current_pha
         'process_ownership_invalid','current_scratch_ownership_ambiguous',
         'worker_processes_still_running','controller_process_audit',
         'worker_process_audit','parser_process_audit','controller_still_running',
-        'controller_forced','worker_forced',
+        'controller_forced','worker_forced','worker_descendant_absence_unproven',
     }
     assert not any(isinstance(e,dict) and (
         workflow_failures.intersection(e) or ('worker' in e and 'error' in e)

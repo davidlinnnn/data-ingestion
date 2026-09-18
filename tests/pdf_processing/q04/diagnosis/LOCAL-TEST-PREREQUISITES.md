@@ -39,7 +39,7 @@ review a narrow fixture-root injection. Do not substitute current ACL output or
 derive a new evidence report from it.
 
 Before this correction, main observed 100 tests with 97 passing and these same
-three errors. After adding eleven ownership regressions, local process enumeration
-produced 111 tests with 108 passing and the same three errors—one missing AIMA path
+three errors. After adding thirteen ownership regressions, local process enumeration
+produced 113 tests with 110 passing and the same three errors—one missing AIMA path
 and two tests opening the same missing fixture-09 evidence file. They are fixture
 setup errors, not assertion regressions in this cleanup change.
