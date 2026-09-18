@@ -22,6 +22,7 @@ _fresh_children = set()
 
 
 async def _stop_children(children):
+    first_error = None
     for process in tuple(children):
         try:
             os.killpg(process.pid, signal.SIGKILL)
@@ -30,14 +31,36 @@ async def _stop_children(children):
         try:
             await asyncio.wait_for(process.wait(), 5)
         except TimeoutError as error:
-            raise FreshChildReapFailure('fresh_child_reap_failed') from error
-        children.discard(process)
-        _fresh_children.discard(process)
+            if first_error is None:
+                first_error = FreshChildReapFailure('fresh_child_reap_failed')
+                first_error.__cause__ = error
+        else:
+            children.discard(process)
+            _fresh_children.discard(process)
+    if first_error is not None:
+        raise first_error
 
 
 async def stop_fresh_children():
     """Worker-shutdown backstop for every fresh child in this event loop."""
     await _stop_children(_fresh_children)
+
+
+async def stop_owned_children(parser, reason='worker_shutdown'):
+    """Attempt every parser cleanup before propagating the first failure."""
+    first_error = None
+    if parser is not None:
+        try:
+            await parser.close(reason)
+        except BaseException as error:
+            first_error = error
+    try:
+        await stop_fresh_children()
+    except BaseException as error:
+        if first_error is None:
+            first_error = error
+    if first_error is not None:
+        raise first_error
 
 
 class ChildFailure(RuntimeError):

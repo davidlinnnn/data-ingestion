@@ -27,7 +27,7 @@ async def run(config_path, out, generation):
     from pdf_processing.object_store import Store
     from pdf_processing.processing import Processing
     from pdf_processing.supervision import WarmParser
-    from pdf_processing.execution import stop_fresh_children
+    from pdf_processing.execution import stop_owned_children
 
     config = json.loads(config_path.read_text())
     import pdf_processing
@@ -79,14 +79,19 @@ async def run(config_path, out, generation):
             await stop.wait()
     finally:
         stop.set()
-        await parser.close()
-        await stop_fresh_children()
+        cleanup_error = None
+        try:
+            await stop_owned_children(parser)
+        except BaseException as error:
+            cleanup_error = error
         await asyncio.gather(sampler, return_exceptions=True)
         import shutil
         shutil.rmtree(scratch, ignore_errors=True)
         (out/'stopped.json').write_text(json.dumps({'pid': os.getpid(), 'time': time.time(),
             'generation': generation, 'parser_absent': parser.process is None,
             'scratch_absent': not scratch.exists(), 'sampler_errors': sampler_error}))
+        if cleanup_error is not None:
+            raise cleanup_error
     require(not sampler_error, 'sampler failed')
 
 

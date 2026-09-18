@@ -186,6 +186,52 @@ class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
+    async def test_shutdown_attempts_every_fresh_child_after_reap_timeout(self):
+        class Process:
+            returncode = None
+
+            def __init__(self, pid, fail):
+                self.pid = pid
+                self.fail = fail
+
+            async def wait(self):
+                if self.fail:
+                    raise TimeoutError
+                self.returncode = -9
+
+        stuck = Process(4242, True)
+        reaped = Process(4343, False)
+        children = {stuck, reaped}
+        execution_module._fresh_children.update(children)
+        try:
+            with mock.patch("pdf_processing.execution.os.killpg") as kill:
+                with self.assertRaisesRegex(Exception, "fresh_child_reap_failed"):
+                    await execution_module._stop_children(children)
+            self.assertEqual(
+                {call.args[0] for call in kill.call_args_list}, {4242, 4343}
+            )
+            self.assertEqual(children, {stuck})
+            self.assertIn(stuck, execution_module._fresh_children)
+            self.assertNotIn(reaped, execution_module._fresh_children)
+        finally:
+            execution_module._fresh_children.difference_update(children)
+
+    async def test_shutdown_attempts_fresh_cleanup_after_warm_close_failure(self):
+        class Parser:
+            async def close(self, reason):
+                self.reason = reason
+                raise RuntimeError("synthetic warm close failure")
+
+        parser = Parser()
+        with mock.patch(
+            "pdf_processing.execution.stop_fresh_children",
+            new=mock.AsyncMock(),
+        ) as stop_fresh:
+            with self.assertRaisesRegex(RuntimeError, "synthetic warm close failure"):
+                await execution_module.stop_owned_children(parser)
+        self.assertEqual(parser.reason, "worker_shutdown")
+        stop_fresh.assert_awaited_once_with()
+
     async def test_restore_waits_for_handoff_before_spawning_and_propagates_spawn_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

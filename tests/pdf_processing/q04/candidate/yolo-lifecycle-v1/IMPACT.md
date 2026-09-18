@@ -9,18 +9,21 @@ and oracles are byte-identical. The producer and harness hash maps in
 `inputs.json` are regenerated for the candidate; the source bundle is untouched.
 The candidate bundle passes the same `prepare.verify_bundle()` used by runtime
 initialization, including the candidate cancellation adapter.
+The bound worker files use best-effort owned-process cleanup: a failed warm
+reap cannot skip fresh-child cleanup, and one failed fresh reap cannot skip the
+remaining owned children.
 
 | Changed source | Behavior | Direct stage identities | Evidence consequence |
 | --- | --- | --- | --- |
 | `supervision.py` | Owns a fresh-child handoff lock; reaps idle warm parser; blocks rebuild until fresh child exits; fails closed if an owned process cannot be reaped | group, assembly | Old warm PID/recycle evidence is incompatible; group and assembly registrations cannot be transplanted |
-| `execution.py` | Wraps restore child spawn, completion, exception and cancellation in the handoff; retains ownership and drains the worker if fresh-child exit is unconfirmed | group, assembly | Old group/assembly producer identities are rejected |
+| `execution.py` | Wraps restore child spawn, completion, exception and cancellation in the handoff; retains ownership and closes the shared parser if fresh-child exit is unconfirmed | group, assembly | Old group/assembly producer identities are rejected |
 | `compatibility.py` | Adds `supervision.py` to assembly dependency projection | assembly | A lifecycle change cannot reuse an old assembly identity |
 | `parse.py` | Documents the enforced fresh-assembly lifecycle | group, assembly | Hash-bound producer changes conservatively with the behavior |
 
 The full producer manifest SHA-256 is
-`dbfd558d1f9be7a0bd196af5a0fc61008b499370aee1f8e9d5b07f80ab926ce4`.
+`070cd429903a2c126412af60856b6c84aa72ae1e7f7655dd0e3d0bacfdf93b28`.
 The candidate `inputs.json` SHA-256 is
-`026884abc5f46f3cb94d213b0290d0693d3f5b4a5cb0bc022482e1fb1a3567c2`.
+`d56a92c920c1267f9e4ff9ce021a6e944c0b63d30b90783f955492d01b81aaf1`.
 The exact file map is in [`MANIFEST.json`](MANIFEST.json).
 
 Every new request must be initialized under a new object prefix and derives a

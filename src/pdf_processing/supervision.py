@@ -64,10 +64,10 @@ class WarmParser:
         self.process = None
         self.count = 0
 
-    async def close(self):
+    async def close(self, reason='worker_shutdown'):
         self.closed = True
         async with self.lock:
-            await self.stop('worker_shutdown')
+            await self.stop(reason)
 
     def fail_closed(self, reason):
         """Prevent parser reuse after another child cannot be reaped."""

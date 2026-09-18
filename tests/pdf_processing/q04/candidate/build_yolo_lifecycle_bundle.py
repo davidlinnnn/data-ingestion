@@ -18,6 +18,7 @@ EXPECTED_CHANGED_PRODUCER_FILES = {
     "supervision.py",
 }
 REQUIRED_CANDIDATE_HARNESS_FILES = {
+    "deploy/pdf-processing/worker.py",
     "tests/pdf_processing/q04/candidate/yolo_lifecycle.py",
     "tests/pdf_processing/q04/candidate/yolo_candidate_measure.py",
 }
