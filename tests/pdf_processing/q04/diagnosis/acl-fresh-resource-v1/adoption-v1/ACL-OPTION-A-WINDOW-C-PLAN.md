@@ -1,12 +1,16 @@
 # ACL fixture 09 Option A window c plan
 
-**Status: PREPARED FOR A NEW AUTHORIZATION, NOT AUTHORIZED.** The first window-c
+**Status: CONSUMED; BOUNDED RUNTIME PASS. Do not execute this plan again.** A
+new authorization subsequently ran the reviewed launcher and all three fixture09
+modes passed. See `sentinel/acl-option-a-window-c/RESULTS.md`. The phase, root,
+prefix and evidence path are now consumed and must not be reused or overwritten.
+The first window-c
 authorization was consumed by an argument-validation invocation that exited 2
 before runner entry. No window-c identity was created and every runtime phase was
 `NOT_RUN`; see `sentinel/acl-option-a-window-c-invocation/RESULTS.md`. A later
 attempt intentionally reuses the still-unused c root, prefix, phase and evidence
-path, but requires a new explicit single-run authorization and all live gates
-must be rechecked. Window b remains the
+path, but required a new explicit single-run authorization and all live gates
+to be rechecked. Window b remains the
 immutable `PRECHECK_FAILED_NO_RUNTIME` attempt documented under
 `sentinel/acl-option-a-window-b/`. Its phase, root, prefix and evidence location
 are consumed and must not be reused or overwritten.
@@ -21,9 +25,10 @@ are consumed and must not be reused or overwritten.
 - Bundle: `/private/tmp/q04-inputs-option-a-v7`
 - Fixture and modes: fixture 09 fresh, restored/new request and exact replay only
 
-The root, prefix and local evidence path are currently absent. The runner creates
-a new run ID and frozen state only after a future authorization, reservation and
-staging pass. It does not copy old registrations or a prior run ID. No warm,
+At preparation time the root, prefix and local evidence path were absent. The
+authorized run subsequently created a new run ID and frozen state after
+reservation and staging passed. It did not copy old registrations or a prior run
+ID. No warm,
 resource, drain, other fixture, service scaling, publication, push, merge or issue
 closure is in scope.
 
@@ -54,15 +59,14 @@ T09a health plus all 32 held Deployments.
 All three modes must complete and agree on the adopted exact graph, 40/69/21
 quality coverage, six formulas, equation 2 as `TextItem`, two required OCR
 results, captions, source evidence and full graph. Exact replay must retain the
-fresh request identity. This would be bounded fixture 09 evidence only and would
-not complete Q04 or #51.
+fresh request identity. The resulting PASS is bounded fixture 09 evidence only
+and does not complete Q04 or #51.
 
-## Exact future command
+## Executed command shape
 
 The command below uses a separate `export` followed by a fixed launcher, avoiding
-same-command environment assignment and expansion. It must not be run until main
-records a new explicit runtime authorization for this window. The literal then
-records that authorization's bounded context.
+same-command environment assignment and expansion. It is retained for audit and
+must not be run again.
 
 ```sh
 cd /private/tmp/q04-acceptance
@@ -71,6 +75,7 @@ unset Q04_ARGV_CAPTURE Q04_CAPTURE_STUB Q04_CAPTURE_OUTPUT
 tests/pdf_processing/q04/sentinel/run_acl_option_a_c.sh
 ```
 
-Before execution, main must review the fixed runner commit and recheck the
-container/boot identity, OOM counters, T09a health, 32 held Deployments, unused
-root/prefix/evidence identities and free global qualification lock.
+Before execution, main reviewed the fixed runner commit; the runner then
+rechecked container/boot identity, OOM counters, T09a health, all 32 held
+Deployments, unused root/prefix/evidence identities and the free global
+qualification lock.
