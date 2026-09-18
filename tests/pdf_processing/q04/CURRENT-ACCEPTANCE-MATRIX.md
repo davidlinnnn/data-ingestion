@@ -79,4 +79,5 @@ No runtime batch is currently authorized. The offline
 [YOLO resource diagnosis](diagnosis/yolo-matrix-a/ANALYSIS.md) recommends one
 fresh-only attribution calibration, still using the current guard, before another
 full matrix. Its [measurement options](diagnosis/yolo-matrix-a/NEXT-MEASUREMENT.md)
-do not authorize a run or a threshold change.
+and [prepared attribution-B plan](preflight/yolo-attribution-b/PLAN.md) do not
+authorize a run or a threshold change.

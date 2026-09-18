@@ -5,6 +5,11 @@ reservation are consumed. Any measurement needs a new phase, prefix, root,
 capacity record and explicit main-session window. Keep the 32 historical
 Deployments closed and main-owned.
 
+The reviewable offline implementation is
+[`preflight/yolo-attribution-b/PLAN.md`](../../preflight/yolo-attribution-b/PLAN.md),
+with phase `yolo-attribution-b`, a new root/prefix, fixed source hashes and
+synthetic collector tests. Its presence still grants no runtime authorization.
+
 ## Recommended first measurement
 
 Run one **fresh-only fixture 07 attribution calibration** before another

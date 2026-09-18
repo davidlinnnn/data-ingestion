@@ -72,6 +72,10 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(step["fixture"], "07")
         self.assertEqual(step["modes"], ["fresh"])
         self.assertEqual(step["execution_mode"], "process")
+        self.assertEqual(step["phase"], "yolo-attribution-b")
+        self.assertTrue((ROOT / step["runner"]).is_file())
+        self.assertTrue((ROOT / step["collector"]).is_file())
+        self.assertTrue((ROOT / step["offline_manifest"]).is_file())
         self.assertFalse(step["runtime_authorized"])
         self.assertTrue(step["requires_explicit_capacity_authorization"])
         self.assertTrue(step["keep_current_guard"])
@@ -104,10 +108,10 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
         step = self.matrix["next_step"]
         plan = (ROOT / step["plan"]).read_text()
-        self.assertIn("grants no runtime authorization", plan)
-        self.assertIn("fresh-only fixture 07 attribution calibration", plan)
-        self.assertIn("4 GiB active cgroup guard", plan)
-        self.assertIn("Do not automatically retry or raise the guard", plan)
+        self.assertIn("grants no runtime", plan)
+        self.assertIn("fixture 07 **fresh only**", plan)
+        self.assertIn("4,294,967,296 B (4 GiB)", plan)
+        self.assertIn("no automatic retry", plan)
 
 
 if __name__ == "__main__":

@@ -119,3 +119,12 @@ log, and original runtime evidence remains unchanged.
 
 Final independent Spec recheck verified all 13 evidence hashes and three script
 hashes: zero residual findings. Standards residual findings: zero.
+
+## Later YOLO attribution preparation
+
+After retained matrix A crossed the unchanged 4 GiB guard, the offline
+[`yolo-attribution-b/PLAN.md`](yolo-attribution-b/PLAN.md) prepared a fresh-only
+diagnostic runner and strict external collector. It uses a new identity, retains
+unknown/incomplete process reads, and makes no Activity-start claim from workflow
+scheduling or external filesystem observations. This later preparation also
+grants no runtime or capacity authorization.
