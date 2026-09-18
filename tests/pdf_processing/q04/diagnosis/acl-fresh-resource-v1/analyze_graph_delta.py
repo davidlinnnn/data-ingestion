@@ -22,6 +22,7 @@ COLLECTIONS = (
     "form_items",
 )
 GRAPH_KEYS = ("body", "furniture", *COLLECTIONS, "pages")
+SPLIT_FIELDS = frozenset({"self_ref", "text", "orig", "prov"})
 
 
 def _canonical(value: Any) -> str:
@@ -47,6 +48,11 @@ def _ref(value: dict[str, Any] | None) -> str | None:
     return value.get("$ref", value.get("cref"))
 
 
+def _split_metadata(node: dict[str, Any]) -> dict[str, Any]:
+    """Fields that a source-region split is not allowed to change or discard."""
+    return {key: value for key, value in node.items() if key not in SPLIT_FIELDS}
+
+
 def _remap(value: Any, mapping: dict[str, str]) -> Any:
     if isinstance(value, dict):
         result = {}
@@ -58,24 +64,28 @@ def _remap(value: Any, mapping: dict[str, str]) -> Any:
                 result[normalized_key] = _remap(child, mapping)
         return result
     if isinstance(value, list):
-        result = [_remap(child, mapping) for child in value]
-        # A split node creates two adjacent reading-order edges that both map to
-        # the one historical node.  Collapse only those adjacent duplicate refs.
-        collapsed = []
-        for child in result:
-            if (
-                collapsed
-                and isinstance(child, dict)
-                and set(child) == {"$ref"}
-                and child == collapsed[-1]
-            ):
-                continue
-            collapsed.append(child)
-        return collapsed
+        return [_remap(child, mapping) for child in value]
     return value
 
 
-def _rebase_provenance(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _without_reviewed_split_edge(
+    body: dict[str, Any], split_ids: list[str]
+) -> dict[str, Any]:
+    """Remove only the second body edge created by the one reviewed split."""
+    result = copy.deepcopy(body)
+    children = result.get("children", [])
+    matches = [
+        index
+        for index in range(len(children) - 1)
+        if [_ref(children[index]), _ref(children[index + 1])] == split_ids
+    ]
+    if len(matches) != 1:
+        raise AssertionError("reviewed split body edge is absent or ambiguous")
+    children.pop(matches[0] + 1)
+    return result
+
+
+def rebase_provenance(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result = []
     offset = 0
     for index, node in enumerate(nodes):
@@ -136,6 +146,10 @@ def analyze(reference: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]
                 f"expected one unique two-node split for {reference_node['self_ref']}"
             )
         pair = candidates[0]
+        if _split_metadata(pair[0]) != _split_metadata(pair[1]):
+            raise AssertionError(
+                "split fragments differ outside self_ref/text/orig/prov"
+            )
         for node in pair:
             mapping[node["self_ref"]] = reference_node["self_ref"]
         split = {
@@ -147,7 +161,7 @@ def analyze(reference: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]
             "actual_parents": [_ref(node.get("parent")) for node in pair],
             "reference_provenance": reference_node["prov"],
             "actual_provenance": [node["prov"] for node in pair],
-            "rebased_actual_provenance": _rebase_provenance(pair),
+            "rebased_actual_provenance": rebase_provenance(pair),
             "reference_reading_order": reference["body"]["children"].index(
                 {"$ref": reference_node["self_ref"]}
             ),
@@ -180,7 +194,7 @@ def analyze(reference: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]
             merged = copy.deepcopy(pair[0])
             merged["text"] = " ".join(item.get("text", "") for item in pair)
             merged["orig"] = " ".join(item.get("orig", "") for item in pair)
-            merged["prov"] = _rebase_provenance(pair)
+            merged["prov"] = rebase_provenance(pair)
             normalized_texts.append(_remap(merged, mapping))
             index += 2
             continue
@@ -191,6 +205,11 @@ def analyze(reference: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]
     for key in GRAPH_KEYS:
         if key == "texts":
             normalized_actual[key] = normalized_texts
+        elif key == "body":
+            normalized_actual[key] = _remap(
+                _without_reviewed_split_edge(actual.get(key, {}), split_ids),
+                mapping,
+            )
         else:
             normalized_actual[key] = _remap(
                 actual.get(key, {} if key in ("body", "furniture", "pages") else []),

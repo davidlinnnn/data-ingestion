@@ -102,7 +102,11 @@ class AclOptionACandidateTests(unittest.TestCase):
             self.assertIn("charspan", node["prov"][0])
             self.assertEqual(entry["maps_to"], "#/texts/97")
 
-    def test_negative_graph_mutations_are_rejected(self):
+    def test_byte_integrity_rejects_mutation_before_semantic_review(self):
+        with self.assertRaisesRegex(ValueError, "candidate file hash changed"):
+            self.verify(self.candidate_raw + b" ")
+
+    def test_semantic_negative_matrix_reaches_specific_relational_checks(self):
         original = json.loads(self.candidate_raw)
 
         missing_fragment = copy.deepcopy(original)
@@ -130,37 +134,74 @@ class AclOptionACandidateTests(unittest.TestCase):
         unexpected_extra["body"]["children"].append({"$ref": "#/texts/128"})
 
         mutations = {
-            "missing fragment": missing_fragment,
-            "missing provenance": missing_provenance,
-            "changed text": changed_text,
-            "wrong order": wrong_order,
-            "wrong parent": wrong_parent,
-            "unexpected extra node": unexpected_extra,
+            "missing fragment": (missing_fragment, "reviewed fragment missing"),
+            "missing provenance": (
+                missing_provenance,
+                "split provenance does not reconstruct reference",
+            ),
+            "changed text": (
+                changed_text,
+                "split text does not reconstruct reference",
+            ),
+            "wrong order": (wrong_order, "split reading order changed"),
+            "wrong parent": (wrong_parent, "split parent changed"),
+            "unexpected extra node": (
+                unexpected_extra,
+                "candidate text count is not one greater than reference",
+            ),
         }
-        for name, candidate in mutations.items():
-            with self.subTest(name=name), self.assertRaises(ValueError):
-                self.verify(
-                    (json.dumps(candidate, ensure_ascii=False, separators=(",", ":")) + "\n").encode()
-                )
+        for name, (candidate, reason) in mutations.items():
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, reason):
+                BUILD.reviewed_delta(self.reference, candidate)
 
     def test_relational_delta_proof_rejects_non_split_graph_changes(self):
         original = json.loads(self.candidate_raw)
 
         changed_group = copy.deepcopy(original)
         changed_group["groups"][0]["children"] = []
-        group_result = BUILD.GRAPH_DELTA.analyze(self.reference, changed_group)
-        self.assertIn(
-            "groups",
-            group_result["remaining_changed_collections_after_diagnostic_normalization"],
-        )
+        with self.assertRaisesRegex(
+            ValueError, "additional graph differences remain: groups"
+        ):
+            BUILD.reviewed_delta(self.reference, changed_group)
 
         changed_parent = copy.deepcopy(original)
         changed_parent["texts"][96]["parent"] = {"$ref": "#/groups/1"}
-        parent_result = BUILD.GRAPH_DELTA.analyze(self.reference, changed_parent)
-        self.assertIn(
-            "texts",
-            parent_result["remaining_changed_collections_after_diagnostic_normalization"],
+        with self.assertRaisesRegex(
+            ValueError, "additional graph differences remain: texts"
+        ):
+            BUILD.reviewed_delta(self.reference, changed_parent)
+
+    def test_second_fragment_metadata_and_edges_are_not_discarded(self):
+        original = json.loads(self.candidate_raw)
+        metadata = copy.deepcopy(original)
+        metadata["texts"][98]["content_layer"] = "furniture"
+        edge = copy.deepcopy(original)
+        edge["texts"][98]["children"] = [{"$ref": "#/texts/0"}]
+
+        for name, candidate in {"metadata": metadata, "edge": edge}.items():
+            with self.subTest(name=name), self.assertRaisesRegex(
+                ValueError,
+                "reviewed relational proof failed: split fragments differ outside",
+            ):
+                BUILD.reviewed_delta(self.reference, candidate)
+
+    def test_only_the_one_reviewed_split_edge_is_collapsed(self):
+        original = json.loads(self.candidate_raw)
+        third_split_edge = copy.deepcopy(original)
+        third_split_edge["body"]["children"].insert(18, {"$ref": "#/texts/98"})
+        non_split_duplicate = copy.deepcopy(original)
+        non_split_duplicate["body"]["children"].append(
+            copy.deepcopy(non_split_duplicate["body"]["children"][-1])
         )
+
+        for name, candidate in {
+            "third split edge": third_split_edge,
+            "non-split duplicate edge": non_split_duplicate,
+        }.items():
+            with self.subTest(name=name), self.assertRaisesRegex(
+                ValueError, "additional graph differences remain: body"
+            ):
+                BUILD.reviewed_delta(self.reference, candidate)
 
     def test_other_fixtures_and_q01_anchors_are_bound_unchanged(self):
         candidate_quality = json.loads(self.quality_raw)

@@ -1,5 +1,6 @@
 """Deterministic offline checks for the retained ACL graph delta."""
 
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -69,6 +70,37 @@ class AclGraphDiagnosisTests(unittest.TestCase):
         self.assertEqual(
             retained["current_provenance"]["actual_method_sha256"],
             "e75b3287bbb2423e12108559fd6de0677c9c96789bf48f93797ca44c0c9bb8e2",
+        )
+
+    def test_split_does_not_discard_second_fragment_metadata_or_edges(self):
+        fixture = json.loads(
+            (DIAGNOSIS / "evidence/page2-split-repro.json").read_text()
+        )
+        mutations = {}
+        metadata = copy.deepcopy(fixture["actual"])
+        metadata["texts"][1]["content_layer"] = "furniture"
+        mutations["metadata"] = metadata
+        edge = copy.deepcopy(fixture["actual"])
+        edge["texts"][1]["children"] = [{"$ref": "#/texts/0"}]
+        mutations["edge"] = edge
+
+        for name, actual in mutations.items():
+            with self.subTest(name=name), self.assertRaisesRegex(
+                AssertionError,
+                "split fragments differ outside self_ref/text/orig/prov",
+            ):
+                MODULE.analyze(fixture["reference"], actual)
+
+    def test_third_split_edge_is_not_collapsed(self):
+        fixture = json.loads(
+            (DIAGNOSIS / "evidence/page2-split-repro.json").read_text()
+        )
+        actual = copy.deepcopy(fixture["actual"])
+        actual["body"]["children"].append({"$ref": "#/texts/98"})
+        result = MODULE.analyze(fixture["reference"], actual)
+        self.assertEqual(
+            result["remaining_changed_collections_after_diagnostic_normalization"],
+            ["body"],
         )
 
 

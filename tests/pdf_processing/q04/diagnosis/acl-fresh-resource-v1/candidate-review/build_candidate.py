@@ -128,6 +128,65 @@ def text_mapping(
     return mapping
 
 
+def reviewed_delta(
+    reference: dict[str, Any], candidate: dict[str, Any]
+) -> dict[str, Any]:
+    """Verify the one fixed-fixture split before the full relational comparison."""
+    old_by_ref = {node["self_ref"]: node for node in reference["texts"]}
+    new_by_ref = {node["self_ref"]: node for node in candidate["texts"]}
+    old = old_by_ref.get(SPLIT_REFERENCE)
+    if old is None:
+        raise ValueError(f"active reference missing reviewed node: {SPLIT_REFERENCE}")
+    missing = [node_ref for node_ref in SPLIT_CANDIDATE if node_ref not in new_by_ref]
+    if missing:
+        raise ValueError(f"reviewed fragment missing: {', '.join(missing)}")
+    pair = [new_by_ref[node_ref] for node_ref in SPLIT_CANDIDATE]
+    if len(candidate["texts"]) != len(reference["texts"]) + 1:
+        raise ValueError("candidate text count is not one greater than reference")
+    if [candidate["texts"].index(node) for node in pair] != [97, 98]:
+        raise ValueError("reviewed fragment text positions changed")
+    if any(node.get("label") != old.get("label") for node in pair):
+        raise ValueError("split label changed")
+    if any(ref(node.get("parent")) != ref(old.get("parent")) for node in pair):
+        raise ValueError("split parent changed")
+    if " ".join(node.get("text", "") for node in pair) != old.get("text", ""):
+        raise ValueError("split text does not reconstruct reference")
+    if " ".join(node.get("orig", "") for node in pair) != old.get("orig", ""):
+        raise ValueError("split orig does not reconstruct reference")
+    try:
+        provenance = GRAPH_DELTA.rebase_provenance(pair)
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("split provenance is invalid") from error
+    if provenance != old.get("prov"):
+        raise ValueError("split provenance does not reconstruct reference")
+    try:
+        order = [
+            candidate["body"]["children"].index({"$ref": node_ref})
+            for node_ref in SPLIT_CANDIDATE
+        ]
+        old_order = reference["body"]["children"].index({"$ref": SPLIT_REFERENCE})
+    except (KeyError, ValueError) as error:
+        raise ValueError("reviewed fragment reading-order edge missing") from error
+    if order != [old_order, old_order + 1]:
+        raise ValueError("split reading order changed")
+    try:
+        graph_delta = GRAPH_DELTA.analyze(reference, candidate)
+    except AssertionError as error:
+        raise ValueError(f"reviewed relational proof failed: {error}") from error
+    remaining = graph_delta[
+        "remaining_changed_collections_after_diagnostic_normalization"
+    ]
+    if (
+        graph_delta["verdict"]
+        != "one_provenance_preserving_split_explains_full_graph_delta"
+        or remaining
+    ):
+        raise ValueError(
+            "additional graph differences remain: " + ", ".join(remaining)
+        )
+    return graph_delta
+
+
 def remap_refs(value: Any, mapping: dict[str, list[str]]) -> Any:
     if isinstance(value, list):
         return [remap_refs(child, mapping) for child in value]
@@ -384,13 +443,7 @@ def build(args: argparse.Namespace) -> None:
             raise ValueError(f"unexpected SHA-256 for {path}")
     ocr_summary = json.loads(args.ocr_summary.read_text())
     mapping = text_mapping(reference, candidate)
-    graph_delta = GRAPH_DELTA.analyze(reference, candidate)
-    if (
-        graph_delta["verdict"]
-        != "one_provenance_preserving_split_explains_full_graph_delta"
-        or graph_delta["remaining_changed_collections_after_diagnostic_normalization"]
-    ):
-        raise ValueError("candidate has graph changes beyond the reviewed split")
+    graph_delta = reviewed_delta(reference, candidate)
     report = candidate_report(candidate, retained, mapping)
     quality = candidate_quality_oracle(old_quality, report)
     q01_hashes = {

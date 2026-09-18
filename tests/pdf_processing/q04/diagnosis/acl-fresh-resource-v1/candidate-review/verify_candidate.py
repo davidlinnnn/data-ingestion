@@ -56,12 +56,12 @@ def verify(
     )
     require(report["document_sha256"] == BUILD.sha(candidate_raw), "document binding changed")
     checks = BUILD.check_graph(candidate, report)
+    graph_delta = BUILD.reviewed_delta(reference, candidate)
     mapping = BUILD.text_mapping(reference, candidate)
     require(
         mapping[BUILD.SPLIT_REFERENCE] == list(BUILD.SPLIT_CANDIDATE),
         "reviewed split changed",
     )
-    graph_delta = BUILD.GRAPH_DELTA.analyze(reference, candidate)
     require(
         graph_delta == manifest["proof"]["full_graph_delta"],
         "full graph delta proof changed",
