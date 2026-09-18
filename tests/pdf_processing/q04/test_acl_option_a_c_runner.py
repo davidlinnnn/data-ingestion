@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,7 @@ from sentinel.run_acl_option_a_c import (
 
 class AclOptionACRunnerTests(unittest.TestCase):
     FROZEN_CODE = Path("/private/tmp/q04-option-a-window-c-source-code-20260918")
+    LAUNCHER = Path(__file__).with_name("sentinel") / "run_acl_option_a_c.sh"
 
     def staged_root(self, directory):
         root = Path(directory)
@@ -64,6 +66,79 @@ class AclOptionACRunnerTests(unittest.TestCase):
         self.assertIn("--kill-after=180s 825s", command)
         self.assertNotIn("--phase warm", command)
         self.assertNotIn("--phase drain", command)
+
+    def test_actual_shell_launcher_captures_complete_nonempty_argv(self):
+        approval = (
+            "new main user authorization for one ACL Option A window c attempt "
+            "after review of the argument-validation failure; fixture09 three "
+            "modes only, 1500 seconds, stop on failure/no retry, 32 Deployments "
+            "held closed"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            captured = root / "argv.txt"
+            stub = root / "capture-argv"
+            stub.write_text(
+                "#!/bin/sh\n"
+                ": > \"$Q04_CAPTURE_OUTPUT\"\n"
+                "for argument in \"$@\"; do printf '%s\\n' \"$argument\" >> \"$Q04_CAPTURE_OUTPUT\"; done\n"
+            )
+            stub.chmod(0o700)
+            environment = dict(
+                os.environ,
+                Q04_APPROVAL_REFERENCE=approval,
+                Q04_ARGV_CAPTURE="1",
+                Q04_CAPTURE_STUB=str(stub),
+                Q04_CAPTURE_OUTPUT=str(captured),
+            )
+            subprocess.run(
+                [str(self.LAUNCHER)],
+                check=True,
+                cwd=Path(__file__).resolve().parents[3],
+                env=environment,
+            )
+            argv = captured.read_text().splitlines()
+        expected_runner = str(
+            Path(__file__).with_name("sentinel").resolve()
+            / "run_acl_option_a_c.py"
+        )
+        self.assertEqual(argv[0], expected_runner)
+        self.assertEqual(argv[1:4], ["--execute", "--owner", "Q04 main task 01a0aa25-3a23-7fb2-b13c-6936f95ccbc7"])
+        self.assertEqual(argv[4:], ["--approval-reference", approval])
+        self.assertTrue(argv[-1])
+        plan = (
+            Path(__file__).with_name("diagnosis")
+            / "acl-fresh-resource-v1/adoption-v1/ACL-OPTION-A-WINDOW-C-PLAN.md"
+        ).read_text()
+        self.assertIn(
+            "export Q04_APPROVAL_REFERENCE=" + shlex.quote(approval),
+            plan,
+        )
+        self.assertIn(
+            "tests/pdf_processing/q04/sentinel/run_acl_option_a_c.sh",
+            plan,
+        )
+
+    def test_shell_launcher_refuses_missing_approval_before_capture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            captured = Path(directory) / "argv.txt"
+            environment = dict(
+                os.environ,
+                Q04_ARGV_CAPTURE="1",
+                Q04_CAPTURE_STUB="/bin/false",
+                Q04_CAPTURE_OUTPUT=str(captured),
+            )
+            environment.pop("Q04_APPROVAL_REFERENCE", None)
+            completed = subprocess.run(
+                [str(self.LAUNCHER)],
+                check=False,
+                capture_output=True,
+                cwd=Path(__file__).resolve().parents[3],
+                env=environment,
+            )
+            self.assertFalse(captured.exists())
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn(b"export the verbatim new window-c authorization", completed.stderr)
 
     def test_retained_binding_rejects_request_profile_and_release_mismatches(self):
         accepted = {

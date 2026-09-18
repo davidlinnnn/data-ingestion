@@ -1,6 +1,12 @@
 # ACL fixture 09 Option A window c plan
 
-**Status: PREPARED, NOT AUTHORIZED, NOT EXECUTED.** Window b remains the
+**Status: PREPARED FOR A NEW AUTHORIZATION, NOT AUTHORIZED.** The first window-c
+authorization was consumed by an argument-validation invocation that exited 2
+before runner entry. No window-c identity was created and every runtime phase was
+`NOT_RUN`; see `sentinel/acl-option-a-window-c-invocation/RESULTS.md`. A later
+attempt intentionally reuses the still-unused c root, prefix, phase and evidence
+path, but requires a new explicit single-run authorization and all live gates
+must be rechecked. Window b remains the
 immutable `PRECHECK_FAILED_NO_RUNTIME` attempt documented under
 `sentinel/acl-option-a-window-b/`. Its phase, root, prefix and evidence location
 are consumed and must not be reused or overwritten.
@@ -53,18 +59,16 @@ not complete Q04 or #51.
 
 ## Exact future command
 
-The command below is intentionally gated by a verbatim approval reference. It
-must not be run until main records a new explicit runtime authorization for this
-window and exports that authorization text as `Q04_APPROVAL_REFERENCE`.
+The command below uses a separate `export` followed by a fixed launcher, avoiding
+same-command environment assignment and expansion. It must not be run until main
+records a new explicit runtime authorization for this window. The literal then
+records that authorization's bounded context.
 
 ```sh
 cd /private/tmp/q04-acceptance
-test -n "${Q04_APPROVAL_REFERENCE:?set to the verbatim new window-c authorization}"
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=tests/pdf_processing/q04 \
-  /Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python \
-  tests/pdf_processing/q04/sentinel/run_acl_option_a_c.py --execute \
-  --owner 'Q04 main task 01a0aa25-3a23-7fb2-b13c-6936f95ccbc7' \
-  --approval-reference "$Q04_APPROVAL_REFERENCE"
+export Q04_APPROVAL_REFERENCE='new main user authorization for one ACL Option A window c attempt after review of the argument-validation failure; fixture09 three modes only, 1500 seconds, stop on failure/no retry, 32 Deployments held closed'
+unset Q04_ARGV_CAPTURE Q04_CAPTURE_STUB Q04_CAPTURE_OUTPUT
+tests/pdf_processing/q04/sentinel/run_acl_option_a_c.sh
 ```
 
 Before execution, main must review the fixed runner commit and recheck the
