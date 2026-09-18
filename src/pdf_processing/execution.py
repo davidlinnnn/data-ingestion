@@ -27,7 +27,10 @@ async def _stop_children(children):
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-        await asyncio.wait_for(process.wait(), 5)
+        try:
+            await asyncio.wait_for(process.wait(), 5)
+        except TimeoutError as error:
+            raise FreshChildReapFailure('fresh_child_reap_failed') from error
         children.discard(process)
         _fresh_children.discard(process)
 
@@ -41,6 +44,10 @@ class ChildFailure(RuntimeError):
     def __init__(self, category, code):
         super().__init__(code)
         self.category, self.code = category, code
+
+
+class FreshChildReapFailure(RuntimeError):
+    """A killed fresh child still has not produced a confirmed exit."""
 
 
 @dataclass(frozen=True)
@@ -74,7 +81,14 @@ class Execution:
             # until the previous warm process has been reaped.
             async with self.child_runner.fresh_child_handoff() as observation:
                 self.observation['parser_handoff'] = observation
-                await self.fresh_child(module, request, out)
+                try:
+                    await self.fresh_child(module, request, out)
+                except FreshChildReapFailure:
+                    # Still inside the shared handoff lock: prevent a later
+                    # profile queue from rebuilding warm capacity around an
+                    # owned fresh process whose exit was not confirmed.
+                    self.child_runner.fail_closed('fresh_child_reap_failed')
+                    raise
             return
         await self.fresh_child(module, request, out)
 
@@ -111,12 +125,20 @@ class Execution:
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-                await asyncio.wait_for(process.wait(), 5)
-                self.fresh_children.discard(process)
-                _fresh_children.discard(process)
-                if not communication.done():
-                    communication.cancel()
-                    await asyncio.gather(communication, return_exceptions=True)
+                try:
+                    await asyncio.wait_for(process.wait(), 5)
+                except TimeoutError as error:
+                    # Retain ownership for worker-shutdown cleanup. Callers
+                    # that coordinate warm capacity must fail closed before
+                    # releasing their handoff lock.
+                    raise FreshChildReapFailure('fresh_child_reap_failed') from error
+                else:
+                    self.fresh_children.discard(process)
+                    _fresh_children.discard(process)
+                finally:
+                    if not communication.done():
+                        communication.cancel()
+                        await asyncio.gather(communication, return_exceptions=True)
 
     def materialize(self, operation, out):
         manifest = self.store.resolve(operation)

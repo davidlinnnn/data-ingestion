@@ -12,15 +12,15 @@ initialization, including the candidate cancellation adapter.
 
 | Changed source | Behavior | Direct stage identities | Evidence consequence |
 | --- | --- | --- | --- |
-| `supervision.py` | Owns a fresh-child handoff lock; reaps idle warm parser; blocks rebuild until fresh child exits | group, assembly | Old warm PID/recycle evidence is incompatible; group and assembly registrations cannot be transplanted |
-| `execution.py` | Wraps restore child spawn, completion, exception and cancellation in the handoff | group, assembly | Old group/assembly producer identities are rejected |
+| `supervision.py` | Owns a fresh-child handoff lock; reaps idle warm parser; blocks rebuild until fresh child exits; fails closed if an owned process cannot be reaped | group, assembly | Old warm PID/recycle evidence is incompatible; group and assembly registrations cannot be transplanted |
+| `execution.py` | Wraps restore child spawn, completion, exception and cancellation in the handoff; retains ownership and drains the worker if fresh-child exit is unconfirmed | group, assembly | Old group/assembly producer identities are rejected |
 | `compatibility.py` | Adds `supervision.py` to assembly dependency projection | assembly | A lifecycle change cannot reuse an old assembly identity |
 | `parse.py` | Documents the enforced fresh-assembly lifecycle | group, assembly | Hash-bound producer changes conservatively with the behavior |
 
 The full producer manifest SHA-256 is
-`3aed8bf64671d51c0017717d0a6d6cea00c871c48bf3712cadfea7e55ad4eb80`.
+`dbfd558d1f9be7a0bd196af5a0fc61008b499370aee1f8e9d5b07f80ab926ce4`.
 The candidate `inputs.json` SHA-256 is
-`d94912049083318876bc551c647c82e073c3c4b181aff9626e4984655d20f39d`.
+`026884abc5f46f3cb94d213b0290d0693d3f5b4a5cb0bc022482e1fb1a3567c2`.
 The exact file map is in [`MANIFEST.json`](MANIFEST.json).
 
 Every new request must be initialized under a new object prefix and derives a

@@ -44,6 +44,10 @@ class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
                 await parser.stop("synthetic_reap_timeout")
         self.assertIs(parser.process, process)
         self.assertEqual(parser.count, 4)
+        self.assertTrue(parser.closed)
+        self.assertTrue(parser.observation["reap_failed"])
+        with self.assertRaisesRegex(Exception, "worker_draining"):
+            await parser.run({"expected_method": {}}, Path("."), lambda detail: None, 1)
 
     async def test_handoff_waits_for_active_capture_then_rebuilds_on_next_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -90,6 +94,61 @@ class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(rebuilt["restarts"], 2)
             self.assertEqual(rebuilt["handoffs"], 1)
             await parser.close()
+
+    async def test_unreaped_restore_child_fails_closed_before_handoff_unlocks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pdf = root / "source.pdf"
+            pdf.write_bytes(b"pdf")
+            parser = WarmParser()
+            execution = Execution(
+                SourceRequest(pdf, "rev", "sha", {}, root),
+                object(),
+                root,
+                child_runner=parser,
+            )
+
+            class NeverReaped:
+                pid = 4242
+                returncode = None
+                stdin = None
+
+                async def communicate(self, _request):
+                    raise RuntimeError("synthetic child failure")
+
+                async def wait(self):
+                    await asyncio.Future()
+
+            process = NeverReaped()
+            request = {"mode": "restore", "out": str(root / "result")}
+
+            async def timeout_wait(awaitable, _seconds):
+                awaitable.close()
+                raise TimeoutError
+
+            with mock.patch(
+                "pdf_processing.execution.asyncio.create_subprocess_exec",
+                new=mock.AsyncMock(return_value=process),
+            ), mock.patch(
+                "pdf_processing.execution.asyncio.wait_for",
+                new=timeout_wait,
+            ), mock.patch("pdf_processing.execution.os.killpg"):
+                with self.assertRaisesRegex(Exception, "fresh_child_reap_failed"):
+                    await execution.child("pdf_processing.parse", request, root)
+
+            self.assertTrue(parser.closed)
+            self.assertTrue(parser.observation["reap_failed"])
+            self.assertEqual(
+                parser.observation["termination_reason"], "fresh_child_reap_failed"
+            )
+            self.assertIn(process, execution.fresh_children)
+            self.assertIn(process, execution_module._fresh_children)
+            with self.assertRaisesRegex(Exception, "worker_draining"):
+                await parser.run(
+                    {"expected_method": {}}, root, lambda detail: None, 1
+                )
+            execution.fresh_children.clear()
+            execution_module._fresh_children.clear()
 
     async def test_cancelled_handoff_finishes_owned_process_cleanup(self):
         with tempfile.TemporaryDirectory() as tmp:

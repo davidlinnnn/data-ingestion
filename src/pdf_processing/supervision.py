@@ -52,7 +52,12 @@ class WarmParser:
                     os.killpg(p.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-                await asyncio.wait_for(p.wait(), self.reap_seconds)
+                try:
+                    await asyncio.wait_for(p.wait(), self.reap_seconds)
+                except TimeoutError:
+                    self.closed = True
+                    self.observation['reap_failed'] = True
+                    raise
         if p.returncode is None:
             raise RuntimeError('owned parser was not reaped')
         self.observation['exit_code'] = p.returncode
@@ -63,6 +68,12 @@ class WarmParser:
         self.closed = True
         async with self.lock:
             await self.stop('worker_shutdown')
+
+    def fail_closed(self, reason):
+        """Prevent parser reuse after another child cannot be reaped."""
+        self.closed = True
+        self.observation.update(ready=False, termination_reason=reason,
+                                reap_failed=True, observed_at=now())
 
     @asynccontextmanager
     async def fresh_child_handoff(self):

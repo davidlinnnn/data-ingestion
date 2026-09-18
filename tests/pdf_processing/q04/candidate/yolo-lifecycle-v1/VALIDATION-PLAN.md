@@ -9,9 +9,9 @@ fixture-07 window using the `q04-yolo-lifecycle-v1` candidate.
 - Create a new phase, run ID, object prefix, state root, reservation and local
   evidence path. Never reuse `yolo-matrix-a` or `yolo-attribution-b` identities.
 - Stage the candidate bundle whose `inputs.json` SHA-256 is
-  `d94912049083318876bc551c647c82e073c3c4b181aff9626e4984655d20f39d` and
+  `026884abc5f46f3cb94d213b0290d0693d3f5b4a5cb0bc022482e1fb1a3567c2` and
   producer-manifest SHA-256 is
-  `3aed8bf64671d51c0017717d0a6d6cea00c871c48bf3712cadfea7e55ad4eb80`.
+  `dbfd558d1f9be7a0bd196af5a0fc61008b499370aee1f8e9d5b07f80ab926ce4`.
 - At init, derive and retain a new profile release from the candidate producer
   and the new prefix's immutable original-source versions. Assert it differs
   from the frozen attribution-B release.
@@ -63,6 +63,8 @@ and post-cleanup. The candidate passes the lifecycle gate only if no sample has
 both an owned warm parser and owned fresh parse child. Confirm the next capture
 after a completed handoff can rebuild a new warm parser; restored/replay reuse
 may legitimately avoid new parsing but must still preserve ownership facts.
+If either the warm parser or fresh restore child cannot be reaped, require the
+worker to remain draining and forbid any warm-parser rebuild.
 
 On every exit, cancel and settle owned workflows, stop and reap the worker plus
 all parser descendants, remove owned scratch, reject incomplete publication,
