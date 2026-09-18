@@ -1,5 +1,10 @@
 # ACL fixture 09 Option A 25-minute window
 
+> **Consumed on 2026-09-18; do not re-execute this command or reuse these
+> identities.** The read-only retained-request precheck failed before reservation
+> or runtime. See `sentinel/acl-option-a-window-b/RESULTS.md`. A later attempt
+> requires a new identity, reviewed commit and separate authorization.
+
 The execution identity is `acl-option-a-window-b`, local evidence is written to
 `/private/tmp/q04-acl-option-a-window-20260918-b`, the remote root is
 `/tmp/q04-option-a-20260918-b`, and the object prefix is

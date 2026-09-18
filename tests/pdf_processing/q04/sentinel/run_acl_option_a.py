@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path
@@ -93,6 +94,68 @@ def build_probe_expectation(bundle):
         ],
         "profile_path": SOURCE_REMOTE + "/inputs/inputs.json",
     }
+
+
+def validate_old_request_binding(
+    accepted, final, registration_key, operation, artifact_sha256, prefix
+):
+    """Validate the retained result using its actual v2 provenance schema."""
+    request = accepted["request"]
+    accepted_profile = accepted["profile"]
+    source = final["source"]
+    result_profile = final["provenance"]["profile"]
+    if source["request_id"] != request["request_id"]:
+        raise ValueError("retained result request changed")
+    if request["profile"] != accepted_profile["id"]:
+        raise ValueError("accepted request profile does not match accepted provenance")
+    if source["profile"] != request["profile"]:
+        raise ValueError("retained result source profile changed")
+    if result_profile["id"] != accepted_profile["id"]:
+        raise ValueError("retained result provenance profile changed")
+    if result_profile["release"] != accepted_profile["release"]:
+        raise ValueError("retained result provenance release changed")
+    source_key = source["artifact"]["key"]
+    if not source_key.startswith(prefix + "sources/"):
+        raise ValueError("retained result source escaped original prefix")
+    if final["status"] != "complete":
+        raise ValueError("retained result is not complete")
+    return {
+        "registration_key": registration_key,
+        "operation": operation,
+        "request_id": source["request_id"],
+        "source_key": source_key,
+        "profile_id": result_profile["id"],
+        "profile_release": result_profile["release"],
+        "artifact_sha256": artifact_sha256,
+        "status": final["status"],
+    }
+
+
+def build_old_request_binding_program():
+    """Build the read-only retained-store probe sent to the coordinator."""
+    return """import boto3,hashlib,json
+from pathlib import Path
+VALIDATOR
+root=Path(ROOT)
+accepted=json.loads((root/'state/keynote-window-2/fresh-10/accepted.json').read_text())
+s3=boto3.client('s3',endpoint_url='http://objects:9000')
+prefix=PREFIX
+found=[]
+for item in s3.list_objects_v2(Bucket='t09a',Prefix=prefix+'registered/').get('Contents',[]):
+ manifest=json.loads(s3.get_object(Bucket='t09a',Key=item['Key'])['Body'].read())
+ for file in manifest['files']:
+  if file['name']!='processing-result.json':continue
+  raw=s3.get_object(Bucket='t09a',Key=file['key'])['Body'].read()
+  assert hashlib.sha256(raw).hexdigest()==file['sha256'] and len(raw)==file['bytes']
+  final=json.loads(raw)
+  if final['source']['request_id']==accepted['request']['request_id']:
+   found.append(validate_old_request_binding(
+    accepted,final,item['Key'],manifest['operation'],file['sha256'],prefix))
+assert len(found)==1
+print(json.dumps(found[0]))
+""".replace("VALIDATOR", inspect.getsource(validate_old_request_binding)).replace(
+        "ROOT", repr(SOURCE_REMOTE)
+    ).replace("PREFIX", repr(SOURCE_PREFIX))
 
 
 def remote_absence_paths():
@@ -482,32 +545,7 @@ print(json.dumps(value))
     validate_remote_baseline(frozen)
     for field in remote_absence_paths():
         assert frozen[field], field
-    old_binding_program = """import boto3,hashlib,json
-from pathlib import Path
-root=Path(ROOT)
-accepted=json.loads((root/'state/keynote-window-2/fresh-10/accepted.json').read_text())
-s3=boto3.client('s3',endpoint_url='http://objects:9000')
-prefix=PREFIX
-found=[]
-for item in s3.list_objects_v2(Bucket='t09a',Prefix=prefix+'registered/').get('Contents',[]):
- manifest=json.loads(s3.get_object(Bucket='t09a',Key=item['Key'])['Body'].read())
- for file in manifest['files']:
-  if file['name']!='processing-result.json':continue
-  raw=s3.get_object(Bucket='t09a',Key=file['key'])['Body'].read()
-  assert hashlib.sha256(raw).hexdigest()==file['sha256'] and len(raw)==file['bytes']
-  final=json.loads(raw)
-  if final['source']['request_id']==accepted['request']['request_id']:
-   found.append({'registration_key':item['Key'],'operation':manifest['operation'],
-    'request_id':final['source']['request_id'],'source_key':final['source']['artifact']['key'],
-    'profile_id':final['profile']['id'],'profile_release':final['profile']['release'],
-    'artifact_sha256':file['sha256'],'status':final['status']})
-assert len(found)==1
-assert found[0]['source_key'].startswith(prefix+'sources/')
-assert found[0]['profile_id']==accepted['profile']['id']
-assert found[0]['profile_release']==accepted['profile']['release']
-assert found[0]['status']=='complete'
-print(json.dumps(found[0]))
-""".replace("ROOT", repr(SOURCE_REMOTE)).replace("PREFIX", repr(SOURCE_PREFIX))
+    old_binding_program = build_old_request_binding_program()
     old_binding = json.loads(remote(old_binding_program, timeout=60))
     (OUT / "old-request-binding.json").write_text(
         json.dumps(old_binding, indent=2, sort_keys=True) + "\n"

@@ -23,13 +23,60 @@ from sentinel.run_acl_option_a import (
     SOURCE_PREFIX,
     build_admission_argv,
     build_capacity,
+    build_old_request_binding_program,
     build_runtime_command,
     remote_absence_paths,
     require_launch_budget,
+    validate_old_request_binding,
 )
 
 
 class AclOptionARunnerTests(unittest.TestCase):
+    def test_retained_request_probe_is_valid_and_uses_v2_schema(self):
+        program = build_old_request_binding_program()
+        compile(program, "<retained-request-probe>", "exec")
+        self.assertIn("final['source']['request_id']", program)
+        self.assertNotIn("final['profile']", program)
+
+    def test_retained_request_binding_uses_v2_source_and_provenance_schema(self):
+        accepted = {
+            "request": {"request_id": "old-request", "profile": "native-v1"},
+            "profile": {"id": "native-v1", "release": "release-1"},
+        }
+        final = {
+            "source": {
+                "request_id": "old-request",
+                "profile": "native-v1",
+                "artifact": {"key": "old-prefix/sources/original.pdf"},
+            },
+            "provenance": {
+                "profile": {"id": "native-v1", "release": "release-1"}
+            },
+            "status": "complete",
+        }
+        binding = validate_old_request_binding(
+            accepted,
+            final,
+            "old-prefix/registered/record.json",
+            "register",
+            "abc123",
+            "old-prefix/",
+        )
+        self.assertEqual(binding["profile_id"], "native-v1")
+        self.assertEqual(binding["profile_release"], "release-1")
+        self.assertNotIn("profile", final)
+
+        final["provenance"]["profile"]["release"] = "changed"
+        with self.assertRaisesRegex(ValueError, "release changed"):
+            validate_old_request_binding(
+                accepted,
+                final,
+                "old-prefix/registered/record.json",
+                "register",
+                "abc123",
+                "old-prefix/",
+            )
+
     def test_new_identity_and_split_capacity_thresholds(self):
         capacity = build_capacity(
             started_at=1_000.0,
