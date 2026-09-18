@@ -11,6 +11,7 @@ import tarfile
 
 
 TRACE_MEMBER = "./state/yolo-attribution-b/resource-attribution.jsonl"
+RETAINED_SUMMARY_SHA256 = "c1b5f902554e66a616e59f3151cd2e26011d7dd75cae3744994e576ee9a66cc0"
 
 
 def sha256(path):
@@ -147,6 +148,9 @@ def analyze(summary, rows, *, summary_sha256, archive_sha256):
 
 
 def analyze_files(summary_path, archive_path):
+    summary_digest = sha256(summary_path)
+    if summary_digest != RETAINED_SUMMARY_SHA256:
+        raise ValueError("retained result summary hash mismatch")
     summary = json.loads(summary_path.read_text())
     archive_digest = sha256(archive_path)
     expected = summary["private_artifacts"]["remote-evidence.tar"]
@@ -160,7 +164,7 @@ def analyze_files(summary_path, archive_path):
     return analyze(
         summary,
         rows,
-        summary_sha256=sha256(summary_path),
+        summary_sha256=summary_digest,
         archive_sha256=archive_digest,
     )
 

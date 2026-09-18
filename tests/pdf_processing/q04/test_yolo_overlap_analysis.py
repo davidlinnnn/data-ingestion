@@ -77,6 +77,15 @@ class YoloOverlapAnalysisTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "archive hash mismatch"):
                 module.analyze_files(summary_path, archive)
 
+    def test_tampered_summary_is_rejected_before_archive_is_read(self):
+        original = HERE / "sentinel/yolo-attribution-b/evidence/summary.json"
+        with tempfile.TemporaryDirectory() as directory:
+            summary = Path(directory) / "summary.json"
+            summary.write_bytes(original.read_bytes() + b" ")
+            missing_archive = Path(directory) / "missing.tar"
+            with self.assertRaisesRegex(ValueError, "summary hash mismatch"):
+                module.analyze_files(summary, missing_archive)
+
 
 if __name__ == "__main__":
     unittest.main()
