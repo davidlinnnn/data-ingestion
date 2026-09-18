@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "as_of": {
+    "commit": "6f16ec83d28226ac57bc9a2b0176b10b38821304",
+    "issue": 51,
+    "issue_state": "OPEN"
+  },
+  "status_definitions": {
+    "proven": "Q04 has current direct evidence for this exact bounded gate.",
+    "reusable": "Earlier direct evidence may satisfy this gate only while every named identity and behavior remains unchanged; it is not a Q04 rerun.",
+    "unproven": "No accepted current evidence closes this gate. Supporting or local evidence must not be counted as a pass."
+  },
+  "fixtures": [
+    {
+      "id": "native",
+      "name": "Native 51-page paper",
+      "pages": 51,
+      "source_sha256": "d58be5fc39608dc9aec45194c602436d793f2f2bf56f267d0e38d6258a9f7a9e",
+      "modes": {"fresh": "unproven", "restored": "unproven", "replay": "unproven"},
+      "q04_fresh_index": "unproven",
+      "oracle_and_full_graph": "unproven",
+      "reason": "The integrated continuation dependency changes parse/assembly identities. R3 is supporting topology evidence and cannot be inherited as a producer pass.",
+      "evidence": [
+        "tests/pdf_processing/q04/STAGE-IMPACT.md",
+        "tests/pdf_processing/T09A-R3-INTEGRATION.md"
+      ]
+    },
+    {
+      "id": "06",
+      "name": "WikiSkill",
+      "pages": 28,
+      "source_sha256": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+      "modes": {"fresh": "unproven", "restored": "unproven", "replay": "unproven"},
+      "q04_fresh_index": "unproven",
+      "oracle_and_full_graph": "unproven",
+      "reason": "The retained 188-cell oracle is reusable as an oracle, but the changed integrated producer has not run this fixture.",
+      "evidence": [
+        "tests/pdf_processing/t06/evidence/VERDICT.md",
+        "tests/pdf_processing/q04/STAGE-IMPACT.md"
+      ]
+    },
+    {
+      "id": "07",
+      "name": "YOLO",
+      "pages": 15,
+      "source_sha256": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab",
+      "modes": {"fresh": "unproven", "restored": "unproven", "replay": "unproven"},
+      "q04_fresh_index": "unproven",
+      "oracle_and_full_graph": "unproven",
+      "reason": "The retained 60-cell and localized control-character oracle is reusable as an oracle, but the changed integrated producer has not run this fixture.",
+      "evidence": [
+        "tests/pdf_processing/t06/evidence/VERDICT.md",
+        "tests/pdf_processing/q04/STAGE-IMPACT.md"
+      ]
+    },
+    {
+      "id": "08",
+      "name": "AIMA original 99-110",
+      "pages": 12,
+      "source_sha256": "b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980",
+      "modes": {"fresh": "reusable", "restored": "reusable", "replay": "reusable"},
+      "q04_fresh_index": "unproven",
+      "oracle_and_full_graph": "reusable",
+      "reason": "Q03 trial A and D bind the same 20 production hashes and directly prove full fresh/reuse/replay/evidence behavior plus the four reviewed structures. Reuse requires exact producer, policy, packages, models, source and harness-path identity. A Q04 fresh-index entry for warm comparison is still absent.",
+      "evidence": [
+        "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
+        "tests/pdf_processing/q03/INTEGRATION-REVIEW.md",
+        "tests/pdf_processing/q04/evidence/static-audit-v2.json"
+      ]
+    },
+    {
+      "id": "09",
+      "name": "ACL original 2-4",
+      "pages": 3,
+      "source_sha256": "bd33fffb2c91f35225f5b89feb29a93013f4814558ac578bef000b632fd169bf",
+      "modes": {"fresh": "proven", "restored": "proven", "replay": "proven"},
+      "q04_fresh_index": "proven",
+      "oracle_and_full_graph": "proven",
+      "reason": "Option A window c directly verified the adopted full graph, six equations, TextItem equation 2, captions, source evidence and both required OCR components in all three modes.",
+      "evidence": [
+        "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/RESULTS.md",
+        "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/evidence/summary.json"
+      ]
+    },
+    {
+      "id": "10",
+      "name": "Keynote export",
+      "pages": 1,
+      "source_sha256": "b9919f9684bc6fdfda2f8ead641607e8cb4c10c2abd7842db2d96ec8579d1d9e",
+      "modes": {"fresh": "proven", "restored": "proven", "replay": "proven"},
+      "q04_fresh_index": "proven",
+      "oracle_and_full_graph": "proven",
+      "reason": "High-capacity-b directly verified all 27 reviewed textboxes, the complete graph and required OCR in all three modes.",
+      "evidence": [
+        "tests/pdf_processing/q04/sentinel/high-capacity-b/RESULTS.md",
+        "tests/pdf_processing/q04/sentinel/high-capacity-b/MAIN-RECONCILIATION.md",
+        "tests/pdf_processing/q04/sentinel/high-capacity-b/evidence/summary.json"
+      ]
+    }
+  ],
+  "release_gates": [
+    {
+      "id": "immutable_binding",
+      "status": "proven",
+      "reason": "The fixed sources, producer, profiles, methods, oracles and harness are hash-bound; both accepted runtime windows retain immutable run and artifact identities.",
+      "evidence": ["tests/pdf_processing/q04/evidence/static-audit-v2.json", "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/RESULTS.md"]
+    },
+    {
+      "id": "stage_impact",
+      "status": "proven",
+      "reason": "Executable local dependency projections establish conservative R3-to-integrated invalidation and the narrower evidence-only compatibility boundary.",
+      "evidence": ["tests/pdf_processing/q04/STAGE-IMPACT.md", "tests/pdf_processing/q04/evidence/static-audit-v2.json"]
+    },
+    {
+      "id": "six_fixture_matrix",
+      "status": "unproven",
+      "reason": "Only fixtures 09 and 10 have Q04 direct passes; fixture 08 is conditionally reusable; native, 06 and 07 remain not run.",
+      "evidence": ["tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"]
+    },
+    {
+      "id": "continuation_and_four_algorithms",
+      "status": "reusable",
+      "reason": "Q03 directly proves the corrected AIMA continuation deltas, four structures and localized dispositions for the identical production inventory; the Q04 warm index is still absent.",
+      "evidence": ["tests/pdf_processing/q03/RUNTIME-RESULTS.md", "tests/pdf_processing/q03/INTEGRATION-REVIEW.md"]
+    },
+    {
+      "id": "evidence_only_compatible_reuse",
+      "status": "reusable",
+      "reason": "Q03 full-request evidence variation directly exercised actual Temporal/shared-storage reuse with the same production hashes. Recheck identities before carrying it forward; do not transplant registrations.",
+      "evidence": ["tests/pdf_processing/q03/RUNTIME-RESULTS.md", "tests/pdf_processing/q04/evidence/static-audit-v2.json"]
+    },
+    {
+      "id": "assembly_method_invalidation",
+      "status": "unproven",
+      "reason": "The local adapter checks disjoint identities, but the real native method-change case has not run.",
+      "evidence": ["tests/pdf_processing/q04/RUNTIME-ADAPTER.md", "tests/pdf_processing/q04/PHASE-TWO-RESULTS.md"]
+    },
+    {
+      "id": "old_request_original_route",
+      "status": "proven",
+      "reason": "ACL Option A window c re-resolved the retained Keynote request under its original prefix/profile/release before claiming the new root.",
+      "evidence": ["tests/pdf_processing/q04/sentinel/acl-option-a-window-c/RESULTS.md"]
+    },
+    {
+      "id": "old_request_changed_profile_rejection",
+      "status": "unproven",
+      "reason": "Local compatibility tests cover rejection, but the actual changed-profile native runtime case has not run.",
+      "evidence": ["tests/pdf_processing/q04/RUNTIME-ADAPTER.md", "tests/pdf_processing/q04/evidence/compatibility.log"]
+    },
+    {
+      "id": "required_relationship_interrupt_retry_replay",
+      "status": "reusable",
+      "reason": "Q03 trial D directly proves interruption before publication, retained partial evidence, cleanup, retry and exact replay on the unchanged required-relationship path. It is owned-child evidence, not Pod loss.",
+      "evidence": ["tests/pdf_processing/q03/RUNTIME-RESULTS.md", "tests/pdf_processing/q03/INTEGRATION-REVIEW.md"]
+    },
+    {
+      "id": "warm_sequence",
+      "status": "unproven",
+      "reason": "R3 proves the supervision topology only. The integrated producer has not run the fixed Wiki-YOLO-AIMA-native-Wiki sequence or request-20 recycle.",
+      "evidence": ["tests/pdf_processing/T09A-R3-INTEGRATION.md", "tests/pdf_processing/q04/RUNTIME-ADAPTER.md"]
+    },
+    {
+      "id": "bounded_process_resource_keynote_acl",
+      "status": "proven",
+      "reason": "The accepted process windows have continuous telemetry, zero PSI/OOM and guarded cleanup, bounded only to fixtures 10 and 09.",
+      "evidence": ["tests/pdf_processing/q04/sentinel/high-capacity-b/RESULTS.md", "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/RESULTS.md"]
+    },
+    {
+      "id": "integrated_resource_bounds",
+      "status": "unproven",
+      "reason": "Two small fixture windows do not establish a six-fixture, warm or recovery operating envelope.",
+      "evidence": ["tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"]
+    },
+    {
+      "id": "active_telemetry_loss_guard",
+      "status": "unproven",
+      "reason": "R3 is supporting evidence; the Q04 integrated guard phase has not run.",
+      "evidence": ["tests/pdf_processing/T09A-R3-INTEGRATION.md", "tests/pdf_processing/q04/RUNTIME-ADAPTER.md"]
+    },
+    {
+      "id": "process_drain_recovery",
+      "status": "unproven",
+      "reason": "Local controller tests and R3 topology are supporting evidence only; no Q04 actual-process drain has run.",
+      "evidence": ["tests/pdf_processing/q04/PHASE-TWO-RESULTS.md", "tests/pdf_processing/q04/RUNTIME-ADAPTER.md"]
+    },
+    {
+      "id": "pod_drain_recovery",
+      "status": "unproven",
+      "reason": "No owned Q04 Pod topology exists. Process-mode evidence cannot prove API UID, CRI-container or emptyDir removal.",
+      "evidence": ["tests/pdf_processing/q04/preflight/README.md", "tests/pdf_processing/q04/RUNTIME-ADAPTER.md"]
+    },
+    {
+      "id": "supported_operating_bounds_report",
+      "status": "unproven",
+      "reason": "The final handoff to #44 awaits the remaining fixture, warm/resource and recovery evidence.",
+      "evidence": ["tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"]
+    }
+  ],
+  "historical_failures": {
+    "preserved": true,
+    "index": "tests/pdf_processing/q04/sentinel/README.md",
+    "not_counted_as_pass": true
+  },
+  "next_batch": {
+    "fixture": "07",
+    "pages": 15,
+    "modes": ["fresh", "restored", "replay"],
+    "execution_mode": "process",
+    "plan": "tests/pdf_processing/q04/NEXT-RUNTIME-BATCH.md",
+    "source_sha256": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab",
+    "bundle_path": "/private/tmp/q04-inputs-option-a-v7/inputs.json",
+    "bundle_sha256": "9e46ad75379dffed05c5e25ec36b22fdf0d680e30e7d2b298d5ac355d0e039f2",
+    "reference_sha256": "a3ac9eb345949cdc83423ba1ae38c794400e8f4f89061056c1102517b6a1e6a1",
+    "runner_sha256": "5fc631f0076001b75815901d610b974b99db52a50d2eb9b8a3b735ab3d109471",
+    "launcher_path": "tests/pdf_processing/q04/sentinel/run_yolo_matrix_a.py",
+    "launcher_sha256": "c2937100736b61377ad1cd5b9230d6149e4946513fa3aff2afa72494d323ef18",
+    "source_runtime_root": "/tmp/q04-option-a-20260918-c",
+    "source_state_sha256": "2a3264316e0a859b2a490b3724af09c2df16959b35d9c8116b02e078f50f0636",
+    "source_prefix": "q04/option-a-20260918-c/",
+    "remote_root": "/tmp/q04-yolo-matrix-20260918-a",
+    "prefix": "q04/yolo-matrix-20260918-a/",
+    "phase": "yolo-matrix-a",
+    "local_evidence": "/private/tmp/q04-yolo-matrix-20260918-a",
+    "window_seconds": 1500,
+    "outer_observation_seconds": 180,
+    "outer_continuous_seconds": 60,
+    "outer_available_bytes": 4831838208,
+    "per_case_continuous_seconds": 60,
+    "per_case_available_bytes": 3221225472,
+    "workload_seconds": 825,
+    "cleanup_seconds": 300
+  }
+}

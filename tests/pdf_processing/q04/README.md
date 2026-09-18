@@ -12,6 +12,12 @@ The follow-up [offline PSI diagnosis and capacity proposal](diagnosis/README.md)
 narrows the failure to the model-initialization/first-stage boundary and proposes
 an exact, newly reviewable 32-Deployment capacity scope. It grants no pause or
 rerun authority.
+#51's current proven/reusable/unproven ledger is in the
+[current acceptance matrix](CURRENT-ACCEPTANCE-MATRIX.md). It records the accepted
+Keynote and ACL windows without treating the remaining fixtures, warm,
+invalidation, resource or recovery rows as complete. The next proposed single
+runtime batch is the [full 15-page YOLO matrix](NEXT-RUNTIME-BATCH.md); that plan
+is preparation only and grants no runtime authority.
 #44 remains the final acceptance gate; #45 owns calibration and #46 packaging.
 
 Read [stage impact and evidence reuse](STAGE-IMPACT.md), then the
@@ -56,7 +62,10 @@ and [second-phase validation](PHASE-TWO-RESULTS.md). `q04_runtime.py --help` is 
 without service access; runtime execution requires a new externally approved
 capacity file. Main must review process versus Pod scope and topology first.
 
-The single authorized sentinel and its 20 service pauses are recorded in
-[sentinel results](sentinel/RESULTS.md); restored/replay were not reached.
+The first authorized sentinel and its 20 service pauses are retained in
+[sentinel results](sentinel/RESULTS.md); restored/replay were not reached in that
+failed attempt. The later high-capacity Keynote run and ACL Option A window c are
+accepted only for their bounded three-mode fixture rows. All other attempts and
+failures remain separately indexed in the [sentinel history](sentinel/README.md).
 No ticket closure, branch publication or merge is claimed. The stage-impact/reuse
 decisions remain unchanged; runtime implementation and frozen profiles were not changed.
