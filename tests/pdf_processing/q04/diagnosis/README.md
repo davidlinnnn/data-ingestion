@@ -13,6 +13,10 @@ proposal following the failed Keynote sentinel:
 - [`acl-v3-b-resource/`](acl-v3-b-resource/) diagnoses the later fixture-09
   active-cgroup rejection and defines the minimum next telemetry needed before a
   qualification ceiling or lifecycle change can be reviewed.
+- [`yolo-matrix-a/`](yolo-matrix-a/) reconstructs the fixture-07 group-to-assembly
+  timeline, corrects `parser_count` and stale-stage interpretation, compares the
+  ACL attribution trace, and proposes a fresh-only attribution calibration without
+  changing the current guard.
 
 No workflow or inference ran, no service was paused, and no production or frozen
 profile code changed during this phase.

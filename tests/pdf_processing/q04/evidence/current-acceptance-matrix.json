@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "6f16ec83d28226ac57bc9a2b0176b10b38821304",
+    "commit": "ccdf81a6d4a0005428b0901c34f5fafabd132bef",
     "issue": 51,
     "issue_state": "OPEN"
   },
@@ -59,10 +59,25 @@
       },
       "q04_fresh_index": "unproven",
       "oracle_and_full_graph": "unproven",
-      "reason": "The retained 60-cell and localized control-character oracle is reusable as an oracle, but the changed integrated producer has not run this fixture.",
+      "reason": "Matrix A ran the integrated producer, but fresh crossed the fixed 4 GiB shared-cgroup guard after assembly was scheduled while progress read assembling, before complete delivery or consumer/oracle verification. Restored and replay did not run, so all acceptance rows and fresh-index remain unproven.",
       "evidence": [
         "tests/pdf_processing/t06/evidence/VERDICT.md",
-        "tests/pdf_processing/q04/STAGE-IMPACT.md"
+        "tests/pdf_processing/q04/STAGE-IMPACT.md",
+        "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
+        "tests/pdf_processing/q04/sentinel/yolo-matrix-a/evidence/summary.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/ANALYSIS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/evidence/trace-analysis.json"
+      ],
+      "attempts": [
+        {
+          "phase": "yolo-matrix-a",
+          "outcome": "failed_cgroup_guard",
+          "fresh": "failed_before_complete_delivery",
+          "restored": "not_run",
+          "replay": "not_run",
+          "cleanup": "proven",
+          "retry_count": 0
+        }
       ]
     },
     {
@@ -147,7 +162,7 @@
     {
       "id": "six_fixture_matrix",
       "status": "unproven",
-      "reason": "Only fixtures 09 and 10 have Q04 direct passes; fixture 08 has reusable historical reference evidence but fails exact Q04 profile/harness identity; native, 06 and 07 remain not run.",
+      "reason": "Only fixtures 09 and 10 have Q04 direct passes; fixture 08 has reusable historical reference evidence but fails exact Q04 profile/harness identity; native and 06 remain unrun, while 07 attempted fresh but failed the cgroup guard before delivery and did not run restored/replay.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"
       ]
@@ -226,9 +241,11 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "Two small fixture windows do not establish a six-fixture, warm or recovery operating envelope.",
+      "reason": "Two small fixture windows do not establish a six-fixture, warm or recovery operating envelope. YOLO matrix A crossed the fixed 4 GiB shared-cgroup guard after assembly scheduling; its censored maximum is not a sizing limit.",
       "evidence": [
-        "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"
+        "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
+        "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/ANALYSIS.md"
       ]
     },
     {
@@ -276,37 +293,18 @@
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true
   },
-  "next_batch": {
+  "next_step": {
+    "kind": "fresh_only_attribution_calibration",
     "fixture": "07",
     "pages": 15,
-    "modes": [
-      "fresh",
-      "restored",
-      "replay"
-    ],
+    "modes": ["fresh"],
     "execution_mode": "process",
-    "plan": "tests/pdf_processing/q04/NEXT-RUNTIME-BATCH.md",
-    "source_sha256": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab",
-    "bundle_path": "/private/tmp/q04-inputs-option-a-v7/inputs.json",
-    "bundle_sha256": "9e46ad75379dffed05c5e25ec36b22fdf0d680e30e7d2b298d5ac355d0e039f2",
-    "reference_sha256": "a3ac9eb345949cdc83423ba1ae38c794400e8f4f89061056c1102517b6a1e6a1",
-    "runner_sha256": "5fc631f0076001b75815901d610b974b99db52a50d2eb9b8a3b735ab3d109471",
-    "launcher_path": "tests/pdf_processing/q04/sentinel/run_yolo_matrix_a.py",
-    "launcher_sha256": "c2937100736b61377ad1cd5b9230d6149e4946513fa3aff2afa72494d323ef18",
-    "source_runtime_root": "/tmp/q04-option-a-20260918-c",
-    "source_state_sha256": "2a3264316e0a859b2a490b3724af09c2df16959b35d9c8116b02e078f50f0636",
-    "source_prefix": "q04/option-a-20260918-c/",
-    "remote_root": "/tmp/q04-yolo-matrix-20260918-a",
-    "prefix": "q04/yolo-matrix-20260918-a/",
-    "phase": "yolo-matrix-a",
-    "local_evidence": "/private/tmp/q04-yolo-matrix-20260918-a",
-    "window_seconds": 1500,
-    "outer_observation_seconds": 180,
-    "outer_continuous_seconds": 60,
-    "outer_available_bytes": 4831838208,
-    "per_case_continuous_seconds": 60,
-    "per_case_available_bytes": 3221225472,
-    "workload_seconds": 825,
-    "cleanup_seconds": 300
+    "plan": "tests/pdf_processing/q04/diagnosis/yolo-matrix-a/NEXT-MEASUREMENT.md",
+    "runtime_authorized": false,
+    "requires_new_identity": true,
+    "requires_explicit_capacity_authorization": true,
+    "keep_current_guard": true,
+    "raise_guard_from_matrix_a": false,
+    "restored_and_replay_gated": true
   }
 }

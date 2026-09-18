@@ -35,6 +35,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(fixtures["08"]["historical_reference"], "reusable")
         for fixture_id in ("native", "06", "07"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"unproven"})
+        yolo_attempt = fixtures["07"]["attempts"][0]
+        self.assertEqual(yolo_attempt["outcome"], "failed_cgroup_guard")
+        self.assertEqual(yolo_attempt["fresh"], "failed_before_complete_delivery")
+        self.assertEqual(yolo_attempt["restored"], "not_run")
+        self.assertEqual(yolo_attempt["replay"], "not_run")
+        self.assertEqual(yolo_attempt["cleanup"], "proven")
+        self.assertEqual(yolo_attempt["retry_count"], 0)
 
     def test_release_gate_statuses_and_evidence_are_reviewable(self):
         allowed = set(self.matrix["status_definitions"])
@@ -59,15 +66,19 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_batch_is_one_unrun_fixture_and_does_not_repeat_passes(self):
-        batch = self.matrix["next_batch"]
-        self.assertEqual(batch["fixture"], "07")
-        self.assertEqual(batch["pages"], 15)
-        self.assertEqual(batch["modes"], ["fresh", "restored", "replay"])
-        self.assertEqual(batch["execution_mode"], "process")
-        self.assertTrue((ROOT / batch["plan"]).is_file())
+    def test_next_step_is_offline_recommendation_not_runtime_authorization(self):
+        step = self.matrix["next_step"]
+        self.assertEqual(step["kind"], "fresh_only_attribution_calibration")
+        self.assertEqual(step["fixture"], "07")
+        self.assertEqual(step["modes"], ["fresh"])
+        self.assertEqual(step["execution_mode"], "process")
+        self.assertFalse(step["runtime_authorized"])
+        self.assertTrue(step["requires_explicit_capacity_authorization"])
+        self.assertTrue(step["keep_current_guard"])
+        self.assertFalse(step["raise_guard_from_matrix_a"])
+        self.assertTrue((ROOT / step["plan"]).is_file())
 
-    def test_human_matrix_and_batch_plan_match_machine_authority(self):
+    def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()
         fixture_rows = {}
         names = {
@@ -91,34 +102,12 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(row[5], fixture["oracle_and_full_graph"])
             self.assertEqual(row[6], fixture["q04_fresh_index"])
 
-        plan = (ROOT / self.matrix["next_batch"]["plan"]).read_text()
-        batch = self.matrix["next_batch"]
-        for field in (
-            "source_sha256",
-            "bundle_path",
-            "bundle_sha256",
-            "reference_sha256",
-            "runner_sha256",
-            "launcher_path",
-            "launcher_sha256",
-            "source_runtime_root",
-            "source_state_sha256",
-            "source_prefix",
-            "remote_root",
-            "prefix",
-            "phase",
-            "local_evidence",
-        ):
-            self.assertIn(str(batch[field]), plan, field)
-        for field, expected, phrase in (
-            ("window_seconds", 1500, "1,500-second lease"),
-            ("outer_observation_seconds", 180, "at most 180 seconds"),
-            ("outer_continuous_seconds", 60, "60 continuous seconds"),
-            ("workload_seconds", 825, "825 seconds"),
-            ("cleanup_seconds", 300, "300 seconds"),
-        ):
-            self.assertEqual(batch[field], expected)
-            self.assertIn(phrase, plan)
+        step = self.matrix["next_step"]
+        plan = (ROOT / step["plan"]).read_text()
+        self.assertIn("grants no runtime authorization", plan)
+        self.assertIn("fresh-only fixture 07 attribution calibration", plan)
+        self.assertIn("4 GiB active cgroup guard", plan)
+        self.assertIn("Do not automatically retry or raise the guard", plan)
 
 
 if __name__ == "__main__":

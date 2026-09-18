@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-This snapshot reconciles issue #51 through commit `6f16ec8`. The machine-readable
+This snapshot reconciles issue #51 through the YOLO result commit `ccdf81a`. The machine-readable
 authority is `evidence/current-acceptance-matrix.json`. “Proven” means direct Q04
 evidence for the exact bounded row. “Reusable” means earlier direct evidence can
 be carried forward only while all stated identities and behavior remain equal.
@@ -24,14 +24,23 @@ equality. Keynote covers 44 items, all 27 reviewed textboxes, one required OCR
 result and exact graph equality. Their process-resource and cleanup observations
 remain bounded to those fixtures.
 
+YOLO matrix A is a retained failed attempt, not an unrun row and not a partial
+pass. Fresh completed three five-page capture groups, then the fixed 4 GiB shared
+cgroup guard fired after assembly was scheduled while progress read `assembling`.
+Complete delivery and every consumer oracle
+remained unevaluated; restored and exact replay did not run; no fresh-index entry
+was created. Cleanup passed with zero retry and all 32 historical Deployments
+remaining closed. Fresh/restored/replay/full-graph rows therefore remain
+`unproven`.
+
 AIMA's executable identity reconciliation confirms equal source bytes, 20-file
 producer, method and relationship semantics. It also finds a different full
 profile/release, source object identity and Q04 consumer/oracle harness. Q03's
 four structures, localized dispositions and interruption/retry/replay therefore
 remain reusable historical reference evidence, but do not satisfy Q04
-fresh/restored/replay/full-graph rows or create a Q04 fresh-index entry. Native,
-WikiSkill and YOLO have not run under the integrated Q04 producer, so their R3
-results remain supporting evidence only.
+fresh/restored/replay/full-graph rows or create a Q04 fresh-index entry. Native
+and WikiSkill have not run under the integrated Q04 producer. YOLO ran but stopped
+before acceptance, so its R3 result remains supporting evidence only.
 
 ## Cross-cutting gates
 
@@ -48,7 +57,7 @@ results remain supporting evidence only.
 | Required-relationship interruption/retry/replay | reusable | Q03 trial D owned-child case; no Pod-loss claim |
 | Fixed warm sequence and recycle | unproven | R3 topology only |
 | Bounded process resources for fixtures 09/10 | **proven** | Two small-fixture windows only |
-| Integrated operating bounds | unproven | Larger fixtures, warm and recovery absent |
+| Integrated operating bounds | unproven | YOLO crossed the fixed shared-cgroup guard after assembly scheduling; larger fixtures, warm and recovery remain absent |
 | Active telemetry-loss guard | unproven | Q04 runtime phase not run |
 | Process drain/recovery | unproven | Q04 runtime phase not run |
 | Pod drain/recovery | unproven | R3 method/topology is reusable; integrated native Pod drain and owned topology remain required |
@@ -66,6 +75,8 @@ relabelled by the later passes. `quality_accepted=false` and
 `canonical_accepted=false` remain explicit; this matrix adds no LaTeX, canonical
 schema or general PDF-quality claim.
 
-The next proposed batch is [YOLO fixture 07](NEXT-RUNTIME-BATCH.md). It is the
-smallest fixture with no reusable integrated run and adds table/cell, caption and
-multi-page OCR coverage that the two completed small fixtures do not supply.
+No runtime batch is currently authorized. The offline
+[YOLO resource diagnosis](diagnosis/yolo-matrix-a/ANALYSIS.md) recommends one
+fresh-only attribution calibration, still using the current guard, before another
+full matrix. Its [measurement options](diagnosis/yolo-matrix-a/NEXT-MEASUREMENT.md)
+do not authorize a run or a threshold change.

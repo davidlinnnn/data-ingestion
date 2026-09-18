@@ -1,6 +1,14 @@
 # Proposed next runtime batch: YOLO fixture 07
 
-This is a preparation plan, not runtime authorization. It proposes one new
+**Consumed by matrix A; retained as the immutable execution plan.** The attempt
+is recorded in [`sentinel/yolo-matrix-a/RESULTS.md`](sentinel/yolo-matrix-a/RESULTS.md)
+and failed the fixed cgroup guard after assembly scheduling. The offline diagnosis and any
+future measurement options are in
+[`diagnosis/yolo-matrix-a/ANALYSIS.md`](diagnosis/yolo-matrix-a/ANALYSIS.md) and
+[`diagnosis/yolo-matrix-a/NEXT-MEASUREMENT.md`](diagnosis/yolo-matrix-a/NEXT-MEASUREMENT.md).
+Do not reuse this phase, identity, prefix or paths.
+
+This was a preparation plan, not runtime authorization. It proposed one new
 process-mode matrix phase for the full 15-page YOLO fixture: fresh,
 restored/new-request and exact replay. It does not include another Keynote/ACL
 run, AIMA, WikiSkill, native, warm, invalidation, guard, drain or Pod work.
