@@ -17,12 +17,17 @@ import test_consumer
 
 
 class WorkflowTransport:
-    def __init__(self, request, result):
+    def __init__(self, request, result, intent_path=None):
         self.request, self.output = request, result
+        self.intent_path = intent_path
 
     async def start_workflow(self, method, submission, **kwargs):
         if submission['request'] != self.request:
             raise ValueError('transport received a reinterpreted accepted request')
+        if self.intent_path is not None:
+            intent = json.loads(self.intent_path.read_text())
+            if intent['workflow_id'] != kwargs['id']:
+                raise ValueError('workflow ownership was not registered before submit')
         return self
 
     async def result(self):
@@ -62,11 +67,15 @@ class Controller(unittest.IsolatedAsyncioTestCase):
                             'memory_events':{'oom_kill':0},'psi_full_avg10':0})+'\n')
                         await asyncio.sleep(.05)
             observer=asyncio.create_task(telemetry());await asyncio.sleep(.01)
-            run=Run(config,{'fixtures':[fixture]},root,WorkflowTransport(request,result),store,host)
+            run=Run(config,{'fixtures':[fixture]},root,
+                    WorkflowTransport(request,result,root/'exact/workflow-intent.json'),store,host)
             try:
                 outcome=await run.trial('native','replay','exact',previous)
                 self.assertTrue(outcome['verified'])
                 self.assertTrue((root/'exact/history.json').exists())
+                intent=json.loads((root/'exact/workflow-intent.json').read_text())
+                self.assertEqual(intent['phase'],root.name)
+                self.assertEqual(intent['trial'],'exact')
             finally:
                 running=False
                 await observer

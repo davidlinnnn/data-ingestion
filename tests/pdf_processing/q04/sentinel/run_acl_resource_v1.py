@@ -352,6 +352,9 @@ def staged_sources():
         / "tests/pdf_processing/q04/sentinel/acl_resource_telemetry.py",
         "acl_fresh_measure.py": REPO
         / "tests/pdf_processing/q04/sentinel/acl_fresh_measure.py",
+        # Keep the frozen producer tree untouched while staging the reviewed
+        # orchestration harness that writes pre-submit workflow ownership.
+        "q04_runtime.py": REPO / "tests/pdf_processing/q04/q04_runtime.py",
     }
 
 
@@ -739,7 +742,9 @@ with open('/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:
                         + repr("q04/q04_runtime.py")
                         + ","
                         + repr("runner-acl-fresh-resource-v1/acl_fresh_measure.py")
-                        + ")))\n",
+                        + "), current_phase="
+                        + repr(PHASE)
+                        + "))\n",
                         timeout=180,
                     )
                     (OUT / "cleanup.json").write_bytes(cleanup_raw)

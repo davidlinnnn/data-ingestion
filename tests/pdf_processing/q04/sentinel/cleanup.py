@@ -19,7 +19,156 @@ def is_owned_controller(args, root, controller_scripts):
     )
 
 
-async def main(location, controller_scripts=('q04/q04_runtime.py',)):
+def is_temporal_not_found(error):
+    """Recognize only the SDK's typed NOT_FOUND transport result."""
+    from temporalio.service import RPCError, RPCStatusCode
+
+    return isinstance(error, RPCError) and error.status == RPCStatusCode.NOT_FOUND
+
+
+def recorded_workflow_ids(root, current_phase):
+    """Separate the exact current phase records from immutable history."""
+    entries = []
+    invalid = []
+    invalid_ids = set()
+    trials = {}
+    paths=list((root/'state').glob('*/*/workflow-intent.json'))
+    paths.extend((root/'state').glob('*/*/workflow.json'))
+    for path in paths:
+        record=json.loads(path.read_text())
+        workflow_id=record['workflow_id']
+        relative=path.relative_to(root/'state')
+        phase, trial=relative.parts[:2]
+        trials.setdefault(path.parent,{})[path.name]=workflow_id
+        entries.append((phase,workflow_id))
+        if path.name=='workflow-intent.json' and (
+                record.get('phase') != phase or record.get('trial') != trial):
+            invalid.append({'path':str(path),'workflow_id':workflow_id,
+                            'reason':'phase_or_trial_mismatch'})
+            invalid_ids.add(workflow_id)
+    for directory, records in trials.items():
+        if len(set(records.values())) > 1:
+            mismatched=sorted(set(records.values()))
+            invalid.append({'path':str(directory),'workflow_ids':mismatched,
+                            'reason':'intent_record_id_mismatch'})
+            invalid_ids.update(mismatched)
+    current={workflow_id for phase,workflow_id in entries
+             if phase == current_phase and workflow_id not in invalid_ids}
+    historical={workflow_id for phase,workflow_id in entries
+                if phase != current_phase and workflow_id not in invalid_ids}
+    return current, historical, invalid, invalid_ids
+
+
+async def cleanup_workflows(client, root, run_id, current_phase, evidence,
+                            report, errors, not_found=is_temporal_not_found):
+    """Stop exact current records; audit history and unowned discoveries.
+
+    A pre-submit workflow intent closes the submit-before-record crash gap. An
+    unrecorded running workflow has no exact phase ownership, so it is surfaced
+    as unexpected active work and fails cleanup without being signalled.
+    """
+    prefix=run_id+'-'
+    current, historical, invalid, invalid_ids=recorded_workflow_ids(
+        root,current_phase)
+    invalid.extend({'workflow_id':wid,'reason':'run_prefix_mismatch'}
+                   for wid in sorted(current|historical) if not wid.startswith(prefix))
+    if invalid:
+        errors.append({'workflow_ownership_invalid':invalid})
+    current={wid for wid in current if wid.startswith(prefix)}
+    historical={wid for wid in historical if wid.startswith(prefix)}
+    async with asyncio.timeout(15):
+        discovered={w.id async for w in client.list_workflows()
+                    if w.id.startswith(prefix)}
+    report['workflow_ownership']={
+        'phase':current_phase,
+        'current_recorded':sorted(current),
+        'historical_recorded':sorted(historical),
+        'discovered':sorted(discovered),
+        'invalid_unowned':sorted(invalid_ids),
+    }
+    report['historical_workflows']=[]
+    report['historical_missing']=[]
+    report['unexpected_active_workflows']=[]
+
+    async def status(handle):
+        description=await asyncio.wait_for(handle.describe(),10)
+        assert description.status is not None
+        return description.status.name
+
+    async def retain_history(workflow_id, handle, scope):
+        history=await asyncio.wait_for(handle.fetch_history(),10)
+        name=hashlib.sha256(workflow_id.encode()).hexdigest()+'.history.json'
+        with (evidence/name).open('x') as output:
+            output.write(history.to_json())
+        if scope=='historical':
+            report['historical_workflows'].append(workflow_id)
+
+    for workflow_id in sorted(current):
+        handle=client.get_workflow_handle(workflow_id)
+        try:
+            if await status(handle)=='RUNNING':
+                await handle.cancel()
+                try:await asyncio.wait_for(handle.result(),20)
+                except BaseException:
+                    if await status(handle)=='RUNNING':
+                        await handle.terminate(reason='approved Q04 sentinel cleanup')
+            current_status=await status(handle)
+            if current_status=='RUNNING':
+                errors.append({'current_workflow_still_running':workflow_id})
+            report['workflows'].append({
+                'workflow_id':workflow_id,'status':current_status,'scope':'current'})
+            await retain_history(workflow_id,handle,'current')
+        except Exception as error:
+            if not_found(error):
+                errors.append({'current_owned_missing':workflow_id})
+            else:
+                errors.append({'workflow':workflow_id,'error':str(error)})
+
+    for workflow_id in sorted(historical):
+        handle=client.get_workflow_handle(workflow_id)
+        try:
+            historical_status=await status(handle)
+            if historical_status=='RUNNING':
+                report['unexpected_active_workflows'].append({
+                    'workflow_id':workflow_id,'source':'historical_record'})
+                errors.append({'unexpected_active_workflow':workflow_id})
+            report['workflows'].append({
+                'workflow_id':workflow_id,'status':historical_status,'scope':'historical'})
+            await retain_history(workflow_id,handle,'historical')
+        except Exception as error:
+            if not_found(error):
+                report['historical_missing'].append(workflow_id)
+            else:
+                errors.append({'workflow':workflow_id,'error':str(error)})
+
+    for workflow_id in sorted(discovered-current-historical):
+        handle=client.get_workflow_handle(workflow_id)
+        try:
+            discovered_status=await status(handle)
+            row={'workflow_id':workflow_id,'status':discovered_status,
+                 'scope':'unrecorded'}
+            report['workflows'].append(row)
+            if discovered_status=='RUNNING':
+                report['unexpected_active_workflows'].append({
+                    'workflow_id':workflow_id,
+                    'source':('invalid_ownership' if workflow_id in invalid_ids
+                              else 'unregistered_unexpected')})
+                errors.append({'unexpected_active_workflow':workflow_id})
+        except Exception as error:
+            if not_found(error):
+                report.setdefault('discovered_missing',[]).append(workflow_id)
+            else:
+                errors.append({'workflow':workflow_id,'error':str(error)})
+
+    async with asyncio.timeout(15):
+        report['running_after_cleanup']=[
+            w.id async for w in client.list_workflows(
+                query='ExecutionStatus="Running"') if w.id.startswith(prefix)]
+    if report['running_after_cleanup']:
+        errors.append({'running_after_cleanup':report['running_after_cleanup']})
+
+
+async def main(location, controller_scripts=('q04/q04_runtime.py',), current_phase=None):
     import psutil
     root=Path(location)
     evidence=root/('owner-cleanup-'+str(time.time_ns()));evidence.mkdir()
@@ -46,37 +195,12 @@ async def main(location, controller_scripts=('q04/q04_runtime.py',)):
         try:
             from temporalio.client import Client
             client=await asyncio.wait_for(Client.connect(config['temporal']),10)
-            async def workflow_status(handle):
-                description=await asyncio.wait_for(handle.describe(),10)
-                assert description.status is not None
-                return description.status.name
-            ids={json.loads(path.read_text())['workflow_id'] for path in (root/'state').glob('*/*/workflow.json')}
-            async def running_owned():
-                async with asyncio.timeout(15):
-                    return [w.id async for w in client.list_workflows(query='ExecutionStatus="Running"') if w.id.startswith(config['run_id']+'-')]
-            # Cover the submit/record gap; recorded IDs are not the authority.
-            async with asyncio.timeout(15):
-                discovered=[w.id async for w in client.list_workflows() if w.id.startswith(config['run_id']+'-')]
-            report['discovered_executions']=discovered
-            ids.update(discovered)
-            for wid in ids:
-                assert wid.startswith(config['run_id']+'-')
-                h=client.get_workflow_handle(wid)
-                try:
-                    if await workflow_status(h)=='RUNNING':
-                        await h.cancel()
-                        try:await asyncio.wait_for(h.result(),20)
-                        except BaseException:
-                            if await workflow_status(h)=='RUNNING':await h.terminate(reason='approved Q04 sentinel cleanup')
-                    status=await workflow_status(h)
-                    assert status!='RUNNING'
-                    report['workflows'].append({'workflow_id':wid,'status':status})
-                    history=await asyncio.wait_for(h.fetch_history(),10)
-                    (evidence/(hashlib.sha256(wid.encode()).hexdigest()+'.history.json')).open('x').write(history.to_json())
-                except Exception as e:errors.append({'workflow':wid,'error':str(e)})
-            await asyncio.sleep(2)
-            report['running_after_cleanup']=await running_owned()
-            assert not report['running_after_cleanup'],'owned workflow still running'
+            if not current_phase:
+                errors.append({'workflow_ownership':'current phase is required'})
+            else:
+                await cleanup_workflows(client,root,config['run_id'],current_phase,
+                                        evidence,report,errors)
+                await asyncio.sleep(2)
         except Exception as e:errors.append({'workflow_transport':str(e)})
     for path in (root/'state').glob('*/worker-*/ownership.json'):
         owner=json.loads(path.read_text());row={'pid':owner['pid'],'generation':owner['generation']}
@@ -149,4 +273,12 @@ async def main(location, controller_scripts=('q04/q04_runtime.py',)):
     print(json.dumps(report))
     assert not remaining and not report['scratch_remaining'] and not any(r.get('unresolved') for r in report['orphans']), 'cleanup incomplete'
     assert all(row['status']!='RUNNING' for row in report['workflows'])
-    assert not any(isinstance(e,dict) and ('workflow_transport' in e or 'publication_audit' in e or 'workflow' in e or ('worker' in e and 'error' in e)) for e in errors), 'cleanup verification failed'
+    workflow_failures={
+        'workflow_transport','workflow','workflow_ownership',
+        'workflow_ownership_invalid','current_owned_missing',
+        'current_workflow_still_running','unexpected_active_workflow',
+        'running_after_cleanup','publication_audit',
+    }
+    assert not any(isinstance(e,dict) and (
+        workflow_failures.intersection(e) or ('worker' in e and 'error' in e)
+    ) for e in errors), 'cleanup verification failed'

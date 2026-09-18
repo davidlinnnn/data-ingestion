@@ -177,6 +177,15 @@ class Run:
         await self.guard()
         started = time.time()
         workflow_id = self.config['run_id']+'-'+label+'-'+uuid.uuid4().hex
+        # Persist exact phase ownership before submission so outer cleanup can
+        # recover the start-workflow / workflow.json crash gap without guessing
+        # from a run-wide prefix.
+        write(target/'workflow-intent.json', {
+            'workflow_id': workflow_id,
+            'phase': self.root.name,
+            'trial': label,
+            'created': started,
+        })
         handle = await self.client.start_workflow(PDFProcessing.run,
             {'request': request, 'activity_queue': self.config['queues'][profile_key]},
             id=workflow_id, task_queue=self.config['workflow_queue'],

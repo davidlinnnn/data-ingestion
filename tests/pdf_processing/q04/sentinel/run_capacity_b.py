@@ -16,6 +16,7 @@ OUT = Path("/private/tmp/q04-keynote-window-20260916-b")
 PACKAGE = Path("/private/tmp/q04-keynote-18be1b3-20260916-a-package")
 REMOTE = "/tmp/q04-keynote-18be1b3-20260916-b"
 PREFIX = "q04/keynote-18be1b3-20260916-b/"
+PHASE = "keynote-window-2"
 PYTHON = "/experiment/.venv/bin/python"
 NS = "pdf-t09a-validation"
 CONTEXT = "kind-internal-a2a-vs6-local"
@@ -326,7 +327,7 @@ timeout --signal=INT --kill-after=180s 825s /experiment/.venv/bin/python tests/p
             try:
                 cleanup_script = (REPO / "tests/pdf_processing/q04/sentinel/cleanup.py").read_text()
                 cleanup_raw = remote(
-                    cleanup_script + "\nasyncio.run(main(" + repr(REMOTE) + "))\n", timeout=180
+                    cleanup_script + "\nasyncio.run(main(" + repr(REMOTE) + ", current_phase=" + repr(PHASE) + "))\n", timeout=180
                 )
                 (OUT / "cleanup.json").write_bytes(cleanup_raw)
                 cleanup_result = json.loads(cleanup_raw)

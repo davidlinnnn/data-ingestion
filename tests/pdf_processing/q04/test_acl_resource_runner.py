@@ -241,6 +241,11 @@ class AclResourceRunner(unittest.TestCase):
             [ast.literal_eval(value) for value in trials[0].args[:3]],
             ["09", "fresh", "fresh-09"],
         )
+        staged = resource_runner.staged_sources()
+        self.assertEqual(
+            staged["q04_runtime.py"],
+            Path(resource_runner.__file__).parents[1] / "q04_runtime.py",
+        )
 
     def test_measurement_driver_rejects_existing_identity_lock(self):
         with tempfile.TemporaryDirectory() as directory:
