@@ -1,0 +1,31 @@
+Completing activity as failed ({'activity_id': '3', 'activity_type': 'pdf_processing_step_v1', 'attempt': 1, 'namespace': 'default', 'task_queue': 'q04-pod-cgroup-i-07', 'workflow_id': 'q04-yolo-pod-cgroup-20260920-i-fresh-07-5979b397c5894b24b72c2ac72a8db104', 'workflow_run_id': '01a0bab6-f7a3-71fd-8c85-2dfadf77b39e', 'workflow_type': 'PDFProcessing'})
+Traceback (most recent call last):
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/processing.py", line 246, in run
+    return await self.execute(value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/processing.py", line 208, in execute
+    identity = await execution.produce(contract)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/execution.py", line 255, in produce
+    await self.child('pdf_processing.parse', {**request, 'mode': 'capture',
+  File "/workspace/src/pdf_processing/execution.py", line 102, in child
+    self.observation['parser'] = await self.child_runner.run(request, out, self.heartbeat, self.child_timeout)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/supervision.py", line 133, in run
+    done, _ = await asyncio.wait({reader}, timeout=.2)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/tasks.py", line 464, in wait
+    return await _wait(fs, timeout, return_when, loop)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/tasks.py", line 550, in _wait
+    await waiter
+asyncio.exceptions.CancelledError

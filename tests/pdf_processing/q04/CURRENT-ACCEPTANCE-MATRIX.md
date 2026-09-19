@@ -111,3 +111,25 @@ transition to preserve only cgroup continuity. It also requires each
 `max_requests=1` parser identity to exit before assembly instead of treating a
 termination label as proof. This harness correction is offline evidence, not a
 retroactive PASS or authorization to rerun.
+
+
+## H repair and I diagnostic window (2026-09-20 execution session)
+
+The [session handoff](pod-topology-v8/SESSION-HANDOFF.md) adds evidence without
+promoting any fixture or cross-cutting row. H's discarded controller sample and
+worker-log cleanup defects are repaired in version I. Recovered H history and
+worker/cgroup traces classify its business failure as PSI-triggered cancellation,
+not demonstrated Activity deadline exhaustion.
+
+One I run from 41a8816 passed all 11 pre-inference gates and registered five YOLO
+pages, then failed the transient scratch/durable evidence transport contract.
+Restored/replay did not start. Failed-workload terminal sealing and separate
+read-only recovery of 38 inventory entries succeeded, while automatic export
+remains failed. Owned runtime was removed, all 32 held Deployments stayed off,
+and all historical PVC UIDs were retained. See [results](pod-topology-v8/first-window-evidence/RESULTS.md).
+
+The existing machine-readable acceptance statuses remain unchanged: I adds no
+accepted fresh index or supported operating bound. The remaining transport repair
+must precede a separately identified follow-up window; I was not retried. #51
+remains open; [ticket text](pod-topology-v8/TICKET-51-UPDATE-DRAFT.md) is a draft for
+main, not a published update.

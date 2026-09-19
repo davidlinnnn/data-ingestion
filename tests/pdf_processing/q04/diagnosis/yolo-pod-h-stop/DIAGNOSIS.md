@@ -14,7 +14,7 @@ worker sample does preserve positive node PSI near the stop.
 | 16:48:42.087937 | event 11 | Group 1–5 scheduled; 180s start/schedule-to-close and 15s heartbeat timeout. |
 | 16:48:49.051700–49.554673 | recovered worker samples | Parser ready, RapidOcrModel then checkpoint_commit progress; retained transport had only earlier LayoutModel trace. |
 | 16:48:50.157763 | original controller last saved sample | Node PSI 0; exact following rejecting sample was discarded. |
-| 16:48:50.228794 | recovered attribution sample 276 | Cgroup full avg10=0.18, total=71,325 microseconds; positive Pod-local stall also observed. |
+| 16:48:50.228794 | recovered attribution index 276 (JSONL line 277) | Cgroup full avg10=0.18, total=71,325 microseconds; positive Pod-local stall also observed. |
 | 16:48:50.330704 | recovered worker samples | Node full avg10=0.54; available=6,709,325,824; cgroup current=1,733,328,896; VM OOM=0. |
 | 16:48:50.570531 | recovered cancel_requested callback marker | Inner failure cleanup invokes owned cancellation. |
 | 16:48:50.571493 | event 12, identity 108@H Pod | Matrix process requested workflow cancellation. |

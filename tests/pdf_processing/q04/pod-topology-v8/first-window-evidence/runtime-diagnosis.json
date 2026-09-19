@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-yolo-pod-cgroup-20260920-i",
+  "executed_commit": "41a8816",
+  "status": "FAIL_TRANSIENT_SCRATCH_EVIDENCE_CONTRACT",
+  "automatic_retry": false,
+  "pre_inference_gates": "11/11 PASS",
+  "controller": {
+    "samples": 194,
+    "minimum_available_bytes": 6678102016,
+    "maximum_memory_current_bytes": 1744384000,
+    "maximum_node_full_avg10": 0.0,
+    "maximum_cgroup_full_avg10": 0.18,
+    "maximum_gap_seconds": 0.5270681381225586,
+    "vm_oom_kill_values": [
+      0
+    ]
+  },
+  "attribution": {
+    "samples": 339,
+    "maximum_memory_current_bytes": 1786847232,
+    "maximum_full_avg10": 0.18,
+    "any_oom": false
+  },
+  "temporal_execution_status": "COMPLETED",
+  "business_result": {
+    "canonical_accepted": false,
+    "error": {
+      "category": "infrastructure",
+      "code": "activity_budget_exhausted"
+    },
+    "observed_at": "2026-09-19T17:29:21.463423+00:00",
+    "pages": 15,
+    "plan": "pdf-plan-v1:3e87231500eef8336b8ccc1db898a3b7b7306ff96f744964b0199bd203f48ea6",
+    "processing_complete": false,
+    "registered_pages": 5,
+    "status": "failed",
+    "steps": [
+      {
+        "observed_at": "2026-09-19T17:29:20.305067+00:00",
+        "operation": "9f9f54ed187f66e65255a684a101dfde11d5fe01cb7d6ce60623780ed507e536",
+        "parser": {
+          "completed_at": "2026-09-19T17:29:20.172389+00:00",
+          "exit_code": -15,
+          "forced_kill": false,
+          "handoffs": 0,
+          "last_local_progress": "2026-09-19T17:29:20.152295+00:00",
+          "memory": {
+            "peak_rss": 1808268,
+            "units": "KiB"
+          },
+          "observed_at": "2026-09-19T17:29:20.172398+00:00",
+          "pid": 1435,
+          "ready": false,
+          "recycles": 1,
+          "request_id": "c129fd216a974a68a676cdbcaa8cdde3",
+          "restarts": 1,
+          "stage": "checkpoint_commit",
+          "termination_reason": "request_recycle"
+        },
+        "reused": false,
+        "seconds": 11.927476755998214,
+        "stage": "group",
+        "storage": {
+          "get_bytes": 6809487,
+          "get_seconds": 0.04083663003984839,
+          "put_bytes": 2933480,
+          "put_seconds": 0.059354001001338474
+        }
+      }
+    ],
+    "version": 1
+  },
+  "restored": "NOT_STARTED",
+  "exact_replay": "NOT_STARTED",
+  "automatic_export_complete": false,
+  "cleanup_disposition": "CLEANED_WITH_PVC_RETAINED_WORKLOAD_EVIDENCE_INCOMPLETE",
+  "retained_pvc_uid": "40b563b4-05f2-4b86-bafb-efcb1422a296",
+  "read_only_recovery": {
+    "terminal_manifest": true,
+    "cleanup_complete": true,
+    "workload_succeeded": false,
+    "verified_inventory_files": 38,
+    "archive_sha256": "186baf8f274041ed8990717409ca248aef6f3be2fd860cf018a27759d1dc32e5",
+    "does_not_relabel_automatic_export": true
+  }
+}
