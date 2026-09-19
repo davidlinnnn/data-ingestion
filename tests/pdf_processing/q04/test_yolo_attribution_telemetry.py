@@ -1,6 +1,7 @@
 """Offline synthetic checks for strict YOLO attribution telemetry."""
 
 import json
+import copy
 from pathlib import Path
 import shutil
 import subprocess
@@ -11,11 +12,19 @@ import time
 import unittest
 
 from sentinel.acl_resource_telemetry import cgroup_identity
-from sentinel.yolo_attribution_telemetry import (
+from sentinel.yolo_reviewed_attribution_telemetry import (
     ProcessLifecycle,
     StrictAttributionCollector,
+    classify_confirmed_exit_transition,
+    evaluate_parser_lifecycle_contract,
     observed_runtime_markers,
     strict_attribution_sample,
+)
+
+
+RETAINED_REPLAY = (
+    Path(__file__).parent
+    / "candidate/yolo-reviewed-b-fail/RETAINED-REPLAY.json"
 )
 
 
@@ -44,7 +53,7 @@ class SyntheticLinux:
         )
         (self.cgroup / "memory.current").write_text("209715200\n")
         (self.cgroup / "memory.events").write_text(
-            "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\n"
+            "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n"
         )
         (self.cgroup / "memory.stat").write_text(
             "anon 104857600\nfile 52428800\nshmem 0\nfile_mapped 4096\n"
@@ -73,6 +82,45 @@ class SyntheticLinux:
 
 
 class YoloAttributionTelemetry(unittest.TestCase):
+    def compact_retained_sample(self, row):
+        return {
+            "monotonic": row["monotonic"],
+            "cgroup": row["cgroup"],
+            "attribution_complete": row["attribution_complete"],
+            "process_coverage": row["process_coverage"],
+            "processes": [
+                {
+                    key: process.get(key)
+                    for key in (
+                        "pid", "ppid", "start_ticks", "ownership", "status",
+                        "reason", "command_class", "pss_bytes",
+                    )
+                }
+                for process in row["processes"]
+            ],
+            "process_events": row["process_events"],
+            "memory_current": row["memory_current"],
+            "memory_events": row["memory_events"],
+            "memory_stat": row["memory_stat"],
+            "memory_pressure_raw": row["memory_pressure_raw"],
+            "observation_labels": [
+                item["label"] for item in row.get("observations", [])
+            ],
+            "warm_parser_present": any(
+                item.get("ownership") == "owned"
+                and item.get("command_class") == "warm_parser"
+                for item in row["processes"]
+            ),
+            "fresh_parse_present": any(
+                item.get("ownership") == "owned"
+                and item.get("command_class") == "fresh_parse_child"
+                for item in row["processes"]
+            ),
+        }
+
+    def retained_replay(self):
+        return json.loads(RETAINED_REPLAY.read_text())
+
     def sample(self, linux, **kwargs):
         return strict_attribution_sample(
             root_pid=100,
@@ -145,6 +193,165 @@ class YoloAttributionTelemetry(unittest.TestCase):
             self.assertEqual(fresh["status"], "identity_changed_during_sample")
             self.assertIsNone(fresh["pss_bytes"])
             self.assertFalse(row["attribution_complete"])
+
+    def test_retained_725_726_727_classifies_only_cgroup_continuity(self):
+        retained = self.retained_replay()
+        rows = [self.compact_retained_sample(row) for row in retained["transition_samples"]]
+        result = classify_confirmed_exit_transition(
+            rows, 1, attribution_gap_seconds=1.0, peak_index=0
+        )
+
+        self.assertEqual(result["status"], "classified_confirmed_exit")
+        self.assertEqual(result["pid"], 5038)
+        self.assertFalse(result["process_attribution_complete"])
+        self.assertTrue(result["cgroup_readings_complete"])
+        self.assertFalse(rows[1]["attribution_complete"])
+        self.assertIsNone(rows[1]["processes"][-1]["pss_bytes"])
+
+    def test_transition_classifier_rejects_pid_reuse_read_denial_unknown_and_peak(self):
+        retained = self.retained_replay()
+        base = [self.compact_retained_sample(row) for row in retained["transition_samples"]]
+        cases = {}
+
+        reused = copy.deepcopy(base)
+        reused[2]["process_events"].append(
+            {
+                "event": "pid_reuse_observed",
+                "pid": 5038,
+                "prior_start_ticks": 8108685,
+                "start_ticks": 9999999,
+            }
+        )
+        cases["pid_reuse"] = (reused, 0, "pid_reuse_observed")
+
+        denied = copy.deepcopy(base)
+        denied[1]["processes"][-1]["reason"] = "PermissionError"
+        cases["read_denied"] = (
+            denied,
+            0,
+            "exit_read_was_not_process_absence",
+        )
+
+        unknown = copy.deepcopy(base)
+        unknown[1]["processes"][-1]["pid"] = 9999
+        unknown[1]["processes"][-1]["start_ticks"] = 9999
+        cases["unknown_descendant"] = (
+            unknown,
+            0,
+            "prior_process_identity_not_complete",
+        )
+        changed_cgroup = copy.deepcopy(base)
+        changed_cgroup[1]["cgroup"]["proc_cgroup"] = "0::/changed"
+        cases["cgroup_identity"] = (
+            changed_cgroup,
+            0,
+            "cgroup_identity_changed",
+        )
+        before_incomplete = copy.deepcopy(base)
+        before_incomplete[0]["attribution_complete"] = False
+        before_incomplete[0]["process_coverage"]["status"] = "incomplete"
+        cases["before_enumeration"] = (
+            before_incomplete,
+            0,
+            "adjacent_process_enumeration_incomplete",
+        )
+        after_incomplete = copy.deepcopy(base)
+        after_incomplete[2]["attribution_complete"] = False
+        after_incomplete[2]["process_coverage"]["status"] = "incomplete"
+        cases["after_enumeration"] = (
+            after_incomplete,
+            0,
+            "adjacent_process_enumeration_incomplete",
+        )
+        cases["peak_unknown"] = (
+            copy.deepcopy(base),
+            1,
+            "peak_process_attribution_incomplete",
+        )
+
+        for name, (rows, peak_index, reason) in cases.items():
+            with self.subTest(name=name):
+                result = classify_confirmed_exit_transition(
+                    rows, 1, attribution_gap_seconds=1.0, peak_index=peak_index
+                )
+                self.assertEqual(result["status"], "unclassified")
+                self.assertEqual(result["reason"], reason)
+
+    def test_retained_max_requests_one_uses_confirmed_recycle_exit_not_handoff(self):
+        retained = self.retained_replay()
+        rows = [
+            self.compact_retained_sample(row)
+            for row in retained["parser_lifecycle_samples"]
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "fresh-07"
+            target.mkdir()
+            (target / "accepted.json").write_text(
+                json.dumps(retained["fresh_accepted"])
+            )
+            result = evaluate_parser_lifecycle_contract(
+                rows, root, require_recycle_exit=True
+            )
+
+        self.assertTrue(result["complete"])
+        self.assertEqual(result["status"], "complete_request_recycle_exit")
+        self.assertFalse(result["handoff_required"])
+        self.assertEqual(
+            [item["pid"] for item in result["parser_exits"]],
+            [4608, 4642, 4676],
+        )
+
+    def test_recycle_label_cannot_replace_exit_or_overlap_proof(self):
+        retained = self.retained_replay()
+        base = [
+            self.compact_retained_sample(row)
+            for row in retained["parser_lifecycle_samples"]
+        ]
+        cases = {}
+        missing_exit = copy.deepcopy(base)
+        for row in missing_exit:
+            row["process_events"] = [
+                event
+                for event in row["process_events"]
+                if not (
+                    event.get("event") == "exit_observed"
+                    and event.get("pid") == 4676
+                )
+            ]
+        cases["termination_reason_only"] = (
+            missing_exit,
+            "parser_exit_not_confirmed_before_assembly",
+        )
+
+        overlap = copy.deepcopy(base)
+        assembly = next(
+            row
+            for row in overlap
+            if "workflow_progress_assembling_observed"
+            in row["observation_labels"]
+        )
+        assembly["warm_parser_present"] = True
+        assembly["fresh_parse_present"] = True
+        cases["warm_fresh_overlap"] = (
+            overlap,
+            "warm_parser_present_at_or_after_assembly",
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "fresh-07"
+            target.mkdir()
+            (target / "accepted.json").write_text(
+                json.dumps(retained["fresh_accepted"])
+            )
+            for name, (rows, reason) in cases.items():
+                with self.subTest(name=name):
+                    result = evaluate_parser_lifecycle_contract(
+                        rows, root, require_recycle_exit=True
+                    )
+                    self.assertFalse(result["complete"])
+                    self.assertEqual(result["reason"], reason)
 
     def test_synthetic_subprocess_lifecycle_retains_birth_exit_and_pid_reuse(self):
         tracker = ProcessLifecycle()

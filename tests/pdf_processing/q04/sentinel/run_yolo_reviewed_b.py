@@ -47,6 +47,10 @@ OFFLINE_MANIFEST = (
 LOCAL_BUNDLE = Path("/private/tmp/q04-inputs-yolo-lifecycle-v1")
 BASELINE_BUDGETS = yolo_reviewed_window.BASELINE_PARSER_BUDGETS
 CANDIDATE_BUDGETS = yolo_reviewed_window.PARSER_BUDGETS
+REVIEWED_CANDIDATE_OVERRIDES = {
+    "tests/pdf_processing/q04/candidate/yolo_candidate_window.py",
+    "tests/pdf_processing/q04/sentinel/yolo_attribution_telemetry.py",
+}
 
 
 def _sha(path: Path) -> str:
@@ -99,9 +103,9 @@ def staged_sources():
         "acl_resource_telemetry.py": REPO
         / "tests/pdf_processing/q04/sentinel/acl_resource_telemetry.py",
         "yolo_attribution_telemetry.py": REPO
-        / "tests/pdf_processing/q04/sentinel/yolo_attribution_telemetry.py",
+        / "tests/pdf_processing/q04/sentinel/yolo_reviewed_attribution_telemetry.py",
         "yolo_candidate_window.py": REPO
-        / "tests/pdf_processing/q04/candidate/yolo_candidate_window.py",
+        / "tests/pdf_processing/q04/candidate/yolo_reviewed_candidate_window.py",
         "yolo_candidate_measure.py": REPO
         / "tests/pdf_processing/q04/candidate/yolo_candidate_measure.py",
         "yolo_lifecycle.py": REPO
@@ -136,15 +140,75 @@ def staged_sources():
 
 def offline_test_files():
     return {
+        "tests/pdf_processing/q04/candidate/yolo-reviewed-b-fail/RETAINED-REPLAY.json": REPO
+        / "tests/pdf_processing/q04/candidate/yolo-reviewed-b-fail/RETAINED-REPLAY.json",
+        "tests/pdf_processing/q04/candidate/yolo-reviewed-b-fail/OFFLINE-RECONCILIATION.md": REPO
+        / "tests/pdf_processing/q04/candidate/yolo-reviewed-b-fail/OFFLINE-RECONCILIATION.md",
         "tests/pdf_processing/q04/test_yolo_review_candidates.py": REPO
         / "tests/pdf_processing/q04/test_yolo_review_candidates.py",
         "tests/pdf_processing/q04/test_yolo_reviewed_window.py": REPO
         / "tests/pdf_processing/q04/test_yolo_reviewed_window.py",
+        "tests/pdf_processing/q04/test_yolo_attribution_telemetry.py": REPO
+        / "tests/pdf_processing/q04/test_yolo_attribution_telemetry.py",
         "tests/pdf_processing/q04/yolo_reviewed_offline_suite.py": REPO
         / "tests/pdf_processing/q04/yolo_reviewed_offline_suite.py",
         "tests/pdf_processing/q04/candidate/build_yolo_reviewed_manifest.py": REPO
         / "tests/pdf_processing/q04/candidate/build_yolo_reviewed_manifest.py",
     }
+
+
+def candidate_staging_files():
+    """Keep the frozen candidate manifest intact while binding reviewed fixes."""
+    manifest = json.loads(lifecycle.CANDIDATE_MANIFEST.read_text())
+    lifecycle.require(
+        manifest["candidate_inputs_sha256"] == lifecycle.EXPECTED_BUNDLE_SHA256,
+        "candidate manifest bundle hash changed",
+    )
+    paths = {
+        "src/pdf_processing/" + name: REPO / "src/pdf_processing" / name
+        for name in manifest["changed_producer_files"]
+    }
+    paths.update(
+        {name: REPO / name for name in manifest["changed_test_files"]}
+    )
+    paths.update(
+        {
+            "tests/pdf_processing/q04/candidate/yolo_candidate_window.py": REPO
+            / "tests/pdf_processing/q04/candidate/yolo_reviewed_candidate_window.py",
+            "tests/pdf_processing/q04/sentinel/yolo_attribution_telemetry.py": REPO
+            / "tests/pdf_processing/q04/sentinel/yolo_reviewed_attribution_telemetry.py",
+        }
+    )
+    expected = {
+        "src/pdf_processing/" + name: digest
+        for name, digest in manifest["producer"].items()
+        if name in manifest["changed_producer_files"]
+    }
+    expected.update(
+        {
+            name: manifest["test_files"][name]
+            for name in manifest["changed_test_files"]
+        }
+    )
+    observed = {name: _sha(path) for name, path in paths.items()}
+    lifecycle.require(
+        {
+            name: digest
+            for name, digest in observed.items()
+            if name not in REVIEWED_CANDIDATE_OVERRIDES
+        }
+        == {
+            name: digest
+            for name, digest in expected.items()
+            if name not in REVIEWED_CANDIDATE_OVERRIDES
+        },
+        "candidate source or worker manifest changed outside reviewed overrides",
+    )
+    lifecycle.require(
+        REVIEWED_CANDIDATE_OVERRIDES <= set(paths),
+        "reviewed candidate overrides are not staged",
+    )
+    return paths
 
 
 def source_hashes(sources=None):
@@ -179,7 +243,7 @@ def reviewed_source_hashes(sources=None, manifest_path=OFFLINE_MANIFEST):
     )
     expected_candidate = {
         name: _sha(path)
-        for name, path in lifecycle.candidate_staging_files().items()
+        for name, path in candidate_staging_files().items()
     }
     lifecycle.require(
         retained.get("candidate_staging_files") == expected_candidate,
@@ -195,7 +259,7 @@ def require_reviewed_git_state(sources=None, manifest_path=OFFLINE_MANIFEST):
     paths = [str(path.resolve().relative_to(REPO)) for path in sources.values()]
     paths.extend(
         str(path.resolve().relative_to(REPO))
-        for path in lifecycle.candidate_staging_files().values()
+        for path in candidate_staging_files().values()
     )
     paths.extend(
         [
@@ -487,7 +551,7 @@ def build_offline_manifest():
         "authorization_scope_sha256": authorization_scope_sha256(),
         "candidate_staging_files": {
             name: _sha(path)
-            for name, path in lifecycle.candidate_staging_files().items()
+            for name, path in candidate_staging_files().items()
         },
         "staged_sources": source_hashes(),
         "offline_test_files": {
@@ -570,6 +634,7 @@ def configure_lifecycle():
         "parser_budgets": CANDIDATE_BUDGETS,
     }
     lifecycle.staged_sources = staged_sources
+    lifecycle.candidate_staging_files = candidate_staging_files
     lifecycle.reviewed_source_hashes = reviewed_source_hashes
     lifecycle.require_reviewed_git_state = require_reviewed_git_state
     lifecycle.build_staging_probe_program = lambda root=REMOTE: (
@@ -596,22 +661,9 @@ def main(argv=None):
     parser.add_argument("--owner")
     parser.add_argument("--approval-reference")
     parser.add_argument("--authorization-scope-sha256")
-    args = parser.parse_args(argv)
-    if not args.execute:
-        parser.error("runtime execution requires explicit --execute")
-    if not args.owner or not args.approval_reference:
-        parser.error("--owner and --approval-reference are required")
-    if args.authorization_scope_sha256 != authorization_scope_sha256():
-        parser.error("authorization scope does not match the reviewed single-run scope")
-    configure_lifecycle()
-    return lifecycle.main(
-        [
-            "--execute",
-            "--owner",
-            args.owner,
-            "--approval-reference",
-            args.approval_reference,
-        ]
+    parser.parse_args(argv)
+    parser.error(
+        "yolo-reviewed-b is a consumed historical identity; use a new reviewed runner"
     )
 
 

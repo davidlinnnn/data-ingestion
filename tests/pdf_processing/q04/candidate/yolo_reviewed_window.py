@@ -18,10 +18,17 @@ from typing import Any
 import consumer
 from consumer import canonical, require, sha
 import q04_runtime
-from candidate.yolo_candidate_window import (
-    run_window as run_lifecycle_window,
-    validate_matrix_records,
-)
+try:
+    from candidate.yolo_reviewed_candidate_window import (
+        run_window as run_lifecycle_window,
+        validate_matrix_records,
+    )
+except ImportError:
+    # The reviewed source is staged under the historical module name remotely.
+    from candidate.yolo_candidate_window import (
+        run_window as run_lifecycle_window,
+        validate_matrix_records,
+    )
 
 try:
     from .yolo_equivalence_candidate import validate_candidate as validate_equivalence
@@ -58,12 +65,16 @@ def evaluate_resource_gate(
     *,
     limit_bytes: int = MAX_CGROUP_BYTES,
 ) -> dict[str, Any]:
-    incomplete = [
+    process_incomplete = [
         index
         for index, sample in enumerate(samples)
         if sample.get("attribution_complete") is not True
         or sample.get("process_coverage", {}).get("status") != "complete"
     ]
+    classified_transitions = summary.get(
+        "classified_cgroup_transition_sample_indexes", []
+    )
+    incomplete = sorted(set(process_incomplete) - set(classified_transitions))
     memory_violations = []
     for index, sample in enumerate(samples):
         value = sample.get("memory_current")
@@ -129,11 +140,10 @@ def evaluate_resource_gate(
     final_cleanup = required_final_labels.issubset(final_labels)
     summary_errors = []
     expected_summary = {
-        "status": "complete",
-        "attribution_complete": True,
+        "qualification_complete": True,
+        "cgroup_resource_complete": True,
+        "unclassified_incomplete_sample_indexes": [],
         "samples": len(samples),
-        "incomplete_samples": 0,
-        "hard_incomplete_sample_indexes": [],
         "errors": [],
         "missing_required_observation_labels": [],
         "required_observations_in_order": True,
@@ -153,10 +163,11 @@ def evaluate_resource_gate(
                 "actual": summary.get("maximum_gap_seconds"),
             }
         )
-    if "warm_handoff_observed" not in summary.get(
-        "observed_observation_labels", []
-    ):
-        summary_errors.append({"field": "warm_handoff_observed", "actual": False})
+    parser_contract = summary.get("parser_lifecycle_contract", {})
+    if parser_contract.get("complete") is not True:
+        summary_errors.append(
+            {"field": "parser_lifecycle_contract", "actual": parser_contract}
+        )
 
     passed = not any(
         (
@@ -174,6 +185,8 @@ def evaluate_resource_gate(
         "limit_bytes": limit_bytes,
         "samples_evaluated": len(samples),
         "incomplete_sample_indexes": incomplete,
+        "process_attribution_incomplete_sample_indexes": process_incomplete,
+        "classified_cgroup_transition_sample_indexes": classified_transitions,
         "memory_violations": memory_violations,
         "oom_violations": oom_violations,
         "psi_violations": psi_violations,
@@ -182,9 +195,10 @@ def evaluate_resource_gate(
         "final_sample_has_cleanup_markers": final_cleanup,
         "summary_errors": summary_errors,
         "rule": (
-            "all complete 250 ms samples must remain at or below 4 GiB with "
-            "zero OOM and full PSI avg10; the final sample must carry both "
-            "cleanup markers"
+            "all 250 ms cgroup readings must remain continuous, at or below "
+            "4 GiB with zero OOM and full PSI avg10; process PSS remains "
+            "unknown for a separately classified confirmed-exit transition; "
+            "the final sample must carry both cleanup markers"
         ),
     }
 
@@ -301,7 +315,10 @@ def validate_reviewed_inputs(args, config, bundle) -> dict[str, Any]:
     require(manifest.get("fixture") == FIXTURE, "manifest fixture changed")
     require(manifest.get("modes") == MODES, "manifest modes changed")
     require(manifest.get("runtime_authorized") is False, "manifest embeds authorization")
-    require(manifest.get("status") == "REVIEWED_INACTIVE", "manifest status changed")
+    require(
+        manifest.get("status") == "HISTORICAL_FAILED_RECONCILED_OFFLINE",
+        "manifest status changed",
+    )
     require(
         manifest.get("production_default_changed") is False,
         "manifest changes production defaults",
@@ -333,7 +350,17 @@ def validate_reviewed_inputs(args, config, bundle) -> dict[str, Any]:
             "full_psi_avg10_max": 0.0,
             "oom_increment_max": 0,
             "required_oom_counters": ["oom", "oom_group_kill", "oom_kill"],
-            "all_samples_complete": True,
+            "all_cgroup_samples_complete": True,
+            "process_attribution_policy": {
+                "raw_incomplete_preserved": True,
+                "pss_substitution_allowed": False,
+                "classified_exit_applies_to_cgroup_qualification_only": True,
+                "same_cgroup_required": True,
+                "same_pid_start_ticks_required": True,
+                "adjacent_complete_enumeration_required": True,
+                "exact_exit_event_required": True,
+                "peak_process_attribution_complete_required": True,
+            },
             "final_sample_labels": [
                 "owned_cleanup_finished",
                 "post_cleanup_sample",

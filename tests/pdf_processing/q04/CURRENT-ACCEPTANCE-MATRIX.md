@@ -102,3 +102,12 @@ This preparation does not alter the historical reference or failures and does
 not authorize runtime, a threshold change, another fixture, or Deployment
 restore. Automatic retry remains disabled. A separate explicit single-run
 authorization for the exact scope digest is required.
+
+The authorized `yolo-reviewed-b` run remains
+`FAIL_ATTRIBUTION_CONTRACT_NOT_PROMOTED`; its evidence and pending index were not
+promoted. The subsequent [offline reconciliation](candidate/yolo-reviewed-b-fail/OFFLINE-RECONCILIATION.md)
+keeps sample 726 process PSS unknown while allowing a narrowly proven PID-exit
+transition to preserve only cgroup continuity. It also requires each
+`max_requests=1` parser identity to exit before assembly instead of treating a
+termination label as proof. This harness correction is offline evidence, not a
+retroactive PASS or authorization to rerun.

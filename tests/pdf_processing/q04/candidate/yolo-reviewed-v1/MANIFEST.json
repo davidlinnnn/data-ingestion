@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "candidate": "q04-yolo-reviewed-v1",
-  "status": "REVIEWED_INACTIVE",
+  "status": "HISTORICAL_FAILED_RECONCILED_OFFLINE",
   "runtime_authorized": false,
   "production_default_changed": false,
   "fixture": "07",
@@ -51,7 +51,17 @@
       "oom_group_kill",
       "oom_kill"
     ],
-    "all_samples_complete": true,
+    "all_cgroup_samples_complete": true,
+    "process_attribution_policy": {
+      "raw_incomplete_preserved": true,
+      "pss_substitution_allowed": false,
+      "classified_exit_applies_to_cgroup_qualification_only": true,
+      "same_cgroup_required": true,
+      "same_pid_start_ticks_required": true,
+      "adjacent_complete_enumeration_required": true,
+      "exact_exit_event_required": true,
+      "peak_process_attribution_complete_required": true
+    },
     "final_sample_labels": [
       "owned_cleanup_finished",
       "post_cleanup_sample"
@@ -80,9 +90,19 @@
     "oom_increment_max": 0,
     "held_deployments": 32,
     "restore_held_deployments": false,
-    "requires_new_explicit_authorization": true
+    "requires_new_explicit_authorization": true,
+    "process_attribution_policy": {
+      "raw_incomplete_preserved": true,
+      "pss_substitution_allowed": false,
+      "classified_exit_applies_to_cgroup_qualification_only": true,
+      "same_cgroup_required": true,
+      "same_pid_start_ticks_required": true,
+      "adjacent_complete_enumeration_required": true,
+      "exact_exit_event_required": true,
+      "peak_process_attribution_complete_required": true
+    }
   },
-  "authorization_scope_sha256": "6fec5f4460dad6f342617fa043a279c517647e0e6521eb2f957c04d37acf1b07",
+  "authorization_scope_sha256": "398c4438923eafd2d027dc4c5799efa526be91a0f29d6166832d22af9a4ee1cc",
   "artifacts": {
     "main_review": "678ca47d52f9fd3346618c1a597d5929df3fd7459b598aae8e051c9ca9c460bd",
     "equivalence_bundle": "d249a3894b004d27adde302bd75176e4df5886be75343f7e17c80b0c5ba83dc8",

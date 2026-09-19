@@ -51,12 +51,22 @@ def build(repo: Path, bundle: Path) -> dict:
         "held_deployments": 32,
         "restore_held_deployments": False,
         "requires_new_explicit_authorization": True,
+        "process_attribution_policy": {
+            "raw_incomplete_preserved": True,
+            "pss_substitution_allowed": False,
+            "classified_exit_applies_to_cgroup_qualification_only": True,
+            "same_cgroup_required": True,
+            "same_pid_start_ticks_required": True,
+            "adjacent_complete_enumeration_required": True,
+            "exact_exit_event_required": True,
+            "peak_process_attribution_complete_required": True,
+        },
     }
     parser_budgets = json.loads(artifacts["parser_budgets"].read_text())
     return {
         "schema_version": 1,
         "candidate": "q04-yolo-reviewed-v1",
-        "status": "REVIEWED_INACTIVE",
+        "status": "HISTORICAL_FAILED_RECONCILED_OFFLINE",
         "runtime_authorized": False,
         "production_default_changed": False,
         "fixture": "07",
@@ -92,7 +102,8 @@ def build(repo: Path, bundle: Path) -> dict:
             "full_psi_avg10_max": 0.0,
             "oom_increment_max": 0,
             "required_oom_counters": ["oom", "oom_group_kill", "oom_kill"],
-            "all_samples_complete": True,
+            "all_cgroup_samples_complete": True,
+            "process_attribution_policy": scope["process_attribution_policy"],
             "final_sample_labels": [
                 "owned_cleanup_finished",
                 "post_cleanup_sample",

@@ -20,6 +20,9 @@ from sentinel import run_yolo_reviewed_b as runner
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 BUNDLE = Path("/private/tmp/q04-inputs-yolo-lifecycle-v1")
+RETAINED_REPLAY = (
+    HERE / "candidate/yolo-reviewed-b-fail/RETAINED-REPLAY.json"
+)
 
 
 def sample(memory=2 * 1024**3, *, final=False):
@@ -46,14 +49,20 @@ def summary(count):
     return {
         "status": "complete",
         "attribution_complete": True,
+        "process_attribution_complete": True,
+        "qualification_complete": True,
+        "cgroup_resource_complete": True,
         "samples": count,
         "incomplete_samples": 0,
         "hard_incomplete_sample_indexes": [],
+        "classified_cgroup_transition_sample_indexes": [],
+        "unclassified_incomplete_sample_indexes": [],
         "errors": [],
         "missing_required_observation_labels": [],
         "required_observations_in_order": True,
         "no_warm_fresh_overlap": True,
         "warm_fresh_overlap_sample_indexes": [],
+        "parser_lifecycle_contract": {"complete": True},
         "maximum_gap_seconds": 0.25,
         "observed_observation_labels": [
             "baseline_before_worker",
@@ -122,6 +131,39 @@ class ReviewedResourceGateTests(unittest.TestCase):
         self.assertEqual(result["status"], "PASS")
         self.assertTrue(result["final_sample_has_cleanup_markers"])
         self.assertEqual(result["samples_evaluated"], 3)
+
+    def test_retained_exit_race_qualifies_cgroup_but_keeps_pss_unknown(self):
+        retained = json.loads(RETAINED_REPLAY.read_text())
+        samples = copy.deepcopy(retained["transition_samples"])
+        samples[-1]["observations"] = [
+            {"label": "owned_cleanup_finished"},
+            {"label": "post_cleanup_sample"},
+        ]
+        retained_summary = summary(len(samples))
+        retained_summary.update(
+            {
+                "status": "qualification_complete_process_attribution_incomplete",
+                "attribution_complete": False,
+                "process_attribution_complete": False,
+                "incomplete_samples": 1,
+                "hard_incomplete_sample_indexes": [1],
+                "classified_cgroup_transition_sample_indexes": [1],
+            }
+        )
+
+        result = window.evaluate_resource_gate(samples, retained_summary)
+
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["process_attribution_incomplete_sample_indexes"], [1])
+        self.assertEqual(result["classified_cgroup_transition_sample_indexes"], [1])
+        self.assertEqual(result["incomplete_sample_indexes"], [])
+        self.assertFalse(samples[1]["attribution_complete"])
+        self.assertIsNone(samples[1]["processes"][-1]["pss_bytes"])
+
+        retained_summary["classified_cgroup_transition_sample_indexes"] = []
+        result = window.evaluate_resource_gate(samples, retained_summary)
+        self.assertEqual(result["status"], "FAIL_RESOURCE_GATE")
+        self.assertEqual(result["incomplete_sample_indexes"], [1])
 
     def test_gate_rejects_each_fixed_resource_boundary(self):
         cases = {}
@@ -401,10 +443,19 @@ class ReviewedRunnerOfflineTests(unittest.TestCase):
         committed = json.loads(runner.INTEGRATION_MANIFEST.read_text())
         rebuilt = manifest_builder.build(REPO, BUNDLE)
         self.assertEqual(rebuilt, committed)
+        self.assertEqual(
+            committed["status"], "HISTORICAL_FAILED_RECONCILED_OFFLINE"
+        )
         self.assertFalse(committed["runtime_authorized"])
         self.assertFalse(committed["production_default_changed"])
         self.assertEqual(committed["parser_policy"]["after_max_requests"], 1)
         self.assertFalse(committed["failure_policy"]["other_fixture_policy_inherited"])
+        policy = committed["authorization_scope"]["process_attribution_policy"]
+        self.assertTrue(policy["raw_incomplete_preserved"])
+        self.assertFalse(policy["pss_substitution_allowed"])
+        self.assertTrue(
+            policy["classified_exit_applies_to_cgroup_qualification_only"]
+        )
         self.assertEqual(
             committed["authorization_scope_sha256"],
             runner.authorization_scope_sha256(),
@@ -487,6 +538,21 @@ class ReviewedRunnerOfflineTests(unittest.TestCase):
                         "not-authorized",
                         "--authorization-scope-sha256",
                         "0" * 64,
+                    ]
+                )
+
+    def test_consumed_historical_launcher_refuses_formerly_valid_scope(self):
+        with redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                runner.main(
+                    [
+                        "--execute",
+                        "--owner",
+                        "offline",
+                        "--approval-reference",
+                        "historical-only",
+                        "--authorization-scope-sha256",
+                        runner.authorization_scope_sha256(),
                     ]
                 )
 
