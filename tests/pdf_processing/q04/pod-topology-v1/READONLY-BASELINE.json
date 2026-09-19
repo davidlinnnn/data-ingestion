@@ -1,0 +1,93 @@
+{
+  "capacity_conclusion": {
+    "admission_still_required": true,
+    "current_12gib_vm_can_accommodate_one_proposed_worker": true,
+    "docker_ram_increase_required_now": false,
+    "ephemeral_scheduler_fit": true,
+    "guarantee": false,
+    "page_cache_charge_may_recur": true,
+    "reason": "4 GiB planned memory plus 2,468,347,904 existing requested bytes is below 12,526,280,704 memory allocatable; 3 GiB planned ephemeral storage plus zero existing requests is below 1,962,694,664,192 ephemeral bytes allocatable; the snapshot also had 8,754,880,512 memory bytes available"
+  },
+  "captured_at": "2026-09-19T04:09:46.310433+00:00",
+  "context": "kind-internal-a2a-vs6-local",
+  "coordinator": {
+    "container_id": "containerd://75d02af07009f1d7152d6a68958cee5f43508ec1dd0ae327142a42db5e429ca5",
+    "node": "internal-a2a-vs6-local-worker2",
+    "ready": true,
+    "restart_count": 1,
+    "started_at": "2026-09-17T13:46:12Z",
+    "uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785"
+  },
+  "held_deployments": {
+    "all_ready_zero": true,
+    "all_replicas_zero": true,
+    "expected": 32,
+    "restored_by_plan": false,
+    "uid_matches": true
+  },
+  "namespace": "pdf-t09a-validation",
+  "node": {
+    "allocatable_bytes": 12526280704,
+    "boot_id": "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3",
+    "capacity_bytes": 12526280704,
+    "existing_cpu_requests_millicores": 1300,
+    "ephemeral_allocatable_bytes": 1962694664192,
+    "existing_ephemeral_requests_bytes": 0,
+    "existing_memory_requests_bytes": 2468347904,
+    "mem_available_bytes": 8754880512,
+    "memory_current_bytes": 4725039104,
+    "memory_max": "max",
+    "oom_kill": 0,
+    "psi_full_avg10": 0.0,
+    "psi_some_avg10": 0.0,
+    "uid": "b33ff221-3443-4b27-83bd-01ce69d0bb01"
+  },
+  "runtime": {
+    "candidate_source_note": "coordinator /app and retained source tree are historical bases; the proposed Pod mounts the exact frozen candidate producer from immutable ConfigMap instead",
+    "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+    "image_content_id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+    "model_artifact_count": 17,
+    "model_cache_disk_usage": "506M",
+    "model_cache_file_count": 35,
+    "model_differences": {},
+    "owned_q04_processes": [],
+    "package_differences": {},
+    "platform": "Linux-6.12.76-linuxkit-aarch64-with-glibc2.41",
+    "platform_matches": true,
+    "python": "3.12.13",
+    "python_matches": true,
+    "retained_profile_method_matches": true,
+    "retained_profile_sha256": "9e46ad75379dffed05c5e25ec36b22fdf0d680e30e7d2b298d5ac355d0e039f2"
+  },
+  "runtime_authorized": false,
+  "schema_version": 1,
+  "scope": "READ_ONLY_NO_WORKFLOW_NO_INFERENCE_NO_MUTATION",
+  "services": {
+    "objects": {
+      "bucket": "t09a",
+      "deployment_uid": "9e69720a-ff80-4aa5-9941-14925dfdf981",
+      "health_status": 200,
+      "pod_uid": "ee7b24cb-bdb7-408a-9ec8-093d2ab5ac00",
+      "ready": true,
+      "service_uid": "a018a08e-2df2-4840-9bce-1e8d982260bb",
+      "versioning": "Enabled"
+    },
+    "secret": {
+      "keys": [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY"
+      ],
+      "name": "store-access",
+      "uid": "f9180d0a-8c2c-475d-ac9c-75a6c3ad4846",
+      "values_read": false
+    },
+    "temporal": {
+      "deployment_uid": "428a8f97-093a-46f8-b5ea-ce321a2910b3",
+      "health": true,
+      "pod_uid": "a7a6e87b-c9cc-471e-871d-e262bf2fc17f",
+      "ready": true,
+      "running_workflows": [],
+      "service_uid": "473e449a-18ff-4ca6-9300-d9fd8c8b2011"
+    }
+  }
+}
