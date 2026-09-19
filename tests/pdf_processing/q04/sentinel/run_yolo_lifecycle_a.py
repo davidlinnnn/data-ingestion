@@ -67,7 +67,7 @@ EXPECTED_BOOT_ID = "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3"
 EXPECTED_PID1_START_TICKS = 733
 EXPECTED_VM_OOM_KILL = 0
 EXPECTED_BUNDLE_SHA256 = (
-    "077b1e7ec744d96bd8d8eee0ffbd5026c83b3795eda11c7e3d5f48938c3e9eee"
+    "67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420"
 )
 SOURCE_BUNDLE_SHA256 = (
     "9e46ad75379dffed05c5e25ec36b22fdf0d680e30e7d2b298d5ac355d0e039f2"
@@ -1329,6 +1329,9 @@ def main(argv=None):
     runner_manifest = None
     reservation_identity = None
     reservation_token = uuid.uuid4().hex
+    STATE["reservation_token"] = reservation_token
+    STATE["remote_claimed"] = False
+    save()
     with open("/private/tmp/data-ingestion-pdf-qualification.lock", "a+") as local_lock:
         fcntl.flock(local_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         try:
@@ -1341,6 +1344,8 @@ def main(argv=None):
             frozen = frozen_precheck()
             claim_remote_root(reservation_token)
             claimed = True
+            STATE["remote_claimed"] = True
+            save()
 
             holder_script = """import fcntl,json,os
 from pathlib import Path
@@ -1383,6 +1388,8 @@ with open('/tmp/data-ingestion-pdf-qualification.lock','a+') as lock:
                 time.sleep(0.2)
             require(acquired, "reservation was not acquired")
             reservation_identity = read_reservation_identity(reservation_token)
+            STATE["reservation_identity"] = reservation_identity
+            save()
 
             start = time.time()
             started_monotonic = time.monotonic()

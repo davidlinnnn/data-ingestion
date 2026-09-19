@@ -18,10 +18,12 @@ from prepare import verify_bundle
 from sentinel.yolo_attribution_telemetry import StrictAttributionCollector
 
 
-def validate_matrix_records(trial_root):
+def validate_matrix_records(trial_root, fixture="07"):
     """Bind restored comparison and replay to the accepted fresh baseline."""
     accepted = {
-        mode: json.loads((trial_root / f"{mode}-07/accepted.json").read_text())
+        mode: json.loads(
+            (trial_root / f"{mode}-{fixture}/accepted.json").read_text()
+        )
         for mode in ("fresh", "restored", "replay")
     }
     require(

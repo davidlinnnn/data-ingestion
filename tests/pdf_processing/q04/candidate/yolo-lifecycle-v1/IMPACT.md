@@ -25,7 +25,7 @@ removed only after every owned child has confirmed exit.
 The full producer manifest SHA-256 is
 `a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d`.
 The candidate `inputs.json` SHA-256 is
-`077b1e7ec744d96bd8d8eee0ffbd5026c83b3795eda11c7e3d5f48938c3e9eee`.
+`67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420`.
 The exact file map is in [`MANIFEST.json`](MANIFEST.json).
 
 Every new request must be initialized under a new object prefix and derives a

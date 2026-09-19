@@ -12,6 +12,7 @@ TEST_MODULES = (
     "tests.pdf_processing.q04.test_yolo_attribution_telemetry",
     "tests.pdf_processing.q04.test_yolo_overlap_analysis",
     "tests.pdf_processing.q04.test_acceptance_matrix",
+    "tests.pdf_processing.q04.test_candidate_batch_runner",
     "tests.pdf_processing.t05.test_supervision",
 )
 

@@ -14,7 +14,7 @@ authorization. It fixes one future 1,500-second process-mode fixture-07 window.
 | Runner directory | `/tmp/q04-yolo-lifecycle-20260919-a/runner-yolo-lifecycle-a` |
 | Driver lock | `/tmp/q04-yolo-lifecycle-20260919-a/yolo-lifecycle-a.driver.lock` |
 | Candidate bundle | `/private/tmp/q04-inputs-yolo-lifecycle-v1` |
-| Candidate inputs SHA-256 | `077b1e7ec744d96bd8d8eee0ffbd5026c83b3795eda11c7e3d5f48938c3e9eee` |
+| Candidate inputs SHA-256 | `67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420` |
 | Producer-manifest SHA-256 | `a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d` |
 
 All paths, the object prefix, reservation, capacity file and phase must be

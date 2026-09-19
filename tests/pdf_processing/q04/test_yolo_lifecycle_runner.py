@@ -25,9 +25,10 @@ class YoloLifecycleRunnerTests(unittest.IsolatedAsyncioTestCase):
             q04 / "candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md"
         ).read_text()
         self.assertIn("8,025 seconds", batch)
-        self.assertIn("Only the first", batch)
-        self.assertIn("Not executable yet", batch)
-        self.assertIn("there is no per-case confirmation", batch)
+        self.assertIn("one reviewable executable batch", batch)
+        self.assertIn("There is no per-fixture confirmation", batch)
+        self.assertIn("**not ready** dependencies", batch)
+        self.assertIn("10,125 seconds", batch)
         self.assertIn("Warm sequence behavior is still unproven", window)
         self.assertIn("equal the window frozen in `state/config.json`", window)
         self.assertIn(
