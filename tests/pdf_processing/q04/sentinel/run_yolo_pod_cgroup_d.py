@@ -176,6 +176,7 @@ def preflight_argv() -> list[str]:
         "/workspace/tests/pdf_processing/q04/candidate/"
         "yolo-reviewed-b-fail/RETAINED-REPLAY.json",
         "--python", "/experiment/.venv/bin/python",
+        "--pod-identity", CONTROL + "/pod-identity.json",
         "--capacity", CONTROL + "/capacity.json",
         "--source-manifest", CONTROL + "/source-manifest.json",
         "--bundle", CONTROL + "/inputs",
@@ -625,6 +626,7 @@ def build_offline_manifest() -> dict:
         "readme": Q04 / "pod-topology-v3/README.md",
         "pre_inference_gates": Q04 / "pod-topology-v3/PRE-INFERENCE-GATES.md",
         "storage_reconciliation": Q04 / "pod-topology-v3/STORAGE-RECONCILIATION.json",
+        "readonly_preflight_reconciliation": Q04 / "pod-topology-v3/READONLY-PREFLIGHT-RECONCILIATION.json",
         "offline_validation": Q04 / "pod-topology-v3/OFFLINE-VALIDATION.md",
         "integration_manifest": Q04 / "pod-topology-v1/INTEGRATION-MANIFEST.json",
         "durable_evidence_feasibility": Q04 / "pod-topology-v1/DURABLE-EVIDENCE-FEASIBILITY.md",
@@ -1264,6 +1266,31 @@ def cleanup_disposition(
     return "CLEANED_WITH_PVC_RETAINED_WORKLOAD_EVIDENCE_INCOMPLETE"
 
 
+def workload_evidence_classification(
+    *, supervisor_identity_published: bool, evidence_captured: bool
+) -> tuple[str, dict]:
+    """Classify workload evidence from the validated supervisor boundary."""
+    if not supervisor_identity_published:
+        return "NOT_STARTED", {
+            "status": "NOT_STARTED",
+            "supervisor": "NOT_STARTED",
+            "workflow": "NOT_STARTED",
+            "inference": "NOT_STARTED",
+            "controller_export_complete": False,
+        }
+    if evidence_captured:
+        return "CONTROLLER_EXPORT_COMPLETE", {
+            "status": "CONTROLLER_EXPORT_COMPLETE",
+            "supervisor": "START_CONFIRMED",
+            "controller_export_complete": True,
+        }
+    return "INCOMPLETE", {
+        "status": "INCOMPLETE",
+        "supervisor": "START_CONFIRMED",
+        "controller_export_complete": False,
+    }
+
+
 def cleanup_policy(
     *, controller_export_complete: bool, deployment_created: bool, pvc_created: bool
 ) -> dict:
@@ -1344,6 +1371,7 @@ def execute_window(args, kube=None) -> dict:
     transport_future = None
     transport_submitted_at = None
     evidence_captured = False
+    supervisor_identity_published = False
     primary_error = None
     baseline_oom = None
     try:
@@ -1455,6 +1483,18 @@ def execute_window(args, kube=None) -> dict:
             ],
             input=source_manifest_raw,
         )
+        pod_identity_raw = json.dumps(pod_identity, sort_keys=True) + "\n"
+        stage_pod_identity = (
+            "from pathlib import Path;import sys;"
+            "Path('/q04-control/pod-identity.json').open('xb').write(sys.stdin.read())"
+        )
+        kube.run(
+            [
+                "exec", "-i", pod, "--", "/experiment/.venv/bin/python", "-c",
+                stage_pod_identity,
+            ],
+            input=pod_identity_raw,
+        )
         preflight_deadline = capacity["ends_at"] - WORKLOAD_SECONDS - CLEANUP_SECONDS
         preflight = kube.run(
             ["exec", pod, "--", *preflight_argv()],
@@ -1463,8 +1503,6 @@ def execute_window(args, kube=None) -> dict:
             ),
         )
         preflight_value = json.loads(preflight)
-        if preflight_value.get("status") != "PASS_PRE_INFERENCE":
-            raise ValueError("Pod pre-inference gate set did not pass")
         (OUT / "pod-pre-inference-gates.json").write_text(
             json.dumps(preflight_value, indent=2, sort_keys=True) + "\n"
         )
@@ -1482,6 +1520,8 @@ def execute_window(args, kube=None) -> dict:
             ],
             input=json.dumps(preflight_value, sort_keys=True),
         )
+        if preflight_value.get("status") != "PASS_PRE_INFERENCE":
+            raise ValueError("Pod pre-inference gate set did not pass")
         if time.time() + WORKLOAD_SECONDS + CLEANUP_SECONDS > capacity["ends_at"]:
             raise ValueError("insufficient fixed lease for workload and cleanup")
         evidence_deadline = capacity["ends_at"] - 120
@@ -1546,6 +1586,7 @@ def execute_window(args, kube=None) -> dict:
                         maximum_transport_gap_seconds=TRANSPORT_GAP_SECONDS,
                     )
                     transport_pool = ThreadPoolExecutor(max_workers=1)
+                    supervisor_identity_published = True
                 except (FileNotFoundError, subprocess.CalledProcessError):
                     pass
             if transport_receipt_expired(
@@ -1656,7 +1697,7 @@ def execute_window(args, kube=None) -> dict:
         if vm_stream is not None and not vm_stream.closed:
             vm_stream.close()
         if workload is not None and workload.poll() is None:
-            if pod_identity is not None:
+            if pod_identity is not None and supervisor_identity_published:
                 try:
                     graceful = max(0.001, remaining_timeout(
                         recovery_deadline, 165, "supervisor graceful stop"
@@ -1707,7 +1748,11 @@ def execute_window(args, kube=None) -> dict:
                 cleanup["pending_transport_error"] = repr(transport_error)
         if transport_pool is not None:
             transport_pool.shutdown(wait=False, cancel_futures=True)
-        if pod_identity is not None and not evidence_captured and workload is not None:
+        if (
+            pod_identity is not None
+            and not evidence_captured
+            and supervisor_identity_published
+        ):
             cleanup["evidence_preserved_before_scale_down"] = False
             try:
                 pod = pod_identity["pod_name"]
@@ -1781,26 +1826,12 @@ def execute_window(args, kube=None) -> dict:
                 evidence_captured = True
             except BaseException as capture_error:
                 cleanup["evidence_capture_error"] = repr(capture_error)
-        if workload is None:
-            workload_evidence_status = "NOT_STARTED"
-            cleanup["workload_evidence"] = {
-                "status": "NOT_STARTED",
-                "supervisor": "NOT_STARTED",
-                "workflow": "NOT_STARTED",
-                "inference": "NOT_STARTED",
-            }
-        elif evidence_captured:
-            workload_evidence_status = "CONTROLLER_EXPORT_COMPLETE"
-            cleanup["workload_evidence"] = {
-                "status": workload_evidence_status,
-                "controller_export_complete": True,
-            }
-        else:
-            workload_evidence_status = "INCOMPLETE"
-            cleanup["workload_evidence"] = {
-                "status": workload_evidence_status,
-                "controller_export_complete": False,
-            }
+        workload_evidence_status, cleanup["workload_evidence"] = (
+            workload_evidence_classification(
+                supervisor_identity_published=supervisor_identity_published,
+                evidence_captured=evidence_captured,
+            )
+        )
         # The PVC is retained storage. It is called workload evidence only after
         # the supervisor produced terminal records. Always remove owned runtime
         # objects; export failure retains the PVC, never the worker Pod.

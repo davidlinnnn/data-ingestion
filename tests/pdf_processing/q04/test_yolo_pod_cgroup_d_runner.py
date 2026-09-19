@@ -1,12 +1,15 @@
 """Offline contracts for the follow-up Q04 Pod cgroup D runner."""
 
+import base64
 import copy
+import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
 
 import pod_topology_d as topology
+import pod_remote_evidence_d as remote_evidence
 import pod_workload_d as workload
 from sentinel import run_yolo_pod_cgroup_d as runner
 
@@ -115,17 +118,68 @@ class YoloPodCgroupDRunnerTests(unittest.TestCase):
         bundle = execute.index("bundle-copy.log")
         capacity = execute.index("stage_capacity")
         preflight = execute.index("single pre-inference gate set")
+        local_record = execute.index('OUT / "pod-pre-inference-gates.json"')
+        durable_record = execute.index('EVIDENCE + "/pre-inference-gates.json"')
+        pass_check = execute.index(
+            'preflight_value.get("status") != "PASS_PRE_INFERENCE"'
+        )
         start = execute.index("subprocess.Popen(")
         self.assertLess(prepare, bundle)
         self.assertLess(bundle, preflight)
         self.assertLess(capacity, preflight)
         self.assertLess(preflight, start)
+        self.assertLess(preflight, local_record)
+        self.assertLess(local_record, durable_record)
+        self.assertLess(durable_record, pass_check)
+        self.assertLess(pass_check, start)
         argv = runner.preflight_argv()
         self.assertIn("pod_preflight_d.py", argv[1])
         self.assertEqual(
             argv[argv.index("--evidence-directory-name") + 1],
             topology.EVIDENCE_DIRECTORY_NAME,
         )
+        self.assertEqual(
+            argv[argv.index("--pod-identity") + 1],
+            runner.CONTROL + "/pod-identity.json",
+        )
+
+    def test_transport_appends_when_empty_stream_later_grows(self):
+        identity = remote_evidence.PodEvidenceIdentity(
+            "pod-uid", "container-id", 42, 99, "a" * 64
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            mirror = remote_evidence.IncrementalEvidenceMirror(
+                Path(directory), identity
+            )
+            name = "workload.log"
+            empty = b""
+            first = {
+                "schema_version": 1,
+                "sequence": 1,
+                "identity": identity.__dict__,
+                "process_state": "live",
+                "files": [{
+                    "path": name, "offset": 0, "size": 0, "total_size": 0,
+                    "eof": True, "sha256": hashlib.sha256(empty).hexdigest(),
+                    "data": base64.b64encode(empty).decode(),
+                }],
+            }
+            payload = b"started\n"
+            second = {
+                "schema_version": 1,
+                "sequence": 2,
+                "identity": identity.__dict__,
+                "process_state": "live",
+                "files": [{
+                    "path": name, "offset": 0, "size": len(payload),
+                    "total_size": len(payload), "eof": True,
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "data": base64.b64encode(payload).decode(),
+                }],
+            }
+            mirror.ingest(first, received_at=10)
+            mirror.ingest(second, received_at=11)
+            self.assertEqual((Path(directory) / name).read_bytes(), payload)
 
     def test_cleanup_labels_preworkload_pvc_separately(self):
         base = {
@@ -152,6 +206,20 @@ class YoloPodCgroupDRunnerTests(unittest.TestCase):
             "CLEANED_WITH_PVC_RETAINED_WORKLOAD_EVIDENCE_INCOMPLETE",
         )
 
+    def test_started_exec_without_validated_supervisor_is_not_started(self):
+        status, record = runner.workload_evidence_classification(
+            supervisor_identity_published=False,
+            evidence_captured=False,
+        )
+        self.assertEqual(status, "NOT_STARTED")
+        self.assertEqual(record["supervisor"], "NOT_STARTED")
+        status, record = runner.workload_evidence_classification(
+            supervisor_identity_published=True,
+            evidence_captured=False,
+        )
+        self.assertEqual(status, "INCOMPLETE")
+        self.assertEqual(record["supervisor"], "START_CONFIRMED")
+
     def test_workload_requires_complete_pre_inference_record(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -161,11 +229,16 @@ class YoloPodCgroupDRunnerTests(unittest.TestCase):
                 "workflow_started": False,
                 "object_written": False,
                 "gates": {name: {"status": "PASS"} for name in (
+                    "image_identity",
                     "mount_and_path",
-                    "executable_packages_models",
+                    "python_executable",
+                    "packages_imports",
+                    "models",
+                    "cgroup",
                     "configuration",
                     "source_hashes",
-                    "temporal_and_object_connectivity",
+                    "temporal",
+                    "object_storage",
                 )},
             }
             (root / "pre-inference-gates.json").write_text(json.dumps(value))

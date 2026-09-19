@@ -42,8 +42,9 @@ authorization. Automatic retry is disabled.
 7. Write the exact PVC/PV/directory identity once in the D directory. Copy the
    frozen bundle to the control `emptyDir`; stage capacity and the generated
    source manifest there.
-8. Execute the full list in `PRE-INFERENCE-GATES.md` once. Persist its result
-   locally and inside the D directory. Any failed row stops before workload.
+8. Execute every row in `PRE-INFERENCE-GATES.md` once, without fail-fast hiding
+   later observations. Persist the complete result locally and inside the D
+   directory before evaluating PASS. Any failed row stops before workload.
 9. Confirm that 825 workload seconds plus 300 cleanup seconds remain, then start
    the supervisor. Run only fixture 07 fresh, restored and exact replay while
    sampling every 250 ms and incrementally mirroring evidence.
@@ -59,6 +60,9 @@ authorization. Automatic retry is disabled.
 Every failed gate stops the sequence and is never retried automatically. A
 failure before supervisor launch is recorded as workload, workflow and
 inference `NOT_STARTED`; cleanup does not attempt to read supervisor markers.
+Launching the local `kubectl exec` transport is insufficient to change that
+classification: only validated publication of `supervisor-ownership.json` and
+the bound transport identity proves supervisor start.
 The report separates local controller evidence, a retained PVC and workload
 evidence. A retained PVC with only infrastructure/preflight records is never
 called durable workload evidence.
@@ -74,3 +78,10 @@ All exits keep the D PVC, remove only UID-fenced D runtime objects, and leave th
 32 historical Deployments closed. Uncertain deletion or final health becomes
 `NEEDS_INTERVENTION`; the runner never force-deletes an identity it cannot
 prove. Historical A/C PVCs, runners and evidence remain unchanged.
+
+The earliest live-only uncertainty is UID/GID 1000 creating the run-owned child
+on the new D mount. If that succeeds and aggregate preflight is reached, the
+current pinned image is expected to fail `models` because
+the read-only reconciliation found three required RapidOCR paths absent and a
+35-versus-49 total-file mismatch. This is an expected stop, not authorization
+to change the image, model contract or thresholds.

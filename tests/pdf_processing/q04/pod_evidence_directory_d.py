@@ -143,6 +143,7 @@ def inspect_run_directory(
     require_capacity(capacity)
     return {
         "schema_version": 1,
+        "status": "PASS",
         "process": process,
         "mount": mount,
         "directory": directory,
@@ -172,6 +173,10 @@ def prepare_run_directory(
     if os.path.lexists(run):
         raise ValueError("run evidence path already exists")
     os.mkdir(run, DIRECTORY_MODE)
+    # Persist the new directory entry in its parent before relying on the
+    # child for durable evidence.  Fsyncs performed by _durable_probe cover
+    # changes inside the child, not creation of the child itself.
+    _fsync_directory(mount_root)
     directory = _validate_run_directory(
         run, expected_uid=expected_uid, expected_gid=expected_gid
     )
@@ -180,6 +185,7 @@ def prepare_run_directory(
     probe = _durable_probe(run)
     return {
         "schema_version": 1,
+        "status": "PASS",
         "process": process,
         "mount": mount,
         "directory": directory,

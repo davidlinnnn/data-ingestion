@@ -24,6 +24,12 @@ PACKAGES = {
     "psutil": "psutil",
 }
 
+EXPECTED_IMAGE = (
+    "docker.io/library/pdf-t08-runtime@"
+    "sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0"
+)
+EXPECTED_NODE = "internal-a2a-vs6-local-worker2"
+
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -60,6 +66,33 @@ def verify_sources(workspace: Path, source_manifest: dict) -> dict:
     }
 
 
+def verify_image_identity(path: Path) -> dict:
+    value = json.loads(path.read_text())
+    required = {
+        "node": EXPECTED_NODE,
+        "image_id": EXPECTED_IMAGE,
+        "image_id_representation": "repository-platform-manifest",
+        "restart_count": 0,
+    }
+    changed = {
+        name: value.get(name)
+        for name, expected in required.items()
+        if value.get(name) != expected
+    }
+    for name in ("pod_name", "pod_uid", "container_id"):
+        if not isinstance(value.get(name), str) or not value[name]:
+            changed[name] = value.get(name)
+    if changed:
+        raise ValueError("accepted Pod image identity changed: " + repr(changed))
+    return {
+        "status": "PASS",
+        **{name: value[name] for name in required},
+        "pod_name": value["pod_name"],
+        "pod_uid": value["pod_uid"],
+        "container_id": value["container_id"],
+    }
+
+
 def verify_runtime_environment(
     *,
     model_cache: Path,
@@ -67,6 +100,20 @@ def verify_runtime_environment(
     python: Path,
     cgroup_root: Path,
 ) -> dict:
+    python_result = verify_python_executable(provenance=provenance, python=python)
+    package_result = verify_packages(provenance=provenance)
+    model_result = verify_models(model_cache=model_cache, provenance=provenance)
+    cgroup_result = verify_cgroup(cgroup_root=cgroup_root)
+    return {
+        "status": "PASS",
+        **python_result,
+        "packages": package_result["packages"],
+        **model_result,
+        **cgroup_result,
+    }
+
+
+def verify_python_executable(*, provenance: Path, python: Path) -> dict:
     method = _expected_method(provenance)
     if platform.python_version() != method["python"]:
         raise ValueError("frozen Python version changed")
@@ -74,12 +121,26 @@ def verify_runtime_environment(
         python, os.R_OK | os.X_OK
     ):
         raise ValueError("fixed Python executable changed")
+    return {
+        "status": "PASS",
+        "python": method["python"],
+        "python_executable": str(python),
+    }
+
+
+def verify_packages(*, provenance: Path) -> dict:
+    method = _expected_method(provenance)
     package_versions = {}
     for module_name, distribution_name in PACKAGES.items():
         importlib.import_module(module_name)
         package_versions[distribution_name] = metadata.version(distribution_name)
         if package_versions[distribution_name] != method["packages"][distribution_name]:
             raise ValueError("frozen package version changed: " + distribution_name)
+    return {"status": "PASS", "packages": package_versions}
+
+
+def verify_models(*, model_cache: Path, provenance: Path) -> dict:
+    method = _expected_method(provenance)
     expected_models = method["model_artifacts"]
     observed_models = {
         name: sha256(model_cache / name) for name in sorted(expected_models)
@@ -90,6 +151,14 @@ def verify_runtime_environment(
     model_files = [path for path in model_cache.rglob("*") if path.is_file()]
     if len(model_files) != 35 or any(not os.access(path, os.R_OK) for path in model_files):
         raise ValueError("frozen model cache file count/readability changed")
+    return {
+        "status": "PASS",
+        "model_artifacts": len(expected_models),
+        "model_files": len(model_files),
+    }
+
+
+def verify_cgroup(*, cgroup_root: Path) -> dict:
     memory_max = (cgroup_root / "memory.max").read_text().strip()
     if memory_max != str(5 * 1024**3):
         raise ValueError("worker cgroup hard limit changed")
@@ -104,11 +173,6 @@ def verify_runtime_environment(
         raise ValueError("worker cgroup did not start with zero OOM counters")
     return {
         "status": "PASS",
-        "python": method["python"],
-        "python_executable": str(python),
-        "packages": package_versions,
-        "model_artifacts": len(expected_models),
-        "model_files": len(model_files),
         "memory_max": memory_max,
         "oom_counters": oom,
     }
@@ -156,8 +220,7 @@ def verify_configuration(
     }
 
 
-def live_connectivity(*, temporal: str, endpoint: str, bucket: str, prefix: str) -> dict:
-    import boto3
+def verify_temporal_connectivity(*, temporal: str) -> dict:
     from temporalio.client import Client
 
     async def temporal_probe() -> dict:
@@ -172,6 +235,16 @@ def live_connectivity(*, temporal: str, endpoint: str, bucket: str, prefix: str)
     temporal_result = asyncio.run(temporal_probe())
     if not temporal_result["healthy"] or temporal_result["running"]:
         raise ValueError("Temporal is unhealthy or not idle")
+    return {
+        "status": "PASS",
+        "temporal_healthy": True,
+        "temporal_running": [],
+    }
+
+
+def verify_object_connectivity(*, endpoint: str, bucket: str, prefix: str) -> dict:
+    import boto3
+
     ready = urllib.request.urlopen(endpoint + "/minio/health/ready", timeout=5).status
     if ready != 200:
         raise ValueError("object health endpoint changed")
@@ -183,8 +256,6 @@ def live_connectivity(*, temporal: str, endpoint: str, bucket: str, prefix: str)
         raise ValueError("object prefix is not unused")
     return {
         "status": "PASS",
-        "temporal_healthy": True,
-        "temporal_running": [],
         "object_health": ready,
         "bucket_versioning": versioning,
         "object_prefix_unused": True,
@@ -200,6 +271,7 @@ def run_preflight(
     provenance: Path,
     python: Path,
     cgroup_root: Path,
+    pod_identity: Path,
     capacity: Path,
     source_manifest_path: Path,
     bundle: Path,
@@ -209,38 +281,83 @@ def run_preflight(
     endpoint: str,
     bucket: str,
     prefix: str,
-    connectivity=live_connectivity,
+    expected_uid: int = 1000,
+    expected_gid: int = 1000,
+    temporal_probe=verify_temporal_connectivity,
+    object_probe=verify_object_connectivity,
 ) -> dict:
-    source_manifest, configuration = verify_configuration(
-        capacity=capacity,
-        source_manifest_path=source_manifest_path,
-        bundle=bundle,
-        authorization_scope_sha256=authorization_scope_sha256,
-        expected_bundle_sha256=expected_bundle_sha256,
-        expected_phase="yolo-pod-cgroup-d",
-    )
-    gates = {
-        "mount_and_path": inspect_run_directory(
-            mount_root, evidence_directory_name
+    gates = {}
+
+    def capture(name, operation) -> None:
+        try:
+            value = operation()
+            if value.get("status") != "PASS":
+                raise ValueError("gate returned a non-PASS result")
+            gates[name] = value
+        except Exception as error:
+            gates[name] = {
+                "status": "FAIL",
+                "error_type": type(error).__name__,
+                "reason": str(error),
+            }
+
+    capture("image_identity", lambda: verify_image_identity(pod_identity))
+    capture(
+        "mount_and_path",
+        lambda: inspect_run_directory(
+            mount_root,
+            evidence_directory_name,
+            expected_uid=expected_uid,
+            expected_gid=expected_gid,
         ),
-        "executable_packages_models": verify_runtime_environment(
-            model_cache=model_cache,
+    )
+    capture(
+        "python_executable",
+        lambda: verify_python_executable(
             provenance=provenance,
             python=python,
-            cgroup_root=cgroup_root,
         ),
-        "configuration": configuration,
-        "source_hashes": verify_sources(workspace, source_manifest),
-        "temporal_and_object_connectivity": connectivity(
-            temporal=temporal,
+    )
+    capture("packages_imports", lambda: verify_packages(provenance=provenance))
+    capture(
+        "models",
+        lambda: verify_models(model_cache=model_cache, provenance=provenance),
+    )
+    capture("cgroup", lambda: verify_cgroup(cgroup_root=cgroup_root))
+    capture(
+        "configuration",
+        lambda: verify_configuration(
+            capacity=capacity,
+            source_manifest_path=source_manifest_path,
+            bundle=bundle,
+            authorization_scope_sha256=authorization_scope_sha256,
+            expected_bundle_sha256=expected_bundle_sha256,
+            expected_phase="yolo-pod-cgroup-d",
+        )[1],
+    )
+    capture(
+        "source_hashes",
+        lambda: verify_sources(
+            workspace, json.loads(source_manifest_path.read_text())
+        ),
+    )
+    capture(
+        "temporal",
+        lambda: temporal_probe(temporal=temporal),
+    )
+    capture(
+        "object_storage",
+        lambda: object_probe(
             endpoint=endpoint,
             bucket=bucket,
             prefix=prefix,
         ),
-    }
+    )
+    failed = [name for name, value in gates.items() if value["status"] != "PASS"]
     return {
         "schema_version": 1,
-        "status": "PASS_PRE_INFERENCE",
+        "status": "PASS_PRE_INFERENCE" if not failed else "FAIL_PRE_INFERENCE",
+        "failed_gates": failed,
         "gates": gates,
         "inference_started": False,
         "workflow_started": False,
@@ -257,6 +374,7 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--provenance", type=Path, required=True)
     value.add_argument("--python", type=Path, required=True)
     value.add_argument("--cgroup-root", type=Path, default=Path("/sys/fs/cgroup"))
+    value.add_argument("--pod-identity", type=Path, required=True)
     value.add_argument("--capacity", type=Path, required=True)
     value.add_argument("--source-manifest", type=Path, required=True)
     value.add_argument("--bundle", type=Path, required=True)

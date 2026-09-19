@@ -51,7 +51,6 @@ ROOT_ALLOWED = {
     "supervisor-ownership.json",
     "ownership.json",
     "transport-identity.json",
-    "no-inference-preflight.json",
     "budget-adoption.json",
     "capacity.json",
     "init-exit.json",
@@ -236,7 +235,13 @@ class IncrementalEvidenceMirror:
             if relative in STREAM_FILES and raw and not raw.endswith(b"\n"):
                 raise ValueError("partial evidence stream record")
             target.parent.mkdir(parents=True, exist_ok=True)
-            mode = "ab" if expected else "xb"
+            # An empty first snapshot creates a zero-byte local file while the
+            # offset remains zero.  Presence in the remote inventory, rather
+            # than a non-zero offset, decides whether a later chunk appends.
+            tracked = relative in self.remote_sizes
+            if tracked and not target.is_file():
+                raise ValueError("local evidence mirror path disappeared")
+            mode = "ab" if tracked else "xb"
             if raw:
                 with target.open(mode) as stream:
                     stream.write(raw)

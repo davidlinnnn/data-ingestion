@@ -19,12 +19,17 @@ class PodEvidenceDirectoryDTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             mount = Path(directory)
             mount.chmod(0o777)
-            result = evidence_directory.prepare_run_directory(
-                mount,
-                "q04-yolo-pod-cgroup-20260919-d",
-                expected_uid=uid,
-                expected_gid=gid,
-            )
+            with mock.patch.object(
+                evidence_directory,
+                "_fsync_directory",
+                wraps=evidence_directory._fsync_directory,
+            ) as fsync_directory:
+                result = evidence_directory.prepare_run_directory(
+                    mount,
+                    "q04-yolo-pod-cgroup-20260919-d",
+                    expected_uid=uid,
+                    expected_gid=gid,
+                )
             run = mount / "q04-yolo-pod-cgroup-20260919-d"
             observed = os.lstat(run)
             self.assertTrue(stat.S_ISDIR(observed.st_mode))
@@ -35,6 +40,8 @@ class PodEvidenceDirectoryDTests(unittest.TestCase):
             self.assertTrue(result["durable_probe"]["atomic_rename"])
             self.assertTrue(result["durable_probe"]["readback_verified"])
             self.assertGreaterEqual(result["capacity"]["evidence_free_bytes"], 128 * 1024**2)
+            self.assertEqual(fsync_directory.call_args_list[0].args[0], mount)
+            self.assertGreaterEqual(fsync_directory.call_count, 3)
 
     def test_create_rejects_preexisting_directory_and_symlink(self):
         uid, gid = self.identity()

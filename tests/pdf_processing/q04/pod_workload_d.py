@@ -191,14 +191,21 @@ def require_pre_inference_gates(control: Path) -> dict:
     ):
         raise ValueError("pre-inference gate record changed")
     expected = {
+        "image_identity",
         "mount_and_path",
-        "executable_packages_models",
+        "python_executable",
+        "packages_imports",
+        "models",
+        "cgroup",
         "configuration",
         "source_hashes",
-        "temporal_and_object_connectivity",
+        "temporal",
+        "object_storage",
     }
     if set(value.get("gates", {})) != expected:
         raise ValueError("pre-inference gate set incomplete")
+    if any(gate.get("status") != "PASS" for gate in value["gates"].values()):
+        raise ValueError("pre-inference gate did not pass")
     return value
 
 

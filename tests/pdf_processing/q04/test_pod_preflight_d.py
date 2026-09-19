@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 import pod_preflight_d as preflight
+import pod_evidence_directory_d as evidence_directory
 
 
 def digest(raw: bytes) -> str:
@@ -18,6 +19,19 @@ def digest(raw: bytes) -> str:
 
 
 class PodPreflightDTests(unittest.TestCase):
+    def pod_identity(self, root: Path) -> Path:
+        path = root / "pod-identity.json"
+        path.write_text(json.dumps({
+            "pod_name": "worker-d",
+            "pod_uid": "pod-uid-d",
+            "container_id": "containerd://worker-d",
+            "node": preflight.EXPECTED_NODE,
+            "image_id": preflight.EXPECTED_IMAGE,
+            "image_id_representation": "repository-platform-manifest",
+            "restart_count": 0,
+        }))
+        return path
+
     def test_source_hash_gate_covers_producer_and_harness(self):
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
@@ -117,19 +131,33 @@ class PodPreflightDTests(unittest.TestCase):
             bundle.mkdir()
             (bundle / "inputs.json").write_bytes(b"inputs")
             connectivity = mock.Mock(return_value={"status": "PASS"})
+            objects = mock.Mock(return_value={"status": "PASS"})
+            mount = root / "mount"
+            mount.mkdir()
+            evidence_directory.prepare_run_directory(
+                mount,
+                "q04-yolo-pod-cgroup-20260919-d",
+                expected_uid=os.getuid(),
+                expected_gid=os.getgid(),
+            )
             with mock.patch.object(
-                preflight, "inspect_run_directory", return_value={"status": "PASS"}
+                preflight, "verify_python_executable", return_value={"status": "PASS"}
             ), mock.patch.object(
-                preflight, "verify_runtime_environment", return_value={"status": "PASS"}
+                preflight, "verify_packages", return_value={"status": "PASS"}
+            ), mock.patch.object(
+                preflight, "verify_models", return_value={"status": "PASS"}
+            ), mock.patch.object(
+                preflight, "verify_cgroup", return_value={"status": "PASS"}
             ):
                 result = preflight.run_preflight(
                     workspace=root,
-                    mount_root=root,
+                    mount_root=mount,
                     evidence_directory_name="q04-yolo-pod-cgroup-20260919-d",
                     model_cache=root,
                     provenance=root,
                     python=Path(sys.executable),
                     cgroup_root=root,
+                    pod_identity=self.pod_identity(root),
                     capacity=capacity,
                     source_manifest_path=source_manifest,
                     bundle=bundle,
@@ -139,17 +167,95 @@ class PodPreflightDTests(unittest.TestCase):
                     endpoint="http://objects:9000",
                     bucket="t09a",
                     prefix="q04/new/",
-                    connectivity=connectivity,
+                    expected_uid=os.getuid(),
+                    expected_gid=os.getgid(),
+                    temporal_probe=connectivity,
+                    object_probe=objects,
                 )
             self.assertEqual(result["status"], "PASS_PRE_INFERENCE")
             self.assertEqual(set(result["gates"]), {
-                "mount_and_path", "executable_packages_models", "configuration",
-                "source_hashes", "temporal_and_object_connectivity",
+                "image_identity", "mount_and_path", "python_executable",
+                "packages_imports", "models", "cgroup", "configuration",
+                "source_hashes", "temporal", "object_storage",
             })
+            self.assertEqual(result["failed_gates"], [])
             self.assertFalse(result["inference_started"])
             self.assertFalse(result["workflow_started"])
             self.assertFalse(result["object_written"])
             connectivity.assert_called_once()
+            objects.assert_called_once()
+
+    def test_preflight_records_every_gate_when_multiple_gates_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_manifest = root / "source.json"
+            source_manifest.write_text(json.dumps({
+                "phase": "q04-pod-cgroup-d", "producer": {}, "harness": {},
+                "producer_set_sha256": "p", "harness_set_sha256": "h",
+            }))
+            capacity = root / "capacity.json"
+            capacity.write_text("{}")
+            bundle = root / "bundle"
+            bundle.mkdir()
+            (bundle / "inputs.json").write_bytes(b"inputs")
+            connectivity = mock.Mock(return_value={"status": "PASS"})
+            objects = mock.Mock(return_value={"status": "PASS"})
+            with mock.patch.object(
+                preflight, "inspect_run_directory", side_effect=ValueError("mount failed")
+            ) as mount, mock.patch.object(
+                preflight, "verify_python_executable",
+                side_effect=RuntimeError("python failed"),
+            ) as python, mock.patch.object(
+                preflight, "verify_packages", return_value={"status": "PASS"}
+            ) as packages, mock.patch.object(
+                preflight, "verify_models", side_effect=ValueError("models failed")
+            ) as models, mock.patch.object(
+                preflight, "verify_cgroup", return_value={"status": "PASS"}
+            ) as cgroup, mock.patch.object(
+                preflight, "verify_configuration",
+                side_effect=ValueError("configuration failed"),
+            ) as configuration:
+                result = preflight.run_preflight(
+                    workspace=root,
+                    mount_root=root,
+                    evidence_directory_name="q04-yolo-pod-cgroup-20260919-d",
+                    model_cache=root,
+                    provenance=root,
+                    python=Path(sys.executable),
+                    cgroup_root=root,
+                    pod_identity=self.pod_identity(root),
+                    capacity=capacity,
+                    source_manifest_path=source_manifest,
+                    bundle=bundle,
+                    authorization_scope_sha256="scope",
+                    expected_bundle_sha256=digest(b"inputs"),
+                    temporal="temporal:7233",
+                    endpoint="http://objects:9000",
+                    bucket="t09a",
+                    prefix="q04/new/",
+                    temporal_probe=connectivity,
+                    object_probe=objects,
+                )
+            self.assertEqual(result["status"], "FAIL_PRE_INFERENCE")
+            self.assertEqual(
+                result["failed_gates"],
+                ["mount_and_path", "python_executable", "models", "configuration"],
+            )
+            self.assertEqual(result["gates"]["source_hashes"]["status"], "PASS")
+            self.assertEqual(
+                result["gates"]["temporal"]["status"],
+                "PASS",
+            )
+            self.assertEqual(result["gates"]["cgroup"]["status"], "PASS")
+            self.assertEqual(result["gates"]["object_storage"]["status"], "PASS")
+            mount.assert_called_once()
+            python.assert_called_once()
+            packages.assert_called_once()
+            models.assert_called_once()
+            cgroup.assert_called_once()
+            configuration.assert_called_once()
+            connectivity.assert_called_once()
+            objects.assert_called_once()
 
 
 if __name__ == "__main__":

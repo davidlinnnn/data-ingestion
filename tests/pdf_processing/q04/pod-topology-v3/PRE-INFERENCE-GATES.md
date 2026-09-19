@@ -2,9 +2,10 @@
 
 Window D executes the following as one fail-closed gate set after Pod readiness
 and before any workflow, object write, parser load or inference. The gate set is
-implemented by `pod_preflight_d.py`; its successful record is then written once
-inside the run-owned evidence directory. The workload refuses to start without
-that complete record.
+implemented by `pod_preflight_d.py`; every row runs once even when another row
+fails, and the complete PASS/FAIL record is written locally and once inside the
+run-owned evidence directory before the controller stops. The workload refuses
+to start without a complete all-PASS record.
 
 | Gate | Exact check | Failure state |
 | --- | --- | --- |
@@ -23,13 +24,19 @@ that complete record.
 | Temporal | Pod-side health succeeds and no workflow is running | workload `NOT_STARTED` |
 | Object store | Pod-side health is HTTP 200, bucket versioning is enabled and the new D prefix is unused | workload `NOT_STARTED` |
 
-The image gate remains in the controller because it binds Kubernetes status to
-the reviewed registry/image chain. All other rows are emitted in the single
-Pod-side preflight result. The object checks are read-only. Candidate source
+The controller binds Kubernetes status to the reviewed registry/image chain,
+then stages that accepted identity into the control volume. The Pod-side gate
+set rechecks and emits it with every other row in one result. The object checks
+are read-only. Candidate source
 upload remains the first operation of `pod_init_d.py` after workload start and
 therefore is not represented as a preflight success.
 
-No live D Pod has exercised this list. Local tests prove the filesystem and
+No live D Pod has exercised this list. A read-only probe of the existing
+coordinator using the same pinned image found the Python and package versions
+exact, but found only 14 of 17 expected model paths and 49 files rather than the
+fixed 35; the three absent paths are listed in
+`READONLY-PREFLIGHT-RECONCILIATION.json`. The D model gate will therefore fail
+if the pinned image remains unchanged. Local tests prove the filesystem and
 validation logic, including rejection of a pre-existing path, symlink, wrong
 owner, wrong mode, model hash drift and source hash drift. Cluster feasibility
 of UID/GID 1000 creating the child on this specific hostPath remains an explicit
