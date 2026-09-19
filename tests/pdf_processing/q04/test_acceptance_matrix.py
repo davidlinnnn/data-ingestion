@@ -99,21 +99,28 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_step_is_candidate_disposition_not_runtime_authorization(self):
+    def test_next_step_is_reviewed_candidate_window_not_runtime_authorization(self):
         step = self.matrix["next_step"]
         self.assertEqual(
-            step["kind"], "main_review_yolo_equivalence_and_resource_candidates"
+            step["kind"], "authorize_reviewed_yolo_candidate_window_after_commit_review"
         )
         self.assertEqual(step["fixture"], "07")
         self.assertEqual(step["runtime_result"], "FAIL_GRAPH_AND_RESOURCE_GATES")
-        self.assertEqual(step["candidate_status"], "PENDING_MAIN_APPROVAL")
+        self.assertEqual(step["candidate_status"], "REVIEWED_INACTIVE")
         self.assertTrue((ROOT / step["diagnosis"]).is_file())
         self.assertTrue((ROOT / step["resource_decision"]).is_file())
         self.assertTrue((ROOT / step["equivalence_candidate"]).is_file())
         self.assertTrue((ROOT / step["resource_candidate"]).is_file())
+        self.assertTrue((ROOT / step["integration_manifest"]).is_file())
+        self.assertTrue((ROOT / step["offline_manifest"]).is_file())
+        self.assertTrue((ROOT / step["runner"]).is_file())
         self.assertFalse(step["runtime_authorized"])
         self.assertFalse(step["automatic_retry"])
-        self.assertTrue(step["requires_main_disposition"])
+        self.assertFalse(step["requires_main_disposition"])
+        self.assertTrue(step["requires_new_runtime_authorization"])
+        self.assertTrue(step["single_execution"])
+        self.assertEqual(step["parser_max_requests"], 1)
+        self.assertFalse(step["other_fixture_policy_inherited"])
         self.assertTrue(step["keep_current_guard"])
         self.assertTrue(step["all_complete_sample_gate"])
         self.assertTrue(step["historical_failure_preserved"])

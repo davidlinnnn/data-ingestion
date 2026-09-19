@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "candidate": "q04-yolo-reviewed-v1",
+  "status": "REVIEWED_INACTIVE",
+  "runtime_authorized": false,
+  "production_default_changed": false,
+  "fixture": "07",
+  "modes": [
+    "fresh",
+    "restored",
+    "replay"
+  ],
+  "identity": {
+    "phase": "yolo-reviewed-b",
+    "remote_root": "/tmp/q04-yolo-reviewed-20260919-b",
+    "prefix": "q04/yolo-reviewed-20260919-b/",
+    "local_output": "/private/tmp/q04-yolo-reviewed-20260919-b",
+    "runner_dir": "/tmp/q04-yolo-reviewed-20260919-b/runner-yolo-reviewed-b",
+    "driver_lock": "/tmp/q04-yolo-reviewed-20260919-b/yolo-reviewed-b.driver.lock"
+  },
+  "oracle_policy": {
+    "kind": "fixture-local-source-reviewed-equivalence",
+    "accepted_pair_count": 2,
+    "historical_reference_mutated": false,
+    "historical_failure_reclassified": false,
+    "general_normalization": false
+  },
+  "parser_policy": {
+    "scope": "this fixture-07 candidate window only",
+    "before_max_requests": 20,
+    "after_max_requests": 1,
+    "group_size_changed": false,
+    "concurrency_changed": false,
+    "production_default_changed": false,
+    "parser_budgets": {
+      "startup_seconds": 120,
+      "no_progress_seconds": 180,
+      "terminate_seconds": 5,
+      "reap_seconds": 5,
+      "max_requests": 1
+    }
+  },
+  "resource_gate": {
+    "sample_interval_seconds": 0.25,
+    "maximum_gap_seconds": 1.0,
+    "max_cgroup_bytes": 4294967296,
+    "full_psi_avg10_max": 0.0,
+    "oom_increment_max": 0,
+    "required_oom_counters": [
+      "oom",
+      "oom_group_kill",
+      "oom_kill"
+    ],
+    "all_samples_complete": true,
+    "final_sample_labels": [
+      "owned_cleanup_finished",
+      "post_cleanup_sample"
+    ]
+  },
+  "authorization_scope": {
+    "single_execution": true,
+    "window_seconds": 1500,
+    "outer_observation_seconds_max": 180,
+    "outer_available_bytes_min": 4831838208,
+    "outer_continuous_seconds": 60,
+    "per_case_available_bytes_min": 3221225472,
+    "per_case_continuous_seconds": 60,
+    "workload_seconds": 825,
+    "cleanup_seconds": 300,
+    "fixture": "07",
+    "modes": [
+      "fresh",
+      "restored",
+      "replay"
+    ],
+    "exact_replay_of_fresh": true,
+    "automatic_retry": false,
+    "max_cgroup_bytes": 4294967296,
+    "full_psi_avg10_max": 0.0,
+    "oom_increment_max": 0,
+    "held_deployments": 32,
+    "restore_held_deployments": false,
+    "requires_new_explicit_authorization": true
+  },
+  "authorization_scope_sha256": "6fec5f4460dad6f342617fa043a279c517647e0e6521eb2f957c04d37acf1b07",
+  "artifacts": {
+    "main_review": "678ca47d52f9fd3346618c1a597d5929df3fd7459b598aae8e051c9ca9c460bd",
+    "equivalence_bundle": "d249a3894b004d27adde302bd75176e4df5886be75343f7e17c80b0c5ba83dc8",
+    "resource_bundle": "0ab2656b51e12a05ec568eb9455bb1f0f1abf12922b5ae5c3170731ef4c7a76c",
+    "parser_budgets": "b418d07d18500681a1b9e6828621c31d26fb5d3ba01791f3c2a64bda00407551",
+    "resource_analysis": "d14792535dc0d37ec9d86a5316aab744250c070b5fa0cddb4155161c9880be69",
+    "historical_methods": "eb58ea3afd15952ef06390d62e3f5fc48f7f213d046e2ca210b11f247b8b83a9",
+    "candidate_inputs": "67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420",
+    "source_pdf": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab",
+    "reference_graph": "a3ac9eb345949cdc83423ba1ae38c794400e8f4f89061056c1102517b6a1e6a1"
+  },
+  "failure_policy": {
+    "automatic_retry": false,
+    "resource_failure_next_step": "return to main for a dedicated cgroup or Linux host decision",
+    "other_fixture_policy_inherited": false,
+    "historical_evidence_preserved": true
+  }
+}

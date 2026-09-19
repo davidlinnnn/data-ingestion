@@ -92,10 +92,13 @@ to 1. A future gate must check all complete samples against the unchanged 4 GiB
 limit and require both cleanup markers on the final sample. No integrated
 resource bound is accepted.
 
-Main-session review of the inactive
-[fixture-local equivalence candidate](candidate/yolo-equivalence-v1/README.md)
-and [resource candidate](candidate/yolo-resource-v1/README.md) is next. The
-[resource decision](diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md) retains the
-397-sample analysis and dedicated-cgroup fallback. The historical reference and
-failures remain unchanged. No runtime, automatic retry, threshold change, or
-Deployment restore is currently authorized.
+Main accepted the exact two-pair equivalence bundle and the window-local
+`max_requests=1` resource candidate for the **next fixture-07 candidate only**.
+The new [reviewed inactive manifest](candidate/yolo-reviewed-v1/MANIFEST.json),
+[run plan](candidate/yolo-reviewed-v1/RUN-PLAN.md) and
+[`yolo-reviewed-b` offline manifest](preflight/yolo-reviewed-b/OFFLINE-MANIFEST.json)
+bind a new identity, fresh/restored/exact replay, and the final all-sample gate.
+This preparation does not alter the historical reference or failures and does
+not authorize runtime, a threshold change, another fixture, or Deployment
+restore. Automatic retry remains disabled. A separate explicit single-run
+authorization for the exact scope digest is required.
