@@ -31,11 +31,13 @@ failed the fixed full-graph gate. Offline source review explains the complete
 delta as two table-interrupted cross-page paragraphs that the attested
 conservative continuation method preserves as two nodes each. Merging only
 those two reviewed pairs makes all nine graph collections equal; table cells,
-captions, links, and other content are unchanged. This supports an inactive,
-fixture-local source-reviewed equivalence proposal. It does not change the
-runtime result. Restored and exact replay did not run; no fresh-index entry was
-created. Cleanup passed with zero retry and all 32 historical Deployments
-remaining closed. Fresh/restored/replay/full-graph rows remain `unproven`.
+captions, links, and other content are unchanged. This is packaged as an
+inactive, fixture-local source-reviewed equivalence candidate. Separately, the
+complete 250 ms stream fails the unchanged 4 GiB gate at one group-3 warm-parser
+sample. Neither candidate changes the runtime result. Restored and exact replay
+did not run; no fresh-index entry was created. Cleanup passed with zero retry
+and all 32 historical Deployments remaining closed.
+Fresh/restored/replay/full-graph rows remain `unproven`.
 
 AIMA's executable identity reconciliation confirms equal source bytes, 20-file
 producer, method and relationship semantics. It also finds a different full
@@ -59,9 +61,9 @@ before acceptance, so its R3 result remains supporting evidence only.
 | Old request remains on original route | **proven** | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Required-relationship interruption/retry/replay | reusable | Q03 trial D owned-child case; no Pod-loss claim |
-| Fixed warm sequence and recycle | unproven | Candidate fresh observed the intended handoff and no overlap; graph failure stopped restored/replay |
+| Fixed warm sequence and recycle | unproven | Candidate fresh observed handoff/no overlap, but graph/resource gates failed; inactive max_requests=1 candidate invalidates request-20 evidence |
 | Bounded process resources for fixtures 09/10 | **proven** | Two small-fixture windows only |
-| Integrated operating bounds | unproven | Candidate fresh removed overlap, but 250 ms telemetry saw a 4,403,523,584-byte transient and later modes/fixtures did not run |
+| Integrated operating bounds | unproven | All 397 samples are complete; group-3 warm parse has the sole 4,403,523,584-byte violation, with no fresh-child overlap |
 | Active telemetry-loss guard | unproven | Q04 runtime phase not run |
 | Process drain/recovery | unproven | Q04 runtime phase not run |
 | Pod drain/recovery | unproven | R3 method/topology is reusable; integrated native Pod drain and owned topology remain required |
@@ -81,14 +83,19 @@ schema or general PDF-quality claim.
 
 The attribution-B window remains a retained failure with an incomplete
 measurement contract. Lifecycle A proves that the fixed candidate removes the
-warm/fresh overlap, while its own graph gate remains failed. Its 202 active
-guard samples peaked at 4,273,446,912 bytes; the complete 250 ms stream observed
-a short 4,403,523,584-byte peak. This discrepancy remains explicit and no
-integrated resource bound is accepted.
+warm/fresh overlap, while its graph and resource gates remain failed. Its 202
+active guard samples peaked at 4,273,446,912 bytes; the complete 250 ms stream
+observed one 4,403,523,584-byte sample during the third sequential warm-parser
+group. The shared PID had zero recycles and increasing RSS high-water. The
+inactive fixture-window resource candidate changes only `max_requests` from 20
+to 1. A future gate must check all complete samples against the unchanged 4 GiB
+limit and require both cleanup markers on the final sample. No integrated
+resource bound is accepted.
 
-Main-session review of the
-[source-reviewed graph diagnosis](diagnosis/yolo-lifecycle-a/ANALYSIS.md) and
-inactive [local oracle proposal](diagnosis/yolo-lifecycle-a/evidence/local-oracle-proposal.json)
-is next. The historical reference and failure remain unchanged. No runtime,
-automatic retry, threshold change, or Deployment restore is currently
-authorized.
+Main-session review of the inactive
+[fixture-local equivalence candidate](candidate/yolo-equivalence-v1/README.md)
+and [resource candidate](candidate/yolo-resource-v1/README.md) is next. The
+[resource decision](diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md) retains the
+397-sample analysis and dedicated-cgroup fallback. The historical reference and
+failures remain unchanged. No runtime, automatic retry, threshold change, or
+Deployment restore is currently authorized.

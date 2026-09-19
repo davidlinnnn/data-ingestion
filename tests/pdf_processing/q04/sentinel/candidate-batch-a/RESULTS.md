@@ -43,6 +43,13 @@ observed a short 4,403,523,584-byte peak. It recorded the required warm-to-fresh
 handoff and no warm/fresh overlap. The run is still a graph-gate failure, and the
 250 ms peak must remain visible in later resource review.
 
+Offline attribution now places that sole violating sample in group 3 while one
+warm parser serves its third sequential request; it is not an overlap,
+assembly, or OCR peak. The detailed retained-data decision is
+[`../../diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md`](../../diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md).
+Both the fixture-local equivalence candidate and the `max_requests=1` resource
+candidate remain inactive pending main approval.
+
 Cleanup verified no remaining owned process, workflow, or scratch and released
 the reservation. The 32 historical Deployments remained closed, kept their
 expected UIDs, and were byte-identical before and after. They were not restored.

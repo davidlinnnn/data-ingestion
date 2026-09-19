@@ -1,0 +1,370 @@
+{
+  "status": "FAIL_RESOURCE_GATE",
+  "source_run": "yolo-lifecycle-a",
+  "archive_sha256": "5c183da78740cb68cc7114dc06a4e2a7bd890b17c7f7637dd69adc8495bb9bc9",
+  "gate": {
+    "status": "FAIL_RESOURCE_GATE",
+    "limit_bytes": 4294967296,
+    "samples_evaluated": 397,
+    "incomplete_sample_indexes": [],
+    "violations": [
+      {
+        "index": 322,
+        "time": 1789780955.0727022,
+        "memory_current_bytes": 4403523584,
+        "excess_bytes": 108556288
+      }
+    ],
+    "post_cleanup_sample_indexes": [
+      396
+    ],
+    "owned_cleanup_finished_sample_indexes": [
+      396
+    ],
+    "final_sample_index": 396,
+    "final_sample_has_cleanup_markers": true,
+    "includes_post_cleanup": true,
+    "rule": "every attribution sample must be complete and at or below the unchanged 4 GiB limit; the final sample must carry owned_cleanup_finished and post_cleanup_sample"
+  },
+  "peak": {
+    "index": 322,
+    "time": 1789780955.0727022,
+    "phase": "group_3_warm_parse",
+    "memory_current_bytes": 4403523584,
+    "excess_bytes": 108556288,
+    "owned_pss_total_bytes": 2201500672,
+    "shared_cgroup_process_pss_total_bytes": 2208115712,
+    "diagnostic_unattributed_bytes": 2195407872,
+    "owned_process_pss_by_class": {
+      "controller": 98876416,
+      "worker": 82496512,
+      "warm_parser": 2020127744
+    },
+    "all_process_pss_by_class": {
+      "owned_descendant": 6208512,
+      "controller": 99282944,
+      "worker": 82496512,
+      "warm_parser": 2020127744
+    },
+    "memory_stat": {
+      "anon": 1845858304,
+      "file": 2461163520,
+      "file_mapped": 340733952,
+      "inactive_file": 2449694720,
+      "kernel": 84828160,
+      "shmem": 4096,
+      "slab": 77166096
+    },
+    "memory_events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "psi": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+    "fresh_parse_child_present": false,
+    "warm_fresh_overlap": false
+  },
+  "exceedance_observation": {
+    "sample_count": 1,
+    "duration_directly_measured_seconds": null,
+    "duration_reason": "one discrete sample cannot establish a nonzero duration",
+    "upper_bound_seconds_between_adjacent_below_limit_samples": 0.5140726566314697,
+    "previous_sample": {
+      "index": 321,
+      "time": 1789780954.8158236,
+      "memory_current_bytes": 4276989952
+    },
+    "next_sample": {
+      "index": 323,
+      "time": 1789780955.3298962,
+      "memory_current_bytes": 4207722496
+    }
+  },
+  "baseline": {
+    "index": 0,
+    "time": 1789780871.788594,
+    "memory_current_bytes": 2564382720,
+    "owned_pss_total_bytes": 28321792,
+    "memory_stat": {
+      "anon": 30142464,
+      "file": 2457952256,
+      "file_mapped": 180224,
+      "inactive_file": 2446516224,
+      "kernel": 76271616,
+      "shmem": 0,
+      "slab": 75782072
+    },
+    "peak_minus_baseline_memory_current_bytes": 1839140864,
+    "peak_minus_baseline_memory_stat": {
+      "anon": 1815715840,
+      "file": 3211264,
+      "file_mapped": 340553728,
+      "inactive_file": 3178496,
+      "kernel": 8556544,
+      "shmem": 4096,
+      "slab": 1384024
+    }
+  },
+  "group_timeline": [
+    {
+      "group": 1,
+      "seconds": 10.924111796994112,
+      "parser_pid": 3486,
+      "parser_peak_rss": {
+        "peak_rss": 1820176,
+        "units": "KiB"
+      },
+      "parser_restarts": 1,
+      "parser_recycles": 0,
+      "start": 1789780933.462127,
+      "end": 1789780944.378923,
+      "sample_count": 43,
+      "maximum_sample_index": 266,
+      "maximum_memory_current_bytes": 4109717504,
+      "maximum_owned_pss_bytes": 1907051520,
+      "peak_owned_process_pss_by_class": {
+        "controller": 96652288,
+        "worker": 76049408,
+        "warm_parser": 1734349824
+      }
+    },
+    {
+      "group": 2,
+      "seconds": 9.392272671000683,
+      "parser_pid": 3486,
+      "parser_peak_rss": {
+        "peak_rss": 1906860,
+        "units": "KiB"
+      },
+      "parser_restarts": 1,
+      "parser_recycles": 0,
+      "start": 1789780944.403008,
+      "end": 1789780953.792353,
+      "sample_count": 37,
+      "maximum_sample_index": 285,
+      "maximum_memory_current_bytes": 4280303616,
+      "maximum_owned_pss_bytes": 2075601920,
+      "peak_owned_process_pss_by_class": {
+        "controller": 96865280,
+        "worker": 76069888,
+        "warm_parser": 1902666752
+      }
+    },
+    {
+      "group": 3,
+      "seconds": 3.441083334997529,
+      "parser_pid": 3486,
+      "parser_peak_rss": {
+        "peak_rss": 1994884,
+        "units": "KiB"
+      },
+      "parser_restarts": 1,
+      "parser_recycles": 0,
+      "start": 1789780953.819083,
+      "end": 1789780957.252892,
+      "sample_count": 13,
+      "maximum_sample_index": 322,
+      "maximum_memory_current_bytes": 4403523584,
+      "maximum_owned_pss_bytes": 2201500672,
+      "peak_owned_process_pss_by_class": {
+        "controller": 98876416,
+        "worker": 82496512,
+        "warm_parser": 2020127744
+      }
+    }
+  ],
+  "assembly_timeline": {
+    "stage": "assembly",
+    "seconds": 7.889774212002521,
+    "start": 1789780957.252892,
+    "end": 1789780965.160942,
+    "sample_count": 31,
+    "maximum_sample_index": 331,
+    "maximum_memory_current_bytes": 4107407360,
+    "maximum_owned_pss_bytes": 1890860032,
+    "peak_owned_process_pss_by_class": {
+      "controller": 98925568,
+      "worker": 82754560,
+      "warm_parser": 1709179904
+    }
+  },
+  "ocr_timeline": [
+    {
+      "stage": "component_ocr",
+      "component": "#/pictures/0",
+      "outcome": "text_detected",
+      "start": 1789780965.160942,
+      "end": 1789780966.823119,
+      "sample_count": 6,
+      "maximum_sample_index": 366,
+      "maximum_memory_current_bytes": 2959106048,
+      "maximum_owned_pss_bytes": 476755968,
+      "peak_owned_process_pss_by_class": {
+        "controller": 99313664,
+        "worker": 96349184,
+        "fresh_owned_child": 281084928
+      }
+    },
+    {
+      "stage": "component_ocr",
+      "component": "#/pictures/1",
+      "outcome": "text_detected",
+      "start": 1789780966.823119,
+      "end": 1789780967.647469,
+      "sample_count": 3,
+      "maximum_sample_index": 370,
+      "maximum_memory_current_bytes": 2858991616,
+      "maximum_owned_pss_bytes": 381679616,
+      "peak_owned_process_pss_by_class": {
+        "controller": 99325952,
+        "worker": 96349184,
+        "fresh_owned_child": 186004480
+      }
+    },
+    {
+      "stage": "component_ocr",
+      "component": "#/pictures/2",
+      "outcome": "text_detected",
+      "start": 1789780967.647469,
+      "end": 1789780968.931275,
+      "sample_count": 5,
+      "maximum_sample_index": 375,
+      "maximum_memory_current_bytes": 2979373056,
+      "maximum_owned_pss_bytes": 499328000,
+      "peak_owned_process_pss_by_class": {
+        "controller": 99354624,
+        "worker": 96357376,
+        "fresh_owned_child": 303616000
+      }
+    },
+    {
+      "stage": "component_ocr",
+      "component": "#/pictures/3",
+      "outcome": "text_detected",
+      "start": 1789780968.931275,
+      "end": 1789780969.955257,
+      "sample_count": 4,
+      "maximum_sample_index": 379,
+      "maximum_memory_current_bytes": 2946613248,
+      "maximum_owned_pss_bytes": 465192960,
+      "peak_owned_process_pss_by_class": {
+        "controller": 99367936,
+        "worker": 96361472,
+        "fresh_owned_child": 269463552
+      }
+    }
+  ],
+  "observation_timeline": [
+    {
+      "sample_index": 0,
+      "sample_time": 1789780871.788594,
+      "label": "baseline_before_worker"
+    },
+    {
+      "sample_index": 238,
+      "sample_time": 1789780933.4904118,
+      "label": "workflow_intent_file_observed"
+    },
+    {
+      "sample_index": 238,
+      "sample_time": 1789780933.4904118,
+      "label": "workflow_record_file_observed"
+    },
+    {
+      "sample_index": 331,
+      "sample_time": 1789780957.3958197,
+      "label": "merged_directory_observed"
+    },
+    {
+      "sample_index": 332,
+      "sample_time": 1789780957.6516962,
+      "label": "fresh_parse_process_birth_observed"
+    },
+    {
+      "sample_index": 332,
+      "sample_time": 1789780957.6516962,
+      "label": "workflow_progress_assembling_observed"
+    },
+    {
+      "sample_index": 334,
+      "sample_time": 1789780958.1643615,
+      "label": "warm_handoff_observed"
+    },
+    {
+      "sample_index": 395,
+      "sample_time": 1789780973.8912933,
+      "label": "cancel_requested"
+    },
+    {
+      "sample_index": 395,
+      "sample_time": 1789780973.8912933,
+      "label": "cancel_completed"
+    },
+    {
+      "sample_index": 395,
+      "sample_time": 1789780973.8912933,
+      "label": "cancel_outcome_file_observed"
+    },
+    {
+      "sample_index": 396,
+      "sample_time": 1789780974.1249552,
+      "label": "owned_cleanup_finished"
+    },
+    {
+      "sample_index": 396,
+      "sample_time": 1789780974.1249552,
+      "label": "post_cleanup_sample"
+    }
+  ],
+  "lifecycle_finding": {
+    "same_warm_parser_pid_for_all_groups": true,
+    "parser_pid": 3486,
+    "configured_max_requests": 20,
+    "reported_restarts": [
+      1,
+      1,
+      1
+    ],
+    "reported_recycles": [
+      0,
+      0,
+      0
+    ],
+    "parser_peak_rss_high_water_kib": [
+      1820176,
+      1906860,
+      1994884
+    ],
+    "monotonically_increasing_high_water": true,
+    "handoff_observed_after_group_3": true,
+    "cause": "the fixed overlap was removed; the only violation occurs while one retained warm parser serves its third sequential group request"
+  },
+  "cleanup": {
+    "last_sample_index": 396,
+    "last_memory_current_bytes": 2681995264,
+    "last_owned_pss_total_bytes": 149692416,
+    "post_cleanup_observed": true
+  },
+  "preferred_minimal_disposition": {
+    "kind": "fixture_window_parser_recycle_policy",
+    "candidate_change": "set parser_budgets.max_requests from 20 to 1 for the next fixture-07 candidate window",
+    "production_change": false,
+    "status": "PENDING_MAIN_APPROVAL",
+    "reason": "three sequential groups use one PID with zero recycles and increasing parser RSS high-water; only group 3 exceeds the unchanged limit",
+    "required_future_validation": [
+      "all attribution samples are complete",
+      "every complete sample, including post-cleanup, is at or below 4,294,967,296 bytes",
+      "no warm/fresh overlap and the handoff remains observed",
+      "fresh graph/oracle and cleanup gates pass under a new identity"
+    ]
+  },
+  "fallback_if_recycle_still_fails": {
+    "kind": "dedicated_cgroup_or_linux_validation_host",
+    "reason": "the shared baseline is 2,564,382,720 bytes (2.388 GiB) and includes 2,446,516,224 bytes (2.278 GiB) inactive file; isolate accounting rather than raising the 4 GiB limit or adding collectors",
+    "limit_bytes": 4294967296,
+    "additional_measurement_window": false
+  }
+}

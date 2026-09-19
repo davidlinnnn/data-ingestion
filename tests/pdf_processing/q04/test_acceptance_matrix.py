@@ -99,21 +99,23 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_step_is_source_review_disposition_not_runtime_authorization(self):
+    def test_next_step_is_candidate_disposition_not_runtime_authorization(self):
         step = self.matrix["next_step"]
         self.assertEqual(
-            step["kind"], "main_review_yolo_source_reviewed_equivalence"
+            step["kind"], "main_review_yolo_equivalence_and_resource_candidates"
         )
         self.assertEqual(step["fixture"], "07")
-        self.assertEqual(step["runtime_result"], "FAIL_GRAPH_GATE")
-        self.assertEqual(step["proposal_status"], "PROPOSAL_NOT_ACTIVE")
+        self.assertEqual(step["runtime_result"], "FAIL_GRAPH_AND_RESOURCE_GATES")
+        self.assertEqual(step["candidate_status"], "PENDING_MAIN_APPROVAL")
         self.assertTrue((ROOT / step["diagnosis"]).is_file())
-        self.assertTrue((ROOT / step["graph_delta"]).is_file())
-        self.assertTrue((ROOT / step["oracle_proposal"]).is_file())
+        self.assertTrue((ROOT / step["resource_decision"]).is_file())
+        self.assertTrue((ROOT / step["equivalence_candidate"]).is_file())
+        self.assertTrue((ROOT / step["resource_candidate"]).is_file())
         self.assertFalse(step["runtime_authorized"])
         self.assertFalse(step["automatic_retry"])
         self.assertTrue(step["requires_main_disposition"])
         self.assertTrue(step["keep_current_guard"])
+        self.assertTrue(step["all_complete_sample_gate"])
         self.assertTrue(step["historical_failure_preserved"])
         self.assertTrue(step["historical_reference_unchanged"])
         self.assertEqual(step["deployments_remain_closed"], 32)
@@ -144,9 +146,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
         step = self.matrix["next_step"]
         diagnosis = (ROOT / step["diagnosis"]).read_text()
+        resource = (ROOT / step["resource_decision"]).read_text()
         self.assertIn("FAIL_GRAPH_GATE", diagnosis)
         self.assertIn("PROPOSAL_NOT_ACTIVE", diagnosis)
         self.assertIn("4,403,523,584", diagnosis)
+        self.assertIn("FAIL_RESOURCE_GATE", resource)
+        self.assertIn("max_requests=20", resource)
+        self.assertIn("post-cleanup", resource)
         self.assertIn("automatic retry", document.lower())
 
 

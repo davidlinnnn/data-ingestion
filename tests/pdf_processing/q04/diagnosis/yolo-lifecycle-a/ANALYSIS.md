@@ -80,6 +80,17 @@ contains all four fragments. Joining only each reviewed pair reproduces the
 historical text and rebased provenance exactly. Parent, content layer, label,
 geometry, and source order are preserved.
 
+The four current-host render inputs for main's visual review are:
+
+- `/private/tmp/q04-yolo-source-review-20260919-a/yolo-02.png`
+- `/private/tmp/q04-yolo-source-review-20260919-a/yolo-03.png`
+- `/private/tmp/q04-yolo-source-review-20260919-a/yolo-08.png`
+- `/private/tmp/q04-yolo-source-review-20260919-a/yolo-09.png`
+
+Their hashes and the render command are recorded in
+[`evidence/source-render-paths.json`](evidence/source-render-paths.json). These
+PNGs are local visual-review inputs, not runtime acceptance artifacts.
+
 The candidate's conservative `column-edge-continuation-v1` method, SHA-256
 `791e2ebef036d6f2468fb607162a135eecb3c4eaa056d4e35b1a81bffde49772`,
 does not merge either pair because a table intervenes and the target begins
@@ -120,6 +131,14 @@ warm-to-fresh handoff and no warm/fresh overlap. The different sampling rates
 explain why the active guard did not observe that transient peak; this run must
 not be described as staying below 4 GiB.
 
+The retained samples locate the only violation in group 3, while the same warm
+parser PID serves its third sequential request. See
+[`RESOURCE-DECISION.md`](RESOURCE-DECISION.md) for the complete phase, process
+PSS, `memory.stat`, duration bound, baseline, cleanup, and preferred inactive
+`max_requests=1` candidate. The new gate checks every complete 250 ms sample
+against the unchanged 4 GiB threshold and requires both cleanup markers on the
+final sample.
+
 Cleanup passed with no owned processes, workflows, scratch, or errors left.
 The reservation was released. All 32 historical Deployments retained their
 expected UIDs and stayed closed; their before/after records are byte-identical
@@ -135,6 +154,11 @@ source regions recorded in
 [`evidence/local-oracle-proposal.json`](evidence/local-oracle-proposal.json).
 It must require exact normalized equality of the complete graph plus the table,
 caption, OCR, and provenance checks, and reject any additional difference.
+
+The proposal is now packaged for review in
+[`../../candidate/yolo-equivalence-v1/`](../../candidate/yolo-equivalence-v1/).
+Its independent validator is deliberately inactive and returns no runtime
+acceptance. Main approval and a separate reviewed integration remain required.
 
 The proposal is `PROPOSAL_NOT_ACTIVE` and has no acceptance effect. Do not
 replace the historical reference, rewrite this runtime FAIL, infer a general

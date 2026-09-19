@@ -59,7 +59,7 @@
       },
       "q04_fresh_index": "unproven",
       "oracle_and_full_graph": "unproven",
-      "reason": "The lifecycle candidate completed fresh processing and required OCR, then failed the fixed full-graph gate before acceptance. Offline source review explains the complete delta as two source-preserving, table-interrupted cross-page paragraph splits under the attested conservative continuation method, but the runtime remains FAIL_GRAPH_GATE. Restored and replay did not run; all acceptance rows and fresh-index remain unproven.",
+      "reason": "The lifecycle candidate completed fresh processing and required OCR, then failed the fixed full-graph gate before acceptance. Source review explains the complete delta as two source-preserving table-interrupted paragraph splits and packages an inactive fixture-local equivalence candidate. The complete 250 ms stream separately fails the unchanged 4 GiB gate at one group-3 warm-parser sample. Restored and replay did not run; all acceptance rows and fresh-index remain unproven.",
       "evidence": [
         "tests/pdf_processing/t06/evidence/VERDICT.md",
         "tests/pdf_processing/q04/STAGE-IMPACT.md",
@@ -78,7 +78,13 @@
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/full-semantic-delta.json",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json",
-        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/local-oracle-proposal.json"
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/local-oracle-proposal.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json",
+        "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/README.md",
+        "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/BUNDLE.json",
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/README.md",
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
       ],
       "attempts": [
         {
@@ -260,14 +266,16 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "The lifecycle candidate fresh run directly observed the intended warm-to-fresh handoff and no overlap, but the graph gate stopped the matrix before restored and replay. The complete revised warm sequence therefore remains unproven.",
+      "reason": "Lifecycle A observed the intended handoff and no overlap, but the complete graph and resource gates failed before restored/replay. The inactive max_requests=1 resource candidate further invalidates the old request-20 sequence, so revised warm behavior remains unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
         "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
         "tests/pdf_processing/q04/test_yolo_lifecycle_candidate.py",
         "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
-        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json"
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
       ]
     },
     {
@@ -282,7 +290,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "The lifecycle candidate fresh run removed warm/fresh overlap. Its active guard samples stayed below 4 GiB, while the complete 250 ms attribution stream observed a transient 4,403,523,584-byte peak. The graph gate stopped later modes and fixtures, so no integrated operating bound is accepted.",
+      "reason": "All 397 attribution samples are complete. Exactly sample 322 exceeds 4 GiB by 108,556,288 bytes during group 3 while one warm parser serves its third sequential request; no fresh child overlaps. The inactive max_requests=1 window candidate is pending review, so no integrated operating bound is accepted.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -292,7 +300,10 @@
         "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/ANALYSIS.md",
         "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md",
         "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
-        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json"
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json",
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
       ]
     },
     {
@@ -341,17 +352,19 @@
     "not_counted_as_pass": true
   },
   "next_step": {
-    "kind": "main_review_yolo_source_reviewed_equivalence",
+    "kind": "main_review_yolo_equivalence_and_resource_candidates",
     "fixture": "07",
-    "runtime_result": "FAIL_GRAPH_GATE",
+    "runtime_result": "FAIL_GRAPH_AND_RESOURCE_GATES",
     "diagnosis": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md",
-    "graph_delta": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/full-semantic-delta.json",
-    "oracle_proposal": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/local-oracle-proposal.json",
-    "proposal_status": "PROPOSAL_NOT_ACTIVE",
+    "resource_decision": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
+    "equivalence_candidate": "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/BUNDLE.json",
+    "resource_candidate": "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
+    "candidate_status": "PENDING_MAIN_APPROVAL",
     "runtime_authorized": false,
     "automatic_retry": false,
     "requires_main_disposition": true,
     "keep_current_guard": true,
+    "all_complete_sample_gate": true,
     "historical_failure_preserved": true,
     "historical_reference_unchanged": true,
     "deployments_remain_closed": 32
