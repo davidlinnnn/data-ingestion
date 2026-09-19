@@ -49,6 +49,7 @@ FINAL_REQUIRED = {
 }
 ROOT_ALLOWED = {
     "supervisor-ownership.json",
+    "supervisor-interruption.json",
     "ownership.json",
     "transport-identity.json",
     "budget-adoption.json",

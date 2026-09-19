@@ -14,7 +14,9 @@ worker sample does preserve positive node PSI near the stop.
 | 16:48:42.087937 | event 11 | Group 1–5 scheduled; 180s start/schedule-to-close and 15s heartbeat timeout. |
 | 16:48:49.051700–49.554673 | recovered worker samples | Parser ready, RapidOcrModel then checkpoint_commit progress; retained transport had only earlier LayoutModel trace. |
 | 16:48:50.157763 | original controller last saved sample | Node PSI 0; exact following rejecting sample was discarded. |
+| 16:48:50.228794 | recovered attribution sample 276 | Cgroup full avg10=0.18, total=71,325 microseconds; positive Pod-local stall also observed. |
 | 16:48:50.330704 | recovered worker samples | Node full avg10=0.54; available=6,709,325,824; cgroup current=1,733,328,896; VM OOM=0. |
+| 16:48:50.570531 | recovered cancel_requested callback marker | Inner failure cleanup invokes owned cancellation. |
 | 16:48:50.571493 | event 12, identity 108@H Pod | Matrix process requested workflow cancellation. |
 | 16:48:50.584761 | event 16 | Outstanding Activity cancellation requested. |
 | 16:48:50.584771 | event 17 | Workflow COMPLETED with business status failed, activity_budget_exhausted, zero registered pages. |
@@ -36,8 +38,13 @@ PSI guard independently stopped the supervisor, whose SIGINT propagation
 interrupted the ongoing matrix cleanup. The supervisor's bad worker-* glob then
 prevented cleanup-complete.json and terminal sealing. Exact relative times of
 the two guard decisions and outer signal are unknown: H did not record them.
-The attribution sampler ended before this positive worker sample, so its prior
-zero cgroup PSI cannot establish the cgroup pressure at the rejecting instant.
+The original 272 transported attribution samples ended before this positive
+worker sample. The recovered PVC contains 293 samples: cgroup full avg10 first
+became positive at 50.228794 (.18), reached .87, and accumulated 113,087 us total
+stall. Its cgroup OOM counters stayed zero. Therefore the pressure was not only
+an observation outside the workload cgroup. This still does not identify the
+stalling task or establish the exact outer rejecting sample; the attribution
+summary is incomplete and cannot qualify process-resource bounds.
 
 There is no Activity failed/timed-out event in the exact history and the whole
 workflow lasted 8.615 seconds. `processing_workflow.py` catches ActivityError and

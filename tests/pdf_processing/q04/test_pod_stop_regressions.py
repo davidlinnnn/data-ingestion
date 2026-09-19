@@ -3,6 +3,8 @@ import ast
 import importlib
 import json
 import contextlib
+import hashlib
+import tarfile
 import io
 import subprocess
 import sys
@@ -109,11 +111,12 @@ class StopRegressions(unittest.TestCase):
 
     def test_supervisor_interruption_seals_failed_workload_with_log_sibling(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
+            root = Path(directory) / "control"
+            root.mkdir()
             args = workload.parser().parse_args(["--prefix", runner.PREFIX,
                 "--authorization-scope-sha256", "a" * 64,
                 "--control", str(root), "--state", str(root / "state"),
-                "--capacity", str(root / "capacity.json"), "--workspace", str(root)])
+                "--capacity", str(root / "capacity.json"), "--workspace", str(Path(directory) / "workspace")])
             worker = args.state / workload.PHASE / "worker-1"
             worker.mkdir(parents=True)
             (worker / "stopped.json").write_text(json.dumps({"parser_absent": True, "scratch_absent": True}))
@@ -121,9 +124,13 @@ class StopRegressions(unittest.TestCase):
             (args.state / "config.json").write_text(json.dumps({"run_id": workload.RUN_ID}))
             args.capacity.write_text("{}")
             (root / "evidence-volume-identity.json").write_text('{"pvc_uid":"owned"}')
-            manifest = root / "tests/pdf_processing/q04/pod-topology-v8/RUNTIME-INTEGRATION-MANIFEST.json"
+            manifest = args.workspace / "tests/pdf_processing/q04/pod-topology-v8/RUNTIME-INTEGRATION-MANIFEST.json"
             manifest.parent.mkdir(parents=True)
             manifest.write_text('{"authorization_scope_sha256":"reviewed"}')
+            remote = importlib.import_module("pod_remote_evidence_" + VERSION)
+            config_hash = hashlib.sha256((args.state / "config.json").read_bytes()).hexdigest()
+            identity = remote.PodEvidenceIdentity("owned-pod", "owned-container", os.getpid(), 1, config_hash)
+            (root / "transport-identity.json").write_text(json.dumps(identity.__dict__))
             process = SimpleNamespace(pid=123, returncode=None)
             def wait(**kwargs):
                 raise KeyboardInterrupt()
@@ -132,7 +139,7 @@ class StopRegressions(unittest.TestCase):
                 process.returncode = 1
                 return False
             with patch.object(workload, "require_pre_inference_gates"), patch.object(workload, "start_ticks", return_value=1), \
-                 patch.object(workload, "adopt_budget", return_value={"config_sha256":"b" * 64}), \
+                 patch.object(workload, "adopt_budget", return_value={"config_sha256":config_hash}), \
                  patch.object(workload.subprocess, "run", return_value=SimpleNamespace(returncode=0,stdout="",stderr="")), \
                  patch.object(workload.subprocess, "Popen", return_value=process), patch.object(workload, "stop_group", side_effect=stop):
                 with self.assertRaises(KeyboardInterrupt):
@@ -143,6 +150,24 @@ class StopRegressions(unittest.TestCase):
             self.assertFalse(sealed["workload_succeeded"])
             self.assertEqual(sealed["status"], "INCOMPLETE")
             self.assertEqual(json.loads((root / "supervisor-interruption.json").read_text())["type"], "KeyboardInterrupt")
+            # Replay the real receiver/archive path after supervisor exit.
+            mirror = remote.IncrementalEvidenceMirror(Path(directory) / "mirror", identity)
+            # The synthetic /proc view reports the now-exited supervisor absent.
+            code = mirror.request_program(str(root)).replace(
+                "Path('/proc')", "Path(" + repr(str(Path(directory) / "absent-proc")) + ")")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                exec(code, {})
+            mirror.ingest(json.loads(output.getvalue()), received_at=1)
+            result = mirror.finalize(require_success=False)
+            self.assertEqual(result["status"], "FAILURE_EVIDENCE_RETAINED")
+            fingerprint = [[str(p.relative_to(root)), p.stat().st_size, hashlib.sha256(p.read_bytes()).hexdigest()]
+                           for p in sorted(root.rglob("*")) if p.is_file()]
+            mirror.verify_archive_fingerprint(fingerprint)
+            archive = Path(directory) / "evidence.tar"
+            with tarfile.open(archive, "w") as tar:
+                tar.add(root, arcname=".")
+            runner.verify_local_archive(archive, fingerprint)
 
     def test_real_process_group_interrupt_is_reaped(self):
         process = subprocess.Popen([sys.executable, "-c",
