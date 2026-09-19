@@ -32,3 +32,8 @@ prior preparation. After the first-window readiness correction, the same broad
 command runs 335 tests with 0 failures and the same 3 macOS `sysctl()` sandbox
 errors. The durable-evidence, topology, transport, remote-probe and runner
 focused set is green at 56/56; the runner file itself is green at 35/35.
+
+After adding the independent no-inference readiness preflight, the broad command
+runs 347 tests with 0 failures and the same 3 macOS `sysctl()` sandbox errors.
+The combined durable-evidence, topology, transport, remote-probe, consumed-runner
+and preflight focused set is green at 67/67.

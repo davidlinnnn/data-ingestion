@@ -1,10 +1,11 @@
 # Minimal YOLO Pod readiness preflight
 
-Status: **prepared, not authorized, and not executable from the consumed
-runner**. This is the smallest follow-up needed before another fixture-07
-window. It starts no workflow, performs no inference, writes no object prefix,
-uploads no candidate source ConfigMaps, and does not mount or alter the retained
-PVC from the failed window.
+Status: **implemented as a separate executable, not authorized, and still not
+executable from the consumed runner**. The fixed new identity, render, manifest,
+command and 600-second budget are in `readiness-preflight-v1/`; its entrypoint
+is `sentinel/run_yolo_readiness_preflight_b.py`. It starts no workflow, performs
+no inference, writes no object prefix, uploads no candidate source ConfigMaps,
+and does not mount or alter the retained PVC from the failed window.
 
 Use a new reviewed runner identity, label, Deployment name, output directory,
 and authorization digest. Keep the pinned node, exact image manifest, UID/GID,

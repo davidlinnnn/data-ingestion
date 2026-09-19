@@ -214,8 +214,15 @@ def normalized_image_digest(image_id: str) -> str:
     return value
 
 
-def validate_pod(pod: dict) -> dict:
-    if pod["metadata"]["labels"].get("q04-run") != RUN_LABEL:
+def validate_pod(
+    pod: dict,
+    *,
+    run_label: str = RUN_LABEL,
+    node_name: str = NODE,
+    image: str = pod_topology.IMAGE,
+    image_content_id: str = pod_topology.IMAGE_CONTENT_ID,
+) -> dict:
+    if pod["metadata"]["labels"].get("q04-run") != run_label:
         raise PodIdentityRejected("Pod run label changed")
     phase = pod.get("status", {}).get("phase")
     if phase not in ("Pending", "Running"):
@@ -223,10 +230,10 @@ def validate_pod(pod: dict) -> dict:
     node = pod["spec"].get("nodeName")
     if node is None:
         raise PodNotReady("Pod is not scheduled")
-    if node != NODE:
+    if node != node_name:
         raise PodIdentityRejected("Pod node changed")
     containers = pod["spec"].get("containers", [])
-    if len(containers) != 1 or containers[0].get("image") != pod_topology.IMAGE:
+    if len(containers) != 1 or containers[0].get("image") != image:
         raise PodIdentityRejected("worker image reference changed")
     statuses = pod["status"].get("containerStatuses", [])
     if not statuses:
@@ -240,7 +247,7 @@ def validate_pod(pod: dict) -> dict:
     image_id = statuses[0].get("imageID")
     if not image_id:
         raise PodNotReady("worker image identity not published")
-    if normalized_image_digest(image_id) != pod_topology.IMAGE_CONTENT_ID:
+    if normalized_image_digest(image_id) != image_content_id:
         raise PodIdentityRejected("worker image digest changed")
     if phase != "Running":
         raise PodNotReady("worker Pod phase is not Running")
@@ -272,12 +279,21 @@ def controller_owner(metadata: dict, kind: str) -> dict:
     return owner
 
 
-def capture_cleanup_identity(kube, pod: dict, deployment: dict) -> dict:
+def capture_cleanup_identity(
+    kube,
+    pod: dict,
+    deployment: dict,
+    *,
+    run_label: str = RUN_LABEL,
+    timeout: float = 30,
+) -> dict:
     """Prove a Pod's owner chain before returning its UID for cleanup."""
-    if pod["metadata"].get("labels", {}).get("q04-run") != RUN_LABEL:
+    if pod["metadata"].get("labels", {}).get("q04-run") != run_label:
         raise PodIdentityRejected("Pod run label changed")
     replica_set_owner = controller_owner(pod["metadata"], "ReplicaSet")
-    replica_set = kube.json("get", "replicaset", replica_set_owner["name"])
+    replica_set = kube.json(
+        "get", "replicaset", replica_set_owner["name"], timeout=timeout
+    )
     if replica_set.get("metadata", {}).get("uid") != replica_set_owner["uid"]:
         raise PodIdentityRejected("Pod ReplicaSet owner UID changed")
     deployment_owner = controller_owner(replica_set["metadata"], "Deployment")
@@ -310,7 +326,11 @@ def pod_readiness_snapshot(pod: dict) -> dict:
         "spec": {
             "nodeName": pod.get("spec", {}).get("nodeName"),
             "containers": [
-                {"name": item.get("name"), "image": item.get("image")}
+                {
+                    "name": item.get("name"),
+                    "image": item.get("image"),
+                    "readinessProbe": item.get("readinessProbe"),
+                }
                 for item in pod.get("spec", {}).get("containers", [])
             ],
         },
@@ -339,36 +359,95 @@ def await_worker_pod(
     timeout_seconds: float = 120,
     monotonic=None,
     sleep=None,
+    run_label: str = RUN_LABEL,
+    node_name: str = NODE,
+    image: str = pod_topology.IMAGE,
+    image_content_id: str = pod_topology.IMAGE_CONTENT_ID,
+    include_events: bool = False,
 ) -> tuple[dict, dict]:
     """Observe one owned Pod until Ready, preserving every decision as JSONL."""
     monotonic = monotonic or time.monotonic
     sleep = sleep or time.sleep
     deadline = monotonic() + timeout_seconds
     cleanup_identity = None
+
+    def request_timeout(action: str) -> float:
+        remaining = deadline - monotonic()
+        if remaining <= 0:
+            error = TimeoutError(f"worker Pod readiness expired before {action}")
+            setattr(error, "cleanup_identity", cleanup_identity)
+            raise error
+        return max(0.001, min(30, remaining))
+
+    def require_time(action: str) -> None:
+        if monotonic() >= deadline:
+            error = TimeoutError(f"worker Pod readiness expired after {action}")
+            setattr(error, "cleanup_identity", cleanup_identity)
+            raise error
+
     with (output / "pod-readiness.jsonl").open("x", buffering=1) as stream:
         while True:
             observed_at = time.time()
             record = {"time": observed_at}
             try:
                 pods = kube.json(
-                    "get", "pods", "-l", "q04-run=" + RUN_LABEL
+                    "get", "pods", "-l", "q04-run=" + run_label,
+                    timeout=request_timeout("Pod list"),
                 )["items"]
+                require_time("Pod list")
                 record = {
                     "time": observed_at,
                     "pod_count": len(pods),
                     "pods": [pod_readiness_snapshot(pod) for pod in pods],
                 }
+                if include_events and len(pods) == 1:
+                    try:
+                        events = kube.json(
+                            "get",
+                            "events",
+                            "--field-selector",
+                            "involvedObject.uid=" + pods[0]["metadata"]["uid"],
+                            timeout=request_timeout("Pod Event list"),
+                        )["items"]
+                        require_time("Pod Event list")
+                        record["events"] = [
+                            {
+                                key: item.get(key)
+                                for key in (
+                                    "type", "reason", "message", "count",
+                                    "firstTimestamp", "lastTimestamp",
+                                )
+                            }
+                            for item in events
+                        ]
+                    except TimeoutError:
+                        raise
+                    except Exception as event_error:
+                        record["events_error"] = repr(event_error)
                 if len(pods) > 1:
                     raise PodIdentityRejected("multiple owned-label Pods observed")
                 if len(pods) == 1:
-                    candidate = capture_cleanup_identity(kube, pods[0], deployment)
+                    candidate = capture_cleanup_identity(
+                        kube,
+                        pods[0],
+                        deployment,
+                        run_label=run_label,
+                        timeout=request_timeout("ReplicaSet owner read"),
+                    )
+                    require_time("ReplicaSet owner read")
                     if cleanup_identity is not None and (
                         candidate["pod_uid"] != cleanup_identity["pod_uid"]
                     ):
                         raise PodIdentityRejected("owned Pod UID changed during readiness")
                     cleanup_identity = candidate
                     try:
-                        ready_identity = validate_pod(pods[0])
+                        ready_identity = validate_pod(
+                            pods[0],
+                            run_label=run_label,
+                            node_name=node_name,
+                            image=image,
+                            image_content_id=image_content_id,
+                        )
                     except PodNotReady as error:
                         record.update(
                             classification="temporary_not_ready",
@@ -412,11 +491,12 @@ def await_worker_pod(
                 stream.write(json.dumps(record, sort_keys=True) + "\n")
                 setattr(error, "cleanup_identity", cleanup_identity)
                 raise
-            if monotonic() >= deadline:
+            remaining = deadline - monotonic()
+            if remaining <= 0:
                 error = TimeoutError("worker Pod readiness expired")
                 setattr(error, "cleanup_identity", cleanup_identity)
                 raise error
-            sleep(1)
+            sleep(min(1, remaining))
 
 
 def validate_evidence_volume(pvc: dict, pv: dict) -> dict:
@@ -908,10 +988,15 @@ def create_owned_objects(kube: Kubectl, items: list[dict], owned: list[dict]) ->
     return created
 
 
-def validate_created_deployment(deployment: dict, owned_objects: list[dict]) -> dict:
+def validate_created_deployment(
+    deployment: dict,
+    owned_objects: list[dict],
+    *,
+    deployment_name: str = DEPLOYMENT,
+) -> dict:
     recorded = [
         item for item in owned_objects
-        if item["kind"] == "Deployment" and item["name"] == DEPLOYMENT
+        if item["kind"] == "Deployment" and item["name"] == deployment_name
     ]
     if len(recorded) != 1:
         raise PodIdentityRejected("exactly one created Deployment identity required")
@@ -926,10 +1011,14 @@ def cleanup_deployment_and_pod(
     pod_identity: dict | None,
     *,
     deadline: float,
+    deployment_name: str = DEPLOYMENT,
+    namespace: str = NAMESPACE,
+    node_name: str = NODE,
+    emptydir_names: tuple[str, ...] = ("scratch", "control", "tmp"),
 ) -> dict:
     result = {}
     current = kube.json(
-        "get", "deployment", DEPLOYMENT,
+        "get", "deployment", deployment_name,
         timeout=remaining_timeout(deadline, 30, "Deployment cleanup identity"),
     )
     before = current["spec"].get("replicas", 0)
@@ -940,7 +1029,7 @@ def cleanup_deployment_and_pod(
         0,
     )
     kube.run(
-        ["patch", "deployment", DEPLOYMENT, "--type=json", "-p", json.dumps(patch)],
+        ["patch", "deployment", deployment_name, "--type=json", "-p", json.dumps(patch)],
         timeout=remaining_timeout(deadline, 30, "scale-to-zero"),
     )
     result["deployment_scaled_zero"] = True
@@ -966,7 +1055,7 @@ def cleanup_deployment_and_pod(
         kube.run(
             [
                 "delete", "--raw",
-                f"/api/v1/namespaces/{NAMESPACE}/pods/{pod_identity['pod_name']}",
+                f"/api/v1/namespaces/{namespace}/pods/{pod_identity['pod_name']}",
                 "-f", "-",
             ],
             input=json.dumps(pod_delete_options(pod_identity["pod_uid"])),
@@ -984,7 +1073,7 @@ def cleanup_deployment_and_pod(
     # The reviewed Deployment is pinned to NODE. Even an initially unscheduled
     # Pod may have reached the kubelet and disappeared before the API re-read,
     # so absence must still be proved against that node.
-    node = pod_identity.get("node") or NODE
+    node = pod_identity.get("node") or node_name
     while True:
         raw = subprocess.check_output(
             [
@@ -1005,7 +1094,7 @@ def cleanup_deployment_and_pod(
                 check=False,
                 timeout=remaining_timeout(deadline, 20, "emptyDir absence check"),
             ).returncode == 0
-            for volume in ("scratch", "control", "tmp")
+            for volume in emptydir_names
         )
         if containers_absent and emptydirs_absent:
             break

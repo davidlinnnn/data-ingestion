@@ -413,7 +413,8 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             identity, cleanup = runner.await_worker_pod(
                 Kube(), self.deployment(), Path(directory),
-                monotonic=iter([0, 1, 2]).__next__, sleep=lambda _: None,
+                monotonic=iter([0, 0, 0, 0, 0, 1, 1, 1, 1, 1]).__next__,
+                sleep=lambda _: None,
             )
             rows = [
                 json.loads(row)
@@ -498,8 +499,9 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(TimeoutError) as raised:
                 runner.await_worker_pod(
-                    Kube(), self.deployment(), Path(directory), timeout_seconds=0,
-                    monotonic=lambda: 0, sleep=lambda _: None,
+                    Kube(), self.deployment(), Path(directory), timeout_seconds=.5,
+                    monotonic=iter([0, 0, 0, 0, 0, 1]).__next__,
+                    sleep=lambda _: None,
                 )
         self.assertEqual(raised.exception.cleanup_identity["pod_uid"], "pod-uid")
 
@@ -529,6 +531,40 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
             row = json.loads(
                 (Path(directory) / "pod-readiness.jsonl").read_text().splitlines()[0]
             )
+        self.assertEqual(row["classification"], "observation_error")
+
+    def test_slow_readiness_api_call_cannot_cross_absolute_deadline(self):
+        class Clock:
+            value = 0
+
+            def now(self):
+                return self.value
+
+        clock = Clock()
+
+        class Kube:
+            timeout = None
+
+            def json(self, *args, **kwargs):
+                self.timeout = kwargs["timeout"]
+                clock.value = 121
+                return {"items": []}
+
+        kube = Kube()
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(TimeoutError, "expired after Pod list"):
+                runner.await_worker_pod(
+                    kube,
+                    self.deployment(),
+                    Path(directory),
+                    timeout_seconds=120,
+                    monotonic=clock.now,
+                    sleep=lambda _: None,
+                )
+            row = json.loads(
+                (Path(directory) / "pod-readiness.jsonl").read_text().splitlines()[0]
+            )
+        self.assertEqual(kube.timeout, 30)
         self.assertEqual(row["classification"], "observation_error")
 
     def test_cleanup_waits_for_graceful_pod_cri_and_emptydir_absence(self):
