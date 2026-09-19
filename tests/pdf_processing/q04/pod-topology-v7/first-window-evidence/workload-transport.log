@@ -1,0 +1,34 @@
+Traceback (most recent call last):
+  File "/workspace/tests/pdf_processing/q04/pod_workload_h.py", line 335, in run
+    returncode = process.wait(timeout=remaining)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/subprocess.py", line 2047, in _wait
+    time.sleep(delay)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/tests/pdf_processing/q04/pod_workload_h.py", line 389, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/tests/pdf_processing/q04/pod_workload_h.py", line 385, in main
+    return run(parser().parse_args(argv))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/pod_workload_h.py", line 357, in run
+    cleanup_markers(args.state),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/pod_workload_h.py", line 156, in cleanup_markers
+    stopped = [json.loads((root / "stopped.json").read_text()) for root in roots]
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NotADirectoryError: [Errno 20] Not a directory: '/q04-evidence/q04-yolo-pod-cgroup-20260920-h/state/yolo-pod-cgroup-h/worker-1.log/stopped.json'
+command terminated with exit code 1
