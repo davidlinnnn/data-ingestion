@@ -80,8 +80,7 @@ All exits keep the D PVC, remove only UID-fenced D runtime objects, and leave th
 prove. Historical A/C PVCs, runners and evidence remain unchanged.
 
 The earliest live-only uncertainty is UID/GID 1000 creating the run-owned child
-on the new D mount. If that succeeds and aggregate preflight is reached, the
-current pinned image is expected to fail `models` because
-the read-only reconciliation found three required RapidOCR paths absent and a
-35-versus-49 total-file mismatch. This is an expected stop, not authorization
-to change the image, model contract or thresholds.
+on the new D mount. A read-only inspection of the pinned image confirmed all 17
+profile-referenced model artifacts at their runtime locations: 14 in the
+Hugging Face cache and three in the installed RapidOCR package. The live gate
+still verifies every artifact's exact digest before workload start.

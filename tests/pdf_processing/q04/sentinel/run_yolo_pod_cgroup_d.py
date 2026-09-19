@@ -627,6 +627,7 @@ def build_offline_manifest() -> dict:
         "pre_inference_gates": Q04 / "pod-topology-v3/PRE-INFERENCE-GATES.md",
         "storage_reconciliation": Q04 / "pod-topology-v3/STORAGE-RECONCILIATION.json",
         "readonly_preflight_reconciliation": Q04 / "pod-topology-v3/READONLY-PREFLIGHT-RECONCILIATION.json",
+        "model_artifact_resolution": Q04 / "pod-topology-v3/MODEL-ARTIFACT-RESOLUTION.md",
         "offline_validation": Q04 / "pod-topology-v3/OFFLINE-VALIDATION.md",
         "integration_manifest": Q04 / "pod-topology-v1/INTEGRATION-MANIFEST.json",
         "durable_evidence_feasibility": Q04 / "pod-topology-v1/DURABLE-EVIDENCE-FEASIBILITY.md",

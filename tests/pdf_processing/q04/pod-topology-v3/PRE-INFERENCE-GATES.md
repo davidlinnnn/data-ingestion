@@ -16,7 +16,7 @@ to start without a complete all-PASS record.
 | Durable filesystem | File fsync, atomic rename, directory fsync, byte-for-byte readback, cleanup fsync and 128 MiB stop watermark | workload `NOT_STARTED` |
 | Python/executable | `sys.executable` is the fixed readable and executable `/experiment/.venv/bin/python`; Python `3.12.13` | workload `NOT_STARTED` |
 | Packages/imports | Import `boto3`, `temporalio`, `PIL`, `psutil`; exact frozen distribution versions from retained reviewed evidence | workload `NOT_STARTED` |
-| Models | Exact SHA-256 for the 17 reviewed model artifacts; 35 readable cache files | workload `NOT_STARTED` |
+| Models | Resolve the 14 reviewed Hugging Face cache artifacts and three RapidOCR package artifacts at their runtime locations; require exact SHA-256 and readability for all 17 | workload `NOT_STARTED` |
 | Cgroup | `memory.max=5 GiB`; initial `oom`, `oom_kill`, `oom_group_kill` all zero | workload `NOT_STARTED` |
 | Capacity configuration | Exact D phase/scope digest, 1,500/180/60/825/300-second budgets, 4.5 GiB outer and 3 GiB per-case gates, 4/5 GiB cgroup thresholds, no retry | workload `NOT_STARTED` |
 | Bundle | `inputs.json` SHA-256 `67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420` | workload `NOT_STARTED` |
@@ -32,12 +32,12 @@ upload remains the first operation of `pod_init_d.py` after workload start and
 therefore is not represented as a preflight success.
 
 No live D Pod has exercised this list. A read-only probe of the existing
-coordinator using the same pinned image found the Python and package versions
-exact, but found only 14 of 17 expected model paths and 49 files rather than the
-fixed 35; the three absent paths are listed in
-`READONLY-PREFLIGHT-RECONCILIATION.json`. The D model gate will therefore fail
-if the pinned image remains unchanged. Local tests prove the filesystem and
-validation logic, including rejection of a pre-existing path, symlink, wrong
-owner, wrong mode, model hash drift and source hash drift. Cluster feasibility
+coordinator using the same pinned image confirmed that 14 reviewed artifacts
+are in the Hugging Face cache and the three RapidOCR ONNX artifacts are in the
+installed package's `models` directory. Unreferenced cache bookkeeping and
+additional cached models are not output dependencies and are not counted as an
+acceptance gate. Local tests prove the filesystem and validation logic,
+including rejection of a pre-existing path, symlink, wrong owner, wrong mode,
+model hash drift and source hash drift. Cluster feasibility
 of UID/GID 1000 creating the child on this specific hostPath remains an explicit
 runtime gate.

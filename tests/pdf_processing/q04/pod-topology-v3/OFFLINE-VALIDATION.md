@@ -34,10 +34,12 @@ were denied macOS `psutil` process-list access by the sandbox; their complete
 7-test file passed when rerun outside that sandbox. The focused D and C suites
 above have no failures or errors.
 
-The D design remains `OFFLINE_READY_FOR_REVIEW`. A live Pod has not yet proved
-that UID/GID 1000 can create the exclusive child on this exact kind hostPath.
-That uncertainty is retained as a mandatory runtime gate. The read-only probe
-also found a known model gate failure in the unchanged pinned image: three
-RapidOCR paths are absent and the total file count is 49 rather than 35. See
-`READONLY-PREFLIGHT-RECONCILIATION.json`; no model or acceptance contract was
-changed to hide the result.
+The D design remains `OFFLINE_READY_FOR_REVIEW`. A subsequent read-only
+inspection resolved the model-path discrepancy without changing the pinned
+image or the original reconciliation record: 14 referenced artifacts are in
+the Hugging Face cache and three RapidOCR artifacts are in the installed
+package. See `MODEL-ARTIFACT-RESOLUTION.md`. The previous 35-file cache count
+mixed referenced artifacts with cache bookkeeping and additional valid Docling
+models, so it is not an output-dependency check. A live Pod has not yet proved
+that UID/GID 1000 can create the exclusive child on this exact kind hostPath;
+that remains a mandatory runtime gate.

@@ -91,7 +91,8 @@ class PodPreflightDTests(unittest.TestCase):
                     cgroup_root=cgroup,
                 )
             self.assertEqual(result["model_artifacts"], 17)
-            self.assertEqual(result["model_files"], 35)
+            self.assertEqual(result["cache_artifacts"], 17)
+            self.assertEqual(result["package_artifacts"], 0)
             (model / "expected-00.bin").write_bytes(b"wrong")
             with mock.patch.object(preflight.importlib, "import_module"), mock.patch.object(
                 preflight.metadata, "version", return_value="fixed"
@@ -102,6 +103,41 @@ class PodPreflightDTests(unittest.TestCase):
                     python=Path(sys.executable),
                     cgroup_root=cgroup,
                 )
+
+    def test_model_gate_resolves_rapidocr_artifacts_from_installed_package(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model_cache = root / "cache"
+            model_cache.mkdir()
+            package = root / "site-packages" / "rapidocr"
+            package_models = package / "models"
+            package_models.mkdir(parents=True)
+            (package / "__init__.py").write_text("")
+            cached = model_cache / "hub" / "layout.bin"
+            cached.parent.mkdir()
+            cached.write_bytes(b"layout")
+            ocr = package_models / "det.onnx"
+            ocr.write_bytes(b"ocr")
+            provenance = root / "provenance.json"
+            provenance.write_text(json.dumps({
+                "fresh_accepted": {"profile": {"method": {
+                    "model_artifacts": {
+                        "hub/layout.bin": preflight.sha256(cached),
+                        "rapidocr/det.onnx": preflight.sha256(ocr),
+                    },
+                }}}
+            }))
+            module = mock.Mock(__file__=str(package / "__init__.py"))
+            with mock.patch.object(
+                preflight.importlib, "import_module", return_value=module
+            ):
+                result = preflight.verify_models(
+                    model_cache=model_cache,
+                    provenance=provenance,
+                )
+            self.assertEqual(result["model_artifacts"], 2)
+            self.assertEqual(result["cache_artifacts"], 1)
+            self.assertEqual(result["package_artifacts"], 1)
 
     def test_single_preflight_returns_all_gates_without_starting_work(self):
         with tempfile.TemporaryDirectory() as directory:

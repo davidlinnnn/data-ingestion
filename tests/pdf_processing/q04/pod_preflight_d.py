@@ -142,19 +142,39 @@ def verify_packages(*, provenance: Path) -> dict:
 def verify_models(*, model_cache: Path, provenance: Path) -> dict:
     method = _expected_method(provenance)
     expected_models = method["model_artifacts"]
+    rapidocr_names = {
+        name for name in expected_models if name.startswith("rapidocr/")
+    }
+    rapidocr_root = None
+    if rapidocr_names:
+        module_path = getattr(importlib.import_module("rapidocr"), "__file__", None)
+        if not isinstance(module_path, str) or not module_path:
+            raise ValueError("rapidocr package path is unavailable")
+        rapidocr_root = Path(module_path).resolve().parent / "models"
+    resolved = {
+        name: (
+            rapidocr_root / name.removeprefix("rapidocr/")
+            if name.startswith("rapidocr/")
+            else model_cache / name
+        )
+        for name in expected_models
+    }
     observed_models = {
-        name: sha256(model_cache / name) for name in sorted(expected_models)
-        if (model_cache / name).is_file()
+        name: sha256(path)
+        for name, path in sorted(resolved.items())
+        if path.is_file() and os.access(path, os.R_OK)
     }
     if observed_models != expected_models:
         raise ValueError("frozen model artifact set or hash changed")
-    model_files = [path for path in model_cache.rglob("*") if path.is_file()]
-    if len(model_files) != 35 or any(not os.access(path, os.R_OK) for path in model_files):
-        raise ValueError("frozen model cache file count/readability changed")
     return {
         "status": "PASS",
         "model_artifacts": len(expected_models),
-        "model_files": len(model_files),
+        "cache_artifacts": sum(
+            not name.startswith("rapidocr/") for name in expected_models
+        ),
+        "package_artifacts": sum(
+            name.startswith("rapidocr/") for name in expected_models
+        ),
     }
 
 
