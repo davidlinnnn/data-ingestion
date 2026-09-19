@@ -1,75 +1,121 @@
-# YOLO lifecycle candidate validation plan
+# YOLO lifecycle candidate executable window
 
-This plan grants no runtime, K8s, publication or service-scaling authorization.
-It fixes the scope for one separately authorized 1,500-second process-mode
-fixture-07 window using the `q04-yolo-lifecycle-v1` candidate.
+This plan grants no runtime, K8s, publication, merge or service-scaling
+authorization. It fixes one future 1,500-second process-mode fixture-07 window.
 
-## Immutable setup
+## Exclusive identity
 
-- Create a new phase, run ID, object prefix, state root, reservation and local
-  evidence path. Never reuse `yolo-matrix-a` or `yolo-attribution-b` identities.
-- Stage the candidate bundle whose `inputs.json` SHA-256 is
-  `30f4163ceafb636236914265a2ecee7c449f96f497edec36645bf7a9b877f382` and
-  producer-manifest SHA-256 is
-  `a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d`.
-- At init, derive and retain a new profile release from the candidate producer
-  and the new prefix's immutable original-source versions. Assert it differs
-  from the frozen attribution-B release.
-- Recheck coordinator/container/boot identity, VM and cgroup OOM counters,
-  Temporal/object health, empty owned queues/prefixes and all 32 historical
-  Deployments still at their expected UIDs with `replicas=ready=0`.
+| Field | Fixed value |
+| --- | --- |
+| Phase and trial name | `yolo-lifecycle-a` |
+| Coordinator root | `/tmp/q04-yolo-lifecycle-20260919-a` |
+| Object prefix | `q04/yolo-lifecycle-20260919-a/` |
+| Local evidence | `/private/tmp/q04-yolo-lifecycle-20260919-a` |
+| Runner directory | `/tmp/q04-yolo-lifecycle-20260919-a/runner-yolo-lifecycle-a` |
+| Driver lock | `/tmp/q04-yolo-lifecycle-20260919-a/yolo-lifecycle-a.driver.lock` |
+| Candidate bundle | `/private/tmp/q04-inputs-yolo-lifecycle-v1` |
+| Candidate inputs SHA-256 | `37a4cf0259d659d6ecdbce5a752d0bb8c6dc1a3679b1ade92d685a449858375c` |
+| Producer-manifest SHA-256 | `a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d` |
 
-## Unchanged admission and guards
+All paths, the object prefix, reservation, capacity file and phase must be
+absent before the launcher atomically claims the root. The generated run ID is
+captured by live init and passed unchanged to the candidate driver.
 
-- Total window: 1,500 seconds; reserve the final 300 seconds for cleanup.
-- Outer admission: observe at most 180 seconds and require 60 continuous seconds
-  with at least 4.5 GiB available, PSI full avg10=0 and OOM unchanged.
-- Preserve at least 825 seconds after outer admission for workload and case
-  admission.
-- Per-case admission: 60 seconds with at least 3 GiB available.
-- Active guard: `memory.current <= 4,294,967,296`, available memory at least
-  1.5 GiB, PSI full avg10=0, telemetry gap at most 3 seconds, and unchanged VM
-  and cgroup OOM counters.
-- Attribution collector: 250 ms target cadence, at most 1 second between
-  attribution samples, complete process identity/PSS coverage, and no collector
-  error. Use `candidate/yolo_candidate_measure.py` so `cancel_requested`
-  surrounds the actual `q04_runtime.Run.cancel_owned` call; callback failure
-  must not skip cleanup.
+[`OFFLINE-MANIFEST.json`](../../preflight/yolo-lifecycle-a/OFFLINE-MANIFEST.json)
+binds the candidate bundle, four changed producer files, Q04 and deployment
+workers, candidate adapter, collector, outer admission, cleanup and launcher.
+The launcher copies every `changed_producer_files` and `changed_test_files`
+entry over the frozen code tree before `prepare.verify_bundle()` and live init.
+It cannot run the old runner with only a substituted producer.
 
-## Ordered workload
+## Fixed launch and budgets
 
-Run only fixture 07 in this order:
+After separate runtime authorization, the only permitted local entrypoint is:
 
-1. **Fresh.** Verify all 15 original pages, complete graph, six tables/60 cells,
-   nine captions, source traversal, four required OCR registrations and fresh
-   index. Verify the warm parser exits before fresh restore child birth, remains
-   absent through that child's exit, and `memory.current` never crosses 4 GiB.
-2. **Restored/new request.** Run only if fresh passes. Reuse the captured source
-   object, require compatible group evidence, repeat every graph/oracle check and
-   require full document equality with fresh.
-3. **Exact replay.** Run only if restored passes. Reuse the exact restored
-   request and require exact graph, registration and artifact identity without
-   reinterpreting the request.
+```sh
+export Q04_APPROVAL_REFERENCE='<verbatim later authorization>'
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests/pdf_processing/q04 \
+/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python \
+tests/pdf_processing/q04/sentinel/run_yolo_lifecycle_a.py \
+  --execute --owner 'main session' \
+  --approval-reference "$Q04_APPROVAL_REFERENCE"
+```
 
-Any fresh failure ends the workload immediately. Any later failure also ends the
-window. There is no automatic retry, threshold change, group-size change or
-concurrency change.
+`$Q04_APPROVAL_REFERENCE` must contain the later explicit authorization; this plan
+does not supply it. The launcher builds and shell-quotes the exact remote argv
+recorded in the offline manifest, replacing only the reviewed
+`q04-offline-candidate` placeholder with the live-init run ID:
 
-## Required lifecycle and cleanup evidence
+```text
+/experiment/.venv/bin/python
+/tmp/q04-yolo-lifecycle-20260919-a/runner-yolo-lifecycle-a/yolo_candidate_window.py
+--bundle /tmp/q04-yolo-lifecycle-20260919-a/inputs
+--state /tmp/q04-yolo-lifecycle-20260919-a/state
+--capacity /tmp/q04-yolo-lifecycle-20260919-a/capacity-yolo-lifecycle-a.json
+--name yolo-lifecycle-a
+--expected-run-id <live-init q04-* run ID>
+--expected-prefix q04/yolo-lifecycle-20260919-a/
+--attribution-interval-seconds 0.25
+--attribution-gap-seconds 1
+--capacity-approved
+```
 
-Retain synchronized samples for baseline, each group capture, warm handoff
-requested/completed, fresh child birth/exit, publication, cancellation if any,
-and post-cleanup. The candidate passes the lifecycle gate only if no sample has
-both an owned warm parser and owned fresh parse child. Confirm the next capture
-after a completed handoff can rebuild a new warm parser; restored/replay reuse
-may legitimately avoid new parsing but must still preserve ownership facts.
-If either the warm parser or fresh restore child cannot be reaped, require the
-shared parser to remain closed and forbid any warm-parser rebuild.
+The remote workload wrapper is `timeout --signal=INT --kill-after=180s 825s`.
+The 1,500-second lease reserves the final 300 seconds for cleanup. Before
+launch it permits at most 180 seconds of outer observation and requires 60
+continuous seconds with at least 4.5 GiB available, PSI full avg10=0 and
+unchanged VM/cgroup OOM counters. Per-case admission remains 60 seconds at
+3 GiB. Active limits remain cgroup memory at most 4,294,967,296 bytes (4 GiB), available memory at
+least 1.5 GiB, PSI full avg10=0, telemetry gap at most three seconds and no OOM.
+There is no automatic retry or threshold, group-size or concurrency change.
 
-On every exit, cancel and settle owned workflows, stop and reap the worker plus
-all parser descendants, remove owned scratch only after confirmed child exit,
-retain scratch and report incomplete cleanup if any owned child is unreaped,
-reject incomplete publication,
-capture history and telemetry, release the reservation, and recheck health and
-the unchanged 32-Deployment snapshot. A passed sentinel remains bounded fixture
-07 evidence and does not close #51.
+## Workload and comparison baselines
+
+Only fixture 07 runs, in this order. Any failure stops later modes.
+
+1. **Fresh** creates the baseline request, plan, registrations, artifacts and
+   typed document. It must pass all 15 pages, the complete graph, six tables/60
+   cells, nine captions, traversal and four required OCR registrations.
+2. **Restored/new request** uses a different request ID and the same captured
+   source artifact. Its complete typed document is compared with fresh.
+3. **Exact replay of fresh** reuses the exact fresh request. Existing runtime
+   checks require the fresh plan, registrations and artifacts to resolve
+   unchanged; the candidate driver additionally rejects replay of the restored
+   request.
+
+The successful-workload collector contract requires no cancel marker. A
+`cancel_requested` marker is required only when the actual
+`q04_runtime.Run.cancel_owned` callback is invoked after failure or guard stop;
+`cancel_completed` or `cancel_failed` describes that callback outcome.
+
+The handoff marker comes from actual Q04 worker `samples.jsonl` rows where
+`parser.handoffs > 0` and `termination_reason == fresh_child_handoff`. Process
+birth/exit and 250 ms PSS samples independently require no sample containing
+both an owned warm parser and owned fresh parse child. Local lifecycle tests
+prove lock ordering, rebuild after a completed handoff, fail-closed reap,
+parallel ownership and cancellation cleanup. The runtime matrix may fully reuse
+work after fresh; it therefore does not claim to revalidate next-capture rebuild.
+
+Warm sequence behavior is still unproven under this producer. Revalidating the
+fixed request-20 recycle/warm sequence remains a separate #51 gate and is not
+part of this window.
+
+## Cleanup and offline gate
+
+Every exit cancels and settles only phase-owned workflows, concurrently reaps
+warm and fresh children, preserves scratch if an owned exit is unconfirmed,
+captures evidence, releases the exact reservation identity, rechecks T09a
+health and verifies all 32 historical Deployments remain at replicas=ready=0.
+
+The single offline gate is:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests/pdf_processing/q04 \
+/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python \
+-m unittest tests.pdf_processing.q04.test_yolo_lifecycle_runner
+```
+
+Its first test calls `offline_validation_record()` and checks the complete
+candidate staging map, bundle verification schema, live-init config schema,
+exclusive identities, exact argv and deadline wrapper without contacting the
+cluster or running inference.

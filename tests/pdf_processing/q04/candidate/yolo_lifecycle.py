@@ -12,6 +12,7 @@ class CancellationObservedRunMixin:
         super().__init__(*args, **kwargs)
         self.observe_cancel = observe_cancel
         self.cancel_observation_errors = []
+        self.cancel_invoked = False
 
     def _observe_cancel(self, label, meaning):
         try:
@@ -26,6 +27,7 @@ class CancellationObservedRunMixin:
             )
 
     async def cancel_owned(self, handle):
+        self.cancel_invoked = True
         self._observe_cancel(
             "cancel_requested",
             "owned_workflow_cancel_callback_invoked",

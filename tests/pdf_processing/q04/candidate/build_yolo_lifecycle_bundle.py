@@ -21,6 +21,8 @@ REQUIRED_CANDIDATE_HARNESS_FILES = {
     "deploy/pdf-processing/worker.py",
     "tests/pdf_processing/q04/candidate/yolo_lifecycle.py",
     "tests/pdf_processing/q04/candidate/yolo_candidate_measure.py",
+    "tests/pdf_processing/q04/candidate/yolo_candidate_window.py",
+    "tests/pdf_processing/q04/sentinel/yolo_attribution_telemetry.py",
 }
 
 

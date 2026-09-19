@@ -24,7 +24,7 @@ except ImportError:
 
 def _command_class(payload: bytes) -> str:
     text = payload.replace(b"\0", b" ").decode(errors="replace")
-    if "yolo_fresh_measure.py" in text:
+    if "yolo_fresh_measure.py" in text or "yolo_candidate_window.py" in text:
         return "controller"
     if "q04/worker.py" in text or text.rstrip().endswith("worker.py"):
         return "worker"
@@ -229,6 +229,28 @@ def observed_runtime_markers(root: Path) -> tuple[list[dict], list[dict]]:
                 })
     except (FileNotFoundError, PermissionError, OSError, ValueError, TypeError) as error:
         issues.append({"scope": "runtime_progress", "reason": type(error).__name__})
+    try:
+        for path in root.rglob("samples.jsonl"):
+            rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+            handoff = next(
+                (
+                    row.get("parser", {})
+                    for row in rows
+                    if row.get("parser", {}).get("handoffs", 0) > 0
+                    and row.get("parser", {}).get("termination_reason")
+                    == "fresh_child_handoff"
+                ),
+                None,
+            )
+            if handoff is not None:
+                markers.append({
+                    "key": str(path.relative_to(root)) + ":parser_handoff",
+                    "label": "warm_handoff_observed",
+                    "meaning": "worker_supervision_sample_after_warm_reap",
+                    "handoffs": handoff["handoffs"],
+                })
+    except (FileNotFoundError, PermissionError, OSError, ValueError, TypeError) as error:
+        issues.append({"scope": "worker_samples", "reason": type(error).__name__})
     try:
         for path in root.rglob("merged"):
             if path.is_dir():
@@ -503,6 +525,16 @@ class StrictAttributionCollector:
                     "sample_duration_seconds": row["sample_duration_seconds"],
                     "collector_thread_cpu_seconds": row["collector_thread_cpu_seconds"],
                     "controller_pss_bytes": controller_pss,
+                    "warm_parser_present": any(
+                        process.get("ownership") == "owned"
+                        and process.get("command_class") == "warm_parser"
+                        for process in row["processes"]
+                    ),
+                    "fresh_parse_present": any(
+                        process.get("ownership") == "owned"
+                        and process.get("command_class") == "fresh_parse_child"
+                        for process in row["processes"]
+                    ),
                     "observation_labels": [
                         observation["label"] for observation in row["observations"]
                     ],
@@ -572,7 +604,13 @@ class StrictAttributionCollector:
         if last is not None and time.monotonic() - last > self.attribution_gap_seconds:
             raise RuntimeError("attribution collector gap exceeded")
 
-    def stop(self) -> CollectorOutcome:
+    def stop(
+        self,
+        *,
+        expect_cancel: bool = True,
+        require_handoff: bool = False,
+        require_no_warm_fresh_overlap: bool = False,
+    ) -> CollectorOutcome:
         if self._stream is None:
             raise RuntimeError("collector was not started")
         self._stop.set()
@@ -637,12 +675,13 @@ class StrictAttributionCollector:
             label for row in rows for label in row["observation_labels"]
         ]
         observed_labels = set(observation_sequence)
-        required_label_sequence = [
-            "baseline_before_worker",
-            "workflow_progress_assembling_observed",
-            "cancel_requested",
-            "post_cleanup_sample",
-        ]
+        required_label_sequence = ["baseline_before_worker"]
+        required_label_sequence.append("workflow_progress_assembling_observed")
+        if require_handoff:
+            required_label_sequence.append("warm_handoff_observed")
+        if expect_cancel:
+            required_label_sequence.append("cancel_requested")
+        required_label_sequence.append("post_cleanup_sample")
         missing_required_labels = sorted(
             set(required_label_sequence) - observed_labels
         )
@@ -656,6 +695,12 @@ class StrictAttributionCollector:
                 except ValueError:
                     required_markers_in_order = False
                     break
+        overlap_sample_indexes = [
+            index
+            for index, row in enumerate(rows)
+            if row["warm_parser_present"] and row["fresh_parse_present"]
+        ]
+        no_warm_fresh_overlap = not overlap_sample_indexes
         complete = (
             bool(rows)
             and not errors
@@ -665,6 +710,7 @@ class StrictAttributionCollector:
             and peak_row is not None
             and peak_row["attribution_complete"]
             and max(gaps, default=0) <= self.attribution_gap_seconds
+            and (no_warm_fresh_overlap or not require_no_warm_fresh_overlap)
         )
         status = "complete" if complete else "incomplete"
         outcome = CollectorOutcome(
@@ -689,6 +735,12 @@ class StrictAttributionCollector:
             "observed_observation_labels": sorted(observed_labels),
             "missing_required_observation_labels": missing_required_labels,
             "required_observations_in_order": required_markers_in_order,
+            "measurement_contract": "guard_failure" if expect_cancel else "successful_workload",
+            "cancel_observation_required": expect_cancel,
+            "handoff_observation_required": require_handoff,
+            "no_warm_fresh_overlap_required": require_no_warm_fresh_overlap,
+            "no_warm_fresh_overlap": no_warm_fresh_overlap,
+            "warm_fresh_overlap_sample_indexes": overlap_sample_indexes,
             "maximum_transition_span_seconds": max(transition_spans, default=0),
             "unbounded_transition": unbounded_transition,
             "peak_sample_attribution_complete": bool(

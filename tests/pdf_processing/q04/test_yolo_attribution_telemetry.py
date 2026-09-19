@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -237,6 +238,58 @@ class YoloAttributionTelemetry(unittest.TestCase):
             self.assertFalse(report["pss_reading_is_atomic"])
             self.assertFalse(report["diagnostic_unattributed_is_cache"])
             self.assertEqual(report["missing_required_observation_labels"], [])
+
+    def test_success_contract_uses_worker_handoff_without_cancel_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            linux = SyntheticLinux(root)
+            shutil.rmtree(linux.proc / "102")
+            trial = linux.observed / "fresh-07"
+            trial.mkdir()
+            (trial / "progress.jsonl").write_text(
+                json.dumps({"progress": {"status": "assembling"}}) + "\n"
+            )
+            worker = linux.observed / "worker-1"
+            worker.mkdir()
+            (worker / "samples.jsonl").write_text(
+                json.dumps(
+                    {
+                        "parser": {
+                            "handoffs": 1,
+                            "termination_reason": "fresh_child_handoff",
+                        }
+                    }
+                )
+                + "\n"
+            )
+            collector = StrictAttributionCollector(
+                root / "attribution.jsonl",
+                root / "summary.json",
+                root_pid=100,
+                observation_root=linux.observed,
+                interval_seconds=0.01,
+                attribution_gap_seconds=0.2,
+                proc_root=linux.proc,
+                cgroup_root=linux.cgroup,
+            )
+            collector.start()
+            time.sleep(0.03)
+            outcome = collector.stop(
+                expect_cancel=False,
+                require_handoff=True,
+                require_no_warm_fresh_overlap=True,
+            )
+            self.assertTrue(outcome.attribution_complete)
+            report = json.loads((root / "summary.json").read_text())
+            self.assertEqual(report["measurement_contract"], "successful_workload")
+            self.assertFalse(report["cancel_observation_required"])
+            self.assertNotIn(
+                "cancel_requested", report["required_observation_sequence"]
+            )
+            self.assertIn(
+                "warm_handoff_observed", report["required_observation_sequence"]
+            )
+            self.assertTrue(report["no_warm_fresh_overlap"])
 
     def test_bounded_transition_remains_incomplete_measurement(self):
         with tempfile.TemporaryDirectory() as directory:
