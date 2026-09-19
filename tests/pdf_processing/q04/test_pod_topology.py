@@ -42,11 +42,26 @@ class PodTopologyTests(unittest.TestCase):
         mounts = {
             row["mountPath"]: row for row in pod["containers"][0]["volumeMounts"]
         }
-        self.assertTrue(mounts["/app/pdf_processing"]["readOnly"])
-        self.assertTrue(mounts["/q04-harness"]["readOnly"])
+        self.assertTrue(mounts["/workspace"]["readOnly"])
         self.assertIn("/scratch", mounts)
         self.assertIn("/q04-control", mounts)
         self.assertIn("/tmp", mounts)
+        projected = next(
+            volume["projected"]
+            for volume in pod["volumes"]
+            if volume["name"] == "workspace"
+        )
+        paths = {
+            item["path"]
+            for source in projected["sources"]
+            for item in source["configMap"]["items"]
+        }
+        self.assertIn("src/pdf_processing/processing.py", paths)
+        self.assertIn("tests/pdf_processing/q04/pod_workload.py", paths)
+        self.assertIn(
+            "tests/pdf_processing/q04/sentinel/yolo_reviewed_attribution_telemetry.py",
+            paths,
+        )
 
     def test_pod_security_and_secret_scope_are_fixed(self):
         pod = topology.kubernetes_list()["items"][2]["spec"]["template"]["spec"]

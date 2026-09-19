@@ -19,6 +19,9 @@ IMAGE = (
     "docker.io/library/pdf-t08-runtime@"
     "sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0"
 )
+IMAGE_CONTENT_ID = (
+    "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+)
 NAMESPACE = "pdf-t09a-validation"
 NODE = "internal-a2a-vs6-local-worker2"
 PHASE = "q04-pod-cgroup-a"
@@ -37,13 +40,30 @@ VM_RUNTIME_FLOOR_BYTES = 1_610_612_736
 
 PRODUCER_MANIFEST = Q04 / "candidate/yolo-lifecycle-v1/MANIFEST.json"
 PRODUCER_ROOT = ROOT / "src/pdf_processing"
+FROZEN_TEST_FILES = tuple(
+    json.loads(PRODUCER_MANIFEST.read_text())["test_files"]
+)
+POD_ONLY_FILES = (
+    "tests/pdf_processing/q04/candidate/__init__.py",
+    "tests/pdf_processing/q04/candidate/yolo_reviewed_window.py",
+    "tests/pdf_processing/q04/candidate/yolo_reviewed_candidate_window.py",
+    "tests/pdf_processing/q04/candidate/yolo_equivalence_candidate.py",
+    "tests/pdf_processing/q04/candidate/yolo_resource_candidate.py",
+    "tests/pdf_processing/q04/sentinel/yolo_reviewed_attribution_telemetry.py",
+    "tests/pdf_processing/q04/candidate/yolo-reviewed-v1/MANIFEST.json",
+    "tests/pdf_processing/q04/candidate/yolo-reviewed-v1/MAIN-REVIEW.json",
+    "tests/pdf_processing/q04/pod-topology-v1/INTEGRATION-MANIFEST.json",
+    "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/BUNDLE.json",
+    "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
+    "tests/pdf_processing/q04/candidate/yolo-resource-v1/PARSER-BUDGETS.json",
+    "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json",
+    "tests/pdf_processing/t09a_r3/evidence/20260914-0b537d0-c/actual-methods.json",
+    "tests/pdf_processing/q04/pod_workload.py",
+    "tests/pdf_processing/q04/pod_init.py",
+    "tests/pdf_processing/q04/pod_remote_evidence.py",
+)
 HARNESS_FILES = {
-    "worker.py": Q04 / "worker.py",
-    "consumer.py": Q04 / "consumer.py",
-    "telemetry.py": Q04 / "telemetry.py",
-    "acl_resource_telemetry.py": Q04 / "sentinel/acl_resource_telemetry.py",
-    "yolo_reviewed_attribution_telemetry.py": Q04
-    / "sentinel/yolo_reviewed_attribution_telemetry.py",
+    name: ROOT / name for name in sorted(set(FROZEN_TEST_FILES + POD_ONLY_FILES))
 }
 
 
@@ -68,6 +88,17 @@ def _source_data() -> tuple[dict[str, str], dict[str, str]]:
         raise ValueError("producer differs from frozen candidate manifest")
     harness = {name: path.read_text() for name, path in HARNESS_FILES.items()}
     return producer, harness
+
+
+def _config_map_payload(files: dict[str, str], *, producer: bool) -> tuple[dict, list]:
+    data = {}
+    items = []
+    for index, (logical, value) in enumerate(sorted(files.items())):
+        key = f"f{index:03d}-{sha(logical.encode())[:12]}"
+        path = "src/pdf_processing/" + logical if producer else logical
+        data[key] = value
+        items.append({"key": key, "path": path})
+    return data, items
 
 
 def source_manifest() -> dict[str, Any]:
@@ -96,6 +127,8 @@ def kubernetes_list() -> dict[str, Any]:
     producer, harness = _source_data()
     identity = source_manifest()
     maps = identity["config_maps"]
+    producer_data, producer_items = _config_map_payload(producer, producer=True)
+    harness_data, harness_items = _config_map_payload(harness, producer=False)
     deployment = {
         "apiVersion": "apps/v1",
         "kind": "Deployment",
@@ -159,7 +192,10 @@ def kubernetes_list() -> dict[str, Any]:
                                         }
                                     },
                                 },
-                                {"name": "PYTHONPATH", "value": "/app:/q04-harness"},
+                                {
+                                    "name": "PYTHONPATH",
+                                    "value": "/workspace/src:/workspace/tests/pdf_processing/q04:/workspace/tests/pdf_processing/q02:/workspace/tests/pdf_processing/q03",
+                                },
                                 {"name": "HF_HUB_OFFLINE", "value": "1"},
                                 {"name": "TRANSFORMERS_OFFLINE", "value": "1"},
                                 {"name": "OMP_NUM_THREADS", "value": "4"},
@@ -187,8 +223,7 @@ def kubernetes_list() -> dict[str, Any]:
                                 "readOnlyRootFilesystem": True,
                             },
                             "volumeMounts": [
-                                {"name": "code", "mountPath": "/app/pdf_processing", "readOnly": True},
-                                {"name": "harness", "mountPath": "/q04-harness", "readOnly": True},
+                                {"name": "workspace", "mountPath": "/workspace", "readOnly": True},
                                 {"name": "scratch", "mountPath": "/scratch"},
                                 {"name": "control", "mountPath": "/q04-control"},
                                 {"name": "tmp", "mountPath": "/tmp"},
@@ -201,8 +236,25 @@ def kubernetes_list() -> dict[str, Any]:
                         }
                     ],
                     "volumes": [
-                        {"name": "code", "configMap": {"name": maps["producer"]}},
-                        {"name": "harness", "configMap": {"name": maps["harness"]}},
+                        {
+                            "name": "workspace",
+                            "projected": {
+                                "sources": [
+                                    {
+                                        "configMap": {
+                                            "name": maps["producer"],
+                                            "items": producer_items,
+                                        }
+                                    },
+                                    {
+                                        "configMap": {
+                                            "name": maps["harness"],
+                                            "items": harness_items,
+                                        }
+                                    },
+                                ]
+                            },
+                        },
                         {"name": "scratch", "emptyDir": {"sizeLimit": "2Gi"}},
                         {"name": "control", "emptyDir": {"sizeLimit": "256Mi"}},
                         {"name": "tmp", "emptyDir": {"sizeLimit": "512Mi"}},
@@ -220,14 +272,14 @@ def kubernetes_list() -> dict[str, Any]:
                 "kind": "ConfigMap",
                 "metadata": {"name": maps["producer"], "namespace": NAMESPACE},
                 "immutable": True,
-                "data": producer,
+                "data": producer_data,
             },
             {
                 "apiVersion": "v1",
                 "kind": "ConfigMap",
                 "metadata": {"name": maps["harness"], "namespace": NAMESPACE},
                 "immutable": True,
-                "data": harness,
+                "data": harness_data,
             },
             deployment,
         ],

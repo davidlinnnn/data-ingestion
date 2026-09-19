@@ -19,7 +19,7 @@ The immutable image is
 `docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0`.
 The exact candidate producer is mounted read-only from
 `q04-pod-code-a6501b471bd3193a`; the Q04 worker/telemetry harness is mounted
-read-only from `q04-pod-harness-922b27bd25a33c18`. Their per-file hashes are in
+read-only through the hash-named harness ConfigMap recorded in
 `SOURCE-MANIFEST.json`, and `pod_topology.py` rebuilds the complete inactive
 Kubernetes List byte for byte.
 
@@ -90,16 +90,23 @@ explicit authorization and a new runner identity before any command is run.
    ID remains `sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce`.
 2. Repeat the admission checks above. Record coordinator, node, service, Secret
    and all 32 held Deployment UIDs. Do not read or print Secret values.
-3. Apply the Kubernetes List while it still has `replicas: 0`. Record the new
-   ConfigMap and Deployment UIDs, then scale only the exact Deployment UID to one.
+3. Atomically `create` each Kubernetes object while the Deployment still has
+   `replicas: 0`. Record only UIDs returned by successful creates; an
+   `AlreadyExists` response proves no ownership and stops the run. Then scale
+   only the exact Deployment UID to one.
    Before submission, prove the read-only-root and UID-1000 file contract with a
    no-inference preflight. Require one ready Pod, one container, restart count
    zero, the pinned image ID, `memory.max=5 GiB`, and fresh zero OOM counters.
-4. Copy the run config into `/q04-control` and start exactly
-   `/experiment/.venv/bin/python /q04-harness/worker.py` for fixture 07. The
-   controller must retain the Pod UID, container ID, worker PID/start identity,
-   config hash and queue names before submission. A remote-evidence adapter must
-   copy the 250 ms stream back without interpolation; transport loss fails closed.
+4. Copy the fixed private fixture bundle and capacity record into
+   `/q04-control`, then start exactly the `workload_argv` frozen in
+   `RUNNER-MANIFEST.json`. The outer controller retains Pod UID, container ID,
+   supervisor PID/start identity, capacity/config hashes and queue names before
+   submission. The remote-evidence adapter copies only complete byte ranges and
+   complete JSONL records; sequence, offset, digest, identity or transport-gap
+   failure closes the run. Transport excludes the staged input bundle and runs
+   independently of the 250 ms VM sampling loop. Every envelope verifies live
+   supervisor PID/start ticks and adopted config digest, carries total byte
+   extent plus EOF, and required files must be complete before PASS.
 5. Run a Pod-local strict collector against the Activity container cgroup. Keep
    process PSS unknown on read/exit races and apply the confirmed-exit
    classification only under the policy frozen by `e99f180`. The live run must
@@ -118,10 +125,57 @@ explicit authorization and a new runner identity before any command is run.
 
 The existing Q04 process-mode runner cannot be used unchanged: its local
 collector would measure the controller cgroup and its Pod mode assumes a shared
-filesystem. Before runtime authorization, the new runner must stage the config
-to `/q04-control`, stream worker/collector evidence back to the controller, and
-bind controller-facing Temporal/MinIO access separately from the Pod's in-cluster
-addresses. This is a required implementation gate, not runtime approval.
+filesystem. `pod_workload.py` therefore runs the measurement controller and its
+single-concurrency Activity worker inside the same worker Pod cgroup. The outer
+runner talks only to the Kubernetes API, the worker2 VM view, and the coordinator
+health probe. The Pod config independently binds Temporal to `temporal:7233` and
+MinIO to `http://objects:9000`; it never inherits a controller-local endpoint.
+The private bundle is copied explicitly, and incremental evidence is streamed
+from `/q04-control` without a shared-filesystem assumption.
+
+## Implemented runner and fixed budget
+
+The single-use runner is
+`tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_a.py`. Its new identity
+is `q04-yolo-pod-cgroup-20260919-a`, phase `yolo-pod-cgroup-a`, object prefix
+`q04/yolo-pod-cgroup-20260919-a/`, and local output
+`/private/tmp/q04-yolo-pod-cgroup-20260919-a`. It accepts only fixture 07 and the
+ordered modes fresh, restored with a new request, and exact replay. Parser
+`max_requests=1`, one Activity at a time, the reviewed graph equivalence, the
+250 ms Pod-local collector, the 4 GiB qualification guard and 5 GiB container
+hard limit are fixed. No automatic retry is implemented.
+
+The 1,500-second lease reserves at most 180 seconds for outer admission, 825
+seconds total for Pod-local init plus all three modes, and the final 300 seconds
+for evidence capture and cleanup. The remaining 195 seconds cover inactive
+apply, bundle transfer, readiness and the no-inference UID-1000 preflight. The
+runner stops new work when that envelope cannot be preserved. Every wait is
+capped by the same absolute lease end. The Pod-local controller starts
+cooperative drain inside its 825-second allocation; it does not add a second
+grace period. If final evidence export fails, the runner stops work but retains
+the UID-bound Pod and objects for explicit recovery instead of deleting the only
+remaining evidence source.
+
+After a separate main-session capacity authorization, the exact single-run
+command is the `exact_single_run_command` value in `RUNNER-MANIFEST.json`. Its
+authorization digest must exactly equal `authorization_scope_sha256` in that
+file. Importing the runner or invoking `--offline-check` is local-only and cannot
+create Kubernetes resources.
+
+The live command performs these mutable operations and therefore requires that
+separate approval: upload the two private immutable ConfigMaps and create the
+inactive Deployment atomically; scale only its recorded UID/resourceVersion from zero to
+one; copy the private fixture bundle and capacity record into the owned
+`emptyDir`; create new-prefix object-store records and run the three workflows;
+then scale to zero and delete only the recorded objects with UID preconditions.
+The earlier rejected server-side dry-run must not be retried. The local JSON
+parse and client rendering checks are not Kubernetes schema or admission proof.
+
+The three mode-level worker generations are normal start/stop phases inside one
+unchanged Pod UID. They are not Pod recovery and are not the #51 drain proof.
+Actual drain qualification requires deletion of the exact old Pod UID during an
+active owned group, a distinct replacement Pod UID and separate old/new cgroup
+streams. That later experiment remains outside this runner.
 
 ## Stop and cleanup
 

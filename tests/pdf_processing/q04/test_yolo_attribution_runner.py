@@ -67,7 +67,7 @@ class YoloAttributionRunner(unittest.TestCase):
         self.assertIn("PYTHONSAFEPATH=1", command)
         self.assertIn("test ! -e", command)
 
-    def test_staged_sources_include_fixed_collector_driver_and_cleanup(self):
+    def test_historical_manifest_uses_retained_collector_not_later_lifecycle_source(self):
         sources = runner.staged_sources()
         self.assertEqual(
             set(sources),
@@ -87,7 +87,31 @@ class YoloAttributionRunner(unittest.TestCase):
             name: hashlib.sha256(path.read_bytes()).hexdigest()
             for name, path in sources.items()
         }
-        self.assertEqual(retained["staged_sources"], observed)
+        historical = (
+            REPO
+            / "tests/pdf_processing/q04/preflight/yolo-attribution-b/retained/yolo_attribution_telemetry.py"
+        )
+        self.assertEqual(
+            retained["staged_sources"]["yolo_attribution_telemetry.py"],
+            hashlib.sha256(historical.read_bytes()).hexdigest(),
+        )
+        self.assertNotEqual(
+            retained["staged_sources"]["yolo_attribution_telemetry.py"],
+            observed["yolo_attribution_telemetry.py"],
+        )
+        unchanged = {
+            name: digest
+            for name, digest in observed.items()
+            if name != "yolo_attribution_telemetry.py"
+        }
+        self.assertEqual(
+            {
+                name: digest
+                for name, digest in retained["staged_sources"].items()
+                if name != "yolo_attribution_telemetry.py"
+            },
+            unchanged,
+        )
         self.assertFalse(retained["runtime_authorized"])
 
     def test_reviewed_manifest_rejects_altered_source_before_staging(self):
