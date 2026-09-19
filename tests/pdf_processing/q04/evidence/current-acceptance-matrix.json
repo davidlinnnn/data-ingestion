@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "ccdf81a6d4a0005428b0901c34f5fafabd132bef",
+    "commit": "4caa019ae33279f13c9d5ccf52de08c2384b3aef",
     "issue": 51,
     "issue_state": "OPEN"
   },
@@ -59,7 +59,7 @@
       },
       "q04_fresh_index": "unproven",
       "oracle_and_full_graph": "unproven",
-      "reason": "Matrix A and attribution B both stopped on the fixed 4 GiB shared-cgroup guard during assembly before complete delivery or consumer/oracle verification. Attribution B proves pre-cancel owned warm-parser/fresh-child overlap but remains measurement-incomplete because its controller cancel_requested marker is absent. A new local lifecycle candidate removes that overlap behind the shared parser lock; it has not run. Restored and replay did not run, so all acceptance rows and fresh-index remain unproven.",
+      "reason": "The lifecycle candidate completed fresh processing and required OCR, then failed the fixed full-graph gate before acceptance. Offline source review explains the complete delta as two source-preserving, table-interrupted cross-page paragraph splits under the attested conservative continuation method, but the runtime remains FAIL_GRAPH_GATE. Restored and replay did not run; all acceptance rows and fresh-index remain unproven.",
       "evidence": [
         "tests/pdf_processing/t06/evidence/VERDICT.md",
         "tests/pdf_processing/q04/STAGE-IMPACT.md",
@@ -73,7 +73,12 @@
         "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/evidence/lifecycle-overlap.json",
         "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
         "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/MANIFEST.json",
-        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md"
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md",
+        "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/full-semantic-delta.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/local-oracle-proposal.json"
       ],
       "attempts": [
         {
@@ -92,6 +97,19 @@
           "restored": "not_run",
           "replay": "not_run",
           "measurement": "incomplete_missing_cancel_requested_callback",
+          "cleanup": "proven",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-lifecycle-a",
+          "outcome": "fresh_processing_complete_failed_graph_gate",
+          "fresh": "failed_full_graph_gate_after_complete_processing",
+          "restored": "not_run",
+          "replay": "not_run",
+          "source_review": "two_source_preserving_splits_explain_full_graph_delta",
+          "local_oracle_proposal": "inactive_pending_main_review",
+          "active_guard_peak_bytes": 4273446912,
+          "attribution_peak_bytes": 4403523584,
           "cleanup": "proven",
           "retry_count": 0
         }
@@ -179,9 +197,11 @@
     {
       "id": "six_fixture_matrix",
       "status": "unproven",
-      "reason": "Only fixtures 09 and 10 have Q04 direct passes; fixture 08 has reusable historical reference evidence but fails exact Q04 profile/harness identity; native and 06 remain unrun, while 07 attempted fresh but failed the cgroup guard before delivery and did not run restored/replay.",
+      "reason": "Only fixtures 09 and 10 have Q04 direct passes; fixture 08 has reusable historical reference evidence but fails exact Q04 profile/harness identity; native and 06 remain unrun. Fixture 07 completed fresh processing but failed the fixed full-graph gate; restored/replay did not run.",
       "evidence": [
-        "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"
+        "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
+        "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md"
       ]
     },
     {
@@ -240,12 +260,14 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "The lifecycle candidate intentionally reaps the warm parser before each fresh assembly, invalidating the old fixed request-20 PID/recycle sequence. Local ownership/rebuild tests pass, but the revised warm behavior has no runtime acceptance.",
+      "reason": "The lifecycle candidate fresh run directly observed the intended warm-to-fresh handoff and no overlap, but the graph gate stopped the matrix before restored and replay. The complete revised warm sequence therefore remains unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
         "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
-        "tests/pdf_processing/q04/test_yolo_lifecycle_candidate.py"
+        "tests/pdf_processing/q04/test_yolo_lifecycle_candidate.py",
+        "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json"
       ]
     },
     {
@@ -260,7 +282,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "Two small fixture windows do not establish a six-fixture, warm or recovery operating envelope. Attribution B proves the initial YOLO breach already had pre-cancel owned warm-parser/fresh-child overlap. The local candidate removes that overlap without changing the guard, but only a new candidate run can establish a bound.",
+      "reason": "The lifecycle candidate fresh run removed warm/fresh overlap. Its active guard samples stayed below 4 GiB, while the complete 250 ms attribution stream observed a transient 4,403,523,584-byte peak. The graph gate stopped later modes and fixtures, so no integrated operating bound is accepted.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -268,7 +290,9 @@
         "tests/pdf_processing/q04/sentinel/yolo-attribution-b/RESULTS.md",
         "tests/pdf_processing/q04/sentinel/yolo-attribution-b/evidence/summary.json",
         "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/ANALYSIS.md",
-        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md"
+        "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md",
+        "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json"
       ]
     },
     {
@@ -317,28 +341,19 @@
     "not_counted_as_pass": true
   },
   "next_step": {
-    "kind": "main_review_yolo_lifecycle_candidate",
+    "kind": "main_review_yolo_source_reviewed_equivalence",
     "fixture": "07",
-    "pages": 15,
-    "modes": [
-      "fresh",
-      "restored",
-      "replay"
-    ],
-    "execution_mode": "process",
-    "candidate_version": "q04-yolo-lifecycle-v1",
-    "candidate_manifest": "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/MANIFEST.json",
-    "impact": "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/IMPACT.md",
-    "validation_plan": "tests/pdf_processing/q04/candidate/yolo-lifecycle-v1/VALIDATION-PLAN.md",
-    "diagnosis": "tests/pdf_processing/q04/diagnosis/yolo-attribution-b/ANALYSIS.md",
+    "runtime_result": "FAIL_GRAPH_GATE",
+    "diagnosis": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md",
+    "graph_delta": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/full-semantic-delta.json",
+    "oracle_proposal": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/local-oracle-proposal.json",
+    "proposal_status": "PROPOSAL_NOT_ACTIVE",
     "runtime_authorized": false,
     "automatic_retry": false,
-    "requires_new_identity": true,
-    "requires_candidate_review": true,
-    "requires_explicit_capacity_authorization": true,
+    "requires_main_disposition": true,
     "keep_current_guard": true,
-    "raise_guard_from_matrix_a": false,
-    "fresh_failure_stops_later_modes": true,
-    "pure_marker_calibration_required": false
+    "historical_failure_preserved": true,
+    "historical_reference_unchanged": true,
+    "deployments_remain_closed": 32
   }
 }

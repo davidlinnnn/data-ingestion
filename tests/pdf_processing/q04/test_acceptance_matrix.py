@@ -57,6 +57,24 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(attribution_attempt["replay"], "not_run")
         self.assertEqual(attribution_attempt["cleanup"], "proven")
         self.assertEqual(attribution_attempt["retry_count"], 0)
+        lifecycle_attempt = fixtures["07"]["attempts"][2]
+        self.assertEqual(lifecycle_attempt["phase"], "yolo-lifecycle-a")
+        self.assertEqual(
+            lifecycle_attempt["outcome"],
+            "fresh_processing_complete_failed_graph_gate",
+        )
+        self.assertEqual(
+            lifecycle_attempt["source_review"],
+            "two_source_preserving_splits_explain_full_graph_delta",
+        )
+        self.assertEqual(
+            lifecycle_attempt["local_oracle_proposal"],
+            "inactive_pending_main_review",
+        )
+        self.assertEqual(lifecycle_attempt["restored"], "not_run")
+        self.assertEqual(lifecycle_attempt["replay"], "not_run")
+        self.assertEqual(lifecycle_attempt["cleanup"], "proven")
+        self.assertEqual(lifecycle_attempt["retry_count"], 0)
 
     def test_release_gate_statuses_and_evidence_are_reviewable(self):
         allowed = set(self.matrix["status_definitions"])
@@ -81,25 +99,24 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_step_is_candidate_review_not_runtime_authorization(self):
+    def test_next_step_is_source_review_disposition_not_runtime_authorization(self):
         step = self.matrix["next_step"]
-        self.assertEqual(step["kind"], "main_review_yolo_lifecycle_candidate")
+        self.assertEqual(
+            step["kind"], "main_review_yolo_source_reviewed_equivalence"
+        )
         self.assertEqual(step["fixture"], "07")
-        self.assertEqual(step["modes"], ["fresh", "restored", "replay"])
-        self.assertEqual(step["execution_mode"], "process")
-        self.assertEqual(step["candidate_version"], "q04-yolo-lifecycle-v1")
-        self.assertTrue((ROOT / step["candidate_manifest"]).is_file())
-        self.assertTrue((ROOT / step["impact"]).is_file())
-        self.assertTrue((ROOT / step["validation_plan"]).is_file())
+        self.assertEqual(step["runtime_result"], "FAIL_GRAPH_GATE")
+        self.assertEqual(step["proposal_status"], "PROPOSAL_NOT_ACTIVE")
         self.assertTrue((ROOT / step["diagnosis"]).is_file())
+        self.assertTrue((ROOT / step["graph_delta"]).is_file())
+        self.assertTrue((ROOT / step["oracle_proposal"]).is_file())
         self.assertFalse(step["runtime_authorized"])
         self.assertFalse(step["automatic_retry"])
-        self.assertTrue(step["requires_candidate_review"])
-        self.assertTrue(step["requires_explicit_capacity_authorization"])
+        self.assertTrue(step["requires_main_disposition"])
         self.assertTrue(step["keep_current_guard"])
-        self.assertFalse(step["raise_guard_from_matrix_a"])
-        self.assertTrue(step["fresh_failure_stops_later_modes"])
-        self.assertFalse(step["pure_marker_calibration_required"])
+        self.assertTrue(step["historical_failure_preserved"])
+        self.assertTrue(step["historical_reference_unchanged"])
+        self.assertEqual(step["deployments_remain_closed"], 32)
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()
@@ -126,13 +143,11 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(row[6], fixture["q04_fresh_index"])
 
         step = self.matrix["next_step"]
-        plan = (ROOT / step["validation_plan"]).read_text()
-        self.assertIn("grants no runtime", plan)
-        self.assertIn("Fresh", plan)
-        self.assertIn("Restored/new request", plan)
-        self.assertIn("Exact replay", plan)
-        self.assertIn("4,294,967,296", plan)
-        self.assertIn("no automatic retry", plan)
+        diagnosis = (ROOT / step["diagnosis"]).read_text()
+        self.assertIn("FAIL_GRAPH_GATE", diagnosis)
+        self.assertIn("PROPOSAL_NOT_ACTIVE", diagnosis)
+        self.assertIn("4,403,523,584", diagnosis)
+        self.assertIn("automatic retry", document.lower())
 
 
 if __name__ == "__main__":

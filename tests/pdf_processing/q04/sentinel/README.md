@@ -36,3 +36,9 @@ Only the later, directly authorized attempt described here executed.
   fresh-only guard stop and narrowed the peak to owned warm-parser/fresh-child
   overlap. Its controller cancellation-marker contract was incomplete, so it
   is diagnostic evidence rather than an acceptance pass.
+- [Candidate batch A](candidate-batch-a/RESULTS.md) stopped on the first
+  fixture after YOLO fresh completed processing but failed the fixed full-graph
+  gate. Restored, replay, and the five later fixtures did not run. The retained
+  failure has a separate
+  [source-review diagnosis](../diagnosis/yolo-lifecycle-a/ANALYSIS.md); its
+  local equivalence proposal is inactive pending main-session review.
