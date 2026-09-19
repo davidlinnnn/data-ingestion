@@ -19,6 +19,14 @@ from consumer import require, sha
 from telemetry import sample
 
 
+async def cleanup_owned_work(parser, scratch):
+    """Remove scratch only after every owned process has confirmed exit."""
+    from pdf_processing.execution import stop_owned_children
+    await stop_owned_children(parser)
+    import shutil
+    shutil.rmtree(scratch, ignore_errors=True)
+
+
 async def run(config_path, out, generation):
     import psutil
     import boto3
@@ -27,7 +35,6 @@ async def run(config_path, out, generation):
     from pdf_processing.object_store import Store
     from pdf_processing.processing import Processing
     from pdf_processing.supervision import WarmParser
-    from pdf_processing.execution import stop_owned_children
 
     config = json.loads(config_path.read_text())
     import pdf_processing
@@ -81,12 +88,10 @@ async def run(config_path, out, generation):
         stop.set()
         cleanup_error = None
         try:
-            await stop_owned_children(parser)
+            await cleanup_owned_work(parser, scratch)
         except BaseException as error:
             cleanup_error = error
         await asyncio.gather(sampler, return_exceptions=True)
-        import shutil
-        shutil.rmtree(scratch, ignore_errors=True)
         (out/'stopped.json').write_text(json.dumps({'pid': os.getpid(), 'time': time.time(),
             'generation': generation, 'parser_absent': parser.process is None,
             'scratch_absent': not scratch.exists(), 'sampler_errors': sampler_error}))

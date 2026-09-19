@@ -47,20 +47,23 @@ async def stop_fresh_children():
 
 
 async def stop_owned_children(parser, reason='worker_shutdown'):
-    """Attempt every parser cleanup before propagating the first failure."""
-    first_error = None
+    """Settle warm and fresh cleanup before propagating the first failure."""
+    tasks = []
     if parser is not None:
-        try:
-            await parser.close(reason)
-        except BaseException as error:
-            first_error = error
+        tasks.append(asyncio.create_task(parser.close(reason)))
+    tasks.append(asyncio.create_task(stop_fresh_children()))
+    settling = asyncio.gather(*tasks, return_exceptions=True)
+    cancelled = None
     try:
-        await stop_fresh_children()
-    except BaseException as error:
-        if first_error is None:
-            first_error = error
-    if first_error is not None:
-        raise first_error
+        results = await asyncio.shield(settling)
+    except asyncio.CancelledError as error:
+        cancelled = error
+        results = await settling
+    for result in results:
+        if isinstance(result, BaseException):
+            raise result
+    if cancelled is not None:
+        raise cancelled
 
 
 class ChildFailure(RuntimeError):

@@ -14,12 +14,10 @@ from temporalio.worker import Worker
 
 async def cleanup_owned_work(parser, reason='worker_shutdown'):
     from pdf_processing.execution import stop_owned_children
-    try:
-        await stop_owned_children(parser, reason)
-    finally:
-        for pattern in ('activity-*', 'ocr-*'):
-            for path in Path(os.environ.get('SCRATCH', '/scratch')).glob(pattern):
-                shutil.rmtree(path, ignore_errors=True)
+    await stop_owned_children(parser, reason)
+    for pattern in ('activity-*', 'ocr-*'):
+        for path in Path(os.environ.get('SCRATCH', '/scratch')).glob(pattern):
+            shutil.rmtree(path, ignore_errors=True)
 
 
 async def main():

@@ -11,7 +11,9 @@ The candidate bundle passes the same `prepare.verify_bundle()` used by runtime
 initialization, including the candidate cancellation adapter.
 The bound worker files use best-effort owned-process cleanup: a failed warm
 reap cannot skip fresh-child cleanup, and one failed fresh reap cannot skip the
-remaining owned children.
+remaining owned children. Warm and fresh cleanup settle concurrently so a fresh
+child holding the handoff lock cannot block its own termination. Scratch is
+removed only after every owned child has confirmed exit.
 
 | Changed source | Behavior | Direct stage identities | Evidence consequence |
 | --- | --- | --- | --- |
@@ -21,9 +23,9 @@ remaining owned children.
 | `parse.py` | Documents the enforced fresh-assembly lifecycle | group, assembly | Hash-bound producer changes conservatively with the behavior |
 
 The full producer manifest SHA-256 is
-`070cd429903a2c126412af60856b6c84aa72ae1e7f7655dd0e3d0bacfdf93b28`.
+`a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d`.
 The candidate `inputs.json` SHA-256 is
-`d56a92c920c1267f9e4ff9ce021a6e944c0b63d30b90783f955492d01b81aaf1`.
+`30f4163ceafb636236914265a2ecee7c449f96f497edec36645bf7a9b877f382`.
 The exact file map is in [`MANIFEST.json`](MANIFEST.json).
 
 Every new request must be initialized under a new object prefix and derives a

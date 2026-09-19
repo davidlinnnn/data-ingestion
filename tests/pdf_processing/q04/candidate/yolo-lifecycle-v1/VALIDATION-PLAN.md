@@ -9,9 +9,9 @@ fixture-07 window using the `q04-yolo-lifecycle-v1` candidate.
 - Create a new phase, run ID, object prefix, state root, reservation and local
   evidence path. Never reuse `yolo-matrix-a` or `yolo-attribution-b` identities.
 - Stage the candidate bundle whose `inputs.json` SHA-256 is
-  `d56a92c920c1267f9e4ff9ce021a6e944c0b63d30b90783f955492d01b81aaf1` and
+  `30f4163ceafb636236914265a2ecee7c449f96f497edec36645bf7a9b877f382` and
   producer-manifest SHA-256 is
-  `070cd429903a2c126412af60856b6c84aa72ae1e7f7655dd0e3d0bacfdf93b28`.
+  `a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d`.
 - At init, derive and retain a new profile release from the candidate producer
   and the new prefix's immutable original-source versions. Assert it differs
   from the frozen attribution-B release.
@@ -67,7 +67,9 @@ If either the warm parser or fresh restore child cannot be reaped, require the
 shared parser to remain closed and forbid any warm-parser rebuild.
 
 On every exit, cancel and settle owned workflows, stop and reap the worker plus
-all parser descendants, remove owned scratch, reject incomplete publication,
+all parser descendants, remove owned scratch only after confirmed child exit,
+retain scratch and report incomplete cleanup if any owned child is unreaped,
+reject incomplete publication,
 capture history and telemetry, release the reservation, and recheck health and
 the unchanged 32-Deployment snapshot. A passed sentinel remains bounded fixture
 07 evidence and does not close #51.

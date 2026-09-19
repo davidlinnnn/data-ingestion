@@ -2,9 +2,12 @@
 
 import asyncio
 from contextlib import asynccontextmanager
+import importlib.util
+import os
 from pathlib import Path
 import sys
 import tempfile
+import types
 import unittest
 from unittest import mock
 
@@ -231,6 +234,80 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                 await execution_module.stop_owned_children(parser)
         self.assertEqual(parser.reason, "worker_shutdown")
         stop_fresh.assert_awaited_once_with()
+
+    async def test_shutdown_stops_fresh_child_that_holds_handoff_lock(self):
+        close_started = asyncio.Event()
+        release_handoff = asyncio.Event()
+
+        class Parser:
+            async def close(self, _reason):
+                close_started.set()
+                await release_handoff.wait()
+
+        async def stop_fresh():
+            await close_started.wait()
+            release_handoff.set()
+
+        with mock.patch(
+            "pdf_processing.execution.stop_fresh_children", new=stop_fresh
+        ):
+            await asyncio.wait_for(
+                execution_module.stop_owned_children(Parser()), timeout=.2
+            )
+
+    async def test_q04_worker_preserves_scratch_when_cleanup_is_incomplete(self):
+        consumer = types.ModuleType("consumer")
+        consumer.require = lambda *_args: None
+        consumer.sha = lambda _value: "sha"
+        telemetry = types.ModuleType("telemetry")
+        telemetry.sample = lambda: {}
+        path = Path(__file__).with_name("worker.py")
+        spec = importlib.util.spec_from_file_location("q04_worker_cleanup_test", path)
+        module = importlib.util.module_from_spec(spec)
+        with mock.patch.dict(
+            sys.modules, {"consumer": consumer, "telemetry": telemetry}
+        ):
+            spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp) / "scratch"
+            scratch.mkdir()
+            with mock.patch(
+                "pdf_processing.execution.stop_owned_children",
+                new=mock.AsyncMock(side_effect=RuntimeError("unreaped child")),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "unreaped child"):
+                    await module.cleanup_owned_work(object(), scratch)
+            self.assertTrue(scratch.is_dir())
+
+    async def test_deploy_worker_preserves_scratch_when_cleanup_is_incomplete(self):
+        temporalio = types.ModuleType("temporalio")
+        client = types.ModuleType("temporalio.client")
+        client.Client = object
+        worker = types.ModuleType("temporalio.worker")
+        worker.Worker = object
+        path = Path(__file__).parents[3] / "deploy/pdf-processing/worker.py"
+        spec = importlib.util.spec_from_file_location("deploy_worker_cleanup_test", path)
+        module = importlib.util.module_from_spec(spec)
+        with mock.patch.dict(
+            sys.modules,
+            {
+                "temporalio": temporalio,
+                "temporalio.client": client,
+                "temporalio.worker": worker,
+            },
+        ):
+            spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp)
+            owned = scratch / "activity-owned"
+            owned.mkdir()
+            with mock.patch.dict(os.environ, {"SCRATCH": str(scratch)}), mock.patch(
+                "pdf_processing.execution.stop_owned_children",
+                new=mock.AsyncMock(side_effect=RuntimeError("unreaped child")),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "unreaped child"):
+                    await module.cleanup_owned_work(object())
+            self.assertTrue(owned.is_dir())
 
     async def test_restore_waits_for_handoff_before_spawning_and_propagates_spawn_error(self):
         with tempfile.TemporaryDirectory() as tmp:
