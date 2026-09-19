@@ -124,7 +124,8 @@ class StopRegressions(unittest.TestCase):
             (args.state / "config.json").write_text(json.dumps({"run_id": workload.RUN_ID}))
             args.capacity.write_text("{}")
             (root / "evidence-volume-identity.json").write_text('{"pvc_uid":"owned"}')
-            manifest = args.workspace / "tests/pdf_processing/q04/pod-topology-v8/RUNTIME-INTEGRATION-MANIFEST.json"
+            measurement_argv = workload.build_measurement_argv(args, args.run_id, "reviewed")
+            manifest = Path(measurement_argv[measurement_argv.index("--integration-manifest") + 1])
             manifest.parent.mkdir(parents=True)
             manifest.write_text('{"authorization_scope_sha256":"reviewed"}')
             remote = importlib.import_module("pod_remote_evidence_" + VERSION)
