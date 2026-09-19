@@ -62,6 +62,7 @@ RUN_LABEL = pod_topology.RUN_LABEL
 NODE = pod_topology.NODE
 WORKER_YAML = Q04 / "pod-topology-v1/WORKER.yaml"
 OFFLINE_MANIFEST = Q04 / "pod-topology-v1/RUNNER-MANIFEST.json"
+CONSUMED_RUN_RECORD = Q04 / "pod-topology-v1/first-window-evidence/MANIFEST.json"
 LOCAL_PYTHON = Path(
     "/Users/david/work/data-ingestion/docs/prototypes/"
     "pdf-checkpoint-prototype/.venv/bin/python"
@@ -188,25 +189,65 @@ def pod_delete_options(uid: str) -> dict:
     return {
         "apiVersion": "v1",
         "kind": "DeleteOptions",
-        "gracePeriodSeconds": 0,
+        "gracePeriodSeconds": 60,
         "preconditions": {"uid": uid},
     }
 
 
+class PodNotReady(RuntimeError):
+    """The owned Pod may still become acceptable without changing identity."""
+
+
+class PodIdentityRejected(ValueError):
+    """The Pod cannot be used by this run and must fail closed immediately."""
+
+
+def normalized_image_digest(image_id: str) -> str:
+    """Return the digest from common CRI/Kubernetes imageID representations."""
+    value = image_id
+    for prefix in ("docker-pullable://", "docker://", "containerd://"):
+        if value.startswith(prefix):
+            value = value[len(prefix):]
+            break
+    if "@" in value:
+        value = value.rsplit("@", 1)[1]
+    return value
+
+
 def validate_pod(pod: dict) -> dict:
     if pod["metadata"]["labels"].get("q04-run") != RUN_LABEL:
-        raise ValueError("Pod run label changed")
-    if pod["spec"].get("nodeName") != NODE:
-        raise ValueError("Pod node changed")
+        raise PodIdentityRejected("Pod run label changed")
+    phase = pod.get("status", {}).get("phase")
+    if phase not in ("Pending", "Running"):
+        raise PodIdentityRejected(f"worker Pod phase is terminal or unexpected: {phase!r}")
+    node = pod["spec"].get("nodeName")
+    if node is None:
+        raise PodNotReady("Pod is not scheduled")
+    if node != NODE:
+        raise PodIdentityRejected("Pod node changed")
+    containers = pod["spec"].get("containers", [])
+    if len(containers) != 1 or containers[0].get("image") != pod_topology.IMAGE:
+        raise PodIdentityRejected("worker image reference changed")
     statuses = pod["status"].get("containerStatuses", [])
-    if len(statuses) != 1 or not statuses[0].get("ready"):
-        raise ValueError("exactly one ready worker container required")
+    if not statuses:
+        raise PodNotReady("worker container status not published")
+    if len(statuses) != 1:
+        raise PodIdentityRejected("exactly one worker container status required")
+    if statuses[0].get("state", {}).get("terminated") is not None:
+        raise PodIdentityRejected("worker container terminated")
     if statuses[0].get("restartCount") != 0:
-        raise ValueError("worker Pod restarted")
-    if pod["spec"]["containers"][0]["image"] != pod_topology.IMAGE:
-        raise ValueError("worker image reference changed")
-    if statuses[0]["imageID"] != pod_topology.IMAGE_CONTENT_ID:
-        raise ValueError("worker image digest changed")
+        raise PodIdentityRejected("worker Pod restarted")
+    image_id = statuses[0].get("imageID")
+    if not image_id:
+        raise PodNotReady("worker image identity not published")
+    if normalized_image_digest(image_id) != pod_topology.IMAGE_CONTENT_ID:
+        raise PodIdentityRejected("worker image digest changed")
+    if phase != "Running":
+        raise PodNotReady("worker Pod phase is not Running")
+    if not statuses[0].get("ready"):
+        raise PodNotReady("worker container is not Ready")
+    if not statuses[0].get("containerID"):
+        raise PodNotReady("worker container identity not published")
     return {
         "pod_name": pod["metadata"]["name"],
         "pod_uid": pod["metadata"]["uid"],
@@ -216,6 +257,166 @@ def validate_pod(pod: dict) -> dict:
         "restart_count": statuses[0]["restartCount"],
         "node": pod["spec"]["nodeName"],
     }
+
+
+def controller_owner(metadata: dict, kind: str) -> dict:
+    owners = [
+        item for item in metadata.get("ownerReferences", [])
+        if item.get("controller") is True
+    ]
+    if len(owners) != 1 or owners[0].get("kind") != kind:
+        raise PodIdentityRejected(f"exactly one controlling {kind} owner required")
+    owner = owners[0]
+    if not owner.get("name") or not owner.get("uid"):
+        raise PodIdentityRejected(f"controlling {kind} owner identity incomplete")
+    return owner
+
+
+def capture_cleanup_identity(kube, pod: dict, deployment: dict) -> dict:
+    """Prove a Pod's owner chain before returning its UID for cleanup."""
+    if pod["metadata"].get("labels", {}).get("q04-run") != RUN_LABEL:
+        raise PodIdentityRejected("Pod run label changed")
+    replica_set_owner = controller_owner(pod["metadata"], "ReplicaSet")
+    replica_set = kube.json("get", "replicaset", replica_set_owner["name"])
+    if replica_set.get("metadata", {}).get("uid") != replica_set_owner["uid"]:
+        raise PodIdentityRejected("Pod ReplicaSet owner UID changed")
+    deployment_owner = controller_owner(replica_set["metadata"], "Deployment")
+    expected = deployment["metadata"]
+    if (
+        deployment_owner["name"] != expected["name"]
+        or deployment_owner["uid"] != expected["uid"]
+    ):
+        raise PodIdentityRejected("ReplicaSet Deployment owner identity changed")
+    metadata = pod["metadata"]
+    return {
+        "pod_name": metadata["name"],
+        "pod_uid": metadata["uid"],
+        "resource_version": metadata["resourceVersion"],
+        "node": pod.get("spec", {}).get("nodeName"),
+        "replica_set_name": replica_set_owner["name"],
+        "replica_set_uid": replica_set_owner["uid"],
+        "deployment_name": deployment_owner["name"],
+        "deployment_uid": deployment_owner["uid"],
+    }
+
+
+def pod_readiness_snapshot(pod: dict) -> dict:
+    status = pod.get("status", {})
+    return {
+        "metadata": {
+            key: pod.get("metadata", {}).get(key)
+            for key in ("name", "uid", "resourceVersion", "labels", "ownerReferences")
+        },
+        "spec": {
+            "nodeName": pod.get("spec", {}).get("nodeName"),
+            "containers": [
+                {"name": item.get("name"), "image": item.get("image")}
+                for item in pod.get("spec", {}).get("containers", [])
+            ],
+        },
+        "status": {
+            "phase": status.get("phase"),
+            "conditions": status.get("conditions", []),
+            "containerStatuses": [
+                {
+                    key: item.get(key)
+                    for key in (
+                        "name", "ready", "restartCount", "image", "imageID",
+                        "containerID", "state", "lastState",
+                    )
+                }
+                for item in status.get("containerStatuses", [])
+            ],
+        },
+    }
+
+
+def await_worker_pod(
+    kube,
+    deployment: dict,
+    output: Path,
+    *,
+    timeout_seconds: float = 120,
+    monotonic=None,
+    sleep=None,
+) -> tuple[dict, dict]:
+    """Observe one owned Pod until Ready, preserving every decision as JSONL."""
+    monotonic = monotonic or time.monotonic
+    sleep = sleep or time.sleep
+    deadline = monotonic() + timeout_seconds
+    cleanup_identity = None
+    with (output / "pod-readiness.jsonl").open("x", buffering=1) as stream:
+        while True:
+            observed_at = time.time()
+            record = {"time": observed_at}
+            try:
+                pods = kube.json(
+                    "get", "pods", "-l", "q04-run=" + RUN_LABEL
+                )["items"]
+                record = {
+                    "time": observed_at,
+                    "pod_count": len(pods),
+                    "pods": [pod_readiness_snapshot(pod) for pod in pods],
+                }
+                if len(pods) > 1:
+                    raise PodIdentityRejected("multiple owned-label Pods observed")
+                if len(pods) == 1:
+                    candidate = capture_cleanup_identity(kube, pods[0], deployment)
+                    if cleanup_identity is not None and (
+                        candidate["pod_uid"] != cleanup_identity["pod_uid"]
+                    ):
+                        raise PodIdentityRejected("owned Pod UID changed during readiness")
+                    cleanup_identity = candidate
+                    try:
+                        ready_identity = validate_pod(pods[0])
+                    except PodNotReady as error:
+                        record.update(
+                            classification="temporary_not_ready",
+                            rejection=repr(error),
+                            cleanup_identity=cleanup_identity,
+                        )
+                    else:
+                        pod_identity = {**cleanup_identity, **ready_identity}
+                        record.update(
+                            classification="accepted",
+                            rejection=None,
+                            cleanup_identity=cleanup_identity,
+                        )
+                        stream.write(json.dumps(record, sort_keys=True) + "\n")
+                        (output / "created-pod-spec.json").write_text(
+                            json.dumps(pods[0], indent=2) + "\n"
+                        )
+                        return pod_identity, cleanup_identity
+                else:
+                    record.update(
+                        classification="temporary_not_ready",
+                        rejection="no owned-label Pod observed",
+                        cleanup_identity=cleanup_identity,
+                    )
+                stream.write(json.dumps(record, sort_keys=True) + "\n")
+            except PodIdentityRejected as error:
+                record.update(
+                    classification="permanent_rejection",
+                    rejection=repr(error),
+                    cleanup_identity=cleanup_identity,
+                )
+                stream.write(json.dumps(record, sort_keys=True) + "\n")
+                setattr(error, "cleanup_identity", cleanup_identity)
+                raise
+            except BaseException as error:
+                record.update(
+                    classification="observation_error",
+                    rejection=repr(error),
+                    cleanup_identity=cleanup_identity,
+                )
+                stream.write(json.dumps(record, sort_keys=True) + "\n")
+                setattr(error, "cleanup_identity", cleanup_identity)
+                raise
+            if monotonic() >= deadline:
+                error = TimeoutError("worker Pod readiness expired")
+                setattr(error, "cleanup_identity", cleanup_identity)
+                raise error
+            sleep(1)
 
 
 def validate_evidence_volume(pvc: dict, pv: dict) -> dict:
@@ -302,6 +503,9 @@ def build_offline_manifest() -> dict:
         "server_dry_run_scope": Q04 / "pod-topology-v1/SERVER-DRY-RUN-SCOPE.md",
         "evidence_capacity": Q04 / "pod-topology-v1/EVIDENCE-CAPACITY.json",
         "pvc_window_plan": Q04 / "pod-topology-v1/PVC-WINDOW-PLAN.md",
+        "image_identity_contract": Q04 / "pod-topology-v1/IMAGE-IDENTITY-CONTRACT.md",
+        "readiness_preflight_plan": Q04 / "pod-topology-v1/READINESS-PREFLIGHT-PLAN.md",
+        "consumed_run_record": CONSUMED_RUN_RECORD,
         "outer_admission": Q04 / "outer_admission.py",
         "held_deployment_identity": Q04 / "sentinel/run_yolo_lifecycle_a.py",
     }
@@ -319,10 +523,11 @@ def build_offline_manifest() -> dict:
         "sources": {name: sha256(path.read_bytes()) for name, path in paths.items()},
         "bundle_inputs_sha256": sha256((BUNDLE / "inputs.json").read_bytes()),
         "workload_argv": workload_argv(),
-        "exact_single_run_command": exact_command(),
+        "exact_single_run_command": None,
+        "historical_exact_single_run_command": exact_command(),
         "runtime_authorized": False,
-        "runtime_readiness": "READY_FOR_AUTHORIZATION",
-        "runtime_blocker": None,
+        "runtime_readiness": "CONSUMED_FAILURE_DO_NOT_REUSE",
+        "runtime_blocker": "new identity, output path, reviewed manifest, and authorization required",
         "private_configmap_upload_requires_approval": True,
         "cluster_mutation_requires_approval": True,
         "server_side_dry_run_forbidden": True,
@@ -339,12 +544,15 @@ def offline_check() -> dict:
         raise ValueError("committed topology is active")
     if workload_argv()[workload_argv().index("--workload-seconds") + 1] != "825":
         raise ValueError("workload budget changed")
+    consumed = json.loads(CONSUMED_RUN_RECORD.read_text())
+    if consumed["run_identity"] != RUN_IDENTITY:
+        raise ValueError("consumed run identity record changed")
     return {
-        "status": "PASS_OFFLINE_ONLY",
+        "status": "PASS_HISTORICAL_RUNNER_ONLY",
         "authorization_scope_sha256": authorization_scope_sha256(),
-        "exact_single_run_command": exact_command(),
+        "exact_single_run_command": None,
         "runtime_authorized": False,
-        "runtime_readiness": "READY_FOR_AUTHORIZATION",
+        "runtime_readiness": "CONSUMED_FAILURE_DO_NOT_REUSE",
     }
 
 
@@ -700,6 +908,18 @@ def create_owned_objects(kube: Kubectl, items: list[dict], owned: list[dict]) ->
     return created
 
 
+def validate_created_deployment(deployment: dict, owned_objects: list[dict]) -> dict:
+    recorded = [
+        item for item in owned_objects
+        if item["kind"] == "Deployment" and item["name"] == DEPLOYMENT
+    ]
+    if len(recorded) != 1:
+        raise PodIdentityRejected("exactly one created Deployment identity required")
+    if deployment.get("metadata", {}).get("uid") != recorded[0]["uid"]:
+        raise PodIdentityRejected("created Deployment UID changed")
+    return deployment
+
+
 def cleanup_deployment_and_pod(
     kube: Kubectl,
     deployment: dict,
@@ -734,6 +954,15 @@ def cleanup_deployment_and_pod(
         timeout=remaining_timeout(deadline, 15, "Pod cleanup identity"),
     ).strip()
     if current_pod:
+        live_pod = kube.json(
+            "get", "pod", pod_identity["pod_name"],
+            timeout=remaining_timeout(deadline, 15, "Pod cleanup UID re-read"),
+        )
+        if live_pod.get("metadata", {}).get("uid") != pod_identity["pod_uid"]:
+            raise PodIdentityRejected("Pod cleanup UID changed")
+        observed_node = live_pod.get("spec", {}).get("nodeName")
+        if observed_node is not None:
+            pod_identity = {**pod_identity, "node": observed_node}
         kube.run(
             [
                 "delete", "--raw",
@@ -744,6 +973,7 @@ def cleanup_deployment_and_pod(
             timeout=remaining_timeout(deadline, 30, "Pod UID-fenced delete"),
         )
         result["pod_delete_uid_precondition_sent"] = True
+        result["pod_delete_grace_seconds"] = 60
     while kube.run(
         ["get", "pod", pod_identity["pod_name"], "--ignore-not-found", "-o", "name"],
         timeout=remaining_timeout(deadline, 15, "Pod absence check"),
@@ -751,26 +981,37 @@ def cleanup_deployment_and_pod(
         if time.time() >= deadline:
             raise TimeoutError("owned Pod did not terminate")
         time.sleep(1)
-    raw = subprocess.check_output(
-        [
-            "docker", "exec", NODE, "crictl", "ps", "--state", "Running",
-            "--label", "io.kubernetes.pod.uid=" + pod_identity["pod_uid"],
-            "-o", "json",
-        ],
-        text=True,
-        timeout=remaining_timeout(deadline, 20, "container absence check"),
-    )
-    if json.loads(raw)["containers"]:
-        raise ValueError("old Pod runtime remains")
-    for volume in ("scratch", "control", "tmp"):
-        subprocess.run(
+    # The reviewed Deployment is pinned to NODE. Even an initially unscheduled
+    # Pod may have reached the kubelet and disappeared before the API re-read,
+    # so absence must still be proved against that node.
+    node = pod_identity.get("node") or NODE
+    while True:
+        raw = subprocess.check_output(
             [
-                "docker", "exec", NODE, "test", "!", "-e",
-                f"/var/lib/kubelet/pods/{pod_identity['pod_uid']}/volumes/kubernetes.io~empty-dir/{volume}",
+                "docker", "exec", node, "crictl", "ps", "-a",
+                "--label", "io.kubernetes.pod.uid=" + pod_identity["pod_uid"],
+                "-o", "json",
             ],
-            check=True,
-            timeout=remaining_timeout(deadline, 20, "emptyDir absence check"),
+            text=True,
+            timeout=remaining_timeout(deadline, 20, "container absence check"),
         )
+        containers_absent = not json.loads(raw)["containers"]
+        emptydirs_absent = all(
+            subprocess.run(
+                [
+                    "docker", "exec", node, "test", "!", "-e",
+                    f"/var/lib/kubelet/pods/{pod_identity['pod_uid']}/volumes/kubernetes.io~empty-dir/{volume}",
+                ],
+                check=False,
+                timeout=remaining_timeout(deadline, 20, "emptyDir absence check"),
+            ).returncode == 0
+            for volume in ("scratch", "control", "tmp")
+        )
+        if containers_absent and emptydirs_absent:
+            break
+        if time.time() >= deadline:
+            raise TimeoutError("owned Pod runtime or emptyDir did not disappear")
+        time.sleep(1)
     result["old_runtime_absent"] = True
     result["emptydirs_absent"] = True
     return result
@@ -880,6 +1121,13 @@ def verify_retained_evidence_claim(
 def execute_window(args, kube=None) -> dict:
     """Execute exactly once; callers must provide the explicit reviewed digest."""
     offline_check()
+    raise RuntimeError(
+        "run identity q04-yolo-pod-cgroup-20260919-a is consumed; "
+        "prepare and review a new no-inference preflight identity"
+    )
+    # This historical implementation remains below for review and cloning into
+    # a new identity.  The consumed-run guard above intentionally makes it
+    # unreachable.
     if args.authorization_scope_sha256 != authorization_scope_sha256():
         raise ValueError("authorization scope digest changed")
     kube = kube or Kubectl()
@@ -891,6 +1139,7 @@ def execute_window(args, kube=None) -> dict:
     deployment = None
     owned_objects = []
     pod_identity = None
+    cleanup_identity = None
     evidence_volume = None
     workload = None
     vm_stream = None
@@ -910,7 +1159,9 @@ def execute_window(args, kube=None) -> dict:
         (OUT / "created-object-specs.json").write_text(
             json.dumps(created_specs, indent=2) + "\n"
         )
-        deployment = kube.json("get", "deployment", DEPLOYMENT)
+        deployment = validate_created_deployment(
+            kube.json("get", "deployment", DEPLOYMENT), owned_objects
+        )
         if deployment["spec"].get("replicas") != 0:
             raise ValueError("new Deployment was not inactive")
         patch = scale_patch(
@@ -922,22 +1173,15 @@ def execute_window(args, kube=None) -> dict:
         kube.run(
             ["patch", "deployment", DEPLOYMENT, "--type=json", "-p", json.dumps(patch)]
         )
-        deadline = time.monotonic() + 120
-        while True:
-            pods = kube.json("get", "pods", "-l", "q04-run=" + RUN_LABEL)["items"]
-            ready = [p for p in pods if p.get("status", {}).get("phase") == "Running"]
-            if len(ready) == 1:
-                try:
-                    pod_identity = validate_pod(ready[0])
-                    (OUT / "created-pod-spec.json").write_text(
-                        json.dumps(ready[0], indent=2) + "\n"
-                    )
-                    break
-                except ValueError:
-                    pass
-            if time.monotonic() >= deadline:
-                raise TimeoutError("worker Pod readiness expired")
-            time.sleep(1)
+        try:
+            pod_identity, cleanup_identity = await_worker_pod(
+                kube, deployment, OUT
+            )
+        except BaseException as readiness_error:
+            cleanup_identity = getattr(
+                readiness_error, "cleanup_identity", cleanup_identity
+            )
+            raise
         pod = pod_identity["pod_name"]
         pvc = kube.json("get", "pvc", pod_topology.EVIDENCE_PVC)
         pv = kube.json("get", "pv", pvc["spec"]["volumeName"])
@@ -1335,7 +1579,10 @@ def execute_window(args, kube=None) -> dict:
             try:
                 cleanup.update(
                     cleanup_deployment_and_pod(
-                        kube, deployment, pod_identity, deadline=cleanup_deadline
+                        kube,
+                        deployment,
+                        pod_identity or cleanup_identity,
+                        deadline=cleanup_deadline,
                     )
                 )
             except BaseException as runtime_cleanup_error:

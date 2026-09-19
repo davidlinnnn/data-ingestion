@@ -166,16 +166,18 @@ and read back with the full inventory. If final controller export fails, the
 runner still deletes the exact Pod and source objects and retains the PVC for
 separately authorized read-only recovery.
 
-After a separate main-session capacity authorization, the exact single-run
-command is the `exact_single_run_command` value in `RUNNER-MANIFEST.json`. Its
-authorization digest must exactly equal `authorization_scope_sha256` in that
-file. Importing the runner or invoking `--offline-check` is local-only and cannot
-create Kubernetes resources.
+This historical plan was executed once. `historical_exact_single_run_command`
+in `RUNNER-MANIFEST.json` records that invocation, while
+`exact_single_run_command` is now `null`. The consumed command, identity,
+authorization digest and output path must not be reused. Importing the runner
+or invoking `--offline-check` is local-only and cannot create Kubernetes
+resources.
 
-The live command performs these mutable operations and therefore requires that
-separate approval: upload the two private immutable ConfigMaps, create the
-retained 1 GiB PVC and inactive Deployment atomically; scale only its recorded
-UID/resourceVersion from zero to one; copy the private fixture bundle and
+The consumed command historically performed the following mutable operations.
+A newly reviewed future runner would require separate approval for any of them:
+upload private immutable ConfigMaps, create its own evidence volume and inactive
+Deployment atomically; scale only its recorded UID/resourceVersion from zero to
+one; copy the private fixture bundle and
 capacity record into the owned `emptyDir`; create new-prefix object-store
 records and run the three workflows; then scale to zero and delete only the
 recorded Pod, Deployment and ConfigMaps with UID preconditions. The PVC has no

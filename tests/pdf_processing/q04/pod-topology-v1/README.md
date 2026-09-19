@@ -1,8 +1,8 @@
 # Q04 fixture-07 worker-Pod runner
 
-Status: **`READY_FOR_AUTHORIZATION`** after local-only durable-evidence and
-cleanup fault tests. No live Kubernetes or runtime action was performed. See
-`DURABLE-EVIDENCE-FEASIBILITY.md` and `EVIDENCE-CAPACITY.json`.
+Status: **first window failed readiness; run identity consumed**. The original
+`NEEDS_INTERVENTION` cleanup result and later read-only reconciliation are
+preserved under `first-window-evidence/`. No workflow or inference started.
 
 This package prepares one independent worker-container cgroup for fixture 07
 fresh, restored and exact replay. It is **offline and unauthorized** until the
@@ -12,8 +12,8 @@ main session grants a separate capacity window whose scope digest matches
 - `WORKER.yaml` is an inactive `replicas: 0` Deployment, one retained 1 GiB
   evidence PVC, and two immutable, hash-named private-source ConfigMaps.
 - `SOURCE-MANIFEST.json` binds every mounted producer and harness file.
-- `RUNNER-MANIFEST.json` binds the new run identity, exact command, resource
-  limits, time budget and executable source hashes.
+- `RUNNER-MANIFEST.json` binds the consumed run identity, historical command,
+  resource limits, time budget and source hashes.
 - `RUN-PLAN.md` defines admission, evidence, stop and cleanup behavior.
 - `BASE-CURRENT-TESTS.md` records the same-environment broad-suite comparison.
 - `EVIDENCE-CAPACITY.json` records prior archive/member/sample maxima, headroom,
@@ -22,16 +22,11 @@ main session grants a separate capacity window whose scope digest matches
   budget, evidence lifecycle, cleanup outcomes and separately authorized
   read-only recovery contract.
 
-The command in `exact_single_run_command` is the only intended live entrypoint.
-It still requires a separate explicit authorization. Running it uploads private
-source in ConfigMaps; creates the run-named claim and inactive Deployment;
-scales the exact Deployment; copies the private fixture bundle; writes a new
-object-store prefix; and starts Temporal workflows. Only server-returned UIDs
-establish ownership. Every exit deletes the exact owned runtime and source
-objects while retaining the evidence PVC. Controller export failure leaves that
-PVC as the recovery source. PVC deletion is absent from the runner. These are
-mutable cluster actions. Importing the runner and `--offline-check` perform none
-of them.
+`exact_single_run_command` is `null`, and the runner refuses execution because
+the identity has been consumed. `historical_exact_single_run_command` records
+what ran; it is not an entrypoint. Any future mutable action requires a new
+identity, output path, reviewed manifest and explicit authorization. Importing
+the runner and `--offline-check` remain local-only.
 
 Do not retry the rejected server-side dry-run. Local JSON parsing and generated
 manifest equality do not prove Kubernetes schema or admission acceptance. A

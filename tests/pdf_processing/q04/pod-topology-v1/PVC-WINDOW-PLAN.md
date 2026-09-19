@@ -1,15 +1,17 @@
 # Q04 fixture-07 durable-PVC window plan
 
-Status: **executable but unauthorized**. This file fixes the next proposed
-1,500-second fixture-07 fresh/restored/exact-replay window. It does not authorize
+Status: **historical, executed once, failed readiness, identity consumed**.
+This file records the fixed 1,500-second fixture-07
+fresh/restored/exact-replay window. It does not authorize
 Kubernetes discovery, source upload, object creation, Temporal work, inference,
 recovery Pod creation, PVC deletion, or restoration of the 32 held Deployments.
 
 ## Fixed payload and admission
 
-The single entrypoint and authorization digest are the
-`exact_single_run_command` and `authorization_scope_sha256` fields in
-`RUNNER-MANIFEST.json`. The destination is API
+The historical entrypoint and authorization digest are the
+`historical_exact_single_run_command` and `authorization_scope_sha256` fields
+in `RUNNER-MANIFEST.json`. They describe only the consumed execution; the live
+`exact_single_run_command` is now `null`. The destination was API
 `https://127.0.0.1:58329`, context `kind-internal-a2a-vs6-local`, namespace
 `pdf-t09a-validation`, and node `internal-a2a-vs6-local-worker2`. The four
 objects are the two hash-named source ConfigMaps, retained PVC
@@ -59,3 +61,14 @@ new local recovery directory. Missing terminal, partial file, digest mismatch,
 permission drift or identity mismatch remains `INCOMPLETE`. The helper is
 UID-fenced and deleted after export; the PVC remains. Claim deletion is outside
 both the execution and recovery plans.
+
+## Executed result
+
+The one authorized execution failed at worker Pod readiness before workflow or
+inference. `first-window-evidence/outer-cleanup.json` preserves the runner's
+original `NEEDS_INTERVENTION` result. The separate later read-only
+`post-run-reconciliation.json` confirms cleanup after the Pod grace period; it
+does not rewrite the earlier result. The retained PVC is empty and has no
+terminal manifest, so its evidence status is `INCOMPLETE`. The run identity,
+prefix, object names, output directory, command and authorization digest in
+this plan must not be reused.

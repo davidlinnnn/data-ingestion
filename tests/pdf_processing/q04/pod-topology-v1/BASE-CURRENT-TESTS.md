@@ -28,5 +28,7 @@ old assertion failed because it selected a different source after lifecycle work
 not because retained `yolo-attribution-b` evidence changed.
 
 The fixture-07 reviewed offline suite is independently green at 97/97 from the
-prior preparation. The current durable-evidence, topology, transport and runner
-focused set is green at 42/42.
+prior preparation. After the first-window readiness correction, the same broad
+command runs 335 tests with 0 failures and the same 3 macOS `sysctl()` sandbox
+errors. The durable-evidence, topology, transport, remote-probe and runner
+focused set is green at 56/56; the runner file itself is green at 35/35.

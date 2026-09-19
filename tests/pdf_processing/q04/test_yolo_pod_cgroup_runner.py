@@ -16,6 +16,59 @@ from candidate import yolo_reviewed_window
 
 
 class YoloPodCgroupRunnerTests(unittest.TestCase):
+    @staticmethod
+    def owned_pod(*, ready=False, image_id=None, pod_uid="pod-uid"):
+        status = {
+            "name": "worker",
+            "ready": ready,
+            "restartCount": 0,
+            "containerID": "containerd://one",
+            "imageID": image_id or pod_topology.IMAGE_CONTENT_ID,
+            "state": {"running": {"startedAt": "2026-09-19T00:00:00Z"}},
+        }
+        return {
+            "metadata": {
+                "name": "owned",
+                "uid": pod_uid,
+                "resourceVersion": "rv",
+                "labels": {"q04-run": pod_topology.RUN_LABEL},
+                "ownerReferences": [{
+                    "controller": True,
+                    "kind": "ReplicaSet",
+                    "name": "worker-rs",
+                    "uid": "rs-uid",
+                }],
+            },
+            "status": {
+                "phase": "Running",
+                "conditions": [{"type": "Ready", "status": "True" if ready else "False"}],
+                "containerStatuses": [status],
+            },
+            "spec": {
+                "nodeName": pod_topology.NODE,
+                "containers": [{"name": "worker", "image": pod_topology.IMAGE}],
+            },
+        }
+
+    @staticmethod
+    def deployment():
+        return {"metadata": {"name": runner.DEPLOYMENT, "uid": "dep-uid"}}
+
+    @staticmethod
+    def replica_set():
+        return {
+            "metadata": {
+                "name": "worker-rs",
+                "uid": "rs-uid",
+                "ownerReferences": [{
+                    "controller": True,
+                    "kind": "Deployment",
+                    "name": runner.DEPLOYMENT,
+                    "uid": "dep-uid",
+                }],
+            }
+        }
+
     def test_capacity_keeps_outer_per_case_workload_cleanup_and_resource_guards(self):
         value = runner.build_capacity(
             starts_at=1000,
@@ -63,6 +116,7 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
             {"op": "test", "path": "/spec/replicas", "value": 0},
         ])
         self.assertEqual(runner.pod_delete_options("pod-uid")["preconditions"], {"uid": "pod-uid"})
+        self.assertEqual(runner.pod_delete_options("pod-uid")["gracePeriodSeconds"], 60)
 
     def test_cleanup_deletes_uid_fenced_runtime_objects_but_retains_pvc(self):
         class Kube:
@@ -263,6 +317,22 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
             runner.create_owned_objects(Kube(), items, owned)
         self.assertEqual(owned, [{"kind": "ConfigMap", "name": "one", "uid": "uid-one"}])
 
+    def test_deployment_get_must_match_uid_returned_by_create(self):
+        owned = [{
+            "kind": "Deployment", "name": runner.DEPLOYMENT, "uid": "created-uid",
+        }]
+        deployment = {
+            "metadata": {"name": runner.DEPLOYMENT, "uid": "created-uid"},
+            "spec": {"replicas": 0},
+        }
+        self.assertIs(runner.validate_created_deployment(deployment, owned), deployment)
+        replacement = {
+            **deployment,
+            "metadata": {"name": runner.DEPLOYMENT, "uid": "replacement-uid"},
+        }
+        with self.assertRaisesRegex(runner.PodIdentityRejected, "UID changed"):
+            runner.validate_created_deployment(replacement, owned)
+
     def test_cleanup_timeout_is_capped_by_one_absolute_deadline(self):
         with mock.patch("sentinel.run_yolo_pod_cgroup_a.time.time", return_value=100):
             self.assertEqual(runner.remaining_timeout(105, 30, "cleanup"), 5)
@@ -323,28 +393,246 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
         self.assertIn("scratch_absent", program)
 
     def test_pod_identity_requires_one_unrestarted_pinned_container(self):
-        pod = {
-            "metadata": {
-                "name": "owned",
-                "uid": "pod-uid",
-                "resourceVersion": "rv",
-                "labels": {"q04-run": pod_topology.RUN_LABEL},
-            },
-            "status": {"containerStatuses": [{
-                "ready": True,
-                "restartCount": 0,
-                "containerID": "containerd://one",
-                "imageID": pod_topology.IMAGE_CONTENT_ID,
-            }]},
-            "spec": {
-                "nodeName": pod_topology.NODE,
-                "containers": [{"image": pod_topology.IMAGE}],
-            },
-        }
+        pod = self.owned_pod(ready=True)
         self.assertEqual(runner.validate_pod(pod)["pod_uid"], "pod-uid")
         pod["status"]["containerStatuses"][0]["restartCount"] = 1
-        with self.assertRaisesRegex(ValueError, "restarted"):
+        with self.assertRaisesRegex(runner.PodIdentityRejected, "restarted"):
             runner.validate_pod(pod)
+
+    def test_started_not_ready_is_recorded_then_ready_path_is_accepted(self):
+        pods = [self.owned_pod(ready=False), self.owned_pod(ready=True)]
+
+        class Kube:
+            def json(inner, *args, **kwargs):
+                if args[1] == "pods":
+                    return {"items": [pods.pop(0)]}
+                if args[1] == "replicaset":
+                    return self.replica_set()
+                raise AssertionError(args)
+
+        with tempfile.TemporaryDirectory() as directory:
+            identity, cleanup = runner.await_worker_pod(
+                Kube(), self.deployment(), Path(directory),
+                monotonic=iter([0, 1, 2]).__next__, sleep=lambda _: None,
+            )
+            rows = [
+                json.loads(row)
+                for row in (Path(directory) / "pod-readiness.jsonl").read_text().splitlines()
+            ]
+        self.assertEqual([row["classification"] for row in rows], [
+            "temporary_not_ready", "accepted",
+        ])
+        self.assertIn("not Ready", rows[0]["rejection"])
+        self.assertEqual(identity["pod_uid"], "pod-uid")
+        self.assertEqual(cleanup["replica_set_uid"], "rs-uid")
+
+    def test_permanent_image_mismatch_stops_immediately_with_snapshot(self):
+        pod = self.owned_pod(ready=True, image_id="sha256:" + "0" * 64)
+
+        class Kube:
+            def json(inner, *args, **kwargs):
+                if args[1] == "pods":
+                    return {"items": [pod]}
+                return self.replica_set()
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(runner.PodIdentityRejected, "digest changed"):
+                runner.await_worker_pod(Kube(), self.deployment(), Path(directory))
+            row = json.loads(
+                (Path(directory) / "pod-readiness.jsonl").read_text().splitlines()[0]
+            )
+        self.assertEqual(row["classification"], "permanent_rejection")
+        self.assertEqual(row["cleanup_identity"]["pod_uid"], "pod-uid")
+        self.assertEqual(row["pods"][0]["status"]["containerStatuses"][0]["imageID"], pod["status"]["containerStatuses"][0]["imageID"])
+
+    def test_terminal_pod_or_container_status_stops_on_first_snapshot(self):
+        terminal_pods = []
+        failed = self.owned_pod(ready=False)
+        failed["status"]["phase"] = "Failed"
+        terminal_pods.append(failed)
+        terminated = self.owned_pod(ready=False)
+        terminated["status"]["containerStatuses"][0]["state"] = {
+            "terminated": {"exitCode": 1, "reason": "Error"}
+        }
+        terminal_pods.append(terminated)
+
+        for pod in terminal_pods:
+            class Kube:
+                def json(inner, *args, **kwargs):
+                    if args[1] == "pods":
+                        return {"items": [pod]}
+                    return self.replica_set()
+
+            with self.subTest(phase=pod["status"]["phase"]), tempfile.TemporaryDirectory() as directory:
+                with self.assertRaises(runner.PodIdentityRejected):
+                    runner.await_worker_pod(Kube(), self.deployment(), Path(directory))
+                rows = (Path(directory) / "pod-readiness.jsonl").read_text().splitlines()
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(json.loads(rows[0])["classification"], "permanent_rejection")
+
+    def test_common_image_id_wrappers_preserve_content_digest_contract(self):
+        expected = pod_topology.IMAGE_CONTENT_ID
+        for value in (
+            expected,
+            "docker.io/library/pdf-t08-runtime@" + expected,
+            "docker-pullable://docker.io/library/pdf-t08-runtime@" + expected,
+            "containerd://" + expected,
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(runner.validate_pod(self.owned_pod(ready=True, image_id=value))["image_id"], value)
+        with self.assertRaisesRegex(runner.PodIdentityRejected, "digest changed"):
+            runner.validate_pod(self.owned_pod(
+                ready=True,
+                image_id=pod_topology.IMAGE.split("@", 1)[1],
+            ))
+
+    def test_nonready_owned_uid_is_returned_on_readiness_timeout(self):
+        pod = self.owned_pod(ready=False)
+
+        class Kube:
+            def json(inner, *args, **kwargs):
+                if args[1] == "pods":
+                    return {"items": [pod]}
+                return self.replica_set()
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(TimeoutError) as raised:
+                runner.await_worker_pod(
+                    Kube(), self.deployment(), Path(directory), timeout_seconds=0,
+                    monotonic=lambda: 0, sleep=lambda _: None,
+                )
+        self.assertEqual(raised.exception.cleanup_identity["pod_uid"], "pod-uid")
+
+    def test_label_without_matching_owner_chain_cannot_authorize_cleanup(self):
+        pod = self.owned_pod(ready=False)
+        pod["metadata"]["ownerReferences"][0]["uid"] = "replacement-rs"
+
+        class Kube:
+            def json(inner, *args, **kwargs):
+                if args[1] == "pods":
+                    return {"items": [pod]}
+                return self.replica_set()
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(runner.PodIdentityRejected, "owner UID changed") as raised:
+                runner.await_worker_pod(Kube(), self.deployment(), Path(directory))
+        self.assertIsNone(raised.exception.cleanup_identity)
+
+    def test_readiness_api_error_is_recorded_and_propagated(self):
+        class Kube:
+            def json(self, *args, **kwargs):
+                raise RuntimeError("API unavailable")
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(RuntimeError, "API unavailable"):
+                runner.await_worker_pod(Kube(), self.deployment(), Path(directory))
+            row = json.loads(
+                (Path(directory) / "pod-readiness.jsonl").read_text().splitlines()[0]
+            )
+        self.assertEqual(row["classification"], "observation_error")
+
+    def test_cleanup_waits_for_graceful_pod_cri_and_emptydir_absence(self):
+        class Kube:
+            def __init__(self):
+                self.pod_reads = iter(["pod/owned", "pod/owned", ""])
+                self.calls = []
+
+            def json(self, *args, **kwargs):
+                if args[1] == "pod":
+                    return {
+                        "metadata": {"uid": "pod-uid"},
+                        "spec": {"nodeName": pod_topology.NODE},
+                    }
+                return {"metadata": {"uid": "dep-uid", "resourceVersion": "rv"}, "spec": {"replicas": 1}}
+
+            def run(self, argv, **kwargs):
+                self.calls.append((argv, kwargs))
+                if argv[:2] == ["get", "pod"]:
+                    return next(self.pod_reads)
+                return "{}"
+
+        kube = Kube()
+        identity = {
+            "pod_name": "owned", "pod_uid": "pod-uid", "node": pod_topology.NODE,
+        }
+        with mock.patch(
+            "sentinel.run_yolo_pod_cgroup_a.subprocess.check_output",
+            return_value=json.dumps({"containers": []}),
+        ) as cri, mock.patch(
+            "sentinel.run_yolo_pod_cgroup_a.subprocess.run",
+            return_value=SimpleNamespace(returncode=0),
+        ), mock.patch("sentinel.run_yolo_pod_cgroup_a.time.sleep"):
+            result = runner.cleanup_deployment_and_pod(
+                kube,
+                {"metadata": {"uid": "dep-uid"}},
+                identity,
+                deadline=runner.time.time() + 60,
+            )
+        delete = next(call for call in kube.calls if "delete" in call[0])
+        self.assertEqual(json.loads(delete[1]["input"])["gracePeriodSeconds"], 60)
+        self.assertIn("-a", cri.call_args.args[0])
+        self.assertTrue(result["old_runtime_absent"])
+        self.assertTrue(result["emptydirs_absent"])
+
+    def test_cleanup_timeout_and_api_unreachable_fail_closed(self):
+        class NeverGone:
+            def json(self, *args, **kwargs):
+                if args[1] == "pod":
+                    return {
+                        "metadata": {"uid": "pod-uid"},
+                        "spec": {"nodeName": pod_topology.NODE},
+                    }
+                return {"metadata": {"uid": "dep-uid", "resourceVersion": "rv"}, "spec": {"replicas": 1}}
+            def run(self, argv, **kwargs):
+                return "pod/owned" if argv[:2] == ["get", "pod"] else "{}"
+
+        identity = {"pod_name": "owned", "pod_uid": "pod-uid", "node": pod_topology.NODE}
+        with mock.patch(
+            "sentinel.run_yolo_pod_cgroup_a.time.time",
+            side_effect=[0, 0, 0, 0, 0, 0, 5],
+        ), mock.patch("sentinel.run_yolo_pod_cgroup_a.time.sleep"):
+            with self.assertRaisesRegex(TimeoutError, "did not terminate"):
+                runner.cleanup_deployment_and_pod(
+                    NeverGone(), {"metadata": {"uid": "dep-uid"}}, identity, deadline=5,
+                )
+
+        class Unreachable:
+            def json(self, *args, **kwargs):
+                raise RuntimeError("API unavailable")
+
+        with self.assertRaisesRegex(RuntimeError, "API unavailable"):
+            runner.cleanup_deployment_and_pod(
+                Unreachable(), {"metadata": {"uid": "dep-uid"}}, identity,
+                deadline=runner.time.time() + 60,
+            )
+
+    def test_unscheduled_cleanup_still_proves_pinned_node_runtime_absence(self):
+        class Kube:
+            def json(self, *args, **kwargs):
+                return {
+                    "metadata": {"uid": "dep-uid", "resourceVersion": "rv"},
+                    "spec": {"replicas": 1},
+                }
+
+            def run(self, argv, **kwargs):
+                if argv[:2] == ["get", "pod"]:
+                    return ""
+                return "{}"
+
+        identity = {"pod_name": "owned", "pod_uid": "pod-uid", "node": None}
+        with mock.patch(
+            "sentinel.run_yolo_pod_cgroup_a.subprocess.check_output",
+            return_value=json.dumps({"containers": []}),
+        ) as cri, mock.patch(
+            "sentinel.run_yolo_pod_cgroup_a.subprocess.run",
+            return_value=SimpleNamespace(returncode=0),
+        ):
+            result = runner.cleanup_deployment_and_pod(
+                Kube(), {"metadata": {"uid": "dep-uid"}}, identity,
+                deadline=runner.time.time() + 60,
+            )
+        self.assertEqual(cri.call_args.args[0][2], pod_topology.NODE)
+        self.assertTrue(result["old_runtime_absent"])
 
     def test_workload_supervisor_fixes_max_requests_and_exact_three_modes(self):
         parser = pod_workload.parser()
@@ -452,20 +740,33 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
         )
         self.assertTrue(profile["release"].startswith("q04-"))
 
-    def test_offline_manifest_binds_exact_command_and_forbids_server_dry_run(self):
+    def test_offline_manifest_marks_executed_identity_consumed(self):
         retained = json.loads(runner.OFFLINE_MANIFEST.read_text())
         self.assertEqual(retained, runner.build_offline_manifest())
         self.assertFalse(retained["runtime_authorized"])
-        self.assertEqual(retained["runtime_readiness"], "READY_FOR_AUTHORIZATION")
-        self.assertIsNone(retained["runtime_blocker"])
+        self.assertEqual(retained["runtime_readiness"], "CONSUMED_FAILURE_DO_NOT_REUSE")
+        self.assertIn("new identity", retained["runtime_blocker"])
         self.assertTrue(retained["server_side_dry_run_forbidden"])
-        command = retained["exact_single_run_command"]
+        self.assertIsNone(retained["exact_single_run_command"])
+        command = retained["historical_exact_single_run_command"]
         self.assertTrue(command.startswith(str(runner.LOCAL_PYTHON)))
         self.assertIn("--execute", command)
         self.assertNotIn("dry-run=server", command)
         self.assertNotIn("retry", command)
         self.assertIn("outer_admission", retained["sources"])
         self.assertIn("held_deployment_identity", retained["sources"])
+        self.assertIn("consumed_run_record", retained["sources"])
+
+    def test_execute_refuses_consumed_identity_before_cluster_adapter_use(self):
+        args = SimpleNamespace(
+            authorization_scope_sha256=runner.authorization_scope_sha256(),
+            owner="main-session",
+            approval_reference="historical",
+        )
+        with mock.patch.object(runner, "offline_check", return_value={}), self.assertRaisesRegex(
+            RuntimeError, "identity.*consumed"
+        ):
+            runner.execute_window(args, kube=mock.Mock())
 
     def test_new_identity_reuses_reviewed_equivalence_without_rewriting_reference(self):
         q04 = runner.Q04
