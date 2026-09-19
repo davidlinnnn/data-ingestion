@@ -26,9 +26,11 @@ fresh captured source artifact. No prior accepted request is reinterpreted.
 ## Capacity budget
 
 Each phase owns a new root, prefix, run ID, reservation and output. Every phase
-allows at most 195 seconds for reservation/staging/init, at most 180 seconds for
-outer admission (60 continuous seconds at 4.5 GiB and PSI=0), and reserves its
-last 300 seconds for cleanup. Its workload budget includes three separate
+allows at most 375 seconds in total for reservation/staging/init plus outer
+admission; 195 seconds is the planning allocation for setup when outer admission
+uses its full 180-second ceiling, not an independently enforced deadline. Outer
+admission still requires 60 continuous seconds at 4.5 GiB and PSI=0. Every phase
+reserves its last 300 seconds for cleanup. Its workload budget includes three separate
 60-second/3-GiB per-case admissions.
 
 Historical figures size the budget only: T09a R3 measured fresh/replay at

@@ -49,6 +49,10 @@ async def run_window(args):
     state_path = args.state / "config.json"
     require(state_path.is_file(), "initialized candidate state is required")
     config = json.loads(state_path.read_text())
+    require(
+        window == config.get("window"),
+        "capacity window differs from initialized candidate state",
+    )
     require(config["run_id"] == args.expected_run_id, "candidate run identity changed")
     require(config["prefix"] == args.expected_prefix, "candidate prefix changed")
     require(config["bundle"] == str(args.bundle.resolve()), "candidate bundle path changed")

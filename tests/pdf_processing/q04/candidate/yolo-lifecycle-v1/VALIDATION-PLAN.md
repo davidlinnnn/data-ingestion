@@ -14,7 +14,7 @@ authorization. It fixes one future 1,500-second process-mode fixture-07 window.
 | Runner directory | `/tmp/q04-yolo-lifecycle-20260919-a/runner-yolo-lifecycle-a` |
 | Driver lock | `/tmp/q04-yolo-lifecycle-20260919-a/yolo-lifecycle-a.driver.lock` |
 | Candidate bundle | `/private/tmp/q04-inputs-yolo-lifecycle-v1` |
-| Candidate inputs SHA-256 | `37a4cf0259d659d6ecdbce5a752d0bb8c6dc1a3679b1ade92d685a449858375c` |
+| Candidate inputs SHA-256 | `077b1e7ec744d96bd8d8eee0ffbd5026c83b3795eda11c7e3d5f48938c3e9eee` |
 | Producer-manifest SHA-256 | `a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d` |
 
 All paths, the object prefix, reservation, capacity file and phase must be
@@ -65,8 +65,10 @@ The 1,500-second lease reserves the final 300 seconds for cleanup. Before
 launch it permits at most 180 seconds of outer observation and requires 60
 continuous seconds with at least 4.5 GiB available, PSI full avg10=0 and
 unchanged VM/cgroup OOM counters. Per-case admission remains 60 seconds at
-3 GiB. Active limits remain cgroup memory at most 4,294,967,296 bytes (4 GiB), available memory at
-least 1.5 GiB, PSI full avg10=0, telemetry gap at most three seconds and no OOM.
+3 GiB. Immediately before collector or runtime startup, the driver requires the
+re-read capacity document to equal the window frozen in `state/config.json`.
+Active limits remain cgroup memory at most 4,294,967,296 bytes (4 GiB), available
+memory at least 1.5 GiB, PSI full avg10=0, telemetry gap at most three seconds and no OOM.
 There is no automatic retry or threshold, group-size or concurrency change.
 
 ## Workload and comparison baselines
@@ -112,10 +114,12 @@ The single offline gate is:
 ```sh
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests/pdf_processing/q04 \
 /Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python \
--m unittest tests.pdf_processing.q04.test_yolo_lifecycle_runner
+-m tests.pdf_processing.q04.yolo_lifecycle_offline_suite
 ```
 
-Its first test calls `offline_validation_record()` and checks the complete
+The suite loads the launcher, lifecycle, cancellation adapter, candidate bundle,
+collector, retained-trace, acceptance-matrix and T05 supervision regressions.
+Its launcher test calls `offline_validation_record()` and checks the complete
 candidate staging map, bundle verification schema, live-init config schema,
 exclusive identities, exact argv and deadline wrapper without contacting the
 cluster or running inference.

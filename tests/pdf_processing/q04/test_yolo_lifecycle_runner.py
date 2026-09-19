@@ -1,15 +1,23 @@
 """Offline end-to-end checks for the fixed YOLO lifecycle candidate window."""
 
+import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import tempfile
 import unittest
+from unittest import mock
 
-from candidate.yolo_candidate_window import validate_matrix_records
+from candidate.yolo_candidate_window import run_window, validate_matrix_records
 from sentinel import run_yolo_lifecycle_a as runner
+from tests.pdf_processing.q04.yolo_lifecycle_offline_suite import build_suite
 
 
-class YoloLifecycleRunnerTests(unittest.TestCase):
+class YoloLifecycleRunnerTests(unittest.IsolatedAsyncioTestCase):
+    def test_single_offline_gate_loads_all_required_regressions(self):
+        suite = build_suite()
+        self.assertGreaterEqual(suite.countTestCases(), 52)
+
     def test_batch_plan_separates_executable_and_unready_gates(self):
         q04 = Path(__file__).resolve().parent
         batch = (q04 / "BATCH-ACCEPTANCE-PLAN.md").read_text()
@@ -21,6 +29,7 @@ class YoloLifecycleRunnerTests(unittest.TestCase):
         self.assertIn("Not executable yet", batch)
         self.assertIn("there is no per-case confirmation", batch)
         self.assertIn("Warm sequence behavior is still unproven", window)
+        self.assertIn("equal the window frozen in `state/config.json`", window)
         self.assertIn(
             "/Users/david/work/data-ingestion/docs/prototypes/"
             "pdf-checkpoint-prototype/.venv/bin/python",
@@ -73,6 +82,60 @@ class YoloLifecycleRunnerTests(unittest.TestCase):
         self.assertIn("PYTHONSAFEPATH=1", command)
         self.assertIn("test ! -e", command)
         self.assertNotIn("yolo_fresh_measure.py", command)
+
+    async def test_launch_rejects_capacity_mutated_after_initialization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = root / "bundle"
+            bundle.mkdir()
+            inputs = bundle / "inputs.json"
+            inputs.write_text("{}")
+            state = root / "state"
+            state.mkdir()
+            frozen_window = {"min_available_bytes": 3 * 1024**3}
+            mutated_window = {"min_available_bytes": 1}
+            capacity = root / "capacity.json"
+            capacity.write_text(json.dumps(mutated_window))
+            (state / "config.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "q04-test-run",
+                        "prefix": "q04/test/",
+                        "bundle": str(bundle.resolve()),
+                        "bundle_sha256": hashlib.sha256(inputs.read_bytes()).hexdigest(),
+                        "producer": {"commit": "candidate"},
+                        "profiles": {"07": {"method": {"parser": "yolo"}}},
+                        "window": frozen_window,
+                    }
+                )
+            )
+            args = SimpleNamespace(
+                bundle=bundle,
+                state=state,
+                capacity=capacity,
+                name="candidate",
+                expected_run_id="q04-test-run",
+                expected_prefix="q04/test/",
+                attribution_interval_seconds=0.25,
+                attribution_gap_seconds=1.0,
+                capacity_approved=True,
+            )
+            verified = {
+                "producer": {"commit": "candidate"},
+                "base_profile": {"method": {"parser": "yolo"}},
+            }
+            with mock.patch(
+                "candidate.yolo_candidate_window.verify_bundle",
+                return_value=verified,
+            ), mock.patch(
+                "candidate.yolo_candidate_window.validate_window"
+            ), mock.patch(
+                "candidate.yolo_candidate_window.q04_runtime.main",
+                new=mock.AsyncMock(),
+            ) as runtime_main:
+                with self.assertRaisesRegex(ValueError, "capacity window differs"):
+                    await run_window(args)
+            runtime_main.assert_not_awaited()
 
     def test_matrix_contract_replays_fresh_and_keeps_restored_new(self):
         with tempfile.TemporaryDirectory() as directory:

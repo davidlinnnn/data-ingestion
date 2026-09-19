@@ -23,6 +23,7 @@ REQUIRED_CANDIDATE_HARNESS_FILES = {
     "tests/pdf_processing/q04/candidate/yolo_candidate_measure.py",
     "tests/pdf_processing/q04/candidate/yolo_candidate_window.py",
     "tests/pdf_processing/q04/sentinel/yolo_attribution_telemetry.py",
+    "tests/pdf_processing/q04/yolo_lifecycle_offline_suite.py",
 }
 
 
