@@ -25,13 +25,14 @@ fresh captured source artifact. No prior accepted request is reinterpreted.
 
 ## Capacity budget
 
-Each phase owns a new root, prefix, run ID, reservation and output. Every phase
-allows at most 375 seconds in total for reservation/staging/init plus outer
-admission; 195 seconds is the planning allocation for setup when outer admission
-uses its full 180-second ceiling, not an independently enforced deadline. Outer
-admission still requires 60 continuous seconds at 4.5 GiB and PSI=0. Every phase
-reserves its last 300 seconds for cleanup. Its workload budget includes three separate
-60-second/3-GiB per-case admissions.
+Each phase owns a new root, prefix, run ID, reservation and output. Reservation
+acquisition and identity prechecks precede the lease. Once the lease starts,
+staging/init plus outer admission may use at most 375 seconds in total; 195
+seconds is the planning allocation for staging/init when outer admission uses
+its full 180-second ceiling, not an independently enforced deadline. Outer
+admission still requires 60 continuous seconds at 4.5 GiB and PSI=0. Every
+phase reserves its last 300 seconds for cleanup. Its workload budget includes
+three separate 60-second/3-GiB per-case admissions.
 
 Historical figures size the budget only: T09a R3 measured fresh/replay at
 74.30/2.02 seconds for WikiSkill, 46.17/2.03 for YOLO, 42.18/2.03 for AIMA,
