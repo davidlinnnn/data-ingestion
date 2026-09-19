@@ -32,7 +32,13 @@ Cleanup removed the exact Deployment, ReplicaSet, Pod and ConfigMaps with UID
 fences. The retained H PVC UID is `d05abeae-9b24-4c92-8431-a80e994187f9`
 and PV UID is `f89b4353-6fe5-42e4-ac0d-a1e54aab53d1`. Final health, OOM and
 PSI checks passed; all 32 held Deployments remained closed. Workload evidence
-is incomplete because the PSI stop prevented terminal export.
+is incomplete for two reasons: the PSI stop interrupted processing, and the
+workload cleanup then treated the sibling file `worker-1.log` as a
+`worker-*` directory. That raised `NotADirectoryError` before it could write
+and seal the terminal cleanup records. The outer UID-fenced cleanup still
+proved the supervisor and Pod runtime absent.
 
 This run does not qualify Q04. Repeating the same local-kind window without a
-policy or environment change would be an uninformative retry.
+policy or environment change would be an uninformative retry. Any future
+window must also restrict cleanup-marker discovery to directories and test the
+coexisting `worker-N.log` path.
