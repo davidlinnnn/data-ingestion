@@ -961,6 +961,55 @@ def remaining_timeout(deadline: float, maximum: float, action: str) -> float:
     return max(0.001, min(maximum, remaining))
 
 
+def stop_transport_process(
+    process,
+    *,
+    recovery_deadline: float,
+    timeout_for=remaining_timeout,
+) -> dict:
+    """Stop the local kubectl transport without blocking owned-Pod cleanup."""
+    result = {
+        "signal_sent": False,
+        "graceful_timeout": False,
+        "forced": False,
+        "confirmed_absent": False,
+        "errors": {},
+    }
+    try:
+        process.send_signal(2)
+        result["signal_sent"] = True
+    except BaseException as error:
+        result["errors"]["send_signal"] = repr(error)
+
+    if process.poll() is None:
+        try:
+            process.wait(timeout=timeout_for(
+                recovery_deadline, 30, "kubectl transport stop"
+            ))
+        except subprocess.TimeoutExpired:
+            result["graceful_timeout"] = True
+        except BaseException as error:
+            result["errors"]["graceful_wait"] = repr(error)
+
+    if process.poll() is None:
+        try:
+            process.kill()
+            result["forced"] = True
+        except BaseException as error:
+            result["errors"]["kill"] = repr(error)
+        if process.poll() is None:
+            try:
+                process.wait(timeout=timeout_for(
+                    recovery_deadline, 10, "forced kubectl transport stop"
+                ))
+            except BaseException as error:
+                result["errors"]["forced_wait"] = repr(error)
+
+    result["confirmed_absent"] = process.poll() is not None
+    result["uncertain"] = bool(result["errors"]) or not result["confirmed_absent"]
+    return result
+
+
 def transport_receipt_expired(future, submitted_at: float | None, now: float) -> bool:
     return (
         future is not None
@@ -1531,17 +1580,12 @@ def execute_window(args, kube=None) -> dict:
                         )
                     except BaseException as force_error:
                         cleanup["supervisor_force_stop_error"] = repr(force_error)
-            workload.send_signal(2)
-            try:
-                workload.wait(timeout=remaining_timeout(
-                    recovery_deadline, 30, "kubectl transport stop"
-                ))
-            except subprocess.TimeoutExpired:
-                workload.kill()
-                workload.wait(timeout=remaining_timeout(
-                    recovery_deadline, 10, "forced kubectl transport stop"
-                ))
-                cleanup["forced_transport_stop"] = True
+            cleanup["transport_stop"] = stop_transport_process(
+                workload, recovery_deadline=recovery_deadline
+            )
+            cleanup["transport_stop_uncertain"] = cleanup["transport_stop"][
+                "uncertain"
+            ]
         if transport_future is not None:
             try:
                 transport_future.result(timeout=remaining_timeout(
@@ -1715,7 +1759,8 @@ def execute_window(args, kube=None) -> dict:
             cleanup["final_identity_and_health"] = False
             cleanup["final_identity_or_health_error"] = repr(final_error)
         api_cleanup_confirmed = (
-            not cleanup.get("runtime_cleanup_error")
+            not cleanup.get("transport_stop_uncertain", False)
+            and not cleanup.get("runtime_cleanup_error")
             and cleanup.get("owned_objects_deleted_with_uid_preconditions") is True
             and cleanup.get("final_identity_and_health") is True
         )

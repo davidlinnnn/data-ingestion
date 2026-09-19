@@ -3,8 +3,10 @@
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 from image_identity import (
     EVIDENCE as IMAGE_EVIDENCE,
@@ -18,6 +20,68 @@ from sentinel import run_yolo_pod_cgroup_c as runner
 
 
 class YoloPodCgroupCRunnerTests(unittest.TestCase):
+    def test_expired_recovery_deadline_cannot_skip_owned_cleanup(self):
+        process = mock.Mock()
+        process.poll.return_value = None
+        stop = runner.stop_transport_process(
+            process,
+            recovery_deadline=0,
+            timeout_for=mock.Mock(side_effect=TimeoutError("deadline expired")),
+        )
+        self.assertTrue(stop["uncertain"])
+        self.assertIn("graceful_wait", stop["errors"])
+        self.assertIn("forced_wait", stop["errors"])
+        process.kill.assert_called_once()
+        self.assertEqual(
+            runner.cleanup_disposition(
+                api_cleanup_confirmed=not stop["uncertain"],
+                pvc_retained=True,
+            ),
+            "NEEDS_INTERVENTION",
+        )
+        source = Path(runner.__file__).read_text()
+        finalizer = source[source.index("finally:", source.index("def execute_window")):]
+        self.assertLess(
+            finalizer.index("stop_transport_process("),
+            finalizer.index("cleanup_deployment_and_pod("),
+        )
+        self.assertLess(
+            finalizer.index("cleanup_deployment_and_pod("),
+            finalizer.index("verify_retained_evidence_claim("),
+        )
+
+    def test_transport_first_timeout_and_second_wait_failure_are_isolated(self):
+        process = mock.Mock()
+        process.poll.return_value = None
+        process.wait.side_effect = [
+            subprocess.TimeoutExpired("kubectl", 30),
+            RuntimeError("second wait failed"),
+        ]
+        stop = runner.stop_transport_process(
+            process,
+            recovery_deadline=100,
+            timeout_for=lambda *_: 1,
+        )
+        self.assertTrue(stop["graceful_timeout"])
+        self.assertTrue(stop["forced"])
+        self.assertTrue(stop["uncertain"])
+        self.assertIn("forced_wait", stop["errors"])
+        process.kill.assert_called_once()
+
+    def test_transport_signal_error_is_recorded_without_escaping(self):
+        process = mock.Mock()
+        process.send_signal.side_effect = OSError("signal failed")
+        process.poll.return_value = 0
+        stop = runner.stop_transport_process(
+            process,
+            recovery_deadline=100,
+            timeout_for=lambda *_: 1,
+        )
+        self.assertTrue(stop["confirmed_absent"])
+        self.assertTrue(stop["uncertain"])
+        self.assertIn("send_signal", stop["errors"])
+        process.kill.assert_not_called()
+
     def real_ready_pod(self):
         path = (
             Path(__file__).parent
