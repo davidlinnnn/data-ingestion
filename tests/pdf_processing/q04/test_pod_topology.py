@@ -37,7 +37,18 @@ class PodTopologyTests(unittest.TestCase):
             set(maps), set(sources["config_maps"].values())
         )
 
-        pod = rendered["items"][2]["spec"]["template"]["spec"]
+        claim = rendered["items"][2]
+        self.assertEqual(claim["kind"], "PersistentVolumeClaim")
+        self.assertEqual(claim["metadata"]["name"], topology.EVIDENCE_PVC)
+        self.assertNotIn("ownerReferences", claim["metadata"])
+        self.assertEqual(
+            claim["metadata"]["annotations"]["q04.openai/automatic-delete"],
+            "false",
+        )
+        self.assertEqual(
+            claim["spec"]["resources"]["requests"]["storage"], "1Gi"
+        )
+        pod = rendered["items"][3]["spec"]["template"]["spec"]
         self.assertEqual(len(pod["containers"]), 1)
         mounts = {
             row["mountPath"]: row for row in pod["containers"][0]["volumeMounts"]
@@ -45,7 +56,15 @@ class PodTopologyTests(unittest.TestCase):
         self.assertTrue(mounts["/workspace"]["readOnly"])
         self.assertIn("/scratch", mounts)
         self.assertIn("/q04-control", mounts)
+        self.assertIn("/q04-evidence", mounts)
         self.assertIn("/tmp", mounts)
+        volumes = {row["name"]: row for row in pod["volumes"]}
+        self.assertEqual(
+            volumes["evidence"]["persistentVolumeClaim"]["claimName"],
+            topology.EVIDENCE_PVC,
+        )
+        self.assertIn("emptyDir", volumes["scratch"])
+        self.assertNotIn("persistentVolumeClaim", volumes["scratch"])
         projected = next(
             volume["projected"]
             for volume in pod["volumes"]
@@ -64,7 +83,7 @@ class PodTopologyTests(unittest.TestCase):
         )
 
     def test_pod_security_and_secret_scope_are_fixed(self):
-        pod = topology.kubernetes_list()["items"][2]["spec"]["template"]["spec"]
+        pod = topology.kubernetes_list()["items"][3]["spec"]["template"]["spec"]
         container = pod["containers"][0]
 
         self.assertFalse(pod["automountServiceAccountToken"])
@@ -97,7 +116,7 @@ class PodTopologyTests(unittest.TestCase):
         )
 
     def test_memory_and_ephemeral_resources_are_independently_fixed(self):
-        container = topology.kubernetes_list()["items"][2]["spec"]["template"][
+        container = topology.kubernetes_list()["items"][3]["spec"]["template"][
             "spec"
         ]["containers"][0]
         self.assertEqual(container["resources"]["requests"]["memory"], "4Gi")
@@ -124,7 +143,7 @@ class PodTopologyTests(unittest.TestCase):
 
     def test_task_queue_and_cleanup_identity_are_fixed(self):
         rendered = topology.kubernetes_list()
-        deployment = rendered["items"][2]
+        deployment = rendered["items"][3]
         annotations = deployment["metadata"]["annotations"]
         self.assertEqual(annotations["q04.openai/workflow-queue"], topology.WORKFLOW_QUEUE)
         self.assertEqual(annotations["q04.openai/activity-queue"], topology.ACTIVITY_QUEUE)

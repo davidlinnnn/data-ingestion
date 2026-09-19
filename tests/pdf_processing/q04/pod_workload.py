@@ -19,6 +19,8 @@ import subprocess
 import sys
 import time
 
+from pod_durable_evidence import seal, write_once
+
 
 PHASE = "yolo-pod-cgroup-a"
 RUN_ID = "q04-yolo-pod-cgroup-20260919-a"
@@ -35,13 +37,6 @@ PARSER_BUDGETS = {
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def write_once(path: Path, value: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("x") as stream:
-        json.dump(value, stream, indent=2, sort_keys=True)
-        stream.write("\n")
 
 
 def start_ticks(pid: int, proc_root: Path = Path("/proc")) -> int:
@@ -98,7 +93,7 @@ def no_inference_preflight(
     }
 
 
-def adopt_budget(state: Path, record: Path) -> dict:
+def adopt_budget(state: Path, record: Path, *, evidence_root: Path | None = None) -> dict:
     path = state / "config.json"
     config = json.loads(path.read_text())
     before = config["parser_budgets"]
@@ -132,7 +127,7 @@ def adopt_budget(state: Path, record: Path) -> dict:
         "production_default_changed": False,
         "fixture": "07",
     }
-    write_once(record, value)
+    write_once(record, value, volume_root=evidence_root or record.parent)
     return value
 
 
@@ -207,6 +202,23 @@ def cleanup_markers(state: Path) -> dict:
     }
 
 
+def seal_terminal(control: Path, *, returncode: int) -> dict:
+    cleanup = json.loads((control / "cleanup-complete.json").read_text())
+    volume_identity = json.loads(
+        (control / "evidence-volume-identity.json").read_text()
+    )
+    cleanup_complete = all(
+        cleanup.get(name) is True
+        for name in ("worker_absent", "owned_children_absent", "scratch_absent")
+    )
+    return seal(
+        control,
+        volume_identity=volume_identity,
+        workload_succeeded=returncode == 0,
+        cleanup_complete=cleanup_complete,
+    )
+
+
 def run(args) -> int:
     workload_started = time.monotonic()
     workload_deadline = workload_started + args.workload_seconds
@@ -217,10 +229,10 @@ def run(args) -> int:
         "capacity_sha256": sha256(args.capacity),
         "phase": PHASE,
         "started_at": time.time(),
-    })
+    }, volume_root=control)
     write_once(control / "no-inference-preflight.json", no_inference_preflight(
         args.workspace, control, args.model_cache
-    ))
+    ), volume_root=control)
     env = os.environ.copy()
     env.update(
         PYTHONDONTWRITEBYTECODE="1",
@@ -247,7 +259,7 @@ def run(args) -> int:
             "timed_out": True,
             "stdout": error.stdout,
             "stderr": error.stderr,
-        })
+        }, volume_root=control)
         write_once(control / "workload-exit.json", {
             "returncode": 124,
             "stage": "init",
@@ -255,20 +267,21 @@ def run(args) -> int:
             "forced": True,
             "finished_at": time.time(),
             "automatic_retry": False,
-        })
+        }, volume_root=control)
         write_once(control / "cleanup-complete.json", {
             "worker_absent": True,
             "owned_children_absent": True,
             "scratch_absent": True,
             "worker_generations": 0,
             "stopped": [],
-        })
+        }, volume_root=control)
+        seal_terminal(control, returncode=124)
         return 124
     write_once(control / "init-exit.json", {
         "returncode": init.returncode,
         "stdout": init.stdout,
         "stderr": init.stderr,
-    })
+    }, volume_root=control)
     if init.returncode:
         write_once(control / "workload-exit.json", {
             "returncode": init.returncode,
@@ -277,16 +290,19 @@ def run(args) -> int:
             "forced": False,
             "finished_at": time.time(),
             "automatic_retry": False,
-        })
+        }, volume_root=control)
         write_once(control / "cleanup-complete.json", {
             "worker_absent": True,
             "owned_children_absent": True,
             "scratch_absent": True,
             "worker_generations": 0,
             "stopped": [],
-        })
+        }, volume_root=control)
+        seal_terminal(control, returncode=init.returncode)
         return init.returncode
-    adopted = adopt_budget(args.state, control / "budget-adoption.json")
+    adopted = adopt_budget(
+        args.state, control / "budget-adoption.json", evidence_root=control
+    )
     config = json.loads((args.state / "config.json").read_text())
     integration_manifest = (
         args.workspace
@@ -312,7 +328,7 @@ def run(args) -> int:
         "config_sha256": adopted["config_sha256"],
         "window_authorization_scope_sha256": args.authorization_scope_sha256,
         "reviewed_candidate_scope_sha256": reviewed_scope_sha256,
-    })
+    }, volume_root=control)
     forced = False
     timed_out = False
     # The 825 seconds includes the candidate's cooperative drain. Begin that
@@ -339,17 +355,22 @@ def run(args) -> int:
             "forced": forced,
             "finished_at": time.time(),
             "automatic_retry": False,
-        })
-        write_once(control / "cleanup-complete.json", cleanup_markers(args.state))
+        }, volume_root=control)
+        write_once(
+            control / "cleanup-complete.json",
+            cleanup_markers(args.state),
+            volume_root=control,
+        )
+        seal_terminal(control, returncode=process.returncode)
     return returncode
 
 
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description=__doc__)
     value.add_argument("--workspace", type=Path, default=Path("/workspace"))
-    value.add_argument("--control", type=Path, default=Path("/q04-control"))
+    value.add_argument("--control", type=Path, default=Path("/q04-evidence"))
     value.add_argument("--bundle", type=Path, default=Path("/q04-control/inputs"))
-    value.add_argument("--state", type=Path, default=Path("/q04-control/state"))
+    value.add_argument("--state", type=Path, default=Path("/q04-evidence/state"))
     value.add_argument("--capacity", type=Path, default=Path("/q04-control/capacity.json"))
     value.add_argument("--model-cache", type=Path, default=Path("/experiment/PROTOTYPE-wipe-me/hf"))
     value.add_argument("--python", default="/experiment/.venv/bin/python")

@@ -125,11 +125,75 @@ class PodRemoteEvidenceTests(unittest.TestCase):
             }
             for name in FINAL_REQUIRED:
                 required.setdefault(name, {})
+            required["workload.log"] = {"line": "complete"}
+            raw_required = {}
             for name, value in required.items():
                 raw = (json.dumps(value) + "\n").encode()
+                raw_required[name] = raw
                 rows.append((name, 0, raw))
+            inventory = [
+                {"path": name, "bytes": len(raw), "sha256": sha256(raw)}
+                for name, raw in sorted(raw_required.items())
+                if name != "durable-terminal-manifest.json"
+            ]
+            terminal = {
+                "schema_version": 1,
+                "terminal": True,
+                "status": "PASS_CANDIDATE",
+                "workload_succeeded": True,
+                "cleanup_complete": True,
+                "inventory": inventory,
+                "inventory_sha256": sha256(
+                    json.dumps(
+                        inventory, sort_keys=True, separators=(",", ":")
+                    ).encode()
+                ),
+                "capacity": {
+                    "requested_bytes": 1_073_741_824,
+                    "evidence_used_bytes": sum(item["bytes"] for item in inventory),
+                    "evidence_free_bytes": 1_073_741_824
+                    - sum(item["bytes"] for item in inventory),
+                    "filesystem_free_bytes": 900_000_000,
+                },
+            }
+            terminal_raw = (json.dumps(terminal) + "\n").encode()
+            rows = [
+                (name, offset, terminal_raw if name == "durable-terminal-manifest.json" else raw)
+                for name, offset, raw in rows
+            ]
             mirror.ingest(envelope(1, rows), received_at=10)
             self.assertEqual(mirror.finalize(require_success=True)["status"], "PASS")
+
+    def test_finalize_rejects_terminal_inventory_mismatch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mirror = IncrementalEvidenceMirror(Path(directory), self.identity())
+            terminal = {
+                "schema_version": 1,
+                "terminal": True,
+                "status": "PASS_CANDIDATE",
+                "workload_succeeded": True,
+                "cleanup_complete": True,
+                "inventory": [],
+                "inventory_sha256": "0" * 64,
+                "capacity": {
+                    "requested_bytes": 1_073_741_824,
+                    "evidence_used_bytes": 1,
+                    "evidence_free_bytes": 900_000_000,
+                    "filesystem_free_bytes": 900_000_000,
+                },
+            }
+            raw = (json.dumps(terminal) + "\n").encode()
+            mirror.ingest(
+                envelope(1, [("durable-terminal-manifest.json", 0, raw)]),
+                received_at=10,
+            )
+            mirror.complete.update(FINAL_REQUIRED)
+            for name in FINAL_REQUIRED - {"durable-terminal-manifest.json"}:
+                path = Path(directory) / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("{}\n")
+            with self.assertRaisesRegex(ValueError, "inventory digest mismatch"):
+                mirror.finalize(require_success=True)
 
     def test_snapshot_program_is_read_only_and_caps_chunks(self):
         program = snapshot_program("/q04-control", {"a": 4}, 8, self.identity())

@@ -44,6 +44,16 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
         self.assertEqual(scope["fixture"], "07")
         self.assertEqual(scope["modes"], ["fresh", "restored", "replay"])
         self.assertFalse(scope["automatic_retry"])
+        self.assertEqual(scope["evidence_pvc"], pod_topology.EVIDENCE_PVC)
+        self.assertEqual(scope["evidence_pvc_bytes"], 1024**3)
+        self.assertFalse(scope["evidence_pvc_automatic_delete"])
+        self.assertEqual(
+            argv[argv.index("--control") + 1], "/q04-evidence"
+        )
+        self.assertEqual(
+            argv[argv.index("--state") + 1], "/q04-evidence/state"
+        )
+        self.assertEqual(argv[argv.index("--bundle") + 1], "/q04-control/inputs")
 
     def test_scale_and_delete_are_uid_fenced(self):
         patch = runner.scale_patch("uid", "rv", 0, 1)
@@ -53,6 +63,184 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
             {"op": "test", "path": "/spec/replicas", "value": 0},
         ])
         self.assertEqual(runner.pod_delete_options("pod-uid")["preconditions"], {"uid": "pod-uid"})
+
+    def test_cleanup_deletes_uid_fenced_runtime_objects_but_retains_pvc(self):
+        class Kube:
+            def __init__(self):
+                self.calls = []
+
+            def run(self, argv, **kwargs):
+                self.calls.append((argv, kwargs))
+                return "{}"
+
+        kube = Kube()
+        owned = [
+            {"kind": "ConfigMap", "name": "code", "uid": "cm-uid"},
+            {
+                "kind": "PersistentVolumeClaim",
+                "name": pod_topology.EVIDENCE_PVC,
+                "uid": "pvc-uid",
+            },
+            {"kind": "Deployment", "name": runner.DEPLOYMENT, "uid": "dep-uid"},
+        ]
+        value = runner.delete_owned_objects(
+            kube, owned, deadline=runner.time.time() + 60
+        )
+        self.assertEqual(value["retained"], [owned[1]])
+        self.assertEqual(value["deleted"], [owned[2], owned[0]])
+        raw_calls = [call for call in kube.calls if "--raw" in call[0]]
+        self.assertEqual(len(raw_calls), 2)
+        self.assertTrue(all('"preconditions"' in call[1]["input"] for call in raw_calls))
+        self.assertTrue(
+            all(pod_topology.EVIDENCE_PVC not in " ".join(call[0]) for call in raw_calls)
+        )
+
+    def test_cleanup_disposition_never_claims_success_when_api_is_unreachable(self):
+        self.assertEqual(
+            runner.cleanup_disposition(
+                api_cleanup_confirmed=False, pvc_retained=True
+            ),
+            "NEEDS_INTERVENTION",
+        )
+        self.assertEqual(
+            runner.cleanup_disposition(
+                api_cleanup_confirmed=True, pvc_retained=False
+            ),
+            "FAIL_EVIDENCE_PVC_NOT_RETAINED",
+        )
+        self.assertEqual(
+            runner.cleanup_disposition(
+                api_cleanup_confirmed=True, pvc_retained=True
+            ),
+            "CLEANED_WITH_DURABLE_EVIDENCE",
+        )
+        self.assertEqual(
+            runner.cleanup_disposition(
+                api_cleanup_confirmed=True,
+                pvc_retained=False,
+                pvc_expected=False,
+            ),
+            "CLEANED_NO_OBJECTS",
+        )
+
+    def test_export_failure_still_removes_runtime_and_retains_claim(self):
+        self.assertEqual(
+            runner.cleanup_policy(
+                controller_export_complete=False,
+                deployment_created=True,
+                pvc_created=True,
+            ),
+            {
+                "controller_export_complete": False,
+                "remove_owned_runtime": True,
+                "retain_evidence_pvc": True,
+            },
+        )
+
+    def test_retained_claim_is_re_read_and_uid_fenced(self):
+        class Kube:
+            uid = "claim-uid"
+
+            def json(self, *args, **kwargs):
+                return {
+                    "metadata": {
+                        "name": pod_topology.EVIDENCE_PVC,
+                        "uid": self.uid,
+                    },
+                    "status": {"phase": "Bound"},
+                }
+
+        owned = [{
+            "kind": "PersistentVolumeClaim",
+            "name": pod_topology.EVIDENCE_PVC,
+            "uid": "claim-uid",
+        }]
+        kube = Kube()
+        value = runner.verify_retained_evidence_claim(
+            kube, owned, None, deadline=runner.time.time() + 60
+        )
+        self.assertTrue(value["retained"])
+        kube.uid = "replacement"
+        with self.assertRaisesRegex(ValueError, "UID changed"):
+            runner.verify_retained_evidence_claim(
+                kube, owned, None, deadline=runner.time.time() + 60
+            )
+
+    def test_evidence_volume_identity_binds_claim_pv_node_and_permissions(self):
+        pvc = {
+            "metadata": {"name": pod_topology.EVIDENCE_PVC, "uid": "claim-uid"},
+            "spec": {
+                "accessModes": ["ReadWriteOnce"],
+                "storageClassName": "standard",
+                "volumeName": "pv-name",
+            },
+            "status": {"phase": "Bound", "capacity": {"storage": "1Gi"}},
+        }
+        pv = {
+            "metadata": {"uid": "pv-uid"},
+            "spec": {
+                "claimRef": {
+                    "uid": "claim-uid",
+                    "name": pod_topology.EVIDENCE_PVC,
+                    "namespace": runner.NAMESPACE,
+                },
+                "nodeAffinity": {
+                    "required": {
+                        "nodeSelectorTerms": [{
+                            "matchExpressions": [{
+                                "key": "kubernetes.io/hostname",
+                                "values": [pod_topology.NODE],
+                            }]
+                        }]
+                    }
+                },
+            },
+        }
+        value = runner.validate_evidence_volume(pvc, pv)
+        self.assertEqual(value["pvc_uid"], "claim-uid")
+        self.assertEqual(value["pv_uid"], "pv-uid")
+        self.assertEqual(value["node"], pod_topology.NODE)
+        self.assertEqual(value["run_as_uid"], 1000)
+        self.assertFalse(value["automatic_delete"])
+        pvc["metadata"]["uid"] = "replacement"
+        with self.assertRaisesRegex(ValueError, "claim identity"):
+            runner.validate_evidence_volume(pvc, pv)
+
+    def test_terminal_manifest_must_bind_the_same_volume_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            terminal = Path(directory) / "durable-terminal-manifest.json"
+            terminal.write_text(json.dumps({"volume_identity": {"pvc_uid": "one"}}))
+            runner.verify_terminal_volume_identity(terminal, {"pvc_uid": "one"})
+            with self.assertRaisesRegex(ValueError, "PVC identity changed"):
+                runner.verify_terminal_volume_identity(
+                    terminal, {"pvc_uid": "replacement"}
+                )
+
+    def test_mount_permissions_record_actual_uid_gid_mode_and_write_access(self):
+        observed = {
+            "process_uid": 1000,
+            "process_gid": 1000,
+            "mount_uid": 0,
+            "mount_gid": 1000,
+            "mode": "0o770",
+            "directory": True,
+            "symlink": False,
+            "writable": True,
+            "group_write": True,
+        }
+        self.assertIs(
+            runner.validate_evidence_mount_permissions(observed), observed
+        )
+        for name, value in (
+            ("mount_gid", 0),
+            ("writable", False),
+            ("group_write", False),
+            ("symlink", True),
+        ):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                runner.validate_evidence_mount_permissions(
+                    {**observed, name: value}
+                )
 
     def test_atomic_create_records_only_uids_returned_by_successful_create(self):
         items = [
@@ -80,6 +268,28 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
             self.assertEqual(runner.remaining_timeout(105, 30, "cleanup"), 5)
             with self.assertRaisesRegex(TimeoutError, "lease expired"):
                 runner.remaining_timeout(100, 30, "cleanup")
+
+    def test_runtime_sample_separates_memory_guard_from_evidence_watermark(self):
+        row = {
+            "available": runner.VM_RUNTIME_FLOOR_BYTES,
+            "psi_full_avg10": 0,
+            "vm_oom_kill": 0,
+            "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+            "memory_current": runner.CGROUP_GUARD_BYTES,
+            "evidence_used_bytes": 939_524_096,
+            "evidence_free_bytes": 134_217_728,
+            "evidence_filesystem_free_bytes": 134_217_728,
+        }
+        runner.verify_runtime_sample(row, 0)
+        for name, value in (
+            ("evidence_used_bytes", 939_524_097),
+            ("evidence_free_bytes", 134_217_727),
+            ("evidence_filesystem_free_bytes", 134_217_727),
+        ):
+            with self.subTest(name=name), self.assertRaisesRegex(
+                ValueError, "evidence PVC stop watermark"
+            ):
+                runner.verify_runtime_sample({**row, name: value}, 0)
 
     def test_pending_transport_exceeding_five_seconds_fails_closed(self):
         future = mock.Mock()
@@ -187,7 +397,7 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
                 path.write_text("# fixed\n")
             with mock.patch("pod_workload.os.getuid", return_value=1000), mock.patch(
                 "pod_workload.os.getgid", return_value=1000
-            ):
+            ), mock.patch("pod_workload.importlib.import_module"):
                 result = pod_workload.no_inference_preflight(
                     workspace, control, model, cgroup
                 )
@@ -246,12 +456,11 @@ class YoloPodCgroupRunnerTests(unittest.TestCase):
         retained = json.loads(runner.OFFLINE_MANIFEST.read_text())
         self.assertEqual(retained, runner.build_offline_manifest())
         self.assertFalse(retained["runtime_authorized"])
-        self.assertEqual(retained["runtime_readiness"], "NOT_RUNTIME_READY")
-        self.assertEqual(
-            retained["runtime_blocker"], "durable evidence path not implemented"
-        )
+        self.assertEqual(retained["runtime_readiness"], "READY_FOR_AUTHORIZATION")
+        self.assertIsNone(retained["runtime_blocker"])
         self.assertTrue(retained["server_side_dry_run_forbidden"])
         command = retained["exact_single_run_command"]
+        self.assertTrue(command.startswith(str(runner.LOCAL_PYTHON)))
         self.assertIn("--execute", command)
         self.assertNotIn("dry-run=server", command)
         self.assertNotIn("retry", command)

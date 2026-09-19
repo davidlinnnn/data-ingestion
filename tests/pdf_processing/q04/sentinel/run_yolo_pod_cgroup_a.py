@@ -40,6 +40,7 @@ RUN_IDENTITY = "q04-yolo-pod-cgroup-20260919-a"
 PREFIX = "q04/yolo-pod-cgroup-20260919-a/"
 OUT = Path("/private/tmp/q04-yolo-pod-cgroup-20260919-a")
 CONTROL = "/q04-control"
+EVIDENCE = "/q04-evidence"
 BUNDLE = Path("/private/tmp/q04-inputs-yolo-lifecycle-v1")
 WINDOW_SECONDS = 1500
 OUTER_OBSERVATION_SECONDS = 180
@@ -61,6 +62,10 @@ RUN_LABEL = pod_topology.RUN_LABEL
 NODE = pod_topology.NODE
 WORKER_YAML = Q04 / "pod-topology-v1/WORKER.yaml"
 OFFLINE_MANIFEST = Q04 / "pod-topology-v1/RUNNER-MANIFEST.json"
+LOCAL_PYTHON = Path(
+    "/Users/david/work/data-ingestion/docs/prototypes/"
+    "pdf-checkpoint-prototype/.venv/bin/python"
+)
 
 
 def sha256(raw: bytes) -> str:
@@ -93,6 +98,9 @@ def authorization_scope() -> dict:
         "container_hard_limit_bytes": HARD_LIMIT_BYTES,
         "vm_runtime_floor_bytes": VM_RUNTIME_FLOOR_BYTES,
         "deployment": DEPLOYMENT,
+        "evidence_pvc": pod_topology.EVIDENCE_PVC,
+        "evidence_pvc_bytes": 1024**3,
+        "evidence_pvc_automatic_delete": False,
         "deployment_initial_replicas": 0,
         "held_deployments_restored": False,
     }
@@ -140,6 +148,10 @@ def workload_argv() -> list[str]:
         "--prefix", PREFIX,
         "--authorization-scope-sha256", authorization_scope_sha256(),
         "--workload-seconds", str(WORKLOAD_SECONDS),
+        "--control", EVIDENCE,
+        "--state", EVIDENCE + "/state",
+        "--bundle", CONTROL + "/inputs",
+        "--capacity", CONTROL + "/capacity.json",
         "--pod-temporal", "temporal:7233",
         "--pod-objects", "http://objects:9000",
     ]
@@ -148,7 +160,7 @@ def workload_argv() -> list[str]:
 def exact_command() -> str:
     return shlex.join(
         [
-            sys.executable,
+            str(LOCAL_PYTHON),
             str(Path(__file__).resolve()),
             "--execute",
             "--owner", "main-session",
@@ -206,12 +218,79 @@ def validate_pod(pod: dict) -> dict:
     }
 
 
+def validate_evidence_volume(pvc: dict, pv: dict) -> dict:
+    metadata = pvc["metadata"]
+    spec = pvc["spec"]
+    status = pvc["status"]
+    if metadata["name"] != pod_topology.EVIDENCE_PVC:
+        raise ValueError("evidence PVC name changed")
+    if metadata.get("ownerReferences"):
+        raise ValueError("evidence PVC has garbage-collection owner")
+    if spec.get("accessModes") != ["ReadWriteOnce"]:
+        raise ValueError("evidence PVC access mode changed")
+    if spec.get("storageClassName") != "standard":
+        raise ValueError("evidence PVC storage class changed")
+    if status.get("phase") != "Bound" or not spec.get("volumeName"):
+        raise ValueError("evidence PVC is not bound")
+    if status.get("capacity", {}).get("storage") != "1Gi":
+        raise ValueError("evidence PVC capacity changed")
+    claim = pv["spec"].get("claimRef", {})
+    if (
+        claim.get("uid") != metadata["uid"]
+        or claim.get("name") != metadata["name"]
+        or claim.get("namespace") != NAMESPACE
+    ):
+        raise ValueError("evidence PV claim identity changed")
+    terms = pv["spec"].get("nodeAffinity", {}).get("required", {}).get(
+        "nodeSelectorTerms", []
+    )
+    nodes = {
+        value
+        for term in terms
+        for expression in term.get("matchExpressions", [])
+        if expression.get("key") == "kubernetes.io/hostname"
+        for value in expression.get("values", [])
+    }
+    if NODE not in nodes:
+        raise ValueError("evidence PV node affinity changed")
+    return {
+        "pvc_name": metadata["name"],
+        "pvc_uid": metadata["uid"],
+        "pv_name": spec["volumeName"],
+        "pv_uid": pv["metadata"]["uid"],
+        "namespace": NAMESPACE,
+        "node": NODE,
+        "access_modes": spec["accessModes"],
+        "storage_class": spec["storageClassName"],
+        "capacity": status["capacity"]["storage"],
+        "mount_path": EVIDENCE,
+        "run_as_uid": 1000,
+        "run_as_gid": 1000,
+        "fs_group": 1000,
+        "automatic_delete": False,
+        "recovery_mode": "read-only helper Pod on the bound node",
+    }
+
+
+def validate_evidence_mount_permissions(value: dict) -> dict:
+    if value.get("process_uid") != 1000 or value.get("process_gid") != 1000:
+        raise ValueError("evidence mount process identity changed")
+    if not value.get("directory") or value.get("symlink"):
+        raise ValueError("evidence mount type changed")
+    if value.get("mount_gid") != 1000:
+        raise ValueError("evidence mount fsGroup ownership changed")
+    if not value.get("writable") or not value.get("group_write"):
+        raise ValueError("evidence mount is not writable by fsGroup")
+    return value
+
+
 def build_offline_manifest() -> dict:
     paths = {
         "runner": Path(__file__),
         "pod_workload": Q04 / "pod_workload.py",
         "pod_init": Q04 / "pod_init.py",
         "remote_evidence": Q04 / "pod_remote_evidence.py",
+        "durable_evidence": Q04 / "pod_durable_evidence.py",
         "topology_builder": Q04 / "pod_topology.py",
         "worker_yaml": WORKER_YAML,
         "source_manifest": Q04 / "pod-topology-v1/SOURCE-MANIFEST.json",
@@ -221,6 +300,8 @@ def build_offline_manifest() -> dict:
         "integration_manifest": Q04 / "pod-topology-v1/INTEGRATION-MANIFEST.json",
         "durable_evidence_feasibility": Q04 / "pod-topology-v1/DURABLE-EVIDENCE-FEASIBILITY.md",
         "server_dry_run_scope": Q04 / "pod-topology-v1/SERVER-DRY-RUN-SCOPE.md",
+        "evidence_capacity": Q04 / "pod-topology-v1/EVIDENCE-CAPACITY.json",
+        "pvc_window_plan": Q04 / "pod-topology-v1/PVC-WINDOW-PLAN.md",
         "outer_admission": Q04 / "outer_admission.py",
         "held_deployment_identity": Q04 / "sentinel/run_yolo_lifecycle_a.py",
     }
@@ -240,8 +321,8 @@ def build_offline_manifest() -> dict:
         "workload_argv": workload_argv(),
         "exact_single_run_command": exact_command(),
         "runtime_authorized": False,
-        "runtime_readiness": "NOT_RUNTIME_READY",
-        "runtime_blocker": "durable evidence path not implemented",
+        "runtime_readiness": "READY_FOR_AUTHORIZATION",
+        "runtime_blocker": None,
         "private_configmap_upload_requires_approval": True,
         "cluster_mutation_requires_approval": True,
         "server_side_dry_run_forbidden": True,
@@ -254,7 +335,7 @@ def offline_check() -> dict:
         raise ValueError("runner manifest differs from executable plan")
     topology = json.loads(WORKER_YAML.read_text())
     pod_topology.validate(topology)
-    if topology["items"][2]["spec"]["replicas"] != 0:
+    if topology["items"][3]["spec"]["replicas"] != 0:
         raise ValueError("committed topology is active")
     if workload_argv()[workload_argv().index("--workload-seconds") + 1] != "825":
         raise ValueError("workload budget changed")
@@ -263,7 +344,7 @@ def offline_check() -> dict:
         "authorization_scope_sha256": authorization_scope_sha256(),
         "exact_single_run_command": exact_command(),
         "runtime_authorized": False,
-        "runtime_readiness": "NOT_RUNTIME_READY",
+        "runtime_readiness": "READY_FOR_AUTHORIZATION",
     }
 
 
@@ -288,14 +369,18 @@ class Kubectl:
 
 
 def sample_program() -> str:
-    return """import json,time
+    return """import json,os,time
 from pathlib import Path
 def fields(path):return {x.split()[0].rstrip(':'):int(x.split()[1]) for x in Path(path).read_text().splitlines()}
 full=next(x for x in Path('/proc/pressure/memory').read_text().splitlines() if x.startswith('full '))
 pressure=dict(x.split('=') for x in full.split()[1:])
+evidence=Path('/q04-evidence');used=sum(p.stat().st_size for p in evidence.rglob('*') if p.is_file())
+fs=os.statvfs(evidence);filesystem_free=fs.f_frsize*fs.f_bavail
 print(json.dumps({'time':time.time(),'available':fields('/proc/meminfo')['MemAvailable']*1024,
  'vm_oom_kill':fields('/proc/vmstat')['oom_kill'],'memory_current':int(Path('/sys/fs/cgroup/memory.current').read_text()),
- 'memory_events':fields('/sys/fs/cgroup/memory.events'),'psi_full_avg10':float(pressure['avg10'])}))
+ 'memory_events':fields('/sys/fs/cgroup/memory.events'),'psi_full_avg10':float(pressure['avg10']),
+ 'evidence_used_bytes':used,'evidence_free_bytes':max(0,1073741824-used),
+ 'evidence_filesystem_free_bytes':filesystem_free}))
 """
 
 
@@ -454,12 +539,18 @@ def verify_runtime_sample(row: dict, baseline_oom: int) -> None:
         raise ValueError("worker cgroup OOM counter changed")
     if row["memory_current"] > CGROUP_GUARD_BYTES:
         raise ValueError("4 GiB qualification guard breached")
+    if (
+        row.get("evidence_used_bytes", 2**63) > 939_524_096
+        or row.get("evidence_free_bytes", -1) < 134_217_728
+        or row.get("evidence_filesystem_free_bytes", -1) < 134_217_728
+    ):
+        raise ValueError("evidence PVC stop watermark reached")
 
 
 def stop_owned_supervisor_program(graceful_seconds: float) -> str:
     return """import json,os,signal,time
 from pathlib import Path
-path=Path('/q04-control/supervisor-ownership.json')
+path=Path('/q04-evidence/supervisor-ownership.json')
 if not path.exists(): print(json.dumps({'identity_published':False}));raise SystemExit(0)
 owner=json.loads(path.read_text());pid=owner['pid']
 raw=(Path('/proc')/str(pid)/'stat').read_text();ticks=int(raw[raw.rfind(')')+1:].split()[19])
@@ -475,7 +566,7 @@ print(json.dumps({'identity_published':True,'pid':pid,'start_ticks':ticks,
 def terminal_cleanup_program() -> str:
     return """import json
 from pathlib import Path
-root=Path('/q04-control');owner=json.loads((root/'supervisor-ownership.json').read_text())
+root=Path('/q04-evidence');owner=json.loads((root/'supervisor-ownership.json').read_text())
 cleanup=json.loads((root/'cleanup-complete.json').read_text())
 absent=not (Path('/proc')/str(owner['pid'])).exists()
 complete=all(cleanup.get(k) is True for k in ('worker_absent','owned_children_absent','scratch_absent'))
@@ -487,7 +578,7 @@ print(json.dumps({'pid':owner['pid'],'start_ticks':owner['start_ticks'],
 def force_stop_supervisor_program() -> str:
     return """import json,os,shutil,signal,time,psutil
 from pathlib import Path
-root=Path('/q04-control');owner=json.loads((root/'supervisor-ownership.json').read_text());pid=owner['pid']
+root=Path('/q04-evidence');owner=json.loads((root/'supervisor-ownership.json').read_text());pid=owner['pid']
 proc=Path('/proc')/str(pid);stat=proc/'stat';supervisor=psutil.Process(pid);owned=supervisor.children(recursive=True)
 raw=stat.read_text();ticks=int(raw[raw.rfind(')')+1:].split()[19])
 if ticks!=owner['start_ticks']: raise ValueError('supervisor PID identity changed')
@@ -539,11 +630,11 @@ print(json.dumps({'pid':pid,'start_ticks':owner['start_ticks'],'absent':not proc
 def archive_fingerprint_program() -> str:
     return """import hashlib,json
 from pathlib import Path
-root=Path('/q04-control');rows=[]
+root=Path('/q04-evidence');rows=[]
 for path in sorted(root.rglob('*')):
  if not path.is_file(): continue
  name=path.relative_to(root).as_posix()
- if name=='inputs' or name.startswith('inputs/') or name=='workload.log': continue
+ if name=='inputs' or name.startswith('inputs/'): continue
  raw=path.read_bytes();rows.append([name,len(raw),hashlib.sha256(raw).hexdigest()])
 print(json.dumps(rows,separators=(',',':')))
 """
@@ -557,7 +648,7 @@ def verify_local_archive(path: Path, remote_rows: list[list]) -> None:
             if not member.isfile():
                 continue
             name = member.name.removeprefix("./")
-            if name == "workload.log" or name == "inputs" or name.startswith("inputs/"):
+            if name == "inputs" or name.startswith("inputs/"):
                 continue
             stream = archive.extractfile(member)
             if stream is None:
@@ -568,6 +659,12 @@ def verify_local_archive(path: Path, remote_rows: list[list]) -> None:
             observed[name] = (len(raw), sha256(raw))
     if observed != expected:
         raise ValueError("local archive differs from stable remote fingerprint")
+
+
+def verify_terminal_volume_identity(path: Path, expected: dict) -> None:
+    terminal = json.loads(path.read_text())
+    if terminal.get("volume_identity") != expected:
+        raise ValueError("durable terminal PVC identity changed")
 
 
 def remaining_timeout(deadline: float, maximum: float, action: str) -> float:
@@ -683,8 +780,12 @@ def delete_owned_objects(
     kube: Kubectl, owned_objects: list[dict], *, deadline: float
 ) -> dict:
     deleted = []
+    retained = []
     errors = {}
     for obj in reversed(owned_objects):
+        if obj["kind"] == "PersistentVolumeClaim":
+            retained.append(obj)
+            continue
         resource = {"Deployment": "deployments", "ConfigMap": "configmaps"}[
             obj["kind"]
         ]
@@ -708,7 +809,72 @@ def delete_owned_objects(
             deleted.append(obj)
         except BaseException as error:
             errors[obj["kind"] + "/" + obj["name"]] = repr(error)
-    return {"deleted": deleted, "errors": errors}
+    return {"deleted": deleted, "retained": retained, "errors": errors}
+
+
+def cleanup_disposition(
+    *, api_cleanup_confirmed: bool, pvc_retained: bool, pvc_expected: bool = True
+) -> str:
+    if not api_cleanup_confirmed:
+        return "NEEDS_INTERVENTION"
+    if not pvc_expected:
+        return "CLEANED_NO_OBJECTS"
+    if not pvc_retained:
+        return "FAIL_EVIDENCE_PVC_NOT_RETAINED"
+    return "CLEANED_WITH_DURABLE_EVIDENCE"
+
+
+def cleanup_policy(
+    *, controller_export_complete: bool, deployment_created: bool, pvc_created: bool
+) -> dict:
+    return {
+        "controller_export_complete": controller_export_complete,
+        "remove_owned_runtime": deployment_created,
+        "retain_evidence_pvc": pvc_created,
+    }
+
+
+def verify_retained_evidence_claim(
+    kube: Kubectl,
+    owned_objects: list[dict],
+    evidence_volume: dict | None,
+    *,
+    deadline: float,
+) -> dict:
+    claims = [
+        item for item in owned_objects
+        if item["kind"] == "PersistentVolumeClaim"
+    ]
+    if len(claims) != 1:
+        raise ValueError("exactly one owned evidence PVC required")
+    expected = claims[0]
+    pvc = kube.json(
+        "get", "pvc", expected["name"],
+        timeout=remaining_timeout(deadline, 30, "retained PVC identity"),
+    )
+    if pvc["metadata"]["uid"] != expected["uid"]:
+        raise ValueError("retained evidence PVC UID changed")
+    if pvc["metadata"].get("deletionTimestamp"):
+        raise ValueError("retained evidence PVC is terminating")
+    if pvc["metadata"].get("ownerReferences"):
+        raise ValueError("retained evidence PVC acquired an owner")
+    result = {
+        "pvc_name": expected["name"],
+        "pvc_uid": expected["uid"],
+        "phase": pvc.get("status", {}).get("phase"),
+        "retained": True,
+        "automatic_delete": False,
+    }
+    if evidence_volume is not None:
+        pv = kube.json(
+            "get", "pv", evidence_volume["pv_name"],
+            timeout=remaining_timeout(deadline, 30, "retained PV identity"),
+        )
+        observed = validate_evidence_volume(pvc, pv)
+        if any(evidence_volume.get(key) != value for key, value in observed.items()):
+            raise ValueError("retained evidence volume identity changed")
+        result["recovery_identity"] = evidence_volume
+    return result
 
 
 def execute_window(args, kube=None) -> dict:
@@ -725,6 +891,7 @@ def execute_window(args, kube=None) -> dict:
     deployment = None
     owned_objects = []
     pod_identity = None
+    evidence_volume = None
     workload = None
     vm_stream = None
     mirror = None
@@ -772,11 +939,45 @@ def execute_window(args, kube=None) -> dict:
                 raise TimeoutError("worker Pod readiness expired")
             time.sleep(1)
         pod = pod_identity["pod_name"]
+        pvc = kube.json("get", "pvc", pod_topology.EVIDENCE_PVC)
+        pv = kube.json("get", "pv", pvc["spec"]["volumeName"])
+        evidence_volume = validate_evidence_volume(pvc, pv)
+        created_claim = next(
+            item for item in owned_objects
+            if item["kind"] == "PersistentVolumeClaim"
+        )
+        if created_claim["uid"] != evidence_volume["pvc_uid"]:
+            raise ValueError("created evidence PVC UID changed")
+        mount_permissions = json.loads(kube.exec_python(
+            pod,
+            "import json,os,stat;from pathlib import Path;"
+            "p=Path('/q04-evidence');s=os.lstat(p);m=stat.S_IMODE(s.st_mode);"
+            "print(json.dumps({'process_uid':os.getuid(),'process_gid':os.getgid(),"
+            "'mount_uid':s.st_uid,'mount_gid':s.st_gid,'mode':oct(m),"
+            "'directory':stat.S_ISDIR(s.st_mode),'symlink':stat.S_ISLNK(s.st_mode),"
+            "'writable':os.access(p,os.W_OK),'group_write':bool(m & stat.S_IWGRP)}))",
+        ))
+        evidence_volume["mount_permissions"] = validate_evidence_mount_permissions(
+            mount_permissions
+        )
+        stage_volume_identity = (
+            "from pathlib import Path;import json,sys;"
+            "sys.path.insert(0,'/workspace/tests/pdf_processing/q04');"
+            "from pod_durable_evidence import write_once;"
+            "write_once(Path('/q04-evidence/evidence-volume-identity.json'),json.loads(sys.stdin.read()))"
+        )
+        kube.run(
+            ["exec", "-i", pod, "--", "/experiment/.venv/bin/python", "-c", stage_volume_identity],
+            input=json.dumps(evidence_volume, sort_keys=True),
+        )
+        (OUT / "evidence-volume-identity.json").write_text(
+            json.dumps(evidence_volume, indent=2) + "\n"
+        )
         preflight = kube.exec_python(
             pod,
             "from pathlib import Path;import json,sys;sys.path.insert(0,'/workspace/tests/pdf_processing/q04');"
             "from pod_workload import no_inference_preflight;"
-            "print(json.dumps(no_inference_preflight(Path('/workspace'),Path('/q04-control'),Path('/experiment/PROTOTYPE-wipe-me/hf'))))",
+            "print(json.dumps(no_inference_preflight(Path('/workspace'),Path('/q04-evidence'),Path('/experiment/PROTOTYPE-wipe-me/hf'))))",
         )
         (OUT / "pod-no-inference-preflight.json").write_text(preflight)
         subprocess.run(
@@ -836,8 +1037,8 @@ def execute_window(args, kube=None) -> dict:
                         kube.exec_python(
                             pod,
                             "from pathlib import Path;import json;"
-                            "s=json.loads(Path('/q04-control/supervisor-ownership.json').read_text());"
-                            "w=json.loads(Path('/q04-control/ownership.json').read_text());"
+                            "s=json.loads(Path('/q04-evidence/supervisor-ownership.json').read_text());"
+                            "w=json.loads(Path('/q04-evidence/ownership.json').read_text());"
                             "print(json.dumps({'pid':s['pid'],'start_ticks':s['start_ticks'],"
                             "'config_sha256':w['config_sha256']}))",
                         )
@@ -851,7 +1052,7 @@ def execute_window(args, kube=None) -> dict:
                     )
                     kube.run(
                         ["exec", "-i", pod, "--", "/experiment/.venv/bin/python", "-c",
-                         "from pathlib import Path;import sys;Path('/q04-control/transport-identity.json').open('x').write(sys.stdin.read())"],
+                         "from pathlib import Path;import sys;Path('/q04-evidence/transport-identity.json').open('x').write(sys.stdin.read())"],
                         input=json.dumps(identity.__dict__, sort_keys=True),
                     )
                     mirror = IncrementalEvidenceMirror(
@@ -871,7 +1072,7 @@ def execute_window(args, kube=None) -> dict:
                 transport_submitted_at = None
             if mirror is not None and transport_future is None and time.monotonic() >= next_transport:
                 transport_future = transport_pool.submit(
-                    pull_once, mirror, CONTROL,
+                    pull_once, mirror, EVIDENCE,
                     lambda program: kube.exec_python(pod, program),
                     now=time.monotonic,
                 )
@@ -912,7 +1113,7 @@ def execute_window(args, kube=None) -> dict:
         while not set(FINAL_REQUIRED).issubset(mirror.complete):
             remaining_timeout(evidence_deadline, 30, "complete evidence drain")
             pull_once(
-                mirror, CONTROL,
+                mirror, EVIDENCE,
                 lambda program: kube.exec_python(
                     pod, program,
                     timeout=remaining_timeout(
@@ -922,6 +1123,9 @@ def execute_window(args, kube=None) -> dict:
                 now=time.monotonic,
             )
         result = mirror.finalize(require_success=True)
+        verify_terminal_volume_identity(
+            OUT / "evidence/durable-terminal-manifest.json", evidence_volume
+        )
         (OUT / "transport-ledger.json").write_text(
             json.dumps({"records": mirror.records, "result": result}, indent=2) + "\n"
         )
@@ -938,7 +1142,7 @@ def execute_window(args, kube=None) -> dict:
         mirror.verify_archive_fingerprint(json.loads(before_archive))
         with (OUT / "pod-control-evidence.tar").open("xb") as output:
             subprocess.run(
-                kube.base + ["exec", pod, "--", "tar", "cf", "-", "-C", CONTROL, "."],
+                kube.base + ["exec", pod, "--", "tar", "cf", "-", "-C", EVIDENCE, "."],
                 check=True,
                 timeout=remaining_timeout(evidence_deadline, 120, "success evidence export"),
                 stdout=output,
@@ -1042,7 +1246,7 @@ def execute_window(args, kube=None) -> dict:
                                 recovery_deadline, 30, "failure evidence drain"
                             )
                             pull_once(
-                                mirror, CONTROL,
+                                mirror, EVIDENCE,
                                 lambda program: kube.exec_python(
                                     pod, program,
                                     timeout=remaining_timeout(
@@ -1072,7 +1276,7 @@ def execute_window(args, kube=None) -> dict:
                     mirror.verify_archive_fingerprint(json.loads(before_archive))
                 with (OUT / "pod-control-failure-evidence.tar").open("xb") as output:
                     subprocess.run(
-                        kube.base + ["exec", pod, "--", "tar", "cf", "-", "-C", CONTROL, "."],
+                        kube.base + ["exec", pod, "--", "tar", "cf", "-", "-C", EVIDENCE, "."],
                         check=True,
                         timeout=remaining_timeout(
                             recovery_deadline, 120, "failure evidence export"
@@ -1096,12 +1300,18 @@ def execute_window(args, kube=None) -> dict:
                 evidence_captured = True
             except BaseException as capture_error:
                 cleanup["evidence_capture_error"] = repr(capture_error)
-        # Never destroy the only remaining evidence source. If export fails the
-        # stopped, UID-bound Pod is retained for explicit recovery.
-        cleanup_allowed = evidence_captured or pod_identity is None
-        cleanup["retained_for_evidence_recovery"] = bool(
-            pod_identity is not None and not evidence_captured
+        # The PVC is the durable evidence source. Always stop and remove owned
+        # runtime objects; export failure retains the PVC, never the worker Pod.
+        policy = cleanup_policy(
+            controller_export_complete=evidence_captured,
+            deployment_created=deployment is not None,
+            pvc_created=any(
+                item["kind"] == "PersistentVolumeClaim" for item in owned_objects
+            ),
         )
+        cleanup["policy"] = policy
+        cleanup["controller_export_complete"] = evidence_captured
+        cleanup["retained_for_evidence_recovery"] = False
         cleanup["terminal_stop_proven"] = terminal_stop_proven
         if pod_identity is not None:
             try:
@@ -1121,7 +1331,7 @@ def execute_window(args, kube=None) -> dict:
             except BaseException as terminal_sample_error:
                 cleanup["terminal_cgroup_oom_proof"] = False
                 cleanup["terminal_cgroup_sample_error"] = repr(terminal_sample_error)
-        if deployment is not None and cleanup_allowed:
+        if policy["remove_owned_runtime"]:
             try:
                 cleanup.update(
                     cleanup_deployment_and_pod(
@@ -1130,18 +1340,32 @@ def execute_window(args, kube=None) -> dict:
                 )
             except BaseException as runtime_cleanup_error:
                 cleanup["runtime_cleanup_error"] = repr(runtime_cleanup_error)
-        deletion = (
-            delete_owned_objects(kube, owned_objects, deadline=cleanup_deadline)
-            if cleanup_allowed
-            else {"deleted": [], "errors": {"retained": "evidence recovery incomplete"}}
+        deletion = delete_owned_objects(
+            kube, owned_objects, deadline=cleanup_deadline
         )
         cleanup["owned_object_deletion"] = deletion
+        expected_deleted = [
+            item for item in owned_objects
+            if item["kind"] != "PersistentVolumeClaim"
+        ]
         cleanup["owned_objects_deleted_with_uid_preconditions"] = (
-            len(deletion["deleted"]) == len(owned_objects) and not deletion["errors"]
+            deletion["deleted"] == list(reversed(expected_deleted))
+            and not deletion["errors"]
         )
+        pvc_expected = policy["retain_evidence_pvc"]
+        pvc_retained = False
+        if pvc_expected:
+            try:
+                cleanup["retained_evidence_claim"] = verify_retained_evidence_claim(
+                    kube,
+                    owned_objects,
+                    evidence_volume,
+                    deadline=cleanup_deadline,
+                )
+                pvc_retained = True
+            except BaseException as retained_error:
+                cleanup["retained_evidence_claim_error"] = repr(retained_error)
         try:
-            if not cleanup_allowed:
-                raise ValueError("owned Pod retained for evidence recovery")
             verify_outer_identity(kube, deadline=cleanup_deadline)
             t09a_health(
                 kube, OUT / "pod-cgroup-health-after-cleanup.json",
@@ -1162,6 +1386,16 @@ def execute_window(args, kube=None) -> dict:
         except BaseException as final_error:
             cleanup["final_identity_and_health"] = False
             cleanup["final_identity_or_health_error"] = repr(final_error)
+        api_cleanup_confirmed = (
+            not cleanup.get("runtime_cleanup_error")
+            and cleanup.get("owned_objects_deleted_with_uid_preconditions") is True
+            and cleanup.get("final_identity_and_health") is True
+        )
+        cleanup["disposition"] = cleanup_disposition(
+            api_cleanup_confirmed=api_cleanup_confirmed,
+            pvc_retained=pvc_retained,
+            pvc_expected=pvc_expected,
+        )
         OUT.mkdir(exist_ok=True)
         (OUT / "outer-cleanup.json").write_text(json.dumps(cleanup, indent=2) + "\n")
         if primary_error is None and (
@@ -1170,6 +1404,7 @@ def execute_window(args, kube=None) -> dict:
             or not cleanup.get("post_cleanup_vm_oom_proof")
             or not cleanup.get("owned_objects_deleted_with_uid_preconditions")
             or not cleanup.get("final_identity_and_health")
+            or cleanup.get("disposition") != "CLEANED_WITH_DURABLE_EVIDENCE"
         ):
             raise RuntimeError("owned Pod cleanup or final health proof failed")
 

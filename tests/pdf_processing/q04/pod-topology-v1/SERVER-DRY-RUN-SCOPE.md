@@ -25,7 +25,7 @@ from the cluster.
 
 ## Proposed API action
 
-A future server-side dry-run would submit the three objects in `WORKER.yaml` to
+A future server-side dry-run would submit the four objects in `WORKER.yaml` to
 the API server with the Kubernetes `dryRun=All` option. Although the API server
 would not persist the objects, the complete object bodies would leave the local
 process and be received and processed by the API endpoint above. It is therefore
@@ -33,7 +33,7 @@ an external transmission of the embedded source and evidence payload, unlike
 the completed `--dry-run=client --validate=false` parse.
 
 The rendered manifest SHA-256 is
-`833cef7dce62f95722d7e442f367543bc8df76ca67e1dbb34c94061ecf099f70` and
+`d50fa041caafe6d6138265940be3199541bd7f4fb071b5443bd0748a3a403d67` and
 contains:
 
 1. Immutable ConfigMap `q04-pod-code-a6501b471bd3193a`: 20 frozen production
@@ -43,7 +43,7 @@ contains:
    relationships, routing, supervision, Temporal integration, and the warm
    parser child. Purpose: mount the exact reviewed producer read-only at
    `/workspace/src/pdf_processing`.
-2. Immutable ConfigMap `q04-pod-harness-ddc75e310eee25a8`: 46 files, 411,361
+2. Immutable ConfigMap `q04-pod-harness-b371166fdfa8f6da`: 47 files, 420,950
    UTF-8 bytes. Content types are Python runner/controller/worker/telemetry and
    oracle code; JSON fixture, oracle, review, budget, resource-analysis,
    integration, and historical-method evidence; and the deployment worker
@@ -51,9 +51,15 @@ contains:
    at `/workspace`, including fresh/restored/exact-replay graph and source
    evidence checks, the Pod workload/init/transport adapters, and the 250 ms
    resource attribution collector.
-3. Inactive Deployment `q04-pod-cgroup-a-activities`, initially `replicas: 0`.
+3. PVC `q04-pod-cgroup-a-evidence-20260919-a`: 1 GiB, RWO, Filesystem,
+   `standard`, no owner reference and automatic deletion disabled. Purpose:
+   persist only state, raw evidence, cleanup markers and the terminal inventory
+   across exact worker-Pod deletion. It contains no source or fixture payload at
+   create time.
+4. Inactive Deployment `q04-pod-cgroup-a-activities`, initially `replicas: 0`.
    Purpose: define the pinned one-container UID/GID-1000 worker Pod, immutable
    image, read-only source projections, scoped Secret references, emptyDirs,
+   evidence-PVC mount,
    resource request/limit, security context, queues, and service addresses. A
    dry-run submits Secret *references* but does not submit or read Secret values.
 
@@ -66,6 +72,7 @@ part of the dry-run.
 
 The earlier server-side dry-run was rejected and must not be retried or
 repackaged. Any future request must name this exact endpoint, manifest digest,
-three-object scope, and source-bearing ConfigMap payload. Client-side parsing is
+four-object scope, source-bearing ConfigMap payload and retained-PVC lifecycle.
+Client-side parsing is
 only syntax/rendering evidence; it is not server schema, admission, defaulting,
 or policy evidence.

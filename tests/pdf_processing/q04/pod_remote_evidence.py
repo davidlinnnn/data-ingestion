@@ -19,6 +19,7 @@ from typing import Callable
 STREAM_FILES = {
     "state/yolo-pod-cgroup-a-measurement/resource-attribution.jsonl",
     "vm-controller.jsonl",
+    "workload.log",
 }
 FINAL_REQUIRED = {
     "state/yolo-pod-cgroup-a/phase-complete.json",
@@ -38,6 +39,8 @@ FINAL_REQUIRED = {
     "state/yolo-pod-cgroup-a-measurement/measurement-contract.json",
     "workload-exit.json",
     "cleanup-complete.json",
+    "durable-terminal-manifest.json",
+    "workload.log",
     "init-exit.json",
     "state/config.json",
     "state/pod-init.json",
@@ -52,6 +55,9 @@ ROOT_ALLOWED = {
     "init-exit.json",
     "workload-exit.json",
     "cleanup-complete.json",
+    "durable-terminal-manifest.json",
+    "evidence-volume-identity.json",
+    "workload.log",
     "state/config.json",
     "state/pod-init.json",
 }
@@ -119,7 +125,7 @@ for path in sorted(root.rglob('*')):
  if path.is_symlink(): raise ValueError('evidence symlink forbidden: '+str(path))
  if not path.is_file(): continue
  name=path.relative_to(root).as_posix()
- if name=='inputs' or name.startswith('inputs/') or name=='workload.log': continue
+ if name=='inputs' or name.startswith('inputs/'): continue
  if name not in allowed and not any(name.startswith(prefix) for prefix in prefixes):
   raise ValueError('unexpected evidence path: '+name)
  start=offsets.get(name,0)
@@ -268,6 +274,61 @@ class IncrementalEvidenceMirror:
         if incomplete:
             raise ValueError("required evidence incomplete: " + ", ".join(incomplete))
         if require_success:
+            terminal = json.loads(
+                self._path("durable-terminal-manifest.json").read_text()
+            )
+            inventory = terminal.get("inventory")
+            if (
+                terminal.get("schema_version") != 1
+                or terminal.get("terminal") is not True
+                or terminal.get("status") != "PASS_CANDIDATE"
+                or terminal.get("workload_succeeded") is not True
+                or terminal.get("cleanup_complete") is not True
+                or not isinstance(inventory, list)
+            ):
+                raise ValueError("durable terminal evidence is incomplete")
+            inventory_digest = sha256(
+                json.dumps(
+                    inventory, sort_keys=True, separators=(",", ":")
+                ).encode()
+            )
+            if terminal.get("inventory_sha256") != inventory_digest:
+                raise ValueError("durable terminal inventory digest mismatch")
+            observed = []
+            inventory_paths = [item.get("path") for item in inventory]
+            if (
+                not all(isinstance(path, str) and path for path in inventory_paths)
+                or inventory_paths != sorted(inventory_paths)
+                or len(set(inventory_paths)) != len(inventory_paths)
+            ):
+                raise ValueError("durable terminal inventory paths are invalid")
+            for item in inventory:
+                relative = item.get("path")
+                target = self._path(relative)
+                raw = target.read_bytes()
+                observed.append(
+                    {"path": relative, "bytes": len(raw), "sha256": sha256(raw)}
+                )
+                if relative not in self.complete:
+                    raise ValueError("durable inventory member is incomplete")
+            if observed != inventory:
+                raise ValueError("durable terminal inventory readback mismatch")
+            capacity = terminal.get("capacity", {})
+            terminal_bytes = self._path(
+                "durable-terminal-manifest.json"
+            ).stat().st_size
+            inventory_bytes = sum(item["bytes"] for item in inventory)
+            final_logical_bytes = inventory_bytes + terminal_bytes
+            if (
+                capacity.get("requested_bytes") != 1_073_741_824
+                or capacity.get("evidence_used_bytes") != inventory_bytes
+                or capacity.get("evidence_free_bytes")
+                != 1_073_741_824 - inventory_bytes
+                or final_logical_bytes > 939_524_096
+                or capacity.get("filesystem_free_bytes", -1) - terminal_bytes
+                < 134_217_728
+            ):
+                raise ValueError("durable terminal capacity watermark breached")
             summary = json.loads(
                 self._path(
                     "state/yolo-pod-cgroup-a-measurement/measurement-contract.json"

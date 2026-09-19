@@ -34,6 +34,8 @@ MEMORY_REQUEST = "4Gi"
 MEMORY_LIMIT = "5Gi"
 EPHEMERAL_REQUEST = "3Gi"
 EPHEMERAL_LIMIT = "4Gi"
+EVIDENCE_PVC = "q04-pod-cgroup-a-evidence-20260919-a"
+EVIDENCE_STORAGE = "1Gi"
 CGROUP_SAMPLE_GUARD_BYTES = 4 * 1024**3
 VM_ADMISSION_BYTES = 4_831_838_208
 VM_RUNTIME_FLOOR_BYTES = 1_610_612_736
@@ -61,6 +63,7 @@ POD_ONLY_FILES = (
     "tests/pdf_processing/q04/pod_workload.py",
     "tests/pdf_processing/q04/pod_init.py",
     "tests/pdf_processing/q04/pod_remote_evidence.py",
+    "tests/pdf_processing/q04/pod_durable_evidence.py",
 )
 HARNESS_FILES = {
     name: ROOT / name for name in sorted(set(FROZEN_TEST_FILES + POD_ONLY_FILES))
@@ -129,6 +132,25 @@ def kubernetes_list() -> dict[str, Any]:
     maps = identity["config_maps"]
     producer_data, producer_items = _config_map_payload(producer, producer=True)
     harness_data, harness_items = _config_map_payload(harness, producer=False)
+    evidence_claim = {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+            "name": EVIDENCE_PVC,
+            "namespace": NAMESPACE,
+            "labels": {"q04-topology": PHASE, "q04-evidence": RUN_LABEL},
+            "annotations": {
+                "q04.openai/automatic-delete": "false",
+                "q04.openai/purpose": "durable-raw-evidence-only",
+            },
+        },
+        "spec": {
+            "accessModes": ["ReadWriteOnce"],
+            "resources": {"requests": {"storage": EVIDENCE_STORAGE}},
+            "storageClassName": "standard",
+            "volumeMode": "Filesystem",
+        },
+    }
     deployment = {
         "apiVersion": "apps/v1",
         "kind": "Deployment",
@@ -226,10 +248,16 @@ def kubernetes_list() -> dict[str, Any]:
                                 {"name": "workspace", "mountPath": "/workspace", "readOnly": True},
                                 {"name": "scratch", "mountPath": "/scratch"},
                                 {"name": "control", "mountPath": "/q04-control"},
+                                {"name": "evidence", "mountPath": "/q04-evidence"},
                                 {"name": "tmp", "mountPath": "/tmp"},
                             ],
                             "readinessProbe": {
-                                "exec": {"command": ["test", "-d", "/q04-control"]},
+                                "exec": {
+                                    "command": [
+                                        "/bin/sh", "-c",
+                                        "test -d /q04-control && test -w /q04-evidence",
+                                    ]
+                                },
                                 "periodSeconds": 2,
                                 "failureThreshold": 15,
                             },
@@ -257,6 +285,10 @@ def kubernetes_list() -> dict[str, Any]:
                         },
                         {"name": "scratch", "emptyDir": {"sizeLimit": "2Gi"}},
                         {"name": "control", "emptyDir": {"sizeLimit": "256Mi"}},
+                        {
+                            "name": "evidence",
+                            "persistentVolumeClaim": {"claimName": EVIDENCE_PVC},
+                        },
                         {"name": "tmp", "emptyDir": {"sizeLimit": "512Mi"}},
                     ],
                 },
@@ -281,6 +313,7 @@ def kubernetes_list() -> dict[str, Any]:
                 "immutable": True,
                 "data": harness_data,
             },
+            evidence_claim,
             deployment,
         ],
     }
@@ -290,7 +323,19 @@ def validate(value: dict[str, Any]) -> dict[str, Any]:
     expected = kubernetes_list()
     if value != expected:
         raise ValueError("rendered topology differs from fixed builder")
-    deployment = value["items"][2]
+    if len(value["items"]) != 4 or value["items"][2]["kind"] != "PersistentVolumeClaim":
+        raise ValueError("exact dedicated evidence PVC required")
+    claim = value["items"][2]
+    if claim["metadata"].get("ownerReferences"):
+        raise ValueError("evidence PVC must not be garbage-collected with the Pod")
+    if claim["spec"] != {
+        "accessModes": ["ReadWriteOnce"],
+        "resources": {"requests": {"storage": "1Gi"}},
+        "storageClassName": "standard",
+        "volumeMode": "Filesystem",
+    }:
+        raise ValueError("evidence PVC contract changed")
+    deployment = value["items"][3]
     container = deployment["spec"]["template"]["spec"]["containers"][0]
     if deployment["spec"]["replicas"] != 0:
         raise ValueError("offline topology must remain inactive")
@@ -314,6 +359,11 @@ def validate(value: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("service-account token must remain disabled")
     if "envFrom" in container:
         raise ValueError("whole-Secret injection is forbidden")
+    mounts = {item["name"]: item for item in container["volumeMounts"]}
+    if mounts["evidence"]["mountPath"] != "/q04-evidence":
+        raise ValueError("durable evidence mount changed")
+    if mounts["scratch"]["mountPath"] != "/scratch":
+        raise ValueError("scratch drain semantics changed")
     return {
         "status": "PASS_OFFLINE_ONLY",
         "runtime_authorized": False,

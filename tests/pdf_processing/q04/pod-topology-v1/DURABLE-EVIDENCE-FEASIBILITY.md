@@ -1,7 +1,8 @@
 # Durable evidence feasibility
 
-Status: **offline design only; `NOT_RUNTIME_READY`**. No PVC, object, Pod, or
-workflow was created while preparing this note.
+Status: **Option A implemented and locally fault-tested; `READY_FOR_AUTHORIZATION`**.
+No PVC, object, Pod, workflow, source upload, or inference was created while
+implementing it.
 
 ## Existing capability
 
@@ -19,7 +20,7 @@ Consequently:
   guarantee scale-to-zero or Pod deletion. Durable evidence does not fix that
   control-plane failure.
 
-## Option A: dedicated owned evidence PVC — recommended
+## Option A: dedicated run-owned evidence PVC — implemented
 
 Create one run-identity-named RWO PVC in `pdf-t09a-validation`, bind it to the
 pinned worker node through the existing `WaitForFirstConsumer` behavior, and
@@ -34,24 +35,53 @@ but retain the PVC. A later read-only recovery Pod can mount the claim on the
 same node and recover evidence without the original worker or source-bearing
 ConfigMaps.
 
-Required acceptance details:
+The fixed claim is `q04-pod-cgroup-a-evidence-20260919-a`: RWO, `standard`,
+Filesystem, 1 GiB, no owner reference, and an explicit automatic-delete=false
+annotation. `/q04-evidence` is the only durable evidence/state root. The private
+input bundle and capacity record remain on `/q04-control`; parser scratch remains
+the separate `/scratch` emptyDir. Cleanup deletes the exact Pod, Deployment and
+source ConfigMaps by recorded UID while retaining the claim on every exit.
 
-- capacity-size the claim before the window; 1 GiB is only a proposal, not an
-  established bound;
+The capacity decision is recorded in `EVIDENCE-CAPACITY.json`. Four retained
+fixture-07 archives were inventoried locally. The largest archive was 26,316,800
+bytes; its members totalled 26,220,356 bytes across 101 files. The maximum JSONL
+file was 4,234,743 bytes and the maximum aggregate JSONL payload was 4,712,396
+bytes. The claim reserves its final 128 MiB and stops before logical evidence
+exceeds 896 MiB, leaving 939,524,096 usable bytes, 35.83 times the observed
+maximum uncompressed inventory. This is headroom, not a future size guarantee.
+
+Implemented acceptance details:
+
+- the controller samples logical evidence bytes and filesystem free bytes; the
+  Pod-local writer rejects a record before it crosses the same 128 MiB reserve;
 - use a new claim name/UID and never reuse or overwrite historical evidence;
-- fsync completed records/manifests and record an append-only durable inventory;
+- every record uses create-only temporary write, flush, file fsync, atomic
+  replace and directory fsync; the terminal path fsyncs completed files and
+  directories before committing its immutable inventory;
 - a terminal PASS requires a read-back-verified terminal manifest, complete
   inventory, cleanup markers, and stable hashes;
 - missing terminal manifest, partial file, failed fsync, or recovery-only PVC is
   `INCOMPLETE`, never PASS;
-- do not give the Deployment an owner reference that garbage-collects the PVC;
+- neither the Deployment nor any other object owns the PVC;
 - PVC deletion is a separate destructive action and is disabled by default.
 
-This is the smallest design that removes Pod `emptyDir` as the sole evidence
-copy while preserving the current one-container/cgroup topology. It adds one
-Kubernetes object and one volume mount, so a future runtime authorization must
-explicitly include PVC creation, retention, capacity, node locality, and later
-deletion policy.
+The terminal manifest is committed only after cleanup markers exist, then read
+back with every inventory size and SHA-256. `PASS_CANDIDATE` means only that this
+Pod-local durable protocol succeeded; the outer controller must still validate
+the graph/oracles, transport ledger, resource guards, cleanup, claim UID and
+post-cleanup health before accepting the run. Missing terminal, partial
+`.incomplete` file, capacity stop, failed fsync, missing inventory member,
+digest mismatch, PVC/PV/node identity mismatch, export failure, or API cleanup
+uncertainty cannot produce a runner PASS.
+
+On controller export failure, the runner still stops submission, terminates the
+exact owned process group, scales the exact Deployment to zero, deletes the
+exact Pod and source objects, and retains the PVC. A separately authorized
+recovery helper must mount that exact claim read-only on the recorded node and
+record claim UID, PV UID, node, access mode, run UID/GID/fsGroup and filesystem
+permissions before copying data. If the API is unreachable, the cleanup record
+is `NEEDS_INTERVENTION`; it never claims the Pod is stopped or the claim is
+retained without API proof.
 
 ## Option B: incremental MinIO evidence — feasible with a bounded loss window
 
@@ -73,14 +103,12 @@ immutable `put_once`, digest/read-back verification, and bounded inventory, but
 its workflow artifact registration is not itself a raw diagnostic evidence
 protocol.
 
-## Decision
+## Decision and remaining gate
 
-Recommend Option A for the next revision because it separates raw evidence from
-workflow objects, survives worker deletion without a final network upload, and
-requires less new failure-state logic. Option B is reasonable only if accepting
-an explicitly bounded last-upload loss window and `INCOMPLETE` disposition.
+Option A is the implemented path. Option B remains an unselected design. The
+runner is ready for main-session review and a new explicit authorization whose
+scope includes the four-object payload, claim retention, and fixed digest.
 
-Neither option authorizes server-side dry-run, source upload, PVC creation,
-runtime execution, inference, service pause/resume, or historical artifact
-deletion. The current runner remains `NOT_RUNTIME_READY` until one durable path
-is implemented, locally tested, reviewed, and separately authorized.
+This implementation does not authorize server-side dry-run, source upload, PVC
+creation, runtime execution, inference, service pause/resume, claim deletion,
+or historical artifact deletion. The 32 held Deployments remain off.

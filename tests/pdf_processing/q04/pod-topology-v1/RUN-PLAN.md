@@ -34,10 +34,12 @@ run identity must be frozen in its own reviewed runner. This preparation does
 not authorize those runs.
 
 The worker mounts disk-backed `emptyDir` volumes of 2 GiB at `/scratch`, 256 MiB
-at `/q04-control`, and 512 MiB at `/tmp`. The Pod requests 3 GiB and is limited
-to 4 GiB of ephemeral storage. The control volume receives only the exact run
-config and worker-owned evidence. Source, models and object-store results do not
-use it. The model cache remains the image's verified
+at `/q04-control`, and 512 MiB at `/tmp`, plus the run-named 1 GiB RWO PVC at
+`/q04-evidence`. The Pod requests 3 GiB and is limited to 4 GiB of ephemeral
+storage. `/q04-control` receives only the private input bundle and capacity
+record. All state and evidence records use `/q04-evidence`; parser scratch stays
+on `/scratch`. Source, models and object-store results do not use the claim. The
+model cache remains the image's verified
 `/experiment/PROTOTYPE-wipe-me/hf`; it is not a hostPath claim.
 
 The Pod does not mount a service-account token. It runs as UID/GID 1000 with a
@@ -90,18 +92,23 @@ explicit authorization and a new runner identity before any command is run.
    ID remains `sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce`.
 2. Repeat the admission checks above. Record coordinator, node, service, Secret
    and all 32 held Deployment UIDs. Do not read or print Secret values.
-3. Atomically `create` each Kubernetes object while the Deployment still has
-   `replicas: 0`. Record only UIDs returned by successful creates; an
+3. Atomically `create` the two immutable ConfigMaps, the run-named PVC and the
+   Deployment while it still has `replicas: 0`. Record only UIDs returned by
+   successful creates; an
    `AlreadyExists` response proves no ownership and stops the run. Then scale
    only the exact Deployment UID to one.
    Before submission, prove the read-only-root and UID-1000 file contract with a
    no-inference preflight. Require one ready Pod, one container, restart count
    zero, the pinned image ID, `memory.max=5 GiB`, and fresh zero OOM counters.
-4. Copy the fixed private fixture bundle and capacity record into
-   `/q04-control`, then start exactly the `workload_argv` frozen in
+4. Require the claim to be Bound to a PV whose claim UID, namespace and node
+   affinity match the created PVC and pinned node. Persist the PVC/PV/node and
+   UID/GID/fsGroup recovery identity on the claim. Copy the fixed private
+   fixture bundle and capacity record into `/q04-control`, then start exactly
+   the `workload_argv` frozen in
    `RUNNER-MANIFEST.json`. The outer controller retains Pod UID, container ID,
    supervisor PID/start identity, capacity/config hashes and queue names before
-   submission. The remote-evidence adapter copies only complete byte ranges and
+   submission. The remote-evidence adapter copies only complete byte ranges
+   from `/q04-evidence` and
    complete JSONL records; sequence, offset, digest, identity or transport-gap
    failure closes the run. Transport excludes the staged input bundle and runs
    independently of the 250 ms VM sampling loop. Every envelope verifies live
@@ -131,7 +138,8 @@ runner talks only to the Kubernetes API, the worker2 VM view, and the coordinato
 health probe. The Pod config independently binds Temporal to `temporal:7233` and
 MinIO to `http://objects:9000`; it never inherits a controller-local endpoint.
 The private bundle is copied explicitly, and incremental evidence is streamed
-from `/q04-control` without a shared-filesystem assumption.
+from `/q04-evidence` without a shared-filesystem assumption. The claim is the
+durable source; the controller mirror and archive are verified exports.
 
 ## Implemented runner and fixed budget
 
@@ -152,9 +160,11 @@ apply, bundle transfer, readiness and the no-inference UID-1000 preflight. The
 runner stops new work when that envelope cannot be preserved. Every wait is
 capped by the same absolute lease end. The Pod-local controller starts
 cooperative drain inside its 825-second allocation; it does not add a second
-grace period. If final evidence export fails, the runner stops work but retains
-the UID-bound Pod and objects for explicit recovery instead of deleting the only
-remaining evidence source.
+grace period. Every record is committed by flush, file fsync, atomic replace and
+directory fsync. The terminal manifest is written only after file/directory sync
+and read back with the full inventory. If final controller export fails, the
+runner still deletes the exact Pod and source objects and retains the PVC for
+separately authorized read-only recovery.
 
 After a separate main-session capacity authorization, the exact single-run
 command is the `exact_single_run_command` value in `RUNNER-MANIFEST.json`. Its
@@ -163,11 +173,13 @@ file. Importing the runner or invoking `--offline-check` is local-only and canno
 create Kubernetes resources.
 
 The live command performs these mutable operations and therefore requires that
-separate approval: upload the two private immutable ConfigMaps and create the
-inactive Deployment atomically; scale only its recorded UID/resourceVersion from zero to
-one; copy the private fixture bundle and capacity record into the owned
-`emptyDir`; create new-prefix object-store records and run the three workflows;
-then scale to zero and delete only the recorded objects with UID preconditions.
+separate approval: upload the two private immutable ConfigMaps, create the
+retained 1 GiB PVC and inactive Deployment atomically; scale only its recorded
+UID/resourceVersion from zero to one; copy the private fixture bundle and
+capacity record into the owned `emptyDir`; create new-prefix object-store
+records and run the three workflows; then scale to zero and delete only the
+recorded Pod, Deployment and ConfigMaps with UID preconditions. The PVC has no
+owner reference and is never auto-deleted.
 The earlier rejected server-side dry-run must not be retried. The local JSON
 parse and client rendering checks are not Kubernetes schema or admission proof.
 
@@ -197,6 +209,13 @@ requires:
    Deployment UIDs still at replicas/ready zero.
 
 Delete the owned Deployment and immutable ConfigMaps only with recorded UID
-preconditions after exporting their specs, logs, sample stream and cleanup
-proof. Preserve object-store evidence and all historical reviewed-B artifacts.
-Do not restore the 32 held Deployments.
+preconditions. Retain the exact PVC even when controller transport or archive
+export fails. Re-read its UID and, once bound, its PV UID/node affinity before
+claiming cleanup success. API unreachability or an unverifiable Pod/PVC identity
+sets `NEEDS_INTERVENTION`; it does not assert that runtime stopped. A later
+recovery window must mount the exact claim read-only on the recorded node,
+record its permissions and UID/GID/fsGroup, run terminal-manifest inventory
+readback, and copy evidence without starting Temporal or inference. Claim
+deletion requires a separate destructive authorization. Preserve object-store
+evidence and all historical reviewed-B artifacts. Do not restore the 32 held
+Deployments.
