@@ -27,13 +27,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_direct_reusable_and_unrun_runtime_evidence_stay_distinct(self):
         fixtures = {row["id"]: row for row in self.matrix["fixtures"]}
-        for fixture_id in ("09", "10"):
+        for fixture_id in ("07", "09", "10"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"proven"})
             self.assertEqual(fixtures[fixture_id]["q04_fresh_index"], "proven")
         self.assertEqual(set(fixtures["08"]["modes"].values()), {"unproven"})
         self.assertEqual(fixtures["08"]["q04_fresh_index"], "unproven")
         self.assertEqual(fixtures["08"]["historical_reference"], "reusable")
-        for fixture_id in ("native", "06", "07"):
+        for fixture_id in ("native", "06"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"unproven"})
         yolo_attempt = fixtures["07"]["attempts"][0]
         self.assertEqual(yolo_attempt["outcome"], "failed_cgroup_guard")
@@ -99,33 +99,22 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
 
-    def test_next_step_is_reviewed_candidate_window_not_runtime_authorization(self):
-        step = self.matrix["next_step"]
-        self.assertEqual(
-            step["kind"], "authorize_reviewed_yolo_candidate_window_after_commit_review"
-        )
-        self.assertEqual(step["fixture"], "07")
-        self.assertEqual(step["runtime_result"], "FAIL_GRAPH_AND_RESOURCE_GATES")
-        self.assertEqual(step["candidate_status"], "REVIEWED_INACTIVE")
-        self.assertTrue((ROOT / step["diagnosis"]).is_file())
-        self.assertTrue((ROOT / step["resource_decision"]).is_file())
-        self.assertTrue((ROOT / step["equivalence_candidate"]).is_file())
-        self.assertTrue((ROOT / step["resource_candidate"]).is_file())
-        self.assertTrue((ROOT / step["integration_manifest"]).is_file())
-        self.assertTrue((ROOT / step["offline_manifest"]).is_file())
-        self.assertTrue((ROOT / step["runner"]).is_file())
-        self.assertFalse(step["runtime_authorized"])
-        self.assertFalse(step["automatic_retry"])
-        self.assertFalse(step["requires_main_disposition"])
-        self.assertTrue(step["requires_new_runtime_authorization"])
-        self.assertTrue(step["single_execution"])
-        self.assertEqual(step["parser_max_requests"], 1)
-        self.assertFalse(step["other_fixture_policy_inherited"])
-        self.assertTrue(step["keep_current_guard"])
-        self.assertTrue(step["all_complete_sample_gate"])
-        self.assertTrue(step["historical_failure_preserved"])
-        self.assertTrue(step["historical_reference_unchanged"])
-        self.assertEqual(step["deployments_remain_closed"], 32)
+    def test_next_step_preserves_original_aima_policy_and_no_retry(self):
+        step = self.matrix['next_step']
+        self.assertEqual(step['kind'], 'execute_original_policy_aima_window_after_review')
+        self.assertEqual(step['fixture'], '08')
+        self.assertEqual(step['parser_max_requests'], 20)
+        self.assertFalse(step['automatic_retry'])
+        self.assertFalse(step['other_fixture_policy_inherited'])
+        self.assertTrue(step['keep_current_guard'])
+        self.assertEqual(step['deployments_remain_closed'], 32)
+        for key in ('integration_manifest', 'offline_manifest', 'runner'):
+            self.assertTrue((ROOT / step[key]).is_file())
+        evidence = Q04 / 'pod-topology-v12/first-window-evidence'
+        summary = json.loads((evidence / 'evidence/state/yolo-pod-cgroup-m-measurement/resource-attribution-summary.json').read_text())
+        self.assertTrue(summary['qualification_complete'])
+        self.assertEqual(summary['incomplete_samples'], 0)
+        self.assertEqual(json.loads((evidence / 'outer-cleanup.json').read_text())['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED')
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()
@@ -151,16 +140,9 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(row[5], fixture["oracle_and_full_graph"])
             self.assertEqual(row[6], fixture["q04_fresh_index"])
 
-        step = self.matrix["next_step"]
-        diagnosis = (ROOT / step["diagnosis"]).read_text()
-        resource = (ROOT / step["resource_decision"]).read_text()
-        self.assertIn("FAIL_GRAPH_GATE", diagnosis)
-        self.assertIn("PROPOSAL_NOT_ACTIVE", diagnosis)
-        self.assertIn("4,403,523,584", diagnosis)
-        self.assertIn("FAIL_RESOURCE_GATE", resource)
-        self.assertIn("max_requests=20", resource)
-        self.assertIn("post-cleanup", resource)
-        self.assertIn("automatic retry", document.lower())
+        self.assertIn('max_requests=1', document)
+        self.assertIn('request20', document)
+        self.assertIn('automatic retry', document.lower())
 
 
 if __name__ == "__main__":

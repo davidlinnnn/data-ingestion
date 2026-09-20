@@ -387,6 +387,23 @@
     "not_counted_as_pass": true
   },
   "next_step": {
+    "kind": "execute_original_policy_aima_window_after_review",
+    "fixture": "08",
+    "parser_max_requests": 20,
+    "runtime_authorized": true,
+    "runtime_started": false,
+    "requires_new_runtime_authorization": false,
+    "automatic_retry": false,
+    "single_execution": true,
+    "other_fixture_policy_inherited": false,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v13/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v13/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_n.py"
+  },
+  "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
     "fixture": "07",
     "runtime_result": "FAIL_GRAPH_AND_RESOURCE_GATES",

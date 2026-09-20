@@ -37,6 +37,8 @@ class YoloPodCgroupJRunnerTests(unittest.TestCase):
         self.assertEqual(measured.expected_prefix, runner.PREFIX)
         self.assertEqual(measured.expected_run_id, runner.RUN_IDENTITY)
         self.assertEqual(measured.name, runner.PHASE)
+        self.assertEqual(args.activity_queue, 'q04-pod-cgroup-n-08')
+        self.assertEqual(initialized.activity_queue, args.activity_queue)
 
     def volume_objects(self):
         pvc = {
