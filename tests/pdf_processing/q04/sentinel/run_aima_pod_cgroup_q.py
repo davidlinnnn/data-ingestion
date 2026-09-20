@@ -5,7 +5,11 @@ from __future__ import annotations
 import inspect
 import shlex
 from pathlib import Path
+import sys
 
+Q04 = Path(__file__).resolve().parent.parent
+if str(Q04) not in sys.path:
+    sys.path.insert(0, str(Q04))
 import pod_topology_q as pod_topology
 from pod_remote_evidence_q import (
     FINAL_REQUIRED,
