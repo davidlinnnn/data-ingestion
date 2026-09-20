@@ -1,0 +1,25 @@
+Completing activity as failed ({'activity_id': '2', 'activity_type': 'pdf_processing_step_v1', 'attempt': 1, 'namespace': 'default', 'task_queue': 'q04-pod-cgroup-l-07', 'workflow_id': 'q04-yolo-pod-cgroup-20260920-l-fresh-07-bb075832810d44dc9039575f19d14cf4', 'workflow_run_id': '01a0bc40-01ee-7e4d-9064-366034fbee6e', 'workflow_type': 'PDFProcessing'})
+Traceback (most recent call last):
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/processing.py", line 246, in run
+    return await self.execute(value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/processing.py", line 208, in execute
+    identity = await execution.produce(contract)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/pdf_processing/execution.py", line 311, in produce
+    await asyncio.wait({publication}, timeout=1)
+  File "/usr/local/lib/python3.12/asyncio/tasks.py", line 464, in wait
+    return await _wait(fs, timeout, return_when, loop)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/tasks.py", line 550, in _wait
+    await waiter
+asyncio.exceptions.CancelledError
