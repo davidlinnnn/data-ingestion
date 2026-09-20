@@ -32,3 +32,15 @@ exit races may still fail the unchanged contract and are not preemptively excuse
 Evidence: probe-result.json, exec-events.json and persistent/ equivalents; scripts
 are retained as diagnostic tools, not automatic acceptance runs. No credentials
 or raw command lines are captured. J records remain byte-for-byte unchanged.
+
+## Remaining caller found by K
+
+K still had nine incomplete rows, including three same-hash PermissionErrors.
+The controller live loop had no recurring exec, but pod_topology retained a
+readinessProbe exec every two seconds. A no-inference counterpart pair retained
+persistent command lanes and the same 50 commands: readiness probe produced 18
+runc PermissionErrors plus one proc-disappearance race in 35 seconds; identical
+startup probe produced zero errors. Both diagnostic Pods were UID-deleted and
+held Deployments/idle health rechecked. This identifies the omitted kubelet caller.
+L moves the same mount test to startupProbe and preserves the identical runtime
+check in the persistent sampling program. K remains failed, not reclassified.
