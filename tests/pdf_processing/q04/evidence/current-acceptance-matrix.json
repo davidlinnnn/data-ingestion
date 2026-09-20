@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "9d27751",
+    "commit": "ed393ad",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-aima-pod-cgroup-20260920-o"
+    "runtime_identity": "q04-aima-pod-cgroup-20260920-p"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -165,7 +165,7 @@
       },
       "q04_fresh_index": "unproven",
       "oracle_and_full_graph": "unproven",
-      "reason": "O completed business work and adopted image supplement, then failed on missing projected oracle data. Local replay diagnoses projection; no fresh index. Restored/replay not run.",
+      "reason": "P completed all three business modes and content/oracle checks but final process attribution failed at sample347; no final fresh index or bounded resource acceptance.",
       "evidence": [
         "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
         "tests/pdf_processing/q03/INTEGRATION-REVIEW.md",
@@ -173,7 +173,8 @@
         "tests/pdf_processing/q04/reconciliation/AIMA-IDENTITY.md",
         "tests/pdf_processing/q04/reconciliation/evidence/aima-identity.json",
         "tests/pdf_processing/q04/pod-topology-v13/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v14/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v14/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v15/first-window-evidence/RESULTS.md"
       ],
       "historical_reference": "reusable",
       "attempts": [
@@ -192,6 +193,15 @@
           "fresh": "business_complete_image_supplement_pass_oracle_dependency_missing",
           "restored": "not_run",
           "replay": "not_run",
+          "cleanup": "proven",
+          "retry_count": 0
+        },
+        {
+          "phase": "pod-topology-v15-p",
+          "outcome": "FAIL_PROCESS_COVERAGE_CHANGED_DURING_SAMPLE",
+          "fresh": "content_complete_resource_unqualified",
+          "restored": "content_complete_resource_unqualified",
+          "replay": "content_complete_resource_unqualified",
           "cleanup": "proven",
           "retry_count": 0
         }
@@ -412,23 +422,14 @@
     "not_counted_as_pass": true
   },
   "next_step": {
-    "kind": "execute_corrected_oracle_projection_after_review",
-    "fixture": "08",
-    "parser_max_requests": 20,
+    "kind": "repair_warm_lifecycle_and_transition_observation_before_new_runtime",
     "runtime_authorized": true,
     "runtime_started": false,
-    "requires_new_runtime_authorization": false,
     "automatic_retry": false,
-    "single_execution": true,
-    "other_fixture_policy_inherited": false,
+    "requires_new_runtime_authorization": false,
     "keep_current_guard": true,
-    "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v15/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v15/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_p.py",
-    "runtime_result": null,
-    "requires_acceptance_rule_adoption": false
+    "historical_failure_preserved": true
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -455,5 +456,24 @@
     "historical_failure_preserved": true,
     "historical_reference_unchanged": true,
     "deployments_remain_closed": 32
+  },
+  "last_execution": {
+    "kind": "execute_corrected_oracle_projection_after_review",
+    "fixture": "08",
+    "parser_max_requests": 20,
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "requires_new_runtime_authorization": false,
+    "automatic_retry": false,
+    "single_execution": true,
+    "other_fixture_policy_inherited": false,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v15/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v15/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_p.py",
+    "runtime_result": "FAIL_PROCESS_COVERAGE_CHANGED_DURING_SAMPLE",
+    "requires_acceptance_rule_adoption": false
   }
 }

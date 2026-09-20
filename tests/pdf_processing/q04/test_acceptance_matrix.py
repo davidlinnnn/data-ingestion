@@ -101,7 +101,11 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_original_aima_policy_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_corrected_oracle_projection_after_review')
+        self.assertEqual(step['kind'], 'repair_warm_lifecycle_and_transition_observation_before_new_runtime')
+        self.assertFalse(step['runtime_started'])
+        self.assertTrue(step['keep_current_guard'])
+        step = self.matrix['last_execution']
+        self.assertEqual(step['runtime_result'], 'FAIL_PROCESS_COVERAGE_CHANGED_DURING_SAMPLE')
         self.assertEqual(step['fixture'], '08')
         self.assertEqual(step['parser_max_requests'], 20)
         self.assertFalse(step['automatic_retry'])

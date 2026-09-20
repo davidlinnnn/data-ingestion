@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through O execution `9d27751`; machine authority:
+Current through P execution `ed393ad`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -42,7 +42,7 @@ execution, reuse and interruption behavior require requalification.
 | Immutable source/producer/profile/method/oracle binding | proven | Exact retained run identities |
 | Stage-impact dependency projection | proven | Existing local audit; new producer changes need their own impact record |
 | Six-fixture current-producer matrix | unproven | Native/Wiki/AIMA and lifecycle applicability remain open |
-| Current AIMA continuation/four algorithms | unproven | Historical Q03 reference retained; N consumer stopped before these checks |
+| Current AIMA continuation/four algorithms | unproven | P content checks pass; final resource qualification remains incomplete |
 | Current evidence-only compatible reuse | unproven | Q03 proof belongs to its original execution path |
 | Real assembly/method invalidation | unproven | Native runtime not run |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
@@ -80,12 +80,15 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The user adopted the AIMA image and measurement proposal. O passed image and
-measurement checks but failed because two existing oracle data files were not
-projected. See [O results](pod-topology-v14/first-window-evidence/RESULTS.md).
-P repairs only that projection and adds complete consumer execution against the
-projected workspace. A new identity/prefix, unchanged guards and independent
-review remain mandatory. No additional acceptance-rule approval is needed.
-Original five-document warm/request20 requirements remain unchanged.
+O failed because oracle data were not projected; P repaired the projection and
+completed all three AIMA business/content cases. P's final resource qualification
+failed on one process-enumeration transition out of 961 samples, so fixture08
+remains unproven as an integrated gate and no fresh index was promoted.
+See [P results](pod-topology-v15/first-window-evidence/RESULTS.md).
+
+Next repair the reproduced cross-document warm lifecycle defect and improve
+transition observability, then test source projection, contracts, interruption
+and cleanup and review before a new uniquely identified controlled runtime.
+Do not reinterpret P's unknown PSS or weaken original request20/guard requirements.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
