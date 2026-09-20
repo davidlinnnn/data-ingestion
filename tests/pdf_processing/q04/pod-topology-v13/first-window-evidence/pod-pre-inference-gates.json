@@ -1,0 +1,123 @@
+{
+  "failed_gates": [],
+  "gates": {
+    "cgroup": {
+      "memory_max": "5368709120",
+      "oom_counters": {
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "status": "PASS"
+    },
+    "configuration": {
+      "bundle_inputs_sha256": "67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420",
+      "capacity_sha256": "6e98c21ad2de8f5f38b72a4c2ebddeaa3cfbeb8a21cb200f2fc74ddad15fcd09",
+      "source_manifest_sha256": "b07d50962ac9d8522b6dd3708076b3cbe64c7cb2d3e72254530666e82d18b209",
+      "status": "PASS"
+    },
+    "image_identity": {
+      "container_id": "containerd://f160488bc946ed75d7dddcba6416bd94b7041302d1c713aa3b25cba5703320a0",
+      "image_id": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "image_id_representation": "repository-platform-manifest",
+      "node": "internal-a2a-vs6-local-worker2",
+      "pod_name": "q04-pod-cgroup-n-activities-6775c8c8d6-mkgql",
+      "pod_uid": "78a70b32-9f80-4668-93aa-338ed7af0af2",
+      "restart_count": 0,
+      "status": "PASS"
+    },
+    "models": {
+      "cache_artifacts": 14,
+      "model_artifacts": 17,
+      "package_artifacts": 3,
+      "status": "PASS"
+    },
+    "mount_and_path": {
+      "capacity": {
+        "evidence_free_bytes": 1073739495,
+        "evidence_used_bytes": 2329,
+        "filesystem_free_bytes": 1801694093312,
+        "requested_bytes": 1073741824
+      },
+      "directory": {
+        "directory": true,
+        "gid": 1000,
+        "label": "application-owned-run-directory",
+        "mode": "0o700",
+        "path": "/q04-evidence/q04-aima-pod-cgroup-20260920-n",
+        "symlink": false,
+        "uid": 1000,
+        "writable": true
+      },
+      "mount": {
+        "directory": true,
+        "gid": 0,
+        "label": "storage-backend-owned-mount-root",
+        "mode": "0o777",
+        "path": "/q04-evidence",
+        "symlink": false,
+        "uid": 0,
+        "writable": true
+      },
+      "process": {
+        "gid": 1000,
+        "uid": 1000
+      },
+      "schema_version": 1,
+      "status": "PASS"
+    },
+    "object_storage": {
+      "bucket_versioning": "Enabled",
+      "object_health": 200,
+      "object_prefix_unused": true,
+      "status": "PASS"
+    },
+    "packages_imports": {
+      "packages": {
+        "boto3": "1.40.24",
+        "pillow": "12.3.0",
+        "psutil": "7.2.2",
+        "temporalio": "1.23.0"
+      },
+      "status": "PASS"
+    },
+    "python_executable": {
+      "python": "3.12.13",
+      "python_executable": "/experiment/.venv/bin/python",
+      "status": "PASS"
+    },
+    "source_hashes": {
+      "harness_files": 53,
+      "harness_set_sha256": "33b66a6252db08849252dd145b73428841552740c1bc33b16b6c910a2711a837",
+      "producer_files": 20,
+      "producer_set_sha256": "a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d",
+      "status": "PASS"
+    },
+    "temporal": {
+      "status": "PASS",
+      "temporal_healthy": true,
+      "temporal_running": []
+    },
+    "workload_imports": {
+      "modules": [
+        "candidate.aima_pod_window",
+        "pod_init_n",
+        "pod_workload_n",
+        "pod_remote_evidence_n"
+      ],
+      "reviewed_contract": {
+        "fixture": "08",
+        "oracle": "unchanged Q04 AIMA source oracle",
+        "parser_max_requests": 20,
+        "production_default_changed": false,
+        "status": "PASS"
+      },
+      "status": "PASS"
+    }
+  },
+  "inference_started": false,
+  "object_written": false,
+  "schema_version": 1,
+  "status": "PASS_PRE_INFERENCE",
+  "workflow_started": false
+}

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "d1701d3",
+    "commit": "985b89a",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-yolo-pod-cgroup-20260920-m"
+    "runtime_identity": "q04-aima-pod-cgroup-20260920-n"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -165,15 +165,27 @@
       },
       "q04_fresh_index": "unproven",
       "oracle_and_full_graph": "unproven",
-      "reason": "Executable reconciliation proves equal source bytes, producer, method and relationship semantics, but the full profile/release, source object identity and Q04 consumer/oracle harness differ. Q03 remains historical reference evidence and cannot satisfy Q04 runtime rows or fresh-index.",
+      "reason": "N completed all 12 pages and 9 required OCR components, but unchanged consumer rejected 21 added images relative to Q01 checkpoint-only reference. Two PSS reads were unknown and observation order failed. No accepted fresh index; restored/replay not run.",
       "evidence": [
         "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
         "tests/pdf_processing/q03/INTEGRATION-REVIEW.md",
         "tests/pdf_processing/q04/evidence/static-audit-v2.json",
         "tests/pdf_processing/q04/reconciliation/AIMA-IDENTITY.md",
-        "tests/pdf_processing/q04/reconciliation/evidence/aima-identity.json"
+        "tests/pdf_processing/q04/reconciliation/evidence/aima-identity.json",
+        "tests/pdf_processing/q04/pod-topology-v13/first-window-evidence/RESULTS.md"
       ],
-      "historical_reference": "reusable"
+      "historical_reference": "reusable",
+      "attempts": [
+        {
+          "phase": "aima-pod-cgroup-n",
+          "outcome": "FAIL_GRAPH_AND_ATTRIBUTION_NOT_PROMOTED",
+          "fresh": "business_complete_consumer_rejected",
+          "restored": "not_run",
+          "replay": "not_run",
+          "cleanup": "proven",
+          "retry_count": 0
+        }
+      ]
     },
     {
       "id": "09",
@@ -246,21 +258,23 @@
     },
     {
       "id": "continuation_and_four_algorithms",
-      "status": "reusable",
-      "reason": "Q03 directly proves the corrected AIMA continuation deltas, four structures and localized dispositions for the identical production inventory; the Q04 warm index is still absent.",
+      "status": "unproven",
+      "reason": "Historical Q03 evidence remains retained. Current lifecycle producer changes the execution path; current runtime requalification is required.",
       "evidence": [
         "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
         "tests/pdf_processing/q03/INTEGRATION-REVIEW.md"
-      ]
+      ],
+      "historical_reference": "reusable only for original Q03 producer/runtime"
     },
     {
       "id": "evidence_only_compatible_reuse",
-      "status": "reusable",
-      "reason": "Q03 full-request evidence variation directly exercised actual Temporal/shared-storage reuse with the same production hashes. Recheck identities before carrying it forward; do not transplant registrations.",
+      "status": "unproven",
+      "reason": "Historical Q03 evidence remains retained. Current lifecycle producer changes the execution path; current runtime requalification is required.",
       "evidence": [
         "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
         "tests/pdf_processing/q04/evidence/static-audit-v2.json"
-      ]
+      ],
+      "historical_reference": "reusable only for original Q03 producer/runtime"
     },
     {
       "id": "assembly_method_invalidation",
@@ -290,17 +304,18 @@
     },
     {
       "id": "required_relationship_interrupt_retry_replay",
-      "status": "reusable",
-      "reason": "Q03 trial D directly proves interruption before publication, retained partial evidence, cleanup, retry and exact replay on the unchanged required-relationship path. It is owned-child evidence, not Pod loss.",
+      "status": "unproven",
+      "reason": "Historical Q03 evidence remains retained. Current lifecycle producer changes the execution path; current runtime requalification is required.",
       "evidence": [
         "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
         "tests/pdf_processing/q03/INTEGRATION-REVIEW.md"
-      ]
+      ],
+      "historical_reference": "reusable only for original Q03 producer/runtime"
     },
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "Lifecycle A observed the intended handoff and no overlap, but the complete graph and resource gates failed before restored/replay. The inactive max_requests=1 resource candidate further invalidates the old request-20 sequence, so revised warm behavior remains unproven.",
+      "reason": "Original Wiki\u2192YOLO\u2192AIMA\u2192native\u2192Wiki sequence and request20 recycle remain required. Current assembly handoff reaps the warm parser per document, so it does not satisfy cross-document reuse. M max_requests=1 proof is fixture07 only.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -364,7 +379,7 @@
     {
       "id": "pod_drain_recovery",
       "status": "unproven",
-      "reason": "No owned Q04 Pod topology exists. Process-mode evidence cannot prove API UID, CRI-container or emptyDir removal.",
+      "reason": "Owned Pod topology and UID-fenced terminal cleanup are proven by M/N; actual interruption of an in-flight Pod and recovery from durable checkpoints have not run.",
       "evidence": [
         "tests/pdf_processing/q04/preflight/README.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -387,11 +402,11 @@
     "not_counted_as_pass": true
   },
   "next_step": {
-    "kind": "execute_original_policy_aima_window_after_review",
+    "kind": "review_aima_image_supplement_and_attribution_contract",
     "fixture": "08",
     "parser_max_requests": 20,
     "runtime_authorized": true,
-    "runtime_started": false,
+    "runtime_started": true,
     "requires_new_runtime_authorization": false,
     "automatic_retry": false,
     "single_execution": true,
@@ -401,7 +416,9 @@
     "deployments_remain_closed": 32,
     "integration_manifest": "tests/pdf_processing/q04/pod-topology-v13/RUNTIME-INTEGRATION-MANIFEST.json",
     "offline_manifest": "tests/pdf_processing/q04/pod-topology-v13/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_n.py"
+    "runner": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_n.py",
+    "runtime_result": "FAIL_GRAPH_AND_ATTRIBUTION_NOT_PROMOTED",
+    "requires_acceptance_rule_adoption": true
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",

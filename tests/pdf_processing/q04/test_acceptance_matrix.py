@@ -101,7 +101,7 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_original_aima_policy_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_original_policy_aima_window_after_review')
+        self.assertEqual(step['kind'], 'review_aima_image_supplement_and_attribution_contract')
         self.assertEqual(step['fixture'], '08')
         self.assertEqual(step['parser_max_requests'], 20)
         self.assertFalse(step['automatic_retry'])
