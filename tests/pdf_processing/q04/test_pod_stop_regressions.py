@@ -40,6 +40,7 @@ class StopRegressions(unittest.TestCase):
                 path = Path(directory) / "samples.jsonl"
                 with path.open("w") as stream:
                     namespace = {**vars(runner), "kube": SimpleNamespace(exec_python=lambda *a, **k: json.dumps(row)),
+                                 "sample_channel": SimpleNamespace(run=lambda *a, **k: json.dumps(row)),
                                  "pod": "owned", "workload_deadline": 100,
                                  "remaining_timeout": lambda *a: 30,
                                  "sample_program": lambda: "sample", "baseline_oom": 0,
