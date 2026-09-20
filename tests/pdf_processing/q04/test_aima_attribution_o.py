@@ -33,12 +33,13 @@ class HandoffTests(unittest.TestCase):
                 self.assertFalse(telemetry.evaluate_handoff_contract(rows, ROOT/'aima-pod-cgroup-n')['complete'])
 
     def test_actual_collector_stop_classifies_only_confirmed_exits(self):
-        for mutation in (None, 'denied', 'peak'):
+        for mutation in (None, 'denied', 'peak', 'tied_peak'):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as tmp:
                 rows = copy.deepcopy(self.rows)
                 if mutation == 'denied':
                     next(p for p in rows[395]['processes'] if p['status'] != 'complete')['reason'] = 'PermissionError'
                 if mutation == 'peak': rows[395]['memory_current'] = 3 * 1024**3
+                if mutation == 'tied_peak': rows[395]['memory_current'] = max(r['memory_current'] for r in rows)
                 supplied = iter(rows)
                 def sampler(**kwargs):
                     row = next(supplied)

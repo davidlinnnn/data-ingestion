@@ -303,7 +303,7 @@ def classify_confirmed_exit_transition(
     before, current, after = rows[index - 1], rows[index], rows[index + 1]
     if current.get("attribution_complete") is not False:
         return failure("sample_not_process_incomplete")
-    if index == peak_index:
+    if index == peak_index or current.get("memory_current") == rows[peak_index].get("memory_current"):
         return failure("peak_process_attribution_incomplete")
     if not all(_cgroup_reading_complete(row) for row in (before, current, after)):
         return failure("cgroup_reading_incomplete")
