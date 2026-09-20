@@ -1868,10 +1868,14 @@ def execute_window(args, kube=None) -> dict:
                 evidence_captured = True
             except BaseException as capture_error:
                 cleanup["evidence_capture_error"] = repr(capture_error)
-        for channel in (sample_channel, evidence_channel):
+        cleanup["persistent_channel_close_errors"] = {}
+        for name, channel in (("sample", sample_channel), ("evidence", evidence_channel)):
             if channel is not None:
-                channel.close()
-        cleanup["persistent_channels_closed"] = True
+                try:
+                    channel.close()
+                except BaseException as channel_error:
+                    cleanup["persistent_channel_close_errors"][name] = repr(channel_error)
+        cleanup["persistent_channels_closed"] = not cleanup["persistent_channel_close_errors"]
         workload_evidence_status, cleanup["workload_evidence"] = (
             workload_evidence_classification(
                 supervisor_identity_published=supervisor_identity_published,
@@ -1969,7 +1973,8 @@ def execute_window(args, kube=None) -> dict:
             cleanup["final_identity_and_health"] = False
             cleanup["final_identity_or_health_error"] = repr(final_error)
         api_cleanup_confirmed = (
-            not cleanup.get("transport_stop_uncertain", False)
+            cleanup["persistent_channels_closed"]
+            and not cleanup.get("transport_stop_uncertain", False)
             and not cleanup.get("runtime_cleanup_error")
             and cleanup.get("owned_objects_deleted_with_uid_preconditions") is True
             and cleanup.get("final_identity_and_health") is True
@@ -1988,7 +1993,8 @@ def execute_window(args, kube=None) -> dict:
         OUT.mkdir(exist_ok=True)
         (OUT / "outer-cleanup.json").write_text(json.dumps(cleanup, indent=2) + "\n")
         if primary_error is None and (
-            cleanup.get("runtime_cleanup_error")
+            not cleanup["persistent_channels_closed"]
+            or cleanup.get("runtime_cleanup_error")
             or not cleanup.get("terminal_cgroup_oom_proof")
             or not cleanup.get("post_cleanup_vm_oom_proof")
             or not cleanup.get("owned_objects_deleted_with_uid_preconditions")

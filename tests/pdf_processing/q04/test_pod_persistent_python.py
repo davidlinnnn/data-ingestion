@@ -1,5 +1,5 @@
 """Real subprocess checks for the prestarted Pod Python command channel."""
-import ast,sys,time,unittest
+import ast,json,sys,tempfile,time,unittest
 from pathlib import Path
 from pod_persistent_python import PersistentPython
 
@@ -25,6 +25,23 @@ class PersistentPythonTests(unittest.TestCase):
   p=self.start()
   with self.assertRaises(RuntimeError):p.run("import os;os._exit(0)")
   p.close();self.assertIsNotNone(p.process.poll())
+ def test_owner_read_handles_atomic_publication_and_rejects_corruption(self):
+  from sentinel import run_yolo_pod_cgroup_k as runner
+  from pod_durable_evidence import write_once
+  tree=ast.parse(Path(runner.__file__).read_text())
+  assignment=next(n for n in ast.walk(tree) if isinstance(n,ast.Assign) and ast.unparse(n.targets[0])=='owner' and 'sample_channel.run' in ast.unparse(n.value))
+  expression=assignment.value.args[0].args[0]
+  p=self.start()
+  with tempfile.TemporaryDirectory() as directory:
+   program=eval(compile(ast.Expression(expression),'<owner program>','eval'),{'EVIDENCE':directory})
+   self.assertIsNone(json.loads(p.run(program))['config_sha256'])
+   root=Path(directory)
+   write_once(root/'supervisor-ownership.json',{'pid':12,'start_ticks':34})
+   self.assertIsNone(json.loads(p.run(program))['config_sha256'])
+   write_once(root/'ownership.json',{'config_sha256':'bound'})
+   self.assertEqual(json.loads(p.run(program)),{'pid':12,'start_ticks':34,'config_sha256':'bound'})
+   (root/'ownership.json').write_text('')
+   with self.assertRaisesRegex(RuntimeError,'JSONDecodeError'):p.run(program)
  def test_controller_live_loop_uses_prestarted_lanes_without_exec_births(self):
   from sentinel import run_yolo_pod_cgroup_k as runner
   tree=ast.parse(Path(runner.__file__).read_text())

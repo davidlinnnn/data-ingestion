@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 from pod_durable_evidence import seal
 
-VERSION = os.environ.get('Q04_TRANSPORT_VERSION', 'j')
+VERSION = os.environ.get('Q04_TRANSPORT_VERSION', 'k')
 remote = importlib.import_module('pod_remote_evidence_' + VERSION)
 runner = importlib.import_module('sentinel.run_yolo_pod_cgroup_' + VERSION)
 
@@ -95,7 +95,7 @@ class TransportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'transport gap exceeded'):
             self.pull(received_at=12)
 
-    def failure_export(self, full_cleanup=False):
+    def failure_export(self, full_cleanup=False, fail_channel_close=False):
         tree = ast.parse(Path(runner.__file__).read_text())
         function = next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='execute_window')
         block = next(n for n in ast.walk(function) if isinstance(n,ast.Try)
@@ -117,10 +117,17 @@ class TransportTests(unittest.TestCase):
             def delete_owned(*args, **kwargs):
                 self.events.append('delete')
                 return {"deleted":list(reversed(owned[1:])),"errors":{}}
+            def close_sample():
+                self.events.append('close-sample')
+                if fail_channel_close:
+                    raise TimeoutError('injected channel close failure')
+            def close_evidence():
+                self.events.append('close-evidence')
             namespace.update(
                 capacity={"ends_at":time.time()+300,"expected_vm_oom_kill":0},
                 vm_stream=None, workload=None, transport_future=None, transport_pool=None,
-                sample_channel=None, evidence_channel=None,
+                sample_channel=SimpleNamespace(close=close_sample),
+                evidence_channel=SimpleNamespace(close=close_evidence),
                 deployment={"metadata":{"uid":"dep-k"}}, cleanup_identity=None,
                 supervisor_identity_published=True, owned_objects=owned,
                 cleanup_deployment_and_pod=lambda *a,**k:{"old_runtime_absent":True,"emptydirs_absent":True},
@@ -154,6 +161,16 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(state['cleanup']['live_qualification_passed'],False)
         self.assertTrue(state['cleanup']['forensic_export_complete'])
 
+    def test_channel_close_failure_does_not_skip_remaining_cleanup(self):
+        self.pull(); self.stop_and_seal()
+        state = self.failure_export(full_cleanup=True, fail_channel_close=True)
+        self.assertIn('close-evidence', self.events)
+        self.assertIn('delete', self.events)
+        self.assertFalse(state['cleanup']['persistent_channels_closed'])
+        self.assertIn('sample', state['cleanup']['persistent_channel_close_errors'])
+        self.assertTrue((self.out/'outer-cleanup.json').is_file())
+        self.assertIn('live transport failure', state['cleanup']['primary_error'])
+
     def test_complete_failed_controller_cleanup_exports_before_owned_deletion(self):
         self.pull()
         self.stop_and_seal()
@@ -167,7 +184,7 @@ class TransportTests(unittest.TestCase):
         self.assertTrue(cleanup['owned_objects_deleted_with_uid_preconditions'])
         self.assertTrue(cleanup['retained_evidence_claim']['retained'])
         self.assertEqual(cleanup['disposition'],'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED')
-        self.assertEqual(self.events,['export','delete'])
+        self.assertEqual(self.events,['export','close-sample','close-evidence','delete'])
         self.assertFalse(self.mirror.finalized)
 
     def test_failed_seal_readback_never_counts_as_recovered(self):
