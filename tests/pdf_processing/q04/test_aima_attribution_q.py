@@ -71,6 +71,66 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
             + [{"pid": 102, "ppid": 101, "start_ticks": 1002}],
         )
 
+    def test_native_capture_restore_reuses_one_parser_then_reaps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trial = root / "fresh-08"
+            worker = root / "worker-1"
+            trial.mkdir()
+            worker.mkdir()
+            parser = {
+                "pid": 42,
+                "ready": True,
+                "restarts": 1,
+                "handoffs": 0,
+                "termination_reason": None,
+            }
+            steps = [
+                {
+                    "stage": stage,
+                    "reused": False,
+                    "parser": {**parser, "request_id": str(index)},
+                }
+                for index, stage in enumerate(["group", "group", "group", "assembly"])
+            ]
+            (trial / "accepted.json").write_text(
+                __import__("json").dumps({"result": {"steps": steps}})
+            )
+            (worker / "stopped.json").write_text(
+                __import__("json").dumps(
+                    {"parser_absent": True, "scratch_absent": True}
+                )
+            )
+            process = {
+                "pid": 42,
+                "ppid": 10,
+                "start_ticks": 420,
+                "command_class": "warm_parser",
+                "status": "complete",
+            }
+            rows = [
+                {
+                    "processes": [process],
+                    "process_events": [],
+                    "warm_parser_present": True,
+                },
+                {
+                    "processes": [],
+                    "process_events": [
+                        {
+                            "event": "exit_observed",
+                            "pid": 42,
+                            "start_ticks": 420,
+                        }
+                    ],
+                    "warm_parser_present": False,
+                },
+            ]
+            result = telemetry.evaluate_warm_continuity_contract(rows, root)
+            self.assertTrue(result["complete"], result)
+            self.assertEqual(result["captures"], 3)
+            self.assertEqual(result["restores"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -415,6 +415,89 @@ def evaluate_handoff_contract(rows: list[dict], observation_root: Path | None) -
             'sub_sample_order_measured': False, 'ordering_authority': 'frozen reap-before-spawn barrier plus successful worker reap record'}
 
 
+def evaluate_warm_continuity_contract(
+    rows: list[dict], observation_root: Path | None
+) -> dict:
+    """Prove native capture and restore shared one parser, then exited."""
+    fail = lambda reason: {"complete": False, "reason": reason}
+    if observation_root is None:
+        return fail("observation_root_missing")
+    try:
+        accepted = json.loads((observation_root / "fresh-08/accepted.json").read_text())
+        stopped = [
+            json.loads(path.read_text())
+            for path in observation_root.glob("worker-*/stopped.json")
+        ]
+    except (OSError, ValueError, TypeError, KeyError):
+        return fail("warm_continuity_evidence_unreadable")
+    steps = [
+        step
+        for step in accepted.get("result", {}).get("steps", [])
+        if step.get("stage") in ("group", "assembly")
+        and step.get("reused") is False
+    ]
+    parsers = [step.get("parser") for step in steps]
+    if (
+        [step.get("stage") for step in steps] != ["group"] * 3 + ["assembly"]
+        or any(not isinstance(parser, dict) for parser in parsers)
+    ):
+        return fail("capture_restore_parser_records_missing")
+    pids = {parser.get("pid") for parser in parsers}
+    request_ids = {parser.get("request_id") for parser in parsers}
+    if len(pids) != 1 or None in pids or len(request_ids) != 4 or None in request_ids:
+        return fail("capture_restore_process_continuity_missing")
+    if any(
+        parser.get("ready") is not True
+        or parser.get("restarts") != 1
+        or parser.get("handoffs") != 0
+        or parser.get("termination_reason") is not None
+        for parser in parsers
+    ):
+        return fail("capture_restore_parser_state_invalid")
+    pid = next(iter(pids))
+    identities = {
+        _process_identity(process)
+        for row in rows
+        for process in row.get("processes", [])
+        if process.get("pid") == pid
+        and process.get("command_class") == "warm_parser"
+        and process.get("status") == "complete"
+    }
+    identities.discard(None)
+    if len(identities) != 1:
+        return fail("warm_parser_identity_not_unique")
+    identity = next(iter(identities))
+    events = [event for row in rows for event in row.get("process_events", [])]
+    exits = [
+        event
+        for event in events
+        if event.get("event") == "exit_observed"
+        and (event.get("pid"), event.get("start_ticks")) == identity
+    ]
+    if (
+        len(exits) != 1
+        or any(
+            event.get("event") == "pid_reuse_observed" and event.get("pid") == pid
+            for event in events
+        )
+        or not stopped
+        or not all(
+            row.get("parser_absent") and row.get("scratch_absent") for row in stopped
+        )
+        or rows[-1].get("warm_parser_present")
+    ):
+        return fail("warm_parser_final_exit_unproven")
+    return {
+        "complete": True,
+        "status": "native_capture_restore_same_process_then_reaped",
+        "pid": pid,
+        "start_ticks": identity[1],
+        "requests": 4,
+        "captures": 3,
+        "restores": 1,
+    }
+
+
 def evaluate_parser_lifecycle_contract(
     rows: list[dict], observation_root: Path | None, *, require_recycle_exit: bool
 ) -> dict:
@@ -860,6 +943,7 @@ class StrictAttributionCollector:
         expect_cancel: bool = True,
         require_handoff: bool = False,
         require_recycle_exit: bool = False,
+        require_warm_continuity: bool = False,
         require_no_warm_fresh_overlap: bool = False,
     ) -> CollectorOutcome:
         if self._stream is None:
@@ -981,6 +1065,10 @@ class StrictAttributionCollector:
         )
         if require_handoff:
             parser_lifecycle = evaluate_handoff_contract(rows, self.observation_root)
+        if require_warm_continuity:
+            parser_lifecycle = evaluate_warm_continuity_contract(
+                rows, self.observation_root
+            )
         process_attribution_complete = not hard_incomplete
         cgroup_resource_complete = (
             bool(rows)
@@ -1038,6 +1126,7 @@ class StrictAttributionCollector:
             "missing_required_observation_labels": missing_required_labels,
             "required_observations_in_order": required_markers_in_order,
             "measurement_contract": "guard_failure" if expect_cancel else "successful_workload",
+            "warm_continuity_required": require_warm_continuity,
             "cancel_observation_required": expect_cancel,
             "handoff_observation_required": require_handoff,
             "request_recycle_exit_required": require_recycle_exit,
