@@ -1,0 +1,28 @@
+{
+  "first_capture_pid": 69857,
+  "next_document_capture_pid": 69858,
+  "same_warm_pid": false,
+  "capture_requests_before_recycle": 2,
+  "observed_parser_count": 1,
+  "fresh_calls": [
+    "restore"
+  ],
+  "inference": false,
+  "external_runtime": false
+}
+Traceback (most recent call last):
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/diagnosis/warm-continuity/reproduce.py", line 50, in <module>
+    asyncio.run(main())
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/diagnosis/warm-continuity/reproduce.py", line 43, in main
+    assert first == second, 'assembly ended warm lifetime before original request20 recycle'
+           ^^^^^^^^^^^^^^^
+AssertionError: assembly ended warm lifetime before original request20 recycle

@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through N execution `985b89a`; machine authority:
+Current through O execution `9d27751`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -24,7 +24,7 @@ acceptance, not the original request20 cross-document warm qualification.
 AIMA N completed 12 pages and nine required OCR components, but the original
 consumer rejected 21 added image fields. The Q01 checkpoint-only reference has
 no images. Offline source-pixel checks explain all additions and prove every
-other projected field equal, but that rule has not been adopted. Two PSS samples
+other projected field equal, and the user subsequently adopted the image supplement. Two PSS samples
 remain unknown and the measurement observation-order assertion also failed.
 Restored/replay did not run and no fresh index was promoted. See
 [N results](pod-topology-v13/first-window-evidence/RESULTS.md) and the
@@ -78,14 +78,14 @@ See [M results](pod-topology-v12/first-window-evidence/RESULTS.md),
 [N results](pod-topology-v13/first-window-evidence/RESULTS.md) and retained A–L
 records under `sentinel/` and `pod-topology-v*/`.
 
-## Next decision
+## Next execution
 
-Review the concrete AIMA image supplement and separately bounded process-exit /
-query-order measurement proposal. They are inactive. Adoption needs explicit
-approval because the user reserved acceptance-rule changes. Any subsequent run
-uses a new identity/prefix and reviewed source, preserves all current guards,
-and stops on failure without automatic retry. No memory increase or new cluster
-is proposed. Original five-document warm/request20 requirements remain unchanged.
+The user adopted the AIMA image and measurement proposal. O passed image and
+measurement checks but failed because two existing oracle data files were not
+projected. See [O results](pod-topology-v14/first-window-evidence/RESULTS.md).
+P repairs only that projection and adds complete consumer execution against the
+projected workspace. A new identity/prefix, unchanged guards and independent
+review remain mandatory. No additional acceptance-rule approval is needed.
+Original five-document warm/request20 requirements remain unchanged.
 
-#51 is not ready for integration/closure. The
-[ticket update](pod-topology-v13/TICKET-51-UPDATE-DRAFT.md) is an unpublished draft.
+#51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
