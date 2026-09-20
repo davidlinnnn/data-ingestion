@@ -27,11 +27,9 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_direct_reusable_and_unrun_runtime_evidence_stay_distinct(self):
         fixtures = {row["id"]: row for row in self.matrix["fixtures"]}
-        for fixture_id in ("07", "09", "10"):
+        for fixture_id in ("07", "08", "09", "10"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"proven"})
             self.assertEqual(fixtures[fixture_id]["q04_fresh_index"], "proven")
-        self.assertEqual(set(fixtures["08"]["modes"].values()), {"unproven"})
-        self.assertEqual(fixtures["08"]["q04_fresh_index"], "unproven")
         self.assertEqual(fixtures["08"]["historical_reference"], "reusable")
         for fixture_id in ("native", "06"):
             self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"unproven"})
@@ -75,6 +73,11 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(lifecycle_attempt["replay"], "not_run")
         self.assertEqual(lifecycle_attempt["cleanup"], "proven")
         self.assertEqual(lifecycle_attempt["retry_count"], 0)
+        aima_attempt = fixtures["08"]["attempts"][-1]
+        self.assertEqual(aima_attempt["phase"], "aima-pod-cgroup-q")
+        self.assertEqual(aima_attempt["outcome"], "PASS_BOUNDED_FIXTURE_08_ONLY")
+        self.assertEqual(aima_attempt["measurement"], "949_complete_samples")
+        self.assertEqual(aima_attempt["retry_count"], 0)
 
     def test_release_gate_statuses_and_evidence_are_reviewable(self):
         allowed = set(self.matrix["status_definitions"])
@@ -98,14 +101,15 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             "supported_operating_bounds_report",
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
+        self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
 
     def test_next_step_preserves_original_aima_policy_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'repair_warm_lifecycle_and_transition_observation_before_new_runtime')
+        self.assertEqual(step['kind'], 'review_and_run_original_29_group_request20_warm_sequence')
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['keep_current_guard'])
         step = self.matrix['last_execution']
-        self.assertEqual(step['runtime_result'], 'FAIL_PROCESS_COVERAGE_CHANGED_DURING_SAMPLE')
+        self.assertEqual(step['runtime_result'], 'PASS_BOUNDED_FIXTURE_08_ONLY')
         self.assertEqual(step['fixture'], '08')
         self.assertEqual(step['parser_max_requests'], 20)
         self.assertFalse(step['automatic_retry'])
@@ -114,8 +118,8 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(step['deployments_remain_closed'], 32)
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v12/first-window-evidence'
-        summary = json.loads((evidence / 'evidence/state/yolo-pod-cgroup-m-measurement/resource-attribution-summary.json').read_text())
+        evidence = Q04 / 'pod-topology-v16/first-window-evidence'
+        summary = json.loads((evidence / 'evidence/state/aima-pod-cgroup-q-measurement/resource-attribution-summary.json').read_text())
         self.assertTrue(summary['qualification_complete'])
         self.assertEqual(summary['incomplete_samples'], 0)
         self.assertEqual(json.loads((evidence / 'outer-cleanup.json').read_text())['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED')

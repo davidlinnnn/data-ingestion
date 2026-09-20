@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through P execution `ed393ad`; machine authority:
+Current through Q execution `3b54e7d`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -12,7 +12,7 @@ silently qualify a changed execution path.
 | native | 51 pages | unproven | unproven | unproven | unproven | unproven |
 | WikiSkill `06` | 28 pages | unproven | unproven | unproven | unproven | unproven |
 | YOLO `07` | 15 pages, M policy | **proven** | **proven** | **proven** | **proven** | **proven** |
-| AIMA `08` | original 99–110 | unproven | unproven | unproven | unproven | unproven |
+| AIMA `08` | original 99–110 | **proven** | **proven** | **proven** | **proven** | **proven** |
 | ACL `09` | original 2–4 | **proven** | **proven** | **proven** | **proven** | **proven** |
 | Keynote `10` | one page | **proven** | **proven** | **proven** | **proven** | **proven** |
 
@@ -21,14 +21,13 @@ components, approved two-pair graph equivalence, `max_requests=1`, THP-disabled
 workload descendants and 1,021 complete process samples. This is bounded fixture07
 acceptance, not the original request20 cross-document warm qualification.
 
-AIMA N completed 12 pages and nine required OCR components, but the original
-consumer rejected 21 added image fields. The Q01 checkpoint-only reference has
-no images. Offline source-pixel checks explain all additions and prove every
-other projected field equal, and the user subsequently adopted the image supplement. Two PSS samples
-remain unknown and the measurement observation-order assertion also failed.
-Restored/replay did not run and no fresh index was promoted. See
-[N results](pod-topology-v13/first-window-evidence/RESULTS.md) and the
-[inactive proposal](diagnosis/aima-n/PROPOSAL.md).
+AIMA Q passed all three modes with 12 pages, nine OCR components, 615-item
+oracle, four algorithms, eight continuation edges, adopted source-pixel image
+supplements and equal full graph/document digests. Its 949 attribution samples
+were complete, and three captures plus native assembly restore used one warm
+parser PID. This is bounded fixture08 acceptance; it does not prove the original
+29-group cross-document request20 sequence. See
+[Q results](pod-topology-v16/first-window-evidence/RESULTS.md).
 
 ACL and Keynote retain their passes under their original producer/runtime
 identities. Applicability to the current lifecycle producer is **unproven**.
@@ -41,17 +40,17 @@ execution, reuse and interruption behavior require requalification.
 | --- | --- | --- |
 | Immutable source/producer/profile/method/oracle binding | proven | Exact retained run identities |
 | Stage-impact dependency projection | proven | Existing local audit; new producer changes need their own impact record |
-| Six-fixture current-producer matrix | unproven | Native/Wiki/AIMA and lifecycle applicability remain open |
-| Current AIMA continuation/four algorithms | unproven | P content checks pass; final resource qualification remains incomplete |
+| Six-fixture current-producer matrix | unproven | Native/Wiki and ACL/Keynote lifecycle applicability remain open |
+| Current AIMA continuation/four algorithms | **proven** | Q exact producer/runtime; four algorithms and eight continuation edges |
 | Current evidence-only compatible reuse | unproven | Q03 proof belongs to its original execution path |
 | Real assembly/method invalidation | unproven | Native runtime not run |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
-| Fixed warm sequence and request20 recycle | unproven | Per-document assembly handoff reaps warm parser; original requirement unchanged |
+| Fixed warm sequence and request20 recycle | unproven | Q proves four AIMA requests on one parser; original 29-group sequence/recycle unrun |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
-| Integrated operating bounds | unproven | M proves fixture07 policy only; N attribution incomplete |
-| Active telemetry-loss guard | unproven | Current runtime phase not run |
+| Integrated operating bounds | unproven | M proves fixture07 and Q proves fixture08; remaining fixtures and request20/drain are open |
+| Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
 | Process drain/recovery | unproven | Current runtime phase not run |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
 | Supported-bounds report to #44 | unproven | Depends on remaining rows |
@@ -70,9 +69,13 @@ execution, reuse and interruption behavior require requalification.
 - M: all three bounded fixture07 cases and unchanged resource gates passed.
 - N: completed AIMA business result, then consumer graph rejection and incomplete
   measurement contract. No PSI/OOM/deadline trigger; no automatic retry.
+- P: all three AIMA content cases completed, but one process membership transition
+  left PSS unknown; final qualification correctly failed.
+- Q: repaired warm continuity and exact before/after process observation passed
+  all AIMA business, oracle, resource, telemetry and cleanup gates.
 
-All historical failures, raw evidence, PVCs and prefixes remain retained. N's
-41 sealed inventory entries / 42 archive files passed independent verification;
+All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
+82 sealed inventory entries / 83 archive files passed independent verification;
 owned runtime is removed, Temporal idle and all 32 held Deployments still off.
 See [M results](pod-topology-v12/first-window-evidence/RESULTS.md),
 [N results](pod-topology-v13/first-window-evidence/RESULTS.md) and retained A–L
@@ -80,15 +83,14 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-O failed because oracle data were not projected; P repaired the projection and
-completed all three AIMA business/content cases. P's final resource qualification
-failed on one process-enumeration transition out of 961 samples, so fixture08
-remains unproven as an integrated gate and no fresh index was promoted.
-See [P results](pod-topology-v15/first-window-evidence/RESULTS.md).
+The warm lifecycle defect and transition observability are repaired. Q passed
+the bounded AIMA08 window without changing resource, PSI, OOM or deadline
+thresholds. See [Q results](pod-topology-v16/first-window-evidence/RESULTS.md).
 
-Next repair the reproduced cross-document warm lifecycle defect and improve
-transition observability, then test source projection, contracts, interruption
-and cleanup and review before a new uniquely identified controlled runtime.
-Do not reinterpret P's unknown PSS or weaken original request20/guard requirements.
+The next runtime should target one remaining acceptance row with a new reviewed
+identity. The shortest useful target is the original 29-group warm sequence and
+request20 recycle because it exercises the repaired boundary directly; it must
+also keep failure-stop/no-retry behavior. Do not rerun Q unchanged, reinterpret
+P's unknown PSS, or infer other fixture passes from Q.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

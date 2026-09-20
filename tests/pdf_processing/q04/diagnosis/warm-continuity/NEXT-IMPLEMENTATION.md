@@ -1,4 +1,4 @@
-# Warm continuity diagnosis — implementation repaired, runtime not yet qualified
+# Warm continuity diagnosis — implementation repaired; AIMA path qualified
 
 The committed `reproduce.py` drives actual `Execution.child` and `WarmParser`
 with a small real newline-protocol subprocess, without inference. Before the
@@ -34,13 +34,20 @@ Completed checks:
 4. Standards review found no issue. Spec review found and the repair preserved
    restore integrity classification across the warm entrypoint.
 
+Q execution `q04-aima-pod-cgroup-20260920-q` subsequently qualified the repaired
+four-request AIMA path under the unchanged resource gates. Three group captures
+and native assembly restore used PID 131/start tick 16535575; all 949 attribution
+samples were complete and the lifecycle ended only after the run. Fresh,
+restored and exact replay all passed business, oracle and resource checks. See
+`pod-topology-v16/first-window-evidence/RESULTS.md`.
+
 Remaining qualification work:
 
-1. Rebind stage-impact/source projections to the repaired producer. The changed
-   lifecycle invalidates inherited fixture runtime qualification.
-2. Run one uniquely identified six-fixture controlled runtime under the existing
-   resource, PSI, OOM, and deadline limits. Do not rerun P unchanged and do not
-   retry automatically.
+1. Run the original 29-group cross-document sequence and request-20 recycle;
+   Q's four-request AIMA path does not exercise that boundary.
+2. Requalify the remaining current-producer fixtures and interruption/recovery
+   rows under their reviewed identities and unchanged guards.
 
-P is a conclusive incomplete-measurement result, not a successful acceptance.
-Original fixture,29-group/request20 and recovery requirements remain unchanged.
+P remains a conclusive incomplete-measurement result. Q does not reclassify P or
+the earlier failures. Original cross-fixture, 29-group/request20 and recovery
+requirements remain unchanged.

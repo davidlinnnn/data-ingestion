@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "ed393ad",
+    "commit": "3b54e7d",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-aima-pod-cgroup-20260920-p"
+    "runtime_identity": "q04-aima-pod-cgroup-20260920-q"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -159,13 +159,13 @@
       "pages": 12,
       "source_sha256": "b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980",
       "modes": {
-        "fresh": "unproven",
-        "restored": "unproven",
-        "replay": "unproven"
+        "fresh": "proven",
+        "restored": "proven",
+        "replay": "proven"
       },
-      "q04_fresh_index": "unproven",
-      "oracle_and_full_graph": "unproven",
-      "reason": "P completed all three business modes and content/oracle checks but final process attribution failed at sample347; no final fresh index or bounded resource acceptance.",
+      "q04_fresh_index": "proven",
+      "oracle_and_full_graph": "proven",
+      "reason": "Q passed fresh/restored/exact replay, the 615-item oracle, four algorithms, eight continuation edges, equal graph/document digests and all 949 resource samples. The repaired native capture/restore path retained one warm parser PID. This is bounded to fixture08 and does not qualify the original 29-group request20 sequence.",
       "evidence": [
         "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
         "tests/pdf_processing/q03/INTEGRATION-REVIEW.md",
@@ -174,7 +174,10 @@
         "tests/pdf_processing/q04/reconciliation/evidence/aima-identity.json",
         "tests/pdf_processing/q04/pod-topology-v13/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v14/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v15/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v15/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/temporal-workflow-reconciliation.json",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/evidence/state/aima-pod-cgroup-q-measurement/resource-attribution-summary.json"
       ],
       "historical_reference": "reusable",
       "attempts": [
@@ -202,6 +205,17 @@
           "fresh": "content_complete_resource_unqualified",
           "restored": "content_complete_resource_unqualified",
           "replay": "content_complete_resource_unqualified",
+          "cleanup": "proven",
+          "retry_count": 0
+        },
+        {
+          "phase": "aima-pod-cgroup-q",
+          "outcome": "PASS_BOUNDED_FIXTURE_08_ONLY",
+          "fresh": "proven",
+          "restored": "proven",
+          "replay": "proven",
+          "measurement": "949_complete_samples",
+          "warm_lifecycle": "three_captures_and_native_restore_same_pid",
           "cleanup": "proven",
           "retry_count": 0
         }
@@ -251,7 +265,7 @@
     {
       "id": "immutable_binding",
       "status": "proven",
-      "reason": "The fixed sources, producer, profiles, methods, oracles and harness are hash-bound; both accepted runtime windows retain immutable run and artifact identities.",
+      "reason": "The fixed sources, producer, profiles, methods, oracles and harness are hash-bound; accepted runtime windows retain immutable run and artifact identities.",
       "evidence": [
         "tests/pdf_processing/q04/evidence/static-audit-v2.json",
         "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/RESULTS.md"
@@ -269,22 +283,22 @@
     {
       "id": "six_fixture_matrix",
       "status": "unproven",
-      "reason": "M proves bounded fixture07; earlier09/10 passes retain their exact producer/runtime scope. Native/06/08 and lifecycle-producer impact requalification remain open.",
+      "reason": "M proves bounded fixture07 and Q proves bounded fixture08; earlier09/10 passes retain their exact producer/runtime scope. Native/06 and lifecycle-producer applicability for 09/10 remain open.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
-        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md"
+        "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/ANALYSIS.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md"
       ]
     },
     {
       "id": "continuation_and_four_algorithms",
-      "status": "unproven",
-      "reason": "Historical Q03 evidence remains retained. Current lifecycle producer changes the execution path; current runtime requalification is required.",
+      "status": "proven",
+      "reason": "Q directly verified four algorithms and eight continuation edges for AIMA08 under the repaired current lifecycle producer and complete resource qualification.",
       "evidence": [
-        "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
-        "tests/pdf_processing/q03/INTEGRATION-REVIEW.md"
-      ],
-      "historical_reference": "reusable only for original Q03 producer/runtime"
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/temporal-workflow-reconciliation.json"
+      ]
     },
     {
       "id": "evidence_only_compatible_reuse",
@@ -335,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "Original Wiki\u2192YOLO\u2192AIMA\u2192native\u2192Wiki sequence and request20 recycle remain required. Current assembly handoff reaps the warm parser per document, so it does not satisfy cross-document reuse. M max_requests=1 proof is fixture07 only.",
+      "reason": "The repaired native path kept three AIMA captures and assembly restore in one parser PID, but the original Wiki\u2192YOLO\u2192AIMA\u2192native\u2192Wiki 29-group sequence and request20 recycle remain required.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -344,7 +358,9 @@
         "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
-        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
+        "tests/pdf_processing/q04/diagnosis/warm-continuity/NEXT-IMPLEMENTATION.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -359,7 +375,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "M passes the unchanged gate for fixture07 with max_requests=1 and THP-disabled workload. Other fixtures and request20 warm/drain remain unqualified; historical failures stay failed.",
+      "reason": "M passes the unchanged gate for fixture07 and Q passes it for fixture08 with 949 complete samples. Other fixtures and request20 warm/drain remain unqualified; historical failures stay failed.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -373,16 +389,17 @@
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json",
         "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
-        "tests/pdf_processing/q04/pod-topology-v12/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v12/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md"
       ]
     },
     {
       "id": "active_telemetry_loss_guard",
       "status": "unproven",
-      "reason": "R3 is supporting evidence; the Q04 integrated guard phase has not run.",
+      "reason": "Q proved normal telemetry continuity with 949 complete samples and final cleanup markers. It did not inject sampler loss and prove fail-closed abort with no complete registration.",
       "evidence": [
-        "tests/pdf_processing/T09A-R3-INTEGRATION.md",
-        "tests/pdf_processing/q04/RUNTIME-ADAPTER.md"
+        "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -422,8 +439,8 @@
     "not_counted_as_pass": true
   },
   "next_step": {
-    "kind": "repair_warm_lifecycle_and_transition_observation_before_new_runtime",
-    "runtime_authorized": true,
+    "kind": "review_and_run_original_29_group_request20_warm_sequence",
+    "runtime_authorized": false,
     "runtime_started": false,
     "automatic_retry": false,
     "requires_new_runtime_authorization": false,
@@ -458,7 +475,7 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_corrected_oracle_projection_after_review",
+    "kind": "execute_repaired_warm_lifecycle_after_review",
     "fixture": "08",
     "parser_max_requests": 20,
     "runtime_authorized": true,
@@ -470,10 +487,10 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v15/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v15/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_p.py",
-    "runtime_result": "FAIL_PROCESS_COVERAGE_CHANGED_DURING_SAMPLE",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v16/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v16/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_aima_pod_cgroup_q.py",
+    "runtime_result": "PASS_BOUNDED_FIXTURE_08_ONLY",
     "requires_acceptance_rule_adoption": false
   }
 }
