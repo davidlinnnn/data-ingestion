@@ -1,5 +1,5 @@
 """Real subprocess checks for the prestarted Pod Python command channel."""
-import ast,json,sys,tempfile,time,unittest
+import ast,importlib,json,os,sys,tempfile,time,unittest
 from pathlib import Path
 from pod_persistent_python import PersistentPython
 
@@ -26,7 +26,7 @@ class PersistentPythonTests(unittest.TestCase):
   with self.assertRaises(RuntimeError):p.run("import os;os._exit(0)")
   p.close();self.assertIsNotNone(p.process.poll())
  def test_owner_read_handles_atomic_publication_and_rejects_corruption(self):
-  from sentinel import run_yolo_pod_cgroup_k as runner
+  runner=importlib.import_module('sentinel.run_yolo_pod_cgroup_'+os.environ.get('Q04_RUNNER_VERSION','k'))
   from pod_durable_evidence import write_once
   tree=ast.parse(Path(runner.__file__).read_text())
   assignment=next(n for n in ast.walk(tree) if isinstance(n,ast.Assign) and ast.unparse(n.targets[0])=='owner' and 'sample_channel.run' in ast.unparse(n.value))
@@ -43,7 +43,7 @@ class PersistentPythonTests(unittest.TestCase):
    (root/'ownership.json').write_text('')
    with self.assertRaisesRegex(RuntimeError,'JSONDecodeError'):p.run(program)
  def test_controller_live_loop_uses_prestarted_lanes_without_exec_births(self):
-  from sentinel import run_yolo_pod_cgroup_k as runner
+  runner=importlib.import_module('sentinel.run_yolo_pod_cgroup_'+os.environ.get('Q04_RUNNER_VERSION','k'))
   tree=ast.parse(Path(runner.__file__).read_text())
   function=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='execute_window')
   loop=next(n for n in ast.walk(function) if isinstance(n,ast.While) and ast.unparse(n.test)=='workload.poll() is None')

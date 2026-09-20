@@ -101,6 +101,7 @@ class StopRegressions(unittest.TestCase):
             evidence = root / "evidence"
             evidence.mkdir()
             code = code.replace(runner.EVIDENCE, str(evidence))
+            code = code.replace("/q04-control", str(root)).replace("/q04-evidence", str(evidence))
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 exec(code, {})
