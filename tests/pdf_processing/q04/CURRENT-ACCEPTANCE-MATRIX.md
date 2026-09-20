@@ -133,3 +133,21 @@ accepted fresh index or supported operating bound. The remaining transport repai
 must precede a separately identified follow-up window; I was not retried. #51
 remains open; [ticket text](pod-topology-v8/TICKET-51-UPDATE-DRAFT.md) is a draft for
 main, not a published update.
+
+
+## J transport repair and diagnostic window (2026-09-20)
+
+Repair commit `2619844` passed 114 tests and two independent reviews. One J run
+passed 11 pre-inference gates and the fresh/restored/exact-replay YOLO case checks
+(each business result complete, 15/15 pages), but failed the unchanged attribution
+contract: 54/1,023 rows incomplete. The fresh index remains pending; no existing
+machine-readable acceptance status or supported operating bound is promoted.
+
+Scratch transport and automatic failed-window export are now runtime-proven:
+115 receipts within the five-second gate; 77 sealed inventory entries and archive
+verified before owned runtime removal. Node/cgroup PSI and OOM guards stayed zero.
+Process-read PermissionError/coverage races are the observed blocker; exact cause
+and missing PSS remain unknown. See the [J handoff](pod-topology-v9/SESSION-HANDOFF.md)
+and [results](pod-topology-v9/first-window-evidence/RESULTS.md). All 32 held
+Deployments stay off, historical PVC UIDs/prefixes remain, no retry occurred.
+#51 stays open; [ticket text](pod-topology-v9/TICKET-51-UPDATE-DRAFT.md) is unpublished.
