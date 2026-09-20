@@ -7,6 +7,7 @@ from .parse import ParseRequest, execute
 
 def main():
     correlation = None
+    request = None
     def receive():
         nonlocal correlation
         line = sys.stdin.readline()
@@ -25,7 +26,12 @@ def main():
         if request is not None:
             execute(request, receive, notify)
     except Exception as error:
-        category, code = (error.category, error.code) if isinstance(error, ChildFailure) else ('parser', 'parser_execution_failed')
+        if isinstance(error, ChildFailure):
+            category, code = error.category, error.code
+        elif isinstance(error, AssertionError) and request is not None and request.mode == 'restore':
+            category, code = 'integrity', 'checkpoint_validation_failed'
+        else:
+            category, code = 'parser', 'parser_execution_failed'
         notify('failure', category=category, code=code)
         raise SystemExit(1)
 

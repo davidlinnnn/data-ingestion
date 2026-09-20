@@ -123,7 +123,7 @@ class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
                     await asyncio.Future()
 
             process = NeverReaped()
-            request = {"mode": "restore", "out": str(root / "result")}
+            request = {"mode": "restore", "scan": True, "out": str(root / "result")}
 
             async def timeout_wait(awaitable, _seconds):
                 awaitable.close()
@@ -329,7 +329,7 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
 
             runner = Runner()
             execution = Execution(source, object(), root, child_runner=runner)
-            request = {"mode": "restore", "out": str(root / "result")}
+            request = {"mode": "restore", "scan": True, "out": str(root / "result")}
             with mock.patch(
                 "pdf_processing.execution.asyncio.create_subprocess_exec",
                 new=mock.AsyncMock(side_effect=RuntimeError("synthetic spawn failure")),
@@ -372,7 +372,7 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaisesRegex(RuntimeError, "synthetic spawn failure"):
                     await execution.child(
                         "pdf_processing.parse",
-                        {"mode": "restore", "out": str(root / "result")},
+                        {"mode": "restore", "scan": True, "out": str(root / "result")},
                         root,
                     )
             self.assertIsNone(parser.process)
@@ -413,7 +413,7 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                 restore = asyncio.create_task(
                     execution.child(
                         "pdf_processing.parse",
-                        {"mode": "restore", "out": str(root / "result")},
+                        {"mode": "restore", "scan": True, "out": str(root / "result")},
                         root,
                     )
                 )

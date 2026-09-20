@@ -97,8 +97,16 @@ class Execution:
         self.fresh_children = set()
 
     async def child(self, module, request, out):
-        """One request per interpreter; S1 explores safe process reuse separately."""
-        if self.child_runner is not None and module == 'pdf_processing.parse' and request.get('mode') == 'capture':
+        """Reuse one parser for native capture and checkpoint restoration."""
+        warm_parse = (
+            self.child_runner is not None
+            and module == 'pdf_processing.parse'
+            and (
+                request.get('mode') == 'capture'
+                or (request.get('mode') == 'restore' and not request.get('scan', False))
+            )
+        )
+        if warm_parse:
             self.observation['parser'] = await self.child_runner.run(request, out, self.heartbeat, self.child_timeout)
             return
         if self.child_runner is not None and module == 'pdf_processing.parse' and request.get('mode') == 'restore':

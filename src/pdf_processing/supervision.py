@@ -164,7 +164,8 @@ class WarmParser:
                             if not self.observation['ready']:
                                 raise ChildFailure('integrity', 'completion_before_readiness')
                             self.observation.update(memory=row.get('memory'), completed_at=now())
-                            self.count += 1
+                            if request.get('mode') == 'capture':
+                                self.count += 1
                             if self.count >= self.max_requests:
                                 self.observation['recycles'] += 1
                                 await self.stop('request_recycle')
