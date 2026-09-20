@@ -391,6 +391,8 @@ def disable_thp() -> dict:
     """Apply Linux's inherited per-process THP policy; never change node sysfs."""
     import ctypes
     libc = ctypes.CDLL(None, use_errno=True)
+    libc.prctl.argtypes = [ctypes.c_int] + [ctypes.c_ulong] * 4
+    libc.prctl.restype = ctypes.c_int
     if libc.prctl(41, 1, 0, 0, 0) != 0:  # PR_SET_THP_DISABLE
         raise OSError(ctypes.get_errno(), "cannot disable workload THP")
     if libc.prctl(42, 0, 0, 0, 0) != 1:  # PR_GET_THP_DISABLE

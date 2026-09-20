@@ -22,6 +22,7 @@ STREAM_FILES = {
     "workload.log",
 }
 FINAL_REQUIRED = {
+    "workload-memory-policy.json",
     "state/yolo-pod-cgroup-m/phase-complete.json",
     "state/yolo-pod-cgroup-m/reviewed-window-contract.json",
     "state/yolo-pod-cgroup-m/fresh-index.json",
@@ -48,6 +49,7 @@ FINAL_REQUIRED = {
     "state/pod-init.json",
 }
 ROOT_ALLOWED = {
+    "workload-memory-policy.json",
     "supervisor-ownership.json",
     "supervisor-interruption.json",
     "ownership.json",

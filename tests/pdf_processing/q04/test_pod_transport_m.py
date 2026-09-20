@@ -16,12 +16,26 @@ from unittest.mock import patch
 
 from pod_durable_evidence import seal
 
-VERSION = os.environ.get('Q04_TRANSPORT_VERSION', 'l')
+VERSION = os.environ.get('Q04_TRANSPORT_VERSION', 'm')
 remote = importlib.import_module('pod_remote_evidence_' + VERSION)
 runner = importlib.import_module('sentinel.run_yolo_pod_cgroup_' + VERSION)
 
 
 class TransportTests(unittest.TestCase):
+    def test_entrypoint_policy_survives_live_and_sealed_transport(self):
+        import pod_workload_m as workload
+        with patch.object(workload, 'parser') as parser, \
+             patch.object(workload, 'disable_thp', return_value={'thp_disabled':1}), \
+             patch.object(workload, 'run', return_value=0):
+            parser.return_value.parse_args.return_value = SimpleNamespace(control=self.root)
+            workload.main([])
+        self.pull()
+        self.stop_and_seal()
+        self.pull(received_at=2)
+        self.assertEqual(self.mirror.finalize(require_success=False)['status'], 'FAILURE_EVIDENCE_RETAINED')
+        self.mirror.verify_archive_fingerprint(json.loads(self.execute(runner.archive_fingerprint_program())))
+        self.assertEqual(json.loads((self.mirror.root / 'workload-memory-policy.json').read_text()), {'thp_disabled':1})
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
