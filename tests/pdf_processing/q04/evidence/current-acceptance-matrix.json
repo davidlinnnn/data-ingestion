@@ -1,9 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "4caa019ae33279f13c9d5ccf52de08c2384b3aef",
+    "commit": "d1701d3",
     "issue": 51,
-    "issue_state": "OPEN"
+    "issue_state": "OPEN",
+    "runtime_identity": "q04-yolo-pod-cgroup-20260920-m"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -53,13 +54,13 @@
       "pages": 15,
       "source_sha256": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab",
       "modes": {
-        "fresh": "unproven",
-        "restored": "unproven",
-        "replay": "unproven"
+        "fresh": "proven",
+        "restored": "proven",
+        "replay": "proven"
       },
-      "q04_fresh_index": "unproven",
-      "oracle_and_full_graph": "unproven",
-      "reason": "The lifecycle candidate completed fresh processing and required OCR, then failed the fixed full-graph gate before acceptance. Source review explains the complete delta as two source-preserving table-interrupted paragraph splits and packages an inactive fixture-local equivalence candidate. The complete 250 ms stream separately fails the unchanged 4 GiB gate at one group-3 warm-parser sample. Restored and replay did not run; all acceptance rows and fresh-index remain unproven.",
+      "q04_fresh_index": "proven",
+      "oracle_and_full_graph": "proven",
+      "reason": "M passed fresh/restored/exact replay and final all-sample resource/cleanup gates. Bounded to fixture07, approved two-pair equivalence, max_requests=1, workload-tree THP disabled and exact lifecycle producer/harness identities. No cross-fixture or original request20 warm qualification.",
       "evidence": [
         "tests/pdf_processing/t06/evidence/VERDICT.md",
         "tests/pdf_processing/q04/STAGE-IMPACT.md",
@@ -84,7 +85,8 @@
         "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/README.md",
         "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/BUNDLE.json",
         "tests/pdf_processing/q04/candidate/yolo-resource-v1/README.md",
-        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
+        "tests/pdf_processing/q04/pod-topology-v12/first-window-evidence/RESULTS.md"
       ],
       "attempts": [
         {
@@ -117,6 +119,36 @@
           "active_guard_peak_bytes": 4273446912,
           "attribution_peak_bytes": 4403523584,
           "cleanup": "proven",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-pod-cgroup-h",
+          "outcome": "PSI_stop_with_original_evidence_loss",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-pod-cgroup-i",
+          "outcome": "scratch_transport_failure",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-pod-cgroup-j",
+          "outcome": "all_cases_complete_attribution_failed",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-pod-cgroup-k",
+          "outcome": "all_cases_complete_recurring_probe_attribution_failed",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-pod-cgroup-l",
+          "outcome": "PSI_stop_process_samples_complete",
+          "retry_count": 0
+        },
+        {
+          "phase": "yolo-pod-cgroup-m",
+          "outcome": "PASS_BOUNDED_FIXTURE_07_ONLY",
           "retry_count": 0
         }
       ]
@@ -159,7 +191,8 @@
       "evidence": [
         "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/RESULTS.md",
         "tests/pdf_processing/q04/sentinel/acl-option-a-window-c/evidence/summary.json"
-      ]
+      ],
+      "current_lifecycle_producer_applicability": "unproven; retained pass belongs to its original producer/runtime identity"
     },
     {
       "id": "10",
@@ -178,7 +211,8 @@
         "tests/pdf_processing/q04/sentinel/high-capacity-b/RESULTS.md",
         "tests/pdf_processing/q04/sentinel/high-capacity-b/MAIN-RECONCILIATION.md",
         "tests/pdf_processing/q04/sentinel/high-capacity-b/evidence/summary.json"
-      ]
+      ],
+      "current_lifecycle_producer_applicability": "unproven; retained pass belongs to its original producer/runtime identity"
     }
   ],
   "release_gates": [
@@ -203,7 +237,7 @@
     {
       "id": "six_fixture_matrix",
       "status": "unproven",
-      "reason": "Only fixtures 09 and 10 have Q04 direct passes; fixture 08 has reusable historical reference evidence but fails exact Q04 profile/harness identity; native and 06 remain unrun. Fixture 07 completed fresh processing but failed the fixed full-graph gate; restored/replay did not run.",
+      "reason": "M proves bounded fixture07; earlier09/10 passes retain their exact producer/runtime scope. Native/06/08 and lifecycle-producer impact requalification remain open.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/candidate-batch-a/RESULTS.md",
@@ -290,7 +324,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "All 397 attribution samples are complete. Exactly sample 322 exceeds 4 GiB by 108,556,288 bytes during group 3 while one warm parser serves its third sequential request; no fresh child overlaps. The inactive max_requests=1 window candidate is pending review, so no integrated operating bound is accepted.",
+      "reason": "M passes the unchanged gate for fixture07 with max_requests=1 and THP-disabled workload. Other fixtures and request20 warm/drain remain unqualified; historical failures stay failed.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -303,7 +337,8 @@
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/runtime-summary.json",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json",
-        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
+        "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
+        "tests/pdf_processing/q04/pod-topology-v12/first-window-evidence/RESULTS.md"
       ]
     },
     {

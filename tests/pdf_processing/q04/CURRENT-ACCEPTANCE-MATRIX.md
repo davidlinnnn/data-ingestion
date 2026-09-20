@@ -1,7 +1,7 @@
 # Q04 current acceptance matrix
 
 This snapshot reconciles issue #51 through the candidate batch executed from
-plan commit `4caa019`. The machine-readable
+M execution commit `d1701d3` (earlier rows retain their exact identities). The machine-readable
 authority is `evidence/current-acceptance-matrix.json`. “Proven” means direct Q04
 evidence for the exact bounded row. “Reusable” means earlier direct evidence can
 be carried forward only while all stated identities and behavior remain equal.
@@ -14,7 +14,7 @@ acceptance.
 | --- | ---: | --- | --- | --- | --- | --- |
 | native | 51 pages | unproven | unproven | unproven | unproven | unproven |
 | WikiSkill `06` | 28 pages | unproven | unproven | unproven | unproven | unproven |
-| YOLO `07` | 15 pages | unproven | unproven | unproven | unproven | unproven |
+| YOLO `07` | 15 pages, M policy | **proven** | **proven** | **proven** | **proven** | **proven** |
 | AIMA `08` | original 99–110 | unproven | unproven | unproven | unproven | unproven |
 | ACL `09` | original 2–4 | **proven** | **proven** | **proven** | **proven** | **proven** |
 | Keynote `10` | one page | **proven** | **proven** | **proven** | **proven** | **proven** |
@@ -151,3 +151,26 @@ and missing PSS remain unknown. See the [J handoff](pod-topology-v9/SESSION-HAND
 and [results](pod-topology-v9/first-window-evidence/RESULTS.md). All 32 held
 Deployments stay off, historical PVC UIDs/prefixes remain, no retry occurred.
 #51 stays open; [ticket text](pod-topology-v9/TICKET-51-UPDATE-DRAFT.md) is unpublished.
+
+## K–M reconciliation (2026-09-20)
+
+K retained the recurring kubelet readiness exec and failed9/1,021 attribution
+rows despite three complete business cases. Diagnostic probes identified the
+root runc initializer by the exact failed command hash. L replaced the repeated
+exec with startup-only checks plus persistent runtime mount checks. All290 L
+process samples were complete, but real node PSI stopped fresh before any page.
+See [L results](pod-topology-v11/first-window-evidence/RESULTS.md).
+
+M passed all three fixture07 cases and all1,021 complete attribution samples,
+unchanged4GiB/zeroPSI/zeroOOM gates, archive verification and cleanup. See
+[M results](pod-topology-v12/first-window-evidence/RESULTS.md). This supersedes
+only the07 current unproven row above; preceding prose describes retained failed
+attempts. The07 policy stays max_requests=1, two reviewed paragraph pairs and
+workload-tree THP disabled. The THP cause of L remains unproven.
+
+ACL/Keynote remain proven under their original producer/runtime identities;
+applicability to the four-file lifecycle producer change is not assumed. Native,
+Wiki,AIMA, fixed request20 warm sequence, invalidation/old-profile rejection and
+active telemetry/process/Pod recovery remain open. No integrated resource bound
+or overall Q04/#51 PASS is declared. All32 held Deployments remain off and all
+historical evidence/PVCs/prefixes remain.
