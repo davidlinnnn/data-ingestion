@@ -103,26 +103,36 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(gates[gate]["status"], "unproven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
 
-    def test_next_step_preserves_original_aima_policy_and_no_retry(self):
+    def test_next_step_preserves_warm_scope_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'review_and_run_original_29_group_request20_warm_sequence')
+        self.assertEqual(step['kind'], 'execute_measurement_scoped_29_group_request20_warm_sequence')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-u')
         self.assertFalse(step['runtime_started'])
-        self.assertTrue(step['keep_current_guard'])
-        step = self.matrix['last_execution']
-        self.assertEqual(step['runtime_result'], 'PASS_BOUNDED_FIXTURE_08_ONLY')
-        self.assertEqual(step['fixture'], '08')
-        self.assertEqual(step['parser_max_requests'], 20)
+        self.assertTrue(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
-        self.assertFalse(step['other_fixture_policy_inherited'])
+        self.assertTrue(step['keep_current_guard'])
+        self.assertEqual(step['pending_graph_fixture_acceptance'], 'unproven')
+        for key in ('integration_manifest', 'offline_manifest', 'runner'):
+            self.assertTrue((ROOT / step[key]).is_file())
+        step = self.matrix['last_execution']
+        self.assertEqual(
+            step['runtime_result'],
+            'FAIL_ACCEPTANCE_HARNESS_SCOPE_MISMATCH_AFTER_FIRST_WORKFLOW',
+        )
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-t')
+        self.assertEqual(step['workflow'], 'first_wiki_complete')
+        self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v16/first-window-evidence'
-        summary = json.loads((evidence / 'evidence/state/aima-pod-cgroup-q-measurement/resource-attribution-summary.json').read_text())
-        self.assertTrue(summary['qualification_complete'])
-        self.assertEqual(summary['incomplete_samples'], 0)
-        self.assertEqual(json.loads((evidence / 'outer-cleanup.json').read_text())['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED')
+        evidence = Q04 / 'pod-topology-v19/first-window-evidence'
+        diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
+        self.assertTrue(diagnosis['first_case']['processing_complete'])
+        self.assertFalse(diagnosis['stop']['psi'])
+        self.assertFalse(diagnosis['stop']['oom'])
+        cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
+        self.assertEqual(cleanup['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED')
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()

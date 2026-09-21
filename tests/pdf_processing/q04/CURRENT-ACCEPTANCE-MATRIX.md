@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through S execution `78063af`; machine authority:
+Current through T execution `d555d29`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -82,6 +82,12 @@ execution, reuse and interruption behavior require requalification.
   transitive `pod_preflight_q.py` engine. No workflow, Activity or inference
   started; S proves no acceptance row. See
   [S results](pod-topology-v18/first-window-evidence/RESULTS.md).
+- T: all pre-inference gates passed and the first Wiki06 workflow completed
+  28/28 pages and 21/21 Activities without PSI, OOM, memory-floor or deadline
+  stop. The warm phase then stopped at the consumer's full-graph review gate,
+  before the remaining sequence or request-20 recycle. This is a harness scope
+  mismatch; no warm row passed. See
+  [T results](pod-topology-v19/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -97,11 +103,11 @@ the bounded AIMA08 window without changing resource, PSI, OOM or deadline
 thresholds. R did not reach that lifecycle because its adapter bound P identity
 defaults before applying R topology.
 
-T is the reviewed repair target for the original 29-group warm sequence and
-request20 recycle. It includes the complete transitive preflight source and
-tests import from the exact projected workspace. It uses a new identity/prefix
-while keeping failure-stop/no-retry behavior and every existing threshold. R
-and S must not be retried. T requires a new explicit authorization after S's
-fail-stop before its single controlled execution.
+U is the reviewed repair target for the original 29-group warm sequence and
+request20 recycle. It separates measurement eligibility from fixture graph
+acceptance: pending Wiki/native graph deltas may continue only when all bound
+source content and non-edge payloads remain equal, and are explicitly recorded
+as not accepted. It uses a new identity/prefix while keeping failure-stop,
+no-retry behavior and every existing threshold. R, S and T must not be retried.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

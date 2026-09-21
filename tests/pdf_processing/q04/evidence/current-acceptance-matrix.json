@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "78063af",
+    "commit": "d555d29",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-warm-pod-cgroup-20260921-s"
+    "runtime_identity": "q04-warm-pod-cgroup-20260921-t"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "S passed admission, Deployment identity and Pod readiness, then stopped on a proven projected-source omission before pre-inference completed. The original 29-group sequence and request20 recycle remain unrun.",
+      "reason": "T completed the first Wiki06 workflow without PSI/OOM/deadline stop, then stopped at a full-graph review gate before the remaining sequence or request20 recycle. The complete warm sequence remains unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -362,15 +362,16 @@
         "tests/pdf_processing/q04/diagnosis/warm-continuity/NEXT-IMPLEMENTATION.md",
         "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v17/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v18/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v18/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v19/first-window-evidence/RESULTS.md"
       ],
       "latest_attempt": {
-        "phase": "warm-pod-cgroup-s",
-        "outcome": "FAIL_ACCEPTANCE_HARNESS_SOURCE_PROJECTION_WORKLOAD_NOT_STARTED",
+        "phase": "warm-pod-cgroup-t",
+        "outcome": "FAIL_ACCEPTANCE_HARNESS_SCOPE_MISMATCH_AFTER_FIRST_WORKFLOW",
         "pod": "ready_then_deleted",
-        "pre_inference": "failed_import",
-        "workflow": "not_started",
-        "inference": "not_started",
+        "pre_inference": "passed",
+        "workflow": "first_wiki_complete",
+        "inference": "completed_first_fixture",
         "retry_count": 0
       }
     },
@@ -448,23 +449,24 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v18/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v19/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "review_and_authorize_corrected_projected_29_group_request20_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-t",
-    "runtime_authorized": false,
+    "kind": "execute_measurement_scoped_29_group_request20_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-u",
+    "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
-    "requires_new_runtime_authorization": true,
+    "requires_new_runtime_authorization": false,
     "single_execution": true,
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
     "historical_failure_preserved": true,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v19/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v19/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_t.py",
-    "authorization_scope_sha256": "c438bb68be79c537a770c7e655a1a3abead8059bde912ff712b79765d6417404"
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v20/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v20/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_u.py",
+    "authorization_scope_sha256": "d982dee470680c3a8830f24ab3a241bca7358ab1aabea967176418333da50b1f",
+    "pending_graph_fixture_acceptance": "unproven"
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -494,8 +496,8 @@
   },
   "last_execution": {
     "kind": "execute_corrected_29_group_request20_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-s",
-    "execution_commit": "78063af",
+    "run_identity": "q04-warm-pod-cgroup-20260921-t",
+    "execution_commit": "d555d29",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -503,14 +505,14 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v18/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v18/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_s.py",
-    "runtime_result": "FAIL_ACCEPTANCE_HARNESS_SOURCE_PROJECTION_WORKLOAD_NOT_STARTED",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v19/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v19/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_t.py",
+    "runtime_result": "FAIL_ACCEPTANCE_HARNESS_SCOPE_MISMATCH_AFTER_FIRST_WORKFLOW",
     "pod": "ready_then_uid_deleted",
-    "pre_inference": "failed_import",
-    "workflow": "not_started",
-    "inference": "not_started",
+    "pre_inference": "passed",
+    "workflow": "first_wiki_complete",
+    "inference": "completed_first_fixture",
     "cleanup": "proven_with_pvc_retained"
   }
 }

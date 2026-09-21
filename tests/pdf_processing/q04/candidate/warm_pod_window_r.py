@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from collections import Counter
 from contextlib import contextmanager
 import json
 import os
@@ -16,7 +17,7 @@ from candidate.aima_image_supplement import REFERENCE_SHA, compare
 from candidate.yolo_candidate_measure import AttributedCandidateRun
 from candidate.yolo_equivalence_candidate import validate_candidate as validate_yolo
 from candidate.yolo_reviewed_window import evaluate_resource_gate
-from consumer import canonical, require, sha
+from consumer import canonical, graph_projection, require, sha, source_signature
 from contracts import validate_window, warm_checks
 from host import Host
 from prepare import verify_bundle
@@ -26,6 +27,75 @@ from sentinel.aima_attribution_telemetry_q import StrictAttributionCollector
 
 SEQUENCE = ("06", "07", "08", "native", "06")
 Q04 = Path(__file__).resolve().parent.parent
+
+
+def measurement_content_signature(document):
+    def without_edges(value):
+        if isinstance(value, dict):
+            return {
+                key: without_edges(child)
+                for key, child in value.items()
+                if key not in {"self_ref", "$ref", "cref", "parent", "children", "captions"}
+            }
+        if isinstance(value, list):
+            return [without_edges(child) for child in value]
+        return value
+
+    text_payloads = Counter()
+    for node in document.get("texts", []):
+        if not node.get("prov"):
+            text_payloads[canonical(without_edges(node))] += 1
+            continue
+        metadata = {
+            key: without_edges(value)
+            for key, value in node.items()
+            if key not in {
+                "self_ref", "parent", "children", "captions", "references",
+                "footnotes", "text", "orig", "prov",
+            }
+        }
+        for provenance in node["prov"]:
+            span = slice(*provenance["charspan"])
+            text_payloads[canonical([
+                {key: value for key, value in provenance.items() if key != "charspan"},
+                node.get("text", "")[span],
+                node.get("orig", "")[span],
+                metadata,
+            ])] += 1
+    bound_payloads = {
+        collection: sorted(
+            canonical(without_edges(node))
+            for node in document.get(collection, [])
+        )
+        for collection in ("pictures", "tables", "key_value_items", "form_items")
+    }
+    return {
+        "source_regions": sorted(source_signature(document).elements()),
+        "text_payloads": sorted(text_payloads.elements()),
+        "bound_payloads": bound_payloads,
+        "pages": canonical(without_edges(document.get("pages", {}))),
+    }
+
+
+def allow_pending_graph_for_measurement(sid: str, document, reference, out: Path):
+    before = graph_projection(reference)
+    after = graph_projection(document)
+    if before == after:
+        return sha(canonical(after).encode())
+    require(
+        measurement_content_signature(reference)
+        == measurement_content_signature(document),
+        f"{sid} source content changed during warm measurement",
+    )
+    q04_runtime.write(out / "source-review-pending.json", {
+        "status": "NOT_ACCEPTED_WARM_MEASUREMENT_ONLY",
+        "fixture": sid,
+        "expected_graph_sha256": sha(canonical(before).encode()),
+        "actual_graph_sha256": sha(canonical(after).encode()),
+        "source_signature_equal": True,
+        "fixture_acceptance": "unproven",
+    })
+    return sha(canonical(after).encode())
 
 
 def validate_scope(args) -> dict:
@@ -127,6 +197,10 @@ def reviewed_reference_checker(bundle: Path, original):
         "YOLO producer adoption input identity changed",
     )
     inputs = json.loads(inputs_bytes)
+    references = {
+        sid: json.loads((bundle / "references" / f"{sid}.json").read_text())
+        for sid in ("06", "native")
+    }
     fixture = next(row for row in inputs["fixtures"] if row["id"] == "07")
     require(
         fixture["sha256"] == adoption["source_sha256"]
@@ -167,6 +241,11 @@ def reviewed_reference_checker(bundle: Path, original):
                 "general_normalization": False,
             })
             return result["identities"]["historical_reference_graph_sha256"]
+        for sid, pending_reference in references.items():
+            if reference == pending_reference:
+                return allow_pending_graph_for_measurement(
+                    sid, document, reference, out
+                )
         return original(document, reference, out)
 
     return check
