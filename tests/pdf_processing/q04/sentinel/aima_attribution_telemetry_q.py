@@ -336,6 +336,30 @@ def classify_confirmed_exit_transition(
         if exiting.get("reason") not in ("FileNotFoundError", "ProcessLookupError"):
             return failure("exit_read_was_not_process_absence")
     elif (
+        {(row.get("scope"), row.get("reason")) for row in unknown_reasons or []}
+        == {
+            ("process_coverage", "process_set_changed_during_sample"),
+            ("process_coverage", "process_transition_read_incomplete"),
+        }
+        and len(unknown) == 1
+    ):
+        exiting = unknown[0]
+        identity = _process_identity(exiting)
+        if identity is None:
+            return failure("exiting_process_identity_missing")
+        if exiting.get("reason") not in ("FileNotFoundError", "ProcessLookupError"):
+            return failure("exit_read_was_not_process_absence")
+        before_ids = {
+            (row.get("pid"), row.get("start_ticks"))
+            for row in current["process_coverage"].get("identities_before", [])
+        }
+        after_ids = {
+            (row.get("pid"), row.get("start_ticks"))
+            for row in current["process_coverage"].get("identities_after", [])
+        }
+        if before_ids - after_ids != {identity} or after_ids - before_ids:
+            return failure("exit_membership_transition_not_confirmed")
+    elif (
         len(unknown_reasons or []) == 1
         and not unknown
         and unknown_reasons[0].get("scope") == "proc_identity"
@@ -721,12 +745,25 @@ def strict_attribution_sample(**kwargs) -> dict:
     """Capture one sample, retrying one whole transient identity read safely."""
     first = _strict_attribution_sample_once(**kwargs)
     unknown = first["process_coverage"]["unknown"]
-    transient_exit = bool(unknown) and all(
-        issue.get("scope") == "proc_identity"
-        and issue.get("reason") in ("FileNotFoundError", "ProcessLookupError")
+    transient_reasons = {
+        ("process_coverage", "process_set_changed_during_sample"),
+        ("process_coverage", "process_transition_read_incomplete"),
+    }
+    incomplete_processes = [
+        row for row in first["processes"] if row.get("status") != "complete"
+    ]
+    transient_churn = bool(unknown) and all(
+        (
+            issue.get("scope") == "proc_identity"
+            and issue.get("reason") in ("FileNotFoundError", "ProcessLookupError")
+        )
+        or (issue.get("scope"), issue.get("reason")) in transient_reasons
         for issue in unknown
+    ) and all(
+        row.get("reason") in ("FileNotFoundError", "ProcessLookupError")
+        for row in incomplete_processes
     )
-    if not transient_exit:
+    if not transient_churn:
         return first
     retry = _strict_attribution_sample_once(**kwargs)
     observations = {"first": copy.deepcopy(first), "retry": copy.deepcopy(retry)}
@@ -762,7 +799,7 @@ def strict_attribution_sample(**kwargs) -> dict:
         and guards_do_not_decrease
     )
     evidence = {
-        "reason": "transient_proc_identity_disappearance",
+        "reason": "transient_process_churn",
         "observations": observations,
         "discarded_memory_current": first.get("memory_current"),
         "retry_memory_current": retry.get("memory_current"),

@@ -307,7 +307,7 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
                     "anon 1\nfile 1\nshmem 0\nfile_mapped 0\n"
                     "inactive_file 0\nslab 1\nkernel 1\n"
                 ),
-                "memory.pressure": "some total=0\nfull total=0\n",
+                "memory.pressure": "some avg10=0.00 total=0\nfull avg10=0.00 total=0\n",
             }[path.name]
 
         def process(_proc, identity, _text, _bytes, owned):
@@ -324,7 +324,10 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
         ), mock.patch.object(
             telemetry,
             "_scan_identities",
-            side_effect=[(before, []), (after, [])],
+            side_effect=[
+                (before, []), (after, []),
+                (after, []), (after, []),
+            ],
         ), mock.patch.object(telemetry, "_read_process", side_effect=process):
             row = telemetry.strict_attribution_sample(
                 root_pid=100,
@@ -336,8 +339,11 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
             )
 
         coverage = row["process_coverage"]
-        self.assertFalse(row["attribution_complete"])
-        self.assertIsNone(row["owned_pss_total_bytes"])
+        self.assertTrue(row["attribution_complete"])
+        self.assertEqual(row["owned_pss_total_bytes"], 30)
+        self.assertTrue(row["identity_resample"]["accepted"])
+        first = row["identity_resample"]["observations"]["first"]
+        coverage = first["process_coverage"]
         self.assertEqual(
             coverage["identities_before"],
             [
@@ -350,6 +356,128 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
             coverage["identities_before"]
             + [{"pid": 102, "ppid": 101, "start_ticks": 1002}],
         )
+
+    def test_exit_during_sample_is_retried_and_remains_classifiable(self):
+        worker = {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"}
+        child = {"pid": 101, "ppid": 100, "start_ticks": 1001, "state": "R"}
+        before = {100: worker, 101: child}
+        after = {100: worker}
+        memory_current = iter((2000, 1000))
+
+        first = {
+            **child,
+            "ownership": "owned",
+            "status": "unknown",
+            "reason": "FileNotFoundError",
+            "command_class": "fresh_owned_child",
+            "pss_bytes": None,
+        }
+        complete = {
+            **worker,
+            "ownership": "owned",
+            "status": "complete",
+            "command_class": "worker",
+            "pss_bytes": 10,
+        }
+        with mock.patch.object(
+            telemetry, "_strict_attribution_sample_once", side_effect=[
+                {
+                    "monotonic": 1.25,
+                    "time": 1.25,
+                    "sample_duration_seconds": 0.1,
+                    "collector_thread_cpu_seconds": 0.01,
+                    "cgroup": {"device": 1, "inode": 2},
+                    "memory_current": next(memory_current),
+                    "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+                    "memory_stat": {key: 0 for key in telemetry.MEMORY_STAT_FIELDS},
+                    "memory_pressure_raw": "full avg10=0.00 total=0\n",
+                    "processes": [complete, first],
+                    "process_events": [],
+                    "process_coverage": {
+                        "status": "incomplete",
+                        "identities_before": [worker, child],
+                        "identities_after": [worker],
+                        "unknown": [
+                            {"scope": "process_coverage", "reason": "process_set_changed_during_sample"},
+                            {"scope": "process_coverage", "reason": "process_transition_read_incomplete"},
+                        ],
+                    },
+                    "attribution_complete": False,
+                },
+                {
+                    "monotonic": 1.35,
+                    "time": 1.35,
+                    "sample_duration_seconds": 0.1,
+                    "collector_thread_cpu_seconds": 0.01,
+                    "cgroup": {"device": 1, "inode": 2},
+                    "memory_current": next(memory_current),
+                    "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+                    "memory_stat": {key: 0 for key in telemetry.MEMORY_STAT_FIELDS},
+                    "memory_pressure_raw": "full avg10=0.00 total=0\n",
+                    "processes": [complete],
+                    "process_events": [],
+                    "process_coverage": {"status": "complete", "unknown": []},
+                    "attribution_complete": True,
+                },
+            ]
+        ):
+            current = telemetry.strict_attribution_sample()
+
+        self.assertFalse(current["attribution_complete"])
+        self.assertFalse(current["identity_resample"]["accepted"])
+        self.assertEqual(current["memory_current"], 2000)
+        prior = {
+            **current,
+            "monotonic": 1.0,
+            "memory_current": 2100,
+            "processes": [complete, {**complete, **child, "command_class": "fresh_owned_child"}],
+            "process_events": [],
+            "process_coverage": {"status": "complete", "unknown": []},
+            "attribution_complete": True,
+        }
+        following = {
+            **current,
+            "monotonic": 1.5,
+            "memory_current": 900,
+            "processes": [complete],
+            "process_events": [{
+                "event": "exit_observed", "pid": 101,
+                "start_ticks": 1001, "command_class": "fresh_owned_child",
+            }],
+            "process_coverage": {"status": "complete", "unknown": []},
+            "attribution_complete": True,
+        }
+        result = telemetry.classify_confirmed_exit_transition(
+            [prior, current, following], 1,
+            attribution_gap_seconds=1.0, peak_index=0,
+        )
+        self.assertEqual(result["status"], "classified_confirmed_exit")
+
+        current["process_coverage"]["identities_after"].append(
+            {"pid": 102, "ppid": 100, "start_ticks": 1002}
+        )
+        result = telemetry.classify_confirmed_exit_transition(
+            [prior, current, following], 1,
+            attribution_gap_seconds=1.0, peak_index=0,
+        )
+        self.assertEqual(result["reason"], "exit_membership_transition_not_confirmed")
+
+    def test_membership_churn_does_not_retry_permission_failure(self):
+        row = {
+            "processes": [{"status": "unknown", "reason": "PermissionError"}],
+            "process_coverage": {
+                "unknown": [
+                    {"scope": "process_coverage", "reason": "process_set_changed_during_sample"},
+                    {"scope": "process_coverage", "reason": "process_transition_read_incomplete"},
+                ]
+            },
+            "attribution_complete": False,
+        }
+        with mock.patch.object(
+            telemetry, "_strict_attribution_sample_once", return_value=row
+        ) as sample:
+            self.assertIs(telemetry.strict_attribution_sample(), row)
+        sample.assert_called_once_with()
 
     def test_native_capture_restore_reuses_one_parser_then_reaps(self):
         with tempfile.TemporaryDirectory() as tmp:

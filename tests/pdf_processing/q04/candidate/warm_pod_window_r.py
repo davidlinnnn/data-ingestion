@@ -195,7 +195,7 @@ def reviewed_reference_checker(bundle: Path, original):
     inputs_sha = sha(inputs_bytes)
     if inputs_sha != adoption["current_candidate_inputs_sha256"]:
         rebinding = json.loads(
-            (Q04 / "candidate/warm-lifecycle-w/MANIFEST.json").read_text()
+            (Q04 / "candidate/warm-lifecycle-x/MANIFEST.json").read_text()
         )
         bindings = rebinding["harness_bindings"]
         require(

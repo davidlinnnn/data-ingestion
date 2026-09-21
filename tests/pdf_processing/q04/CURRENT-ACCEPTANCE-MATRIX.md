@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through V execution `68430db`; machine authority:
+Current through W execution `7d18e41`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -98,6 +98,12 @@ execution, reuse and interruption behavior require requalification.
   harness binding before workflow, Activity, parser or inference. Read-only PVC
   recovery sealed the exact failure and cleanup. V proves no acceptance row.
   See [V results](pod-topology-v21/first-window-evidence/RESULTS.md).
+- W: all 11 pre-inference gates and all five Temporal workflows completed the
+  29-group sequence and request-20 recycle. Three of 1,425 process samples
+  remained unclassified because the sampler did not retry before/after
+  process-set churn. PSI, OOM, memory-floor and deadline guards did not fire;
+  the combined warm/resource row remains unproven. See
+  [W results](pod-topology-v22/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -108,11 +114,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-U completed the original 29-group warm sequence and request-20 recycle without
-a resource stop. V did not reach the workload because preflight failed to apply
-init's complete bundle verification. W runs that same verification before
-admission and uses a newly bound bundle with unchanged producer, inputs, oracles,
-resource thresholds, failure-stop behavior and no-retry rule. R through V must
-not be retried.
+W completed the original workload without a resource stop, but its sampler did
+not handle process births/exits between the two identity scans. X retries one
+whole sample for that exact transient churn while preserving both observations
+and the unchanged conservative memory/PSI/OOM guards. Permission errors,
+ambiguous membership changes and unattributed peaks still fail closed. X uses a
+new bundle, run identity, prefix and PVC; no prior failed runtime is retried.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
