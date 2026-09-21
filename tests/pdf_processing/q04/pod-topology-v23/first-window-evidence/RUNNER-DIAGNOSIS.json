@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-x",
+  "workload_exit": {
+    "returncode": 1,
+    "timed_out": false,
+    "forced": false,
+    "failure": "ValueError: process attribution incomplete"
+  },
+  "workload": {
+    "five_workflows_completed": true,
+    "group_requests": 29,
+    "parser_pids": [
+      131,
+      1836
+    ],
+    "request_recycles": 1
+  },
+  "resource": {
+    "outer_min_available_bytes": 5322141696,
+    "outer_max_cgroup_bytes": 2481577984,
+    "inner_max_cgroup_bytes": 2306383872,
+    "max_node_full_psi_avg10": 0.0,
+    "max_cgroup_full_psi_avg10": 0.0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0,
+    "sample_count": 1466,
+    "maximum_gap_seconds": 0.73684329201933
+  },
+  "process_attribution": {
+    "status": "incomplete",
+    "hard_incomplete_sample_indexes": [
+      460
+    ],
+    "classified_exit_indexes": [
+      460
+    ],
+    "unclassified_indexes": [],
+    "cause": {
+      "460": "PID 646 exited during /proc read; process PSS unavailable; adjacent identity samples and exact exit event bounded the transition"
+    }
+  },
+  "causal_chain": [
+    "29-group sequence and five Temporal workflows completed",
+    "PID 646 exited while sample 460 read /proc",
+    "sampler emitted cgroup_process_read_incomplete",
+    "transient retry allowlist omitted that reason, so no whole-sample retry occurred",
+    "cgroup qualification classified the bounded exit but exact process attribution remained false",
+    "candidate raised ValueError",
+    "Pod supervisor recorded returncode 1",
+    "outer controller stopped without retry and cleaned owned runtime"
+  ],
+  "excluded_causes": [
+    "node PSI",
+    "Pod cgroup PSI",
+    "VM OOM",
+    "cgroup OOM",
+    "memory floor",
+    "workload deadline",
+    "supervisor interruption",
+    "ingestion activity failure"
+  ],
+  "unknowns": [
+    "A Y run may observe a different fail-closed condition; this cannot be known before the one controlled run"
+  ],
+  "root_cause": "The process-disappearance path used cgroup_process_read_incomplete, but strict_attribution_sample did not include that reason in its otherwise safe one-retry transient churn allowlist."
+}

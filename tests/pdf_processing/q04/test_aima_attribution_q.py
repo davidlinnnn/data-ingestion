@@ -479,6 +479,43 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
             self.assertIs(telemetry.strict_attribution_sample(), row)
         sample.assert_called_once_with()
 
+    def test_disappearing_process_read_retries_whole_sample(self):
+        first = {
+            "monotonic": 1.0,
+            "time": 1.0,
+            "sample_duration_seconds": 0.1,
+            "collector_thread_cpu_seconds": 0.01,
+            "memory_current": 1000,
+            "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+            "memory_pressure_raw": "full avg10=0.00 total=0\n",
+            "processes": [{"status": "unknown", "reason": "ProcessLookupError"}],
+            "process_coverage": {
+                "unknown": [{
+                    "scope": "process_coverage",
+                    "reason": "cgroup_process_read_incomplete",
+                }]
+            },
+            "attribution_complete": False,
+        }
+        retry = {
+            **first,
+            "monotonic": 1.1,
+            "time": 1.1,
+            "memory_current": 1100,
+            "processes": [{"status": "complete", "pss_bytes": 10}],
+            "process_coverage": {"unknown": []},
+            "attribution_complete": True,
+        }
+        with mock.patch.object(
+            telemetry, "_strict_attribution_sample_once", side_effect=[first, retry]
+        ) as sample:
+            row = telemetry.strict_attribution_sample()
+
+        self.assertTrue(row["attribution_complete"])
+        self.assertTrue(row["identity_resample"]["accepted"])
+        self.assertEqual(row["memory_current"], 1100)
+        self.assertEqual(sample.call_count, 2)
+
     def test_native_capture_restore_reuses_one_parser_then_reaps(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

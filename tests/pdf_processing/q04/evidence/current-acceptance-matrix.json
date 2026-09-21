@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "7d18e41",
+    "commit": "59ef005",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-warm-pod-cgroup-20260921-w"
+    "runtime_identity": "q04-warm-pod-cgroup-20260921-x"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "W completed all five Temporal workflows, 29 groups and the request-20 recycle, but three transient process-set changes remained unclassified. The combined warm/resource row remains unproven.",
+      "reason": "X completed all five Temporal workflows, 29 groups and the request-20 recycle, but one disappearing-process read was not retried because cgroup_process_read_incomplete was absent from the transient retry allowlist. The combined warm/resource row remains unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -366,11 +366,12 @@
         "tests/pdf_processing/q04/pod-topology-v19/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v20/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v21/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v23/first-window-evidence/RESULTS.md"
       ],
       "latest_attempt": {
-        "phase": "warm-pod-cgroup-w",
-        "outcome": "FAIL_PROCESS_SET_CHURN_ATTRIBUTION_INCOMPLETE",
+        "phase": "warm-pod-cgroup-x",
+        "outcome": "FAIL_DISAPPEARING_PROCESS_READ_NOT_RETRIED",
         "workflows_completed": 5,
         "group_requests": 29,
         "request_recycles": 1,
@@ -390,7 +391,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "W completed the full warm workload with zero PSI/OOM and no memory-floor/deadline stop, but three transient process-set changes remained unclassified; the integrated warm resource bound remains unqualified.",
+      "reason": "X completed the full warm workload with zero PSI/OOM and no memory-floor/deadline stop, but one disappearing-process read was not retried; the integrated warm resource bound remains unqualified.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -407,7 +408,8 @@
         "tests/pdf_processing/q04/pod-topology-v12/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v20/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v23/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -454,11 +456,11 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v23/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "execute_process_set_churn_rescan_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-x",
+    "kind": "execute_disappearing_process_read_rescan_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-y",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -467,11 +469,11 @@
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
     "historical_failure_preserved": true,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v23/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v23/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_x.py",
-    "authorization_scope_sha256": "f11e6d4743f4bfab93863ef5c6582fbde64d4b20bcd64e5474d3b38249406be2",
-    "bundle_inputs_sha256": "9f15d64fdb4db14b5d5ecada14f94ee5004319bca02bebaadde9e7b540bbdfb4",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v24/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v24/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_y.py",
+    "authorization_scope_sha256": "ea21f339efc96770d8e93d9235416787b2b449c6dfe699ea9e76fac2e57b7b24",
+    "bundle_inputs_sha256": "0e9082d41729b22ecc771e0c2df9998e60acecb35fd6fd10424b6997a15c8f5b",
     "pending_graph_fixture_acceptance": "unproven"
   },
   "historical_next_step": {
@@ -501,9 +503,9 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_bundle_verified_29_group_request20_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-w",
-    "execution_commit": "7d18e41",
+    "kind": "execute_process_set_churn_rescan_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-x",
+    "execution_commit": "59ef005",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -511,10 +513,10 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v22/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v22/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_w.py",
-    "runtime_result": "FAIL_PROCESS_SET_CHURN_ATTRIBUTION_INCOMPLETE",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v23/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v23/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_x.py",
+    "runtime_result": "FAIL_DISAPPEARING_PROCESS_READ_NOT_RETRIED",
     "workflows_completed": 5,
     "group_requests": 29,
     "request_recycles": 1,

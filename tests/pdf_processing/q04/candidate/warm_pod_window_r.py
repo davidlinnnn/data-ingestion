@@ -194,9 +194,13 @@ def reviewed_reference_checker(bundle: Path, original):
     inputs = json.loads(inputs_bytes)
     inputs_sha = sha(inputs_bytes)
     if inputs_sha != adoption["current_candidate_inputs_sha256"]:
-        rebinding = json.loads(
-            (Q04 / "candidate/warm-lifecycle-x/MANIFEST.json").read_text()
-        )
+        rebinding = next((
+            value
+            for path in sorted((Q04 / "candidate").glob("warm-lifecycle-*/MANIFEST.json"))
+            if (value := json.loads(path.read_text())).get("candidate_inputs_sha256")
+            == inputs_sha
+        ), None)
+        require(rebinding is not None, "warm harness rebinding is not reviewed")
         bindings = rebinding["harness_bindings"]
         require(
             inputs_sha == rebinding["candidate_inputs_sha256"]

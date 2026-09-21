@@ -105,8 +105,8 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_warm_scope_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_process_set_churn_rescan_warm_sequence')
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-x')
+        self.assertEqual(step['kind'], 'execute_disappearing_process_read_rescan_warm_sequence')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-y')
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
@@ -117,9 +117,9 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_PROCESS_SET_CHURN_ATTRIBUTION_INCOMPLETE',
+            'FAIL_DISAPPEARING_PROCESS_READ_NOT_RETRIED',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-w')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-x')
         self.assertEqual(step['workflows_completed'], 5)
         self.assertEqual(step['group_requests'], 29)
         self.assertFalse(step['automatic_retry'])
@@ -127,10 +127,11 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(step['deployments_remain_closed'], 32)
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v22/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v23/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
         self.assertTrue(diagnosis['workload']['five_workflows_completed'])
-        self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [711, 745, 1065])
+        self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [])
+        self.assertEqual(diagnosis['process_attribution']['classified_exit_indexes'], [460])
         self.assertEqual(diagnosis['resource']['max_node_full_psi_avg10'], 0)
         self.assertEqual(diagnosis['resource']['cgroup_oom_kill'], 0)
         cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())

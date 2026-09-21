@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through W execution `7d18e41`; machine authority:
+Current through X execution `59ef005`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -104,6 +104,13 @@ execution, reuse and interruption behavior require requalification.
   process-set churn. PSI, OOM, memory-floor and deadline guards did not fire;
   the combined warm/resource row remains unproven. See
   [W results](pod-topology-v22/first-window-evidence/RESULTS.md).
+- X: all 11 pre-inference gates and all five Temporal workflows completed the
+  29-group sequence and request-20 recycle. One of 1,466 samples lost a child
+  during `/proc` reading. The exit was bounded for cgroup qualification, but the
+  sampler omitted `cgroup_process_read_incomplete` from its safe transient retry
+  allowlist, so exact process attribution failed. PSI, OOM, memory-floor and
+  deadline guards did not fire. See
+  [X results](pod-topology-v23/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -114,11 +121,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-W completed the original workload without a resource stop, but its sampler did
-not handle process births/exits between the two identity scans. X retries one
-whole sample for that exact transient churn while preserving both observations
-and the unchanged conservative memory/PSI/OOM guards. Permission errors,
-ambiguous membership changes and unattributed peaks still fail closed. X uses a
-new bundle, run identity, prefix and PVC; no prior failed runtime is retried.
+X proved that births and before/after process-set churn are retried, but exposed
+the direct disappearing-process reason omitted from the same allowlist. Y adds
+only `cgroup_process_read_incomplete`; retry remains limited to
+`FileNotFoundError`/`ProcessLookupError`, preserves both observations, and accepts
+the retry only when memory/PSI/OOM guards do not decrease. All thresholds and
+the one-run/no-automatic-retry policy remain unchanged. Y uses a new bundle, run
+identity, prefix and PVC.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

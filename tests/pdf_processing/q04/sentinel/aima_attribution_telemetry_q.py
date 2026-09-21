@@ -746,6 +746,7 @@ def strict_attribution_sample(**kwargs) -> dict:
     first = _strict_attribution_sample_once(**kwargs)
     unknown = first["process_coverage"]["unknown"]
     transient_reasons = {
+        ("process_coverage", "cgroup_process_read_incomplete"),
         ("process_coverage", "process_set_changed_during_sample"),
         ("process_coverage", "process_transition_read_incomplete"),
     }
