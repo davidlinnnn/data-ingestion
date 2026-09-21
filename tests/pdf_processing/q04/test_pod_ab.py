@@ -1,4 +1,4 @@
-"""Regression checks for the Z warm Pod adapter."""
+"""Regression checks for the AB warm Pod adapter."""
 
 import importlib
 import json
@@ -9,12 +9,12 @@ import sys
 import tempfile
 import unittest
 
-import pod_topology_z as topology
-import pod_preflight_z as preflight
-from sentinel import run_warm_pod_cgroup_z as runner
+import pod_topology_ab as topology
+import pod_preflight_ab as preflight
+from sentinel import run_warm_pod_cgroup_ab as runner
 
 
-class ZWarmPodAdapterTest(unittest.TestCase):
+class ABWarmPodAdapterTest(unittest.TestCase):
     def test_private_engine_binds_w_identity_before_function_definition(self):
         deployment = {
             "metadata": {"name": topology.DEPLOYMENT, "uid": "t-deployment"}
@@ -48,15 +48,15 @@ class ZWarmPodAdapterTest(unittest.TestCase):
         public = importlib.import_module("pod_topology_p")
         self.assertEqual(public.PHASE, "q04-pod-cgroup-p")
 
-    def test_z_is_new_inactive_fail_stop_identity(self):
-        self.assertEqual(runner.RUN_IDENTITY, "q04-warm-pod-cgroup-20260921-z")
-        self.assertEqual(runner.PREFIX, "q04/warm-pod-cgroup-20260921-z/")
+    def test_ab_is_new_inactive_fail_stop_identity(self):
+        self.assertEqual(runner.RUN_IDENTITY, "q04-warm-pod-cgroup-20260921-ab")
+        self.assertEqual(runner.PREFIX, "q04/warm-pod-cgroup-20260921-ab/")
         self.assertFalse(runner.authorization_scope()["automatic_retry"])
         self.assertEqual(topology.kubernetes_list()["items"][3]["spec"]["replicas"], 0)
-        self.assertIn("pod_workload_z.py", runner.workload_argv()[1])
-        self.assertIn("pod_preflight_z.py", runner.preflight_argv()[1])
+        self.assertIn("pod_workload_ab.py", runner.workload_argv()[1])
+        self.assertIn("pod_preflight_ab.py", runner.preflight_argv()[1])
 
-    def test_historical_z_bundle_is_stale_after_ab_repair(self):
+    def test_complete_preflight_configuration_gate_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
             capacity = Path(tmp) / "capacity.json"
             source = Path(tmp) / "source.json"
@@ -76,18 +76,18 @@ class ZWarmPodAdapterTest(unittest.TestCase):
                 "container_hard_limit_bytes": 5_368_709_120,
             }))
             source.write_text(json.dumps({"phase": preflight.TOPOLOGY_PHASE}))
-            bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-z-final")
-            with self.assertRaisesRegex(ValueError, "bundle harness drift"):
-                preflight.verify_configuration_z(
-                    capacity=capacity,
-                    authorization_scope_sha256=runner.authorization_scope_sha256(),
-                    source_manifest_path=source,
-                    bundle=bundle,
-                    expected_bundle_sha256=preflight.sha256(bundle / "inputs.json"),
-                )
+            bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-ab-final")
+            _, result = preflight.verify_configuration_ab(
+                capacity=capacity,
+                authorization_scope_sha256=runner.authorization_scope_sha256(),
+                source_manifest_path=source,
+                bundle=bundle,
+                expected_bundle_sha256=preflight.sha256(bundle / "inputs.json"),
+            )
+            self.assertEqual(result["status"], "PASS")
 
     def test_preflight_rejects_bundle_with_stale_harness_binding(self):
-        source_bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-z-final")
+        source_bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-ab-final")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             bundle = root / "bundle"
@@ -118,7 +118,7 @@ class ZWarmPodAdapterTest(unittest.TestCase):
             source = root / "source.json"
             source.write_text(json.dumps({"phase": preflight.TOPOLOGY_PHASE}))
             with self.assertRaisesRegex(ValueError, "bundle harness drift"):
-                preflight.verify_configuration_z(
+                preflight.verify_configuration_ab(
                     capacity=capacity,
                     authorization_scope_sha256=runner.authorization_scope_sha256(),
                     source_manifest_path=source,
@@ -130,8 +130,8 @@ class ZWarmPodAdapterTest(unittest.TestCase):
         env = os.environ.copy()
         env["PYTHONDONTWRITEBYTECODE"] = "1"
         for modules in (
-            "sentinel.run_warm_pod_cgroup_s,sentinel.run_warm_pod_cgroup_z",
-            "sentinel.run_warm_pod_cgroup_z,sentinel.run_warm_pod_cgroup_s",
+            "sentinel.run_warm_pod_cgroup_s,sentinel.run_warm_pod_cgroup_ab",
+            "sentinel.run_warm_pod_cgroup_ab,sentinel.run_warm_pod_cgroup_s",
         ):
             subprocess.run(
                 [
@@ -147,7 +147,7 @@ class ZWarmPodAdapterTest(unittest.TestCase):
                 cwd=Path(__file__).resolve().parents[3],
             )
 
-    def test_preflight_imports_from_exact_projected_workspace(self):
+    def test_preflight_gate_passes_from_exact_projected_workspace(self):
         rendered = topology.kubernetes_list()
         maps = {
             item["metadata"]["name"]: item["data"]
@@ -185,10 +185,13 @@ class ZWarmPodAdapterTest(unittest.TestCase):
                 [
                     sys.executable,
                     "-c",
-                    "import pod_preflight_z; "
+                    "import pod_preflight_ab; "
                     "import json,tempfile; from pathlib import Path; "
                     "from candidate.warm_pod_window_r import reviewed_reference_checker; "
-                    "b=Path('/private/tmp/q04-inputs-warm-lifecycle-z-final'); "
+                    "b=Path('/private/tmp/q04-inputs-warm-lifecycle-ab-final'); "
+                    "pod_preflight_ab.verify_workload_imports_ab("
+                    "workspace=Path.cwd(),bundle=b,"
+                    "prefix='q04/warm-pod-cgroup-20260921-ab/'); "
                     "r=json.loads((b/'references/07.json').read_text()); "
                     f"d=json.loads(Path({str(document)!r}).read_text()); "
                     "c=reviewed_reference_checker(b,lambda *_args: None); "

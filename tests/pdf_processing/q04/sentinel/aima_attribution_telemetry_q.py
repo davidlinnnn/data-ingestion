@@ -303,6 +303,49 @@ def _failed_resample_exit_identity(current: dict) -> tuple[int, int] | None:
     if not (first.get("cgroup") == retry.get("cgroup") == current.get("cgroup")):
         return None
 
+    membership_change = [{
+        "scope": "process_coverage",
+        "reason": "process_set_changed_during_sample",
+    }]
+    first_coverage = first.get("process_coverage", {})
+    retry_coverage = retry.get("process_coverage", {})
+    if (
+        first_coverage.get("unknown") == membership_change
+        and current.get("process_coverage", {}).get("unknown") == membership_change
+        and retry.get("attribution_complete") is True
+        and retry_coverage.get("status") == "complete"
+        and retry_coverage.get("unknown") == []
+        and not any(
+            item.get("status") != "complete"
+            for row in (first, current, retry)
+            for item in row.get("processes", [])
+        )
+    ):
+        first_before = {
+            _process_identity(item)
+            for item in first_coverage.get("identities_before", [])
+        }
+        first_after = {
+            _process_identity(item)
+            for item in first_coverage.get("identities_after", [])
+        }
+        retry_before = {
+            _process_identity(item)
+            for item in retry_coverage.get("identities_before", [])
+        }
+        retry_after = {
+            _process_identity(item)
+            for item in retry_coverage.get("identities_after", [])
+        }
+        exits = first_before - first_after
+        if (
+            None not in first_before | first_after | retry_before | retry_after
+            and len(exits) == 1
+            and not first_after - first_before
+            and retry_before == retry_after == first_after
+        ):
+            return next(iter(exits))
+
     def absent_identity(row):
         unknown = [item for item in row.get("processes", []) if item.get("status") != "complete"]
         if len(unknown) != 1 or unknown[0].get("reason") not in (
@@ -315,8 +358,6 @@ def _failed_resample_exit_identity(current: dict) -> tuple[int, int] | None:
     if identity is None or absent_identity(current) != identity or absent_identity(retry) != identity:
         return None
     direct = [{"scope": "process_coverage", "reason": "cgroup_process_read_incomplete"}]
-    first_coverage = first.get("process_coverage", {})
-    retry_coverage = retry.get("process_coverage", {})
     if first_coverage.get("unknown") != direct:
         return None
     first_before = {_process_identity(item) for item in first_coverage.get("identities_before", [])}

@@ -105,8 +105,8 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_warm_scope_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_corrected_runtime_scope_binding_warm_sequence')
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-aa')
+        self.assertEqual(step['kind'], 'execute_complete_retry_membership_exit_classification_warm_sequence')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-ab')
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
@@ -117,24 +117,25 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_PRE_INFERENCE_RUNTIME_SCOPE_DIGEST',
+            'FAIL_COMPLETE_RETRY_MEMBERSHIP_EXIT_UNCLASSIFIED',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-z')
-        self.assertEqual(step['workflows_completed'], 0)
-        self.assertEqual(step['group_requests'], 0)
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-aa')
+        self.assertEqual(step['workflows_completed'], 5)
+        self.assertEqual(step['group_requests'], 29)
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v25/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v26/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
-        self.assertEqual(diagnosis['workload']['status'], 'NOT_STARTED')
-        self.assertEqual(diagnosis['pre_inference']['failed_gate'], 'workload_imports')
-        self.assertFalse(diagnosis['workload']['object_written'])
+        self.assertTrue(diagnosis['workload']['five_workflows_completed'])
+        self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [1291])
+        self.assertEqual(diagnosis['resource']['max_node_full_psi_avg10'], 0)
+        self.assertEqual(diagnosis['resource']['cgroup_oom_kill'], 0)
         cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
         self.assertEqual(
-            cleanup['disposition'], 'CLEANED_WITH_PVC_RETAINED_WORKLOAD_NOT_STARTED'
+            cleanup['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED'
         )
 
     def test_human_matrix_and_next_step_match_machine_authority(self):

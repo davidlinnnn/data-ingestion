@@ -563,6 +563,69 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
                 )
                 self.assertEqual(result["status"], "unclassified")
 
+    def test_lower_complete_retry_confirms_membership_exit(self):
+        worker = {
+            "pid": 100, "ppid": 1, "start_ticks": 1000,
+            "status": "complete", "command_class": "worker", "pss_bytes": 10,
+        }
+        child = {
+            "pid": 101, "ppid": 100, "start_ticks": 1001,
+            "status": "complete", "command_class": "fresh_owned_child", "pss_bytes": 20,
+        }
+        identities = [
+            {key: row[key] for key in ("pid", "ppid", "start_ticks")}
+            for row in (worker, child)
+        ]
+        remaining = identities[:1]
+
+        def sample(monotonic, processes, before_ids, after_ids, *, complete):
+            return {
+                "monotonic": monotonic,
+                "time": monotonic,
+                "memory_current": 90,
+                "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+                "memory_stat": {key: 0 for key in telemetry.MEMORY_STAT_FIELDS},
+                "memory_pressure_raw": "full avg10=0.00 total=0\n",
+                "cgroup": {"device": 1, "inode": 2},
+                "attribution_complete": complete,
+                "processes": processes,
+                "process_events": [],
+                "process_coverage": {
+                    "status": "complete" if complete else "incomplete",
+                    "identities_before": before_ids,
+                    "identities_after": after_ids,
+                    "unknown": [] if complete else [{
+                        "scope": "process_coverage",
+                        "reason": "process_set_changed_during_sample",
+                    }],
+                },
+            }
+
+        before = sample(1.0, [worker, child], identities, identities, complete=True)
+        before["memory_current"] = 100
+        first = sample(1.2, [worker], identities, remaining, complete=False)
+        first["memory_current"] = 95
+        retry = sample(1.25, [worker], remaining, remaining, complete=True)
+        retry["memory_current"] = 90
+        current = copy.deepcopy(first)
+        current["monotonic"] = retry["monotonic"]
+        current["identity_resample"] = {
+            "accepted": False,
+            "observations": {"first": first, "retry": retry},
+        }
+        after = sample(1.5, [worker], remaining, remaining, complete=True)
+        after["memory_current"] = 80
+        after["process_events"] = [{
+            "event": "exit_observed", "pid": 101, "start_ticks": 1001,
+            "command_class": "fresh_owned_child",
+        }]
+
+        result = telemetry.classify_confirmed_exit_transition(
+            [before, current, after], 1,
+            attribution_gap_seconds=1.0, peak_index=0,
+        )
+        self.assertEqual(result["status"], "classified_confirmed_exit")
+
     def test_membership_churn_does_not_retry_permission_failure(self):
         row = {
             "processes": [{"status": "unknown", "reason": "PermissionError"}],

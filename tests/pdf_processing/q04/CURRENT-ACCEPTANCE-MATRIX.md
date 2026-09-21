@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through Z execution `f83d1db`; machine authority:
+Current through AA execution `019fc15`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -122,6 +122,12 @@ execution, reuse and interruption behavior require requalification.
   runner authorization digest. No workflow, Activity, inference or object write
   started. Cleanup passed and the retained PVC is Bound. See
   [Z results](pod-topology-v25/first-window-evidence/RESULTS.md).
+- AA: all 11 pre-inference gates and all five Temporal workflows completed the
+  29-group sequence and request-20 recycle. One of 1,307 samples retained the
+  higher first cgroup reading when a fresh child exited; its complete retry and
+  adjacent complete sample prove the exact exit, but the classifier lacked this
+  shape. PSI, OOM, memory-floor and deadline guards did not fire. See
+  [AA results](pod-topology-v26/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -132,11 +138,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Z did not start the workload because its runtime manifest used the outer runner
-digest for the narrower inner measurement scope. AA binds that scope to its
-canonical digest and exercises the exact projected `workload_imports` gate in a
-regression test. The failed-resample classifier, thresholds and the
-one-run/no-automatic-retry policy remain unchanged. AA uses a new run identity,
-prefix and PVC.
+AA proved a complete retry can confirm the exact membership exit even when the
+collector conservatively retains the first, higher cgroup reading. AB classifies
+only that same identity-fenced exit shape. Changed identities, simultaneous
+births, permission failures and unattributed peaks still fail closed. All
+thresholds and the one-run/no-automatic-retry policy remain unchanged. AB uses a
+new bundle, run identity, prefix and PVC.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

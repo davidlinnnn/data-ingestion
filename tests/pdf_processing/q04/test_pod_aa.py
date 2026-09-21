@@ -56,7 +56,7 @@ class AAWarmPodAdapterTest(unittest.TestCase):
         self.assertIn("pod_workload_aa.py", runner.workload_argv()[1])
         self.assertIn("pod_preflight_aa.py", runner.preflight_argv()[1])
 
-    def test_complete_preflight_configuration_gate_passes(self):
+    def test_historical_aa_bundle_is_stale_after_ab_repair(self):
         with tempfile.TemporaryDirectory() as tmp:
             capacity = Path(tmp) / "capacity.json"
             source = Path(tmp) / "source.json"
@@ -77,14 +77,14 @@ class AAWarmPodAdapterTest(unittest.TestCase):
             }))
             source.write_text(json.dumps({"phase": preflight.TOPOLOGY_PHASE}))
             bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-aa-final")
-            _, result = preflight.verify_configuration_aa(
-                capacity=capacity,
-                authorization_scope_sha256=runner.authorization_scope_sha256(),
-                source_manifest_path=source,
-                bundle=bundle,
-                expected_bundle_sha256=preflight.sha256(bundle / "inputs.json"),
-            )
-            self.assertEqual(result["status"], "PASS")
+            with self.assertRaisesRegex(ValueError, "bundle harness drift"):
+                preflight.verify_configuration_aa(
+                    capacity=capacity,
+                    authorization_scope_sha256=runner.authorization_scope_sha256(),
+                    source_manifest_path=source,
+                    bundle=bundle,
+                    expected_bundle_sha256=preflight.sha256(bundle / "inputs.json"),
+                )
 
     def test_preflight_rejects_bundle_with_stale_harness_binding(self):
         source_bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-aa-final")
