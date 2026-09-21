@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through U execution `2a4f92b`; machine authority:
+Current through V execution `68430db`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -94,6 +94,10 @@ execution, reuse and interruption behavior require requalification.
   combined warm/resource row remain unproven. No PSI, OOM, memory-floor or
   deadline stop occurred. See
   [U results](pod-topology-v20/first-window-evidence/RESULTS.md).
+- V: all 11 pre-inference gates passed, then init rejected a stale bundle
+  harness binding before workflow, Activity, parser or inference. Read-only PVC
+  recovery sealed the exact failure and cleanup. V proves no acceptance row.
+  See [V results](pod-topology-v21/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -105,10 +109,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 U completed the original 29-group warm sequence and request-20 recycle without
-a resource stop. Qualification failed closed on one normal child-exit sampling
-race. V retries only a transient `/proc` identity disappearance once before
-sealing a sample; persistent errors and incomplete samples still fail. V uses a
-new identity/prefix and keeps every resource threshold, failure-stop behavior and
-the no-retry rule unchanged. R through U must not be retried.
+a resource stop. V did not reach the workload because preflight failed to apply
+init's complete bundle verification. W runs that same verification before
+admission and uses a newly bound bundle with unchanged producer, inputs, oracles,
+resource thresholds, failure-stop behavior and no-retry rule. R through V must
+not be retried.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

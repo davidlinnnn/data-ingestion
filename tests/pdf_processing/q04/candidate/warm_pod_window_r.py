@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 from collections import Counter
 from contextlib import contextmanager
 import json
@@ -190,13 +191,38 @@ def reviewed_reference_checker(bundle: Path, original):
     methods_bytes = (
         Q04.parent / "t09a_r3/evidence/20260914-0b537d0-c/actual-methods.json"
     ).read_bytes()
+    inputs = json.loads(inputs_bytes)
+    inputs_sha = sha(inputs_bytes)
+    if inputs_sha != adoption["current_candidate_inputs_sha256"]:
+        rebinding = json.loads(
+            (Q04 / "candidate/warm-lifecycle-w/MANIFEST.json").read_text()
+        )
+        bindings = rebinding["harness_bindings"]
+        require(
+            inputs_sha == rebinding["candidate_inputs_sha256"]
+            and rebinding["source_inputs_sha256"]
+            == adoption["current_candidate_inputs_sha256"]
+            and sorted(bindings) == sorted(rebinding["changed_harness_bindings"]),
+            "YOLO producer adoption input identity changed",
+        )
+        normalized = copy.deepcopy(inputs)
+        for name, binding in bindings.items():
+            require(
+                normalized["test_files"].get(name) == binding["candidate"],
+                "warm harness rebinding changed",
+            )
+            normalized["test_files"][name] = binding["source"]
+        require(
+            sha(canonical(normalized).encode())
+            == rebinding["source_canonical_sha256"]
+            == rebinding["normalized_candidate_sha256"],
+            "warm bundle changed beyond reviewed harness bindings",
+        )
     require(
-        sha(inputs_bytes) == adoption["current_candidate_inputs_sha256"]
-        and yolo_bundle["identities"]["candidate_inputs_sha256"]
+        yolo_bundle["identities"]["candidate_inputs_sha256"]
         == adoption["previous_candidate_inputs_sha256"],
         "YOLO producer adoption input identity changed",
     )
-    inputs = json.loads(inputs_bytes)
     references = {
         sid: json.loads((bundle / "references" / f"{sid}.json").read_text())
         for sid in ("06", "native")
@@ -213,9 +239,7 @@ def reviewed_reference_checker(bundle: Path, original):
         )),
         "YOLO reviewed equivalence boundary changed",
     )
-    yolo_bundle["identities"]["candidate_inputs_sha256"] = adoption[
-        "current_candidate_inputs_sha256"
-    ]
+    yolo_bundle["identities"]["candidate_inputs_sha256"] = inputs_sha
 
     def check(document, reference, out):
         if reference == aima_reference:

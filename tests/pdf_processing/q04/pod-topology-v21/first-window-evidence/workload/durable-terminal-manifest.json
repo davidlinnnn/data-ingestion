@@ -1,0 +1,129 @@
+{
+  "capacity": {
+    "evidence_free_bytes": 1073734408,
+    "evidence_used_bytes": 7416,
+    "filesystem_free_bytes": 1800737259520,
+    "requested_bytes": 1073741824
+  },
+  "cleanup_complete": true,
+  "inventory": [
+    {
+      "bytes": 131,
+      "path": "cleanup-complete.json",
+      "sha256": "86d065fe558d35808ef21035edecd2198674bcab9ee860db449e968c79adf1c2"
+    },
+    {
+      "bytes": 2329,
+      "path": "evidence-volume-identity.json",
+      "sha256": "b26c7a9dc21a7176b767feb731b5965b9346a63f9b17f1669692a196c341df5f"
+    },
+    {
+      "bytes": 863,
+      "path": "init-exit.json",
+      "sha256": "a6547b6bf416d5a74e35c1578a10ddd0ab1c10558b223eab8a490001f895a919"
+    },
+    {
+      "bytes": 3678,
+      "path": "pre-inference-gates.json",
+      "sha256": "43bd71d21962ccb02fd9bc25096ea6d4d14c18fd32cc2d7c38252f22dfa1ed25"
+    },
+    {
+      "bytes": 199,
+      "path": "supervisor-ownership.json",
+      "sha256": "9fe9888a8e9f1bbfd0faff67e620418aee26b04c427edab503a7bac6c94eaf9d"
+    },
+    {
+      "bytes": 146,
+      "path": "workload-exit.json",
+      "sha256": "f73db1e5e70c93d3428516b9633b45b1ef5690c3cdfd39fc27f015df4a3201f3"
+    },
+    {
+      "bytes": 70,
+      "path": "workload-memory-policy.json",
+      "sha256": "3abf60406039fbf8a5083fb97591184f65b8218e7dcfccd195cbaa24242ebe8f"
+    }
+  ],
+  "inventory_sha256": "06203192b19657aff4f69038324100f6a3988d532a65f3d01ba71396f9451a46",
+  "schema_version": 1,
+  "status": "INCOMPLETE",
+  "terminal": true,
+  "volume_identity": {
+    "access_modes": [
+      "ReadWriteOnce"
+    ],
+    "automatic_delete": false,
+    "capacity": "1Gi",
+    "directory_contract": {
+      "capacity": {
+        "evidence_free_bytes": 1073741824,
+        "evidence_used_bytes": 0,
+        "filesystem_free_bytes": 1800810184704,
+        "requested_bytes": 1073741824
+      },
+      "directory": {
+        "directory": true,
+        "gid": 1000,
+        "label": "application-owned-run-directory",
+        "mode": "0o700",
+        "path": "/q04-evidence/q04-warm-pod-cgroup-20260921-v",
+        "symlink": false,
+        "uid": 1000,
+        "writable": true
+      },
+      "durable_probe": {
+        "atomic_rename": true,
+        "bytes": 26,
+        "directory_fsync_after_remove": true,
+        "directory_fsync_after_rename": true,
+        "file_fsync": true,
+        "probe_removed": true,
+        "readback_verified": true,
+        "sha256": "9e7da91e20900ed78b5bf470ba2f238b98b4462f983d352f865d8e91cc09c901"
+      },
+      "mount": {
+        "directory": true,
+        "gid": 0,
+        "label": "storage-backend-owned-mount-root",
+        "mode": "0o777",
+        "path": "/q04-evidence",
+        "symlink": false,
+        "uid": 0,
+        "writable": true
+      },
+      "process": {
+        "gid": 1000,
+        "uid": 1000
+      },
+      "schema_version": 1,
+      "status": "PASS"
+    },
+    "evidence_directory": "/q04-evidence/q04-warm-pod-cgroup-20260921-v",
+    "evidence_directory_name": "q04-warm-pod-cgroup-20260921-v",
+    "fs_group": 1000,
+    "host_path": "/var/local-path-provisioner/pvc-efb941de-4307-4fbe-9b83-7e27a61c9cf1_pdf-t09a-validation_q04-pod-cgroup-v-evidence-20260921-v",
+    "mount_path": "/q04-evidence",
+    "mount_root_permissions": {
+      "directory": true,
+      "mode": "0o777",
+      "mount_gid": 0,
+      "mount_uid": 0,
+      "process_gid": 1000,
+      "process_uid": 1000,
+      "searchable": true,
+      "symlink": false,
+      "writable": true
+    },
+    "namespace": "pdf-t09a-validation",
+    "node": "internal-a2a-vs6-local-worker2",
+    "pv_name": "pvc-efb941de-4307-4fbe-9b83-7e27a61c9cf1",
+    "pv_uid": "c2c001cb-4925-43c8-a3ac-6ecdf5ae5e4f",
+    "pvc_name": "q04-pod-cgroup-v-evidence-20260921-v",
+    "pvc_uid": "efb941de-4307-4fbe-9b83-7e27a61c9cf1",
+    "recovery_mode": "read-only helper Pod on the bound node",
+    "run_as_gid": 1000,
+    "run_as_uid": 1000,
+    "storage_class": "standard",
+    "volume_backend": "rancher.io/local-path hostPath DirectoryOrCreate"
+  },
+  "workload_succeeded": false
+}
