@@ -139,7 +139,7 @@ def exact_command() -> str:
         str(Path(__file__).resolve()),
         "--execute",
         "--owner", "main-session",
-        "--approval-reference", "REQUIRES_NEW_EXPLICIT_AUTHORIZATION_AFTER_R_FAIL_STOP",
+        "--approval-reference", "User explicitly authorized Q04 S execution on 2026-09-21",
         "--authorization-scope-sha256", authorization_scope_sha256(),
     ])
 
@@ -185,7 +185,7 @@ def build_offline_manifest() -> dict:
     value["sources"].update({
         name: base.sha256(path.read_bytes()) for name, path in paths.items()
     })
-    value["runtime_blocker"] = "new explicit authorization after R fail-stop"
+    value["runtime_blocker"] = "live admission and complete S warm runtime gates"
     return value
 
 
