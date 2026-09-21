@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-z",
+  "workload": {
+    "status": "NOT_STARTED",
+    "workflow": "NOT_STARTED",
+    "inference": "NOT_STARTED",
+    "object_written": false
+  },
+  "pre_inference": {
+    "status": "FAIL_PRE_INFERENCE",
+    "passed_gates": 10,
+    "failed_gate": "workload_imports",
+    "error_type": "ValueError",
+    "reason": "runtime scope digest changed"
+  },
+  "digest_evidence": {
+    "declared_runtime_scope_sha256": "eb940293af955e10001d7ae4339d7ba75dadb1de2735d6bc5a4f939031428b01",
+    "canonical_runtime_scope_sha256": "d9087af3bd250fc8c5664089dd1aa910804e548d498d90b1cbd5ff5f105c9fa8",
+    "declared_value_is_outer_runner_scope": true
+  },
+  "causal_chain": [
+    "Z projected the runtime integration manifest into the Pod workspace",
+    "the workload_imports gate called the candidate runtime scope validator",
+    "the manifest contained the outer runner authorization digest instead of the canonical inner measurement scope digest",
+    "the validator failed closed before workflow, inference, or object writes",
+    "the outer controller stopped without retry and cleaned owned runtime objects"
+  ],
+  "excluded_causes": [
+    "node PSI",
+    "Pod cgroup PSI",
+    "VM OOM",
+    "cgroup OOM",
+    "memory floor",
+    "workload deadline",
+    "supervisor interruption",
+    "Temporal Activity failure",
+    "ingestion implementation failure"
+  ],
+  "unknowns": [
+    "Z did not start the workload, so it adds no evidence about whether a later run satisfies the combined warm/resource gate"
+  ],
+  "root_cause": "The v25 runtime integration manifest bound its inner measurement scope to the outer runner authorization digest, and the local projection test did not execute the workload_imports gate."
+}

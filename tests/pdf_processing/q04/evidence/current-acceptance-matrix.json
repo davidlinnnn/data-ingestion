@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "eb97a0d",
+    "commit": "f83d1db",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-warm-pod-cgroup-20260921-y"
+    "runtime_identity": "q04-warm-pod-cgroup-20260921-z"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "Y completed all five Temporal workflows, 29 groups and the request-20 recycle, but two exact process exits remained unclassified because the compact summary omitted retained failed-resample observations. The combined warm/resource row remains unproven.",
+      "reason": "Y completed all five Temporal workflows, 29 groups and the request-20 recycle, but its combined warm/resource row remained unproven. Z stopped at workload_imports because its runtime manifest bound the inner measurement scope to the outer runner digest; no workflow, Activity or inference started.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -368,14 +368,15 @@
         "tests/pdf_processing/q04/pod-topology-v21/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v23/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v25/first-window-evidence/RESULTS.md"
       ],
       "latest_attempt": {
-        "phase": "warm-pod-cgroup-y",
-        "outcome": "FAIL_FAILED_RESAMPLE_EXIT_UNCLASSIFIED",
-        "workflows_completed": 5,
-        "group_requests": 29,
-        "request_recycles": 1,
+        "phase": "warm-pod-cgroup-z",
+        "outcome": "FAIL_PRE_INFERENCE_RUNTIME_SCOPE_DIGEST",
+        "workflows_completed": 0,
+        "group_requests": 0,
+        "request_recycles": 0,
         "resource_stop": false,
         "retry_count": 0
       }
@@ -392,7 +393,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "Y completed the full warm workload with zero PSI/OOM and no memory-floor/deadline stop, but two failed-resample exits remained unclassified; the integrated warm resource bound remains unqualified.",
+      "reason": "Y completed the full warm workload with zero PSI/OOM and no memory-floor/deadline stop, but exact process attribution remained unqualified. Z stopped before workload start on a runtime-manifest digest binding defect and adds no resource qualification evidence.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -411,7 +412,8 @@
         "tests/pdf_processing/q04/pod-topology-v20/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v22/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v23/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v25/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -458,11 +460,11 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v25/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "execute_failed_resample_exit_classification_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-z",
+    "kind": "execute_corrected_runtime_scope_binding_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-aa",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -471,10 +473,10 @@
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
     "historical_failure_preserved": true,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v25/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v25/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_z.py",
-    "authorization_scope_sha256": "eb940293af955e10001d7ae4339d7ba75dadb1de2735d6bc5a4f939031428b01",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v26/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v26/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_aa.py",
+    "authorization_scope_sha256": "ec63e02755ad27e27453027e5db775fb2e3602ee4a9ee984f11e4d93216cdae6",
     "bundle_inputs_sha256": "c11923940277d4ddbad70e7fa6f5413f846be99fead32285c3d2354e05a52ac8",
     "pending_graph_fixture_acceptance": "unproven"
   },
@@ -505,9 +507,9 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_disappearing_process_read_rescan_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-y",
-    "execution_commit": "eb97a0d",
+    "kind": "execute_failed_resample_exit_classification_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-z",
+    "execution_commit": "f83d1db",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -515,13 +517,15 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v24/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v24/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_y.py",
-    "runtime_result": "FAIL_FAILED_RESAMPLE_EXIT_UNCLASSIFIED",
-    "workflows_completed": 5,
-    "group_requests": 29,
-    "request_recycles": 1,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v25/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v25/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_z.py",
+    "runtime_result": "FAIL_PRE_INFERENCE_RUNTIME_SCOPE_DIGEST",
+    "pre_inference_gates_passed": 10,
+    "failed_gate": "workload_imports",
+    "workflows_completed": 0,
+    "group_requests": 0,
+    "request_recycles": 0,
     "psi_oom_memory_floor_deadline_stop": false,
     "cleanup": "proven_with_pvc_retained"
   }

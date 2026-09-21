@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through Y execution `eb97a0d`; machine authority:
+Current through Z execution `f83d1db`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -117,6 +117,11 @@ execution, reuse and interruption behavior require requalification.
   summary omitted the retained failed-resample observations. PSI, OOM,
   memory-floor and deadline guards did not fire. See
   [Y results](pod-topology-v24/first-window-evidence/RESULTS.md).
+- Z: ten of 11 pre-inference gates passed. `workload_imports` rejected a runtime
+  manifest whose inner measurement scope was incorrectly bound to the outer
+  runner authorization digest. No workflow, Activity, inference or object write
+  started. Cleanup passed and the retained PVC is Bound. See
+  [Z results](pod-topology-v25/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -127,12 +132,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Y proved the complete workload and exposed two failed retries whose retained
-observations still prove exact process exits. Z retains those observations in
-the compact summary and classifies only the same identity-fenced absence and
-membership-exit shapes. Permission failures, changed identities, retry-time
-births and unattributed peaks still fail closed. All thresholds and the
-one-run/no-automatic-retry policy remain unchanged. Z uses a new bundle, run
-identity, prefix and PVC.
+Z did not start the workload because its runtime manifest used the outer runner
+digest for the narrower inner measurement scope. AA binds that scope to its
+canonical digest and exercises the exact projected `workload_imports` gate in a
+regression test. The failed-resample classifier, thresholds and the
+one-run/no-automatic-retry policy remain unchanged. AA uses a new run identity,
+prefix and PVC.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
