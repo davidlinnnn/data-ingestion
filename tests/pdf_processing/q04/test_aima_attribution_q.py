@@ -543,10 +543,18 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
         simultaneous_birth["process_coverage"]["identities_after"].append(
             {"pid": 102, "ppid": 100, "start_ticks": 1002}
         )
+        between_observation_birth = copy.deepcopy(retry_direct)
+        between_observation_birth["process_coverage"]["identities_before"].append(
+            {"pid": 102, "ppid": 100, "start_ticks": 1002}
+        )
+        between_observation_birth["process_coverage"]["identities_after"].append(
+            {"pid": 102, "ppid": 100, "start_ticks": 1002}
+        )
         for name, retry in (
             ("different_identity", wrong_identity),
             ("permission_denied", denied),
             ("simultaneous_retry_birth", simultaneous_birth),
+            ("between_observation_birth", between_observation_birth),
         ):
             with self.subTest(name=name):
                 result = telemetry.classify_confirmed_exit_transition(

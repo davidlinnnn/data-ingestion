@@ -332,7 +332,7 @@ def _failed_resample_exit_identity(current: dict) -> tuple[int, int] | None:
 
     before = {_process_identity(item) for item in retry_coverage.get("identities_before", [])}
     after = {_process_identity(item) for item in retry_coverage.get("identities_after", [])}
-    if None in before or None in after:
+    if None in before or None in after or before != first_after:
         return None
     issues = retry_coverage.get("unknown")
     if issues == direct:
