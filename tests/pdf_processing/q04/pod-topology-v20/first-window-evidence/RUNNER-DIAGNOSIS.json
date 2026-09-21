@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-u",
+  "execution_commit": "2a4f92b",
+  "automatic_retry": false,
+  "disposition": "FAIL_PROCESS_ATTRIBUTION_ONE_BOUNDED_CHILD_EXIT_SAMPLE",
+  "workload": {
+    "sequence_complete": true,
+    "group_requests": 29,
+    "parser_pids": [131, 1836],
+    "recycles": 1,
+    "temporal_workflows_completed": 5,
+    "pending_graphs_promoted": false
+  },
+  "measurement": {
+    "samples": 1438,
+    "incomplete_samples": 1,
+    "incomplete_indexes": [1065],
+    "peak_index": 1321,
+    "peak_attribution_complete": true,
+    "maximum_attribution_cgroup_bytes": 2458259456,
+    "maximum_worker_cgroup_bytes": 2530975744,
+    "minimum_available_bytes": 5278797824,
+    "node_full_psi_max": 0,
+    "cgroup_full_psi_max": 0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0
+  },
+  "root_cause": "A short-lived fresh child disappeared during /proc identity enumeration. The sampler retained the transient FileNotFoundError instead of immediately obtaining one stable replacement inventory.",
+  "unknown": [
+    "PSS for sample 1065 is unknown and cannot be retroactively treated as complete.",
+    "Complete-process resource qualification requires a new identity after the sampler repair."
+  ],
+  "historical_evidence_preserved": true,
+  "u_identity_retry_forbidden": true
+}

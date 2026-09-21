@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through T execution `d555d29`; machine authority:
+Current through U execution `2a4f92b`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -88,6 +88,12 @@ execution, reuse and interruption behavior require requalification.
   before the remaining sequence or request-20 recycle. This is a harness scope
   mismatch; no warm row passed. See
   [T results](pod-topology-v19/first-window-evidence/RESULTS.md).
+- U: the complete 29-group sequence and request-20 recycle ran successfully, but
+  one of 1,438 process samples lost a short-lived child during `/proc` identity
+  enumeration. Its PSS is unknown, so complete process attribution and the
+  combined warm/resource row remain unproven. No PSI, OOM, memory-floor or
+  deadline stop occurred. See
+  [U results](pod-topology-v20/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -98,16 +104,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The warm lifecycle defect and transition observability are repaired. Q passed
-the bounded AIMA08 window without changing resource, PSI, OOM or deadline
-thresholds. R did not reach that lifecycle because its adapter bound P identity
-defaults before applying R topology.
-
-U is the reviewed repair target for the original 29-group warm sequence and
-request20 recycle. It separates measurement eligibility from fixture graph
-acceptance: pending Wiki/native graph deltas may continue only when all bound
-source content and non-edge payloads remain equal, and are explicitly recorded
-as not accepted. It uses a new identity/prefix while keeping failure-stop,
-no-retry behavior and every existing threshold. R, S and T must not be retried.
+U completed the original 29-group warm sequence and request-20 recycle without
+a resource stop. Qualification failed closed on one normal child-exit sampling
+race. V retries only a transient `/proc` identity disappearance once before
+sealing a sample; persistent errors and incomplete samples still fail. V uses a
+new identity/prefix and keeps every resource threshold, failure-stop behavior and
+the no-retry rule unchanged. R through U must not be retried.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

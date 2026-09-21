@@ -9,6 +9,286 @@ from sentinel import aima_attribution_telemetry_q as telemetry
 
 
 class ProcessTransitionEvidenceTest(unittest.TestCase):
+    def test_transient_identity_exit_is_rescanned_before_sample_is_sealed(self):
+        stable = {
+            100: {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"},
+        }
+        vanished = [{
+            "pid": 1887,
+            "scope": "proc_identity",
+            "reason": "FileNotFoundError",
+        }]
+
+        def read_text(path):
+            return {
+                "memory.current": "1000\n",
+                "memory.events": "oom 0\noom_kill 0\noom_group_kill 0\n",
+                "memory.stat": "".join(
+                    f"{key} 0\n" for key in telemetry.MEMORY_STAT_FIELDS
+                ),
+                "memory.pressure": "full avg10=0.00 total=0\n",
+            }[path.name]
+
+        process = {
+            **stable[100],
+            "ownership": "owned",
+            "status": "complete",
+            "command_class": "worker",
+            "pss_bytes": 10,
+        }
+        monotonic = iter((0.0, 1.0, 2.0, 4.0))
+        thread_time = iter((0.0, 0.1, 0.2, 0.5))
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            telemetry, "cgroup_identity", return_value={"proc_cgroup": "0::/"}
+        ), mock.patch.object(
+            telemetry,
+            "_scan_identities",
+            side_effect=[(stable, vanished), (stable, []), (stable, []), (stable, [])],
+        ), mock.patch.object(telemetry, "_read_process", return_value=process):
+            row = telemetry.strict_attribution_sample(
+                root_pid=100,
+                expected_cgroup={"proc_cgroup": "0::/"},
+                proc_root=Path(tmp) / "proc",
+                cgroup_root=Path(tmp) / "cgroup",
+                read_text=read_text,
+                read_bytes=lambda _path: b"",
+                monotonic=lambda: next(monotonic),
+                thread_time=lambda: next(thread_time),
+            )
+
+        self.assertTrue(row["attribution_complete"])
+        self.assertEqual(row["process_coverage"]["unknown"], [])
+        self.assertEqual(row["process_coverage"]["enumerated_before"], 1)
+        self.assertTrue(row["identity_resample"]["accepted"])
+        self.assertEqual(row["sample_duration_seconds"], 3.0)
+        self.assertAlmostEqual(row["collector_thread_cpu_seconds"], 0.4)
+        observations = row["identity_resample"]["observations"]
+        self.assertEqual(observations["first"]["process_coverage"]["unknown"], vanished)
+        self.assertEqual(observations["retry"]["process_coverage"]["unknown"], [])
+        self.assertEqual(observations["first"]["monotonic"], 1.0)
+        self.assertEqual(observations["retry"]["monotonic"], 4.0)
+
+    def test_transient_rescan_cannot_hide_a_higher_unattributed_reading(self):
+        stable = {
+            100: {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"},
+        }
+        vanished = [{
+            "pid": 1887,
+            "scope": "proc_identity",
+            "reason": "FileNotFoundError",
+        }]
+        memory_current = iter(("2000\n", "1000\n"))
+
+        def read_text(path):
+            if path.name == "memory.current":
+                return next(memory_current)
+            return {
+                "memory.events": "oom 0\noom_kill 0\noom_group_kill 0\n",
+                "memory.stat": "".join(
+                    f"{key} 0\n" for key in telemetry.MEMORY_STAT_FIELDS
+                ),
+                "memory.pressure": "full avg10=0.00 total=0\n",
+            }[path.name]
+
+        process = {
+            **stable[100],
+            "ownership": "owned",
+            "status": "complete",
+            "command_class": "worker",
+            "pss_bytes": 10,
+        }
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            telemetry, "cgroup_identity", return_value={"proc_cgroup": "0::/"}
+        ), mock.patch.object(
+            telemetry,
+            "_scan_identities",
+            side_effect=[(stable, vanished), (stable, []), (stable, []), (stable, [])],
+        ), mock.patch.object(telemetry, "_read_process", return_value=process):
+            row = telemetry.strict_attribution_sample(
+                root_pid=100,
+                expected_cgroup={"proc_cgroup": "0::/"},
+                proc_root=Path(tmp) / "proc",
+                cgroup_root=Path(tmp) / "cgroup",
+                read_text=read_text,
+                read_bytes=lambda _path: b"",
+            )
+
+        self.assertFalse(row["attribution_complete"])
+        self.assertEqual(row["memory_current"], 2000)
+        self.assertFalse(row["identity_resample"]["accepted"])
+
+    def test_transient_rescan_preserves_higher_permission_failure_as_peak(self):
+        stable = {
+            100: {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"},
+        }
+        vanished = [{
+            "pid": 1887,
+            "scope": "proc_identity",
+            "reason": "FileNotFoundError",
+        }]
+        denied = [{
+            "pid": 1948,
+            "scope": "proc_identity",
+            "reason": "PermissionError",
+        }]
+        memory_current = iter(("1000\n", "2000\n"))
+
+        def read_text(path):
+            if path.name == "memory.current":
+                return next(memory_current)
+            return {
+                "memory.events": "oom 0\noom_kill 0\noom_group_kill 0\n",
+                "memory.stat": "".join(
+                    f"{key} 0\n" for key in telemetry.MEMORY_STAT_FIELDS
+                ),
+                "memory.pressure": "full avg10=0.00 total=0\n",
+            }[path.name]
+
+        process = {
+            **stable[100],
+            "ownership": "owned",
+            "status": "complete",
+            "command_class": "worker",
+            "pss_bytes": 10,
+        }
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            telemetry, "cgroup_identity", return_value={"proc_cgroup": "0::/"}
+        ), mock.patch.object(
+            telemetry,
+            "_scan_identities",
+            side_effect=[
+                (stable, vanished), (stable, []),
+                (stable, denied), (stable, []),
+            ],
+        ), mock.patch.object(telemetry, "_read_process", return_value=process):
+            row = telemetry.strict_attribution_sample(
+                root_pid=100,
+                expected_cgroup={"proc_cgroup": "0::/"},
+                proc_root=Path(tmp) / "proc",
+                cgroup_root=Path(tmp) / "cgroup",
+                read_text=read_text,
+                read_bytes=lambda _path: b"",
+            )
+
+        self.assertFalse(row["attribution_complete"])
+        self.assertEqual(row["memory_current"], 2000)
+        self.assertFalse(row["identity_resample"]["retry_attribution_complete"])
+        self.assertEqual(
+            row["process_coverage"]["unknown"][-1]["detail"], denied[0]
+        )
+
+    def test_transient_rescan_cannot_hide_first_psi_pressure(self):
+        stable = {
+            100: {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"},
+        }
+        vanished = [{
+            "pid": 1887,
+            "scope": "proc_identity",
+            "reason": "FileNotFoundError",
+        }]
+        pressure = iter((
+            "full avg10=0.25 total=100\n",
+            "full avg10=0.00 total=100\n",
+        ))
+
+        def read_text(path):
+            if path.name == "memory.pressure":
+                return next(pressure)
+            return {
+                "memory.current": "1000\n",
+                "memory.events": "oom 0\noom_kill 0\noom_group_kill 0\n",
+                "memory.stat": "".join(
+                    f"{key} 0\n" for key in telemetry.MEMORY_STAT_FIELDS
+                ),
+            }[path.name]
+
+        process = {
+            **stable[100],
+            "ownership": "owned",
+            "status": "complete",
+            "command_class": "worker",
+            "pss_bytes": 10,
+        }
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            telemetry, "cgroup_identity", return_value={"proc_cgroup": "0::/"}
+        ), mock.patch.object(
+            telemetry,
+            "_scan_identities",
+            side_effect=[(stable, vanished), (stable, []), (stable, []), (stable, [])],
+        ), mock.patch.object(telemetry, "_read_process", return_value=process):
+            row = telemetry.strict_attribution_sample(
+                root_pid=100,
+                expected_cgroup={"proc_cgroup": "0::/"},
+                proc_root=Path(tmp) / "proc",
+                cgroup_root=Path(tmp) / "cgroup",
+                read_text=read_text,
+                read_bytes=lambda _path: b"",
+            )
+
+        self.assertFalse(row["attribution_complete"])
+        self.assertIn("avg10=0.25", row["memory_pressure_raw"])
+        self.assertFalse(row["identity_resample"]["accepted"])
+
+    def test_disappeared_child_identity_is_a_bounded_confirmed_exit(self):
+        process = {
+            "pid": 1887,
+            "ppid": 112,
+            "start_ticks": 17906968,
+            "command_class": "fresh_owned_child",
+            "status": "complete",
+        }
+
+        def row(monotonic, processes, *, complete=True, unknown=None, events=None):
+            identities = [
+                {key: process[key] for key in ("pid", "ppid", "start_ticks")}
+                for process in processes
+            ]
+            return {
+                "monotonic": monotonic,
+                "memory_current": 100,
+                "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+                "memory_stat": {key: 0 for key in telemetry.MEMORY_STAT_FIELDS},
+                "memory_pressure_raw": "full avg10=0.00 total=0\n",
+                "cgroup": {"device": 1, "inode": 2},
+                "attribution_complete": complete,
+                "processes": processes,
+                "process_events": events or [],
+                "process_coverage": {
+                    "status": "complete" if complete else "incomplete",
+                    "identities_before": identities,
+                    "identities_after": identities,
+                    "unknown": unknown or [],
+                },
+            }
+
+        rows = [
+            row(1.0, [process]),
+            row(
+                1.25,
+                [],
+                complete=False,
+                unknown=[{
+                    "pid": 1887,
+                    "scope": "proc_identity",
+                    "reason": "FileNotFoundError",
+                }],
+                events=[{
+                    "event": "exit_observed",
+                    "pid": 1887,
+                    "start_ticks": 17906968,
+                    "command_class": "fresh_owned_child",
+                }],
+            ),
+            row(1.5, []),
+        ]
+        rows[1]["memory_current"] = 90
+        rows[2]["memory_current"] = 80
+        result = telemetry.classify_confirmed_exit_transition(
+            rows, 1, attribution_gap_seconds=1.0, peak_index=0
+        )
+        self.assertEqual(result["status"], "classified_confirmed_exit")
+        self.assertEqual(result["prior_command_class"], "fresh_owned_child")
+
     def test_changed_membership_persists_exact_before_and_after_identities(self):
         before = {
             100: {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"},

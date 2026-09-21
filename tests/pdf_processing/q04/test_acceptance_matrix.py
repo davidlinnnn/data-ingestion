@@ -105,8 +105,8 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_warm_scope_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_measurement_scoped_29_group_request20_warm_sequence')
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-u')
+        self.assertEqual(step['kind'], 'execute_transient_exit_rescan_29_group_request20_warm_sequence')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-v')
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
@@ -117,20 +117,21 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_ACCEPTANCE_HARNESS_SCOPE_MISMATCH_AFTER_FIRST_WORKFLOW',
+            'FAIL_PROCESS_ATTRIBUTION_ONE_BOUNDED_CHILD_EXIT_SAMPLE',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-t')
-        self.assertEqual(step['workflow'], 'first_wiki_complete')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-u')
+        self.assertEqual(step['workflow'], 'five_workflows_complete')
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v19/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v20/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
-        self.assertTrue(diagnosis['first_case']['processing_complete'])
-        self.assertFalse(diagnosis['stop']['psi'])
-        self.assertFalse(diagnosis['stop']['oom'])
+        self.assertTrue(diagnosis['workload']['sequence_complete'])
+        self.assertEqual(diagnosis['measurement']['incomplete_indexes'], [1065])
+        self.assertEqual(diagnosis['measurement']['node_full_psi_max'], 0)
+        self.assertEqual(diagnosis['measurement']['cgroup_oom_kill'], 0)
         cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
         self.assertEqual(cleanup['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED')
 

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "d555d29",
+    "commit": "2a4f92b",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-warm-pod-cgroup-20260921-t"
+    "runtime_identity": "q04-warm-pod-cgroup-20260921-u"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "T completed the first Wiki06 workflow without PSI/OOM/deadline stop, then stopped at a full-graph review gate before the remaining sequence or request20 recycle. The complete warm sequence remains unproven.",
+      "reason": "U completed all 29 group requests and the request-20 parser recycle, but one normal child-exit sample had unknown PSS. Complete process attribution and the combined warm/resource row remain unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -363,15 +363,19 @@
         "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v17/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v18/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v19/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v19/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v20/first-window-evidence/RESULTS.md"
       ],
       "latest_attempt": {
-        "phase": "warm-pod-cgroup-t",
-        "outcome": "FAIL_ACCEPTANCE_HARNESS_SCOPE_MISMATCH_AFTER_FIRST_WORKFLOW",
-        "pod": "ready_then_deleted",
+        "phase": "warm-pod-cgroup-u",
+        "outcome": "FAIL_PROCESS_ATTRIBUTION_ONE_BOUNDED_CHILD_EXIT_SAMPLE",
+        "pod": "ready_then_uid_deleted",
         "pre_inference": "passed",
-        "workflow": "first_wiki_complete",
-        "inference": "completed_first_fixture",
+        "workflow": "five_workflows_complete",
+        "inference": "29_groups_complete",
+        "parser_recycle": "request_20_to_21_observed",
+        "process_samples": 1438,
+        "incomplete_process_samples": 1,
         "retry_count": 0
       }
     },
@@ -387,7 +391,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "M passes the unchanged gate for fixture07 and Q passes it for fixture08 with 949 complete samples. Other fixtures and request20 warm/drain remain unqualified; historical failures stay failed.",
+      "reason": "M passes fixture07 and Q passes fixture08. U completed the 29-group warm workload with zero PSI/OOM and no memory-floor/deadline stop, but one process sample had unknown PSS; the warm resource bound remains unqualified.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -402,7 +406,8 @@
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json",
         "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
         "tests/pdf_processing/q04/pod-topology-v12/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v20/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -449,11 +454,11 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v19/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v20/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "execute_measurement_scoped_29_group_request20_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-u",
+    "kind": "execute_transient_exit_rescan_29_group_request20_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-v",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -462,10 +467,10 @@
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
     "historical_failure_preserved": true,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v20/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v20/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_u.py",
-    "authorization_scope_sha256": "d982dee470680c3a8830f24ab3a241bca7358ab1aabea967176418333da50b1f",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v21/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v21/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_v.py",
+    "authorization_scope_sha256": "6bede0d54a2e0b19bcbdc7b39a14cc398f4dccf78b8658df4bd81f769cd78dee",
     "pending_graph_fixture_acceptance": "unproven"
   },
   "historical_next_step": {
@@ -495,9 +500,9 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_corrected_29_group_request20_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260921-t",
-    "execution_commit": "d555d29",
+    "kind": "execute_measurement_scoped_29_group_request20_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-u",
+    "execution_commit": "2a4f92b",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -505,14 +510,16 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v19/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v19/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_t.py",
-    "runtime_result": "FAIL_ACCEPTANCE_HARNESS_SCOPE_MISMATCH_AFTER_FIRST_WORKFLOW",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v20/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v20/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_u.py",
+    "runtime_result": "FAIL_PROCESS_ATTRIBUTION_ONE_BOUNDED_CHILD_EXIT_SAMPLE",
     "pod": "ready_then_uid_deleted",
     "pre_inference": "passed",
-    "workflow": "first_wiki_complete",
-    "inference": "completed_first_fixture",
+    "workflow": "five_workflows_complete",
+    "inference": "29_groups_complete",
+    "parser_recycle": "request_20_to_21_observed",
+    "measurement": "1437_of_1438_process_samples_complete",
     "cleanup": "proven_with_pvc_retained"
   }
 }

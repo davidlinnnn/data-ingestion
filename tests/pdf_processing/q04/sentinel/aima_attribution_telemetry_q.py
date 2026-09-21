@@ -7,6 +7,7 @@ and makes that sample incomplete; it is never folded into a zero PSS total.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 import hashlib
 import json
@@ -321,25 +322,42 @@ def classify_confirmed_exit_transition(
     ):
         return failure("transition_gap_exceeded")
     unknown_reasons = current.get("process_coverage", {}).get("unknown")
-    if unknown_reasons != [
+    unknown = [row for row in current.get("processes", []) if row.get("status") != "complete"]
+    events = current.get("process_events", []) + after.get("process_events", [])
+    if unknown_reasons == [
         {"scope": "process_coverage", "reason": "cgroup_process_read_incomplete"}
     ]:
+        if len(unknown) != 1:
+            return failure("expected_one_exiting_process")
+        exiting = unknown[0]
+        identity = _process_identity(exiting)
+        if identity is None:
+            return failure("exiting_process_identity_missing")
+        if exiting.get("reason") not in ("FileNotFoundError", "ProcessLookupError"):
+            return failure("exit_read_was_not_process_absence")
+    elif (
+        len(unknown_reasons or []) == 1
+        and not unknown
+        and unknown_reasons[0].get("scope") == "proc_identity"
+        and unknown_reasons[0].get("reason") in ("FileNotFoundError", "ProcessLookupError")
+        and type(unknown_reasons[0].get("pid")) is int
+    ):
+        exits = [
+            event for event in events
+            if event.get("event") == "exit_observed"
+            and event.get("pid") == unknown_reasons[0]["pid"]
+            and type(event.get("start_ticks")) is int
+        ]
+        if len(exits) != 1:
+            return failure("matching_exit_not_confirmed")
+        identity = exits[0]["pid"], exits[0]["start_ticks"]
+    else:
         return failure("unexpected_process_coverage_reason")
-    unknown = [row for row in current.get("processes", []) if row.get("status") != "complete"]
-    if len(unknown) != 1:
-        return failure("expected_one_exiting_process")
-    exiting = unknown[0]
-    identity = _process_identity(exiting)
-    if identity is None:
-        return failure("exiting_process_identity_missing")
-    if exiting.get("reason") not in ("FileNotFoundError", "ProcessLookupError"):
-        return failure("exit_read_was_not_process_absence")
     prior = [row for row in before.get("processes", []) if _process_identity(row) == identity]
     if len(prior) != 1 or prior[0].get("status") != "complete":
         return failure("prior_process_identity_not_complete")
     if any(_process_identity(row) == identity for row in after.get("processes", [])):
         return failure("exiting_identity_still_present")
-    events = current.get("process_events", []) + after.get("process_events", [])
     if any(
         event.get("event") == "pid_reuse_observed" and event.get("pid") == identity[0]
         for event in events
@@ -572,7 +590,7 @@ def evaluate_parser_lifecycle_contract(
     }
 
 
-def strict_attribution_sample(
+def _strict_attribution_sample_once(
     *,
     root_pid: int,
     expected_cgroup: dict,
@@ -697,6 +715,95 @@ def strict_attribution_sample(
         "attribution_complete": complete,
         "runtime_observations": runtime_markers,
     }
+
+
+def strict_attribution_sample(**kwargs) -> dict:
+    """Capture one sample, retrying one whole transient identity read safely."""
+    first = _strict_attribution_sample_once(**kwargs)
+    unknown = first["process_coverage"]["unknown"]
+    transient_exit = bool(unknown) and all(
+        issue.get("scope") == "proc_identity"
+        and issue.get("reason") in ("FileNotFoundError", "ProcessLookupError")
+        for issue in unknown
+    )
+    if not transient_exit:
+        return first
+    retry = _strict_attribution_sample_once(**kwargs)
+    observations = {"first": copy.deepcopy(first), "retry": copy.deepcopy(retry)}
+    def full_psi(row):
+        try:
+            line = next(
+                line for line in row["memory_pressure_raw"].splitlines()
+                if line.startswith("full ")
+            )
+            return float(next(field for field in line.split() if field.startswith("avg10=")).split("=", 1)[1])
+        except (AttributeError, KeyError, StopIteration, ValueError):
+            return None
+
+    first_psi = full_psi(first)
+    retry_psi = full_psi(retry)
+    event_keys = set(first["memory_events"]) | set(retry["memory_events"])
+    guards_do_not_decrease = (
+        first_psi is not None
+        and retry_psi is not None
+        and retry_psi >= first_psi
+        and all(
+            type(first["memory_events"].get(key)) is int
+            and type(retry["memory_events"].get(key)) is int
+            and retry["memory_events"][key] >= first["memory_events"][key]
+            for key in event_keys
+        )
+    )
+    retry_safe = (
+        retry["attribution_complete"]
+        and type(first.get("memory_current")) is int
+        and type(retry.get("memory_current")) is int
+        and retry["memory_current"] >= first["memory_current"]
+        and guards_do_not_decrease
+    )
+    evidence = {
+        "reason": "transient_proc_identity_disappearance",
+        "observations": observations,
+        "discarded_memory_current": first.get("memory_current"),
+        "retry_memory_current": retry.get("memory_current"),
+        "discarded_memory_events": first["memory_events"],
+        "retry_memory_events": retry["memory_events"],
+        "discarded_memory_pressure_raw": first["memory_pressure_raw"],
+        "retry_memory_pressure_raw": retry["memory_pressure_raw"],
+        "retry_attribution_complete": retry["attribution_complete"],
+        "accepted": retry_safe,
+    }
+    if retry_safe:
+        retry["sample_duration_seconds"] += first["sample_duration_seconds"]
+        retry["collector_thread_cpu_seconds"] += first["collector_thread_cpu_seconds"]
+        retry["identity_resample"] = evidence
+        return retry
+    first["process_coverage"]["unknown"].extend({
+        "scope": "identity_resample_retry",
+        "reason": "retry_incomplete",
+        "detail": issue,
+    } for issue in retry["process_coverage"]["unknown"])
+    values = [
+        value for value in (first.get("memory_current"), retry.get("memory_current"))
+        if type(value) is int
+    ]
+    first["memory_current"] = max(values, default=None)
+    first["memory_events"] = {
+        key: max(
+            value for value in (
+                first["memory_events"].get(key), retry["memory_events"].get(key)
+            ) if type(value) is int
+        )
+        for key in event_keys
+    }
+    if retry_psi is not None and (first_psi is None or retry_psi > first_psi):
+        first["memory_pressure_raw"] = retry["memory_pressure_raw"]
+    first["monotonic"] = retry["monotonic"]
+    first["time"] = retry["time"]
+    first["sample_duration_seconds"] += retry["sample_duration_seconds"]
+    first["collector_thread_cpu_seconds"] += retry["collector_thread_cpu_seconds"]
+    first["identity_resample"] = evidence
+    return first
 
 
 @dataclass(frozen=True)
