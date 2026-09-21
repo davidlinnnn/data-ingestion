@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AA execution `019fc15`; machine authority:
+Current through AB execution `d58118b`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -128,6 +128,13 @@ execution, reuse and interruption behavior require requalification.
   adjacent complete sample prove the exact exit, but the classifier lacked this
   shape. PSI, OOM, memory-floor and deadline guards did not fire. See
   [AA results](pod-topology-v26/first-window-evidence/RESULTS.md).
+- AB: all 11 pre-inference gates and all five Temporal workflows completed the
+  29-group sequence and request-20 recycle. Its sole raw incomplete sample was
+  safely classified as an exact confirmed exit, and no unclassified cgroup
+  transition remained. The exited child's PSS is still unknown, so the adopted
+  complete-process-attribution gate correctly failed after business completion.
+  PSI, OOM, memory-floor and deadline guards did not fire. See
+  [AB results](pod-topology-v27/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -138,11 +145,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AA proved a complete retry can confirm the exact membership exit even when the
-collector conservatively retains the first, higher cgroup reading. AB classifies
-only that same identity-fenced exit shape. Changed identities, simultaneous
-births, permission failures and unattributed peaks still fail closed. All
-thresholds and the one-run/no-automatic-retry policy remain unchanged. AB uses a
-new bundle, run identity, prefix and PVC.
+AB proved the full warm business sequence and cgroup continuity, but not complete
+process attribution: the confirmed exit's PSS cannot be recovered after the
+process is gone. An unchanged rerun is not warranted. The next implementation
+must capture a stable complete process snapshot while retaining every cgroup
+guard observation; it must not reinterpret unknown PSS as known. Thresholds and
+the one-run/no-automatic-retry policy remain unchanged. No next runtime is
+authorized or prepared yet.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

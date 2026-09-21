@@ -103,34 +103,37 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(gates[gate]["status"], "unproven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
 
-    def test_next_step_preserves_warm_scope_and_no_retry(self):
+    def test_next_step_preserves_process_completeness_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_complete_retry_membership_exit_classification_warm_sequence')
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-ab')
+        self.assertEqual(step['kind'], 'design_stable_complete_process_snapshot')
         self.assertFalse(step['runtime_started'])
-        self.assertTrue(step['runtime_authorized'])
+        self.assertFalse(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
+        self.assertFalse(step['acceptance_standard_change'])
+        self.assertTrue(step['unchanged_rerun_forbidden'])
+        self.assertTrue((ROOT / step['evidence']).is_file())
         self.assertEqual(step['pending_graph_fixture_acceptance'], 'unproven')
-        for key in ('integration_manifest', 'offline_manifest', 'runner'):
-            self.assertTrue((ROOT / step[key]).is_file())
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_COMPLETE_RETRY_MEMBERSHIP_EXIT_UNCLASSIFIED',
+            'FAIL_CONFIRMED_EXIT_PSS_UNKNOWN',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-aa')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-ab')
         self.assertEqual(step['workflows_completed'], 5)
         self.assertEqual(step['group_requests'], 29)
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
+        self.assertFalse(step['process_attribution_complete'])
+        self.assertTrue(step['cgroup_resource_complete'])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v26/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v27/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
         self.assertTrue(diagnosis['workload']['five_workflows_completed'])
-        self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [1291])
+        self.assertEqual(diagnosis['process_attribution']['classified_exit_indexes'], [691])
+        self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [])
         self.assertEqual(diagnosis['resource']['max_node_full_psi_avg10'], 0)
         self.assertEqual(diagnosis['resource']['cgroup_oom_kill'], 0)
         cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
