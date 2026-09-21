@@ -1,5 +1,6 @@
 """Q keeps unknown PSS unknown and records both process enumerations."""
 
+import copy
 from pathlib import Path
 import tempfile
 import unittest
@@ -461,6 +462,98 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
             attribution_gap_seconds=1.0, peak_index=0,
         )
         self.assertEqual(result["reason"], "exit_membership_transition_not_confirmed")
+
+    def test_failed_resample_still_classifies_only_the_same_exact_exit(self):
+        worker = {
+            "pid": 100, "ppid": 1, "start_ticks": 1000,
+            "status": "complete", "command_class": "worker", "pss_bytes": 10,
+        }
+        child = {
+            "pid": 101, "ppid": 100, "start_ticks": 1001,
+            "status": "complete", "command_class": "warm_parser", "pss_bytes": 20,
+        }
+        absent = {**child, "status": "unknown", "reason": "ProcessLookupError", "pss_bytes": None}
+        identities = [{key: row[key] for key in ("pid", "ppid", "start_ticks")} for row in (worker, child)]
+        direct = [{"scope": "process_coverage", "reason": "cgroup_process_read_incomplete"}]
+
+        def sample(monotonic, processes, unknown, before_ids, after_ids, *, complete=False):
+            return {
+                "monotonic": monotonic,
+                "time": monotonic,
+                "memory_current": 90,
+                "memory_events": {"oom": 0, "oom_kill": 0, "oom_group_kill": 0},
+                "memory_stat": {key: 0 for key in telemetry.MEMORY_STAT_FIELDS},
+                "memory_pressure_raw": "full avg10=0.00 total=0\n",
+                "cgroup": {"device": 1, "inode": 2},
+                "attribution_complete": complete,
+                "processes": processes,
+                "process_events": [],
+                "process_coverage": {
+                    "status": "complete" if complete else "incomplete",
+                    "identities_before": before_ids,
+                    "identities_after": after_ids,
+                    "unknown": unknown,
+                },
+            }
+
+        before = sample(1.0, [worker, child], [], identities, identities, complete=True)
+        before["memory_current"] = 100
+        after_ids = identities[:1]
+        after = sample(1.5, [worker], [], after_ids, after_ids, complete=True)
+        after["memory_current"] = 80
+        after["process_events"] = [
+            {"event": "exit_observed", "pid": 101, "start_ticks": 1001},
+            {"event": "birth_observed", "pid": 102, "start_ticks": 1002},
+        ]
+        first = sample(1.2, [worker, absent], direct, identities, identities)
+        retry_direct = sample(1.25, [worker, absent], direct, identities, identities)
+        transition_issues = [
+            {"scope": "proc_identity", "pid": 101, "reason": "FileNotFoundError"},
+            {"scope": "process_coverage", "reason": "process_set_changed_during_sample"},
+            {"scope": "process_coverage", "reason": "process_transition_read_incomplete"},
+        ]
+        retry_transition = sample(1.25, [worker, absent], transition_issues, identities, after_ids)
+
+        def retained(retry):
+            current = copy.deepcopy(first)
+            current["monotonic"] = retry["monotonic"]
+            current["process_coverage"]["unknown"] += [
+                {"scope": "identity_resample_retry", "reason": "retry_incomplete", "detail": issue}
+                for issue in retry["process_coverage"]["unknown"]
+            ]
+            current["identity_resample"] = {
+                "accepted": False,
+                "observations": {"first": copy.deepcopy(first), "retry": copy.deepcopy(retry)},
+            }
+            return current
+
+        for name, retry in (("same_read", retry_direct), ("membership_exit", retry_transition)):
+            with self.subTest(name=name):
+                result = telemetry.classify_confirmed_exit_transition(
+                    [before, retained(retry), after], 1,
+                    attribution_gap_seconds=1.0, peak_index=0,
+                )
+                self.assertEqual(result["status"], "classified_confirmed_exit")
+
+        wrong_identity = copy.deepcopy(retry_direct)
+        wrong_identity["processes"][-1]["start_ticks"] = 9999
+        denied = copy.deepcopy(retry_direct)
+        denied["processes"][-1]["reason"] = "PermissionError"
+        simultaneous_birth = copy.deepcopy(retry_transition)
+        simultaneous_birth["process_coverage"]["identities_after"].append(
+            {"pid": 102, "ppid": 100, "start_ticks": 1002}
+        )
+        for name, retry in (
+            ("different_identity", wrong_identity),
+            ("permission_denied", denied),
+            ("simultaneous_retry_birth", simultaneous_birth),
+        ):
+            with self.subTest(name=name):
+                result = telemetry.classify_confirmed_exit_transition(
+                    [before, retained(retry), after], 1,
+                    attribution_gap_seconds=1.0, peak_index=0,
+                )
+                self.assertEqual(result["status"], "unclassified")
 
     def test_membership_churn_does_not_retry_permission_failure(self):
         row = {

@@ -1,4 +1,4 @@
-"""Regression checks for the Y warm Pod adapter."""
+"""Regression checks for the Z warm Pod adapter."""
 
 import importlib
 import json
@@ -9,12 +9,12 @@ import sys
 import tempfile
 import unittest
 
-import pod_topology_y as topology
-import pod_preflight_y as preflight
-from sentinel import run_warm_pod_cgroup_y as runner
+import pod_topology_z as topology
+import pod_preflight_z as preflight
+from sentinel import run_warm_pod_cgroup_z as runner
 
 
-class YWarmPodAdapterTest(unittest.TestCase):
+class ZWarmPodAdapterTest(unittest.TestCase):
     def test_private_engine_binds_w_identity_before_function_definition(self):
         deployment = {
             "metadata": {"name": topology.DEPLOYMENT, "uid": "t-deployment"}
@@ -48,15 +48,15 @@ class YWarmPodAdapterTest(unittest.TestCase):
         public = importlib.import_module("pod_topology_p")
         self.assertEqual(public.PHASE, "q04-pod-cgroup-p")
 
-    def test_w_is_new_inactive_fail_stop_identity(self):
-        self.assertEqual(runner.RUN_IDENTITY, "q04-warm-pod-cgroup-20260921-y")
-        self.assertEqual(runner.PREFIX, "q04/warm-pod-cgroup-20260921-y/")
+    def test_z_is_new_inactive_fail_stop_identity(self):
+        self.assertEqual(runner.RUN_IDENTITY, "q04-warm-pod-cgroup-20260921-z")
+        self.assertEqual(runner.PREFIX, "q04/warm-pod-cgroup-20260921-z/")
         self.assertFalse(runner.authorization_scope()["automatic_retry"])
         self.assertEqual(topology.kubernetes_list()["items"][3]["spec"]["replicas"], 0)
-        self.assertIn("pod_workload_y.py", runner.workload_argv()[1])
-        self.assertIn("pod_preflight_y.py", runner.preflight_argv()[1])
+        self.assertIn("pod_workload_z.py", runner.workload_argv()[1])
+        self.assertIn("pod_preflight_z.py", runner.preflight_argv()[1])
 
-    def test_historical_y_bundle_is_stale_after_z_repair(self):
+    def test_complete_preflight_configuration_gate_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
             capacity = Path(tmp) / "capacity.json"
             source = Path(tmp) / "source.json"
@@ -76,18 +76,18 @@ class YWarmPodAdapterTest(unittest.TestCase):
                 "container_hard_limit_bytes": 5_368_709_120,
             }))
             source.write_text(json.dumps({"phase": preflight.TOPOLOGY_PHASE}))
-            bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-y-final")
-            with self.assertRaisesRegex(ValueError, "bundle harness drift"):
-                preflight.verify_configuration_y(
-                    capacity=capacity,
-                    authorization_scope_sha256=runner.authorization_scope_sha256(),
-                    source_manifest_path=source,
-                    bundle=bundle,
-                    expected_bundle_sha256=preflight.sha256(bundle / "inputs.json"),
-                )
+            bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-z-final")
+            _, result = preflight.verify_configuration_z(
+                capacity=capacity,
+                authorization_scope_sha256=runner.authorization_scope_sha256(),
+                source_manifest_path=source,
+                bundle=bundle,
+                expected_bundle_sha256=preflight.sha256(bundle / "inputs.json"),
+            )
+            self.assertEqual(result["status"], "PASS")
 
     def test_preflight_rejects_bundle_with_stale_harness_binding(self):
-        source_bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-y-final")
+        source_bundle = Path("/private/tmp/q04-inputs-warm-lifecycle-z-final")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             bundle = root / "bundle"
@@ -118,7 +118,7 @@ class YWarmPodAdapterTest(unittest.TestCase):
             source = root / "source.json"
             source.write_text(json.dumps({"phase": preflight.TOPOLOGY_PHASE}))
             with self.assertRaisesRegex(ValueError, "bundle harness drift"):
-                preflight.verify_configuration_y(
+                preflight.verify_configuration_z(
                     capacity=capacity,
                     authorization_scope_sha256=runner.authorization_scope_sha256(),
                     source_manifest_path=source,
@@ -130,8 +130,8 @@ class YWarmPodAdapterTest(unittest.TestCase):
         env = os.environ.copy()
         env["PYTHONDONTWRITEBYTECODE"] = "1"
         for modules in (
-            "sentinel.run_warm_pod_cgroup_s,sentinel.run_warm_pod_cgroup_y",
-            "sentinel.run_warm_pod_cgroup_y,sentinel.run_warm_pod_cgroup_s",
+            "sentinel.run_warm_pod_cgroup_s,sentinel.run_warm_pod_cgroup_z",
+            "sentinel.run_warm_pod_cgroup_z,sentinel.run_warm_pod_cgroup_s",
         ):
             subprocess.run(
                 [
@@ -185,10 +185,10 @@ class YWarmPodAdapterTest(unittest.TestCase):
                 [
                     sys.executable,
                     "-c",
-                    "import pod_preflight_y; "
+                    "import pod_preflight_z; "
                     "import json,tempfile; from pathlib import Path; "
                     "from candidate.warm_pod_window_r import reviewed_reference_checker; "
-                    "b=Path('/private/tmp/q04-inputs-warm-lifecycle-y-final'); "
+                    "b=Path('/private/tmp/q04-inputs-warm-lifecycle-z-final'); "
                     "r=json.loads((b/'references/07.json').read_text()); "
                     f"d=json.loads(Path({str(document)!r}).read_text()); "
                     "c=reviewed_reference_checker(b,lambda *_args: None); "

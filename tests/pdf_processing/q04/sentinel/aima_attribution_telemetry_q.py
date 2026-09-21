@@ -288,6 +288,68 @@ def _cgroup_reading_complete(row: dict) -> bool:
     )
 
 
+def _failed_resample_exit_identity(current: dict) -> tuple[int, int] | None:
+    evidence = current.get("identity_resample")
+    if not isinstance(evidence, dict) or evidence.get("accepted") is not False:
+        return None
+    observations = evidence.get("observations")
+    if not isinstance(observations, dict):
+        return None
+    first, retry = observations.get("first"), observations.get("retry")
+    if not isinstance(first, dict) or not isinstance(retry, dict):
+        return None
+    if not all(_cgroup_reading_complete(row) for row in (first, retry)):
+        return None
+    if not (first.get("cgroup") == retry.get("cgroup") == current.get("cgroup")):
+        return None
+
+    def absent_identity(row):
+        unknown = [item for item in row.get("processes", []) if item.get("status") != "complete"]
+        if len(unknown) != 1 or unknown[0].get("reason") not in (
+            "FileNotFoundError", "ProcessLookupError"
+        ):
+            return None
+        return _process_identity(unknown[0])
+
+    identity = absent_identity(first)
+    if identity is None or absent_identity(current) != identity or absent_identity(retry) != identity:
+        return None
+    direct = [{"scope": "process_coverage", "reason": "cgroup_process_read_incomplete"}]
+    first_coverage = first.get("process_coverage", {})
+    retry_coverage = retry.get("process_coverage", {})
+    if first_coverage.get("unknown") != direct:
+        return None
+    first_before = {_process_identity(item) for item in first_coverage.get("identities_before", [])}
+    first_after = {_process_identity(item) for item in first_coverage.get("identities_after", [])}
+    if None in first_before or None in first_after or first_before != first_after or identity not in first_before:
+        return None
+    expected_unknown = direct + [
+        {"scope": "identity_resample_retry", "reason": "retry_incomplete", "detail": issue}
+        for issue in retry_coverage.get("unknown", [])
+    ]
+    if current.get("process_coverage", {}).get("unknown") != expected_unknown:
+        return None
+
+    before = {_process_identity(item) for item in retry_coverage.get("identities_before", [])}
+    after = {_process_identity(item) for item in retry_coverage.get("identities_after", [])}
+    if None in before or None in after:
+        return None
+    issues = retry_coverage.get("unknown")
+    if issues == direct:
+        return identity if before == after and identity in before else None
+    actual = {(item.get("scope"), item.get("reason"), item.get("pid")) for item in issues or []}
+    expected_tail = {
+        ("process_coverage", "process_set_changed_during_sample", None),
+        ("process_coverage", "process_transition_read_incomplete", None),
+    }
+    identity_issues = actual - expected_tail
+    valid_identity_issue = len(identity_issues) == 1 and next(iter(identity_issues)) in {
+        ("proc_identity", "FileNotFoundError", identity[0]),
+        ("proc_identity", "ProcessLookupError", identity[0]),
+    }
+    return identity if valid_identity_issue and actual >= expected_tail and before - after == {identity} and not after - before else None
+
+
 def classify_confirmed_exit_transition(
     rows: list[dict], index: int, *, attribution_gap_seconds: float, peak_index: int
 ) -> dict:
@@ -324,7 +386,10 @@ def classify_confirmed_exit_transition(
     unknown_reasons = current.get("process_coverage", {}).get("unknown")
     unknown = [row for row in current.get("processes", []) if row.get("status") != "complete"]
     events = current.get("process_events", []) + after.get("process_events", [])
-    if unknown_reasons == [
+    resampled_identity = _failed_resample_exit_identity(current)
+    if resampled_identity is not None:
+        identity = resampled_identity
+    elif unknown_reasons == [
         {"scope": "process_coverage", "reason": "cgroup_process_read_incomplete"}
     ]:
         if len(unknown) != 1:
@@ -1000,6 +1065,7 @@ class StrictAttributionCollector:
                     "memory_events": row["memory_events"],
                     "memory_stat": row["memory_stat"],
                     "memory_pressure_raw": row["memory_pressure_raw"],
+                    "identity_resample": copy.deepcopy(row.get("identity_resample")),
                     "sample_duration_seconds": row["sample_duration_seconds"],
                     "collector_thread_cpu_seconds": row["collector_thread_cpu_seconds"],
                     "controller_pss_bytes": controller_pss,

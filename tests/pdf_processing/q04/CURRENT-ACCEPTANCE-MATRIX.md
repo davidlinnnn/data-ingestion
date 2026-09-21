@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through X execution `59ef005`; machine authority:
+Current through Y execution `eb97a0d`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -111,6 +111,12 @@ execution, reuse and interruption behavior require requalification.
   allowlist, so exact process attribution failed. PSI, OOM, memory-floor and
   deadline guards did not fire. See
   [X results](pod-topology-v23/first-window-evidence/RESULTS.md).
+- Y: all 11 pre-inference gates and all five Temporal workflows completed the
+  29-group sequence and request-20 recycle. Five process exits were classified;
+  two more exact exits remained unclassified because the compact collector
+  summary omitted the retained failed-resample observations. PSI, OOM,
+  memory-floor and deadline guards did not fire. See
+  [Y results](pod-topology-v24/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -121,12 +127,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-X proved that births and before/after process-set churn are retried, but exposed
-the direct disappearing-process reason omitted from the same allowlist. Y adds
-only `cgroup_process_read_incomplete`; retry remains limited to
-`FileNotFoundError`/`ProcessLookupError`, preserves both observations, and accepts
-the retry only when memory/PSI/OOM guards do not decrease. All thresholds and
-the one-run/no-automatic-retry policy remain unchanged. Y uses a new bundle, run
+Y proved the complete workload and exposed two failed retries whose retained
+observations still prove exact process exits. Z retains those observations in
+the compact summary and classifies only the same identity-fenced absence and
+membership-exit shapes. Permission failures, changed identities, retry-time
+births and unattributed peaks still fail closed. All thresholds and the
+one-run/no-automatic-retry policy remain unchanged. Z uses a new bundle, run
 identity, prefix and PVC.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
