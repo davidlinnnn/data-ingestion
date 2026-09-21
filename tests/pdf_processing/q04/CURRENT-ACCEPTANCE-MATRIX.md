@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through Q execution `3b54e7d`; machine authority:
+Current through R execution `3174174`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -73,6 +73,10 @@ execution, reuse and interruption behavior require requalification.
   left PSS unknown; final qualification correctly failed.
 - Q: repaired warm continuity and exact before/after process observation passed
   all AIMA business, oracle, resource, telemetry and cleanup gates.
+- R: outer admission passed, then an acceptance-harness early-bound P Deployment
+  default rejected the correctly created R Deployment before scale-up. No Pod,
+  workflow, Activity or inference started; R proves no acceptance row. See
+  [R results](pod-topology-v17/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -85,12 +89,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 The warm lifecycle defect and transition observability are repaired. Q passed
 the bounded AIMA08 window without changing resource, PSI, OOM or deadline
-thresholds. See [Q results](pod-topology-v16/first-window-evidence/RESULTS.md).
+thresholds. R did not reach that lifecycle because its adapter bound P identity
+defaults before applying R topology.
 
-The next runtime should target one remaining acceptance row with a new reviewed
-identity. The shortest useful target is the original 29-group warm sequence and
-request20 recycle because it exercises the repaired boundary directly; it must
-also keep failure-stop/no-retry behavior. Do not rerun Q unchanged, reinterpret
-P's unknown PSS, or infer other fixture passes from Q.
+S is the reviewed repair target for the original 29-group warm sequence and
+request20 recycle. It binds topology before loading the shared engine and uses a
+new identity/prefix while keeping failure-stop/no-retry behavior and all existing
+thresholds. R must not be retried. S requires a new explicit authorization after
+R's fail-stop before its single controlled execution.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

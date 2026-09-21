@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "3b54e7d",
+    "commit": "3174174",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-aima-pod-cgroup-20260920-q"
+    "runtime_identity": "q04-warm-pod-cgroup-20260921-r"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "The repaired native path kept three AIMA captures and assembly restore in one parser PID, but the original Wiki\u2192YOLO\u2192AIMA\u2192native\u2192Wiki 29-group sequence and request20 recycle remain required.",
+      "reason": "R stopped on a proven acceptance-harness identity-binding defect before Pod scale-up. The original Wiki→YOLO→AIMA→native→Wiki 29-group sequence and request20 recycle remain unrun.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -360,8 +360,17 @@
         "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/RESOURCE-DECISION.md",
         "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json",
         "tests/pdf_processing/q04/diagnosis/warm-continuity/NEXT-IMPLEMENTATION.md",
-        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md"
-      ]
+        "tests/pdf_processing/q04/pod-topology-v16/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v17/first-window-evidence/RESULTS.md"
+      ],
+      "latest_attempt": {
+        "phase": "warm-pod-cgroup-r",
+        "outcome": "FAIL_ACCEPTANCE_HARNESS_IDENTITY_BINDING_WORKLOAD_NOT_STARTED",
+        "pod": "not_started",
+        "workflow": "not_started",
+        "inference": "not_started",
+        "retry_count": 0
+      }
     },
     {
       "id": "bounded_process_resource_keynote_acl",
@@ -436,17 +445,24 @@
   "historical_failures": {
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
-    "not_counted_as_pass": true
+    "not_counted_as_pass": true,
+    "latest": "tests/pdf_processing/q04/pod-topology-v17/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "review_and_run_original_29_group_request20_warm_sequence",
+    "kind": "review_and_authorize_corrected_29_group_request20_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-s",
     "runtime_authorized": false,
     "runtime_started": false,
     "automatic_retry": false,
-    "requires_new_runtime_authorization": false,
+    "requires_new_runtime_authorization": true,
+    "single_execution": true,
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
-    "historical_failure_preserved": true
+    "historical_failure_preserved": true,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v18/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v18/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_s.py",
+    "authorization_scope_sha256": "b456cbaabba2cc7841fe967ffccef25e7d073608d86e7f85572a844691cd10f2"
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -475,22 +491,23 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_repaired_warm_lifecycle_after_review",
-    "fixture": "08",
-    "parser_max_requests": 20,
+    "kind": "execute_original_29_group_request20_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260921-r",
+    "execution_commit": "3174174",
     "runtime_authorized": true,
     "runtime_started": true,
-    "requires_new_runtime_authorization": false,
     "automatic_retry": false,
     "single_execution": true,
-    "other_fixture_policy_inherited": false,
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v16/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v16/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_aima_pod_cgroup_q.py",
-    "runtime_result": "PASS_BOUNDED_FIXTURE_08_ONLY",
-    "requires_acceptance_rule_adoption": false
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v17/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v17/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_r.py",
+    "runtime_result": "FAIL_ACCEPTANCE_HARNESS_IDENTITY_BINDING_WORKLOAD_NOT_STARTED",
+    "pod": "not_started",
+    "workflow": "not_started",
+    "inference": "not_started",
+    "cleanup": "proven_with_unused_pvc_retained"
   }
 }
