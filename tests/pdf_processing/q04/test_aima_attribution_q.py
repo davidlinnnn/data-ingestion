@@ -1,8 +1,15 @@
 """Q keeps unknown PSS unknown and records both process enumerations."""
 
+import asyncio
 import copy
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
+import threading
+import time
 import unittest
 from unittest import mock
 
@@ -10,6 +17,159 @@ from sentinel import aima_attribution_telemetry_q as telemetry
 
 
 class ProcessTransitionEvidenceTest(unittest.TestCase):
+    @unittest.skipUnless(
+        Path("/sys/fs/cgroup/memory.current").is_file(),
+        "requires Linux cgroup v2",
+    )
+    def test_linux_child_shutdown_keeps_complete_samples_and_outer_observer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            collector = telemetry.StrictAttributionCollector(
+                root / "samples.jsonl",
+                root / "summary.json",
+                root_pid=os.getpid(),
+                interval_seconds=0.02,
+                attribution_gap_seconds=0.5,
+                shutdown_timeout_seconds=0.5,
+            )
+            outer_stop = threading.Event()
+            outer_samples = []
+
+            def observe_cgroup():
+                while not outer_stop.wait(0.002):
+                    outer_samples.append(
+                        int(Path("/sys/fs/cgroup/memory.current").read_text())
+                    )
+
+            observer = threading.Thread(target=observe_cgroup)
+            observer.start()
+            collector.start()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(10)"])
+            time.sleep(0.05)
+
+            async def shutdown():
+                child.terminate()
+                await asyncio.to_thread(child.wait, 1)
+
+            asyncio.run(collector.process_transition("child_shutdown", shutdown))
+            outcome = collector.stop(expect_cancel=False)
+            outer_stop.set()
+            observer.join(1)
+            summary = json.loads((root / "summary.json").read_text())
+
+        self.assertTrue(outcome.attribution_complete)
+        self.assertTrue(outer_samples)
+        self.assertTrue(
+            summary["process_transition_windows"][0]["sampler_lock_acquired"]
+        )
+
+    def test_controlled_process_transition_preserves_shutdown_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            collector = telemetry.StrictAttributionCollector(
+                Path(tmp) / "samples.jsonl",
+                Path(tmp) / "summary.json",
+            )
+            collector._stream = object()
+            collector._last_completed = 1.0
+
+            async def shutdown():
+                def failed_capture():
+                    with collector._capture_lock:
+                        with collector._lock:
+                            collector._errors.append("capture failed")
+                            collector._last_completed = 2.0
+
+                threading.Thread(target=failed_capture).start()
+                raise ValueError("shutdown failed")
+
+            with self.assertRaisesRegex(ValueError, "shutdown failed"):
+                asyncio.run(collector.process_transition("worker_shutdown", shutdown))
+
+        self.assertEqual(
+            collector._process_transition_windows[0]["label"], "worker_shutdown"
+        )
+
+    def test_sampler_lock_timeout_does_not_block_worker_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            collector = telemetry.StrictAttributionCollector(
+                Path(tmp) / "samples.jsonl",
+                Path(tmp) / "summary.json",
+                shutdown_timeout_seconds=0.01,
+            )
+            collector._stream = object()
+            collector._capture_lock.acquire()
+            stopped = []
+
+            async def shutdown():
+                stopped.append(True)
+
+            try:
+                with self.assertRaisesRegex(RuntimeError, "sampler lock timed out"):
+                    asyncio.run(collector.process_transition("worker_shutdown", shutdown))
+            finally:
+                collector._capture_lock.release()
+
+        self.assertEqual(stopped, [True])
+
+    def test_transition_keeps_sampler_out_and_enforces_existing_gap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            collector = telemetry.StrictAttributionCollector(
+                Path(tmp) / "samples.jsonl",
+                Path(tmp) / "summary.json",
+                attribution_gap_seconds=0.005,
+            )
+            collector._stream = object()
+            collector._last_completed = 1.0
+            competing_capture_entered = threading.Event()
+            outer_samples = []
+
+            def competing_capture():
+                with collector._capture_lock:
+                    with collector._lock:
+                        collector._last_completed = 2.0
+                    competing_capture_entered.set()
+
+            async def shutdown():
+                thread = threading.Thread(target=competing_capture)
+                thread.start()
+                for _ in range(3):
+                    outer_samples.append(time.monotonic())
+                    await asyncio.sleep(0.003)
+                self.assertFalse(competing_capture_entered.is_set())
+                return thread
+
+            with self.assertRaisesRegex(RuntimeError, "window exceeded"):
+                asyncio.run(collector.process_transition("worker_shutdown", shutdown))
+
+        self.assertGreaterEqual(len(outer_samples), 3)
+        self.assertTrue(competing_capture_entered.wait(1))
+
+    def test_cancelled_lock_wait_cannot_leave_sampler_lock_acquired(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            collector = telemetry.StrictAttributionCollector(
+                Path(tmp) / "samples.jsonl",
+                Path(tmp) / "summary.json",
+                shutdown_timeout_seconds=0.2,
+            )
+            collector._stream = object()
+            collector._capture_lock.acquire()
+
+            async def scenario():
+                task = asyncio.create_task(collector.process_transition(
+                    "worker_shutdown", lambda: asyncio.sleep(0)
+                ))
+                await asyncio.sleep(0.01)
+                task.cancel()
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+                collector._capture_lock.release()
+
+            asyncio.run(scenario())
+
+        self.assertTrue(collector._capture_lock.acquire(timeout=0.1))
+        collector._capture_lock.release()
+
     def test_short_lived_owned_descendants_are_read_first(self):
         identities = {
             20: {"pid": 20, "ppid": 1, "start_ticks": 20},

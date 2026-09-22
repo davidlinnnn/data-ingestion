@@ -8,6 +8,7 @@ and makes that sample incomplete; it is never folded into a zero PSS total.
 from __future__ import annotations
 
 import copy
+import asyncio
 from dataclasses import dataclass
 import hashlib
 import json
@@ -1034,6 +1035,7 @@ class StrictAttributionCollector:
         self._last_completed = None
         self._lifecycle = ProcessLifecycle()
         self._abandoned = threading.Event()
+        self._process_transition_windows = []
 
     @property
     def started(self) -> bool:
@@ -1049,6 +1051,61 @@ class StrictAttributionCollector:
                 "meaning": meaning,
                 "observed_at": time.time(),
             })
+
+    async def process_transition(self, label: str, operation):
+        """Keep a known process transition between two complete samples."""
+        if not label or not self.started:
+            raise RuntimeError("started collector and transition label are required")
+        started = time.monotonic()
+        acquire_deadline = time.monotonic() + self.shutdown_timeout_seconds
+        acquired = self._capture_lock.acquire(blocking=False)
+        while not acquired and time.monotonic() < acquire_deadline:
+            await asyncio.sleep(min(0.01, self.interval_seconds))
+            acquired = self._capture_lock.acquire(blocking=False)
+        with self._lock:
+            completed_before = self._last_completed
+        primary = None
+        primary_traceback = None
+        result = None
+        try:
+            result = await operation()
+        except BaseException as error:
+            primary = error
+            primary_traceback = error.__traceback__
+        if acquired:
+            self._capture_lock.release()
+        duration = time.monotonic() - started
+        with self._lock:
+            self._process_transition_windows.append({
+                "label": label,
+                "duration_seconds": duration,
+                "sampler_lock_acquired": acquired,
+            })
+        errors = []
+        if not acquired:
+            errors.append("process transition sampler lock timed out")
+        else:
+            deadline = time.monotonic() + self.shutdown_timeout_seconds
+            while True:
+                with self._lock:
+                    completed_after = self._last_completed
+                    collector_errors = tuple(self._errors)
+                if completed_after is not None and completed_after != completed_before:
+                    break
+                if collector_errors or time.monotonic() >= deadline:
+                    errors.append("post-transition complete sample not observed")
+                    break
+                await asyncio.sleep(min(0.01, self.interval_seconds))
+        if duration > self.attribution_gap_seconds:
+            errors.append(f"process transition window exceeded: {duration:.6f}s")
+        if errors:
+            with self._lock:
+                self._errors.extend(errors)
+        if primary is not None:
+            raise primary.with_traceback(primary_traceback)
+        if errors:
+            raise RuntimeError("; ".join(errors))
+        return result
 
     def _capture(self, terminal: bool = False):
         with self._capture_lock:
@@ -1239,6 +1296,7 @@ class StrictAttributionCollector:
             rows = list(self._rows)
             errors = tuple(self._errors)
             committed_bytes = self._committed_bytes
+            process_transition_windows = list(self._process_transition_windows)
         thread_alive = self._thread is not None and self._thread.is_alive()
         if self._stream is not None and not thread_alive:
             self._stream.close()
@@ -1431,6 +1489,11 @@ class StrictAttributionCollector:
             "pss_class_maxima_are_not_additive": True,
             "diagnostic_unattributed_is_cache": False,
             "guard_source": "unchanged q04 worker telemetry",
+            "process_transition_windows": process_transition_windows,
+            "maximum_process_transition_window_seconds": max(
+                (row["duration_seconds"] for row in process_transition_windows),
+                default=0,
+            ),
         }
         with self.summary.open("x") as stream:
             json.dump(payload, stream, indent=2, sort_keys=True)

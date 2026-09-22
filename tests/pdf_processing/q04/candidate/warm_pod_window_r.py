@@ -361,7 +361,9 @@ async def run_window(args):
                 })
                 proof = warm_checks(results)
                 q04_runtime.write(root / "warm-proof.json", proof)
-                await host.stop()
+                await collector.process_transition(
+                    "controlled_worker_shutdown", host.stop
+                )
     except BaseException as error:
         primary_error = error
     finally:
@@ -372,7 +374,12 @@ async def run_window(args):
             except BaseException:
                 pass
         try:
-            await host.stop()
+            if collector.started and host.process is not None:
+                await collector.process_transition(
+                    "failure_worker_shutdown", host.stop
+                )
+            else:
+                await host.stop()
         except BaseException as error:
             primary_error = primary_error or error
         if collector.started:
