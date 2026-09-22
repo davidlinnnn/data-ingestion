@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AC execution `b8a10d1`; machine authority:
+Current through AD execution `d4d1d18`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -146,6 +146,12 @@ execution, reuse and interruption behavior require requalification.
   the unchanged all-sample process-attribution gate failed. No PSI, OOM,
   memory-floor, deadline, Activity, supervisor, or ingestion failure occurred.
   See [AC results](pod-topology-v28/first-window-evidence/RESULTS.md).
+- AD: the terminal synchronization succeeded within the unchanged attribution
+  gap and eliminated AC's terminal worker race. All business, recycle, peak,
+  cgroup, and cleanup evidence passed, but three fresh-child exits and the
+  request-20 warm-parser recycle overlapped process snapshots. Their PSS remains unknown, so the all-sample
+  process-attribution gate correctly failed. See
+  [AD results](pod-topology-v29/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -156,12 +162,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AC proved the full warm business sequence, cgroup continuity, parser recycle,
-and complete process attribution at the resource peak. It did not prove complete
-attribution across controlled worker shutdown. An unchanged rerun is not
-warranted. The next implementation must synchronize the terminal worker
-transition with process sampling while retaining continuous independent cgroup
-observation; it must not reinterpret unknown PSS as known. Thresholds and the
-one-run/no-automatic-retry policy remain unchanged. No next runtime is prepared.
+AD proved the full warm business sequence, cgroup continuity, parser recycle,
+peak attribution, and synchronized terminal worker shutdown. It did not prove
+complete attribution across owned child lifecycle transitions. An unchanged
+rerun is not warranted. The next implementation must expose a bounded
+owned-process lifecycle handshake for fresh-child exits and warm-parser recycle while retaining continuous
+independent cgroup observation; it must not reinterpret unknown PSS as known.
+Thresholds and the one-run/no-automatic-retry policy remain unchanged.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

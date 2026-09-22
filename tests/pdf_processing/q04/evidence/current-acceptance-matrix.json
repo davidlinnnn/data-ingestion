@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "b8a10d1",
+    "commit": "d4d1d18",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-warm-pod-cgroup-20260922-ac"
+    "runtime_identity": "q04-warm-pod-cgroup-20260922-ad"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "AB completed all five Temporal workflows, 29 groups and the request-20 recycle. Its sole incomplete raw sample was an exact classified exit with complete cgroup continuity, but the exited child's PSS remained unknown. The adopted contract requires complete process attribution, so the combined row remains unproven.",
+      "reason": "AD completed all five Temporal workflows, 29 groups and the request-20 recycle. Terminal synchronization passed, but three fresh-child exits and the warm parser recycle each overlapped a process sample. Cgroup continuity is complete while those exited processes' PSS remains unknown, so the combined row remains unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -371,18 +371,24 @@
         "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v25/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v26/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v27/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v27/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v28/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v29/first-window-evidence/RESULTS.md"
       ],
       "latest_attempt": {
-        "phase": "warm-pod-cgroup-ab",
-        "outcome": "FAIL_CONFIRMED_EXIT_PSS_UNKNOWN",
+        "phase": "warm-pod-cgroup-ad",
+        "outcome": "FAIL_OWNED_PROCESS_TRANSITION_PSS_UNKNOWN",
         "workflows_completed": 5,
         "group_requests": 29,
         "request_recycles": 1,
         "classified_exit_indexes": [
-          691
+          589,
+          686,
+          958,
+          1121
         ],
         "unclassified_cgroup_transition_indexes": [],
+        "terminal_transition_complete": true,
         "process_attribution_complete": false,
         "cgroup_resource_complete": true,
         "resource_stop": false,
@@ -401,7 +407,7 @@
     {
       "id": "integrated_resource_bounds",
       "status": "unproven",
-      "reason": "AB completed the full warm workload with zero PSI/OOM and no memory-floor or deadline stop. Its exact exit classification qualifies cgroup continuity, but the exited process PSS remains unknown and the accepted combined gate requires complete process attribution.",
+      "reason": "AD completed the full warm workload with zero PSI/OOM and no memory-floor or deadline stop. Terminal synchronization passed and cgroup continuity is complete, but three fresh-child exits and the request-20 warm-parser recycle left four process PSS samples unknown. The accepted combined gate requires complete process attribution.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -423,7 +429,9 @@
         "tests/pdf_processing/q04/pod-topology-v24/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v25/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v26/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v27/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v27/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v28/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v29/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -470,10 +478,10 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v27/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v29/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "design_terminal_worker_sampler_synchronization",
+    "kind": "design_owned_process_lifecycle_handshake",
     "runtime_authorized": false,
     "runtime_started": false,
     "automatic_retry": false,
@@ -481,10 +489,10 @@
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
     "historical_failure_preserved": true,
-    "measurement_requirement": "coordinate terminal worker exit with process sampling while retaining continuous independent cgroup observation",
+    "measurement_requirement": "bracket fresh-child exits and warm-parser recycle with complete process samples while retaining continuous independent cgroup observation",
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/pod-topology-v28/first-window-evidence/RESULTS.md",
+    "evidence": "tests/pdf_processing/q04/pod-topology-v29/first-window-evidence/RESULTS.md",
     "pending_graph_fixture_acceptance": "unproven"
   },
   "historical_next_step": {
@@ -514,9 +522,9 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_deepest_owned_first_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260922-ac",
-    "execution_commit": "b8a10d1",
+    "kind": "execute_terminal_transition_synchronized_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260922-ad",
+    "execution_commit": "d4d1d18",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -524,20 +532,24 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v28/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v28/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_ac.py",
-    "runtime_result": "FAIL_TERMINAL_WORKER_EXIT_PSS_UNKNOWN",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v29/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v29/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_ad.py",
+    "runtime_result": "FAIL_OWNED_PROCESS_TRANSITION_PSS_UNKNOWN",
     "workflows_completed": 5,
     "group_requests": 29,
     "request_recycles": 1,
     "classified_exit_indexes": [
-      1399
+      589,
+      686,
+      958,
+      1121
     ],
     "psi_oom_memory_floor_deadline_stop": false,
     "cleanup": "proven_with_pvc_retained",
     "unclassified_cgroup_transition_indexes": [],
     "peak_sample_attribution_complete": true,
+    "terminal_transition_complete": true,
     "process_attribution_complete": false,
     "cgroup_resource_complete": true
   }
