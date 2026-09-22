@@ -49,9 +49,9 @@ execution, reuse and interruption behavior require requalification.
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
-| Fixed warm sequence and request20 recycle | unproven | Sequence/recycle completed in later warm runs; complete all-sample process attribution and fresh-output equality remain open |
+| Fixed warm sequence and request20 recycle | unproven | AG proves the sequence, recycle and resources; required Q04 fresh-output equality remains pending |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
-| Integrated operating bounds | unproven | M proves fixture07 and Q proves fixture08; remaining fixtures and request20/drain are open |
+| Integrated operating bounds | **proven** | AG exact producer/runtime: 1,425 complete process/cgroup samples, unchanged guards, no resource stop |
 | Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
 | Process drain/recovery | unproven | Current runtime phase not run |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
@@ -162,6 +162,15 @@ execution, reuse and interruption behavior require requalification.
   No PSI, OOM, memory-floor, deadline, Activity, supervisor, or ingestion
   failure occurred. See
   [AF results](pod-topology-v31/first-window-evidence/RESULTS.md).
+- AG: all 11 pre-inference gates, all five workflows, the 29-group sequence,
+  request-20 recycle, all 1,425 process/cgroup samples, unchanged resource
+  guards, terminal evidence and cleanup passed. Its reviewed contract retains
+  required Q04 fresh-output equality as pending, so the complete warm row is
+  not promoted. The raw cleanup field
+  `terminal_stop_proven=false` means the controller did not initiate a stop
+  after natural success; exit code zero, `cleanup-complete.json`, the terminal
+  manifest and absent owned runtime prove terminal cleanup. See
+  [AG results](pod-topology-v32/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -172,13 +181,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AF proved the full warm business sequence, parser recycle, peak attribution,
-unchanged resource guards, synchronized exits, and cleanup. Full cgroup
-qualification remained incomplete because sample 440 was unclassified. It
-isolated the remaining gap to unsynchronized fresh-child creation. The implementation now brackets
-creation and ownership registration with the same bounded lifecycle lock used
-by the collector and exit/reap paths. AG must first pass the Linux lifecycle
-preflight, then run once with a new identity and unchanged thresholds; it must
-not reinterpret unknown PSS as known.
+AG closes integrated-resource qualification and proves the bounded sequence
+and recycle behavior for its exact producer/runtime. Required Q04 fresh-output
+equality still blocks the complete warm row. The next runtime work must resolve
+that equality requirement before moving to the separately specified current
+process interruption/retry/replay gate. Native/Wiki06 fixture acceptance,
+changed-profile rejection, Pod interruption/recovery and telemetry-loss
+injection also remain open. Any next runtime must use a new identity, retain
+the unchanged guards and run once without automatic retry.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

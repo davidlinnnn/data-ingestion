@@ -93,8 +93,6 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         for gate in (
             "six_fixture_matrix",
             "assembly_method_invalidation",
-            "warm_sequence",
-            "integrated_resource_bounds",
             "active_telemetry_loss_guard",
             "process_drain_recovery",
             "pod_drain_recovery",
@@ -102,11 +100,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         ):
             self.assertEqual(gates[gate]["status"], "unproven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
+        self.assertEqual(gates["integrated_resource_bounds"]["status"], "proven")
 
     def test_next_step_preserves_process_completeness_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'execute_fresh_birth_synchronized_warm_sequence')
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-ag')
+        self.assertEqual(
+            step['kind'], 'resolve_required_q04_fresh_output_equality'
+        )
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
@@ -118,26 +118,26 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_FRESH_CHILD_BIRTH_PSS_UNKNOWN',
+            'PASS_SEQUENCE_RECYCLE_AND_INTEGRATED_RESOURCE_ONLY_FRESH_OUTPUT_EQUALITY_PENDING',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-af')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-ag')
         self.assertEqual(step['workflows_completed'], 5)
         self.assertEqual(step['group_requests'], 29)
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
-        self.assertFalse(step['process_attribution_complete'])
-        self.assertFalse(step['cgroup_resource_complete'])
+        self.assertTrue(step['process_attribution_complete'])
+        self.assertTrue(step['cgroup_resource_complete'])
         self.assertTrue(step['peak_sample_attribution_complete'])
-        self.assertEqual(step['incomplete_sample_indexes'], [440])
+        self.assertTrue(step['qualification_complete'])
+        self.assertEqual(step['incomplete_sample_indexes'], [])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v31/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v32/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
-        self.assertEqual(diagnosis['incomplete_sample_index'], 440)
-        self.assertEqual(
-            diagnosis['coverage_unknown'][0]['reason'],
-            'process_set_changed_during_sample',
+        self.assertEqual(diagnosis['resource_summary']['incomplete_samples'], 0)
+        self.assertTrue(
+            diagnosis['resource_summary']['process_attribution_complete']
         )
         cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
         self.assertEqual(

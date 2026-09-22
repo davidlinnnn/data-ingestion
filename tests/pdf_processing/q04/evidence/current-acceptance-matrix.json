@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "d20ce3c",
+    "commit": "acc7557",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-warm-pod-cgroup-20260922-af"
+    "runtime_identity": "q04-warm-pod-cgroup-20260922-ag"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -349,7 +349,7 @@
     {
       "id": "warm_sequence",
       "status": "unproven",
-      "reason": "AF completed all five Temporal workflows, 29 groups and the request-20 recycle. Peak attribution and all resource guards passed, but fresh-child birth changed process membership during sample 440. The child PSS is unknown, so process and cgroup qualification remain incomplete and the combined row remains unproven.",
+      "reason": "AG completed all five Temporal workflows, 29 groups and request-20 recycle with 1,425 complete process/cgroup samples. Its reviewed contract leaves required Q04 fresh-output equality pending, so the complete warm row remains unproven.",
       "evidence": [
         "tests/pdf_processing/T09A-R3-INTEGRATION.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -375,25 +375,25 @@
         "tests/pdf_processing/q04/pod-topology-v28/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v29/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v30/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v31/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v31/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v32/first-window-evidence/RESULTS.md"
       ],
       "latest_attempt": {
-        "phase": "warm-pod-cgroup-af",
-        "outcome": "FAIL_FRESH_CHILD_BIRTH_PSS_UNKNOWN",
+        "phase": "warm-pod-cgroup-ag",
+        "outcome": "PASS_SEQUENCE_RECYCLE_RESOURCE_ONLY_FRESH_OUTPUT_EQUALITY_PENDING",
         "workflows_completed": 5,
         "group_requests": 29,
         "request_recycles": 1,
-        "incomplete_sample_indexes": [
-          440
-        ],
-        "unclassified_cgroup_transition_indexes": [
-          440
-        ],
+        "samples": 1425,
+        "incomplete_sample_indexes": [],
+        "unclassified_cgroup_transition_indexes": [],
         "peak_sample_attribution_complete": true,
-        "process_attribution_complete": false,
-        "cgroup_resource_complete": false,
+        "process_attribution_complete": true,
+        "cgroup_resource_complete": true,
+        "qualification_complete": true,
         "resource_stop": false,
-        "retry_count": 0
+        "retry_count": 0,
+        "fresh_output_equality": "pending"
       }
     },
     {
@@ -407,8 +407,8 @@
     },
     {
       "id": "integrated_resource_bounds",
-      "status": "unproven",
-      "reason": "AF completed the full warm workload without PSI, OOM, memory-floor or deadline stop, and peak attribution passed. Fresh-child birth overlapped sample 440, so exact process PSS and full cgroup qualification remain incomplete under the unchanged combined gate.",
+      "status": "proven",
+      "reason": "AG completed the full warm workload with 1,425 complete process/cgroup samples, a 0.678278-second maximum gap, zero PSI/OOM stops and no memory-floor or deadline stop under unchanged limits.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/sentinel/yolo-matrix-a/RESULTS.md",
@@ -434,7 +434,8 @@
         "tests/pdf_processing/q04/pod-topology-v28/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v29/first-window-evidence/RESULTS.md",
         "tests/pdf_processing/q04/pod-topology-v30/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v31/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v31/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v32/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -481,11 +482,10 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v31/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v32/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "execute_fresh_birth_synchronized_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260922-ag",
+    "kind": "resolve_required_q04_fresh_output_equality",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -493,13 +493,10 @@
     "keep_current_guard": true,
     "deployments_remain_closed": 32,
     "historical_failure_preserved": true,
-    "measurement_requirement": "serialize fresh-child creation, completion and reap with process snapshots while retaining continuous independent cgroup observation",
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/pod-topology-v31/first-window-evidence/RESULTS.md",
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v32/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v32/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_ag.py",
+    "evidence": "tests/pdf_processing/q04/pod-topology-v32/first-window-evidence/RESULTS.md",
+    "remaining_gate": "warm_sequence_fresh_output_equality",
     "pending_graph_fixture_acceptance": "unproven"
   },
   "historical_next_step": {
@@ -529,9 +526,9 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
-    "kind": "execute_exit_synchronized_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260922-af",
-    "execution_commit": "765005d",
+    "kind": "execute_fresh_birth_synchronized_warm_sequence",
+    "run_identity": "q04-warm-pod-cgroup-20260922-ag",
+    "execution_commit": "acc7557",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -539,23 +536,22 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v31/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v31/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_af.py",
-    "runtime_result": "FAIL_FRESH_CHILD_BIRTH_PSS_UNKNOWN",
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v32/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v32/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_ag.py",
+    "runtime_result": "PASS_SEQUENCE_RECYCLE_AND_INTEGRATED_RESOURCE_ONLY_FRESH_OUTPUT_EQUALITY_PENDING",
     "workflows_completed": 5,
     "group_requests": 29,
     "request_recycles": 1,
-    "incomplete_sample_indexes": [
-      440
-    ],
+    "samples": 1425,
+    "incomplete_sample_indexes": [],
     "psi_oom_memory_floor_deadline_stop": false,
     "cleanup": "proven_with_pvc_retained",
-    "unclassified_cgroup_transition_indexes": [
-      440
-    ],
+    "unclassified_cgroup_transition_indexes": [],
     "peak_sample_attribution_complete": true,
-    "process_attribution_complete": false,
-    "cgroup_resource_complete": false
+    "process_attribution_complete": true,
+    "cgroup_resource_complete": true,
+    "qualification_complete": true,
+    "fresh_output_equality": "pending"
   }
 }
