@@ -32,5 +32,13 @@ pending. The current-producer six-fixture modes, changed-profile rejection,
 process/Pod interruption recovery, telemetry-loss injection and the #44 bounds
 handoff also remain open. #51 is therefore not ready to close or integrate.
 
+A strict post-run comparison of the retained AG documents confirms why the
+fresh-output gate cannot be promoted: Wiki06 has 496 current text nodes versus
+490 in its retained reference, and native has 1,145 versus 1,119. Both retain
+the exact source-region multiset, but their graph collections differ. This is
+preserved for source review; it is not treated as output equality or silently
+normalized. Re-running the same producer before that review would fail at the
+same gate and add no acceptance evidence.
+
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).

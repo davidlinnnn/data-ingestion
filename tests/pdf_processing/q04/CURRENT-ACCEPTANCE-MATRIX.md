@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AF execution; machine authority:
+Current through AG execution and post-run source-delta analysis; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -189,5 +189,12 @@ process interruption/retry/replay gate. Native/Wiki06 fixture acceptance,
 changed-profile rejection, Pod interruption/recovery and telemetry-loss
 injection also remain open. Any next runtime must use a new identity, retain
 the unchanged guards and run once without automatic retry.
+
+The retained AG documents now have a strict no-inference comparison record:
+Wiki06 changes from 490 to 496 text nodes and native from 1,119 to 1,145, while
+their source-region multisets remain equal. This is a graph/assembly difference,
+not a missing-source finding. Re-running the same current producer before a
+source review would deterministically stop at the same Q04 graph gate and would
+not advance acceptance.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

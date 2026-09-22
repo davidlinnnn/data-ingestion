@@ -7,3 +7,12 @@ The lifecycle and resource qualification passed. All 1,425 samples were complete
 Cleanup passed: workload exit code was zero; the durable terminal manifest is `PASS_CANDIDATE`; `cleanup-complete.json` proves worker, parser, owned children and scratch absent; persistent channels closed; terminal and post-cleanup OOM/PSI checks passed; and owned Deployment, Pod and ConfigMaps were deleted with UID preconditions. The raw `outer-cleanup.json` field `terminal_stop_proven=false` records that the controller did not initiate a stop after natural success; it is not a failed cleanup gate. PVC `q04-pod-cgroup-ag-evidence-20260922-ag` remains Bound with UID `7770d9d2-dc31-4981-9a2e-25fc2fc07a1c`.
 
 AG proves the bounded sequence, request-20 recycle and integrated-resource row for this exact producer/runtime. Its reviewed contract explicitly leaves required Q04 fresh-output equality pending, so the complete warm row remains unproven. It does not promote the native or Wiki06 fixture acceptance rows: those cases intentionally retain `source-review-pending.json` and are measurement-only. Process and Pod interruption/recovery, active telemetry-loss injection, changed-profile rejection, and the remaining current-producer fixture modes are still unproven.
+
+Post-run strict comparison made that blocker concrete without rerunning inference. Wiki06
+has the same source-region multiset but 496 current text nodes versus 490 in the
+retained reference; native has 1,145 versus 1,119. Both change `body`, `groups`,
+`texts`, `pictures`, and `tables`, with no added or removed source segments. The
+current graph hashes are respectively `8f3a24bfe0d994363731057bcbb7dd5117955da96bb37798bbe975965497b6b0`
+and `584c29ed896800a290bb6bcece42e4b5f73c570b27f908490c6f8ada0c14d77d`.
+Those differences require source review; source-signature equality is not an
+acceptance substitute.
