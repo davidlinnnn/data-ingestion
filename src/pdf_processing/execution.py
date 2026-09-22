@@ -177,39 +177,61 @@ class Execution:
             control_parent = control_child = None
             command = [sys.executable, '-m', module]
             options = {}
-            if lifecycle:
-                import socket
-                control_parent, control_child = socket.socketpair()
-                control_parent.setblocking(False)
-                command = [sys.executable, '-m', 'pdf_processing.lifecycle_child', module]
-                options = {
-                    'env': {**os.environ, 'PDF_PROCESS_LIFECYCLE_FD': str(control_child.fileno())},
-                    'pass_fds': (control_child.fileno(),),
-                }
-            spawning = asyncio.create_task(asyncio.create_subprocess_exec(
-                *command, stdin=asyncio.subprocess.PIPE, stdout=log, stderr=log,
-                start_new_session=True, **options))
-            try:
-                process = await asyncio.shield(spawning)
-            except asyncio.CancelledError:
+            cancelled = None
+            async with process_lifecycle_transition() as synchronized:
+                if not synchronized:
+                    raise ProcessLifecycleSynchronizationError(
+                        'process_lifecycle_lock_timeout'
+                    )
+                if lifecycle:
+                    import socket
+                    control_parent, control_child = socket.socketpair()
+                    control_parent.setblocking(False)
+                    command = [sys.executable, '-m', 'pdf_processing.lifecycle_child', module]
+                    options = {
+                        'env': {**os.environ, 'PDF_PROCESS_LIFECYCLE_FD': str(control_child.fileno())},
+                        'pass_fds': (control_child.fileno(),),
+                    }
+                spawning = asyncio.create_task(asyncio.create_subprocess_exec(
+                    *command, stdin=asyncio.subprocess.PIPE, stdout=log, stderr=log,
+                    start_new_session=True, **options))
                 try:
-                    process = await spawning
-                    self.fresh_children.add(process)
-                    _fresh_children.add(process)
-                    await _stop_children(self.fresh_children)
-                finally:
+                    process = await asyncio.shield(spawning)
+                except asyncio.CancelledError as error:
+                    try:
+                        process = await asyncio.shield(spawning)
+                    except asyncio.CancelledError:
+                        spawning.cancel()
+                        await asyncio.gather(spawning, return_exceptions=True)
+                        if spawning.cancelled():
+                            if control_parent is not None:
+                                control_parent.close()
+                            raise
+                        try:
+                            process = spawning.result()
+                        except BaseException:
+                            if control_parent is not None:
+                                control_parent.close()
+                            raise
+                    except BaseException:
+                        if control_parent is not None:
+                            control_parent.close()
+                        raise
+                    cancelled = error
+                except BaseException:
                     if control_parent is not None:
                         control_parent.close()
-                raise
-            except BaseException:
+                    raise
+                finally:
+                    if control_child is not None:
+                        control_child.close()
+                self.fresh_children.add(process)
+                _fresh_children.add(process)
+            if cancelled is not None:
                 if control_parent is not None:
                     control_parent.close()
-                raise
-            finally:
-                if control_child is not None:
-                    control_child.close()
-            self.fresh_children.add(process)
-            _fresh_children.add(process)
+                await _stop_children(self.fresh_children)
+                raise cancelled
             communication = asyncio.create_task(process.communicate(json.dumps(request).encode()))
             ready = None
             group_cleanup_done = False

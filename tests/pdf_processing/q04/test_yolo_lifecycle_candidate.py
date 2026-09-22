@@ -235,6 +235,26 @@ class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
+    async def test_fresh_child_lock_timeout_does_not_spawn(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            lock_path = root / "lock"
+            execution = Execution(None, None, root)
+            env = {
+                "PDF_PROCESS_LIFECYCLE_LOCK": str(lock_path),
+                "PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS": ".03",
+            }
+            with lock_path.open("a") as held, mock.patch.dict(os.environ, env), mock.patch(
+                "pdf_processing.execution.asyncio.create_subprocess_exec"
+            ) as spawn:
+                fcntl.flock(held, fcntl.LOCK_EX)
+                with self.assertRaisesRegex(
+                    RuntimeError, "process_lifecycle_lock_timeout"
+                ):
+                    await execution.fresh_child("fixture", {}, root)
+            spawn.assert_not_called()
+
     async def test_double_cancel_during_spawn_closes_lifecycle_sockets(self):
         parent = mock.Mock()
         child = mock.Mock()
@@ -265,6 +285,69 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                 running.cancel()
                 with self.assertRaises(asyncio.CancelledError):
                     await running
+        parent.close.assert_called_once_with()
+        child.close.assert_called_once_with()
+
+    async def test_double_cancel_after_spawn_completion_reaps_owned_process(self):
+        process = mock.Mock(pid=42, returncode=None)
+        real_shield = asyncio.shield
+        calls = 0
+
+        async def spawn(*_args, **_kwargs):
+            return process
+
+        async def cancelled_shield(task):
+            nonlocal calls
+            calls += 1
+            await asyncio.sleep(0)
+            if calls <= 2:
+                raise asyncio.CancelledError
+            return await real_shield(task)
+
+        async def stop(children):
+            self.assertIn(process, children)
+            children.discard(process)
+            execution_module._fresh_children.discard(process)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            execution = Execution(None, None, root)
+            with mock.patch(
+                "pdf_processing.execution.asyncio.create_subprocess_exec", new=spawn
+            ), mock.patch(
+                "pdf_processing.execution.asyncio.shield", new=cancelled_shield
+            ), mock.patch("pdf_processing.execution._stop_children", new=stop):
+                with self.assertRaises(asyncio.CancelledError):
+                    await execution.fresh_child("fixture", {}, root)
+        self.assertEqual(execution.fresh_children, set())
+        self.assertEqual(execution_module._fresh_children, set())
+
+    async def test_double_cancel_after_spawn_failure_closes_lifecycle_sockets(self):
+        parent = mock.Mock()
+        child = mock.Mock()
+        child.fileno.return_value = 42
+
+        async def spawn(*_args, **_kwargs):
+            raise RuntimeError("spawn failed")
+
+        async def cancelled_shield(_task):
+            await asyncio.sleep(0)
+            raise asyncio.CancelledError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            execution = Execution(None, None, root)
+            with mock.patch.dict(
+                os.environ, {"PDF_PROCESS_LIFECYCLE_LOCK": str(root / "lock")}
+            ), mock.patch(
+                "socket.socketpair", return_value=(parent, child)
+            ), mock.patch(
+                "pdf_processing.execution.asyncio.create_subprocess_exec", new=spawn
+            ), mock.patch(
+                "pdf_processing.execution.asyncio.shield", new=cancelled_shield
+            ):
+                with self.assertRaisesRegex(RuntimeError, "spawn failed"):
+                    await execution.fresh_child("fixture", {}, root)
         parent.close.assert_called_once_with()
         child.close.assert_called_once_with()
 
@@ -575,6 +658,7 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                 "import json, pathlib, sys\n"
                 "request=json.load(sys.stdin)\n"
                 "pathlib.Path(request['marker']).write_text('done')\n"
+                "import time; time.sleep(.1)\n"
             )
             lock_path = root / "lifecycle.lock"
             pdf = root / "source.pdf"
@@ -593,8 +677,13 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                         "lifecycle_fixture", {"marker": str(marker)}, root
                     )
                 )
+                await asyncio.sleep(.03)
+                self.assertFalse(marker.exists())
+                self.assertFalse(execution.fresh_children)
+                fcntl.flock(held, fcntl.LOCK_UN)
                 while not marker.exists():
                     await asyncio.sleep(.01)
+                fcntl.flock(held, fcntl.LOCK_EX)
                 await asyncio.sleep(.03)
                 self.assertFalse(running.done())
                 process = next(iter(execution.fresh_children))
