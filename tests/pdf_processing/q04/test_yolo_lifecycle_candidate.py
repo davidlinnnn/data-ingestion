@@ -30,6 +30,52 @@ for line in sys.stdin:
 
 
 class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
+    async def test_lifecycle_lock_brackets_warm_parser_reap(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            child = root / "child.py"
+            child.write_text("import time\ntime.sleep(60)\n")
+            lock_path = root / "lifecycle.lock"
+            parser = WarmParser(command=[sys.executable, str(child)])
+            parser.process = await asyncio.create_subprocess_exec(
+                sys.executable, str(child), start_new_session=True
+            )
+            with lock_path.open("a") as held, mock.patch.dict(
+                os.environ, {"PDF_PROCESS_LIFECYCLE_LOCK": str(lock_path)}
+            ):
+                fcntl.flock(held, fcntl.LOCK_EX)
+                stopped = asyncio.create_task(parser.stop("request_recycle"))
+                await asyncio.sleep(.03)
+                self.assertFalse(stopped.done())
+                self.assertIsNone(parser.process.returncode)
+                fcntl.flock(held, fcntl.LOCK_UN)
+                await stopped
+            self.assertIsNone(parser.process)
+
+    async def test_lifecycle_lock_timeout_still_reaps_and_fails_closed(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            child = root / "child.py"
+            child.write_text("import time\ntime.sleep(60)\n")
+            lock_path = root / "lifecycle.lock"
+            parser = WarmParser(command=[sys.executable, str(child)])
+            parser.process = await asyncio.create_subprocess_exec(
+                sys.executable, str(child), start_new_session=True
+            )
+            env = {
+                "PDF_PROCESS_LIFECYCLE_LOCK": str(lock_path),
+                "PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS": ".03",
+            }
+            with lock_path.open("a") as held, mock.patch.dict(os.environ, env):
+                fcntl.flock(held, fcntl.LOCK_EX)
+                with self.assertRaisesRegex(
+                    RuntimeError, "process_lifecycle_lock_timeout"
+                ):
+                    await parser.stop("request_recycle")
+            self.assertIsNone(parser.process)
+
     async def test_failed_reap_retains_process_ownership(self):
         class NeverReaped:
             pid = 4242
@@ -189,6 +235,39 @@ class WarmParserHandoffTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
+    async def test_double_cancel_during_spawn_closes_lifecycle_sockets(self):
+        parent = mock.Mock()
+        child = mock.Mock()
+        child.fileno.return_value = 42
+
+        async def blocked_spawn(*args, **kwargs):
+            await asyncio.Future()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            execution = Execution(None, None, root)
+            with (
+                mock.patch.dict(
+                    os.environ, {"PDF_PROCESS_LIFECYCLE_LOCK": str(root / "lock")}
+                ),
+                mock.patch("socket.socketpair", return_value=(parent, child)),
+                mock.patch(
+                    "pdf_processing.execution.asyncio.create_subprocess_exec",
+                    new=blocked_spawn,
+                ),
+            ):
+                running = asyncio.create_task(
+                    execution.fresh_child("fixture", {}, root)
+                )
+                await asyncio.sleep(0)
+                running.cancel()
+                await asyncio.sleep(0)
+                running.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await running
+        parent.close.assert_called_once_with()
+        child.close.assert_called_once_with()
+
     async def test_shutdown_attempts_every_fresh_child_after_reap_timeout(self):
         class Process:
             returncode = None
@@ -485,6 +564,77 @@ class ExecutionHandoffTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(asyncio.CancelledError):
                     await second_task
             self.assertEqual(execution_module._fresh_children, set())
+
+    async def test_lifecycle_lock_keeps_completed_fresh_child_until_sample_finishes(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            module = root / "lifecycle_fixture.py"
+            marker = root / "completed"
+            module.write_text(
+                "import json, pathlib, sys\n"
+                "request=json.load(sys.stdin)\n"
+                "pathlib.Path(request['marker']).write_text('done')\n"
+            )
+            lock_path = root / "lifecycle.lock"
+            pdf = root / "source.pdf"
+            pdf.write_bytes(b"pdf")
+            execution = Execution(
+                SourceRequest(pdf, "rev", "sha", {}, root), object(), root
+            )
+            env = {
+                "PDF_PROCESS_LIFECYCLE_LOCK": str(lock_path),
+                "PYTHONPATH": str(root) + os.pathsep + os.environ.get("PYTHONPATH", ""),
+            }
+            with lock_path.open("a") as held, mock.patch.dict(os.environ, env):
+                fcntl.flock(held, fcntl.LOCK_EX)
+                running = asyncio.create_task(
+                    execution.fresh_child(
+                        "lifecycle_fixture", {"marker": str(marker)}, root
+                    )
+                )
+                while not marker.exists():
+                    await asyncio.sleep(.01)
+                await asyncio.sleep(.03)
+                self.assertFalse(running.done())
+                process = next(iter(execution.fresh_children))
+                self.assertIsNone(process.returncode)
+                fcntl.flock(held, fcntl.LOCK_UN)
+                await running
+            self.assertEqual(execution.fresh_children, set())
+
+    async def test_completed_fresh_child_cleans_its_process_group(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            module = root / "descendant_fixture.py"
+            marker = root / "descendant.pid"
+            module.write_text(
+                "import json, pathlib, subprocess, sys\n"
+                "request=json.load(sys.stdin)\n"
+                "child=subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+                "pathlib.Path(request['marker']).write_text(str(child.pid))\n"
+            )
+            lock_path = root / "lifecycle.lock"
+            pdf = root / "source.pdf"
+            pdf.write_bytes(b"pdf")
+            execution = Execution(
+                SourceRequest(pdf, "rev", "sha", {}, root), object(), root
+            )
+            env = {
+                "PDF_PROCESS_LIFECYCLE_LOCK": str(lock_path),
+                "PYTHONPATH": str(root) + os.pathsep + os.environ.get("PYTHONPATH", ""),
+            }
+            with mock.patch.dict(os.environ, env):
+                await execution.fresh_child(
+                    "descendant_fixture", {"marker": str(marker)}, root
+                )
+            descendant = int(marker.read_text())
+            try:
+                import psutil
+                status = psutil.Process(descendant).status()
+            except psutil.NoSuchProcess:
+                status = "absent"
+            self.assertIn(status, {"absent", psutil.STATUS_ZOMBIE})
 
 
 class CandidateIdentityTests(unittest.TestCase):

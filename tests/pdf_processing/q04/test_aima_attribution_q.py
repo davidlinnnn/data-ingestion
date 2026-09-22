@@ -17,6 +17,35 @@ from sentinel import aima_attribution_telemetry_q as telemetry
 
 
 class ProcessTransitionEvidenceTest(unittest.TestCase):
+    def test_lifecycle_wrapper_preserves_fresh_parse_classification(self):
+        command = (
+            b"python\0-m\0pdf_processing.lifecycle_child\0pdf_processing.parse\0"
+        )
+        self.assertEqual(telemetry._command_class(command), "fresh_parse_child")
+
+    def test_collector_lifecycle_lock_wait_is_bounded_before_sampling(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            lock_path = root / "lifecycle.lock"
+            sampler = mock.Mock()
+            collector = telemetry.StrictAttributionCollector(
+                root / "samples.jsonl",
+                root / "summary.json",
+                shutdown_timeout_seconds=.02,
+                lifecycle_lock_path=lock_path,
+                sampler=sampler,
+            )
+            collector.identity = {}
+            collector._stream = object()
+            with lock_path.open("a") as held:
+                fcntl.flock(held, fcntl.LOCK_EX)
+                with self.assertRaisesRegex(
+                    RuntimeError, "process lifecycle lock timed out"
+                ):
+                    collector._capture()
+            sampler.assert_not_called()
+
     @unittest.skipUnless(
         Path("/sys/fs/cgroup/memory.current").is_file(),
         "requires Linux cgroup v2",

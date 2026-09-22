@@ -10,7 +10,11 @@ import sys
 import time
 import uuid
 
-from .execution import ChildFailure
+from .execution import (
+    ChildFailure,
+    ProcessLifecycleSynchronizationError,
+    process_lifecycle_transition,
+)
 
 
 def now():
@@ -34,6 +38,14 @@ class WarmParser:
                             'last_local_progress': None, 'termination_reason': None}
 
     async def stop(self, reason):
+        async with process_lifecycle_transition() as synchronized:
+            await self._stop(reason)
+        if not synchronized:
+            raise ProcessLifecycleSynchronizationError(
+                'process_lifecycle_lock_timeout'
+            )
+
+    async def _stop(self, reason):
         p = self.process
         self.observation.update(ready=False, termination_reason=reason, forced_kill=False, observed_at=now())
         if p is None:

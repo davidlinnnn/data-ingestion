@@ -4,6 +4,7 @@ No source, client, remote method or storage namespace is bound at import time.
 This is the T01 seam, not the T02 ingestion workflow or canonical schema.
 """
 import asyncio
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 import hashlib
 import json
@@ -12,6 +13,45 @@ from pathlib import Path
 import signal
 import sys
 import tempfile
+import time
+
+
+LIFECYCLE_LOCK_ENV = 'PDF_PROCESS_LIFECYCLE_LOCK'
+LIFECYCLE_LOCK_TIMEOUT_ENV = 'PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS'
+
+
+class ProcessLifecycleSynchronizationError(RuntimeError):
+    pass
+
+
+@asynccontextmanager
+async def process_lifecycle_transition():
+    """Serialize an owned-process exit with an external process snapshot."""
+    path = os.environ.get(LIFECYCLE_LOCK_ENV)
+    if not path:
+        yield True
+        return
+    import fcntl
+    with open(path, 'a') as stream:
+        deadline = time.monotonic() + float(
+            os.environ.get(LIFECYCLE_LOCK_TIMEOUT_ENV, '1')
+        )
+        acquired = False
+        while True:
+            try:
+                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                acquired = True
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    break
+                await asyncio.sleep(.01)
+        try:
+            yield acquired
+        finally:
+            if acquired:
+                fcntl.flock(stream, fcntl.LOCK_UN)
+
 
 from .compatibility import CONTRACT, methods_match
 from .object_store import Store, StoreFailure, digest
@@ -24,19 +64,24 @@ _fresh_children = set()
 async def _stop_children(children):
     first_error = None
     for process in tuple(children):
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        try:
-            await asyncio.wait_for(process.wait(), 5)
-        except TimeoutError as error:
-            if first_error is None:
-                first_error = FreshChildReapFailure('fresh_child_reap_failed')
-                first_error.__cause__ = error
-        else:
-            children.discard(process)
-            _fresh_children.discard(process)
+        async with process_lifecycle_transition() as synchronized:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                await asyncio.wait_for(process.wait(), 5)
+            except TimeoutError as error:
+                if first_error is None:
+                    first_error = FreshChildReapFailure('fresh_child_reap_failed')
+                    first_error.__cause__ = error
+            else:
+                children.discard(process)
+                _fresh_children.discard(process)
+        if not synchronized and first_error is None:
+            first_error = ProcessLifecycleSynchronizationError(
+                'process_lifecycle_lock_timeout'
+            )
     if first_error is not None:
         raise first_error
 
@@ -128,26 +173,73 @@ class Execution:
 
     async def fresh_child(self, module, request, out):
         with (out/'process.log').open('wb') as log:
+            lifecycle = os.environ.get(LIFECYCLE_LOCK_ENV)
+            control_parent = control_child = None
+            command = [sys.executable, '-m', module]
+            options = {}
+            if lifecycle:
+                import socket
+                control_parent, control_child = socket.socketpair()
+                control_parent.setblocking(False)
+                command = [sys.executable, '-m', 'pdf_processing.lifecycle_child', module]
+                options = {
+                    'env': {**os.environ, 'PDF_PROCESS_LIFECYCLE_FD': str(control_child.fileno())},
+                    'pass_fds': (control_child.fileno(),),
+                }
             spawning = asyncio.create_task(asyncio.create_subprocess_exec(
-                sys.executable, '-m', module, stdin=asyncio.subprocess.PIPE,
-                stdout=log, stderr=log, start_new_session=True))
+                *command, stdin=asyncio.subprocess.PIPE, stdout=log, stderr=log,
+                start_new_session=True, **options))
             try:
                 process = await asyncio.shield(spawning)
             except asyncio.CancelledError:
-                process = await spawning
-                self.fresh_children.add(process)
-                _fresh_children.add(process)
-                await _stop_children(self.fresh_children)
+                try:
+                    process = await spawning
+                    self.fresh_children.add(process)
+                    _fresh_children.add(process)
+                    await _stop_children(self.fresh_children)
+                finally:
+                    if control_parent is not None:
+                        control_parent.close()
                 raise
+            except BaseException:
+                if control_parent is not None:
+                    control_parent.close()
+                raise
+            finally:
+                if control_child is not None:
+                    control_child.close()
             self.fresh_children.add(process)
             _fresh_children.add(process)
             communication = asyncio.create_task(process.communicate(json.dumps(request).encode()))
+            ready = None
+            group_cleanup_done = False
             try:
                 async with asyncio.timeout(self.child_timeout):
-                    while not communication.done():
+                    if control_parent is not None:
+                        ready = asyncio.create_task(
+                            asyncio.get_running_loop().sock_recv(control_parent, 1)
+                        )
+                    while not communication.done() and not (ready and ready.done()):
                         self.heartbeat({'pid': process.pid, 'durable_completion': False})
-                        await asyncio.wait({communication}, timeout=1)
-                    await communication
+                        await asyncio.wait(
+                            {communication, *(() if ready is None else (ready,))}, timeout=1,
+                            return_when=asyncio.FIRST_COMPLETED,
+                        )
+                    if ready is not None and ready.done() and ready.result() == b'1':
+                        async with process_lifecycle_transition() as synchronized:
+                            await asyncio.get_running_loop().sock_sendall(control_parent, b'1')
+                            await communication
+                            try:
+                                os.killpg(process.pid, signal.SIGKILL)
+                            except ProcessLookupError:
+                                pass
+                            group_cleanup_done = True
+                        if not synchronized:
+                            raise ProcessLifecycleSynchronizationError(
+                                'process_lifecycle_lock_timeout'
+                            )
+                    else:
+                        await communication
                 if process.returncode:
                     failure = Path(request['out'])/'failure.json'
                     if failure.is_file():
@@ -156,20 +248,37 @@ class Execution:
                     raise RuntimeError('child_process_failed')
             finally:
                 try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                try:
-                    await asyncio.wait_for(process.wait(), 5)
-                except TimeoutError as error:
-                    # Retain ownership for worker-shutdown cleanup. Callers
-                    # that coordinate warm capacity must fail closed before
-                    # releasing their handoff lock.
-                    raise FreshChildReapFailure('fresh_child_reap_failed') from error
-                else:
-                    self.fresh_children.discard(process)
-                    _fresh_children.discard(process)
+                    primary_active = sys.exc_info()[0] is not None
+                    synchronized = True
+                    if not group_cleanup_done:
+                        async with process_lifecycle_transition() as synchronized:
+                            try:
+                                os.killpg(process.pid, signal.SIGKILL)
+                            except ProcessLookupError:
+                                pass
+                            if process.returncode is None:
+                                try:
+                                    await asyncio.wait_for(process.wait(), 5)
+                                except TimeoutError as error:
+                                    # Retain ownership for worker-shutdown cleanup. Callers
+                                    # that coordinate warm capacity must fail closed before
+                                    # releasing their handoff lock.
+                                    raise FreshChildReapFailure(
+                                        'fresh_child_reap_failed'
+                                    ) from error
+                    if process.returncode is not None:
+                        self.fresh_children.discard(process)
+                        _fresh_children.discard(process)
+                    if not synchronized and not primary_active:
+                        raise ProcessLifecycleSynchronizationError(
+                            'process_lifecycle_lock_timeout'
+                        )
                 finally:
+                    if control_parent is not None:
+                        control_parent.close()
+                    if ready is not None and not ready.done():
+                        ready.cancel()
+                        await asyncio.gather(ready, return_exceptions=True)
                     if not communication.done():
                         communication.cancel()
                         await asyncio.gather(communication, return_exceptions=True)

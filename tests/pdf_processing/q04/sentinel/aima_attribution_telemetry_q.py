@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import asyncio
+from contextlib import nullcontext
 from dataclasses import dataclass
 import hashlib
 import json
@@ -32,7 +33,7 @@ def _command_class(payload: bytes) -> str:
         return "worker"
     if "pdf_processing.warm_child" in text:
         return "warm_parser"
-    if "-m pdf_processing.parse" in text:
+    if "-m pdf_processing.parse" in text or "pdf_processing.lifecycle_child pdf_processing.parse" in text:
         return "fresh_parse_child"
     if "-m pdf_processing." in text:
         return "fresh_owned_child"
@@ -1002,6 +1003,7 @@ class StrictAttributionCollector:
         cgroup_root: Path = Path("/sys/fs/cgroup"),
         sampler=strict_attribution_sample,
         stream_factory=None,
+        lifecycle_lock_path: Path | None = None,
     ):
         if min(interval_seconds, attribution_gap_seconds, shutdown_timeout_seconds) <= 0:
             raise ValueError("collector intervals must be positive")
@@ -1019,6 +1021,7 @@ class StrictAttributionCollector:
         self.stream_factory = stream_factory or (
             lambda output: output.open("x", buffering=1)
         )
+        self.lifecycle_lock_path = lifecycle_lock_path
         self.identity = None
         self._stop = threading.Event()
         self._ready = threading.Event()
@@ -1109,17 +1112,34 @@ class StrictAttributionCollector:
 
     def _capture(self, terminal: bool = False):
         with self._capture_lock:
-            if self.identity is None or self._stream is None:
-                raise RuntimeError("collector is not initialized")
-            if self._abandoned.is_set():
-                return
-            row = self.sampler(
-                root_pid=self.root_pid,
-                expected_cgroup=self.identity,
-                proc_root=self.proc_root,
-                cgroup_root=self.cgroup_root,
-                observation_root=self.observation_root,
-            )
+            lifecycle = nullcontext()
+            if self.lifecycle_lock_path is not None:
+                import fcntl
+                lifecycle = self.lifecycle_lock_path.open("a")
+            with lifecycle as lifecycle_stream:
+                if lifecycle_stream is not None:
+                    deadline = time.monotonic() + self.shutdown_timeout_seconds
+                    while True:
+                        try:
+                            fcntl.flock(
+                                lifecycle_stream, fcntl.LOCK_EX | fcntl.LOCK_NB
+                            )
+                            break
+                        except BlockingIOError:
+                            if time.monotonic() >= deadline:
+                                raise RuntimeError("process lifecycle lock timed out")
+                            time.sleep(min(.01, self.interval_seconds))
+                if self.identity is None or self._stream is None:
+                    raise RuntimeError("collector is not initialized")
+                if self._abandoned.is_set():
+                    return
+                row = self.sampler(
+                    root_pid=self.root_pid,
+                    expected_cgroup=self.identity,
+                    proc_root=self.proc_root,
+                    cgroup_root=self.cgroup_root,
+                    observation_root=self.observation_root,
+                )
             row["process_events"] = self._lifecycle.update(row["processes"])
             fresh_events = [
                 {

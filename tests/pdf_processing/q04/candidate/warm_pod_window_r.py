@@ -334,6 +334,7 @@ async def run_window(args):
         observation_root=root,
         interval_seconds=args.attribution_interval_seconds,
         attribution_gap_seconds=args.attribution_gap_seconds,
+        lifecycle_lock_path=measurement / "process-lifecycle.lock",
     )
     warm_run = AttributedCandidateRun(
         config, bundle, root, client, store, host, collector=collector
@@ -342,7 +343,15 @@ async def run_window(args):
     outcome = None
     proof = None
     consumer.check_reference = reviewed_reference_checker(args.bundle, original_reference)
+    previous_lifecycle_lock = os.environ.get("PDF_PROCESS_LIFECYCLE_LOCK")
+    previous_lifecycle_timeout = os.environ.get(
+        "PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS"
+    )
     try:
+        os.environ["PDF_PROCESS_LIFECYCLE_LOCK"] = str(collector.lifecycle_lock_path)
+        os.environ["PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS"] = str(
+            args.attribution_gap_seconds
+        )
         with projected_aima_oracle(args.bundle):
             async with Worker(client, task_queue=config["workflow_queue"], workflows=[PDFProcessing]):
                 collector.start()
@@ -382,16 +391,28 @@ async def run_window(args):
                 await host.stop()
         except BaseException as error:
             primary_error = primary_error or error
-        if collector.started:
-            collector.observe(
-                "owned_cleanup_finished",
-                source="warm_candidate_window",
-                meaning="warm_worker_returned_after_owned_cleanup",
-            )
-            outcome = collector.stop(
-                expect_cancel=False,
-                require_no_warm_fresh_overlap=True,
-            )
+        try:
+            if collector.started:
+                collector.observe(
+                    "owned_cleanup_finished",
+                    source="warm_candidate_window",
+                    meaning="warm_worker_returned_after_owned_cleanup",
+                )
+                outcome = collector.stop(
+                    expect_cancel=False,
+                    require_no_warm_fresh_overlap=True,
+                )
+        finally:
+            if previous_lifecycle_lock is None:
+                os.environ.pop("PDF_PROCESS_LIFECYCLE_LOCK", None)
+            else:
+                os.environ["PDF_PROCESS_LIFECYCLE_LOCK"] = previous_lifecycle_lock
+            if previous_lifecycle_timeout is None:
+                os.environ.pop("PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS", None)
+            else:
+                os.environ[
+                    "PDF_PROCESS_LIFECYCLE_LOCK_TIMEOUT_SECONDS"
+                ] = previous_lifecycle_timeout
 
     if primary_error is not None:
         q04_runtime.write(root / "phase-failure.json", {
