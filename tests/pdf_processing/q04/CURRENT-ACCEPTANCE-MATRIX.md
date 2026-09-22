@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AD execution `d4d1d18`; machine authority:
+Current through AF execution; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -152,6 +152,16 @@ execution, reuse and interruption behavior require requalification.
   request-20 warm-parser recycle overlapped process snapshots. Their PSS remains unknown, so the all-sample
   process-attribution gate correctly failed. See
   [AD results](pod-topology-v29/first-window-evidence/RESULTS.md).
+- AE: ten of 11 pre-inference gates passed, but a generated acceptance adapter
+  misspelled the authorized capacity key. No workload started; cleanup passed.
+  See [AE results](pod-topology-v30/first-window-evidence/RESULTS.md).
+- AF: all 11 pre-inference gates and all five workflows completed the 29-group
+  sequence and request-20 recycle. One of 1,420 samples overlapped the birth of
+  a fresh child because the lifecycle lock covered exit/reap but not creation.
+  Its exact PSS is unknown, so the unchanged all-sample attribution gate failed.
+  No PSI, OOM, memory-floor, deadline, Activity, supervisor, or ingestion
+  failure occurred. See
+  [AF results](pod-topology-v31/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -162,12 +172,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AD proved the full warm business sequence, cgroup continuity, parser recycle,
-peak attribution, and synchronized terminal worker shutdown. It did not prove
-complete attribution across owned child lifecycle transitions. An unchanged
-rerun is not warranted. The next implementation must expose a bounded
-owned-process lifecycle handshake for fresh-child exits and warm-parser recycle while retaining continuous
-independent cgroup observation; it must not reinterpret unknown PSS as known.
-Thresholds and the one-run/no-automatic-retry policy remain unchanged.
+AF proved the full warm business sequence, parser recycle, peak attribution,
+unchanged resource guards, synchronized exits, and cleanup. Full cgroup
+qualification remained incomplete because sample 440 was unclassified. It
+isolated the remaining gap to unsynchronized fresh-child creation. The implementation now brackets
+creation and ownership registration with the same bounded lifecycle lock used
+by the collector and exit/reap paths. AG must first pass the Linux lifecycle
+preflight, then run once with a new identity and unchanged thresholds; it must
+not reinterpret unknown PSS as known.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

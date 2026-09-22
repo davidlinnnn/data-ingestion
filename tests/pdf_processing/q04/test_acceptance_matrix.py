@@ -105,9 +105,10 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_process_completeness_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'design_owned_process_lifecycle_handshake')
+        self.assertEqual(step['kind'], 'execute_fresh_birth_synchronized_warm_sequence')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-ag')
         self.assertFalse(step['runtime_started'])
-        self.assertFalse(step['runtime_authorized'])
+        self.assertTrue(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertFalse(step['acceptance_standard_change'])
@@ -117,30 +118,27 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_OWNED_PROCESS_TRANSITION_PSS_UNKNOWN',
+            'FAIL_FRESH_CHILD_BIRTH_PSS_UNKNOWN',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-ad')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-af')
         self.assertEqual(step['workflows_completed'], 5)
         self.assertEqual(step['group_requests'], 29)
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
         self.assertFalse(step['process_attribution_complete'])
-        self.assertTrue(step['cgroup_resource_complete'])
+        self.assertFalse(step['cgroup_resource_complete'])
         self.assertTrue(step['peak_sample_attribution_complete'])
-        self.assertTrue(step['terminal_transition_complete'])
+        self.assertEqual(step['incomplete_sample_indexes'], [440])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v29/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v31/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
-        self.assertTrue(diagnosis['workload']['five_workflows_completed'])
+        self.assertEqual(diagnosis['incomplete_sample_index'], 440)
         self.assertEqual(
-            diagnosis['process_attribution']['classified_exit_indexes'],
-            [589, 686, 958, 1121],
+            diagnosis['coverage_unknown'][0]['reason'],
+            'process_set_changed_during_sample',
         )
-        self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [])
-        self.assertEqual(diagnosis['resource']['max_node_full_psi_avg10'], 0)
-        self.assertEqual(diagnosis['resource']['cgroup_oom_kill'], 0)
         cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
         self.assertEqual(
             cleanup['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED'
