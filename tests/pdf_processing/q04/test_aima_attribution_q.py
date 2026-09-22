@@ -10,6 +10,19 @@ from sentinel import aima_attribution_telemetry_q as telemetry
 
 
 class ProcessTransitionEvidenceTest(unittest.TestCase):
+    def test_short_lived_owned_descendants_are_read_first(self):
+        identities = {
+            20: {"pid": 20, "ppid": 1, "start_ticks": 20},
+            21: {"pid": 21, "ppid": 20, "start_ticks": 21},
+            22: {"pid": 22, "ppid": 21, "start_ticks": 22},
+            5: {"pid": 5, "ppid": 1, "start_ticks": 5},
+        }
+        owned = telemetry._owned(identities, 20)
+
+        ordered = telemetry._process_read_order(identities, owned, 20)
+
+        self.assertEqual([pid for pid, _row in ordered], [22, 21, 20, 5])
+
     def test_transient_identity_exit_is_rescanned_before_sample_is_sealed(self):
         stable = {
             100: {"pid": 100, "ppid": 1, "start_ticks": 1000, "state": "S"},

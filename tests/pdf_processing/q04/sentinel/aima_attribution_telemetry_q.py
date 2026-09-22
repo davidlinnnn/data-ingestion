@@ -124,6 +124,28 @@ def _owned(identities: dict[int, dict], root_pid: int) -> dict[int, dict]:
     return {pid: identities[pid] for pid in sorted(result)}
 
 
+def _process_read_order(
+    identities: dict[int, dict], owned: dict[int, dict], root_pid: int
+) -> list[tuple[int, dict]]:
+    """Read short-lived owned descendants before their longer-lived parents."""
+    depth = {root_pid: 0}
+    while len(depth) < len(owned):
+        prior = len(depth)
+        for pid, row in owned.items():
+            if row["ppid"] in depth:
+                depth[pid] = depth[row["ppid"]] + 1
+        if len(depth) == prior:
+            break
+    return sorted(
+        identities.items(),
+        key=lambda item: (
+            item[0] not in owned,
+            -depth.get(item[0], 0),
+            item[0],
+        ),
+    )
+
+
 def _read_process(
     proc_root: Path,
     initial: dict,
@@ -776,7 +798,7 @@ def _strict_attribution_sample_once(
             bytes_reader,
             owned=pid in owned,
         )
-        for pid, row in sorted(before.items())
+        for pid, row in _process_read_order(before, owned, root_pid)
     ]
     after, after_issues = _scan_identities(
         proc_root, text_reader, expected_cgroup["proc_cgroup"]
