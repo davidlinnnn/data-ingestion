@@ -192,6 +192,7 @@ def reviewed_reference_checker(bundle: Path, original):
         Q04.parent / "t09a_r3/evidence/20260914-0b537d0-c/actual-methods.json"
     ).read_bytes()
     inputs = json.loads(inputs_bytes)
+    reviewed_inputs = inputs
     inputs_sha = sha(inputs_bytes)
     if inputs_sha != adoption["current_candidate_inputs_sha256"]:
         rebinding = next((
@@ -202,6 +203,7 @@ def reviewed_reference_checker(bundle: Path, original):
         ), None)
         require(rebinding is not None, "warm harness rebinding is not reviewed")
         bindings = rebinding["harness_bindings"]
+        producer_bindings = rebinding.get("producer_bindings", {})
         require(
             inputs_sha == rebinding["candidate_inputs_sha256"]
             and rebinding["source_inputs_sha256"]
@@ -216,12 +218,22 @@ def reviewed_reference_checker(bundle: Path, original):
                 "warm harness rebinding changed",
             )
             normalized["test_files"][name] = binding["source"]
+        for name, binding in producer_bindings.items():
+            require(
+                normalized["producer"].get(name) == binding["candidate"],
+                "warm producer rebinding changed",
+            )
+            if binding["source"] is None:
+                normalized["producer"].pop(name)
+            else:
+                normalized["producer"][name] = binding["source"]
         require(
             sha(canonical(normalized).encode())
             == rebinding["source_canonical_sha256"]
             == rebinding["normalized_candidate_sha256"],
             "warm bundle changed beyond reviewed harness bindings",
         )
+        reviewed_inputs = normalized
     require(
         yolo_bundle["identities"]["candidate_inputs_sha256"]
         == adoption["previous_candidate_inputs_sha256"],
@@ -234,8 +246,8 @@ def reviewed_reference_checker(bundle: Path, original):
     fixture = next(row for row in inputs["fixtures"] if row["id"] == "07")
     require(
         fixture["sha256"] == adoption["source_sha256"]
-        and inputs["producer"]["continuation.py"] == adoption["continuation_sha256"]
-        and sha(canonical(inputs["producer"]).encode())
+        and reviewed_inputs["producer"]["continuation.py"] == adoption["continuation_sha256"]
+        and sha(canonical(reviewed_inputs["producer"]).encode())
         == adoption["current_producer_set_sha256"]
         and not any(adoption[name] for name in (
             "fixture_07_changed", "base_profile_changed", "reference_07_changed",
