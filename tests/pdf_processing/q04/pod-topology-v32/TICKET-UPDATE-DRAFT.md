@@ -40,5 +40,10 @@ preserved for source review; it is not treated as output equality or silently
 normalized. Re-running the same producer before that review would fail at the
 same gate and add no acceptance evidence.
 
+The resulting source review rejects automatic oracle adoption. Wiki06 has six
+cross-page splits; native also contains six many-to-many regroupings, so
+source-fragment equality cannot establish preserved graph semantics. No historical
+reference or acceptance threshold changed.
+
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).

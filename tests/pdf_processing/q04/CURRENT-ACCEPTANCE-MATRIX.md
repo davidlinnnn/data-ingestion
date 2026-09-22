@@ -197,4 +197,8 @@ not a missing-source finding. Re-running the same current producer before a
 source review would deterministically stop at the same Q04 graph gate and would
 not advance acceptance.
 
+That source review is now complete for automatic adoption and rejects it:
+Wiki06 contains six cross-page splits, while native also contains six many-to-many
+regroupings. No general split/merge normalization or new oracle is accepted.
+
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
