@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AB execution `d58118b`; machine authority:
+Current through AC execution `b8a10d1`; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -26,7 +26,9 @@ oracle, four algorithms, eight continuation edges, adopted source-pixel image
 supplements and equal full graph/document digests. Its 949 attribution samples
 were complete, and three captures plus native assembly restore used one warm
 parser PID. This is bounded fixture08 acceptance; it does not prove the original
-29-group cross-document request20 sequence. See
+29-group cross-document request20 sequence. Later warm runs completed that
+sequence and recycle, but complete all-sample process attribution and
+fresh-output equality remain unproven. See
 [Q results](pod-topology-v16/first-window-evidence/RESULTS.md).
 
 ACL and Keynote retain their passes under their original producer/runtime
@@ -47,7 +49,7 @@ execution, reuse and interruption behavior require requalification.
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
-| Fixed warm sequence and request20 recycle | unproven | Q proves four AIMA requests on one parser; original 29-group sequence/recycle unrun |
+| Fixed warm sequence and request20 recycle | unproven | Sequence/recycle completed in later warm runs; complete all-sample process attribution and fresh-output equality remain open |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
 | Integrated operating bounds | unproven | M proves fixture07 and Q proves fixture08; remaining fixtures and request20/drain are open |
 | Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
@@ -135,6 +137,15 @@ execution, reuse and interruption behavior require requalification.
   complete-process-attribution gate correctly failed after business completion.
   PSI, OOM, memory-floor and deadline guards did not fire. See
   [AB results](pod-topology-v27/first-window-evidence/RESULTS.md).
+- AC: deepest-owned-first sampling was exercised once; that single result does
+  not prove it eliminated AB's race. All 11 pre-inference gates, all five
+  workflows, the 29-group sequence, request-20 recycle, cgroup qualification,
+  and peak process attribution passed. During
+  controlled terminal cleanup, worker PID 111 exited while sample 1399 read
+  its process files. The exact exit is classified, but its PSS is unknown, so
+  the unchanged all-sample process-attribution gate failed. No PSI, OOM,
+  memory-floor, deadline, Activity, supervisor, or ingestion failure occurred.
+  See [AC results](pod-topology-v28/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -145,12 +156,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AB proved the full warm business sequence and cgroup continuity, but not complete
-process attribution: the confirmed exit's PSS cannot be recovered after the
-process is gone. An unchanged rerun is not warranted. The next implementation
-must capture a stable complete process snapshot while retaining every cgroup
-guard observation; it must not reinterpret unknown PSS as known. Thresholds and
-the one-run/no-automatic-retry policy remain unchanged. No next runtime is
-authorized or prepared yet.
+AC proved the full warm business sequence, cgroup continuity, parser recycle,
+and complete process attribution at the resource peak. It did not prove complete
+attribution across controlled worker shutdown. An unchanged rerun is not
+warranted. The next implementation must synchronize the terminal worker
+transition with process sampling while retaining continuous independent cgroup
+observation; it must not reinterpret unknown PSS as known. Thresholds and the
+one-run/no-automatic-retry policy remain unchanged. No next runtime is prepared.
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

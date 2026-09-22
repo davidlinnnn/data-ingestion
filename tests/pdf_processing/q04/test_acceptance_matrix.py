@@ -105,7 +105,7 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
 
     def test_next_step_preserves_process_completeness_and_no_retry(self):
         step = self.matrix['next_step']
-        self.assertEqual(step['kind'], 'design_stable_complete_process_snapshot')
+        self.assertEqual(step['kind'], 'design_terminal_worker_sampler_synchronization')
         self.assertFalse(step['runtime_started'])
         self.assertFalse(step['runtime_authorized'])
         self.assertFalse(step['automatic_retry'])
@@ -117,9 +117,9 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'FAIL_CONFIRMED_EXIT_PSS_UNKNOWN',
+            'FAIL_TERMINAL_WORKER_EXIT_PSS_UNKNOWN',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260921-ab')
+        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-ac')
         self.assertEqual(step['workflows_completed'], 5)
         self.assertEqual(step['group_requests'], 29)
         self.assertFalse(step['automatic_retry'])
@@ -127,12 +127,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(step['deployments_remain_closed'], 32)
         self.assertFalse(step['process_attribution_complete'])
         self.assertTrue(step['cgroup_resource_complete'])
+        self.assertTrue(step['peak_sample_attribution_complete'])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v27/first-window-evidence'
+        evidence = Q04 / 'pod-topology-v28/first-window-evidence'
         diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
         self.assertTrue(diagnosis['workload']['five_workflows_completed'])
-        self.assertEqual(diagnosis['process_attribution']['classified_exit_indexes'], [691])
+        self.assertEqual(diagnosis['process_attribution']['classified_exit_indexes'], [1399])
         self.assertEqual(diagnosis['process_attribution']['unclassified_indexes'], [])
         self.assertEqual(diagnosis['resource']['max_node_full_psi_avg10'], 0)
         self.assertEqual(diagnosis['resource']['cgroup_oom_kill'], 0)
