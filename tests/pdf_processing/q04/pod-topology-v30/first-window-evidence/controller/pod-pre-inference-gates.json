@@ -1,0 +1,130 @@
+{
+  "failed_gates": [
+    "configuration"
+  ],
+  "gates": {
+    "cgroup": {
+      "memory_max": "5368709120",
+      "oom_counters": {
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "status": "PASS"
+    },
+    "configuration": {
+      "error_type": "ValueError",
+      "reason": "capacity configuration changed: {'outer_aemission_available_bytes': None}",
+      "status": "FAIL"
+    },
+    "image_identity": {
+      "container_id": "containerd://94386dfb2015794ae588e2dbfa38e42a87fca9de07ee40f9c939a41a14fca05b",
+      "image_id": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "image_id_representation": "repository-platform-manifest",
+      "node": "internal-a2a-vs6-local-worker2",
+      "pod_name": "q04-pod-cgroup-ae-activities-57d548b7fc-tw5l9",
+      "pod_uid": "abfeae20-8698-4c1a-8c10-0957d7056adf",
+      "restart_count": 0,
+      "status": "PASS"
+    },
+    "models": {
+      "cache_artifacts": 14,
+      "model_artifacts": 17,
+      "package_artifacts": 3,
+      "status": "PASS"
+    },
+    "mount_and_path": {
+      "capacity": {
+        "evidence_free_bytes": 1073739488,
+        "evidence_used_bytes": 2336,
+        "filesystem_free_bytes": 1797640728576,
+        "requested_bytes": 1073741824
+      },
+      "directory": {
+        "directory": true,
+        "gid": 1000,
+        "label": "application-owned-run-directory",
+        "mode": "0o700",
+        "path": "/q04-evidence/q04-warm-pod-cgroup-20260922-ae",
+        "symlink": false,
+        "uid": 1000,
+        "writable": true
+      },
+      "mount": {
+        "directory": true,
+        "gid": 0,
+        "label": "storage-backend-owned-mount-root",
+        "mode": "0o777",
+        "path": "/q04-evidence",
+        "symlink": false,
+        "uid": 0,
+        "writable": true
+      },
+      "process": {
+        "gid": 1000,
+        "uid": 1000
+      },
+      "schema_version": 1,
+      "status": "PASS"
+    },
+    "object_storage": {
+      "bucket_versioning": "Enabled",
+      "object_health": 200,
+      "object_prefix_unused": true,
+      "status": "PASS"
+    },
+    "packages_imports": {
+      "packages": {
+        "boto3": "1.40.24",
+        "pillow": "12.3.0",
+        "psutil": "7.2.2",
+        "temporalio": "1.23.0"
+      },
+      "status": "PASS"
+    },
+    "python_executable": {
+      "python": "3.12.13",
+      "python_executable": "/experiment/.venv/bin/python",
+      "status": "PASS"
+    },
+    "source_hashes": {
+      "harness_files": 71,
+      "harness_set_sha256": "19482781f4ced89f68a661fa32ffced06904dc970b1e30d1fda1a70a06a1b514",
+      "producer_files": 21,
+      "producer_set_sha256": "ff633761319cc4d507bd95954a279018fd896410030add331e35b1ed4bf13a4b",
+      "status": "PASS"
+    },
+    "temporal": {
+      "status": "PASS",
+      "temporal_healthy": true,
+      "temporal_running": []
+    },
+    "workload_imports": {
+      "modules": [
+        "candidate.warm_pod_window_r",
+        "pod_init_p",
+        "pod_workload_ae",
+        "pod_remote_evidence_ae"
+      ],
+      "reviewed_contract": {
+        "group_requests": 29,
+        "parser_max_requests": 20,
+        "production_default_changed": false,
+        "sequence": [
+          "06",
+          "07",
+          "08",
+          "native",
+          "06"
+        ],
+        "status": "PASS"
+      },
+      "status": "PASS"
+    }
+  },
+  "inference_started": false,
+  "object_written": false,
+  "schema_version": 1,
+  "status": "FAIL_PRE_INFERENCE",
+  "workflow_started": false
+}
