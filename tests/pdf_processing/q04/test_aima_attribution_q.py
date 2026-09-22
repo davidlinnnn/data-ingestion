@@ -72,8 +72,8 @@ class ProcessTransitionEvidenceTest(unittest.TestCase):
 
             observer = threading.Thread(target=observe_cgroup)
             observer.start()
-            collector.start()
             child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(10)"])
+            collector.start()
             time.sleep(0.05)
 
             async def shutdown():
