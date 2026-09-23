@@ -55,11 +55,14 @@ invalid edges and v2 removes exactly those six with no additions. Full local
 native and Wiki06 captures preserve all source fragments. Native now differs
 from the retained reference by 32 ordered body-text splits; Wiki06 by six.
 A diagnostic-only reconstruction of those exact splits matches all nine graph
-collections for both fixtures. This does not adopt a new oracle or prove
-Temporal/shared-storage acceptance. Local checkpoint restoration reproduced
-the full native and Wiki06 capture documents byte for byte. Exact component
-review, fail-closed oracle
-checks, then a new-identity runtime remain necessary.
+collections for both fixtures. Local checkpoint restoration reproduced the full
+native and Wiki06 capture documents byte for byte. All 38 splits were then
+source-reviewed, including the seven with an intervening table, picture or
+caption. A fixture-specific exact v2 graph oracle is now frozen; mutation
+checks reject an additional source-preserving split and changes to text,
+geometry, relationships, table cells or body order. This is an offline oracle
+decision only. Fresh, restored, exact replay and affected warm/recovery rows
+remain unproven until a new-identity controlled runtime passes. #51 remains open.
 
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).

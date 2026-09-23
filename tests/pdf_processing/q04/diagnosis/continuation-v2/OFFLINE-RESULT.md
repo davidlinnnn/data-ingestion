@@ -1,6 +1,6 @@
 # Q04 continuation v2 offline result
 
-Status: **CANDIDATE_ONLY — no Q04 acceptance or new oracle**.
+Status: **reviewed exact v2 oracle candidate; no Q04 runtime acceptance**.
 
 `src/pdf_processing/continuation.py` now declares
 `column-edge-continuation-v2`, SHA-256
@@ -66,10 +66,12 @@ container or Q04-named Pod. The retained AG PVC remains Bound at UID
 Deployments still have their exact namespace/name/UID and zero desired/ready
 replicas; the three Q04 namespace core services remain available.
 
-Before adopting a fixture-specific oracle, review and freeze the exact 38 split
-components and duplicate picture label against source regions and graph links,
-then run mutation checks that reject any extra split, altered text/geometry,
-parent/child/caption/table/picture relation or order. A new producer/runtime
-identity must then qualify fresh, restored, exact replay and the affected warm,
-resource and interruption rows. The current raw documents still fail strict
-graph equality; neither fixture nor #51 is accepted by this offline result.
+The 38 components and duplicate picture label have now been source-reviewed in
+[SOURCE-REVIEW-DECISION.md](SOURCE-REVIEW-DECISION.md). The fixture-specific
+[EXACT-ORACLE.json](EXACT-ORACLE.json) freezes the complete v2 graph digests;
+the runtime gate accepts only those exact graphs and mutation checks reject
+extra splits and changes to text, geometry, relationships or order. This does
+not retroactively accept the local captures. A new producer/runtime identity
+must qualify fresh, restored, exact replay and the affected warm, resource and
+interruption rows. The v2 raw documents still fail the historical reference's
+strict equality; neither fixture nor #51 is accepted by this offline result.

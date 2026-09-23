@@ -197,19 +197,21 @@ not a missing-source finding. Re-running the same current producer before a
 source review would deterministically stop at the same Q04 graph gate and would
 not advance acceptance.
 
-The native source review now rejects the current graph itself: five of its six
-many-to-many components join text across intervening PDF columns; the remaining
-component is a duplicate picture label. Wiki06's six splits and native's other
-23 splits have not been approved. The versioned continuation rule is a likely
-cause, but its sole responsibility is not proven without the pre-merge elements.
-No general split/merge normalization or new oracle is accepted. See
+The AG native source review rejected that v1 graph: five of its six
+many-to-many components joined text across intervening PDF columns; the remaining
+component was a duplicate picture label. The other native and Wiki06 splits
+were pending review at that point. Later replay of the pre-merge elements
+isolated the six invalid v1 edges. No general split/merge normalization is
+accepted. See
 [AG source-review result](pod-topology-v32/first-window-evidence/SOURCE-REVIEW-RESULT.md).
 
 A versioned v2 continuation candidate now blocks those six invalid native
 joins. Offline full-document captures retain exact source fragments; native has
-32 ordered one-to-two text splits and Wiki06 has six. Diagnostic normalization
-of only these splits reproduces both complete reference graphs, but no oracle is
-adopted and no current-producer runtime row is promoted. See
-[v2 offline result](diagnosis/continuation-v2/OFFLINE-RESULT.md).
+32 ordered one-to-two text splits and Wiki06 has six. All 38 splits and their
+graph bindings were source-reviewed, and a fixture-specific exact v2 graph
+oracle is frozen with fail-closed mutation checks. No current-producer runtime
+row is promoted: fresh, restored, exact replay and the affected warm sequence
+still need a new controlled execution. See
+[v2 source-review decision](diagnosis/continuation-v2/SOURCE-REVIEW-DECISION.md).
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
