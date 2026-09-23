@@ -8,7 +8,7 @@ from collections import Counter
 from docling_core.types.doc import CoordOrigin
 from docling_ibm_models.reading_order.reading_order_rb import ReadingOrderPredictor
 
-METHOD = 'column-edge-continuation-v1'
+METHOD = 'column-edge-continuation-v2'
 
 
 def geometry(e):
@@ -39,6 +39,9 @@ def predict_merges(ordered):
     A non-text first item at a column entrance blocks continuation. Margin-sized
     items cannot win a body-column match. Ambiguous targets/owners yield no edge.
     """
+    body = [e for e in ordered if e.label not in ('page_header', 'page_footer', 'footnote')
+            and not (e.label == 'text' and geometry(e)[2] - geometry(e)[0] < .2)]
+    next_body = {a.cid: b.cid for a, b in zip(body, body[1:])}
     edges = {}
     for a in ordered:
         if a.label != 'text' or not re.fullmatch(r'.+([a-z,\-\u00AD])\s*', a.text):
@@ -85,6 +88,9 @@ def predict_merges(ordered):
                 edges[left] = right
     owners = Counter(edges.values())
     edges = {a: b for a, b in edges.items() if owners[b] == 1}
+    # Filter after ambiguity checks so another owner or entrance still blocks a join.
+    edges = {a: b for a, b in edges.items()
+             if by_id[a].page_no == by_id[b].page_no or next_body.get(a) == b}
     targets = set(edges.values())
     chains = {}
     for a in edges.keys() - targets:

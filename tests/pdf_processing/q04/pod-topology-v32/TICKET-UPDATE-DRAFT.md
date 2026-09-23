@@ -49,5 +49,17 @@ The v1 continuation rule is consistent with the invalid joins, but sole cause
 is not proven without pre-merge elements. No historical reference, oracle or
 acceptance threshold changed.
 
+Subsequent local v2 diagnosis used the exact PDF and a pinned offline model
+image. Replaying full native pre-merge checkpoints proved v1 made those six
+invalid edges and v2 removes exactly those six with no additions. Full local
+native and Wiki06 captures preserve all source fragments. Native now differs
+from the retained reference by 32 ordered body-text splits; Wiki06 by six.
+A diagnostic-only reconstruction of those exact splits matches all nine graph
+collections for both fixtures. This does not adopt a new oracle or prove
+Temporal/shared-storage acceptance. Local checkpoint restoration reproduced
+the full native and Wiki06 capture documents byte for byte. Exact component
+review, fail-closed oracle
+checks, then a new-identity runtime remain necessary.
+
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).

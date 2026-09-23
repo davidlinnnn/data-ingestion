@@ -205,4 +205,11 @@ cause, but its sole responsibility is not proven without the pre-merge elements.
 No general split/merge normalization or new oracle is accepted. See
 [AG source-review result](pod-topology-v32/first-window-evidence/SOURCE-REVIEW-RESULT.md).
 
+A versioned v2 continuation candidate now blocks those six invalid native
+joins. Offline full-document captures retain exact source fragments; native has
+32 ordered one-to-two text splits and Wiki06 has six. Diagnostic normalization
+of only these splits reproduces both complete reference graphs, but no oracle is
+adopted and no current-producer runtime row is promoted. See
+[v2 offline result](diagnosis/continuation-v2/OFFLINE-RESULT.md).
+
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
