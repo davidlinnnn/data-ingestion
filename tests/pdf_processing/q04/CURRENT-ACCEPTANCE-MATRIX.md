@@ -205,13 +205,17 @@ isolated the six invalid v1 edges. No general split/merge normalization is
 accepted. See
 [AG source-review result](pod-topology-v32/first-window-evidence/SOURCE-REVIEW-RESULT.md).
 
-A versioned v2 continuation candidate now blocks those six invalid native
-joins. Offline full-document captures retain exact source fragments; native has
-32 ordered one-to-two text splits and Wiki06 has six. All 38 splits and their
-graph bindings were source-reviewed, and a fixture-specific exact v2 graph
-oracle is frozen with fail-closed mutation checks. No current-producer runtime
-row is promoted: fresh, restored, exact replay and the affected warm sequence
-still need a new controlled execution. See
-[v2 source-review decision](diagnosis/continuation-v2/SOURCE-REVIEW-DECISION.md).
+A versioned v2 continuation candidate blocked those six invalid native joins.
+Offline full-document captures retained exact source fragments; native had
+32 ordered one-to-two text splits and Wiki06 six. All 38 splits and their
+graph bindings were source-reviewed, and a fixture-specific exact graph
+oracle was frozen with fail-closed mutation checks. Six-fixture offline
+projection then found v2 incorrectly split a valid AIMA continuation across a
+narrow page-margin picture. V3 restores that AIMA join and produces the same
+native/Wiki06/YOLO document bytes as the reviewed v2 or AG outputs; ACL and
+Keynote full graphs equal their references. The v3 exact oracle is frozen for
+native/Wiki06. No current-producer runtime row is promoted: fresh, restored,
+exact replay and the affected warm sequence still need a new controlled
+execution. See [v3 offline result](diagnosis/continuation-v3/OFFLINE-RESULT.md).
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.

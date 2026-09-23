@@ -1,6 +1,6 @@
 # Q04 continuation v2 offline result
 
-Status: **reviewed exact v2 oracle candidate; no Q04 runtime acceptance**.
+Status: **source-reviewed for native/Wiki06, superseded for cross-fixture runtime by v3**.
 
 `src/pdf_processing/continuation.py` now declares
 `column-edge-continuation-v2`, SHA-256
@@ -75,3 +75,9 @@ not retroactively accept the local captures. A new producer/runtime identity
 must qualify fresh, restored, exact replay and the affected warm, resource and
 interruption rows. The v2 raw documents still fail the historical reference's
 strict equality; neither fixture nor #51 is accepted by this offline result.
+
+Subsequent six-fixture offline projection found that v2 also split a legitimate
+AIMA page 5–6 continuation across a narrow margin picture. V3 fixes that
+regression while producing byte-identical native and Wiki06 documents. See
+[v3 offline result](../continuation-v3/OFFLINE-RESULT.md). Do not execute v2
+as the next cross-fixture Q04 producer.

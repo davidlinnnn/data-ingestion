@@ -1,5 +1,4 @@
 """Cross-page joins must respect Docling's actual reading order."""
-import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -12,10 +11,10 @@ from pdf_processing.execution import ChildFailure
 from pdf_processing.parse import ParseRequest, execute
 
 
-def element(cid, page, text, left, top, right, bottom):
+def element(cid, page, text, left, top, right, bottom, label="text"):
     return PageElement(
         cid=cid, ref=RefItem(cref=f"#/{cid}"), page_no=page,
-        page_size=Size(width=600, height=800), text=text, label="text",
+        page_size=Size(width=600, height=800), text=text, label=label,
         l=left, t=800-top, r=right, b=800-bottom,
         coord_origin=CoordOrigin.BOTTOMLEFT,
     )
@@ -44,22 +43,38 @@ class CrossPageReadingOrder(unittest.TestCase):
         ordered = ReadingOrderPredictor().predict_reading_order([first, second])
         self.assertEqual(predict_merges(ordered), {0: [1]})
 
-    def test_historical_v1_binding_cannot_select_v2_code(self):
-        source = Path(__file__).resolve().parents[3] / "src/pdf_processing/continuation.py"
-        self.assertEqual(METHOD, "column-edge-continuation-v2")
-        with tempfile.TemporaryDirectory() as tmp:
-            request = ParseRequest(
-                mode="restore", pdf=Path(tmp) / "missing.pdf", out=Path(tmp) / "out",
-                model_cache=Path(tmp), checkpoint=Path(tmp),
-                expected_method={"continuation": {
-                    "version": "column-edge-continuation-v1",
-                    "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
-                }},
-            )
-            with self.assertRaises(ChildFailure) as caught:
-                execute(request)
-            self.assertEqual(caught.exception.code, "unsupported_continuation_method")
-            self.assertFalse(request.out.exists())
+    def test_margin_picture_does_not_break_single_column_handoff(self):
+        first = element(0, 5, "Unfinished single-column prose", 100, 680, 500, 755)
+        margin_icon = element(1, 6, "", 35, 180, 65, 205, label="picture")
+        second = element(2, 6, "Continuation follows.", 100, 50, 500, 120)
+        ordered = [first, margin_icon, second]
+        self.assertEqual(predict_merges(ordered), {0: [2]})
+
+    def test_narrow_picture_inside_body_column_blocks_handoff(self):
+        first = element(0, 5, "Unfinished single-column prose", 100, 680, 500, 755)
+        body_picture = element(1, 6, "", 150, 180, 180, 205, label="picture")
+        second = element(2, 6, "Continuation follows.", 100, 50, 500, 120)
+        self.assertEqual(predict_merges([first, body_picture, second]), {})
+
+    def test_historical_methods_cannot_select_v3_code(self):
+        self.assertEqual(METHOD, "column-edge-continuation-v3")
+        for version, source_sha in (
+            ("v1", "791e2ebef036d6f2468fb607162a135eecb3c4eaa056d4e35b1a81bffde49772"),
+            ("v2", "8c5e68006af438e2c1a5d5f82614436c8e1e7e5fc7f6e0a1d77645c640b23305"),
+        ):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as tmp:
+                request = ParseRequest(
+                    mode="restore", pdf=Path(tmp) / "missing.pdf", out=Path(tmp) / "out",
+                    model_cache=Path(tmp), checkpoint=Path(tmp),
+                    expected_method={"continuation": {
+                        "version": "column-edge-continuation-" + version,
+                        "sha256": source_sha,
+                    }},
+                )
+                with self.assertRaises(ChildFailure) as caught:
+                    execute(request)
+                self.assertEqual(caught.exception.code, "unsupported_continuation_method")
+                self.assertFalse(request.out.exists())
 
 
 if __name__ == "__main__":

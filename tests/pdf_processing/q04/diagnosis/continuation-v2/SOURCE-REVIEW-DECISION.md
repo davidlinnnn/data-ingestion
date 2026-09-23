@@ -49,3 +49,7 @@ order. Mutation checks exercise those failures against the retained full local
 captures. No acceptance threshold or resource guard changes. Fresh, restored,
 exact replay, warm equality and recovery remain unproven for this new producer
 until a new controlled runtime completes those rows.
+
+Later six-fixture projection found a separate valid AIMA join rejected by v2.
+V3 repairs it while preserving the exact native/Wiki06 bytes reviewed here;
+the next cross-fixture runtime must use the [v3 binding](../continuation-v3/EXACT-ORACLE.json).

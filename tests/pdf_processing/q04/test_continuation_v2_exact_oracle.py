@@ -1,6 +1,7 @@
 """The source-reviewed v2 oracle rejects collateral graph changes."""
 
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -10,7 +11,7 @@ import unittest
 
 Q04 = Path(__file__).resolve().parent
 sys.path.insert(0, str(Q04))
-from consumer import source_signature
+from consumer import graph_projection, source_signature
 spec = importlib.util.spec_from_file_location(
     'exact_oracle', Q04 / 'diagnosis/continuation-v2/exact_oracle.py')
 oracle = importlib.util.module_from_spec(spec)
@@ -56,7 +57,7 @@ class ExactV2Oracle(unittest.TestCase):
         def altered(change):
             document = copy.deepcopy(original)
             change(document)
-            with self.assertRaisesRegex(ValueError, 'unreviewed exact v2 graph delta'):
+            with self.assertRaisesRegex(ValueError, 'unreviewed exact graph delta'):
                 self.check(sid, document)
 
         altered(lambda d: d['texts'][0].__setitem__('text', d['texts'][0]['text'] + '!'))
@@ -87,7 +88,7 @@ class ExactV2Oracle(unittest.TestCase):
         split = copy.deepcopy(original)
         extra_source_preserving_split(split)
         self.assertEqual(source_signature(split), source_signature(original))
-        with self.assertRaisesRegex(ValueError, 'unreviewed exact v2 graph delta'):
+        with self.assertRaisesRegex(ValueError, 'unreviewed exact graph delta'):
             self.check(sid, split)
 
     def test_input_and_method_mutations_fail_closed(self):
@@ -100,6 +101,37 @@ class ExactV2Oracle(unittest.TestCase):
         method['continuation']['version'] = 'column-edge-continuation-v1'
         with self.assertRaisesRegex(ValueError, 'input or method changed'):
             self.check(sid, self.documents[sid], method=method)
+
+    def test_v3_six_fixture_offline_projection(self):
+        evidence = Path('/private/tmp/q04-local-native-v3-envelope')
+        if not (evidence / 'capture-native/document.json').exists():
+            self.skipTest('retained local v3 captures unavailable')
+        manifest = json.loads((Q04 / 'diagnosis/continuation-v3/EXACT-ORACLE.json').read_text())
+        method = json.loads((evidence / 'expected-v3.json').read_text())
+        self.assertEqual(hashlib.sha256((Q04 / 'diagnosis/continuation-v2/SOURCE-REVIEW-DECISION.md').read_bytes()).hexdigest(),
+                         manifest['v2_source_review_sha256'])
+        documents, raws = {}, {}
+        for sid in ('native', '06', '07', '08', '09', '10'):
+            raw = (evidence / ('capture-' + sid) / 'document.json').read_bytes()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                             manifest['local_v3_document_sha256'][sid])
+            raws[sid] = raw
+            documents[sid] = json.loads(raw)
+        for sid in ('native', '06'):
+            previous = self.evidence / ('capture-full-51' if sid == 'native' else 'capture-wiki-28') / 'document.json'
+            self.assertEqual(raws[sid], previous.read_bytes())
+            self.assertEqual(oracle.check(sid, documents[sid], self.sources[sid],
+                             self.references[sid], method, manifest),
+                             manifest['fixtures'][sid]['exact_graph_sha256'])
+            with self.assertRaisesRegex(ValueError, 'input or method changed'):
+                oracle.check(sid, documents[sid], self.sources[sid],
+                             self.references[sid], self.method, manifest)
+        ag = Path('/private/tmp/q04-warm-pod-cgroup-20260922-ag/evidence/state/warm-pod-cgroup-ag')
+        for sid, trial in (('07', 'warm-1-07'), ('08', 'warm-2-08')):
+            self.assertEqual(raws[sid], (ag / trial / 'document.json').read_bytes())
+        for sid in ('09', '10'):
+            reference = json.loads((self.inputs / 'references' / (sid + '.json')).read_text())
+            self.assertEqual(graph_projection(documents[sid]), graph_projection(reference))
 
 
 if __name__ == '__main__':

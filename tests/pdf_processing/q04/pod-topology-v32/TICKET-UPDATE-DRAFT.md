@@ -64,5 +64,19 @@ geometry, relationships, table cells or body order. This is an offline oracle
 decision only. Fresh, restored, exact replay and affected warm/recovery rows
 remain unproven until a new-identity controlled runtime passes. #51 remains open.
 
+Before runtime, six-fixture offline projection found that v2 split one valid
+AIMA page 5–6 continuation because a narrow page-margin picture appeared
+between text parts in Docling reading order. A red regression reproduced this;
+code review added a counterexample requiring a narrow picture inside the body
+column to remain a blocker. Final v3 ignores only narrow pictures outside the
+horizontal span of the wide body text on that page. Fresh local captures under
+this source restore the exact AG AIMA document, while full native/Wiki06/YOLO
+documents stay byte-for-
+byte equal to the reviewed captures and ACL/Keynote full graphs equal their
+references. The 38-split source review therefore remains applicable to v3;
+the v3 method and exact fixture graph hashes are frozen. These are local
+diagnostics, not a Q04 runtime PASS. The next runtime needs a new identity,
+v3-bound bundle, local preflight review and one controlled attempt.
+
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).
