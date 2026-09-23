@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AG execution and post-run source-delta analysis; machine authority:
+Current through AH execution and independent terminal verification; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -49,9 +49,9 @@ execution, reuse and interruption behavior require requalification.
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
-| Fixed warm sequence and request20 recycle | unproven | AG proves the sequence, recycle and resources; required Q04 fresh-output equality remains pending |
+| Fixed warm sequence and request20 recycle | unproven | AH proves the sequence, recycle, exact v3 warm graphs and resources; required cross-mode fresh-output equality remains pending |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
-| Integrated operating bounds | **proven** | AG exact producer/runtime: 1,425 complete process/cgroup samples, unchanged guards, no resource stop |
+| Integrated operating bounds | **proven** | AH v3 producer/runtime: 1,349 complete process/cgroup samples, unchanged guards, no resource stop |
 | Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
 | Process drain/recovery | unproven | Current runtime phase not run |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
@@ -171,6 +171,16 @@ execution, reuse and interruption behavior require requalification.
   after natural success; exit code zero, `cleanup-complete.json`, the terminal
   manifest and absent owned runtime prove terminal cleanup. See
   [AG results](pod-topology-v32/first-window-evidence/RESULTS.md).
+- AH: all 11 pre-inference gates and five v3-bound Temporal workflows passed.
+  Wiki06 (twice), YOLO07, AIMA08 and native matched their frozen exact graph
+  digests; native registered 51 pages. The 29-group sequence, request-20
+  recycle, and all 1,349 process/cgroup samples passed unchanged guards.
+  The 93-entry terminal inventory passed independent hash/readback checks;
+  workload exit was zero, owned Pod/Deployment/ConfigMaps were removed, the
+  evidence PVC remains Bound, and all 32 held Deployments remain exact/off.
+  Required standalone fresh-output equality, restored and replay modes remain
+  unproven, so the complete warm row is still not promoted. See
+  [AH results](pod-topology-v33/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -181,11 +191,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AG closes integrated-resource qualification and proves the bounded sequence
-and recycle behavior for its exact producer/runtime. Required Q04 fresh-output
-equality still blocks the complete warm row. The next runtime work must resolve
-that equality requirement before moving to the separately specified current
-process interruption/retry/replay gate. Native/Wiki06 fixture acceptance,
+AH extends the integrated-resource, sequence and recycle proof to the exact
+v3 continuation producer and adds strict native/Wiki06 graph acceptance in a
+real warm workflow. Required standalone fresh-output equality still blocks the
+complete warm row. The next runtime work is the v3 fresh/restored/exact-replay
+matrix, including fresh-output comparison with AH before moving to the
+separately specified current process interruption/retry/replay gate. Native/Wiki06 fixture acceptance,
 changed-profile rejection, Pod interruption/recovery and telemetry-loss
 injection also remain open. Any next runtime must use a new identity, retain
 the unchanged guards and run once without automatic retry.

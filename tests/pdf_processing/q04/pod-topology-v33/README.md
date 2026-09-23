@@ -1,11 +1,14 @@
-# Q04 AH v3 warm candidate (offline preparation)
+# Q04 AH v3 warm candidate
 
-Status: **not a runtime acceptance result**. AH has a new run identity
+Status: **completed bounded warm/resource runtime; full #51 acceptance pending**.
+See [the independently verified result](first-window-evidence/RESULTS.md).
+AH has a new run identity
 `q04-warm-pod-cgroup-20260924-ah`, object prefix
 `q04/warm-pod-cgroup-20260924-ah/`, and retained evidence PVC
 `q04-pod-cgroup-ah-evidence-20260924-ah`. The existing kind cluster and
-`pdf-t09a-validation` namespace are reused. The topology remains inactive at
-zero replicas until the one controlled execution.
+`pdf-t09a-validation` namespace were reused. The committed topology began
+inactive at zero replicas; the one controlled execution completed and cleaned
+up its Pod, Deployment and ConfigMaps.
 
 The private bundle `/private/tmp/q04-inputs-warm-continuation-v3-ah` differs
 from the retained AG bundle only at `producer.continuation.py` and
@@ -27,13 +30,13 @@ then checks all selected work, page evidence, OCR, relationships, and source
 identity through durable storage reads. None of these local comparisons
 promotes a runtime row on its own.
 
-Local AH adapter checks pass in the pinned runtime image: all six exact graphs,
+Local AH adapter checks passed in the pinned runtime image: all six exact graphs,
 method and graph mutations, bundle derivation, complete startup arguments,
 projected workspace imports, inactive topology, interruption sealing and
 cleanup with a `worker-1.log` sibling. The inherited supervisor interruption
 regressions pass on the host. The [source manifest](SOURCE-MANIFEST.json),
 [inactive topology](WORKER.yaml), [runtime manifest](RUNTIME-INTEGRATION-MANIFEST.json),
-and [runner manifest](RUNNER-MANIFEST.json) bind the executable plan. The
-next gate is independent code review, followed by live admission and one
-fail-stop runtime. Fresh/restored/replay matrix and other #51 recovery gates
-remain separate until proven.
+and [runner manifest](RUNNER-MANIFEST.json) bind the executable plan.
+Independent code review and live admission passed. The
+fresh/restored/replay matrix and other #51 recovery gates remain separate
+until proven.

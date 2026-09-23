@@ -87,5 +87,19 @@ startup-argument, fail-closed oracle, supervisor interruption and cleanup
 checks pass locally. No AH Pod or workflow has started and no AH acceptance
 row is promoted; code review and live admission remain next.
 
+AH then ran once with a distinct identity and no automatic retry. It passed
+60-second outer admission, all 11 pre-inference gates, five actual Temporal
+workflows, exact v3 graph checks for Wiki06/YOLO/AIMA/native/repeated Wiki06,
+the 29-group sequence, request-20 recycle and all 1,349 process/cgroup
+samples under unchanged guards. The two Wiki06 warm documents are byte equal.
+No PSI, OOM, memory-floor, deadline, Activity, supervisor or ingestion stop
+occurred. Workload and outer controller exited zero; 93 terminal inventory
+entries passed independent readback. Owned Pod/Deployment/ConfigMaps are gone,
+the AH PVC remains Bound, and all 32 held Deployments remain exact/off. The
+fresh/restored/exact-replay matrix and required cross-mode fresh-output equality
+remain pending; AH is a bounded warm/resource pass, not #51 closure. Raw evidence:
+`/private/tmp/q04-warm-pod-cgroup-20260924-ah`; reviewed summary:
+`tests/pdf_processing/q04/pod-topology-v33/first-window-evidence/RESULTS.md`.
+
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).
