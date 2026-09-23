@@ -78,5 +78,14 @@ the v3 method and exact fixture graph hashes are frozen. These are local
 diagnostics, not a Q04 runtime PASS. The next runtime needs a new identity,
 v3-bound bundle, local preflight review and one controlled attempt.
 
+AH preparation now binds that candidate to a new private bundle, identity,
+object prefix and inactive Pod topology. Its strict graph gate accepts only the
+six frozen v3 graph digests, checks the native/Wiki source-reviewed oracle, and
+retains AIMA's independent source-image supplement. The bundle proves that
+only the continuation source and method changed from AG. Projected workspace,
+startup-argument, fail-closed oracle, supervisor interruption and cleanup
+checks pass locally. No AH Pod or workflow has started and no AH acceptance
+row is promoted; code review and live admission remain next.
+
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).
