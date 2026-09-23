@@ -40,10 +40,14 @@ preserved for source review; it is not treated as output equality or silently
 normalized. Re-running the same producer before that review would fail at the
 same gate and add no acceptance evidence.
 
-The resulting source review rejects automatic oracle adoption. Wiki06 has six
-cross-page splits; native also contains six many-to-many regroupings, so
-source-fragment equality cannot establish preserved graph semantics. No historical
-reference or acceptance threshold changed.
+The native source review found five incorrect reading-order joins among its six
+many-to-many components: AG connects text into the same column on the next page
+across intervening source columns. The sixth component is a duplicate picture
+label with unchanged local relations. The current native graph is rejected;
+the remaining 23 native splits and six Wiki06 splits are not yet approved.
+The v1 continuation rule is consistent with the invalid joins, but sole cause
+is not proven without pre-merge elements. No historical reference, oracle or
+acceptance threshold changed.
 
 Commits: `d20ce3c` (fresh-process creation synchronization), `acc7557` (AF
 evidence and AG preparation), `56d94fb` (AG runtime evidence).

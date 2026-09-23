@@ -197,8 +197,12 @@ not a missing-source finding. Re-running the same current producer before a
 source review would deterministically stop at the same Q04 graph gate and would
 not advance acceptance.
 
-That source review is now complete for automatic adoption and rejects it:
-Wiki06 contains six cross-page splits, while native also contains six many-to-many
-regroupings. No general split/merge normalization or new oracle is accepted.
+The native source review now rejects the current graph itself: five of its six
+many-to-many components join text across intervening PDF columns; the remaining
+component is a duplicate picture label. Wiki06's six splits and native's other
+23 splits have not been approved. The versioned continuation rule is a likely
+cause, but its sole responsibility is not proven without the pre-merge elements.
+No general split/merge normalization or new oracle is accepted. See
+[AG source-review result](pod-topology-v32/first-window-evidence/SOURCE-REVIEW-RESULT.md).
 
 #51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
