@@ -291,11 +291,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Review the overlapping warm parser/fresh child and allocator/direct-reclaim
-timing from AQ before choosing a new-identity diagnostic or code change.
-The host-scope observer showed AQ's own Pod experienced the dominant PSI
-stall, but did not establish the precise cause. Do not infer a false guard
-trigger, increase memory or relax the zero limit. Decide on any further
+AQ's replayed trace shows 60 VM allocation stalls and 8,847 directly scanned
+pages as a fresh child grew during warm-parser overlap; successful AN had
+comparable overlap without a full-PSI stop. The host-scope observer locates
+AQ's stall in its Pod, but does not establish a single PID or allocator cause.
+Review a targeted allocation/reclaim instrument or workload fix before any
+new-identity runtime. Do not infer a false guard trigger, increase memory or
+relax the zero limit. Decide on any further
 new-identity runtime only after this attribution review.
 Active telemetry-loss and process/Pod
 recovery remain separate gates.
