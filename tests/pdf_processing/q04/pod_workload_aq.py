@@ -39,7 +39,7 @@ def build_measurement_argv(args, run_id: str, authorization_sha256: str) -> list
         "--authorization-scope-sha256", authorization_sha256,
         "--attribution-interval-seconds", "0.25",
         "--attribution-gap-seconds", "1",
-        "--capacity-aqproved",
+        "--capacity-approved",
     ]
 
 

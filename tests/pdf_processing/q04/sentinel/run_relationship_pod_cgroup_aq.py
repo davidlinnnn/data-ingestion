@@ -149,7 +149,7 @@ def exact_command() -> str:
         str(Path(__file__).with_name("run_relationship_pod_cgroup_aq_guarded.py").resolve()),
         "--execute",
         "--owner", "main-session",
-        "--aqproval-reference", "User authorized any Q04 acceptance execution on 2026-09-22",
+        "--approval-reference", "User authorized any Q04 acceptance execution on 2026-09-22",
         "--authorization-scope-sha256", authorization_scope_sha256(),
     ])
 

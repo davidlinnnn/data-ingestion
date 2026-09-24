@@ -4,12 +4,14 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
+from candidate import relationship_interruption_window_ao as matrix
 from candidate.relationship_interruption_window_ao import validate_scope
 import pod_topology_aq as topology
 import pod_workload_aq as workload
@@ -44,6 +46,12 @@ class AQObservedRelationshipTest(unittest.TestCase):
         self.assertFalse(runner.authorization_scope()["automatic_retry"])
         self.assertEqual(topology.kubernetes_list()["items"][3]["spec"]["replicas"], 0)
         self.assertIn("run_relationship_pod_cgroup_aq_guarded.py", runner.exact_command())
+        command = shlex.split(runner.exact_command())
+        parsed = runner.base.parser().parse_args(command[2:])
+        self.assertTrue(parsed.execute)
+        self.assertEqual(parsed.authorization_scope_sha256,
+                         runner.authorization_scope_sha256())
+        self.assertTrue(parsed.approval_reference)
         self.assertEqual(guarded.owned_probe_command()[-2:],
                          ["--run-id", runner.RUN_IDENTITY])
         self.assertIn("--cgroupns=host", guarded.owned_probe_command())
@@ -52,6 +60,28 @@ class AQObservedRelationshipTest(unittest.TestCase):
         self.assertIn("--pull=never", guarded.owned_probe_command())
         probe.self_test()
         self.assertEqual(runner.base.offline_check()["status"], "PASS_OFFLINE_ONLY")
+
+    def test_measurement_argv_parses_at_real_entrypoint(self):
+        args = type("Args", (), {"python": "python", "bundle": Path("/bundle"),
+            "state": Path("/state"), "capacity": Path("/capacity"),
+            "prefix": runner.PREFIX, "workspace": Path("/workspace")})()
+        argv = workload.build_measurement_argv(args, runner.RUN_IDENTITY, "inner-sha")
+        async def no_runtime(_args):
+            return None
+        with patch.object(matrix, "run_window", no_runtime):
+            self.assertEqual(matrix.main(argv[3:]), 0)
+
+    def test_inspect_daemon_error_is_not_absence(self):
+        with tempfile.TemporaryDirectory() as raw:
+            cid = Path(raw) / "observer.cid"
+            cid.write_text("expected-container")
+            failed = subprocess.CompletedProcess([], 1, "", "Cannot connect to Docker daemon")
+            with patch.object(guarded, "PROBE_CID", cid), \
+                 patch.object(guarded, "inspect_probe", return_value=failed):
+                with self.assertRaisesRegex(RuntimeError, "absence unverified"):
+                    guarded.owner("verify", {"container_id": "expected-container"})
+                with self.assertRaisesRegex(RuntimeError, "stop unverified"):
+                    guarded.owner("stop", {"container_id": "expected-container"})
 
     def test_probe_cleanup_records_remote_stop_failure(self):
         with tempfile.TemporaryDirectory() as raw:

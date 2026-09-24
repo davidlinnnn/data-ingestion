@@ -44,13 +44,17 @@ def inspect_probe(cid):
         capture_output=True, text=True, timeout=20)
 
 
+def definitely_absent(check, ident):
+    return check.returncode != 0 and f"no such object: {ident}" in check.stderr.lower()
+
+
 def owner(action, identity=None):
     if PROBE_CID.exists():
         cid = PROBE_CID.read_text().strip()
     else:
         named = inspect_probe(PROBE_NAME)
         if named.returncode:
-            if action == "verify":
+            if action == "verify" and definitely_absent(named, PROBE_NAME):
                 return {"absent": True}
             raise RuntimeError("host observer container ID unavailable")
         cid = named.stdout.split()[0]
@@ -60,10 +64,14 @@ def owner(action, identity=None):
     if action == "verify":
         if check.returncode == 0:
             raise RuntimeError("host observer remains active")
+        if not definitely_absent(check, cid):
+            raise RuntimeError("host observer absence unverified: docker inspect failed")
         return {"container_id": cid, "absent": True}
     if action != "stop":
         raise ValueError("unknown host observer action")
     if check.returncode:
+        if not definitely_absent(check, cid):
+            raise RuntimeError("host observer stop unverified: docker inspect failed")
         return {"container_id": cid, "already_absent": True}
     if check.stdout.strip() != f"{cid} host {RUN_IDENTITY}":
         raise RuntimeError("host observer scope or identity changed")
