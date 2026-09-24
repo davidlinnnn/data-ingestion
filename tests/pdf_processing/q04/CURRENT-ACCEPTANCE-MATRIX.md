@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AK execution and independent terminal verification; machine authority:
+Current through AL execution and independent terminal verification; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -32,6 +32,12 @@ had `worker_method_mismatch`, zero registered pages and no processing result;
 the original replay completed 51/51 pages. All 725 process/cgroup samples and
 terminal cleanup passed. See [AK results](pod-topology-v36/first-window-evidence/RESULTS.md).
 
+AL passed current-v3 native evidence-only new-request reuse: all 12 checked
+group/assembly identities reused, seven OCR components reran, and new
+processing/content-evidence identities retained the same exact output. All
+849 process/cgroup samples and terminal cleanup passed. See
+[AL results](pod-topology-v37/first-window-evidence/RESULTS.md).
+
 YOLO M (`d1701d3`) passed all three modes with 15 pages and four required OCR
 components, approved two-pair graph equivalence, `max_requests=1`, THP-disabled
 workload descendants and 1,021 complete process samples. This is bounded fixture07
@@ -60,7 +66,7 @@ execution, reuse and interruption behavior require requalification.
 | Stage-impact dependency projection | proven | Existing local audit; new producer changes need their own impact record |
 | Six-fixture current-producer matrix | **proven** | AI proves native/Wiki; AJ proves 07–10 with current-v3 fresh/restored/exact replay and frozen graphs |
 | Current AIMA continuation/four algorithms | **proven** | Q exact producer/runtime; four algorithms and eight continuation edges |
-| Current evidence-only compatible reuse | unproven | Q03 proof belongs to its original execution path |
+| Current evidence-only compatible reuse | **proven** | AL new native request reused 12 checked upstream operations, reran OCR and created new downstream identities |
 | Real assembly/method invalidation | unproven | AI native matrix did not run the changed-method case |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | **proven** | AK changed profile rejected the exact old request; original-route replay retained its result |
@@ -218,6 +224,13 @@ execution, reuse and interruption behavior require requalification.
   All 725 process/cgroup samples, 61 terminal inventory entries and cleanup
   passed; AK PVC remains Bound and the 32 held Deployments remain exact/off.
   See [AK results](pod-topology-v36/first-window-evidence/RESULTS.md).
+- AL: one controlled native fresh/evidence-only new request/original replay
+  sequence passed. All 12 checked upstream operations reused for the new
+  request, seven OCR components reran, and new processing/evidence identities
+  retained the exact document and graph. All 849 process/cgroup samples,
+  66 terminal inventory entries and cleanup passed; AL PVC remains Bound and
+  all 32 held Deployments remain exact/off. See
+  [AL results](pod-topology-v37/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -228,9 +241,9 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The next bounded test should target one of the remaining gates: evidence-only
-compatible reuse, real assembly/method invalidation, required-relationship
-interruption/retry/replay, active telemetry-loss, or process/Pod recovery.
+The next bounded test should target real assembly/method invalidation. The
+required-relationship interruption/retry/replay, active telemetry-loss, and
+process/Pod recovery remain separate gates.
 Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
 retry. #51 is not ready for integration or closure; ticket updates remain

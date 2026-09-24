@@ -1,0 +1,11 @@
+# Q04 AL evidence-only compatible reuse result
+
+**PASS for current-v3 native evidence-only new-request reuse and original-route exact replay only. #51 remains open.** One controlled execution used `q04-profile-pod-cgroup-20260924-al` and prefix `q04/profile-pod-cgroup-20260924-al/`. No automatic retry or threshold change occurred. [Independent verification](INDEPENDENT-VERIFICATION.json) records the three histories, identities, resource gate and terminal inventory.
+
+All 11 pre-inference gates passed. The native fresh request completed 51/51 pages with 11 new groups and one new assembly. A new request kept the exact versioned source artifact and producer, changed only evidence-profile content and its derived release, and reused all **12 checked group/assembly operation identities**. Its seven required OCR operations ran anew; processing result and content-evidence identities changed. The full document bytes and frozen v3 graph remained equal to fresh and AI. Exact replay of the original request reused all 12 upstream operations and all seven OCR results, retaining the original processing result. All three Temporal histories ended `WORKFLOW_EXECUTION_COMPLETED` without a failed Activity event.
+
+The strict collector retained **849 complete process/cgroup samples**, maximum gap **0.693127 s** (limit one second). The all-sample gate passed with final cleanup markers and no PSI, OOM or 4 GiB cgroup violation. Outer VM telemetry retained 862 samples, minimum available memory 5,000,335,360 bytes and maximum cgroup use 2,307,784,704 bytes. No memory-floor or deadline stop occurred.
+
+The workload exited 0. The 66-file terminal inventory covering 86,100,475 bytes passed independent exact-file-set, SHA-256 and readback checks. Owned Pod, Deployment and ConfigMaps were removed with UID checks. The AL evidence PVC `q04-pod-cgroup-al-evidence-20260924-al` remains Bound with UID `43f4e6af-79b2-4fd8-9cd5-55b1c4590b00`; all historical PVCs and object prefixes remain retained. A post-run read-only check found all 32 held Deployments exact and off.
+
+This qualifies evidence-only compatible new-request reuse under the current v3 producer. It does not qualify real assembly/method invalidation, required-relationship interruption/retry/replay, active telemetry-loss abort, or in-flight process/Pod recovery.
