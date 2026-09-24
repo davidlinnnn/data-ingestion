@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AN execution and independent terminal verification; machine authority:
+Acceptance rows current through AN execution; AO and AP stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -261,6 +261,14 @@ execution, reuse and interruption behavior require requalification.
   terminal inventory, owned cleanup, retained Bound PVC and 32 exact/off held
   Deployments were independently checked. See
   [AO results](pod-topology-v40/first-window-evidence/RESULTS.md).
+- AP: all 11 pre-inference gates passed, but unchanged node PSI stopped before
+  any workflow or inference. The retained trigger read `full avg10=0.18`;
+  a continuous external probe measured 20,218 microseconds of node full
+  stall but none in its 68 visible cgroups near the stop. Pressure origin
+  remains unknown. The 26-file terminal inventory, owned cleanup, retained
+  Bound PVC and 32 exact/off held Deployments were independently checked.
+  No relationship acceptance row passed. See
+  [AP results](pod-topology-v41/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -271,9 +279,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Collect per-cgroup PSI alongside the unchanged node guard in another
-new-identity required-relationship interruption/recovery/replay attempt;
-AO's quiet pre-admission period did not prevent the later node spike.
+Investigate the global `/proc/pressure/memory` scope against the host/VM
+cgroup namespace and probe visibility. AP's continuous per-cgroup probe did
+not attribute the node stall to any of 68 visible cgroups; do not infer a
+false guard trigger or relax the zero limit. Decide on any further
+new-identity runtime only after this attribution review.
 Active telemetry-loss and process/Pod
 recovery remain separate gates.
 Each runtime needs a fresh
