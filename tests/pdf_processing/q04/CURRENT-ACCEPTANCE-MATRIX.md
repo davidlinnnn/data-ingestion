@@ -279,10 +279,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Investigate the global `/proc/pressure/memory` scope against the host/VM
-cgroup namespace and probe visibility. AP's continuous per-cgroup probe did
-not attribute the node stall to any of 68 visible cgroups; do not infer a
-false guard trigger or relax the zero limit. Decide on any further
+Investigate global PSI at the Docker Desktop VM/host level. Read-only
+follow-up confirmed kind worker2 uses a private cgroup namespace, so AP's
+68 visible cgroups do not form a complete attribution universe. Do not infer
+a false guard trigger or relax the zero limit. Decide on any further
 new-identity runtime only after this attribution review.
 Active telemetry-loss and process/Pod
 recovery remain separate gates.
