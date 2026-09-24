@@ -90,8 +90,7 @@ def main():
         time.sleep(min(args.interval, max(0, end - time.monotonic())))
         current = snapshot()
         row = delta(previous, current)
-        if row["node_full_delta_us"] or row["cgroup_full_delta_us"]:
-            print(json.dumps(row), flush=True)
+        print(json.dumps({"kind": "sample", **row}), flush=True)
         previous = current
     print(json.dumps({"kind": "end", "time": previous[0],
                       "stopped_by_signal": stopped,

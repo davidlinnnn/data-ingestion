@@ -38,11 +38,11 @@ for path in pathlib.Path('/proc').iterdir():
   start=int((path/'stat').read_text().rsplit(') ',1)[1].split()[19])
   matches.append((int(path.name),start))
  except (FileNotFoundError,ProcessLookupError): pass
-assert len(matches)<=1, 'ambiguous node observer identity'
+if len(matches)>1: raise RuntimeError('ambiguous node observer identity')
 if pid:
- assert not matches or matches==[(pid,ticks)], 'node observer identity changed'
+ if matches and matches!=[(pid,ticks)]: raise RuntimeError('node observer identity changed')
 if action=='stop' and matches: os.kill(matches[0][0],signal.SIGTERM)
-if action=='verify': assert not matches, 'node observer remains active'
+if action=='verify' and matches: raise RuntimeError('node observer remains active')
 print(json.dumps({'matches':matches,'action':action}))
 """
 
@@ -83,29 +83,62 @@ def start_probe():
             time.sleep(.05)
         raise TimeoutError("node observer start identity missing")
     except BaseException:
-        owner("stop")
-        process.wait(timeout=20)
-        owner("verify")
+        stop_probe(process, None, require_end=False)
         raise
 
 
-def stop_probe(process, identity):
-    outcome = {"stop": owner("stop", identity)}
-    try:
-        process.wait(timeout=20)
-    except subprocess.TimeoutExpired:
-        process.terminate()
-        process.wait(timeout=10)
-        raise RuntimeError("node observer transport did not exit after owned stop")
-    outcome["verify"] = owner("verify", identity)
-    lines = PROBE_OUT.read_text().splitlines()
-    outcome["end"] = json.loads(lines[-1]) if lines else None
-    outcome["transport_exit"] = process.returncode
+def stop_probe(process, identity, *, require_end=True):
+    outcome = {}
+    def attempt(name, operation):
+        try:
+            outcome[name] = {"ok": True, "value": operation()}
+        except BaseException as error:
+            outcome[name] = {"ok": False, "type": type(error).__name__,
+                             "reason": str(error)}
+
+    def settle_transport():
+        try:
+            return {"exit_code": process.wait(timeout=20), "forced": False}
+        except subprocess.TimeoutExpired:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=10)
+            raise RuntimeError("node observer transport required forced stop")
+
+    attempt("remote_stop", lambda: owner("stop", identity))
+    attempt("transport", settle_transport)
+    attempt("remote_absence", lambda: owner("verify", identity))
+    def terminal():
+        lines = PROBE_OUT.read_text().splitlines()
+        end = json.loads(lines[-1]) if lines else None
+        if require_end and (not end or end.get("kind") != "end"
+                            or end.get("time", 0) < identity["time"]):
+            raise ValueError("node observer terminal marker missing")
+        samples = [json.loads(line) for line in lines[1:-1]]
+        if require_end and (not samples or any(
+                sample.get("kind") != "sample"
+                or sample["ended_at"] - sample["started_at"] > 1
+                or sample["node_full_delta_us"] < 0
+                for sample in samples)
+                or samples[0]["started_at"] != identity["time"]
+                or samples[-1]["ended_at"] != end["time"]
+                or any(later["started_at"] != earlier["ended_at"]
+                       for earlier, later in zip(samples, samples[1:]))):
+            raise ValueError("node observer sample coverage incomplete")
+        return {"end": end, "samples": len(samples),
+                "max_gap_seconds": max((sample["ended_at"] - sample["started_at"]
+                                        for sample in samples), default=None)}
+    attempt("terminal", terminal)
+    outcome["complete"] = (
+        all(item["ok"] for item in outcome.values())
+        and outcome["transport"]["value"]["exit_code"] == 0
+    )
     PROBE_CLEANUP.write_text(json.dumps(outcome, indent=2) + "\n")
-    if (not outcome["end"] or outcome["end"].get("kind") != "end"
-            or outcome["end"].get("time", 0) < identity["time"]
-            or process.returncode != 0):
-        raise RuntimeError("node observer terminal evidence incomplete")
+    if not outcome["complete"]:
+        raise RuntimeError("node observer cleanup or terminal evidence incomplete")
     return outcome
 
 

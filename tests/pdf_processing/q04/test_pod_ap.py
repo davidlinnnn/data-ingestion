@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from candidate.relationship_interruption_window_ao import validate_scope
 import pod_topology_ap as topology
@@ -46,6 +47,68 @@ class APObservedRelationshipTest(unittest.TestCase):
         compile(guarded.OWNER_PROGRAM, "owner", "exec")
         probe.self_test()
         self.assertEqual(runner.base.offline_check()["status"], "PASS_OFFLINE_ONLY")
+
+    def test_probe_cleanup_records_remote_stop_failure(self):
+        with tempfile.TemporaryDirectory() as raw:
+            output = Path(raw) / "probe.jsonl"
+            output.write_text('{"kind":"start","time":1}\n'
+                              '{"kind":"sample","started_at":1,"ended_at":1.25,"node_full_delta_us":0}\n'
+                              '{"kind":"end","time":1.25}\n')
+            cleanup = Path(raw) / "cleanup.json"
+            class Process:
+                def wait(self, timeout):
+                    return 0
+            calls = []
+            def owner(action, identity):
+                calls.append(action)
+                if action == "stop":
+                    raise subprocess.CalledProcessError(1, "docker")
+                return {"matches": [], "action": action}
+            with patch.object(guarded, "PROBE_OUT", output), \
+                 patch.object(guarded, "PROBE_CLEANUP", cleanup), \
+                 patch.object(guarded, "owner", owner):
+                with self.assertRaisesRegex(RuntimeError, "cleanup"):
+                    guarded.stop_probe(Process(), {"time": 1})
+            result = json.loads(cleanup.read_text())
+            self.assertEqual(calls, ["stop", "verify"])
+            self.assertFalse(result["remote_stop"]["ok"])
+            self.assertTrue(result["remote_absence"]["ok"])
+            self.assertTrue(result["terminal"]["ok"])
+            self.assertFalse(result["complete"])
+
+    def test_probe_cleanup_records_transport_timeout(self):
+        with tempfile.TemporaryDirectory() as raw:
+            output = Path(raw) / "probe.jsonl"
+            output.write_text('{"kind":"start","time":1}\n'
+                              '{"kind":"sample","started_at":1,"ended_at":1.25,"node_full_delta_us":0}\n'
+                              '{"kind":"end","time":1.25}\n')
+            cleanup = Path(raw) / "cleanup.json"
+            class Process:
+                def __init__(self):
+                    self.forced = False
+                def wait(self, timeout):
+                    if not self.forced:
+                        raise subprocess.TimeoutExpired("docker", timeout)
+                    return -15
+                def terminate(self):
+                    self.forced = True
+            process = Process()
+            calls = []
+            def owner(action, identity):
+                calls.append(action)
+                return {"matches": [], "action": action}
+            with patch.object(guarded, "PROBE_OUT", output), \
+                 patch.object(guarded, "PROBE_CLEANUP", cleanup), \
+                 patch.object(guarded, "owner", owner):
+                with self.assertRaisesRegex(RuntimeError, "cleanup"):
+                    guarded.stop_probe(process, {"time": 1})
+            result = json.loads(cleanup.read_text())
+            self.assertTrue(process.forced)
+            self.assertEqual(calls, ["stop", "verify"])
+            self.assertFalse(result["transport"]["ok"])
+            self.assertTrue(result["remote_absence"]["ok"])
+            self.assertTrue(result["terminal"]["ok"])
+            self.assertFalse(result["complete"])
 
     @unittest.skipUnless(importlib.util.find_spec("pypdfium2"), "pinned image required")
     def test_exact_projected_workspace_imports(self):
