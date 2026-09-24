@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through AS execution; AO, AP, AQ and AR stop evidence independently verified. Machine authority:
+Acceptance rows current through AU execution; AO, AP, AQ, AR and AT stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -82,7 +82,7 @@ execution, reuse and interruption behavior require requalification.
 | Fixed warm sequence and request20 recycle | **proven** | AH proves sequence/recycle/resources; AI and AJ prove exact fresh-output equality for all four AH warm fixtures |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
 | Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
-| Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
+| Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
 | Process drain/recovery | unproven | Current runtime phase not run |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
 | Supported-bounds report to #44 | unproven | Depends on remaining rows |
@@ -297,6 +297,20 @@ execution, reuse and interruption behavior require requalification.
   Deployments remain exact/off. The optional OCR phase trace did not load
   because workload setup reset `PYTHONPATH`; AQ's precise stall phase remains
   unknown. See [AS results](pod-topology-v44/first-window-evidence/RESULTS.md).
+- AT: active sampler-loss injection and owned cleanup occurred at five
+  registered native pages, but the verifier rejected Temporal `COMPLETED`
+  without decoding its failed business result. It exited nonzero before
+  terminal qualification; raw failure export and PVC remain retained. See
+  [AT results](pod-topology-v45/first-window-evidence/RESULTS.md).
+- AU: one new controlled active telemetry-loss window passed. The worker
+  sampler stopped while the next group parsed; the controller detected stale
+  samples and canceled owned work. Temporal `COMPLETED` carried a failed
+  business result (`activity_budget_exhausted`, 5/51 pages,
+  `processing_complete=false`), and publication audit found no complete
+  registration. Independent cancellation attribution, all 323 process/cgroup
+  samples, 42 terminal inventory hashes, host observer and cleanup passed.
+  AU PVC remains Bound and the 32 held Deployments remain exact/off. See
+  [AU results](pod-topology-v46/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -307,9 +321,9 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AS proves the required relationship interruption/recovery/replay gate.
-Next is an isolated active telemetry-loss abort, followed by actual process
-and Pod drain/recovery and the supported operating-bounds handoff to #44.
+AS proves the required relationship interruption/recovery/replay gate; AU
+proves active telemetry-loss fail-closed. Next are actual process and Pod
+drain/recovery and the supported operating-bounds handoff to #44.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
