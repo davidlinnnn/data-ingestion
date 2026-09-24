@@ -271,9 +271,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Investigate AO's node-level PSI source and require a stable pre-admission
-window under unchanged guards before another new-identity required-relationship
-interruption/recovery/replay attempt. Active telemetry-loss and process/Pod
+Collect per-cgroup PSI alongside the unchanged node guard in another
+new-identity required-relationship interruption/recovery/replay attempt;
+AO's quiet pre-admission period did not prevent the later node spike.
+Active telemetry-loss and process/Pod
 recovery remain separate gates.
 Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
