@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AH execution and independent terminal verification; machine authority:
+Current through AI execution and independent terminal verification; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -9,12 +9,17 @@ silently qualify a changed execution path.
 
 | Fixture | Scope | Fresh | Restored | Exact replay | Full graph/oracle | Q04 fresh index |
 | --- | ---: | --- | --- | --- | --- | --- |
-| native | 51 pages | unproven | unproven | unproven | unproven | unproven |
-| WikiSkill `06` | 28 pages | unproven | unproven | unproven | unproven | unproven |
+| native | 51 pages | **proven** | **proven** | **proven** | **proven** | **proven** |
+| WikiSkill `06` | 28 pages | **proven** | **proven** | **proven** | **proven** | **proven** |
 | YOLO `07` | 15 pages, M policy | **proven** | **proven** | **proven** | **proven** | **proven** |
 | AIMA `08` | original 99–110 | **proven** | **proven** | **proven** | **proven** | **proven** |
 | ACL `09` | original 2–4 | **proven** | **proven** | **proven** | **proven** | **proven** |
 | Keynote `10` | one page | **proven** | **proven** | **proven** | **proven** | **proven** |
+
+AI passed Wiki06 and native fresh/restored/exact replay with 28/51 pages,
+the strict v3 source-reviewed graph oracle, and document bytes equal to AH's
+warm outputs. All 1,217 process/cgroup samples and terminal cleanup passed.
+See [AI results](pod-topology-v34/first-window-evidence/RESULTS.md).
 
 YOLO M (`d1701d3`) passed all three modes with 15 pages and four required OCR
 components, approved two-pair graph equivalence, `max_requests=1`, THP-disabled
@@ -27,8 +32,8 @@ supplements and equal full graph/document digests. Its 949 attribution samples
 were complete, and three captures plus native assembly restore used one warm
 parser PID. This is bounded fixture08 acceptance; it does not prove the original
 29-group cross-document request20 sequence. Later warm runs completed that
-sequence and recycle, but complete all-sample process attribution and
-fresh-output equality remain unproven. See
+sequence and recycle; AH later proved complete all-sample process attribution.
+Current v3 fresh-output equality for AIMA remains unproven. See
 [Q results](pod-topology-v16/first-window-evidence/RESULTS.md).
 
 ACL and Keynote retain their passes under their original producer/runtime
@@ -42,16 +47,16 @@ execution, reuse and interruption behavior require requalification.
 | --- | --- | --- |
 | Immutable source/producer/profile/method/oracle binding | proven | Exact retained run identities |
 | Stage-impact dependency projection | proven | Existing local audit; new producer changes need their own impact record |
-| Six-fixture current-producer matrix | unproven | Native/Wiki and ACL/Keynote lifecycle applicability remain open |
+| Six-fixture current-producer matrix | unproven | AI proves current-v3 native/Wiki; YOLO, AIMA, ACL and Keynote v3 matrix applicability remains open |
 | Current AIMA continuation/four algorithms | **proven** | Q exact producer/runtime; four algorithms and eight continuation edges |
 | Current evidence-only compatible reuse | unproven | Q03 proof belongs to its original execution path |
-| Real assembly/method invalidation | unproven | Native runtime not run |
+| Real assembly/method invalidation | unproven | AI native matrix did not run the changed-method case |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
-| Fixed warm sequence and request20 recycle | unproven | AH proves the sequence, recycle, exact v3 warm graphs and resources; required cross-mode fresh-output equality remains pending |
+| Fixed warm sequence and request20 recycle | unproven | AH proves sequence/recycle/resources; AI proves native/Wiki fresh equality; YOLO/AIMA current-v3 fresh equality remains pending |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
-| Integrated operating bounds | **proven** | AH v3 producer/runtime: 1,349 complete process/cgroup samples, unchanged guards, no resource stop |
+| Integrated operating bounds | **proven** | AH 1,349 and AI 1,217 complete v3 process/cgroup samples under unchanged guards, no resource stop |
 | Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
 | Process drain/recovery | unproven | Current runtime phase not run |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
@@ -181,6 +186,13 @@ execution, reuse and interruption behavior require requalification.
   Required standalone fresh-output equality, restored and replay modes remain
   unproven, so the complete warm row is still not promoted. See
   [AH results](pod-topology-v33/first-window-evidence/RESULTS.md).
+- AI: one controlled current-v3 Wiki06/native matrix completed all six
+  fresh/restored/exact replay trials. Each document matched AH warm bytes,
+  with 28/51 registered pages, no failed Activity events, 1,217 complete
+  process/cgroup samples and zero PSI/OOM/memory violations. The 102-entry
+  terminal inventory passed independent hash/readback; workload exit and
+  cleanup passed, AI PVC remains Bound, and the 32 held Deployments remain
+  exact/off. See [AI results](pod-topology-v34/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -191,42 +203,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AH extends the integrated-resource, sequence and recycle proof to the exact
-v3 continuation producer and adds strict native/Wiki06 graph acceptance in a
-real warm workflow. Required standalone fresh-output equality still blocks the
-complete warm row. The next runtime work is the v3 fresh/restored/exact-replay
-matrix, including fresh-output comparison with AH before moving to the
-separately specified current process interruption/retry/replay gate. Native/Wiki06 fixture acceptance,
-changed-profile rejection, Pod interruption/recovery and telemetry-loss
-injection also remain open. Any next runtime must use a new identity, retain
-the unchanged guards and run once without automatic retry.
-
-The retained AG documents now have a strict no-inference comparison record:
-Wiki06 changes from 490 to 496 text nodes and native from 1,119 to 1,145, while
-their source-region multisets remain equal. This is a graph/assembly difference,
-not a missing-source finding. Re-running the same current producer before a
-source review would deterministically stop at the same Q04 graph gate and would
-not advance acceptance.
-
-The AG native source review rejected that v1 graph: five of its six
-many-to-many components joined text across intervening PDF columns; the remaining
-component was a duplicate picture label. The other native and Wiki06 splits
-were pending review at that point. Later replay of the pre-merge elements
-isolated the six invalid v1 edges. No general split/merge normalization is
-accepted. See
-[AG source-review result](pod-topology-v32/first-window-evidence/SOURCE-REVIEW-RESULT.md).
-
-A versioned v2 continuation candidate blocked those six invalid native joins.
-Offline full-document captures retained exact source fragments; native had
-32 ordered one-to-two text splits and Wiki06 six. All 38 splits and their
-graph bindings were source-reviewed, and a fixture-specific exact graph
-oracle was frozen with fail-closed mutation checks. Six-fixture offline
-projection then found v2 incorrectly split a valid AIMA continuation across a
-narrow page-margin picture. V3 restores that AIMA join and produces the same
-native/Wiki06/YOLO document bytes as the reviewed v2 or AG outputs; ACL and
-Keynote full graphs equal their references. The v3 exact oracle is frozen for
-native/Wiki06. No current-producer runtime row is promoted: fresh, restored,
-exact replay and the affected warm sequence still need a new controlled
-execution. See [v3 offline result](diagnosis/continuation-v3/OFFLINE-RESULT.md).
-
-#51 is not ready for integration/closure. Ticket updates remain unpublished drafts.
+The next bounded matrix should test YOLO07 and AIMA08 under the current v3
+producer and compare their fresh documents with AH warm output. ACL09 and
+Keynote10 also need current-v3 applicability checks. Changed-profile rejection,
+current required-relationship interruption/retry/replay, active telemetry-loss,
+and process/Pod recovery remain separate gates. Each runtime needs a fresh
+identity/prefix, unchanged guards, one controlled execution and no automatic
+retry. #51 is not ready for integration or closure; ticket updates remain
+unpublished drafts.
