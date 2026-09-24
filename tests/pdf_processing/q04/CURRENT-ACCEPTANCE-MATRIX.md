@@ -252,6 +252,15 @@ execution, reuse and interruption behavior require requalification.
   terminal inventory hashes and cleanup passed; AN PVC remains Bound and
   all 32 held Deployments remain exact/off. See
   [AN results](pod-topology-v39/first-window-evidence/RESULTS.md).
+- AO: all 11 pre-inference gates and fresh native (51 pages/seven OCR
+  components) passed, but the next request stopped on a retained node PSI
+  `full avg10=1.08` sample against the unchanged zero limit during its first
+  parsing Activity. The interruption hook, recovery and replay were not
+  reached. Temporal completed only with a failed business result after
+  controller cancellation; failed-plan publication was absent. The 50-file
+  terminal inventory, owned cleanup, retained Bound PVC and 32 exact/off held
+  Deployments were independently checked. See
+  [AO results](pod-topology-v40/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -262,9 +271,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The next bounded test should target current required-relationship
-interruption/retry/replay. Active telemetry-loss and process/Pod recovery
-remain separate gates.
+Investigate AO's node-level PSI source and require a stable pre-admission
+window under unchanged guards before another new-identity required-relationship
+interruption/recovery/replay attempt. Active telemetry-loss and process/Pod
+recovery remain separate gates.
 Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
 retry. #51 is not ready for integration or closure; ticket updates remain
