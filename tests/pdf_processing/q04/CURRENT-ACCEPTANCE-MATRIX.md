@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AI execution and independent terminal verification; machine authority:
+Current through AJ execution and independent terminal verification; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -21,6 +21,11 @@ the strict v3 source-reviewed graph oracle, and document bytes equal to AH's
 warm outputs. All 1,217 process/cgroup samples and terminal cleanup passed.
 See [AI results](pod-topology-v34/first-window-evidence/RESULTS.md).
 
+AJ passed current-v3 YOLO07, AIMA08, ACL09 and Keynote10 fresh/restored/exact
+replay with full registered-page counts and exact frozen graphs. 07/08 documents
+equaled AH warm output. All 772 process/cgroup samples and terminal cleanup
+passed. See [AJ results](pod-topology-v35/first-window-evidence/RESULTS.md).
+
 YOLO M (`d1701d3`) passed all three modes with 15 pages and four required OCR
 components, approved two-pair graph equivalence, `max_requests=1`, THP-disabled
 workload descendants and 1,021 complete process samples. This is bounded fixture07
@@ -33,11 +38,11 @@ were complete, and three captures plus native assembly restore used one warm
 parser PID. This is bounded fixture08 acceptance; it does not prove the original
 29-group cross-document request20 sequence. Later warm runs completed that
 sequence and recycle; AH later proved complete all-sample process attribution.
-Current v3 fresh-output equality for AIMA remains unproven. See
+AJ now proves current-v3 fresh-output equality for AIMA. See
 [Q results](pod-topology-v16/first-window-evidence/RESULTS.md).
 
 ACL and Keynote retain their passes under their original producer/runtime
-identities. Applicability to the current lifecycle producer is **unproven**.
+identities. AJ additionally proves applicability to the current v3 producer.
 Q03 AIMA source/oracle evidence remains a historical reference; current lifecycle
 execution, reuse and interruption behavior require requalification.
 
@@ -47,16 +52,16 @@ execution, reuse and interruption behavior require requalification.
 | --- | --- | --- |
 | Immutable source/producer/profile/method/oracle binding | proven | Exact retained run identities |
 | Stage-impact dependency projection | proven | Existing local audit; new producer changes need their own impact record |
-| Six-fixture current-producer matrix | unproven | AI proves current-v3 native/Wiki; YOLO, AIMA, ACL and Keynote v3 matrix applicability remains open |
+| Six-fixture current-producer matrix | **proven** | AI proves native/Wiki; AJ proves 07–10 with current-v3 fresh/restored/exact replay and frozen graphs |
 | Current AIMA continuation/four algorithms | **proven** | Q exact producer/runtime; four algorithms and eight continuation edges |
 | Current evidence-only compatible reuse | unproven | Q03 proof belongs to its original execution path |
 | Real assembly/method invalidation | unproven | AI native matrix did not run the changed-method case |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | unproven | Local compatibility only |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
-| Fixed warm sequence and request20 recycle | unproven | AH proves sequence/recycle/resources; AI proves native/Wiki fresh equality; YOLO/AIMA current-v3 fresh equality remains pending |
+| Fixed warm sequence and request20 recycle | **proven** | AH proves sequence/recycle/resources; AI and AJ prove exact fresh-output equality for all four AH warm fixtures |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
-| Integrated operating bounds | **proven** | AH 1,349 and AI 1,217 complete v3 process/cgroup samples under unchanged guards, no resource stop |
+| Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
 | Active telemetry-loss guard | unproven | Q proves normal continuity; no injected sampler-loss abort ran |
 | Process drain/recovery | unproven | Current runtime phase not run |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
@@ -193,6 +198,13 @@ execution, reuse and interruption behavior require requalification.
   terminal inventory passed independent hash/readback; workload exit and
   cleanup passed, AI PVC remains Bound, and the 32 held Deployments remain
   exact/off. See [AI results](pod-topology-v34/first-window-evidence/RESULTS.md).
+- AJ: one controlled current-v3 07–10 matrix completed all twelve
+  fresh/restored/exact replay trials. 07/08 documents matched AH warm output;
+  09/10 matched the frozen complete-graph oracle. All 772 process/cgroup
+  samples and unchanged guards passed. The 180-entry terminal inventory passed
+  independent exact-set/hash/readback; owned runtime was removed, AJ PVC remains
+  Bound, and all 32 held Deployments remain exact/off. See
+  [AJ results](pod-topology-v35/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -203,11 +215,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The next bounded matrix should test YOLO07 and AIMA08 under the current v3
-producer and compare their fresh documents with AH warm output. ACL09 and
-Keynote10 also need current-v3 applicability checks. Changed-profile rejection,
-current required-relationship interruption/retry/replay, active telemetry-loss,
-and process/Pod recovery remain separate gates. Each runtime needs a fresh
+The next bounded test should target one of the remaining rejection or recovery
+gates: changed-profile rejection, real assembly/method invalidation,
+required-relationship interruption/retry/replay, active telemetry-loss, or
+process/Pod recovery. Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
 retry. #51 is not ready for integration or closure; ticket updates remain
 unpublished drafts.
