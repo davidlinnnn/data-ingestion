@@ -104,11 +104,12 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(gates["old_request_changed_profile_rejection"]["status"], "proven")
         self.assertEqual(gates["evidence_only_compatible_reuse"]["status"], "proven")
         self.assertEqual(gates["assembly_method_invalidation"]["status"], "proven")
+        self.assertEqual(gates["required_relationship_interrupt_retry_replay"]["status"], "proven")
 
     def test_next_step_preserves_process_completeness_and_no_retry(self):
         step = self.matrix['next_step']
         self.assertEqual(
-            step['kind'], 'required_relationship_interrupt_retry_replay'
+            step['kind'], 'active_telemetry_loss_guard'
         )
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
@@ -120,11 +121,11 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'PASS_AN_REAL_METHOD_INVALIDATION_AND_ORIGINAL_REPLAY_ONLY',
+            'PASS_REQUIRED_RELATIONSHIP_INTERRUPTION_RECOVERY_REPLAY',
         )
-        self.assertEqual(step['run_identity'], 'q04-method-pod-cgroup-20260924-an')
-        self.assertEqual(step['workflows_completed'], 3)
-        self.assertEqual(step['samples'], 1128)
+        self.assertEqual(step['run_identity'], 'q04-relationship-pod-cgroup-20260925-as')
+        self.assertEqual(step['workflows_completed'], 4)
+        self.assertEqual(step['resource_samples'], 895)
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
@@ -134,12 +135,12 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(step['incomplete_sample_indexes'], [])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = json.loads((Q04 / 'pod-topology-v39/first-window-evidence/INDEPENDENT-VERIFICATION.json').read_text())
-        self.assertEqual(evidence['resource']['gate_status'], 'PASS')
-        self.assertEqual(evidence['terminal']['status'], 'PASS_CANDIDATE')
-        self.assertEqual([row['terminal_event'] for row in evidence['workflows']],
-                         ['EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED'] * 3)
-        self.assertTrue(evidence['old_new_upstream_operations_disjoint'])
+        evidence = json.loads((Q04 / 'pod-topology-v44/first-window-evidence/INDEPENDENT-VERIFICATION.json').read_text())
+        self.assertEqual(evidence['status'], 'PASS')
+        self.assertEqual(evidence['terminal_inventory_files'], 95)
+        self.assertEqual(evidence['resource_samples'], 895)
+        self.assertEqual(evidence['ocr_phase_trace'],
+                         'MISSING; AQ process-level stall phase remains unknown')
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()

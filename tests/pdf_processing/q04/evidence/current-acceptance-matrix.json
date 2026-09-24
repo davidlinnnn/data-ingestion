@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "22d6301",
+    "commit": "3a3c163",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-method-pod-cgroup-20260924-an"
+    "runtime_identity": "q04-relationship-pod-cgroup-20260925-as"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -351,13 +351,12 @@
     },
     {
       "id": "required_relationship_interrupt_retry_replay",
-      "status": "unproven",
-      "reason": "Historical Q03 evidence remains retained. Current lifecycle producer changes the execution path; current runtime requalification is required.",
+      "status": "proven",
+      "reason": "AS current native run intentionally interrupted the required evidence child at first_page_decoded; one failed Activity and incomplete business result were retained, failed-plan publication passed, and a new worker completed recovery and exact replay with 51 pages, seven OCR components and frozen document/full-graph digests under unchanged guards.",
       "evidence": [
-        "tests/pdf_processing/q03/RUNTIME-RESULTS.md",
-        "tests/pdf_processing/q03/INTEGRATION-REVIEW.md"
-      ],
-      "historical_reference": "reusable only for original Q03 producer/runtime"
+        "tests/pdf_processing/q04/pod-topology-v44/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v44/first-window-evidence/INDEPENDENT-VERIFICATION.json"
+      ]
     },
     {
       "id": "warm_sequence",
@@ -501,17 +500,22 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v38/first-window-evidence/RESULTS.md",
+    "latest": "tests/pdf_processing/q04/pod-topology-v43/first-window-evidence/RESULTS.md",
     "am": {
       "run_identity": "q04-method-pod-cgroup-20260924-am",
       "status": "INCOMPLETE",
       "reason": "AM harness retained a fresh warm parser for the method-off request; first invalidation Activity failed worker_method_mismatch, zero pages; no replay. Failure evidence and PVC retained.",
       "evidence": "tests/pdf_processing/q04/pod-topology-v38/first-window-evidence/RESULTS.md"
+    },
+    "ar": {
+      "run_identity": "q04-relationship-pod-cgroup-20260925-ar",
+      "status": "FAIL_PRE_INFERENCE",
+      "reason": "Diagnostic producer hash differed from frozen AH input bundle; no workflow or object write. Cleanup proved; PVC retained.",
+      "evidence": "tests/pdf_processing/q04/pod-topology-v43/first-window-evidence/RESULTS.md"
     }
   },
   "next_step": {
-    "kind": "required_relationship_interrupt_retry_replay",
-    "fixture": "native",
+    "kind": "active_telemetry_loss_guard",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -521,8 +525,8 @@
     "historical_failure_preserved": true,
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/pod-topology-v39/first-window-evidence/RESULTS.md",
-    "remaining_gate": "Exercise current required-relationship interruption, retry and exact replay under owned worker/Pod lifecycle; then active telemetry-loss abort, process/Pod recovery and #44 bounds handoff remain."
+    "evidence": "tests/pdf_processing/q04/pod-topology-v44/first-window-evidence/RESULTS.md",
+    "remaining_gate": "Exercise active telemetry-loss abort, then actual process/Pod drain and recovery and #44 supported-bounds handoff. Correct optional OCR trace path separately; AQ exact process cause remains unknown."
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -551,6 +555,35 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
+    "kind": "execute_current_required_relationship_interrupt_recovery_replay",
+    "run_identity": "q04-relationship-pod-cgroup-20260925-as",
+    "execution_commit": "3a3c163",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v44/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v44/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_relationship_pod_cgroup_as_guarded.py",
+    "runtime_result": "PASS_REQUIRED_RELATIONSHIP_INTERRUPTION_RECOVERY_REPLAY",
+    "workflows_completed": 4,
+    "expected_failed_business_workflows": 1,
+    "resource_samples": 895,
+    "host_samples": 1478,
+    "terminal_inventory_files": 95,
+    "incomplete_sample_indexes": [],
+    "psi_oom_memory_floor_deadline_stop": false,
+    "cleanup": "proven_with_pvc_retained",
+    "process_attribution_complete": true,
+    "cgroup_resource_complete": true,
+    "qualification_complete": true,
+    "required_relationship_interrupt_retry_replay": "proven",
+    "ocr_phase_trace": "absent; AQ process-level cause unknown"
+  },
+  "previous_execution": {
     "kind": "execute_v3_real_method_invalidation",
     "run_identity": "q04-method-pod-cgroup-20260924-an",
     "execution_commit": "22d6301",
@@ -574,32 +607,6 @@
     "cgroup_resource_complete": true,
     "qualification_complete": true,
     "assembly_method_invalidation": "proven",
-    "original_route_replay": "proven"
-  },
-  "previous_execution": {
-    "kind": "execute_v3_evidence_only_reuse",
-    "run_identity": "q04-profile-pod-cgroup-20260924-al",
-    "execution_commit": "8c3b060",
-    "runtime_authorized": true,
-    "runtime_started": true,
-    "automatic_retry": false,
-    "single_execution": true,
-    "keep_current_guard": true,
-    "historical_failure_preserved": true,
-    "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v37/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v37/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_profile_pod_cgroup_al.py",
-    "runtime_result": "PASS_EVIDENCE_ONLY_COMPATIBLE_REUSE_AND_ORIGINAL_REPLAY_ONLY",
-    "workflows_completed": 3,
-    "samples": 849,
-    "incomplete_sample_indexes": [],
-    "psi_oom_memory_floor_deadline_stop": false,
-    "cleanup": "proven_with_pvc_retained",
-    "process_attribution_complete": true,
-    "cgroup_resource_complete": true,
-    "qualification_complete": true,
-    "evidence_only_compatible_reuse": "proven",
     "original_route_replay": "proven"
   }
 }

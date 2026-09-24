@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through AN execution; AO, AP and AQ stop evidence independently verified. Machine authority:
+Acceptance rows current through AS execution; AO, AP, AQ and AR stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -78,7 +78,7 @@ execution, reuse and interruption behavior require requalification.
 | Real assembly/method invalidation | **proven** | AN new native method release invalidated all 12 checked group/assembly operations; method-off graph and original replay passed |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | **proven** | AK changed profile rejected the exact old request; original-route replay retained its result |
-| Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
+| Current required-relationship interruption/retry/replay | **proven** | AS current native first-page evidence-child interruption, failed-plan publication, replacement worker recovery and exact replay; original producer/bundle, unchanged guards |
 | Fixed warm sequence and request20 recycle | **proven** | AH proves sequence/recycle/resources; AI and AJ prove exact fresh-output equality for all four AH warm fixtures |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
 | Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
@@ -281,6 +281,22 @@ execution, reuse and interruption behavior require requalification.
   PVC and 32 exact/off held Deployments were independently checked. No
   relationship acceptance row passed. See
   [AQ results](pod-topology-v42/first-window-evidence/RESULTS.md).
+- AR: the diagnostic projected OCR source disagreed with the frozen input
+  bundle producer map. Configuration failed before inference, workflow or
+  object write. The new identity was consumed; owned runtime was removed,
+  observer stopped and PVC retained Bound. See
+  [AR results](pod-topology-v43/first-window-evidence/RESULTS.md).
+- AS: one controlled native fresh/required evidence-child interruption/
+  recovery/exact replay window passed with the original AH producer and
+  bundle. The intended child was killed at `first_page_decoded`; the one
+  failed Activity and incomplete business result were expected, failed-plan
+  publication passed, and replacement worker recovery/replay each completed
+  51 pages and seven OCR components with frozen document and graph digests.
+  All 895 process/cgroup resource samples, 95 terminal inventory hashes,
+  host observer and cleanup passed; AS PVC remains Bound and the 32 held
+  Deployments remain exact/off. The optional OCR phase trace did not load
+  because workload setup reset `PYTHONPATH`; AQ's precise stall phase remains
+  unknown. See [AS results](pod-topology-v44/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -291,17 +307,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-AQ's replayed trace shows 60 VM allocation stalls and 8,847 directly scanned
-pages as a fresh child grew during warm-parser overlap; successful AN had
-comparable overlap without a full-PSI stop. The host-scope observer locates
-AQ's stall in its Pod, but does not establish a single PID or allocator cause.
-Review a targeted OCR-child page-preparation/engine-initialization instrument
-or workload fix before any
-new-identity runtime. Do not infer a false guard trigger, increase memory or
-relax the zero limit. Decide on any further
-new-identity runtime only after this attribution review.
-Active telemetry-loss and process/Pod
-recovery remain separate gates.
+AS proves the required relationship interruption/recovery/replay gate.
+Next is an isolated active telemetry-loss abort, followed by actual process
+and Pod drain/recovery and the supported operating-bounds handoff to #44.
+AQ's node/Pod pressure origin was localized, but its process/allocator cause
+remains unknown because AS's optional phase hook did not load. Do not infer a
+false guard trigger, increase memory or relax the zero limit. Correct the
+descendant trace path and review any future diagnostic separately.
 Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
 retry. #51 is not ready for integration or closure; ticket updates remain
