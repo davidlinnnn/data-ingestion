@@ -1,7 +1,9 @@
 """Local contracts for the v3-bound Q04 warm Pod adapter."""
 
 import copy
+import contextlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -11,13 +13,15 @@ import tempfile
 import unittest
 from types import SimpleNamespace
 
-from candidate.matrix_v3_window import validate_ah_equality, validate_scope
+from candidate.matrix_v3_window import measurement_contract, validate_ah_equality, validate_scope
 from candidate.warm_v3_reference import reviewed_reference_checker, verify_v3_bundle
 from consumer import check_reference
 import pod_preflight_ai as preflight
+import pod_remote_evidence_ai as evidence
 import pod_topology_ai as topology
 import pod_workload_ai as workload
 from sentinel import run_matrix_pod_cgroup_ai as runner
+from pod_durable_evidence import seal
 
 
 BUNDLE = Path("/private/tmp/q04-inputs-warm-continuation-v3-ah")
@@ -155,6 +159,43 @@ class AIMatrixPodAdapterTest(unittest.TestCase):
             record.write_text(json.dumps(value))
             with self.assertRaisesRegex(ValueError, "native replay differs"):
                 validate_ah_equality(root, manifest)
+
+    def test_success_contract_seals_and_finalizes_in_ai_mirror(self):
+        with tempfile.TemporaryDirectory() as raw:
+            base = Path(raw)
+            root = base / "remote"
+            (root / "state").mkdir(parents=True)
+            (root / "state/config.json").write_text("{}")
+            identity = evidence.PodEvidenceIdentity(
+                "pod", "container", 42, 99, evidence.base.sha256(b"{}"))
+            def write(name, value):
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(value) + "\n")
+            write("transport-identity.json", identity.__dict__)
+            write("supervisor-ownership.json", {"pid": 42, "start_ticks": 99})
+            write("ownership.json", {"config_sha256": identity.config_sha256})
+            volume = {"pvc_uid": "claim", "pv_uid": "volume"}
+            write("evidence-volume-identity.json", volume)
+            for name in evidence.FINAL_REQUIRED - {"durable-terminal-manifest.json"}:
+                if not (root / name).exists():
+                    write(name, {})
+            contract = measurement_contract(
+                SimpleNamespace(qualification_complete=True, cgroup_resource_complete=True),
+                {"process_attribution_complete": True}, {"status": "PASS"})
+            write(f"state/{evidence.MEASUREMENT}/measurement-contract.json", contract)
+            write("workload-exit.json", {"returncode": 0, "automatic_retry": False})
+            write("cleanup-complete.json", {
+                "worker_absent": True, "owned_children_absent": True, "scratch_absent": True})
+            seal(root, volume_identity=volume, workload_succeeded=True, cleanup_complete=True)
+            mirror = evidence.IncrementalEvidenceMirror(base / "mirror", identity)
+            program = mirror.request_program(str(root)).replace(
+                "Path('/proc')", "Path(" + repr(str(base / "proc")) + ")")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                exec(program, {})
+            mirror.ingest(json.loads(output.getvalue()), received_at=1)
+            self.assertEqual(mirror.finalize(require_success=True)["status"], "PASS")
 
     @unittest.skipUnless(importlib.util.find_spec("pypdfium2"), "pinned image required")
     def test_exact_projected_workspace_imports(self):

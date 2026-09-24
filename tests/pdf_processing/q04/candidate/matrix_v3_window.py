@@ -63,6 +63,17 @@ def validate_ah_equality(root, manifest):
                     f"{sid} {mode} differs from AH warm output")
 
 
+def measurement_contract(outcome, summary, gate):
+    return {
+        "workload": "Wiki06/native fresh/restored/exact replay",
+        "workload_succeeded": True,
+        "qualification_complete": outcome.qualification_complete,
+        "process_attribution_complete": summary["process_attribution_complete"],
+        "cgroup_resource_complete": outcome.cgroup_resource_complete,
+        "resource_gate": gate, "automatic_retry": False,
+    }
+
+
 async def run_window(args):
     import boto3
     from pdf_processing.object_store import Store
@@ -169,13 +180,8 @@ async def run_window(args):
     gate = evaluate_resource_gate(samples, summary)
     q04_runtime.write(measurement / "all-sample-resource-gate.json", gate)
     require(gate["status"] == "PASS", "all-sample resource gate failed")
-    q04_runtime.write(measurement / "measurement-contract.json", {
-        "workload": "Wiki06/native fresh/restored/exact replay",
-        "qualification_complete": outcome.qualification_complete,
-        "process_attribution_complete": summary["process_attribution_complete"],
-        "cgroup_resource_complete": outcome.cgroup_resource_complete,
-        "resource_gate": gate, "automatic_retry": False,
-    })
+    q04_runtime.write(measurement / "measurement-contract.json",
+                      measurement_contract(outcome, summary, gate))
     q04_runtime.write(root / "fresh-index.json", json.loads(
         (root / "fresh-index.pending.json").read_text()))
     q04_runtime.write(root / "reviewed-window-contract.json", {
