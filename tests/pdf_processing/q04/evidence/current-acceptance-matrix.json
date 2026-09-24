@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "8c3b060",
+    "commit": "22d6301",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-profile-pod-cgroup-20260924-al"
+    "runtime_identity": "q04-method-pod-cgroup-20260924-an"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -324,11 +324,11 @@
     },
     {
       "id": "assembly_method_invalidation",
-      "status": "unproven",
-      "reason": "The local adapter checks disjoint identities, but the real native method-change case has not run.",
+      "status": "proven",
+      "reason": "AN used a new immutable native method release on the same versioned source; all 12 checked group/assembly operations were new and disjoint, the method-off graph matched the frozen reference, and exact original-route replay retained its result.",
       "evidence": [
-        "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
-        "tests/pdf_processing/q04/PHASE-TWO-RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v39/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v39/first-window-evidence/INDEPENDENT-VERIFICATION.json"
       ]
     },
     {
@@ -501,10 +501,16 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v32/first-window-evidence/RESULTS.md"
+    "latest": "tests/pdf_processing/q04/pod-topology-v38/first-window-evidence/RESULTS.md",
+    "am": {
+      "run_identity": "q04-method-pod-cgroup-20260924-am",
+      "status": "INCOMPLETE",
+      "reason": "AM harness retained a fresh warm parser for the method-off request; first invalidation Activity failed worker_method_mismatch, zero pages; no replay. Failure evidence and PVC retained.",
+      "evidence": "tests/pdf_processing/q04/pod-topology-v38/first-window-evidence/RESULTS.md"
+    }
   },
   "next_step": {
-    "kind": "assembly_method_invalidation",
+    "kind": "required_relationship_interrupt_retry_replay",
     "fixture": "native",
     "runtime_authorized": true,
     "runtime_started": false,
@@ -515,8 +521,8 @@
     "historical_failure_preserved": true,
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/pod-topology-v37/first-window-evidence/RESULTS.md",
-    "remaining_gate": "Remove native continuation under a new immutable release; require fresh disjoint group/assembly identities, no copied registrations, checked output, and original-route replay. Interruption and recovery remain separate."
+    "evidence": "tests/pdf_processing/q04/pod-topology-v39/first-window-evidence/RESULTS.md",
+    "remaining_gate": "Exercise current required-relationship interruption, retry and exact replay under owned worker/Pod lifecycle; then active telemetry-loss abort, process/Pod recovery and #44 bounds handoff remain."
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -545,6 +551,32 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
+    "kind": "execute_v3_real_method_invalidation",
+    "run_identity": "q04-method-pod-cgroup-20260924-an",
+    "execution_commit": "22d6301",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v39/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v39/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_method_pod_cgroup_an.py",
+    "runtime_result": "PASS_AN_REAL_METHOD_INVALIDATION_AND_ORIGINAL_REPLAY_ONLY",
+    "workflows_completed": 3,
+    "samples": 1128,
+    "incomplete_sample_indexes": [],
+    "psi_oom_memory_floor_deadline_stop": false,
+    "cleanup": "proven_with_pvc_retained",
+    "process_attribution_complete": true,
+    "cgroup_resource_complete": true,
+    "qualification_complete": true,
+    "assembly_method_invalidation": "proven",
+    "original_route_replay": "proven"
+  },
+  "previous_execution": {
     "kind": "execute_v3_evidence_only_reuse",
     "run_identity": "q04-profile-pod-cgroup-20260924-al",
     "execution_commit": "8c3b060",
@@ -568,32 +600,6 @@
     "cgroup_resource_complete": true,
     "qualification_complete": true,
     "evidence_only_compatible_reuse": "proven",
-    "original_route_replay": "proven"
-  },
-  "previous_execution": {
-    "kind": "execute_v3_changed_profile_rejection",
-    "run_identity": "q04-profile-pod-cgroup-20260924-ak",
-    "execution_commit": "872bbc3",
-    "runtime_authorized": true,
-    "runtime_started": true,
-    "automatic_retry": false,
-    "single_execution": true,
-    "keep_current_guard": true,
-    "historical_failure_preserved": true,
-    "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v36/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v36/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_profile_pod_cgroup_ak.py",
-    "runtime_result": "PASS_CHANGED_PROFILE_OLD_REQUEST_REJECTION_AND_ORIGINAL_REPLAY_ONLY",
-    "workflows_completed": 3,
-    "samples": 725,
-    "incomplete_sample_indexes": [],
-    "psi_oom_memory_floor_deadline_stop": false,
-    "cleanup": "proven_with_pvc_retained",
-    "process_attribution_complete": true,
-    "cgroup_resource_complete": true,
-    "qualification_complete": true,
-    "old_request_changed_profile_rejection": "proven",
     "original_route_replay": "proven"
   }
 }

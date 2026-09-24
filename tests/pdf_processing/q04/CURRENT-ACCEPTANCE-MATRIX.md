@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AL execution and independent terminal verification; machine authority:
+Current through AN execution and independent terminal verification; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -38,6 +38,14 @@ processing/content-evidence identities retained the same exact output. All
 849 process/cgroup samples and terminal cleanup passed. See
 [AL results](pod-topology-v37/first-window-evidence/RESULTS.md).
 
+AM stopped on a harness worker/parser method mismatch after native fresh; its
+method-off request registered zero pages. AN used a new identity and an explicit
+worker generation boundary. Native method-off then completed 51 pages with 12
+new, disjoint group/assembly operations and the frozen method-off graph; exact
+original-route replay retained the original processing result. All 1,128
+process/cgroup samples and terminal cleanup passed. See
+[AN results](pod-topology-v39/first-window-evidence/RESULTS.md).
+
 YOLO M (`d1701d3`) passed all three modes with 15 pages and four required OCR
 components, approved two-pair graph equivalence, `max_requests=1`, THP-disabled
 workload descendants and 1,021 complete process samples. This is bounded fixture07
@@ -67,7 +75,7 @@ execution, reuse and interruption behavior require requalification.
 | Six-fixture current-producer matrix | **proven** | AI proves native/Wiki; AJ proves 07–10 with current-v3 fresh/restored/exact replay and frozen graphs |
 | Current AIMA continuation/four algorithms | **proven** | Q exact producer/runtime; four algorithms and eight continuation edges |
 | Current evidence-only compatible reuse | **proven** | AL new native request reused 12 checked upstream operations, reran OCR and created new downstream identities |
-| Real assembly/method invalidation | unproven | AI native matrix did not run the changed-method case |
+| Real assembly/method invalidation | **proven** | AN new native method release invalidated all 12 checked group/assembly operations; method-off graph and original replay passed |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
 | Changed profile rejects old request | **proven** | AK changed profile rejected the exact old request; original-route replay retained its result |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
@@ -231,6 +239,19 @@ execution, reuse and interruption behavior require requalification.
   66 terminal inventory entries and cleanup passed; AL PVC remains Bound and
   all 32 held Deployments remain exact/off. See
   [AL results](pod-topology-v37/first-window-evidence/RESULTS.md).
+- AM: one controlled method-off attempt stopped at its first invalidation
+  group Activity with `worker_method_mismatch` because the harness retained
+  the fresh warm parser. No method-off pages or replay were accepted; the
+  terminal failure inventory and Bound PVC were retained. See
+  [AM results](pod-topology-v38/first-window-evidence/RESULTS.md).
+- AN: one new controlled native fresh/method-off/original replay sequence
+  passed. Fresh and method-off each registered 51 pages in separate worker
+  generations; the latter created 12 new disjoint group/assembly operations
+  and matched the frozen method-off graph. Replay retained the original
+  document and processing result. All 1,128 process/cgroup samples, 72
+  terminal inventory hashes and cleanup passed; AN PVC remains Bound and
+  all 32 held Deployments remain exact/off. See
+  [AN results](pod-topology-v39/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -241,9 +262,9 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The next bounded test should target real assembly/method invalidation. The
-required-relationship interruption/retry/replay, active telemetry-loss, and
-process/Pod recovery remain separate gates.
+The next bounded test should target current required-relationship
+interruption/retry/replay. Active telemetry-loss and process/Pod recovery
+remain separate gates.
 Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
 retry. #51 is not ready for integration or closure; ticket updates remain
