@@ -2,7 +2,9 @@
 
 import argparse
 import json
+import os
 from pathlib import Path
+import signal
 import time
 
 
@@ -63,6 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seconds", type=float, default=15)
     parser.add_argument("--interval", type=float, default=.25)
+    parser.add_argument("--run-id", default="local-diagnostic")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     self_test()
@@ -70,12 +73,20 @@ def main():
         return
     if args.seconds <= 0 or args.interval <= 0:
         raise ValueError("positive diagnostic duration and interval required")
+    stopped = False
+    def request_stop(_signal, _frame):
+        nonlocal stopped
+        stopped = True
+    signal.signal(signal.SIGTERM, request_stop)
+    pid = os.getpid()
+    start_ticks = int(Path(f"/proc/{pid}/stat").read_text().rsplit(") ", 1)[1].split()[19])
     end = time.monotonic() + args.seconds
     previous = snapshot()
     print(json.dumps({"kind": "start", "time": previous[0],
+                      "pid": pid, "start_ticks": start_ticks, "run_id": args.run_id,
                       "node_full_total_us": previous[1],
                       "cgroup_count": len(previous[2])}), flush=True)
-    while time.monotonic() < end:
+    while not stopped and time.monotonic() < end:
         time.sleep(min(args.interval, max(0, end - time.monotonic())))
         current = snapshot()
         row = delta(previous, current)
@@ -83,6 +94,7 @@ def main():
             print(json.dumps(row), flush=True)
         previous = current
     print(json.dumps({"kind": "end", "time": previous[0],
+                      "stopped_by_signal": stopped,
                       "node_full_total_us": previous[1],
                       "cgroup_count": len(previous[2])}), flush=True)
 
