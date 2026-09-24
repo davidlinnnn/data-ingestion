@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through AN execution; AO and AP stop evidence independently verified. Machine authority:
+Acceptance rows current through AN execution; AO, AP and AQ stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -269,6 +269,18 @@ execution, reuse and interruption behavior require requalification.
   Bound PVC and 32 exact/off held Deployments were independently checked.
   No relationship acceptance row passed. See
   [AP results](pod-topology-v41/first-window-evidence/RESULTS.md).
+- AQ: all 11 pre-inference gates and fresh native (51 pages/seven OCR
+  components) passed. During interrupted native, unchanged node/Pod PSI
+  `full avg10=0.18` stopped the run after 51 pages and two components;
+  the required child hook, recovery and replay were not reached. The new
+  host-cgroup observer matched the dominant stall increments to AQ's own
+  Pod/container path, while the precise process/allocator cause remains
+  unknown. Temporal completed only with a failed business result after
+  cancellation; no Activity failure event occurred. Its 1,269 continuous
+  host samples, 50-file terminal inventory, owned cleanup, retained Bound
+  PVC and 32 exact/off held Deployments were independently checked. No
+  relationship acceptance row passed. See
+  [AQ results](pod-topology-v42/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -279,13 +291,11 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Prepare a new-identity relationship attempt with an owned host-cgroup
-observer after local lifecycle and terminal-evidence review. Read-only
-follow-up confirmed kind worker2 uses a private cgroup namespace, while a
-temporary host-scope observer exposed 153 cgroups and matched global/root
-PSI totals; its five-second idle probe saw no event. AP's 68 visible cgroups
-were incomplete, and its pressure source remains unknown. Do not infer a
-false guard trigger or relax the zero limit. Decide on any further
+Review the overlapping warm parser/fresh child and allocator/direct-reclaim
+timing from AQ before choosing a new-identity diagnostic or code change.
+The host-scope observer showed AQ's own Pod experienced the dominant PSI
+stall, but did not establish the precise cause. Do not infer a false guard
+trigger, increase memory or relax the zero limit. Decide on any further
 new-identity runtime only after this attribution review.
 Active telemetry-loss and process/Pod
 recovery remain separate gates.
