@@ -279,10 +279,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-Investigate global PSI at the Docker Desktop VM/host level. Read-only
-follow-up confirmed kind worker2 uses a private cgroup namespace, so AP's
-68 visible cgroups do not form a complete attribution universe. Do not infer
-a false guard trigger or relax the zero limit. Decide on any further
+Prepare a new-identity relationship attempt with an owned host-cgroup
+observer after local lifecycle and terminal-evidence review. Read-only
+follow-up confirmed kind worker2 uses a private cgroup namespace, while a
+temporary host-scope observer exposed 153 cgroups and matched global/root
+PSI totals; its five-second idle probe saw no event. AP's 68 visible cgroups
+were incomplete, and its pressure source remains unknown. Do not infer a
+false guard trigger or relax the zero limit. Decide on any further
 new-identity runtime only after this attribution review.
 Active telemetry-loss and process/Pod
 recovery remain separate gates.
