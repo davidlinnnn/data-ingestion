@@ -1,5 +1,6 @@
 """Recompute the AQ stop attribution and bounded AN comparison from raw evidence."""
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -68,6 +69,13 @@ def verify():
                        expected["an_pod_memory_at_that_sample_bytes"])
     assert max(r["psi_full_avg10"] for r in controller) == expected["aq_max_controller_full_avg10"]
     assert max(r["psi_full_avg10"] for r in rows(AN / "vm-controller.jsonl")) == expected["an_max_controller_full_avg10"]
+    child = EXPECTED["classification"]
+    command = child["growing_child_command"].split()
+    digest = hashlib.sha256(("\0".join(command) + "\0").encode()).hexdigest()
+    assert digest == child["growing_child_command_sha256"]
+    assert any(p["pid"] == child["growing_child_pid"] and p["command_sha256"] == digest
+               for sample in rows(next(AQ.glob("failure-evidence/state/*-measurement/resource-attribution.jsonl")))
+               for p in sample["processes"])
     print("PASS: AQ Pod stall, reclaim timing and bounded AN comparison")
 
 
