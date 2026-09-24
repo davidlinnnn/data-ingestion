@@ -32,7 +32,7 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(fixtures[fixture_id]["q04_fresh_index"], "proven")
         self.assertEqual(fixtures["08"]["historical_reference"], "reusable")
         for fixture_id in ("native", "06"):
-            self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"unproven"})
+            self.assertEqual(set(fixtures[fixture_id]["modes"].values()), {"proven"})
         yolo_attempt = fixtures["07"]["attempts"][0]
         self.assertEqual(yolo_attempt["outcome"], "failed_cgroup_guard")
         self.assertEqual(yolo_attempt["fresh"], "failed_before_complete_delivery")
@@ -91,7 +91,6 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             for evidence in row["evidence"]:
                 self.assertTrue((ROOT / evidence).is_file(), evidence)
         for gate in (
-            "six_fixture_matrix",
             "assembly_method_invalidation",
             "active_telemetry_loss_guard",
             "process_drain_recovery",
@@ -101,11 +100,14 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             self.assertEqual(gates[gate]["status"], "unproven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
         self.assertEqual(gates["integrated_resource_bounds"]["status"], "proven")
+        self.assertEqual(gates["six_fixture_matrix"]["status"], "proven")
+        self.assertEqual(gates["warm_sequence"]["status"], "proven")
+        self.assertEqual(gates["old_request_changed_profile_rejection"]["status"], "proven")
 
     def test_next_step_preserves_process_completeness_and_no_retry(self):
         step = self.matrix['next_step']
         self.assertEqual(
-            step['kind'], 'resolve_required_q04_fresh_output_equality'
+            step['kind'], 'evidence_only_compatible_reuse'
         )
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
@@ -114,35 +116,27 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertFalse(step['acceptance_standard_change'])
         self.assertTrue(step['unchanged_rerun_forbidden'])
         self.assertTrue((ROOT / step['evidence']).is_file())
-        self.assertEqual(step['pending_graph_fixture_acceptance'], 'unproven')
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'PASS_SEQUENCE_RECYCLE_AND_INTEGRATED_RESOURCE_ONLY_FRESH_OUTPUT_EQUALITY_PENDING',
+            'PASS_CHANGED_PROFILE_OLD_REQUEST_REJECTION_AND_ORIGINAL_REPLAY_ONLY',
         )
-        self.assertEqual(step['run_identity'], 'q04-warm-pod-cgroup-20260922-ag')
-        self.assertEqual(step['workflows_completed'], 5)
-        self.assertEqual(step['group_requests'], 29)
+        self.assertEqual(step['run_identity'], 'q04-profile-pod-cgroup-20260924-ak')
+        self.assertEqual(step['workflows_completed'], 3)
+        self.assertEqual(step['samples'], 725)
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
         self.assertTrue(step['process_attribution_complete'])
         self.assertTrue(step['cgroup_resource_complete'])
-        self.assertTrue(step['peak_sample_attribution_complete'])
         self.assertTrue(step['qualification_complete'])
         self.assertEqual(step['incomplete_sample_indexes'], [])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = Q04 / 'pod-topology-v32/first-window-evidence'
-        diagnosis = json.loads((evidence / 'RUNNER-DIAGNOSIS.json').read_text())
-        self.assertEqual(diagnosis['resource_summary']['incomplete_samples'], 0)
-        self.assertTrue(
-            diagnosis['resource_summary']['process_attribution_complete']
-        )
-        cleanup = json.loads((evidence / 'controller/outer-cleanup.json').read_text())
-        self.assertEqual(
-            cleanup['disposition'], 'CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED'
-        )
+        evidence = json.loads((Q04 / 'pod-topology-v36/first-window-evidence/INDEPENDENT-VERIFICATION.json').read_text())
+        self.assertEqual(evidence['resource']['gate_status'], 'PASS')
+        self.assertEqual(evidence['terminal']['manifest_status'], 'PASS_CANDIDATE')
+        self.assertEqual([row['status'] for row in evidence['workflows']], ['complete', 'failed', 'complete'])
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()

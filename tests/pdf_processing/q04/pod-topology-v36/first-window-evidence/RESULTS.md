@@ -1,0 +1,11 @@
+# Q04 AK changed-profile rejection result
+
+**PASS for old native request rejection under a changed profile and exact replay on its original route only. #51 remains open.** One controlled execution used `q04-profile-pod-cgroup-20260924-ak` and prefix `q04/profile-pod-cgroup-20260924-ak/`. No automatic retry or threshold change occurred. [Independent verification](INDEPENDENT-VERIFICATION.json) records the three histories, resource gate and terminal inventory.
+
+All 11 pre-inference gates passed. Fresh native completed 51/51 pages and matched the frozen v3 full graph and AI document digest. The same request under the changed `native-evidence` profile returned business `failed/worker_method_mismatch`, `processing_complete=false`, zero registered pages and no processing result. Its Temporal history ended `WORKFLOW_EXECUTION_COMPLETED` with one expected non-retryable `ActivityTaskFailed` event. The runtime checked that the retained original plan still held the original profile. The same request then replayed through the original profile, completed 51/51 pages, and retained the original processing result and exact document digest.
+
+The strict collector retained **725 complete process/cgroup samples** with a maximum gap of **0.461830 s** (limit one second). The all-sample gate passed, including terminal cleanup markers, with zero PSI, OOM or 4 GiB cgroup violations. The outer VM controller retained 724 samples, minimum available memory 5,153,230,848 bytes and maximum cgroup use 2,091,339,776 bytes. Workload exit was zero.
+
+The 61-file terminal inventory passed independent exact-file-set, SHA-256 and readback checks. Owned Pod, Deployment and ConfigMaps were removed with UID checks. The AK evidence PVC `q04-pod-cgroup-ak-evidence-20260924-ak` remains Bound with UID `bf58f03d-24c9-4549-beda-8fb7d4323149`; all historical PVCs and object prefixes remain retained. A post-run read-only check found all 32 held Deployments exact and off.
+
+This qualifies changed-profile rejection of an old accepted request under the current v3 producer. It does not qualify evidence-only compatible new-request reuse, real assembly/method invalidation, required-relationship interruption, active telemetry-loss abort, or in-flight process/Pod recovery.

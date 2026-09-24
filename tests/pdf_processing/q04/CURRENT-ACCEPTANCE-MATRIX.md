@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Current through AJ execution and independent terminal verification; machine authority:
+Current through AK execution and independent terminal verification; machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -25,6 +25,12 @@ AJ passed current-v3 YOLO07, AIMA08, ACL09 and Keynote10 fresh/restored/exact
 replay with full registered-page counts and exact frozen graphs. 07/08 documents
 equaled AH warm output. All 772 process/cgroup samples and terminal cleanup
 passed. See [AJ results](pod-topology-v35/first-window-evidence/RESULTS.md).
+
+AK passed old native request rejection under a changed current-v3 profile,
+followed by exact replay on the original route. The expected business failure
+had `worker_method_mismatch`, zero registered pages and no processing result;
+the original replay completed 51/51 pages. All 725 process/cgroup samples and
+terminal cleanup passed. See [AK results](pod-topology-v36/first-window-evidence/RESULTS.md).
 
 YOLO M (`d1701d3`) passed all three modes with 15 pages and four required OCR
 components, approved two-pair graph equivalence, `max_requests=1`, THP-disabled
@@ -57,7 +63,7 @@ execution, reuse and interruption behavior require requalification.
 | Current evidence-only compatible reuse | unproven | Q03 proof belongs to its original execution path |
 | Real assembly/method invalidation | unproven | AI native matrix did not run the changed-method case |
 | Old request original route | proven | ACL window c re-read retained Keynote binding |
-| Changed profile rejects old request | unproven | Local compatibility only |
+| Changed profile rejects old request | **proven** | AK changed profile rejected the exact old request; original-route replay retained its result |
 | Current required-relationship interruption/retry/replay | unproven | Q03 historical owned-child proof, not current lifecycle/Pod recovery |
 | Fixed warm sequence and request20 recycle | **proven** | AH proves sequence/recycle/resources; AI and AJ prove exact fresh-output equality for all four AH warm fixtures |
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
@@ -205,6 +211,13 @@ execution, reuse and interruption behavior require requalification.
   independent exact-set/hash/readback; owned runtime was removed, AJ PVC remains
   Bound, and all 32 held Deployments remain exact/off. See
   [AJ results](pod-topology-v35/first-window-evidence/RESULTS.md).
+- AK: one controlled native fresh/changed-profile old-request/original replay
+  sequence passed. The expected negative business result had one non-retryable
+  failed Activity, `worker_method_mismatch`, zero registered pages and no
+  processing result; original replay remained complete and byte-identical.
+  All 725 process/cgroup samples, 61 terminal inventory entries and cleanup
+  passed; AK PVC remains Bound and the 32 held Deployments remain exact/off.
+  See [AK results](pod-topology-v36/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -215,10 +228,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 
 ## Next execution
 
-The next bounded test should target one of the remaining rejection or recovery
-gates: changed-profile rejection, real assembly/method invalidation,
-required-relationship interruption/retry/replay, active telemetry-loss, or
-process/Pod recovery. Each runtime needs a fresh
+The next bounded test should target one of the remaining gates: evidence-only
+compatible reuse, real assembly/method invalidation, required-relationship
+interruption/retry/replay, active telemetry-loss, or process/Pod recovery.
+Each runtime needs a fresh
 identity/prefix, unchanged guards, one controlled execution and no automatic
 retry. #51 is not ready for integration or closure; ticket updates remain
 unpublished drafts.

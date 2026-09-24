@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "88d3743",
+    "commit": "872bbc3",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-matrix-pod-cgroup-20260924-aj"
+    "runtime_identity": "q04-profile-pod-cgroup-20260924-ak"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -340,11 +340,12 @@
     },
     {
       "id": "old_request_changed_profile_rejection",
-      "status": "unproven",
-      "reason": "Local compatibility tests cover rejection, but the actual changed-profile native runtime case has not run.",
+      "status": "proven",
+      "reason": "AK submitted the exact accepted native request under a changed current-v3 profile; the business result failed worker_method_mismatch with zero registered pages and no processing result. The original plan remained unchanged and original-route exact replay completed with the original result. All resource and terminal gates passed.",
       "evidence": [
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
-        "tests/pdf_processing/q04/evidence/compatibility.log"
+        "tests/pdf_processing/q04/evidence/compatibility.log",
+        "tests/pdf_processing/q04/pod-topology-v36/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -502,13 +503,8 @@
     "latest": "tests/pdf_processing/q04/pod-topology-v32/first-window-evidence/RESULTS.md"
   },
   "next_step": {
-    "kind": "current_v3_remaining_fixture_matrix",
-    "fixtures": [
-      "07",
-      "08",
-      "09",
-      "10"
-    ],
+    "kind": "evidence_only_compatible_reuse",
+    "fixture": "native",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -518,8 +514,8 @@
     "historical_failure_preserved": true,
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/pod-topology-v34/first-window-evidence/RESULTS.md",
-    "remaining_gate": "YOLO/AIMA current-v3 warm equality and ACL/Keynote current-v3 applicability, then invalidation and recovery"
+    "evidence": "tests/pdf_processing/q04/pod-topology-v36/first-window-evidence/RESULTS.md",
+    "remaining_gate": "A new native request with evidence-only profile change must reuse checked upstream work, produce new downstream identity, and pass exact current-v3 output; method invalidation and recovery follow separately."
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -548,6 +544,32 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
+    "kind": "execute_v3_changed_profile_rejection",
+    "run_identity": "q04-profile-pod-cgroup-20260924-ak",
+    "execution_commit": "872bbc3",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v36/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v36/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_profile_pod_cgroup_ak.py",
+    "runtime_result": "PASS_CHANGED_PROFILE_OLD_REQUEST_REJECTION_AND_ORIGINAL_REPLAY_ONLY",
+    "workflows_completed": 3,
+    "samples": 725,
+    "incomplete_sample_indexes": [],
+    "psi_oom_memory_floor_deadline_stop": false,
+    "cleanup": "proven_with_pvc_retained",
+    "process_attribution_complete": true,
+    "cgroup_resource_complete": true,
+    "qualification_complete": true,
+    "old_request_changed_profile_rejection": "proven",
+    "original_route_replay": "proven"
+  },
+  "previous_execution": {
     "kind": "execute_v3_wiki_native_matrix",
     "run_identity": "q04-matrix-pod-cgroup-20260924-ai",
     "execution_commit": "714dc97",
@@ -572,34 +594,5 @@
     "qualification_complete": true,
     "wiki_native_fresh_output_equality": "proven",
     "yolo_aima_fresh_output_equality": "pending"
-  },
-  "previous_execution": {
-    "kind": "execute_v3_exact_graph_warm_sequence",
-    "run_identity": "q04-warm-pod-cgroup-20260924-ah",
-    "execution_commit": "b8174f5",
-    "runtime_authorized": true,
-    "runtime_started": true,
-    "automatic_retry": false,
-    "single_execution": true,
-    "keep_current_guard": true,
-    "historical_failure_preserved": true,
-    "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v33/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v33/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_warm_pod_cgroup_ah.py",
-    "runtime_result": "PASS_EXACT_GRAPH_SEQUENCE_RECYCLE_RESOURCE_ONLY_FRESH_OUTPUT_EQUALITY_PENDING",
-    "workflows_completed": 5,
-    "group_requests": 29,
-    "request_recycles": 1,
-    "samples": 1349,
-    "incomplete_sample_indexes": [],
-    "psi_oom_memory_floor_deadline_stop": false,
-    "cleanup": "proven_with_pvc_retained",
-    "unclassified_cgroup_transition_indexes": [],
-    "peak_sample_attribution_complete": true,
-    "process_attribution_complete": true,
-    "cgroup_resource_complete": true,
-    "qualification_complete": true,
-    "fresh_output_equality": "pending"
   }
 }
