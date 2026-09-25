@@ -2,9 +2,11 @@
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 from pathlib import Path
+import psutil
 import signal
 import subprocess
 import time
@@ -13,6 +15,73 @@ from candidate.yolo_reviewed_window import evaluate_resource_gate
 from consumer import require
 from pod_durable_evidence import write_once
 from sentinel.aima_attribution_telemetry_q import StrictAttributionCollector
+
+
+def publish_worker_proof(root: Path, measurement: Path, generation: int,
+                         worker: subprocess.Popen) -> bool:
+    target = root / f'worker-{generation}'
+    ready_path = target / 'ready.json'
+    sample_path = target / 'samples.jsonl'
+    proof_path = measurement / 'worker-proof.json'
+    if proof_path.exists():
+        return True
+    if not ready_path.exists() or not sample_path.exists():
+        return False
+    ready_raw = ready_path.read_bytes()
+    ready = json.loads(ready_raw)
+    with sample_path.open('rb') as stream:
+        first = stream.readline()
+    if not first.endswith(b'\n'):
+        return False
+    sample = json.loads(first)
+    process = psutil.Process(ready['pid'])
+    require(ready['generation'] == sample['generation'] == generation
+            and sample['time'] <= ready['time']
+            and ready['config_sha256'] == hashlib.sha256(
+                (root / 'config.json').read_bytes()).hexdigest()
+            and worker.pid == ready['pid']
+            and process.create_time() == ready['created']
+            and any('q04/worker_bc.py' in arg for arg in process.cmdline()),
+            'Activity worker ownership proof changed')
+    write_once(proof_path, {
+        'generation': generation, 'worker_pid': ready['pid'],
+        'worker_created': ready['created'],
+        'ready_sha256': hashlib.sha256(ready_raw).hexdigest(),
+        'first_sample_sha256': hashlib.sha256(first).hexdigest(),
+        'config_sha256': hashlib.sha256((root / 'config.json').read_bytes()).hexdigest(),
+        'published_at': time.time()}, volume_root=root.parents[1])
+    return True
+
+
+def hold_requested_parser(root: Path, measurement: Path, generation: int,
+                          worker: subprocess.Popen):
+    request_path = measurement / 'hold-request.json'
+    proof_path = measurement / 'held-parser.json'
+    if not request_path.exists() or proof_path.exists():
+        return
+    request = json.loads(request_path.read_text())
+    require(request.get('run_id') == 'q04-pod-loss-pod-cgroup-20260925-bf'
+            and request.get('generation') == generation
+            and type(request.get('child_pid')) is int
+            and request['child_pid'] > 0
+            and isinstance(request.get('old_pod_uid'), str)
+            and request['old_pod_uid']
+            and isinstance(request.get('requested_at'), (int, float)),
+            'Activity parser hold request identity changed')
+    child = psutil.Process(request['child_pid'])
+    require(worker.pid in [ancestor.pid for ancestor in child.parents()]
+            and 'pdf_processing.warm_child' in child.cmdline(),
+            'in-flight parser ownership changed')
+    os.kill(child.pid, signal.SIGSTOP)
+    deadline = time.monotonic() + 3
+    while child.status() != psutil.STATUS_STOPPED:
+        require(time.monotonic() < deadline, 'owned parser hold deadline')
+        time.sleep(.02)
+    write_once(proof_path, {'run_id': request['run_id'],
+        'generation': generation, 'parser_pid': child.pid,
+        'old_pod_uid': request['old_pod_uid'],
+        'worker_pid': worker.pid, 'parser_stopped': True,
+        'held_at': time.time()}, volume_root=root.parents[1])
 
 
 async def run(config_path: Path, root: Path, generation: int) -> None:
@@ -52,6 +121,8 @@ async def run(config_path: Path, root: Path, generation: int) -> None:
         try:
             while worker.poll() is None and not stop.is_set():
                 collector.require_healthy()
+                publish_worker_proof(root, measurement, generation, worker)
+                hold_requested_parser(root, measurement, generation, worker)
                 marker = measurement / 'stop-request.json'
                 if marker.exists():
                     request = json.loads(marker.read_text())

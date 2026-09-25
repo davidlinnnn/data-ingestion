@@ -20,7 +20,8 @@ ROOT = EVIDENCE + '/state/' + PHASE
 class MailboxController:
     def __init__(self, kube, coordinator: dict, deployment: dict,
                  worker_pod: dict, output: Path, *, deadline: float,
-                 check_abort=lambda: None):
+                 check_abort=lambda: None, bundle: Path | None = None,
+                 capacity_path: Path | None = None):
         self.kube = kube
         self.coordinator = coordinator
         self.deployment = deployment
@@ -28,6 +29,7 @@ class MailboxController:
         self.output = output
         self.deadline = deadline
         self.check_abort = check_abort
+        self.bundle, self.capacity_path = bundle, capacity_path
         self.worker_transports = []
         self.handled = set()
         self.transition_started = None
@@ -74,26 +76,16 @@ class MailboxController:
             raise ValueError('Activity Pod UID/container changed')
 
     def _worker_proof(self, pod: dict, generation: int) -> dict:
-        directory = ROOT + f'/worker-{generation}'
-        program = """import hashlib,json,psutil,sys,time
-from pathlib import Path
-directory=Path(sys.argv[1]);ready_raw=(directory/'ready.json').read_bytes();ready=json.loads(ready_raw)
-with (directory/'samples.jsonl').open('rb') as stream:first=stream.readline()
-assert first.endswith(b'\\n')
-sample=json.loads(first)
-assert ready['generation']==sample['generation']==int(sys.argv[2])
-assert sample['time']<=ready['time'] and 0<=time.time()-ready['time']<=1
-assert ready['config_sha256']==hashlib.sha256((directory.parent/'config.json').read_bytes()).hexdigest()
-worker=psutil.Process(ready['pid'])
-assert worker.create_time()==ready['created'] and any('q04/worker_bc.py' in arg for arg in worker.cmdline())
-print(json.dumps({'worker_pid':ready['pid'],'worker_created':ready['created'],
- 'ready_sha256':hashlib.sha256(ready_raw).hexdigest(),
- 'first_sample_sha256':hashlib.sha256(first).hexdigest()}))
-"""
-        return json.loads(self.kube.run(['exec', pod['pod_name'], '--',
-            '/experiment/.venv/bin/python', '-c', program,
-            directory, str(generation)],
-            timeout=reviewed.remaining_timeout(self.deadline, 15, 'worker proof')))
+        path = ROOT + f'-measurement/worker-{generation}/worker-proof.json'
+        program = ("from pathlib import Path;print(Path(" + repr(path)
+                   + ").read_text())")
+        proof = json.loads(self.kube.exec_python(self.coordinator['pod_name'],
+            program, timeout=reviewed.remaining_timeout(self.deadline, 15,
+                'worker proof')))
+        if (proof.get('generation') != generation
+                or not 0 <= time.time() - proof['published_at'] <= 1):
+            raise ValueError('Activity worker proof stale or wrong generation')
+        return proof
 
     def start_worker(self, generation: int, pod: dict) -> dict:
         self.check_abort()
@@ -106,7 +98,7 @@ print(json.dumps({'worker_pid':ready['pid'],'worker_created':ready['created'],
         transport = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
         self.worker_transports.append((transport, log))
         deadline = min(self.deadline, time.time() + 90)
-        ready_path = ROOT + f'/worker-{generation}/ready.json'
+        ready_path = ROOT + f'-measurement/worker-{generation}/worker-proof.json'
         ready_program = ("from pathlib import Path;print('yes' if Path("
                          + repr(ready_path) + ").exists() else 'no')")
         while time.time() < deadline:
@@ -152,6 +144,29 @@ print(json.dumps({'worker_pid':ready['pid'],'worker_created':ready['created'],
             time.sleep(.2)
         raise TimeoutError('Activity worker did not stop')
 
+    def prepare_replacement(self, pod: dict):
+        """Populate the new Pod's emptyDir before its measured worker starts."""
+        self.check_abort()
+        self._verify_worker_pod(pod)
+        if self.bundle is None or self.capacity_path is None:
+            raise ValueError('replacement inputs unavailable')
+        with (self.output / 'replacement-bundle-copy.log').open('x') as log:
+            subprocess.run(self.kube.base + ['cp', str(self.bundle),
+                pod['pod_name'] + ':/q04-control/inputs'],
+                check=True, timeout=180, stdout=log, stderr=subprocess.STDOUT)
+        for name, raw in (('capacity.json', self.capacity_path.read_bytes()),
+                          ('pod-identity.json', json.dumps(pod).encode())):
+            program = ("import sys;from pathlib import Path;"
+                       "Path('/q04-control/" + name
+                       + "').open('xb').write(sys.stdin.buffer.read())")
+            self.kube.run(['exec', '-i', pod['pod_name'], '--',
+                '/experiment/.venv/bin/python', '-c', program],
+                input=raw.decode(),
+                timeout=reviewed.remaining_timeout(self.deadline, 30,
+                    'replacement input staging'))
+        self._verify_worker_pod(pod)
+        self.check_abort()
+
     def process_once(self):
         self.check_abort()
         for kind, generation in (('stop', 0), ('drain', 2), ('start', 1)):
@@ -179,6 +194,7 @@ print(json.dumps({'worker_pid':ready['pid'],'worker_created':ready['created'],
                         self.output / 'replacement', deadline=self.deadline,
                         check_abort=self.check_abort)
                     self.worker_pod = replacement
+                    self.prepare_replacement(replacement)
                     self.reply(kind, generation, {**proof,
                         **self.start_worker(2, replacement)})
                 finally:

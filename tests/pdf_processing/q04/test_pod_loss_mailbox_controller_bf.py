@@ -1,6 +1,7 @@
 """Mailbox stop must win over a pending start/drain and clean the Activity Pod."""
 
 from pathlib import Path
+import json
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -9,6 +10,33 @@ from sentinel.pod_loss_mailbox_controller_bf import MailboxController
 
 
 class MailboxControllerTest(unittest.TestCase):
+    def test_replacement_emptydir_inputs_staged_before_worker(self):
+        class Kube:
+            base = ['kubectl']
+            def __init__(self):
+                self.writes = []
+            def run(self, args, **kwargs):
+                self.writes.append((args, kwargs['input']))
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            bundle = root / 'bundle'
+            bundle.mkdir()
+            capacity = root / 'capacity.json'
+            capacity.write_text(json.dumps({'ends_at': 100}))
+            kube = Kube()
+            controller = MailboxController(kube, {'pod_name': 'coordinator'},
+                {'metadata': {'uid': 'deployment'}}, {'pod_name': 'old'}, root,
+                deadline=10**11, bundle=bundle, capacity_path=capacity)
+            pod = {'pod_name': 'new', 'pod_uid': 'new-uid'}
+            with patch.object(controller, '_verify_worker_pod') as verify, \
+                 patch('sentinel.pod_loss_mailbox_controller_bf.subprocess.run') as cp:
+                controller.prepare_replacement(pod)
+            cp.assert_called_once()
+            self.assertEqual(len(kube.writes), 2)
+            self.assertEqual(json.loads(kube.writes[0][1]), {'ends_at': 100})
+            self.assertEqual(json.loads(kube.writes[1][1]), pod)
+            self.assertEqual(verify.call_count, 2)
+
     def test_stop_before_adoption_still_cleans_owned_activity_pod(self):
         with tempfile.TemporaryDirectory() as raw:
             controller = MailboxController(object(), {'pod_name': 'coordinator'},

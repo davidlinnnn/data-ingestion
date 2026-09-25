@@ -36,31 +36,43 @@ def wait_old_sample(kube, coordinator: str, requested_at: float,
     raise TimeoutError('old Pod lacked a complete sample after drain request')
 
 
-def hold_owned_parser(kube, old: dict, child_pid: int, *, deadline: float):
-    """Freeze only the in-flight parser descended from this exact worker."""
-    ready = EVIDENCE + '/state/' + PHASE + '/worker-1/ready.json'
-    program = """import json,os,psutil,signal,sys,time
-from pathlib import Path
-ready=json.loads(Path(sys.argv[1]).read_text());child_pid=int(sys.argv[2])
-parent=psutil.Process(ready['pid'])
-assert parent.create_time()==ready['created']
-assert any('q04/worker_bc.py' in arg for arg in parent.cmdline())
-child=psutil.Process(child_pid)
-assert parent.pid in [ancestor.pid for ancestor in child.parents()]
-assert 'pdf_processing.warm_child' in child.cmdline()
-os.kill(child_pid,signal.SIGSTOP)
-deadline=time.monotonic()+3
-while child.status()!=psutil.STATUS_STOPPED:
- assert time.monotonic()<deadline
- time.sleep(.02)
-print(json.dumps({'worker_pid':parent.pid,'parser_pid':child_pid,'parser_stopped':True}))
-"""
-    held = json.loads(kube.run(['exec', old['pod_name'], '--',
-        '/experiment/.venv/bin/python', '-c', program, ready, str(child_pid)],
-        timeout=reviewed.remaining_timeout(deadline, 15, 'owned parser hold')))
-    if held.get('parser_pid') != child_pid or held.get('parser_stopped') is not True:
-        raise ValueError('in-flight owned parser hold unproven')
-    return held
+def hold_owned_parser(kube, coordinator: str, old: dict, child_pid: int,
+                      *, deadline: float, check_abort=lambda: None):
+    """Ask the already-sampled Activity supervisor to freeze its owned parser."""
+    measurement = EVIDENCE + '/state/' + PHASE + '-measurement/worker-1'
+    request = {'run_id': 'q04-pod-loss-pod-cgroup-20260925-bf',
+               'generation': 1, 'child_pid': child_pid,
+               'old_pod_uid': old['pod_uid'], 'requested_at': time.time()}
+    write = ("import json,sys;from pathlib import Path;"
+             "sys.path.insert(0,'/workspace/tests/pdf_processing/q04');"
+             "from pod_durable_evidence import write_once;"
+             "write_once(Path(" + repr(measurement + '/hold-request.json')
+             + "),json.loads(sys.stdin.read()),volume_root=Path("
+             + repr(EVIDENCE) + "))")
+    check_abort()
+    kube.run(['exec', '-i', coordinator, '--',
+        '/experiment/.venv/bin/python', '-c', write],
+        input=json.dumps(request),
+        timeout=reviewed.remaining_timeout(deadline, 15, 'owned parser hold request'))
+    read = ("import json;from pathlib import Path;p=Path("
+            + repr(measurement + '/held-parser.json')
+            + ");print(p.read_text() if p.exists() else '{}')")
+    while time.time() < deadline:
+        check_abort()
+        held = json.loads(kube.exec_python(coordinator, read,
+            timeout=reviewed.remaining_timeout(deadline, 10,
+                'owned parser hold proof')))
+        if held:
+            if (held.get('run_id') != request['run_id']
+                    or held.get('generation') != 1
+                    or held.get('old_pod_uid') != old['pod_uid']
+                    or held.get('parser_pid') != child_pid
+                    or held.get('parser_stopped') is not True
+                    or held.get('held_at', 0) < request['requested_at']):
+                raise ValueError('in-flight owned parser hold unproven')
+            return held
+        time.sleep(.1)
+    raise TimeoutError('in-flight owned parser hold deadline')
 
 
 def drain_worker(kube, deployment: dict, old: dict, coordinator: str,
@@ -79,7 +91,8 @@ def drain_worker(kube, deployment: dict, old: dict, coordinator: str,
             or current['container_id'] != old['container_id']):
         raise ValueError('old Activity Pod identity changed before deletion')
     check_abort()
-    held = hold_owned_parser(kube, old, request['child_pid'], deadline=deadline)
+    held = hold_owned_parser(kube, coordinator, old, request['child_pid'],
+                             deadline=deadline, check_abort=check_abort)
     check_abort()
     sample = wait_old_sample(kube, coordinator, request['requested_at'], deadline,
                              check_abort=check_abort)

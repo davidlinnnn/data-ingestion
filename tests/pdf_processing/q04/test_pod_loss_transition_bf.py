@@ -1,7 +1,9 @@
 """A Pod-loss transition must fence the old UID before any scale/delete."""
 
 from pathlib import Path
+import json
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -24,6 +26,26 @@ class FakeKube:
 
 
 class TransitionTest(unittest.TestCase):
+    def test_parser_hold_uses_coordinator_mailbox_only(self):
+        class Kube:
+            def __init__(self):
+                self.calls = []
+                self.request = None
+            def run(self, args, **kwargs):
+                self.calls.append(('run', args))
+                self.request = json.loads(kwargs['input'])
+            def exec_python(self, pod, program, **kwargs):
+                self.calls.append(('exec_python', pod))
+                return json.dumps({**self.request, 'parser_pid': 99,
+                    'parser_stopped': True, 'held_at': time.time()})
+        kube = Kube()
+        proof = transition.hold_owned_parser(kube, 'coordinator',
+            {'pod_uid': 'old-uid', 'pod_name': 'measured-worker'}, 99,
+            deadline=time.time() + 10)
+        self.assertTrue(proof['parser_stopped'])
+        self.assertEqual(kube.calls[0][1][2], 'coordinator')
+        self.assertEqual(kube.calls[1], ('exec_python', 'coordinator'))
+
     def test_wrong_old_uid_rejected_before_kubernetes_operation(self):
         kube = FakeKube()
         with tempfile.TemporaryDirectory() as raw:

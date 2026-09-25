@@ -15,7 +15,9 @@ if str(Q04) not in sys.path:
     sys.path.insert(0, str(Q04))
 
 import pod_topology_bf as topology
+from candidate.yolo_reviewed_window import evaluate_resource_gate
 from sentinel import run_yolo_pod_cgroup_p as reviewed
+from sentinel.object_monitor_bf import ObjectMonitor
 from sentinel.pod_loss_mailbox_controller_bf import MailboxController
 from telemetry import check_sample
 
@@ -49,6 +51,7 @@ def authorization_scope() -> dict:
         'workload_seconds': 825, 'cleanup_seconds': 300,
         'sample_interval_seconds': .25, 'cgroup_guard_bytes': 4_294_967_296,
         'container_hard_limit_bytes': 5_368_709_120,
+        'object_limit_bytes': 536_870_912,
         'vm_runtime_floor_bytes': 1_610_612_736,
         'activity_deployment': topology.DEPLOYMENT,
         'coordinator_deployment': topology.COORDINATOR_DEPLOYMENT,
@@ -66,6 +69,8 @@ def build_runner_manifest() -> dict:
         'runner': Path(__file__),
         'mailbox_controller': Path(__file__).with_name('pod_loss_mailbox_controller_bf.py'),
         'pod_transition': Path(__file__).with_name('pod_loss_transition_bf.py'),
+        'object_monitor': Path(__file__).with_name('object_monitor_bf.py'),
+        'object_probe': Path(__file__).with_name('object_cgroup_probe_bf.py'),
         'activity_supervisor': Q04 / 'pod_activity_supervisor_bf.py',
         'coordinator_supervisor': Q04 / 'pod_workload_bf.py',
         'coordinator_bridge': Q04 / 'pod_loss_bridge_bf.py',
@@ -372,6 +377,55 @@ def export_evidence(kube, coordinator: dict, volume: dict, *, success: bool):
     return archive
 
 
+def readback_objects(kube, coordinator: dict) -> dict:
+    program = """import boto3,hashlib,json
+prefix='q04/pod-loss-pod-cgroup-20260925-bf/'
+s3=boto3.client('s3',endpoint_url='http://objects:9000')
+listed=[]
+for page in s3.get_paginator('list_objects_v2').paginate(Bucket='t09a',Prefix=prefix):
+ listed.extend(page.get('Contents',[]))
+assert listed and all(item['Key'].startswith(prefix) for item in listed)
+objects=[]
+for item in listed:
+ response=s3.get_object(Bucket='t09a',Key=item['Key'])
+ digest=hashlib.sha256();size=0
+ for chunk in response['Body'].iter_chunks(chunk_size=1048576):
+  digest.update(chunk);size+=len(chunk)
+ assert size==item['Size']==response['ContentLength']
+ assert response['ETag']==item['ETag']
+ objects.append({'key':item['Key'],'bytes':size,'sha256':digest.hexdigest(),
+  'etag':item['ETag']})
+again=[]
+for page in s3.get_paginator('list_objects_v2').paginate(Bucket='t09a',Prefix=prefix):
+ again.extend((item['Key'],item['Size'],item['ETag']) for item in page.get('Contents',[]))
+assert sorted(again)==sorted((item['Key'],item['Size'],item['ETag']) for item in listed)
+print(json.dumps({'prefix':prefix,'bucket':'t09a','objects':objects},sort_keys=True))
+"""
+    value = json.loads(kube.exec_python(coordinator['pod_name'], program,
+        timeout=180))
+    if (value.get('prefix') != PREFIX or value.get('bucket') != 't09a'
+            or not value.get('objects')
+            or any(not row['key'].startswith(PREFIX)
+                   or row['bytes'] < 0 or len(row['sha256']) != 64
+                   for row in value['objects'])):
+        raise ValueError('BF independent object readback incomplete')
+    (OUT / 'object-readback.json').write_text(json.dumps(value, indent=2) + '\n')
+    return {'objects': len(value['objects']),
+            'bytes': sum(row['bytes'] for row in value['objects']),
+            'inventory_sha256': sha(canonical(value['objects']))}
+
+
+def validate_old_resource_rows(rows: list[dict]):
+    # The deleted Pod cannot write terminal cleanup markers or a summary. Reuse
+    # the unchanged per-sample resource gate without treating those as a pass.
+    gate = evaluate_resource_gate(rows, {},
+                                  limit_bytes=authorization_scope()['cgroup_guard_bytes'])
+    if any(gate[name] for name in (
+            'incomplete_sample_indexes', 'memory_violations',
+            'oom_violations', 'psi_violations')):
+        raise ValueError('BF old Pod all-sample resource gate failed')
+
+
 def validate_archive(archive: Path) -> dict:
     with tarfile.open(archive) as tar:
         files = {member.name.removeprefix('./'): tar.extractfile(member).read()
@@ -435,6 +489,7 @@ def validate_archive(archive: Path) -> dict:
                    for earlier, later in zip(old_rows, old_rows[1:]))
             or old_rows[-1]['time'] < request['requested_at']):
         raise ValueError('BF old Pod process attribution incomplete')
+    validate_old_resource_rows(old_rows)
     measurement = f'state/{PHASE}-measurement/worker-2/'
     summary = record(measurement + 'resource-attribution-summary.json')
     gate = record(measurement + 'all-sample-resource-gate.json')
@@ -513,7 +568,7 @@ def execute(args):
     owned = []
     worker_deployment = coordinator_deployment = None
     worker = coordinator = volume = None
-    controller = monitor = workload = None
+    controller = monitor = object_monitor = workload = None
     primary = None
     success = False
     try:
@@ -523,23 +578,30 @@ def execute(args):
         def check_monitor():
             if monitor is not None and monitor.error is not None:
                 raise monitor.error
+            if object_monitor is not None and object_monitor.error is not None:
+                raise object_monitor.error
         controller = MailboxController(kube, coordinator, worker_deployment,
                                        worker, OUT, deadline=deadline,
-                                       check_abort=check_monitor)
+                                       check_abort=check_monitor, bundle=BUNDLE,
+                                       capacity_path=OUT / 'capacity.json')
         monitor = RuntimeMonitor(kube, coordinator, controller, capacity)
+        object_monitor = ObjectMonitor(kube, OUT / 'object-pressure.jsonl',
+            authorization_scope()['object_limit_bytes'])
+        (OUT / 'object-observer-start.json').write_text(json.dumps(
+            object_monitor.start(seconds=int(capacity['ends_at'] - time.time())),
+            indent=2) + '\n')
         workload = subprocess.Popen(kube.base + ['exec', coordinator['pod_name'],
             '--', *workload_argv()],
             stdout=(OUT / 'workload-transport.log').open('x'),
             stderr=subprocess.STDOUT)
         monitor.start()
         while workload.poll() is None:
-            if monitor.error is not None:
-                raise monitor.error
+            check_monitor()
             controller.process_once()
             if time.time() >= deadline:
                 raise TimeoutError('BF workload deadline')
             time.sleep(.1)
-        monitor.stop()
+        check_monitor()
         if workload.returncode != 0:
             raise RuntimeError('BF workload failed; no retry')
         if controller.handled != {('start', 1), ('drain', 2), ('stop', 0)}:
@@ -548,6 +610,12 @@ def execute(args):
         archive = export_evidence(kube, coordinator, volume, success=True)
         (OUT / 'independent-verification.json').write_text(
             json.dumps(validate_archive(archive), indent=2) + '\n')
+        (OUT / 'object-readback-summary.json').write_text(json.dumps(
+            readback_objects(kube, coordinator), indent=2) + '\n')
+        check_monitor()
+        monitor.stop()
+        (OUT / 'object-observer-summary.json').write_text(json.dumps(
+            object_monitor.stop(), indent=2) + '\n')
         success = True
     except BaseException as error:
         primary = error
@@ -562,6 +630,12 @@ def execute(args):
                 monitor.stop()
             except BaseException as error:
                 cleanup['errors']['monitor'] = repr(error)
+        if object_monitor is not None and object_monitor.process is not None:
+            try:
+                if not object_monitor.cleaned:
+                    cleanup['object_observer'] = object_monitor.stop()
+            except BaseException as error:
+                cleanup['errors']['object_observer'] = repr(error)
         if workload is not None and workload.poll() is None:
             try:
                 stop_program = reviewed.stop_owned_supervisor_program(120).replace(

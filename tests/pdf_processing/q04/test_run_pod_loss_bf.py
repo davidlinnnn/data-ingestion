@@ -77,6 +77,33 @@ class BFOfflineTest(unittest.TestCase):
             self.assertRegex(str(monitor.error), 'transport close failed')
             self.assertEqual(len(monitor.rows), 1)
 
+    def test_deleted_pod_psi_sample_rejects_qualification(self):
+        row = {'attribution_complete': True,
+               'process_coverage': {'status': 'complete'},
+               'memory_current': 1024,
+               'memory_events': {'oom': 0, 'oom_kill': 0, 'oom_group_kill': 0},
+               'memory_pressure_raw': 'full avg10=0.00 avg60=0.00 total=0\n'}
+        bf.validate_old_resource_rows([row])
+        with self.assertRaisesRegex(ValueError, 'all-sample resource gate'):
+            bf.validate_old_resource_rows([
+                row, {**row, 'memory_pressure_raw':
+                      'full avg10=0.01 avg60=0.00 total=1\n'}])
+
+    def test_object_readback_program_is_valid_and_scoped(self):
+        test = self
+        class Kube:
+            def exec_python(self, pod, program, **kwargs):
+                compile(program, '<object-readback>', 'exec')
+                test.assertEqual(pod, 'coordinator')
+                test.assertIn(bf.PREFIX, program)
+                return json.dumps({'bucket': 't09a', 'prefix': bf.PREFIX,
+                    'objects': [{'key': bf.PREFIX + 'registered/one',
+                        'bytes': 3, 'sha256': 'a' * 64, 'etag': 'etag'}]})
+        with tempfile.TemporaryDirectory() as tmp, patch.object(bf, 'OUT', Path(tmp)):
+            self.assertEqual(bf.readback_objects(Kube(),
+                {'pod_name': 'coordinator'})['objects'], 1)
+            self.assertTrue((Path(tmp) / 'object-readback.json').exists())
+
     def test_exact_launch_contract(self):
         self.assertEqual(bf.offline_check()['status'], 'PASS_OFFLINE_ONLY')
         command = bf.workload_argv()
