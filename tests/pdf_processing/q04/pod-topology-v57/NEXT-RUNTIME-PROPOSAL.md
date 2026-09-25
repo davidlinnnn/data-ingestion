@@ -10,4 +10,4 @@ In the new window, verify `activity-memory-policy.json` for each Activity genera
 
 The BG runner/projection and 37 BG tests are now built and pass locally. The user explicitly authorized the requested **one temporary BG 1 GiB MinIO trial with restoration to 512 MiB** in the immediately following conversation turn. This authorization does not cover automatic retry, a permanent shared-service change, relaxed acceptance gates or a second BG window. The runtime must still pass final source/manifest review and live preflight before the single attempt.
 
-Live execution is presently blocked: automatic approval review twice rejected changing the persistent BG runner's `runtime_authorized` gate to true, despite the follow-up authorization. The gate remains false; do not attempt indirect execution.
+The user subsequently instructed execution of this exact next step. Automatic approval review accepted enabling the BG runner's one-window gate; the runner manifest is now `runtime_authorized=true`. No other identity is authorized by this change.
