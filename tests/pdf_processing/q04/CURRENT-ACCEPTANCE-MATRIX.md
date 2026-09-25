@@ -332,6 +332,16 @@ execution, reuse and interruption behavior require requalification.
   Raw evidence, prefix and Bound PVC remain retained; owned cleanup and 32
   exact/off held Deployments were verified. See
   [AX results](pod-topology-v49/first-window-evidence/RESULTS.md).
+- AY: the exact object-service cgroup was sampled during one controlled
+  process-drain window. Temporal business result completed 51 pages after
+  worker generation 1→2, but the unchanged node PSI guard stopped before
+  terminal qualification. At the stop, MinIO was within 372 KiB of its
+  512 MiB limit; its cgroup full PSI and `memory.events max` rose together
+  with node-full PSI, without OOM. A post-stop 28.676-second observer sample
+  interval also invalidated full-window coverage. The terminal manifest is
+  incomplete, so process recovery remains **unproven**. Owned cleanup passed;
+  PVC, prefix and raw evidence are retained. See
+  [AY results](pod-topology-v50/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -343,10 +353,12 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 AS proves the required relationship interruption/recovery/replay gate; AU
-proves active telemetry-loss fail-closed. AX corrected AW's oracle and reached
-exact native output after process drain, but a real colocated object-service
-node PSI burst stopped terminal qualification. Investigate that pressure before
-another process run. Actual Pod drain/recovery and the supported operating-bounds
+proves active telemetry-loss fail-closed. AX and AY reached complete native
+business output after process drain, but real node PSI bursts stopped terminal
+qualification. AY measured concurrent limit events and full PSI in the exact
+colocated object-service cgroup; the precise object operation remains unknown.
+Investigate that service's operating bounds before another process run. Actual
+Pod drain/recovery and the supported operating-bounds
 handoff to #44 remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
