@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through AU execution; AO, AP, AQ, AR and AT stop evidence independently verified. Machine authority:
+Acceptance rows current through BD execution; historical stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -83,7 +83,7 @@ execution, reuse and interruption behavior require requalification.
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
 | Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
-| Process drain/recovery | unproven | Current runtime phase not run |
+| Process drain/recovery | **unproven** | AX–BD reached exact 51-page business completion, but outer PSI, runner configuration/transport or strict process-attribution failures prevented terminal qualification |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
 | Supported-bounds report to #44 | unproven | Depends on remaining rows |
 
@@ -342,6 +342,32 @@ execution, reuse and interruption behavior require requalification.
   incomplete, so process recovery remains **unproven**. Owned cleanup passed;
   PVC, prefix and raw evidence are retained. See
   [AY results](pod-topology-v50/first-window-evidence/RESULTS.md).
+- AZ: a copied runner referred to a nonexistent `RETAINED-REPLAZ.json`;
+  pre-inference configuration failed before workflow or object writes. Its
+  identity was consumed and cleanup passed. See
+  [AZ results](pod-topology-v51/first-window-evidence/RESULTS.md).
+- BA: native process drain and exact 51-page business output passed, but two
+  worker Ready timestamps preceded their first resource sample by under one
+  millisecond. Strict coverage failed; terminal manifest stayed incomplete.
+  See [BA results](pod-topology-v52/first-window-evidence/RESULTS.md).
+- BB: a readiness fix modified a file pinned by the frozen AH bundle, so
+  provenance correctly rejected configuration before inference. The fix was
+  moved to a distinct projected worker path. See
+  [BB results](pod-topology-v53/first-window-evidence/RESULTS.md).
+- BC: distinct worker readiness passed, native process recovery completed
+  51/51 pages with exact document and graph, and all 838 process samples
+  passed. The local terminal mirror stopped before copying the full 22.5 MB
+  document, so terminal qualification failed. See
+  [BC results](pod-topology-v54/first-window-evidence/RESULTS.md).
+- BD: the full forensic inventory of 46 files passed independent size/hash
+  verification, and native process recovery again completed 51/51 pages with
+  exact output. One of 836 strict process samples saw an owned short-lived
+  child disappear before PSS read during drain; attribution was incomplete
+  and the terminal manifest correctly remained `INCOMPLETE`. The normal
+  Pod-local drain-signal helper is the likely child, but its command was not
+  captured. Cleanup and host-observer coverage passed; the 768 MiB MinIO
+  trial recorded 14 new max events, no OOM. See
+  [BD results](pod-topology-v55/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -353,13 +379,15 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 AS proves the required relationship interruption/recovery/replay gate; AU
-proves active telemetry-loss fail-closed. AX and AY reached complete native
-business output after process drain, but real node PSI bursts stopped terminal
-qualification. AY measured concurrent limit events and full PSI in the exact
-colocated object-service cgroup; the precise object operation remains unknown.
-Investigate that service's operating bounds before another process run. Actual
-Pod drain/recovery and the supported operating-bounds
-handoff to #44 remain open.
+proves active telemetry-loss fail-closed. BC and BD reached complete exact
+native process-recovery business output but did not pass terminal qualification.
+BE serializes the likely transient drain-signal helper with the existing
+process lifecycle lock and retains BD's complete-inventory mirror condition;
+its new identity may run once after offline tests and review. No attribution
+or resource threshold is relaxed. The 768 MiB MinIO trial avoided the earlier
+outer PSI stop in BA–BD, but BD's 14 max events mean a permanent operating
+bound is not yet proven. Actual Pod drain/recovery and the supported
+operating-bounds handoff to #44 remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
