@@ -27,6 +27,17 @@ async def cleanup_owned_work(parser, scratch):
     shutil.rmtree(scratch, ignore_errors=True)
 
 
+async def publish_ready_after_first_sample(out, identity, first_sample, sampler_error):
+    await asyncio.wait_for(first_sample.wait(), timeout=10)
+    require(not sampler_error, 'sampler failed before worker readiness')
+    with (out/'samples.jsonl').open() as stream:
+        first = json.loads(stream.readline())
+    now = time.time()
+    require(first['time'] <= now, 'worker sample must precede readiness')
+    (out/'ready.tmp').write_text(json.dumps({**identity, 'time': now}))
+    (out/'ready.tmp').replace(out/'ready.json')
+
+
 async def run(config_path, out, generation):
     import psutil
     import boto3
@@ -54,6 +65,7 @@ async def run(config_path, out, generation):
     scratch = (Path('/scratch')/config['run_id']/str(generation)) if config.get('pod_namespace') else out/'scratch'
     workers = []
     sampler_error = []
+    first_sample = asyncio.Event()
 
     async def observe():
         try:
@@ -65,10 +77,12 @@ async def run(config_path, out, generation):
                     row.update(worker_pid=os.getpid(), generation=generation,
                         parser=dict(parser.observation), parser_count=parser.count)
                     stream.write(json.dumps(row)+'\n')
+                    first_sample.set()
                     await asyncio.sleep(.5)
                 stream.write(json.dumps({**sample(), 'worker_pid': os.getpid(), 'generation': generation, 'parser': dict(parser.observation), 'parser_count': parser.count})+'\n')
         except BaseException as error:
             sampler_error.append(type(error).__name__)
+            first_sample.set()
             stop.set()
 
     sampler = asyncio.create_task(observe())
@@ -81,8 +95,7 @@ async def run(config_path, out, generation):
                     max_concurrent_activities=1, graceful_shutdown_timeout=timedelta(seconds=config['drain_seconds']))
                 await stack.enter_async_context(worker)
                 workers.append(worker)
-            (out/'ready.tmp').write_text(json.dumps({**identity, 'time': time.time()}))
-            (out/'ready.tmp').replace(out/'ready.json')
+            await publish_ready_after_first_sample(out, identity, first_sample, sampler_error)
             await stop.wait()
     finally:
         stop.set()

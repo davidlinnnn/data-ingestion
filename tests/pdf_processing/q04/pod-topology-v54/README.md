@@ -1,0 +1,5 @@
+# Q04 BC: isolated worker readiness fix with frozen AH bundle
+
+BB correctly failed pre-inference because modifying AH-pinned shared `worker.py` drifted the frozen bundle. BC restores that file unchanged and projects a distinct `worker_bc.py` with the first-sample-before-Ready ordering fix. A distinct `host_bc.py` launches it; the reviewed process-drain candidate imports that host. Local tests run `verify_bundle` on the original AH bundle, check projected workspace imports and exercise both normal and failed-sampler readiness. The frozen producer and current-v3 native oracle remain unchanged.
+
+BC uses a fresh run ID, prefix, PVC, Deployment and observer name. The 768 MiB MinIO trial stays on the existing Deployment with exact Pod UID `a84384de-8292-439e-b8ce-d75a70816d3f`; the observer checks that UID, cgroup and limit. All Q04 node PSI, Pod/cgroup, OOM and memory guards, deadlines, process-drain injection, cleanup and no-retry policy are unchanged. One controlled run can qualify process recovery only. Pod drain/recovery and #51 closure require separate evidence.

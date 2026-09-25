@@ -7,7 +7,7 @@ import tempfile
 import time
 import unittest
 
-from worker import publish_ready_after_first_sample
+from worker_bc import publish_ready_after_first_sample
 
 
 class WorkerReadinessTest(unittest.TestCase):
