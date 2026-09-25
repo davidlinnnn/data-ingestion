@@ -90,12 +90,9 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
                     self.assertIn(status, allowed)
             for evidence in row["evidence"]:
                 self.assertTrue((ROOT / evidence).is_file(), evidence)
-        for gate in (
-            "process_drain_recovery",
-            "pod_drain_recovery",
-            "supported_operating_bounds_report",
-        ):
+        for gate in ("pod_drain_recovery", "supported_operating_bounds_report"):
             self.assertEqual(gates[gate]["status"], "unproven")
+        self.assertEqual(gates["process_drain_recovery"]["status"], "proven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
         self.assertEqual(gates["integrated_resource_bounds"]["status"], "proven")
         self.assertEqual(gates["six_fixture_matrix"]["status"], "proven")
@@ -106,10 +103,10 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(gates["required_relationship_interrupt_retry_replay"]["status"], "proven")
         self.assertEqual(gates["active_telemetry_loss_guard"]["status"], "proven")
 
-    def test_next_step_preserves_process_completeness_and_no_retry(self):
+    def test_next_step_preserves_pod_loss_boundary_and_no_retry(self):
         step = self.matrix['next_step']
         self.assertEqual(
-            step['kind'], 'process_drain_recovery'
+            step['kind'], 'pod_drain_recovery'
         )
         self.assertFalse(step['runtime_started'])
         self.assertTrue(step['runtime_authorized'])
@@ -121,11 +118,13 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'PASS_ACTIVE_TELEMETRY_LOSS_GUARD_ONLY',
+            'PASS_NATIVE_WORKER_PROCESS_DRAIN_RECOVERY_ONLY',
         )
-        self.assertEqual(step['run_identity'], 'q04-telemetry-loss-pod-cgroup-20260925-au')
-        self.assertEqual(step['expected_failed_business_workflows'], 1)
-        self.assertEqual(step['resource_samples'], 323)
+        self.assertEqual(step['run_identity'], 'q04-process-drain-pod-cgroup-20260925-be')
+        self.assertEqual(step['business_pages'], 51)
+        self.assertEqual(step['resource_samples'], 834)
+        self.assertEqual(step['terminal_inventory_files'], 50)
+        self.assertTrue(step['minio_trial_limit_restored'])
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
@@ -135,11 +134,10 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         self.assertEqual(step['incomplete_sample_indexes'], [])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        evidence = json.loads((Q04 / 'pod-topology-v46/first-window-evidence/INDEPENDENT-VERIFICATION.json').read_text())
-        self.assertEqual(evidence['status'], 'PASS')
-        self.assertEqual(evidence['terminal_inventory_files'], 42)
-        self.assertEqual(evidence['resource_samples'], 323)
-        self.assertEqual(evidence['business_status'], 'failed')
+        self.assertTrue((Q04 / 'pod-topology-v56/first-window-evidence/RESULTS.md').is_file())
+        previous = self.matrix['previous_execution']
+        self.assertEqual(previous['runtime_result'], 'PASS_ACTIVE_TELEMETRY_LOSS_GUARD_ONLY')
+        self.assertEqual(previous['run_identity'], 'q04-telemetry-loss-pod-cgroup-20260925-au')
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()

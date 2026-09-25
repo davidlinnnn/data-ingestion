@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "dff321c",
+    "commit": "8e03e92",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-telemetry-loss-pod-cgroup-20260925-au"
+    "runtime_identity": "q04-process-drain-pod-cgroup-20260925-be"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -468,32 +468,35 @@
     },
     {
       "id": "process_drain_recovery",
-      "status": "unproven",
-      "reason": "Local controller tests and R3 topology are supporting evidence only; no Q04 actual-process drain has run.",
+      "status": "proven",
+      "reason": "BE single-run native owned worker-process drain after five registered pages: generations 1→2, pages 6–10 attempt 2, exact 51-page document/graph, 834 complete process/cgroup samples, 50 hashed terminal inventory members and owned cleanup passed.",
       "evidence": [
         "tests/pdf_processing/q04/PHASE-TWO-RESULTS.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
         "tests/pdf_processing/q04/reconciliation/DRAIN-REQUALIFICATION.md",
-        "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json"
+        "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json",
+        "tests/pdf_processing/q04/pod-topology-v56/first-window-evidence/RESULTS.md"
       ]
     },
     {
       "id": "pod_drain_recovery",
       "status": "unproven",
-      "reason": "Owned Pod topology and UID-fenced terminal cleanup are proven by M/N; actual interruption of an in-flight Pod and recovery from durable checkpoints have not run.",
+      "reason": "BE proves worker-process drain only. The Q04 coordinator still shared that Pod; actual in-flight Kubernetes Pod loss/replacement requires a separate coordinator and has not run.",
       "evidence": [
         "tests/pdf_processing/q04/preflight/README.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
         "tests/pdf_processing/q04/reconciliation/DRAIN-REQUALIFICATION.md",
-        "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json"
+        "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json",
+        "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md"
       ]
     },
     {
       "id": "supported_operating_bounds_report",
       "status": "unproven",
-      "reason": "The final handoff to #44 awaits the remaining fixture, warm/resource and recovery evidence.",
+      "reason": "Current-v3 measured-bounds draft exists, with Pod loss and MinIO sustainable limit explicitly unqualified; mainline review and #44 publication have not occurred.",
       "evidence": [
-        "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md"
+        "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
+        "tests/pdf_processing/q04/SUPPORTED-BOUNDS-HANDOFF-DRAFT.md"
       ]
     }
   ],
@@ -501,7 +504,7 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v45/first-window-evidence/RESULTS.md",
+    "latest": "tests/pdf_processing/q04/pod-topology-v55/first-window-evidence/RESULTS.md",
     "am": {
       "run_identity": "q04-method-pod-cgroup-20260924-am",
       "status": "INCOMPLETE",
@@ -519,10 +522,16 @@
       "status": "FAIL_VERIFIER_AFTER_EXPECTED_GUARD",
       "reason": "Telemetry-loss abort and cleanup succeeded, but AT verifier rejected Temporal COMPLETED despite failed business payload; terminal qualification did not seal. Evidence and PVC retained.",
       "evidence": "tests/pdf_processing/q04/pod-topology-v45/first-window-evidence/RESULTS.md"
+    },
+    "bd": {
+      "run_identity": "q04-process-drain-pod-cgroup-20260925-bd",
+      "status": "INCOMPLETE_ATTRIBUTION",
+      "reason": "One transient owned child disappeared during strict process snapshot; exact command not captured. Business output was exact but terminal qualification failed. Cleanup, PVC and prefix retained.",
+      "evidence": "tests/pdf_processing/q04/pod-topology-v55/first-window-evidence/RESULTS.md"
     }
   },
   "next_step": {
-    "kind": "process_drain_recovery",
+    "kind": "pod_drain_recovery",
     "runtime_authorized": true,
     "runtime_started": false,
     "automatic_retry": false,
@@ -532,8 +541,8 @@
     "historical_failure_preserved": true,
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/pod-topology-v46/first-window-evidence/RESULTS.md",
-    "remaining_gate": "Exercise actual process drain/recovery, then in-flight Pod drain/recovery and #44 supported-bounds handoff. AQ exact OCR process-level cause remains unknown."
+    "evidence": "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
+    "remaining_gate": "Implement and review a split-coordinator in-flight Pod-loss window with exact UID/process/cgroup evidence, then one fresh-identity run; hand measured bounds and unqualified conditions to #44. No new runtime is prepared yet."
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -562,6 +571,38 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
+    "kind": "process_drain_recovery",
+    "run_identity": "q04-process-drain-pod-cgroup-20260925-be",
+    "execution_commit": "cc3259d",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v56/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v56/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_process_drain_pod_cgroup_be_guarded.py",
+    "runtime_result": "PASS_NATIVE_WORKER_PROCESS_DRAIN_RECOVERY_ONLY",
+    "business_pages": 51,
+    "resource_samples": 834,
+    "host_samples": 1388,
+    "terminal_inventory_files": 50,
+    "incomplete_sample_indexes": [],
+    "psi_oom_memory_floor_deadline_stop": false,
+    "cleanup": "proven_with_pvc_retained",
+    "process_attribution_complete": true,
+    "cgroup_resource_complete": true,
+    "qualification_complete": true,
+    "process_drain_recovery": "proven",
+    "minio_trial_limit_restored": true,
+    "remaining": [
+      "pod_drain_recovery",
+      "supported_operating_bounds_report"
+    ]
+  },
+  "previous_execution": {
     "kind": "active_telemetry_loss_guard",
     "run_identity": "q04-telemetry-loss-pod-cgroup-20260925-au",
     "execution_commit": "dff321c",
@@ -593,7 +634,7 @@
       "supported_operating_bounds_report"
     ]
   },
-  "previous_execution": {
+  "earlier_execution": {
     "kind": "execute_current_required_relationship_interrupt_recovery_replay",
     "run_identity": "q04-relationship-pod-cgroup-20260925-as",
     "execution_commit": "3a3c163",

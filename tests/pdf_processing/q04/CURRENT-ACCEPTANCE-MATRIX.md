@@ -85,7 +85,7 @@ execution, reuse and interruption behavior require requalification.
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
 | Process drain/recovery | **proven** | BE owned worker-process drain at five pages, generations 1→2, pages 6–10 retried on attempt 2, exact 51-page output, 834 complete process samples, full 50-file terminal inventory and cleanup |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
-| Supported-bounds report to #44 | draft only | Measured current-v3 limits and unqualified Pod-loss/object-service conditions are recorded in `SUPPORTED-BOUNDS-HANDOFF-DRAFT.md`; mainline review/publication pending |
+| Supported-bounds report to #44 | unproven | Measured current-v3 limits and unqualified Pod-loss/object-service conditions are drafted in `SUPPORTED-BOUNDS-HANDOFF-DRAFT.md`; mainline review/publication pending |
 
 ## Stop-cause and evidence record
 
