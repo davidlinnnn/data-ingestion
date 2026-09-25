@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through BD execution; historical stop evidence independently verified. Machine authority:
+Acceptance rows current through BE execution; historical stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -83,7 +83,7 @@ execution, reuse and interruption behavior require requalification.
 | Original ACL/Keynote bounded process resources | proven | Exact small-fixture producer/runtime only |
 | Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
-| Process drain/recovery | **unproven** | AX–BD reached exact 51-page business completion, but outer PSI, runner configuration/transport or strict process-attribution failures prevented terminal qualification |
+| Process drain/recovery | **proven** | BE owned worker-process drain at five pages, generations 1→2, pages 6–10 retried on attempt 2, exact 51-page output, 834 complete process samples, full 50-file terminal inventory and cleanup |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
 | Supported-bounds report to #44 | unproven | Depends on remaining rows |
 
@@ -368,6 +368,15 @@ execution, reuse and interruption behavior require requalification.
   captured. Cleanup and host-observer coverage passed; the 768 MiB MinIO
   trial recorded 14 new max events, no OOM. See
   [BD results](pod-topology-v55/first-window-evidence/RESULTS.md).
+- BE: one controlled native worker-process drain/recovery passed all 11
+  pre-inference gates, exact 51-page document and graph, 834 complete
+  process/cgroup samples, 50 terminal inventory hashes, read-only host
+  observer and UID-fenced cleanup. Worker generations 1→2 retried pages
+  6–10 on attempt 2. The temporary 768 MiB MinIO limit still recorded eight
+  new max events without OOM, so no permanent service bound is inferred.
+  The process-recovery row is **proven only for this exact producer/runtime**;
+  Pod-loss recovery remains separate. See
+  [BE results](pod-topology-v56/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -379,15 +388,15 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 AS proves the required relationship interruption/recovery/replay gate; AU
-proves active telemetry-loss fail-closed. BC and BD reached complete exact
-native process-recovery business output but did not pass terminal qualification.
-BE serializes the likely transient drain-signal helper with the existing
-process lifecycle lock and retains BD's complete-inventory mirror condition;
-its new identity may run once after offline tests and review. No attribution
-or resource threshold is relaxed. The 768 MiB MinIO trial avoided the earlier
-outer PSI stop in BA–BD, but BD's 14 max events mean a permanent operating
-bound is not yet proven. Actual Pod drain/recovery and the supported
-operating-bounds handoff to #44 remain open.
+proves active telemetry-loss fail-closed; BE proves native **worker-process**
+drain/recovery under the exact frozen current-v3 producer. No attribution or
+resource threshold was relaxed. Actual in-flight **Pod loss/recovery** has not
+run and cannot be inferred from a child-process drain. The temporary 768 MiB
+MinIO trial avoided the earlier outer PSI stop, but BE's eight new max events
+and full PSI mean a permanent operating bound is not yet proven. Design and
+review the Pod-loss coordinator/injection with exact Pod UID fencing, then
+run once under a new identity. The supported operating-bounds handoff to #44
+and #51 integration review remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
