@@ -1,6 +1,7 @@
 """The measured Activity Pod publishes control proof without new execs."""
 
 import hashlib
+import asyncio
 import json
 from pathlib import Path
 import tempfile
@@ -13,6 +14,35 @@ import pod_activity_supervisor_bf as bf
 
 
 class ActivityControlTest(unittest.TestCase):
+    def test_activity_exec_disables_thp_before_worker_spawn(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'evidence/state/pod-loss-pod-cgroup-bf'
+            root.mkdir(parents=True)
+            config = root / 'config.json'
+            config.write_text(json.dumps({
+                'run_id': 'q04-pod-loss-pod-cgroup-20260925-bf',
+                'pod_namespace': 'pdf-t09a-validation',
+                'python': '/experiment/.venv/bin/python'}))
+            marker = root.parent / 'pod-loss-pod-cgroup-bf-measurement/worker-1/activity-memory-policy.json'
+            def spawn(*_args, **_kwargs):
+                self.assertEqual(json.loads(marker.read_text())['thp_disabled'], 1)
+                raise RuntimeError('stop before worker spawn')
+            read_text = Path.read_text
+            def read(path, *args, **kwargs):
+                if str(path) == '/proc/self/stat':
+                    return '1 (python) S ' + '0 ' * 22
+                return read_text(path, *args, **kwargs)
+            with patch.object(bf, 'disable_thp', create=True,
+                              return_value={'thp_disabled': 1,
+                                            'inherited_by_children': True}) as policy, \
+                 patch.object(bf, 'StrictAttributionCollector') as collector, \
+                 patch.object(Path, 'read_text', new=read), \
+                 patch.object(bf.subprocess, 'Popen', side_effect=spawn):
+                with self.assertRaisesRegex(RuntimeError, 'stop before worker spawn'):
+                    asyncio.run(bf.run(config, root, 1))
+            policy.assert_called_once()
+            collector.return_value.start.assert_called_once()
+
     def test_worker_proof_and_parser_hold_are_published_in_process(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / 'evidence/state/pod-loss-pod-cgroup-bf'

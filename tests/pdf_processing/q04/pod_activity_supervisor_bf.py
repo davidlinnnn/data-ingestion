@@ -14,6 +14,7 @@ import time
 from candidate.yolo_reviewed_window import evaluate_resource_gate
 from consumer import require
 from pod_durable_evidence import write_once
+from pod_workload_p import disable_thp
 from sentinel.aima_attribution_telemetry_q import StrictAttributionCollector
 
 
@@ -91,6 +92,8 @@ async def run(config_path: Path, root: Path, generation: int) -> None:
             and generation in (1, 2), 'Activity Pod supervisor identity changed')
     measurement = root.parent / (root.name + '-measurement') / f'worker-{generation}'
     measurement.mkdir(parents=True, exist_ok=False)
+    write_once(measurement / 'activity-memory-policy.json', disable_thp(),
+               volume_root=root.parents[1])
     collector = StrictAttributionCollector(
         measurement / 'resource-attribution.jsonl',
         measurement / 'resource-attribution-summary.json',
