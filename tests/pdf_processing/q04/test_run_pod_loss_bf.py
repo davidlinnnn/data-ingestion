@@ -127,10 +127,47 @@ class BFOfflineTest(unittest.TestCase):
                     'approval_reference': 'test'})())
             kubectl.assert_not_called()
 
-    def test_unreviewed_runtime_cannot_create_cluster_objects(self):
+    def test_wrong_scope_cannot_create_cluster_objects(self):
         with patch.object(bf.reviewed, 'Kubectl') as kubectl:
-            with self.assertRaisesRegex(RuntimeError, 'awaits complete'):
+            with self.assertRaisesRegex(ValueError, 'scope digest changed'):
                 bf.execute(type('Args', (), {'authorization_scope_sha256':
-                    bf.authorization_scope_sha256(), 'owner': 'test',
+                    'wrong', 'owner': 'test',
                     'approval_reference': 'test'})())
             kubectl.assert_not_called()
+
+    def test_failed_setup_restores_authorized_object_trial(self):
+        names = ('PHASE', 'RUN_IDENTITY', 'PREFIX', 'OUT', 'EVIDENCE',
+                 'EVIDENCE_DIRECTORY_NAME', 'NAMESPACE', 'NODE', 'DEPLOYMENT',
+                 'RUN_LABEL', 'pod_topology', 'authorization_scope_sha256')
+        previous = {name: getattr(bf.reviewed, name) for name in names}
+        self.addCleanup(lambda: [setattr(bf.reviewed, name, value)
+                                 for name, value in previous.items()])
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'bf'
+            manifest = Path(tmp) / 'manifest.json'
+            manifest.write_text('{"runtime_authorized": true}')
+            state = {'old_pod': {'pod_uid': 'old'}, 'trial_pod': None}
+            args = type('Args', (), {'authorization_scope_sha256':
+                bf.authorization_scope_sha256(), 'owner': 'test',
+                'approval_reference': 'test'})()
+            with patch.object(bf, 'OUT', out), \
+                 patch.object(bf, 'RUNNER_MANIFEST', manifest), \
+                 patch.object(bf, 'offline_check'), \
+                 patch.object(bf.reviewed, 'Kubectl', return_value=object()), \
+                 patch.object(bf.reviewed, 'build_capacity', return_value={
+                     'ends_at': time.time() + 1500}), \
+                 patch.object(bf.reviewed, 'verify_held_deployments'), \
+                 patch.object(bf.reviewed, 't09a_health'), \
+                 patch.object(bf.object_trial, 'capture', return_value=state), \
+                 patch.object(bf.object_trial, 'enter', side_effect=TimeoutError(
+                     'trial rollout timeout')) as enter, \
+                 patch.object(bf.object_trial, 'restore', return_value={
+                     'restored_limit': '512Mi'}) as restore, \
+                 patch.object(bf, 'setup') as setup:
+                with self.assertRaisesRegex(TimeoutError, 'trial rollout timeout'):
+                    bf.execute(args)
+            enter.assert_called_once()
+            setup.assert_not_called()
+            restore.assert_called_once()
+            self.assertEqual(json.loads((out / 'outer-cleanup.json').read_text())
+                             ['object_trial_restoration']['restored_limit'], '512Mi')

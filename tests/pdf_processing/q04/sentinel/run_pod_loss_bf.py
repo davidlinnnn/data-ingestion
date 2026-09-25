@@ -18,6 +18,7 @@ import pod_topology_bf as topology
 from candidate.yolo_reviewed_window import evaluate_resource_gate
 from sentinel import run_yolo_pod_cgroup_p as reviewed
 from sentinel.object_monitor_bf import ObjectMonitor
+from sentinel import object_limit_trial_bf as object_trial
 from sentinel.pod_loss_mailbox_controller_bf import MailboxController
 from telemetry import check_sample
 
@@ -51,7 +52,7 @@ def authorization_scope() -> dict:
         'workload_seconds': 825, 'cleanup_seconds': 300,
         'sample_interval_seconds': .25, 'cgroup_guard_bytes': 4_294_967_296,
         'container_hard_limit_bytes': 5_368_709_120,
-        'object_limit_bytes': 536_870_912,
+        'object_limit_bytes': object_trial.TRIAL_BYTES,
         'vm_runtime_floor_bytes': 1_610_612_736,
         'activity_deployment': topology.DEPLOYMENT,
         'coordinator_deployment': topology.COORDINATOR_DEPLOYMENT,
@@ -71,6 +72,7 @@ def build_runner_manifest() -> dict:
         'pod_transition': Path(__file__).with_name('pod_loss_transition_bf.py'),
         'object_monitor': Path(__file__).with_name('object_monitor_bf.py'),
         'object_probe': Path(__file__).with_name('object_cgroup_probe_bf.py'),
+        'object_limit_trial': Path(__file__).with_name('object_limit_trial_bf.py'),
         'activity_supervisor': Q04 / 'pod_activity_supervisor_bf.py',
         'coordinator_supervisor': Q04 / 'pod_workload_bf.py',
         'coordinator_bridge': Q04 / 'pod_loss_bridge_bf.py',
@@ -86,7 +88,7 @@ def build_runner_manifest() -> dict:
         'authorization_scope_sha256': authorization_scope_sha256(),
         'sources': {name: sha(path.read_bytes()) for name, path in paths.items()},
         'bundle_inputs_sha256': sha((BUNDLE / 'inputs.json').read_bytes()),
-        'runtime_authorized': False, 'automatic_retry': False}
+        'runtime_authorized': True, 'automatic_retry': False}
 
 
 def offline_check() -> dict:
@@ -566,12 +568,21 @@ def execute(args):
     (OUT / 'capacity.json').write_text(json.dumps(capacity, indent=2) + '\n')
     kube = reviewed.Kubectl()
     owned = []
+    trial = None
     worker_deployment = coordinator_deployment = None
     worker = coordinator = volume = None
     controller = monitor = object_monitor = workload = None
     primary = None
     success = False
     try:
+        reviewed.verify_held_deployments(kube)
+        reviewed.t09a_health(kube, OUT / 'health-before-object-trial.json',
+                            require_idle=True)
+        trial = object_trial.capture(kube)
+        (OUT / 'object-trial-before.json').write_text(json.dumps(trial, indent=2) + '\n')
+        object_trial.enter(kube, trial, deadline=min(time.time() + 120,
+                                                    capacity['ends_at'] - 300))
+        (OUT / 'object-trial-entered.json').write_text(json.dumps(trial, indent=2) + '\n')
         (worker_deployment, coordinator_deployment,
          worker, coordinator, volume) = setup(kube, capacity, owned)
         deadline = min(capacity['ends_at'] - 300, time.time() + 825)
@@ -667,6 +678,12 @@ def execute(args):
                 cleanup['errors'].update(objects['errors'])
             except BaseException as error:
                 cleanup['errors']['object_cleanup'] = repr(error)
+        if trial is not None:
+            try:
+                cleanup['object_trial_restoration'] = object_trial.restore(
+                    kube, trial, deadline=capacity['ends_at'] - 30)
+            except BaseException as error:
+                cleanup['errors']['object_trial_restoration'] = repr(error)
         try:
             reviewed.verify_held_deployments(kube)
             reviewed.t09a_health(kube, OUT / 'health-after.json', require_idle=True)
