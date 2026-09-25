@@ -377,6 +377,17 @@ execution, reuse and interruption behavior require requalification.
   The process-recovery row is **proven only for this exact producer/runtime**;
   Pod-loss recovery remains separate. See
   [BE results](pod-topology-v56/first-window-evidence/RESULTS.md).
+- BF: one split-Pod native window passed outer admission and all 11
+  pre-inference gates, then stopped on the unchanged node PSI guard during
+  parsing at zero registered pages, before Pod-loss injection. The rejecting
+  sample is retained; Temporal cancellation preceded its completed-but-failed
+  `activity_budget_exhausted` business result. MinIO's exact 1 GiB cgroup had
+  no max/PSI/OOM increase in this short run and was restored to 512 MiB.
+  Failure archive stability and the terminal manifest were incomplete because
+  worker-owned files changed during export/sealing; the retained PVC was
+  independently copied through a UID-fenced read-only recovery Pod. No Pod-loss
+  or supported-bound row is promoted. See
+  [BF results](pod-topology-v57/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -390,14 +401,13 @@ records under `sentinel/` and `pod-topology-v*/`.
 AS proves the required relationship interruption/recovery/replay gate; AU
 proves active telemetry-loss fail-closed; BE proves native **worker-process**
 drain/recovery under the exact frozen current-v3 producer. No attribution or
-resource threshold was relaxed. Actual in-flight **Pod loss/recovery** has not
-run and cannot be inferred from a child-process drain. The temporary 768 MiB
-MinIO trial avoided the earlier outer PSI stop, but BE's eight new max events
-and full PSI mean a permanent operating bound is not yet proven. Design and
-review the Pod-loss coordinator/injection with exact Pod UID fencing, then
-run once under a new identity. A measured-bounds draft and separate-Pod
-execution design are recorded locally; the #44 handoff and #51 integration
-review remain open.
+resource threshold was relaxed. BF exercised a separate coordinator and
+Activity Pod but stopped before its in-flight Pod-loss injection. Neither
+BE's 768 MiB object-service trial (eight max events/full PSI) nor BF's short
+1 GiB trial establishes a permanent object-service bound. Diagnose BF's node
+PSI burst and validate the repaired failure-export ordering offline before a
+fresh-identity Pod-loss window. The #44 handoff and #51 integration review
+remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the

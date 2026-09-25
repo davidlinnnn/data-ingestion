@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "8e03e92",
+    "commit": "7224960",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-process-drain-pod-cgroup-20260925-be"
+    "runtime_identity": "q04-pod-loss-pod-cgroup-20260925-bf"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -481,13 +481,14 @@
     {
       "id": "pod_drain_recovery",
       "status": "unproven",
-      "reason": "BE proves worker-process drain only. The Q04 coordinator still shared that Pod; actual in-flight Kubernetes Pod loss/replacement requires a separate coordinator and has not run.",
+      "reason": "BF separate-coordinator native window stopped on unchanged node PSI during parsing at zero registered pages, before in-flight Pod deletion/replacement; no Pod-loss pass.",
       "evidence": [
         "tests/pdf_processing/q04/preflight/README.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
         "tests/pdf_processing/q04/reconciliation/DRAIN-REQUALIFICATION.md",
         "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json",
-        "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md"
+        "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
+        "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md"
       ]
     },
     {
@@ -504,7 +505,7 @@
     "preserved": true,
     "index": "tests/pdf_processing/q04/sentinel/README.md",
     "not_counted_as_pass": true,
-    "latest": "tests/pdf_processing/q04/pod-topology-v55/first-window-evidence/RESULTS.md",
+    "latest": "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md",
     "am": {
       "run_identity": "q04-method-pod-cgroup-20260924-am",
       "status": "INCOMPLETE",
@@ -528,11 +529,17 @@
       "status": "INCOMPLETE_ATTRIBUTION",
       "reason": "One transient owned child disappeared during strict process snapshot; exact command not captured. Business output was exact but terminal qualification failed. Cleanup, PVC and prefix retained.",
       "evidence": "tests/pdf_processing/q04/pod-topology-v55/first-window-evidence/RESULTS.md"
+    },
+    "bf": {
+      "run_identity": "q04-pod-loss-pod-cgroup-20260925-bf",
+      "status": "STOP_NODE_PSI_BEFORE_POD_LOSS_TERMINAL_INCOMPLETE",
+      "reason": "Saved node PSI trigger during parsing, zero registered pages, no Pod-loss injection; first archive changed during export and retained PVC terminal readback is incomplete. MinIO restored; PVC and prefix retained.",
+      "evidence": "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md"
     }
   },
   "next_step": {
     "kind": "pod_drain_recovery",
-    "runtime_authorized": true,
+    "runtime_authorized": false,
     "runtime_started": false,
     "automatic_retry": false,
     "single_execution_after_review": true,
@@ -542,7 +549,7 @@
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
     "evidence": "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
-    "remaining_gate": "BF split-coordinator Pod-loss runner is prepared for offline checking but runtime-locked. Complete exact object-service cgroup observation, retained-object readback and review before one fresh-identity run; hand measured bounds and unqualified conditions to #44.",
+    "remaining_gate": "Diagnose BF node PSI burst and validate repaired failure-export ordering before a fresh-identity Pod-loss window; preserve unchanged guards and hand unqualified bounds to #44.",
     "prepared_runner_runtime_authorized": false,
     "prepared_runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bf.py"
   },
@@ -573,6 +580,38 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
+    "kind": "pod_drain_recovery",
+    "run_identity": "q04-pod-loss-pod-cgroup-20260925-bf",
+    "execution_commit": "7224960",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v57/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v57/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bf.py",
+    "runtime_result": "STOP_NODE_PSI_BEFORE_POD_LOSS_TERMINAL_INCOMPLETE",
+    "business_pages": 0,
+    "node_samples": 273,
+    "object_samples": 284,
+    "psi_full_avg10_trigger": 0.18,
+    "vm_available_at_stop": 6366519296,
+    "vm_oom_kill_at_stop": 0,
+    "minio_trial_limit_restored": true,
+    "object_prefix_items": 28,
+    "evidence_pvc_retained": true,
+    "pod_loss_injected": false,
+    "qualification_complete": false,
+    "remaining": [
+      "pod_drain_recovery",
+      "supported_operating_bounds_report"
+    ],
+    "runner_now_locked": true
+  },
+  "previous_execution": {
     "kind": "process_drain_recovery",
     "run_identity": "q04-process-drain-pod-cgroup-20260925-be",
     "execution_commit": "cc3259d",
@@ -600,38 +639,6 @@
     "process_drain_recovery": "proven",
     "minio_trial_limit_restored": true,
     "remaining": [
-      "pod_drain_recovery",
-      "supported_operating_bounds_report"
-    ]
-  },
-  "previous_execution": {
-    "kind": "active_telemetry_loss_guard",
-    "run_identity": "q04-telemetry-loss-pod-cgroup-20260925-au",
-    "execution_commit": "dff321c",
-    "runtime_authorized": true,
-    "runtime_started": true,
-    "automatic_retry": false,
-    "single_execution": true,
-    "keep_current_guard": true,
-    "historical_failure_preserved": true,
-    "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v46/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v46/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_telemetry_loss_pod_cgroup_au_guarded.py",
-    "runtime_result": "PASS_ACTIVE_TELEMETRY_LOSS_GUARD_ONLY",
-    "expected_failed_business_workflows": 1,
-    "resource_samples": 323,
-    "host_samples": 841,
-    "terminal_inventory_files": 42,
-    "incomplete_sample_indexes": [],
-    "psi_oom_memory_floor_deadline_stop": false,
-    "cleanup": "proven_with_pvc_retained",
-    "process_attribution_complete": true,
-    "cgroup_resource_complete": true,
-    "qualification_complete": true,
-    "active_telemetry_loss_guard": "proven",
-    "remaining": [
-      "process_drain_recovery",
       "pod_drain_recovery",
       "supported_operating_bounds_report"
     ]
@@ -664,5 +671,37 @@
     "qualification_complete": true,
     "required_relationship_interrupt_retry_replay": "proven",
     "ocr_phase_trace": "absent; AQ process-level cause unknown"
+  },
+  "previous_telemetry_loss_execution": {
+    "kind": "active_telemetry_loss_guard",
+    "run_identity": "q04-telemetry-loss-pod-cgroup-20260925-au",
+    "execution_commit": "dff321c",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v46/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v46/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_telemetry_loss_pod_cgroup_au_guarded.py",
+    "runtime_result": "PASS_ACTIVE_TELEMETRY_LOSS_GUARD_ONLY",
+    "expected_failed_business_workflows": 1,
+    "resource_samples": 323,
+    "host_samples": 841,
+    "terminal_inventory_files": 42,
+    "incomplete_sample_indexes": [],
+    "psi_oom_memory_floor_deadline_stop": false,
+    "cleanup": "proven_with_pvc_retained",
+    "process_attribution_complete": true,
+    "cgroup_resource_complete": true,
+    "qualification_complete": true,
+    "active_telemetry_loss_guard": "proven",
+    "remaining": [
+      "process_drain_recovery",
+      "pod_drain_recovery",
+      "supported_operating_bounds_report"
+    ]
   }
 }

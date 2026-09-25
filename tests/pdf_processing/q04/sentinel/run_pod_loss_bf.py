@@ -88,7 +88,7 @@ def build_runner_manifest() -> dict:
         'authorization_scope_sha256': authorization_scope_sha256(),
         'sources': {name: sha(path.read_bytes()) for name, path in paths.items()},
         'bundle_inputs_sha256': sha((BUNDLE / 'inputs.json').read_bytes()),
-        'runtime_authorized': True, 'automatic_retry': False}
+        'runtime_authorized': False, 'automatic_retry': False}
 
 
 def offline_check() -> dict:
@@ -510,12 +510,15 @@ def validate_archive(archive: Path) -> dict:
 
 
 def cleanup_owned_deployments(kube, owned: list[dict], *, deadline: float,
-                              errors: dict | None = None) -> dict:
+                              errors: dict | None = None,
+                              names: tuple[str, ...] | None = None) -> dict:
     result = {}
     errors = errors if errors is not None else {}
     for name, label in ((topology.DEPLOYMENT, topology.RUN_LABEL),
                         (topology.COORDINATOR_DEPLOYMENT,
                          topology.RUN_LABEL + '-coordinator')):
+        if names is not None and name not in names:
+            continue
         owner = next((row for row in owned
                       if row['kind'] == 'Deployment' and row['name'] == name), None)
         if owner is None:
@@ -659,14 +662,24 @@ def execute(args):
                     recovery_deadline=capacity['ends_at'] - 120)
             except BaseException as error:
                 cleanup['errors']['workload_transport'] = repr(error)
+        cleanup['deployments'] = {}
+        if not success:
+            try:
+                cleanup['deployments'].update(cleanup_owned_deployments(
+                    kube, owned, deadline=capacity['ends_at'] - 90,
+                    errors=cleanup['errors'], names=(topology.DEPLOYMENT,)))
+            except BaseException as error:
+                cleanup['errors']['worker_cleanup'] = repr(error)
         if coordinator is not None and volume is not None and not success:
             try:
                 export_evidence(kube, coordinator, volume, success=False)
             except BaseException as error:
                 cleanup['errors']['failure_evidence'] = repr(error)
         try:
-            cleanup['deployments'] = cleanup_owned_deployments(kube, owned,
-                deadline=capacity['ends_at'] - 90, errors=cleanup['errors'])
+            cleanup['deployments'].update(cleanup_owned_deployments(
+                kube, owned, deadline=capacity['ends_at'] - 90,
+                errors=cleanup['errors'], names=(topology.COORDINATOR_DEPLOYMENT,)
+                if not success else None))
         except BaseException as error:
             cleanup['errors']['run_owned_pods'] = repr(error)
         if owned and not any(key.startswith('run_owned_pods') for key in cleanup['errors']):
