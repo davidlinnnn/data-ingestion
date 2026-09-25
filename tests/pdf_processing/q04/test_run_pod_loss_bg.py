@@ -141,12 +141,17 @@ class BGOfflineTest(unittest.TestCase):
                 kubectl.assert_not_called()
 
     def test_completed_bg_identity_cannot_run_again(self):
-        with patch.object(bg.reviewed, 'Kubectl') as kubectl:
-            with self.assertRaisesRegex(RuntimeError, 'awaits complete'):
-                bg.execute(type('Args', (), {'authorization_scope_sha256':
-                    bg.authorization_scope_sha256(), 'owner': 'test',
-                    'approval_reference': 'test'})())
-            kubectl.assert_not_called()
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = Path(tmp) / 'manifest.json'
+            manifest.write_text('{"runtime_authorized": false}')
+            with patch.object(bg, 'RUNNER_MANIFEST', manifest), \
+                 patch.object(bg, 'offline_check'), \
+                 patch.object(bg.reviewed, 'Kubectl') as kubectl:
+                with self.assertRaisesRegex(RuntimeError, 'awaits complete'):
+                    bg.execute(type('Args', (), {'authorization_scope_sha256':
+                        bg.authorization_scope_sha256(), 'owner': 'test',
+                        'approval_reference': 'test'})())
+                kubectl.assert_not_called()
 
     def test_failed_setup_restores_authorized_object_trial(self):
         names = ('PHASE', 'RUN_IDENTITY', 'PREFIX', 'OUT', 'EVIDENCE',
