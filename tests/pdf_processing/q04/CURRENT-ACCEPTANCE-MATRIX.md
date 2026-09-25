@@ -84,7 +84,7 @@ execution, reuse and interruption behavior require requalification.
 | Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
 | Process drain/recovery | **proven** | BE owned worker-process drain at five pages, generations 1→2, pages 6–10 retried on attempt 2, exact 51-page output, 834 complete process samples, full 50-file terminal inventory and cleanup |
-| Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
+| Pod drain/recovery | unproven | BG injected one in-flight Pod loss and started Activity attempt 2 on a replacement Pod, but the workflow timed out before complete business output |
 | Supported-bounds report to #44 | unproven | Measured current-v3 limits and unqualified Pod-loss/object-service conditions are drafted in `SUPPORTED-BOUNDS-HANDOFF-DRAFT.md`; mainline review/publication pending |
 
 ## Stop-cause and evidence record
@@ -388,6 +388,17 @@ execution, reuse and interruption behavior require requalification.
   independently copied through a UID-fenced read-only recovery Pod. No Pod-loss
   or supported-bound row is promoted. See
   [BF results](pod-topology-v57/first-window-evidence/RESULTS.md).
+- BG: one fresh split-Pod window injected the in-flight Activity Pod loss
+  after five registered pages, confirmed old runtime/scratch absence and
+  started Activity attempt 2 on the replacement Pod. Both Activity processes
+  had THP disabled; node PSI/OOM stayed zero. Temporal's configured 180-second
+  execution timeout expired with 51 registered pages, 3/7 components and
+  `processing_complete=false`. A missing cleanup observation caused a
+  secondary resource-gate failure and misleading worker-stop timeout; local
+  corrections are tested but not live-qualified. MinIO's temporary 1 GiB
+  limit was restored to 512 MiB; BG PVC/prefix and failure evidence remain.
+  Neither Pod-loss nor supported-bounds row is promoted. See
+  [BG results](pod-topology-v58/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -401,12 +412,14 @@ records under `sentinel/` and `pod-topology-v*/`.
 AS proves the required relationship interruption/recovery/replay gate; AU
 proves active telemetry-loss fail-closed; BE proves native **worker-process**
 drain/recovery under the exact frozen current-v3 producer. No attribution or
-resource threshold was relaxed. BF exercised a separate coordinator and
-Activity Pod but stopped before its in-flight Pod-loss injection. Neither
-BE's 768 MiB object-service trial (eight max events/full PSI) nor BF's short
-1 GiB trial establishes a permanent object-service bound. Diagnose BF's node
-PSI burst and validate the repaired failure-export ordering offline before a
-fresh-identity Pod-loss window. The #44 handoff and #51 integration review
+resource threshold was relaxed. BG reached an in-flight Pod loss and
+replacement, but the 180-second Temporal execution timeout expired before
+complete business output. Its cleanup-observation tool defect is corrected
+locally and BG is locked against reuse. Review the existing workflow timeout
+against observed replacement time before proposing another fresh-identity
+window; do not treat it as a proven capacity or acceptance-standard change.
+Neither BE's 768 MiB nor the incomplete BF/BG 1 GiB trials establishes a
+permanent object-service bound. The #44 handoff and #51 integration review
 remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a

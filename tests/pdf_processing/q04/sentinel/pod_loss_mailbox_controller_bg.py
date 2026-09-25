@@ -131,15 +131,20 @@ class MailboxController:
         check = ("import json;from pathlib import Path;"
             "a=Path(" + repr(expected) + ");b=Path(" + repr(summary)
             + ");c=Path(" + repr(gate) + ");"
-            "print('yes' if a.exists() and b.exists() and c.exists()"
+            "ready=a.exists() and b.exists() and c.exists();"
+            "status=json.loads(c.read_text())['status'] if ready else None;"
+            "print('gate_failed' if ready and status!='PASS' else 'yes' if ready"
             " and json.loads(a.read_text())['parser_absent']"
             " and json.loads(a.read_text())['scratch_absent']"
             " and json.loads(b.read_text())['attribution_complete']"
-            " and json.loads(c.read_text())['status']=='PASS' else 'no')")
+            " else 'no')")
         stop_deadline = min(self.deadline, time.time() + 75)
         while time.time() < stop_deadline:
             self.check_abort()
-            if self.kube.exec_python(self.coordinator['pod_name'], check).strip() == 'yes':
+            state = self.kube.exec_python(self.coordinator['pod_name'], check).strip()
+            if state == 'gate_failed':
+                raise ValueError('Activity Pod resource gate failed')
+            if state == 'yes':
                 return
             time.sleep(.2)
         raise TimeoutError('Activity worker did not stop')

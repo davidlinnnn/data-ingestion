@@ -9,11 +9,27 @@ import time
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from unittest.mock import Mock
 
 import pod_activity_supervisor_bg as bg
 
 
 class ActivityControlTest(unittest.TestCase):
+    def test_cleanup_observation_requires_worker_stop_proof(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            collector = Mock()
+            with self.assertRaises(Exception):
+                bg.record_owned_cleanup(collector, root, 2)
+            stopped = root / 'worker-2/stopped.json'
+            stopped.parent.mkdir()
+            stopped.write_text(json.dumps({'generation': 2,
+                'parser_absent': True, 'scratch_absent': True}))
+            bg.record_owned_cleanup(collector, root, 2)
+            collector.observe.assert_called_once_with('owned_cleanup_finished',
+                source='pod_activity_supervisor_bg',
+                meaning='worker_returned_after_owned_cleanup')
+
     def test_activity_exec_disables_thp_before_worker_spawn(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / 'evidence/state/pod-loss-pod-cgroup-bg'

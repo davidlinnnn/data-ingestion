@@ -85,6 +85,17 @@ def hold_requested_parser(root: Path, measurement: Path, generation: int,
         'held_at': time.time()}, volume_root=root.parents[1])
 
 
+def record_owned_cleanup(collector, root: Path, generation: int) -> None:
+    stopped = json.loads((root / f'worker-{generation}/stopped.json').read_text())
+    require(stopped.get('generation') == generation
+            and stopped.get('parser_absent') is True
+            and stopped.get('scratch_absent') is True,
+            'Activity worker cleanup proof incomplete')
+    collector.observe('owned_cleanup_finished',
+                      source='pod_activity_supervisor_bg',
+                      meaning='worker_returned_after_owned_cleanup')
+
+
 async def run(config_path: Path, root: Path, generation: int) -> None:
     config = json.loads(config_path.read_text())
     require(config['run_id'] == 'q04-pod-loss-pod-cgroup-20260925-bg'
@@ -147,6 +158,7 @@ async def run(config_path: Path, root: Path, generation: int) -> None:
             primary = None
             try:
                 await collector.process_transition('controlled_worker_shutdown', stop_worker)
+                record_owned_cleanup(collector, root, generation)
             except BaseException as error:
                 primary = error
             outcome = collector.stop(expect_cancel=False,

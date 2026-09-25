@@ -3,6 +3,7 @@
 from pathlib import Path
 import json
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -10,6 +11,17 @@ from sentinel.pod_loss_mailbox_controller_bg import MailboxController
 
 
 class MailboxControllerTest(unittest.TestCase):
+    def test_finished_worker_with_failed_gate_reports_gate_failure(self):
+        class Kube:
+            def exec_python(self, _pod, program, **_kwargs):
+                compile(program, '<remote-check>', 'exec')
+                return 'gate_failed'
+        with tempfile.TemporaryDirectory() as raw:
+            controller = MailboxController(Kube(), {'pod_name': 'coordinator'},
+                {}, {}, Path(raw), deadline=time.time() + .3)
+            with self.assertRaisesRegex(ValueError, 'resource gate failed'):
+                controller._stop_current_worker(2)
+
     def test_replacement_emptydir_inputs_staged_before_worker(self):
         class Kube:
             base = ['kubectl']

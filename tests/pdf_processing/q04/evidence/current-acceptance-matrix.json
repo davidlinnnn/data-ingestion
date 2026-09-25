@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "7224960",
+    "commit": "73c82bb",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-pod-loss-pod-cgroup-20260925-bf"
+    "runtime_identity": "q04-pod-loss-pod-cgroup-20260925-bg"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -481,14 +481,15 @@
     {
       "id": "pod_drain_recovery",
       "status": "unproven",
-      "reason": "BF separate-coordinator native window stopped on unchanged node PSI during parsing at zero registered pages, before in-flight Pod deletion/replacement; no Pod-loss pass.",
+      "reason": "BG injected in-flight Activity Pod loss and replacement, but Temporal's 180-second execution timeout expired before complete 51-page/seven-component business output; no Pod-loss pass.",
       "evidence": [
         "tests/pdf_processing/q04/preflight/README.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
         "tests/pdf_processing/q04/reconciliation/DRAIN-REQUALIFICATION.md",
         "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json",
         "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
-        "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v58/RESULTS.md"
       ]
     },
     {
@@ -535,6 +536,12 @@
       "status": "STOP_NODE_PSI_BEFORE_POD_LOSS_TERMINAL_INCOMPLETE",
       "reason": "Saved node PSI trigger during parsing, zero registered pages, no Pod-loss injection; first archive changed during export and retained PVC terminal readback is incomplete. MinIO restored; PVC and prefix retained.",
       "evidence": "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md"
+    },
+    "bg": {
+      "run_identity": "q04-pod-loss-pod-cgroup-20260925-bg",
+      "status": "WORKFLOW_EXECUTION_TIMEOUT_AFTER_POD_LOSS",
+      "reason": "In-flight Pod loss and Activity attempt 2 occurred; 180-second workflow timeout left 51 registered pages, 3/7 components and incomplete business output. Cleanup-label tooling failure was secondary; MinIO restored and PVC/prefix retained.",
+      "evidence": "tests/pdf_processing/q04/pod-topology-v58/RESULTS.md"
     }
   },
   "next_step": {
@@ -549,9 +556,9 @@
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
     "evidence": "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
-    "remaining_gate": "Diagnose BF node PSI burst and validate repaired failure-export ordering before a fresh-identity Pod-loss window; preserve unchanged guards and hand unqualified bounds to #44.",
+    "remaining_gate": "Review the observed BG Pod replacement and incomplete work against the existing 180-second Temporal execution budget; preserve unchanged guards and use a fresh identity for any later window.",
     "prepared_runner_runtime_authorized": false,
-    "prepared_runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bf.py"
+    "prepared_runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bg.py"
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -581,8 +588,8 @@
   },
   "last_execution": {
     "kind": "pod_drain_recovery",
-    "run_identity": "q04-pod-loss-pod-cgroup-20260925-bf",
-    "execution_commit": "7224960",
+    "run_identity": "q04-pod-loss-pod-cgroup-20260925-bg",
+    "execution_commit": "73c82bb",
     "runtime_authorized": true,
     "runtime_started": true,
     "automatic_retry": false,
@@ -590,20 +597,20 @@
     "keep_current_guard": true,
     "historical_failure_preserved": true,
     "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v57/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v57/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bf.py",
-    "runtime_result": "STOP_NODE_PSI_BEFORE_POD_LOSS_TERMINAL_INCOMPLETE",
-    "business_pages": 0,
-    "node_samples": 273,
-    "object_samples": 284,
-    "psi_full_avg10_trigger": 0.18,
-    "vm_available_at_stop": 6366519296,
-    "vm_oom_kill_at_stop": 0,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v58/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v58/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bg.py",
+    "runtime_result": "WORKFLOW_EXECUTION_TIMEOUT_AFTER_POD_LOSS",
+    "business_pages": 51,
+    "business_components": 3,
+    "node_samples": 1221,
+    "object_samples": 1268,
+    "psi_full_avg10_max": 0.0,
+    "vm_available_min": 5086441472,
+    "vm_oom_kill_delta": 0,
     "minio_trial_limit_restored": true,
-    "object_prefix_items": 28,
     "evidence_pvc_retained": true,
-    "pod_loss_injected": false,
+    "pod_loss_injected": true,
     "qualification_complete": false,
     "remaining": [
       "pod_drain_recovery",

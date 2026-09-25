@@ -88,7 +88,7 @@ def build_runner_manifest() -> dict:
         'authorization_scope_sha256': authorization_scope_sha256(),
         'sources': {name: sha(path.read_bytes()) for name, path in paths.items()},
         'bundle_inputs_sha256': sha((BUNDLE / 'inputs.json').read_bytes()),
-        'runtime_authorized': True, 'automatic_retry': False}
+        'runtime_authorized': False, 'automatic_retry': False}
 
 
 def offline_check() -> dict:
