@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "87d0a58",
+    "commit": "b98f510",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-pod-loss-pod-cgroup-20260926-bh"
+    "runtime_identity": "q04-pod-loss-pod-cgroup-20260926-bh",
+    "runtime_execution_commit": "87d0a58"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -495,11 +496,12 @@
     },
     {
       "id": "supported_operating_bounds_report",
-      "status": "unproven",
-      "reason": "Measured current-v3 bounds now include qualified BH Pod loss and exact 1 GiB object-Pod observation; permanent MinIO sizing, restored historical Deployments and concurrency remain unqualified, and #44 handoff has not been reviewed/published.",
+      "status": "proven",
+      "reason": "The measured BH/BE/BF operating bounds and explicit exclusions were reviewed in merged PR #59 and published to #44 at https://github.com/davidlinnnn/data-ingestion/issues/44#issuecomment-5836427956. Permanent MinIO sizing, restored historical Deployments and concurrency remain unqualified. Post-BH producer impact is recorded without relabelling old runtime identities.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
-        "tests/pdf_processing/q04/SUPPORTED-BOUNDS-HANDOFF-DRAFT.md"
+        "tests/pdf_processing/q04/SUPPORTED-BOUNDS-HANDOFF-DRAFT.md",
+        "tests/pdf_processing/q04/POST-BH-PRODUCER-IMPACT.md"
       ]
     }
   ],
@@ -546,7 +548,7 @@
     }
   },
   "next_step": {
-    "kind": "supported_operating_bounds_report",
+    "kind": "integration_review_and_close_51",
     "runtime_authorized": false,
     "runtime_started": false,
     "automatic_retry": false,
@@ -556,8 +558,8 @@
     "historical_failure_preserved": true,
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/SUPPORTED-BOUNDS-HANDOFF-DRAFT.md",
-    "remaining_gate": "Review and publish the exact measured-bounds handoff to #44, including BH Pod-loss proof, 1 GiB trial measurements and explicit exclusions; then perform #51 integration review.",
+    "evidence": "tests/pdf_processing/q04/POST-BH-PRODUCER-IMPACT.md",
+    "remaining_gate": "No Q04 gate remains after the merged PR #59, post-BH producer impact review and published #44 measured-bounds handoff.",
     "prepared_runner_runtime_authorized": false,
     "prepared_runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bh.py"
   },
@@ -614,9 +616,7 @@
     "evidence_pvc_retained": true,
     "pod_loss_injected": true,
     "qualification_complete": true,
-    "remaining": [
-      "supported_operating_bounds_report"
-    ],
+    "remaining": [],
     "runner_now_locked": true
   },
   "previous_execution": {

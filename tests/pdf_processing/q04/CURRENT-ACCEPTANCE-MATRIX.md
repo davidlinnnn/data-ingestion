@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through BH execution; historical stop evidence independently verified. Machine authority:
+Acceptance rows current through BH execution and the #44 bounds handoff; historical stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -85,7 +85,13 @@ execution, reuse and interruption behavior require requalification.
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
 | Process drain/recovery | **proven** | BE owned worker-process drain at five pages, generations 1→2, pages 6–10 retried on attempt 2, exact 51-page output, 834 complete process samples, full 50-file terminal inventory and cleanup |
 | Pod drain/recovery | **proven** | BH deleted the in-flight Activity Pod after five pages, verified old runtime/scratch absence, recovered pages 6–10 on attempt 2 and completed exact 51-page/seven-component output under unchanged resource guards |
-| Supported-bounds report to #44 | unproven | Measured current-v3 limits and unqualified Pod-loss/object-service conditions are drafted in `SUPPORTED-BOUNDS-HANDOFF-DRAFT.md`; mainline review/publication pending |
+| Supported-bounds report to #44 | **proven** | Reviewed [#44 handoff](https://github.com/davidlinnnn/data-ingestion/issues/44#issuecomment-5836427956) cites the measured limits and explicit unqualified conditions after PR #59 merged |
+
+The post-BH `warm_child.py` correction changes the group producer fingerprint but only
+the error classification after a second request. [Its stage-impact record](POST-BH-PRODUCER-IMPACT.md)
+keeps BH/AI/AJ attached to their original exact producers, verifies the changed
+failure path locally and explains why unchanged successful fixture, warm and drain
+behavior does not need another full runtime. No historical run is relabelled.
 
 ## Stop-cause and evidence record
 
@@ -415,20 +421,20 @@ See [M results](pod-topology-v12/first-window-evidence/RESULTS.md),
 [N results](pod-topology-v13/first-window-evidence/RESULTS.md) and retained A–L
 records under `sentinel/` and `pod-topology-v*/`.
 
-## Remaining release work
+## Qualification and remaining bounds
 
 AS proves the required relationship interruption/recovery/replay gate; AU
 proves active telemetry-loss fail-closed; BE proves native **worker-process**
 drain/recovery and BH proves in-flight **Activity Pod** loss/recovery under
 the exact frozen current-v3 producer. BH used a scoped 300-second finite
 Temporal budget while all resource, business and cleanup criteria remained
-unchanged. The remaining gate is a measured, scope-limited supported-bounds
-handoff for #44 and mainline integration review. BH's 1 GiB MinIO trial
+unchanged. The measured, scope-limited supported-bounds handoff was published
+to #44 after PR #59 merged. BH's 1 GiB MinIO trial
 completed without cgroup max/full-PSI events, but does not establish a
 permanent or general service limit; the 32 historical Deployments stayed off.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
 descendant trace path and review any future diagnostic separately.
-#51 is not ready to close until the #44 bounds handoff is reviewed and
-published; ticket updates remain unpublished drafts.
+#51's scoped Q04 gates are complete after the #44 handoff and post-BH producer
+impact review; #44 retains final operating-scope acceptance.

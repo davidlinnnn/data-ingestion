@@ -91,25 +91,28 @@ class WarmContinuityTest(unittest.IsolatedAsyncioTestCase):
             },
         }
         capture = {**request, "request_id": "capture", "request": {**request["request"], "mode": "capture"}}
-        stdin = io.StringIO(json.dumps(capture) + "\n" + json.dumps(request) + "\n")
-        stdout = io.StringIO()
-        def capture_then_fail_restore(first, receive, _notify):
-            self.assertEqual(first.mode, "capture")
-            self.assertEqual(receive().mode, "restore")
-            raise AssertionError("corrupt")
-        with (
-            mock.patch.object(sys, "stdin", stdin),
-            mock.patch.object(sys, "stdout", stdout),
-            mock.patch.object(warm_child, "execute", side_effect=capture_then_fail_restore),
-            self.assertRaisesRegex(SystemExit, "1"),
+        for first, second, category, code in (
+            (capture, request, "integrity", "checkpoint_validation_failed"),
+            (request, capture, "parser", "parser_execution_failed"),
         ):
-            warm_child.main()
-
-        failure = json.loads(stdout.getvalue())
-        self.assertEqual(failure["kind"], "failure")
-        self.assertEqual(failure["request_id"], "restore-corrupt")
-        self.assertEqual(failure["category"], "integrity")
-        self.assertEqual(failure["code"], "checkpoint_validation_failed")
+            with self.subTest(second=second["request_id"]):
+                stdin = io.StringIO(json.dumps(first) + "\n" + json.dumps(second) + "\n")
+                stdout = io.StringIO()
+                def fail_second(active, receive, _notify):
+                    self.assertEqual(active.mode, first["request"]["mode"])
+                    self.assertEqual(receive().mode, second["request"]["mode"])
+                    raise AssertionError("corrupt")
+                with (
+                    mock.patch.object(sys, "stdin", stdin),
+                    mock.patch.object(sys, "stdout", stdout),
+                    mock.patch.object(warm_child, "execute", side_effect=fail_second),
+                    self.assertRaisesRegex(SystemExit, "1"),
+                ):
+                    warm_child.main()
+                failure = json.loads(stdout.getvalue())
+                self.assertEqual(failure["kind"], "failure")
+                self.assertEqual(failure["request_id"], second["request_id"])
+                self.assertEqual((failure["category"], failure["code"]), (category, code))
 
     async def test_cancelled_restore_reaps_warm_process_before_rebuild(self):
         with tempfile.TemporaryDirectory() as tmp:
