@@ -90,18 +90,24 @@ class WarmContinuityTest(unittest.IsolatedAsyncioTestCase):
                 "checkpoint": "/corrupt-checkpoint",
             },
         }
-        stdin = io.StringIO(json.dumps(request) + "\n")
+        capture = {**request, "request_id": "capture", "request": {**request["request"], "mode": "capture"}}
+        stdin = io.StringIO(json.dumps(capture) + "\n" + json.dumps(request) + "\n")
         stdout = io.StringIO()
+        def capture_then_fail_restore(first, receive, _notify):
+            self.assertEqual(first.mode, "capture")
+            self.assertEqual(receive().mode, "restore")
+            raise AssertionError("corrupt")
         with (
             mock.patch.object(sys, "stdin", stdin),
             mock.patch.object(sys, "stdout", stdout),
-            mock.patch.object(warm_child, "execute", side_effect=AssertionError("corrupt")),
+            mock.patch.object(warm_child, "execute", side_effect=capture_then_fail_restore),
             self.assertRaisesRegex(SystemExit, "1"),
         ):
             warm_child.main()
 
         failure = json.loads(stdout.getvalue())
         self.assertEqual(failure["kind"], "failure")
+        self.assertEqual(failure["request_id"], "restore-corrupt")
         self.assertEqual(failure["category"], "integrity")
         self.assertEqual(failure["code"], "checkpoint_validation_failed")
 

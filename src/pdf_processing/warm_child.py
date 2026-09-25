@@ -9,7 +9,7 @@ def main():
     correlation = None
     request = None
     def receive():
-        nonlocal correlation
+        nonlocal correlation, request
         line = sys.stdin.readline()
         if not line:
             return None
@@ -17,7 +17,8 @@ def main():
         if envelope.get('version') != 1 or not isinstance(envelope.get('request_id'), str):
             raise ChildFailure('integrity', 'invalid_child_request')
         correlation = envelope['request_id']
-        return ParseRequest.from_json(envelope['request'])
+        request = ParseRequest.from_json(envelope['request'])
+        return request
     def notify(kind, **data):
         print(json.dumps({'protocol':'pdf-warm-v1', 'request_id':correlation,
                           'kind':kind, **data}), flush=True)
