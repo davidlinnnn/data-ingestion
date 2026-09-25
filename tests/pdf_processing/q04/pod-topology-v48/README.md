@@ -1,0 +1,5 @@
+# Q04 AW worker-process drain gate
+
+Run one native workflow with the frozen AH producer and unchanged node/Pod PSI, OOM, memory and deadline guards. After the first five pages register and the next group starts, stop the exact owned parser child, drain only its worker process, and start a second worker in the same Pod. The existing Temporal drain oracle requires pages 6–10 to retry once, the first group to remain registered, and all other groups to run once. The final 51-page document must match the accepted native baseline. Pod-local config intentionally has `pod_namespace=null`; the existing `Host.drain()` process branch handles that case.
+
+The new AW identity, PVC and object prefix preserve AV and all prior runs. AV reached the injection but an unnecessary Pod-mode check rejected the Pod-local process path before drain; its failure evidence and PVC remain retained. AW has one controlled execution and no automatic retry. A process-drain pass does not prove in-flight Pod replacement or close #51.
