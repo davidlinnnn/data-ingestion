@@ -85,7 +85,7 @@ execution, reuse and interruption behavior require requalification.
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
 | Process drain/recovery | **proven** | BE owned worker-process drain at five pages, generations 1→2, pages 6–10 retried on attempt 2, exact 51-page output, 834 complete process samples, full 50-file terminal inventory and cleanup |
 | Pod drain/recovery | unproven | UID-fenced terminal cleanup proven; in-flight Pod loss/recovery not run |
-| Supported-bounds report to #44 | unproven | Depends on remaining rows |
+| Supported-bounds report to #44 | draft only | Measured current-v3 limits and unqualified Pod-loss/object-service conditions are recorded in `SUPPORTED-BOUNDS-HANDOFF-DRAFT.md`; mainline review/publication pending |
 
 ## Stop-cause and evidence record
 
@@ -395,8 +395,9 @@ run and cannot be inferred from a child-process drain. The temporary 768 MiB
 MinIO trial avoided the earlier outer PSI stop, but BE's eight new max events
 and full PSI mean a permanent operating bound is not yet proven. Design and
 review the Pod-loss coordinator/injection with exact Pod UID fencing, then
-run once under a new identity. The supported operating-bounds handoff to #44
-and #51 integration review remain open.
+run once under a new identity. A measured-bounds draft and separate-Pod
+execution design are recorded locally; the #44 handoff and #51 integration
+review remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
