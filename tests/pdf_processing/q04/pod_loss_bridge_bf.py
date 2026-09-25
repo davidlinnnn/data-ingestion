@@ -36,7 +36,7 @@ class Host:
     async def exchange(self, kind: str, generation: int, details: dict,
                        seconds: float, *, repeat: bool = False) -> dict:
         request = {'run_id': self.run_id, 'kind': kind,
-                   'generation': generation, **details}
+                   'generation': generation, 'requested_at': time.time(), **details}
         name = f'{generation}-{kind}'
         request_path = self.control / f'{name}.request.json'
         if repeat and request_path.exists():
@@ -115,10 +115,12 @@ class Host:
             return
         reply = await self.exchange('stop', 0,
                                     {'known_pod_uid': self.pod_uid},
-                                    self.config['drain_seconds'] + 45,
+                                    self.config['drain_seconds']
+                                    + self.config['window']['max_replacement_seconds'] + 45,
                                     repeat=True)
         if (reply.get('worker_absent') is not True
-                or reply.get('activity_pods_absent') is not True):
+                or reply.get('activity_pods_absent') is not True
+                or reply.get('emptydirs_absent') is not True):
             raise ValueError('run-owned Activity Pod stop unproven')
         self.process = None
         self.stopped = True

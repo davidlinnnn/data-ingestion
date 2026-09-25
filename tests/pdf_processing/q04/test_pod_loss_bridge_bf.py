@@ -64,6 +64,7 @@ class PodLossBridgeTest(unittest.TestCase):
                 request = await second
                 self.assertEqual(request['old_pod_uid'], 'old-uid')
                 self.assertEqual(request['child_pid'], 99)
+                self.assertLessEqual(request['requested_at'], time.time())
                 self.assertEqual(proof['scope'], 'owned_pod')
                 self.assertEqual(proof['new_pod_uid'], 'new-uid')
                 self.assertEqual(json.loads((host.current / 'host.json').read_text())
@@ -155,7 +156,7 @@ class PodLossBridgeTest(unittest.TestCase):
                 (host.control / '0-stop.reply.json').write_text(json.dumps({
                     'run_id': 'q04-bf', 'kind': 'stop', 'generation': 0,
                     'status': 'PASS', 'activity_pods_absent': True,
-                    'worker_absent': True}))
+                    'worker_absent': True, 'emptydirs_absent': True}))
                 await stop
                 await host.stop()
                 self.assertTrue(host.stopped)
