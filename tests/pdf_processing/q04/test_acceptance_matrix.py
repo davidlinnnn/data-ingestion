@@ -83,6 +83,8 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         allowed = set(self.matrix["status_definitions"])
         gates = {row["id"]: row for row in self.matrix["release_gates"]}
         self.assertEqual(len(gates), len(self.matrix["release_gates"]))
+        self.assertEqual(len(gates), 16)
+        self.assertEqual({row["status"] for row in gates.values()}, {"proven"})
         for row in self.matrix["fixtures"] + self.matrix["release_gates"]:
             statuses = row.get("modes", {}).values()
             for status in [row.get("status"), row.get("q04_fresh_index"), row.get("oracle_and_full_graph"), *statuses]:
@@ -91,7 +93,7 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
             for evidence in row["evidence"]:
                 self.assertTrue((ROOT / evidence).is_file(), evidence)
         self.assertEqual(gates["pod_drain_recovery"]["status"], "proven")
-        self.assertEqual(gates["supported_operating_bounds_report"]["status"], "unproven")
+        self.assertEqual(gates["supported_operating_bounds_report"]["status"], "proven")
         self.assertEqual(gates["process_drain_recovery"]["status"], "proven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
         self.assertEqual(gates["integrated_resource_bounds"]["status"], "proven")
@@ -106,7 +108,7 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
     def test_next_step_preserves_pod_loss_boundary_and_no_retry(self):
         step = self.matrix['next_step']
         self.assertEqual(
-            step['kind'], 'supported_operating_bounds_report'
+            step['kind'], 'integration_review_and_close_51'
         )
         self.assertFalse(step['runtime_started'])
         self.assertFalse(step['runtime_authorized'])
