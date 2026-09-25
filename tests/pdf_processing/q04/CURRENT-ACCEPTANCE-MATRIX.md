@@ -322,6 +322,16 @@ execution, reuse and interruption behavior require requalification.
   No process-recovery row is promoted. Raw failure export, object prefix and
   Bound PVC are retained; cleanup and 32 exact/off held Deployments were
   checked. See [AW results](pod-topology-v48/first-window-evidence/RESULTS.md).
+- AX: the corrected current-v3 oracle accepted the exact native document
+  and graph after a worker-process drain, with pages 6–10 recovered on attempt
+  2. Twelve seconds after Temporal business completion, the unchanged outer
+  node PSI guard stopped on `full avg10=0.72`. The read-only host trace
+  localized the concurrent pressure to the colocated 512 MiB object-service
+  cgroup; AX Pod cgroup PSI and OOM counters remained zero. Terminal
+  qualification was incomplete, so process recovery is still **unproven**.
+  Raw evidence, prefix and Bound PVC remain retained; owned cleanup and 32
+  exact/off held Deployments were verified. See
+  [AX results](pod-topology-v49/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -333,9 +343,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 AS proves the required relationship interruption/recovery/replay gate; AU
-proves active telemetry-loss fail-closed. AW exercised process drain but its
-harness selected the wrong oracle; a new identity must use the existing
-reviewed current-v3 oracle. Actual Pod drain/recovery and the supported operating-bounds
+proves active telemetry-loss fail-closed. AX corrected AW's oracle and reached
+exact native output after process drain, but a real colocated object-service
+node PSI burst stopped terminal qualification. Investigate that pressure before
+another process run. Actual Pod drain/recovery and the supported operating-bounds
 handoff to #44 remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a

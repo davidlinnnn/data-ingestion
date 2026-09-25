@@ -1,0 +1,7 @@
+# Draft for GitHub #51 — not a passing result
+
+AW's apparent graph divergence was an acceptance-harness error: it compared current-v3 native output to the historical method-off graph. The existing source-reviewed current-v3 oracle passed AW's retained document offline. The corrected AX window used a fresh identity, frozen AH producer and unchanged resource gates. It drained worker generation 1, recovered pages 6–10 on Activity attempt 2, and produced the accepted exact 51-page native document and graph.
+
+AX still stopped before terminal qualification. Twelve seconds after Temporal business completion, the unchanged outer node-memory PSI guard saw `full avg10=0.72`. The triggering sample was retained. AX Pod cgroup PSI and OOM counters were zero, while the independent host trace localized a concurrent full-pressure burst to the colocated `objects` Pod's 512 MiB MinIO container cgroup. The precise object-store operation is unknown. AX stopped once, with no retry; the terminal inventory is incomplete, so process recovery is not yet accepted. Owned runtime was removed, its Bound evidence PVC/prefix and raw evidence were retained, and the 32 held Deployments remain off.
+
+Next: diagnose the object-service pressure under its existing limit and review an operating configuration without weakening the node PSI gate. Then run one new-identity process window if justified. Actual Pod drain/recovery and the #44 operating-bounds handoff remain open. #51 is not ready to integrate or close.
