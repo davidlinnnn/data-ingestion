@@ -1,6 +1,6 @@
 # Q04 current acceptance matrix
 
-Acceptance rows current through BE execution; historical stop evidence independently verified. Machine authority:
+Acceptance rows current through BH execution; historical stop evidence independently verified. Machine authority:
 `evidence/current-acceptance-matrix.json`. A proven row applies only to its exact
 producer, profile, runtime and acceptance policy. Historical evidence cannot
 silently qualify a changed execution path.
@@ -84,7 +84,7 @@ execution, reuse and interruption behavior require requalification.
 | Integrated operating bounds | **proven** | AH 1,349, AI 1,217 and AJ 772 complete v3 process/cgroup samples under unchanged guards, no resource stop |
 | Active telemetry-loss guard | **proven** | AU stopped worker sampling at five registered native pages during active parsing; stale-sample guard canceled owned work, no complete registration, all-sample resources and cleanup passed |
 | Process drain/recovery | **proven** | BE owned worker-process drain at five pages, generations 1→2, pages 6–10 retried on attempt 2, exact 51-page output, 834 complete process samples, full 50-file terminal inventory and cleanup |
-| Pod drain/recovery | unproven | BG injected one in-flight Pod loss and started Activity attempt 2 on a replacement Pod, but the workflow timed out before complete business output |
+| Pod drain/recovery | **proven** | BH deleted the in-flight Activity Pod after five pages, verified old runtime/scratch absence, recovered pages 6–10 on attempt 2 and completed exact 51-page/seven-component output under unchanged resource guards |
 | Supported-bounds report to #44 | unproven | Measured current-v3 limits and unqualified Pod-loss/object-service conditions are drafted in `SUPPORTED-BOUNDS-HANDOFF-DRAFT.md`; mainline review/publication pending |
 
 ## Stop-cause and evidence record
@@ -399,6 +399,14 @@ execution, reuse and interruption behavior require requalification.
   limit was restored to 512 MiB; BG PVC/prefix and failure evidence remain.
   Neither Pod-loss nor supported-bounds row is promoted. See
   [BG results](pod-topology-v58/RESULTS.md).
+- BH: one fresh split-Pod window completed the in-flight Pod loss/replacement
+  under a scoped finite 300-second workflow budget. All 11 pre-inference gates,
+  exact 51-page/seven-component business output, attempt-2 pages 6–10,
+  independent old/new process samples, terminal inventory, object readback and
+  UID-fenced cleanup passed. MinIO's temporary 1 GiB trial was restored to
+  512 MiB. This proves Pod drain/recovery for the exact producer/runtime;
+  a permanent object-service bound is not inferred. See
+  [BH results](pod-topology-v59/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -407,25 +415,20 @@ See [M results](pod-topology-v12/first-window-evidence/RESULTS.md),
 [N results](pod-topology-v13/first-window-evidence/RESULTS.md) and retained A–L
 records under `sentinel/` and `pod-topology-v*/`.
 
-## Next execution
+## Remaining release work
 
 AS proves the required relationship interruption/recovery/replay gate; AU
 proves active telemetry-loss fail-closed; BE proves native **worker-process**
-drain/recovery under the exact frozen current-v3 producer. No attribution or
-resource threshold was relaxed. BG reached an in-flight Pod loss and
-replacement, but the 180-second Temporal execution timeout expired before
-complete business output. Its cleanup-observation tool defect is corrected
-locally and BG is locked against reuse. Review the existing workflow timeout
-against observed replacement time before proposing another fresh-identity
-window; do not treat it as a proven capacity or acceptance-standard change.
-Neither BE's 768 MiB nor the incomplete BF/BG 1 GiB trials establishes a
-permanent object-service bound. The #44 handoff and #51 integration review
-remain open.
+drain/recovery and BH proves in-flight **Activity Pod** loss/recovery under
+the exact frozen current-v3 producer. BH used a scoped 300-second finite
+Temporal budget while all resource, business and cleanup criteria remained
+unchanged. The remaining gate is a measured, scope-limited supported-bounds
+handoff for #44 and mainline integration review. BH's 1 GiB MinIO trial
+completed without cgroup max/full-PSI events, but does not establish a
+permanent or general service limit; the 32 historical Deployments stayed off.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
 descendant trace path and review any future diagnostic separately.
-Each runtime needs a fresh
-identity/prefix, unchanged guards, one controlled execution and no automatic
-retry. #51 is not ready for integration or closure; ticket updates remain
-unpublished drafts.
+#51 is not ready to close until the #44 bounds handoff is reviewed and
+published; ticket updates remain unpublished drafts.

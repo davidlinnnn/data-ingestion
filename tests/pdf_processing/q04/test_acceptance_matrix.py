@@ -90,8 +90,8 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
                     self.assertIn(status, allowed)
             for evidence in row["evidence"]:
                 self.assertTrue((ROOT / evidence).is_file(), evidence)
-        for gate in ("pod_drain_recovery", "supported_operating_bounds_report"):
-            self.assertEqual(gates[gate]["status"], "unproven")
+        self.assertEqual(gates["pod_drain_recovery"]["status"], "proven")
+        self.assertEqual(gates["supported_operating_bounds_report"]["status"], "unproven")
         self.assertEqual(gates["process_drain_recovery"]["status"], "proven")
         self.assertEqual(gates["continuation_and_four_algorithms"]["status"], "proven")
         self.assertEqual(gates["integrated_resource_bounds"]["status"], "proven")
@@ -106,7 +106,7 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
     def test_next_step_preserves_pod_loss_boundary_and_no_retry(self):
         step = self.matrix['next_step']
         self.assertEqual(
-            step['kind'], 'pod_drain_recovery'
+            step['kind'], 'supported_operating_bounds_report'
         )
         self.assertFalse(step['runtime_started'])
         self.assertFalse(step['runtime_authorized'])
@@ -118,24 +118,24 @@ class CurrentAcceptanceMatrixTest(unittest.TestCase):
         step = self.matrix['last_execution']
         self.assertEqual(
             step['runtime_result'],
-            'WORKFLOW_EXECUTION_TIMEOUT_AFTER_POD_LOSS',
+            'PASS_NATIVE_ACTIVITY_POD_LOSS_RECOVERY',
         )
-        self.assertEqual(step['run_identity'], 'q04-pod-loss-pod-cgroup-20260925-bg')
+        self.assertEqual(step['run_identity'], 'q04-pod-loss-pod-cgroup-20260926-bh')
         self.assertEqual(step['business_pages'], 51)
-        self.assertEqual(step['business_components'], 3)
-        self.assertEqual(step['node_samples'], 1221)
+        self.assertEqual(step['business_components'], 7)
+        self.assertEqual(step['node_samples'], 1286)
         self.assertTrue(step['pod_loss_injected'])
         self.assertTrue(step['minio_trial_limit_restored'])
         self.assertFalse(step['automatic_retry'])
         self.assertTrue(step['keep_current_guard'])
         self.assertEqual(step['deployments_remain_closed'], 32)
-        self.assertFalse(step['qualification_complete'])
+        self.assertTrue(step['qualification_complete'])
         for key in ('integration_manifest', 'offline_manifest', 'runner'):
             self.assertTrue((ROOT / step[key]).is_file())
-        self.assertTrue((Q04 / 'pod-topology-v58/RESULTS.md').is_file())
+        self.assertTrue((Q04 / 'pod-topology-v59/RESULTS.md').is_file())
         previous = self.matrix['previous_execution']
-        self.assertEqual(previous['runtime_result'], 'PASS_NATIVE_WORKER_PROCESS_DRAIN_RECOVERY_ONLY')
-        self.assertEqual(previous['run_identity'], 'q04-process-drain-pod-cgroup-20260925-be')
+        self.assertEqual(previous['runtime_result'], 'WORKFLOW_EXECUTION_TIMEOUT_AFTER_POD_LOSS')
+        self.assertEqual(previous['run_identity'], 'q04-pod-loss-pod-cgroup-20260925-bg')
 
     def test_human_matrix_and_next_step_match_machine_authority(self):
         document = (Q04 / "CURRENT-ACCEPTANCE-MATRIX.md").read_text()

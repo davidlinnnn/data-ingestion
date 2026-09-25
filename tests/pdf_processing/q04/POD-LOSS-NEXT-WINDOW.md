@@ -1,5 +1,7 @@
 # Q04 remaining in-flight Pod-loss qualification
 
+Historical execution plan. BH has now qualified the exact in-flight Activity Pod-loss/recovery row; see [BH results](pod-topology-v59/RESULTS.md) and the current acceptance matrix. The remaining release work is the scoped measured-bounds handoff to #44.
+
 BE proves worker **process** drain/recovery. It does not prove Kubernetes Pod loss: the Q04 trial coordinator and Activity worker ran inside the same Pod. Deleting that Pod would kill the coordinator and prevent it from observing recovery. R3 used a separate coordinator plus a replaceable Activity Pod; its old Pod disappeared 32.1 seconds after deletion and exact native work recovered. Those durations are observations, not new Q04 thresholds. The existing historical `coordinator` Pod has neither the Q04 evidence PVC nor `kubectl`, so it can remain a health endpoint but cannot safely host the Q04 drain driver without altering its Pod spec or losing continuous shared evidence. Use a **new run-owned coordinator Pod** instead.
 
 ## Execution design

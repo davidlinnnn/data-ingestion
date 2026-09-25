@@ -5,3 +5,5 @@ BG injected the Pod loss and reached Activity attempt 2, but Temporal's inherite
 One fresh identity `q04-pod-loss-pod-cgroup-20260926-bh`, object prefix `q04/pod-loss-pod-cgroup-20260926-bh/`, evidence PVC `q04-pod-cgroup-bh-evidence-20260926-bh`, one run, no automatic retry. Keep BG and earlier PVCs/prefixes intact. The run uses the existing kind/namespace and the same reversible 1 GiB MinIO trial with exact Pod cgroup observation and restoration to 512 MiB. Recheck live service health, idle Temporal, all 32 held Deployments, no BH objects/prefix and available memory before execution. Stop on any existing guard and retain failure evidence. After execution, check both business outcome and UID-fenced cleanup; do not promote Pod-loss or supported-bounds gates on a partial result.
 
 The user instructed this next step after reviewing the 300-second proposal. Automatic approval review accepted enabling the exact single-run BH gate. Live execution still requires the final offline/source check and fresh cluster preflight.
+
+The single run completed at execution commit `87d0a58`; see [RESULTS.md](RESULTS.md). The runner is locked again and no BH retry is authorized.

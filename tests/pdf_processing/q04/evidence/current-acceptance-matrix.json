@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "as_of": {
-    "commit": "73c82bb",
+    "commit": "87d0a58",
     "issue": 51,
     "issue_state": "OPEN",
-    "runtime_identity": "q04-pod-loss-pod-cgroup-20260925-bg"
+    "runtime_identity": "q04-pod-loss-pod-cgroup-20260926-bh"
   },
   "status_definitions": {
     "proven": "Q04 has current direct evidence for this exact bounded gate.",
@@ -480,8 +480,8 @@
     },
     {
       "id": "pod_drain_recovery",
-      "status": "unproven",
-      "reason": "BG injected in-flight Activity Pod loss and replacement, but Temporal's 180-second execution timeout expired before complete 51-page/seven-component business output; no Pod-loss pass.",
+      "status": "proven",
+      "reason": "BH deleted the in-flight Activity Pod after five pages, verified old runtime/scratch absence, recovered attempt-2 pages 6–10 on a replacement UID, and completed exact 51-page/seven-component output with full resource/cleanup evidence.",
       "evidence": [
         "tests/pdf_processing/q04/preflight/README.md",
         "tests/pdf_processing/q04/RUNTIME-ADAPTER.md",
@@ -489,13 +489,14 @@
         "tests/pdf_processing/q04/reconciliation/evidence/drain-requalification.json",
         "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
         "tests/pdf_processing/q04/pod-topology-v57/first-window-evidence/RESULTS.md",
-        "tests/pdf_processing/q04/pod-topology-v58/RESULTS.md"
+        "tests/pdf_processing/q04/pod-topology-v58/RESULTS.md",
+        "tests/pdf_processing/q04/pod-topology-v59/RESULTS.md"
       ]
     },
     {
       "id": "supported_operating_bounds_report",
       "status": "unproven",
-      "reason": "Current-v3 measured-bounds draft exists, with Pod loss and MinIO sustainable limit explicitly unqualified; mainline review and #44 publication have not occurred.",
+      "reason": "Measured current-v3 bounds now include qualified BH Pod loss and exact 1 GiB object-Pod observation; permanent MinIO sizing, restored historical Deployments and concurrency remain unqualified, and #44 handoff has not been reviewed/published.",
       "evidence": [
         "tests/pdf_processing/q04/ACCEPTANCE-PLAN.md",
         "tests/pdf_processing/q04/SUPPORTED-BOUNDS-HANDOFF-DRAFT.md"
@@ -545,7 +546,7 @@
     }
   },
   "next_step": {
-    "kind": "pod_drain_recovery",
+    "kind": "supported_operating_bounds_report",
     "runtime_authorized": false,
     "runtime_started": false,
     "automatic_retry": false,
@@ -555,10 +556,10 @@
     "historical_failure_preserved": true,
     "acceptance_standard_change": false,
     "unchanged_rerun_forbidden": true,
-    "evidence": "tests/pdf_processing/q04/POD-LOSS-NEXT-WINDOW.md",
-    "remaining_gate": "Review the observed BG Pod replacement and incomplete work against the existing 180-second Temporal execution budget; preserve unchanged guards and use a fresh identity for any later window.",
+    "evidence": "tests/pdf_processing/q04/SUPPORTED-BOUNDS-HANDOFF-DRAFT.md",
+    "remaining_gate": "Review and publish the exact measured-bounds handoff to #44, including BH Pod-loss proof, 1 GiB trial measurements and explicit exclusions; then perform #51 integration review.",
     "prepared_runner_runtime_authorized": false,
-    "prepared_runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bg.py"
+    "prepared_runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bh.py"
   },
   "historical_next_step": {
     "kind": "authorize_reviewed_yolo_candidate_window_after_commit_review",
@@ -587,6 +588,38 @@
     "deployments_remain_closed": 32
   },
   "last_execution": {
+    "kind": "pod_drain_recovery",
+    "run_identity": "q04-pod-loss-pod-cgroup-20260926-bh",
+    "execution_commit": "87d0a58",
+    "runtime_authorized": true,
+    "runtime_started": true,
+    "automatic_retry": false,
+    "single_execution": true,
+    "keep_current_guard": true,
+    "historical_failure_preserved": true,
+    "deployments_remain_closed": 32,
+    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v59/RUNTIME-INTEGRATION-MANIFEST.json",
+    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v59/RUNNER-MANIFEST.json",
+    "runner": "tests/pdf_processing/q04/sentinel/run_pod_loss_bh.py",
+    "runtime_result": "PASS_NATIVE_ACTIVITY_POD_LOSS_RECOVERY",
+    "business_pages": 51,
+    "business_components": 7,
+    "node_samples": 1286,
+    "object_samples": 1336,
+    "psi_full_avg10_max": 0.0,
+    "vm_available_min": 5100683264,
+    "vm_oom_kill_delta": 0,
+    "minio_trial_limit_restored": true,
+    "object_prefix_items": 303,
+    "evidence_pvc_retained": true,
+    "pod_loss_injected": true,
+    "qualification_complete": true,
+    "remaining": [
+      "supported_operating_bounds_report"
+    ],
+    "runner_now_locked": true
+  },
+  "previous_execution": {
     "kind": "pod_drain_recovery",
     "run_identity": "q04-pod-loss-pod-cgroup-20260925-bg",
     "execution_commit": "73c82bb",
@@ -617,38 +650,6 @@
       "supported_operating_bounds_report"
     ],
     "runner_now_locked": true
-  },
-  "previous_execution": {
-    "kind": "process_drain_recovery",
-    "run_identity": "q04-process-drain-pod-cgroup-20260925-be",
-    "execution_commit": "cc3259d",
-    "runtime_authorized": true,
-    "runtime_started": true,
-    "automatic_retry": false,
-    "single_execution": true,
-    "keep_current_guard": true,
-    "historical_failure_preserved": true,
-    "deployments_remain_closed": 32,
-    "integration_manifest": "tests/pdf_processing/q04/pod-topology-v56/RUNTIME-INTEGRATION-MANIFEST.json",
-    "offline_manifest": "tests/pdf_processing/q04/pod-topology-v56/RUNNER-MANIFEST.json",
-    "runner": "tests/pdf_processing/q04/sentinel/run_process_drain_pod_cgroup_be_guarded.py",
-    "runtime_result": "PASS_NATIVE_WORKER_PROCESS_DRAIN_RECOVERY_ONLY",
-    "business_pages": 51,
-    "resource_samples": 834,
-    "host_samples": 1388,
-    "terminal_inventory_files": 50,
-    "incomplete_sample_indexes": [],
-    "psi_oom_memory_floor_deadline_stop": false,
-    "cleanup": "proven_with_pvc_retained",
-    "process_attribution_complete": true,
-    "cgroup_resource_complete": true,
-    "qualification_complete": true,
-    "process_drain_recovery": "proven",
-    "minio_trial_limit_restored": true,
-    "remaining": [
-      "pod_drain_recovery",
-      "supported_operating_bounds_report"
-    ]
   },
   "earlier_execution": {
     "kind": "execute_current_required_relationship_interrupt_recovery_replay",
@@ -710,5 +711,13 @@
       "pod_drain_recovery",
       "supported_operating_bounds_report"
     ]
+  },
+  "recent_runs": {
+    "bh": {
+      "run_identity": "q04-pod-loss-pod-cgroup-20260926-bh",
+      "status": "PASS_NATIVE_ACTIVITY_POD_LOSS_RECOVERY",
+      "reason": "One in-flight Pod deletion, replacement attempt 2, exact 51-page/seven-component business output, terminal/resource/object readback and cleanup passed; MinIO restored to 512 MiB.",
+      "evidence": "tests/pdf_processing/q04/pod-topology-v59/RESULTS.md"
+    }
   }
 }
