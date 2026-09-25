@@ -315,9 +315,10 @@ execution, reuse and interruption behavior require requalification.
   host incorrectly required a remote Pod handle in Pod-local mode. No process
   recovery was tested. See [AV results](pod-topology-v47/first-window-evidence/RESULTS.md).
 - AW: one controlled Pod-local worker-process drain did replace worker
-  generation 1 with 2, and the workflow completed 51 pages. The consumer
-  rejected a full typed-graph delta against the frozen native reference; the
-  terminal inventory was incomplete and process attribution did not qualify.
+  generation 1 with 2, and the workflow completed 51 pages. Its harness used
+  the historical method-off oracle on current-v3 output; the actual document
+  exactly matched AN's accepted current-v3 bytes and graph. The terminal
+  inventory was incomplete and process attribution did not qualify.
   No process-recovery row is promoted. Raw failure export, object prefix and
   Bound PVC are retained; cleanup and 32 exact/off held Deployments were
   checked. See [AW results](pod-topology-v48/first-window-evidence/RESULTS.md).
@@ -332,9 +333,9 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 AS proves the required relationship interruption/recovery/replay gate; AU
-proves active telemetry-loss fail-closed. AW exercised process drain but
-failed the frozen exact-graph gate. Diagnose that divergence before another
-process run. Actual Pod drain/recovery and the supported operating-bounds
+proves active telemetry-loss fail-closed. AW exercised process drain but its
+harness selected the wrong oracle; a new identity must use the existing
+reviewed current-v3 oracle. Actual Pod drain/recovery and the supported operating-bounds
 handoff to #44 remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
