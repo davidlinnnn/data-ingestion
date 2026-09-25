@@ -1,5 +1,6 @@
 """One sequential, correlated native parser process; memory never owns progress."""
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import json
 import os
@@ -9,7 +10,11 @@ import sys
 import time
 import uuid
 
-from .execution import ChildFailure
+from .execution import (
+    ChildFailure,
+    ProcessLifecycleSynchronizationError,
+    process_lifecycle_transition,
+)
 
 
 def now():
@@ -29,39 +34,83 @@ class WarmParser:
         self.lock = asyncio.Lock()
         self.closed = False
         self.count = 0
-        self.observation = {'ready': False, 'restarts': 0, 'recycles': 0,
+        self.observation = {'ready': False, 'restarts': 0, 'recycles': 0, 'handoffs': 0,
                             'last_local_progress': None, 'termination_reason': None}
 
     async def stop(self, reason):
+        async with process_lifecycle_transition() as synchronized:
+            await self._stop(reason)
+        if not synchronized:
+            raise ProcessLifecycleSynchronizationError(
+                'process_lifecycle_lock_timeout'
+            )
+
+    async def _stop(self, reason):
         p = self.process
         self.observation.update(ready=False, termination_reason=reason, forced_kill=False, observed_at=now())
         if p is None:
             return
-        try:
-            if p.returncode is None:
+        if p.returncode is None:
+            try:
+                os.killpg(p.pid, signal.SIGCONT)
+                os.killpg(p.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                await asyncio.wait_for(p.wait(), self.terminate_seconds)
+            except TimeoutError:
+                self.observation['forced_kill'] = True
                 try:
-                    os.killpg(p.pid, signal.SIGCONT)
-                    os.killpg(p.pid, signal.SIGTERM)
+                    os.killpg(p.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
                 try:
-                    await asyncio.wait_for(p.wait(), self.terminate_seconds)
-                except TimeoutError:
-                    self.observation['forced_kill'] = True
-                    try:
-                        os.killpg(p.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
                     await asyncio.wait_for(p.wait(), self.reap_seconds)
-            self.observation['exit_code'] = p.returncode
-        finally:
-            self.process = None
-            self.count = 0
+                except TimeoutError:
+                    self.closed = True
+                    self.observation['reap_failed'] = True
+                    raise
+        if p.returncode is None:
+            raise RuntimeError('owned parser was not reaped')
+        self.observation['exit_code'] = p.returncode
+        self.process = None
+        self.count = 0
 
-    async def close(self):
+    async def close(self, reason='worker_shutdown'):
         self.closed = True
         async with self.lock:
-            await self.stop('worker_shutdown')
+            await self.stop(reason)
+
+    def fail_closed(self, reason):
+        """Prevent parser reuse after another child cannot be reaped."""
+        self.closed = True
+        self.observation.update(ready=False, termination_reason=reason,
+                                reap_failed=True, observed_at=now())
+
+    @asynccontextmanager
+    async def fresh_child_handoff(self):
+        """Own parser capacity while one memory-heavy fresh child runs.
+
+        The same lock covers ``run``. A handoff requested during capture waits
+        for that request to finish. The lock remains held until the caller's
+        fresh child has exited, so another queue cannot rebuild the warm parser
+        concurrently. Caller cancellation during the initial reap waits for
+        owned-process cleanup before it is propagated.
+        """
+        async with self.lock:
+            if self.closed:
+                raise ChildFailure('infrastructure', 'worker_draining')
+            if self.process is not None:
+                self.observation['handoffs'] += 1
+                cleanup = asyncio.create_task(self.stop('fresh_child_handoff'))
+                try:
+                    await asyncio.shield(cleanup)
+                except asyncio.CancelledError:
+                    # Process ownership outlives the cancelled caller. Do not
+                    # let scratch teardown race an unreaped warm parser.
+                    await cleanup
+                    raise
+            yield dict(self.observation)
 
     async def run(self, request, out, heartbeat, hard_seconds):
         async with self.lock:
@@ -127,7 +176,8 @@ class WarmParser:
                             if not self.observation['ready']:
                                 raise ChildFailure('integrity', 'completion_before_readiness')
                             self.observation.update(memory=row.get('memory'), completed_at=now())
-                            self.count += 1
+                            if request.get('mode') == 'capture':
+                                self.count += 1
                             if self.count >= self.max_requests:
                                 self.observation['recycles'] += 1
                                 await self.stop('request_recycle')

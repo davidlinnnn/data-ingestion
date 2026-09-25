@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-y",
+  "workload_exit": {
+    "returncode": 1,
+    "timed_out": false,
+    "forced": false,
+    "failure": "ValueError: process attribution incomplete"
+  },
+  "workload": {
+    "five_workflows_completed": true,
+    "group_requests": 29,
+    "parser_pids": [
+      131,
+      1836
+    ],
+    "request_recycles": 1
+  },
+  "resource": {
+    "outer_min_available_bytes": 5196533760,
+    "outer_max_cgroup_bytes": 2527735808,
+    "inner_max_cgroup_bytes": 2578677760,
+    "max_node_full_psi_avg10": 0.0,
+    "max_cgroup_full_psi_avg10": 0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0,
+    "sample_count": 1501,
+    "maximum_gap_seconds": 0.7407874999917112
+  },
+  "process_attribution": {
+    "status": "incomplete",
+    "hard_incomplete_sample_indexes": [
+      443,
+      468,
+      654,
+      739,
+      772,
+      1043,
+      1499
+    ],
+    "classified_exit_indexes": [
+      443,
+      468,
+      654,
+      739,
+      772
+    ],
+    "unclassified_indexes": [
+      1043,
+      1499
+    ],
+    "cause": {
+      "1043": "warm parser PID 131 exited during both the initial read and conservative retry; adjacent complete sample records its exact exit and replacement PID 1836 birth",
+      "1499": "worker PID 112 exited during the initial read and retry membership scan; adjacent complete sample records its exact exit"
+    }
+  },
+  "causal_chain": [
+    "29-group sequence and five Temporal workflows completed",
+    "normal parser recycle and terminal worker exit intersected /proc reads",
+    "the one retry also observed each exiting identity incompletely",
+    "the collector retained the higher/conservative resource reading and both observations",
+    "the classifier did not interpret the retained failed-resample observations",
+    "resource qualification and exact process attribution remained false",
+    "candidate raised ValueError",
+    "Pod supervisor recorded returncode 1",
+    "outer controller stopped without retry and cleaned owned runtime"
+  ],
+  "excluded_causes": [
+    "node PSI",
+    "Pod cgroup PSI",
+    "VM OOM",
+    "cgroup OOM",
+    "memory floor",
+    "workload deadline",
+    "supervisor interruption",
+    "ingestion Activity failure"
+  ],
+  "unknowns": [
+    "A later run can still encounter a distinct fail-closed telemetry condition; this cannot be known before one controlled run"
+  ],
+  "root_cause": "The compact collector summary omitted identity_resample, and the transition classifier therefore could not validate an exact exit when the conservative retry was also incomplete."
+}

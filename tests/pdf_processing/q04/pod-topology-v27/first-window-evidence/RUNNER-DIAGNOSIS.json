@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-ab",
+  "workload_exit": {
+    "returncode": 1,
+    "timed_out": false,
+    "forced": false,
+    "failure": "ValueError: process attribution incomplete"
+  },
+  "workload": {
+    "five_workflows_completed": true,
+    "all_processing_complete": true,
+    "registered_pages": [28, 15, 12, 51, 28],
+    "group_requests": 29,
+    "parser_pids": [131, 1836],
+    "request_recycles": 1
+  },
+  "resource": {
+    "outer_min_available_bytes": 5161975808,
+    "outer_max_cgroup_bytes": 2601865216,
+    "inner_max_cgroup_bytes": 2637160448,
+    "max_node_full_psi_avg10": 0.0,
+    "max_cgroup_full_psi_avg10": 0.0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0,
+    "sample_count": 1305,
+    "maximum_gap_seconds": 0.6711053330218419
+  },
+  "process_attribution": {
+    "executed_summary_status": "qualification_complete_process_attribution_incomplete",
+    "hard_incomplete_sample_indexes": [691],
+    "classified_exit_indexes": [691],
+    "unclassified_indexes": [],
+    "classified_identity": {"pid": 1753, "start_ticks": 19040994, "command_class": "fresh_owned_child"},
+    "process_attribution_complete": false,
+    "cgroup_transition_qualification": "complete"
+  },
+  "causal_chain": [
+    "all five Temporal workflows completed with processing_complete=true",
+    "one fresh child exited during process observation",
+    "the identity-fenced classifier safely classified the exact exit",
+    "the summary recorded no unclassified cgroup transitions",
+    "the exited child's PSS remained unknown, so process attribution correctly remained false",
+    "the candidate raised ValueError after business completion",
+    "the supervisor returned 1; the outer controller stopped without retry and cleaned owned runtime"
+  ],
+  "excluded_causes": [
+    "node PSI",
+    "Pod cgroup PSI",
+    "VM OOM",
+    "cgroup OOM",
+    "memory floor",
+    "workload deadline",
+    "supervisor interruption",
+    "Temporal Activity failure",
+    "ingestion business failure"
+  ],
+  "unknowns": [
+    "Whether a stable-snapshot measurement can capture every short-lived process without materially perturbing the workload has not been demonstrated"
+  ],
+  "root_cause": "Fresh child PID 1753 exited during process enumeration. Its exact exit and cgroup continuity are proven, but its PSS at the retained cgroup observation is unknowable, so the complete-process-attribution gate correctly failed."
+}

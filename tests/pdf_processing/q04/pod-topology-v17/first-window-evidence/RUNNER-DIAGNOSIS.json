@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-r",
+  "execution_commit": "3174174",
+  "failure_stage": "after_object_create_before_deployment_scale_up",
+  "observed_error": "PodIdentityRejected: exactly one created Deployment identity required",
+  "created_deployment": {
+    "kind": "Deployment",
+    "name": "q04-pod-cgroup-r-activities",
+    "uid": "bc9c5e64-fa41-4048-8425-d8bc1ed554ef"
+  },
+  "runtime_engine_global_deployment": "q04-pod-cgroup-r-activities",
+  "captured_validator_default_deployment": "q04-pod-cgroup-p-activities",
+  "runtime_engine_global_run_label": "q04-pod-cgroup-r",
+  "captured_run_label_defaults": {
+    "validate_pod": "q04-pod-cgroup-p",
+    "capture_cleanup_identity": "q04-pod-cgroup-p",
+    "await_worker_pod": "q04-pod-cgroup-p"
+  },
+  "root_cause": "R loaded the private P engine before replacing its globals; Python bound P identity values into keyword defaults at function definition time.",
+  "causal_classification": {
+    "acceptance_harness_identity_binding": "PROVEN_ROOT_CAUSE",
+    "cluster_capacity": "NOT_CAUSAL_RUN_STOPPED_BEFORE_POD",
+    "node_or_cgroup_psi": "NOT_CAUSAL_RUN_STOPPED_BEFORE_POD",
+    "activity_or_workflow": "NOT_STARTED",
+    "ingestion_implementation": "NOT_EXERCISED"
+  },
+  "fix": "S loads the shared engine with S topology installed before function definitions and restores the public P module afterward.",
+  "r_retry_forbidden": true,
+  "thresholds_changed": false,
+  "captured_keyword_defaults": {
+    "validate_pod": {
+      "run_label": "q04-pod-cgroup-p",
+      "node_name": "internal-a2a-vs6-local-worker2",
+      "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "image_identity": "ImageIdentityChain(repository='docker.io/library/pdf-t08-runtime', registry_index_digest=None, platform_manifest_digest='sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0', config_digest='sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce', os='linux', architecture='arm64', cri_repo_digests=('docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0',), cri_repo_tags=('docker.io/library/pdf-checkpoint-prototype:linux-v2',), cri_config_id='sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce', docker_engine_id='sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0', docker_repo_digests=('pdf-checkpoint-prototype@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0',), docker_repo_tags=('pdf-checkpoint-prototype:linux-v2',))"
+    },
+    "capture_cleanup_identity": {
+      "run_label": "q04-pod-cgroup-p",
+      "timeout": 30
+    },
+    "await_worker_pod": {
+      "timeout_seconds": 120,
+      "monotonic": null,
+      "sleep": null,
+      "run_label": "q04-pod-cgroup-p",
+      "node_name": "internal-a2a-vs6-local-worker2",
+      "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "image_identity": "ImageIdentityChain(repository='docker.io/library/pdf-t08-runtime', registry_index_digest=None, platform_manifest_digest='sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0', config_digest='sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce', os='linux', architecture='arm64', cri_repo_digests=('docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0',), cri_repo_tags=('docker.io/library/pdf-checkpoint-prototype:linux-v2',), cri_config_id='sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce', docker_engine_id='sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0', docker_repo_digests=('pdf-checkpoint-prototype@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0',), docker_repo_tags=('pdf-checkpoint-prototype:linux-v2',))",
+      "include_events": false
+    },
+    "validate_created_deployment": {
+      "deployment_name": "q04-pod-cgroup-p-activities"
+    },
+    "cleanup_deployment_and_pod": {
+      "deployment_name": "q04-pod-cgroup-p-activities",
+      "namespace": "pdf-t09a-validation",
+      "node_name": "internal-a2a-vs6-local-worker2",
+      "emptydir_names": [
+        "scratch",
+        "control",
+        "tmp"
+      ]
+    }
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "status": "FAIL_GRAPH_GATE",
+  "acceptance_pass": false,
+  "batch": {
+    "phase": "stopped",
+    "completed_phases": [],
+    "failure": {
+      "reason": "yolo failed; batch stopped",
+      "type": "RuntimeError"
+    },
+    "automatic_retry": false,
+    "retry_count": 0,
+    "fresh_accepted": false,
+    "fresh_processing_complete": true,
+    "restored_ran": false,
+    "exact_replay_ran": false,
+    "later_fixtures_ran": false
+  },
+  "graph_gate": {
+    "status": "SOURCE_REVIEW_REQUIRED",
+    "expected_graph_sha256": "b270e1818bdeecf5f88cc83766c8ab3fa1e89a1586fb0cacbfbf049614a8c276",
+    "actual_graph_sha256": "80c435fc8dc171c6da52a1353195b7221ad2449a518c326efbb0193d9828587d",
+    "removed_source_segments": [],
+    "added_source_segments": [],
+    "changed_collections": [
+      "body",
+      "groups",
+      "texts",
+      "pictures",
+      "tables"
+    ]
+  },
+  "delivery_before_graph_gate": {
+    "pages": 15,
+    "registered_pages": 15,
+    "selected_components": 4,
+    "registered_components": 4,
+    "component_ocr": [
+      {
+        "component": "#/pictures/0",
+        "outcome": "text_detected"
+      },
+      {
+        "component": "#/pictures/1",
+        "outcome": "text_detected"
+      },
+      {
+        "component": "#/pictures/2",
+        "outcome": "text_detected"
+      },
+      {
+        "component": "#/pictures/3",
+        "outcome": "text_detected"
+      }
+    ],
+    "pre_graph_consumer_checks_passed": true
+  },
+  "outer_admission": {
+    "continuous_seconds": 60.6990384029923,
+    "maximum_cgroup": 2550300672,
+    "maximum_psi": 0.0,
+    "minimum_available": 8793636864,
+    "observed_seconds": 60.72010927798692,
+    "oom_values": [
+      0
+    ],
+    "passed": true,
+    "resets": 0,
+    "samples": 61
+  },
+  "guards": {
+    "max_cgroup_bytes": 4294967296,
+    "samples": 202,
+    "maximum_sampled_memory_current_bytes": 4273446912,
+    "sampled_guard_crossed": false,
+    "minimum_available_bytes": 7085002752,
+    "maximum_full_psi_avg10": 0.0,
+    "memory_events_max": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    }
+  },
+  "resource_attribution": {
+    "samples": 397,
+    "maximum_memory_current_bytes": 4403523584,
+    "maximum_owned_pss_bytes": 2201500672,
+    "maximum_gap_seconds": 0.2787922499992419,
+    "incomplete_samples": 0,
+    "peak_sample_attribution_complete": true,
+    "required_observations_in_order": true,
+    "handoff_observed": true,
+    "no_warm_fresh_overlap": true,
+    "warm_fresh_overlap_sample_indexes": [],
+    "diagnostic_peak_exceeds_active_guard_bytes": 108556288
+  },
+  "cleanup": {
+    "verified": true,
+    "reservation_released": true,
+    "errors": [],
+    "current_scratch_remaining": [],
+    "running_after_cleanup": [],
+    "unexpected_active_processes": [],
+    "unexpected_active_workflows": [],
+    "health": {
+      "time": 1789780978.8777266,
+      "healthy": true,
+      "running": [],
+      "objects": 200
+    }
+  },
+  "held_services": {
+    "count": 32,
+    "all_expected_uids": true,
+    "all_closed": true,
+    "before_after_byte_identical": true,
+    "before_after_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "restored": false
+  },
+  "retained_evidence": {
+    "archive_sha256": "5c183da78740cb68cc7114dc06a4e2a7bd890b17c7f7637dd69adc8495bb9bc9",
+    "archive_bytes": 9287680,
+    "batch_state_sha256": "f6b607f008354b4b69a62a36bd174bb3e157af18acebe43132d169d61d1686ce",
+    "runtime_files_sha256": {
+      "cleanup.json": "7bea7c849b2f757b851b703fe13deb867b98baf498e7171c83276a9da2bdcb85",
+      "health-after.json": "6b17064be4e1a88b027c8bbd20dc89734fcef00ee5b767c9d871052df0e1ef66",
+      "held-services-before.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+      "held-services-after.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+      "lease-state.json": "babe1b94a84ae8634db6eaeeef701eb0b829bba46099e8e365735fb8eecddd55",
+      "admission.json": "c27adac4aae515d470421a5bd5997a8f9127882add1b9b5a11a62f11d0c1ba93",
+      "frozen-postcheck.json": "daf464788f3a513509149709ddf93f0c8543fc6b5f9279be78e4fc68f24fcdfb"
+    },
+    "frozen_state_unchanged": true,
+    "source_state_unchanged": true,
+    "frozen_postcheck": {
+      "state_sha256": "de271e9333ad5e3085cd50ba94b3548eb979e9cb57814c1110eba707c4bee31e",
+      "source_state_sha256": "2a3264316e0a859b2a490b3724af09c2df16959b35d9c8116b02e078f50f0636",
+      "phase_complete": false
+    }
+  }
+}

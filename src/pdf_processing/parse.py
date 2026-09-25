@@ -2,7 +2,7 @@
 
 Derived from the pinned experiment. No source, store or method is selected at import.
 Fresh execution installs guards once. The private warm protocol rebinds request-local
-state around one sequential capture converter; assembly always runs fresh.
+state around sequential native capture and checkpoint-restoration converters.
 """
 import collections
 import hashlib
@@ -44,7 +44,12 @@ class ParseRequest:
 
 
 def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: None):
-    if receive is not None and (request.mode != 'capture' or not request.checkpoint_only or request.scan):
+    if receive is not None and (
+        request.scan
+        or request.mode not in ('capture', 'restore')
+        or (request.mode == 'capture' and not request.checkpoint_only)
+        or (request.mode == 'restore' and request.checkpoint is None)
+    ):
         raise ChildFailure('method', 'unsupported_warm_profile')
     if request.mode not in ('baseline', 'capture', 'restore', 'warmup'):
         raise ValueError('Unsupported execution mode')
@@ -111,7 +116,7 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
         print(json.dumps(value), flush=True)
     
     
-    def instrument(forbid=False):
+    def instrument():
         # Class-level wrappers count stage input pages/batches and fail closed on replay.
         from docling.models.stages.page_preprocessing.page_preprocessing_model import PagePreprocessingModel
         from docling.models.stages.layout.layout_model import LayoutModel
@@ -130,7 +135,7 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
             original = cls.__call__
             def wrapped(self, conv_res, page_batch, _original=original, _name=cls.__name__):
                 pages = list(page_batch)
-                if forbid:
+                if request.mode == "restore":
                     raise AssertionError(f"Repeated page stage: {_name}")
                 t = time.perf_counter()
                 event("stage_enter", [p.page_no for p in pages], 0, native_stage=_name)
@@ -289,21 +294,32 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
                 "backend": "PdfFormatOption default pinned by packages"}
     
     request.out.mkdir(parents=True, exist_ok=True)
-    instrument(request.mode == "restore")
-    pipeline = {"baseline": SelectedPipeline, "warmup": SelectedPipeline,
-                "capture": CapturePipeline, "restore": RestorePipeline}[request.mode]
-    converter = DocumentConverter(format_options={bm.InputFormat.PDF: PdfFormatOption(
-        pipeline_cls=pipeline, pipeline_options=options(request.scan))})
-    t = time.perf_counter()
-    converter.initialize_pipeline(bm.InputFormat.PDF)
-    event("model_initialization", [], time.perf_counter() - t)
+    instrument()
+    converters = {}
+    def converter_for(mode):
+        if mode not in converters:
+            pipeline = {"baseline": SelectedPipeline, "warmup": SelectedPipeline,
+                        "capture": CapturePipeline, "restore": RestorePipeline}[mode]
+            converter = DocumentConverter(format_options={bm.InputFormat.PDF: PdfFormatOption(
+                pipeline_cls=pipeline, pipeline_options=options(request.scan))})
+            t = time.perf_counter()
+            converter.initialize_pipeline(bm.InputFormat.PDF)
+            event("model_initialization", [], time.perf_counter() - t)
+            converters[mode] = converter
+        return converters[mode]
+    converter_for(request.mode)
     current_method = method()
     producer = {p.name: sha(p) for p in Path(__file__).parent.glob('*.py')}
     actual_checkpoint = dependencies('group', {'method': current_method}, producer)
     original_scan, original_cache = request.scan, request.model_cache
     while True:
         if receive is not None:
-            if request.mode != 'capture' or not request.checkpoint_only or request.scan or request.scan != original_scan or request.model_cache != original_cache:
+            if (request.scan
+                    or request.mode not in ('capture', 'restore')
+                    or (request.mode == 'capture' and not request.checkpoint_only)
+                    or (request.mode == 'restore' and request.checkpoint is None)
+                    or request.scan != original_scan
+                    or request.model_cache != original_cache):
                 raise ChildFailure('method', 'unsupported_warm_profile')
         request.out.mkdir(parents=True, exist_ok=True)
         if request.expected_method is not None:
@@ -318,7 +334,7 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
         if request.mode == "warmup":
             return
         t = time.perf_counter()
-        result = converter.convert(request.pdf, page_range=(request.start, request.end))
+        result = converter_for(request.mode).convert(request.pdf, page_range=(request.start, request.end))
         elapsed = time.perf_counter() - t
         assert result.status == bm.ConversionStatus.SUCCESS, result.errors
         result.document.save_as_json(request.out / "document.json")
@@ -337,6 +353,7 @@ def execute(request: ParseRequest, receive=None, notify=lambda kind, **data: Non
                   "errors": [e.model_dump(mode="json") for e in result.errors]}
         write(request.out / "metrics.json", report)
         print(json.dumps(report, indent=2))
+        del result
         notify('done', memory={'peak_rss': report['peak_rss_bytes'], 'units': report['rss_units']})
         if receive is None:
             return

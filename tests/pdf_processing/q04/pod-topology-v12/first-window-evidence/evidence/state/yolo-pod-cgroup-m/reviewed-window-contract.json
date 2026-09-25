@@ -1,0 +1,112 @@
+{
+  "status": "PASS bounded fixture-07 candidate only",
+  "fixture": "07",
+  "modes": [
+    "fresh",
+    "restored",
+    "replay"
+  ],
+  "fresh_index_integrated": true,
+  "equivalence_bundle_sha256": "d249a3894b004d27adde302bd75176e4df5886be75343f7e17c80b0c5ba83dc8",
+  "parser_budget_identity_sha256": "b418d07d18500681a1b9e6828621c31d26fb5d3ba01791f3c2a64bda00407551",
+  "parser_budgets": {
+    "startup_seconds": 120,
+    "no_progress_seconds": 180,
+    "terminate_seconds": 5,
+    "reap_seconds": 5,
+    "max_requests": 1
+  },
+  "parser_recycle_contract": {
+    "status": "PASS fixture-07 parser recycle contract",
+    "fixture": "07",
+    "expected_page_groups": [
+      [
+        1,
+        5
+      ],
+      [
+        6,
+        10
+      ],
+      [
+        11,
+        15
+      ]
+    ],
+    "group_scheduling": "sequential",
+    "maximum_concurrent_activities": 1,
+    "fresh_parser_pids": [
+      124,
+      158,
+      192
+    ],
+    "fresh_parser_recycles": [
+      1,
+      2,
+      3
+    ],
+    "fresh_parser_restarts": [
+      1,
+      2,
+      3
+    ],
+    "modes": {
+      "fresh": {
+        "pages": 15,
+        "group_pages": 5,
+        "group_count": 3,
+        "operations": [
+          "8be74e4419846ea51330b24bcb3d8c6a130e0a7648a1da4fe5ea171ddf381893",
+          "87d4dbcd3a44cde5b701d8e150051630ebbf256ab1e571a007a647c94a05de64",
+          "254d1dd62096f26ff5f5d3db8afd94100a7d59f090ed7c907dfec92a4a7dc42c"
+        ],
+        "reused": false
+      },
+      "restored": {
+        "pages": 15,
+        "group_pages": 5,
+        "group_count": 3,
+        "operations": [
+          "8be74e4419846ea51330b24bcb3d8c6a130e0a7648a1da4fe5ea171ddf381893",
+          "87d4dbcd3a44cde5b701d8e150051630ebbf256ab1e571a007a647c94a05de64",
+          "254d1dd62096f26ff5f5d3db8afd94100a7d59f090ed7c907dfec92a4a7dc42c"
+        ],
+        "reused": true
+      },
+      "replay": {
+        "pages": 15,
+        "group_pages": 5,
+        "group_count": 3,
+        "operations": [
+          "8be74e4419846ea51330b24bcb3d8c6a130e0a7648a1da4fe5ea171ddf381893",
+          "87d4dbcd3a44cde5b701d8e150051630ebbf256ab1e571a007a647c94a05de64",
+          "254d1dd62096f26ff5f5d3db8afd94100a7d59f090ed7c907dfec92a4a7dc42c"
+        ],
+        "reused": true
+      }
+    }
+  },
+  "resource_gate": {
+    "status": "PASS",
+    "limit_bytes": 4294967296,
+    "samples_evaluated": 1021,
+    "incomplete_sample_indexes": [],
+    "process_attribution_incomplete_sample_indexes": [],
+    "classified_cgroup_transition_sample_indexes": [],
+    "memory_violations": [],
+    "oom_violations": [],
+    "psi_violations": [],
+    "final_sample_index": 1020,
+    "final_sample_labels": [
+      "owned_cleanup_finished",
+      "post_cleanup_sample"
+    ],
+    "final_sample_has_cleanup_markers": true,
+    "summary_errors": [],
+    "rule": "all 250 ms cgroup readings must remain continuous, at or below 4 GiB with zero OOM and full PSI avg10; process PSS remains unknown for a separately classified confirmed-exit transition; the final sample must carry both cleanup markers"
+  },
+  "automatic_retry": false,
+  "production_default_changed": false,
+  "historical_reference_mutated": false,
+  "general_normalization": false
+}

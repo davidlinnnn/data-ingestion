@@ -1,0 +1,7 @@
+# Draft for GitHub #51 — not posted
+
+Q04 active telemetry-loss fail-closed is now proven by AU (`q04-telemetry-loss-pod-cgroup-20260925-au`, execution commit `dff321c`). The native worker sampler stopped during the next parsing group after five pages; controller detected the stale sample and canceled its owned workflow. Temporal execution completed with a **failed** business result (`activity_budget_exhausted`, 5/51 pages, `processing_complete=false`), and the publication audit found no complete registration. Independent cancel attribution, 323 unchanged-guard resource samples, 42 exact terminal inventory hashes, host observer and UID-fenced cleanup passed. PVC remains Bound; all 32 existing Deployments remain off.
+
+AT (`05c9774`) reached the same guard but its acceptance verifier incorrectly treated every Temporal `COMPLETED` event as ingestion success. AT stopped before terminal qualification; its raw evidence and PVC remain retained. AU corrected the verifier and used a new identity/prefix, not an unchanged retry.
+
+Matrix: active telemetry-loss guard **proven**. Remaining: actual process drain/recovery, in-flight Pod drain/recovery, and supported operating-bounds handoff to #44. #51 remains open and is not ready for integration or closure. AQ's exact OCR process/allocator cause remains unknown. Results: `tests/pdf_processing/q04/pod-topology-v45/first-window-evidence/RESULTS.md` and `tests/pdf_processing/q04/pod-topology-v46/first-window-evidence/RESULTS.md`.

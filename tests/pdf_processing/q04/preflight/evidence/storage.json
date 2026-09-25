@@ -1,0 +1,208 @@
+{
+  "service_pods": [
+    {
+      "name": "objects-8865c4db6-bqmvr",
+      "uid": "ee7b24cb-bdb7-408a-9ec8-093d2ab5ac00",
+      "volumes": [
+        {
+          "name": "data",
+          "persistentVolumeClaim": {
+            "claimName": "object-data"
+          }
+        },
+        {
+          "name": "kube-api-access-8gk6f",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "minio",
+          "mounts": [
+            {
+              "mountPath": "/data",
+              "name": "data"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-8gk6f",
+              "readOnly": true
+            }
+          ],
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "temporal-bf44c7c45-wqvgj",
+      "uid": "a7a6e87b-c9cc-471e-871d-e262bf2fc17f",
+      "volumes": [
+        {
+          "name": "data",
+          "persistentVolumeClaim": {
+            "claimName": "temporal-data"
+          }
+        },
+        {
+          "name": "kube-api-access-bbzzh",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "temporal",
+          "mounts": [
+            {
+              "mountPath": "/data",
+              "name": "data"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-bbzzh",
+              "readOnly": true
+            }
+          ],
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "name": "object-data",
+      "uid": "ebd0ba41-443c-4971-859a-3b2ca8f5b1d4",
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "2Gi"
+          }
+        },
+        "storageClassName": "standard",
+        "volumeMode": "Filesystem",
+        "volumeName": "pvc-ebd0ba41-443c-4971-859a-3b2ca8f5b1d4"
+      },
+      "status": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "capacity": {
+          "storage": "2Gi"
+        },
+        "phase": "Bound"
+      }
+    },
+    {
+      "name": "temporal-data",
+      "uid": "453260b2-de67-44c6-9fda-f3292cb5ee04",
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "1Gi"
+          }
+        },
+        "storageClassName": "standard",
+        "volumeMode": "Filesystem",
+        "volumeName": "pvc-453260b2-de67-44c6-9fda-f3292cb5ee04"
+      },
+      "status": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "capacity": {
+          "storage": "1Gi"
+        },
+        "phase": "Bound"
+      }
+    }
+  ]
+}

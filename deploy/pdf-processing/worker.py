@@ -12,9 +12,9 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 
 
-async def cleanup_fresh_work():
-    from pdf_processing.execution import stop_fresh_children
-    await stop_fresh_children()
+async def cleanup_owned_work(parser, reason='worker_shutdown'):
+    from pdf_processing.execution import stop_owned_children
+    await stop_owned_children(parser, reason)
     for pattern in ('activity-*', 'ocr-*'):
         for path in Path(os.environ.get('SCRATCH', '/scratch')).glob(pattern):
             shutil.rmtree(path, ignore_errors=True)
@@ -89,18 +89,14 @@ async def main():
         except TimeoutError:
             # Thread-backed publication cannot be cancelled safely in Python. The
             # worker process is the final isolation unit after the drain deadline.
-            if parser is not None:
-                await parser.stop('drain_deadline')
-            await cleanup_fresh_work()
+            await cleanup_owned_work(parser, 'drain_deadline')
             print(json.dumps({'event':'forced_worker_exit', 'reason':'drain_deadline'}), flush=True)
             os._exit(75)
         await running
     finally:
         stopping.cancel()
         await asyncio.gather(stopping, return_exceptions=True)
-        if parser is not None:
-            await parser.close()
-        await cleanup_fresh_work()
+        await cleanup_owned_work(parser)
 
 
 async def entrypoint():

@@ -1,0 +1,35 @@
+{
+  "base_commit": "18be1b3fbcb929921ec986a1a0bf93e4be995b4d",
+  "scope": "READ_ONLY_PREFLIGHT_AND_LOCAL_PLAN",
+  "created_at": "2026-09-16T14:12:14.224819+00:00",
+  "context": "kind-internal-a2a-vs6-local",
+  "remote_mutations": false,
+  "workflows_submitted": 0,
+  "inference_runs": 0,
+  "services_paused": 0,
+  "evidence": {
+    "closing-check.json": "eb27b25c5453254e01a45783becd4484f4e99d6e2ae44f6066501d7fb7e5df4d",
+    "inventory-after.json": "9435a844cd460ebe1b1d357cb7ce2ca34b670f40f7140e1960d5cfd775c01751",
+    "inventory.json": "c7a862009e390dfdff4ffa2d8201932b14c41687f3832d5c33043ff9720c7bff",
+    "local-validation-final.log": "feb0ac7746fcba06d0980b832e36100264787d6b78e4567805ca8e9bcd5fc785",
+    "local-validation.log": "8058ffb28cb4923434bbb32544f897422b88a38fa2e648283c4fc4361d4db677",
+    "package.json": "224e433f90e3a226847b00ce79b73f139f5e4b293e988e9cbce695bd87e6559c",
+    "pause-candidates.json": "7cb8a281d132df45ed4d46feaf7eb2fa288c7198e5c73eb2d334dd895eef2641",
+    "probe.json": "fc65213d5b7704ef2adeece40a0d720c0d1989eba675622b7d53cffabc403672",
+    "processes.json": "aeb83568de04b1d21fc35393ca0a16692447a5c0dbbb53d8888df84f1942a31e",
+    "remote-probe-executed.py": "3fadbedd736b9c189512e2335801b069cbeab69ff67f9363ade595a4d373b339",
+    "storage.json": "9db71fa7bdad7600b2368f2249d45403bdf76dd483454f462a0021018922582f",
+    "typecheck-final.log": "6d88a1b220adb7a3d62092b6e38431f0b3fe8babe9864fab90e5849766260332",
+    "typecheck.log": "9da76df9c5ec791f3ff14d9a20b34803eac89772797b7d42af5a5d4f5f6baff3"
+  },
+  "reproduction_scripts": {
+    "inventory.py": "09f3fd45ab1ec8cbd5bd97b643e11b03b6f6a0201c11bd478d8b36c102337b85",
+    "remote_probe.py": "323dabed1cb276a2116cdc910906d0aecf21703bc6f2974c9468595269bed0da",
+    "run_probe.py": "ca8f3e684b8f29987a4bbc192724bf204d66fe21db365ee512168ba5c86d38b1"
+  },
+  "notes": [
+    "remote-probe-executed.py preserves the executed stdin probe body; expected profile/producer came from frozen local inputs.",
+    "Current reproduction scripts pin Kubernetes context explicitly and have type-only corrections; original measurements are not overwritten.",
+    "Private package contains exactly18be1b3 src/tests and frozen v5 inputs, not preflight scripts."
+  ]
+}

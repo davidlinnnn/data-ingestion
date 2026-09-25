@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-aa",
+  "workload_exit": {
+    "returncode": 1,
+    "timed_out": false,
+    "forced": false,
+    "failure": "ValueError: process attribution incomplete"
+  },
+  "workload": {
+    "five_workflows_completed": true,
+    "all_processing_complete": true,
+    "group_requests": 29,
+    "parser_pids": [131, 1836],
+    "request_recycles": 1
+  },
+  "resource": {
+    "outer_min_available_bytes": 5155491840,
+    "outer_max_cgroup_bytes": 2547748864,
+    "inner_max_cgroup_bytes": 2547224576,
+    "max_node_full_psi_avg10": 0.0,
+    "max_cgroup_full_psi_avg10": 0.0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0,
+    "sample_count": 1307,
+    "maximum_gap_seconds": 0.7182968749839347
+  },
+  "process_attribution": {
+    "status": "incomplete",
+    "hard_incomplete_sample_indexes": [404, 412, 559, 692, 1291],
+    "classified_exit_indexes": [404, 412, 559, 692],
+    "unclassified_indexes": [1291],
+    "cause": {
+      "1291": "fresh child PID 3053 exited between the first membership scans; the complete retry and next complete sample confirm the same identity absent, but the classifier did not handle a failed conservative resample whose retry itself was complete"
+    }
+  },
+  "causal_chain": [
+    "all five Temporal workflows completed with processing_complete=true",
+    "fresh child PID 3053 exited during process membership enumeration",
+    "the retry was complete and confirmed PID 3053 absent but had a lower cgroup memory reading",
+    "the collector retained the higher first cgroup reading and both raw observations",
+    "the transition classifier lacked the complete-retry membership-exit shape",
+    "exact process attribution remained false and the candidate raised ValueError",
+    "the supervisor returned 1; the outer controller stopped without retry and cleaned owned runtime"
+  ],
+  "excluded_causes": [
+    "node PSI",
+    "Pod cgroup PSI",
+    "VM OOM",
+    "cgroup OOM",
+    "memory floor",
+    "workload deadline",
+    "supervisor interruption",
+    "Temporal Activity failure",
+    "ingestion business failure"
+  ],
+  "unknowns": [
+    "A later run can encounter a different fail-closed telemetry transition; this cannot be known before one controlled run"
+  ],
+  "root_cause": "The failed-resample exit classifier did not recognize a membership exit whose conservative retry was complete and confirmed the exact identity absent."
+}

@@ -1,0 +1,76 @@
+{
+  "primary_error": "ValueError('evidence mount fsGroup ownership changed')",
+  "evidence_preserved_before_scale_down": false,
+  "evidence_capture_error": "CalledProcessError(1, ['kubectl', '--context', 'kind-internal-a2a-vs6-local', '--request-timeout=15s', '-n', 'pdf-t09a-validation', 'exec', 'q04-pod-cgroup-c-activities-6c64c4f9b4-m5fkn', '--', '/experiment/.venv/bin/python', '-c', \"import json\\nfrom pathlib import Path\\nroot=Path('/q04-evidence');owner=json.loads((root/'supervisor-ownership.json').read_text())\\ncleanup=json.loads((root/'cleanup-complete.json').read_text())\\nabsent=not (Path('/proc')/str(owner['pid'])).exists()\\ncomplete=all(cleanup.get(k) is True for k in ('worker_absent','owned_children_absent','scratch_absent'))\\nprint(json.dumps({'pid':owner['pid'],'start_ticks':owner['start_ticks'],\\n 'supervisor_absent':absent,'cleanup_complete':complete}))\\n\"])",
+  "policy": {
+    "controller_export_complete": false,
+    "remove_owned_runtime": true,
+    "retain_evidence_pvc": true
+  },
+  "controller_export_complete": false,
+  "retained_for_evidence_recovery": false,
+  "terminal_stop_proven": false,
+  "terminal_cgroup_oom_proof": true,
+  "deployment_scaled_zero": true,
+  "pod_delete_uid_precondition_sent": true,
+  "pod_delete_grace_seconds": 60,
+  "old_runtime_absent": true,
+  "emptydirs_absent": true,
+  "owned_object_deletion": {
+    "deleted": [
+      {
+        "kind": "Deployment",
+        "name": "q04-pod-cgroup-c-activities",
+        "uid": "845d2aeb-11cd-4b01-97fb-73f767070595"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-harness-b14a326192775c06",
+        "uid": "9ce19726-2369-4ecd-9b38-2f536bf2836f"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-code-a6501b471bd3193a",
+        "uid": "217b5325-f90b-4f24-a16e-ebac65bbcab9"
+      }
+    ],
+    "retained": [
+      {
+        "kind": "PersistentVolumeClaim",
+        "name": "q04-pod-cgroup-c-evidence-20260919-c",
+        "uid": "b1e16e99-90d5-42b7-b802-dca6643170be"
+      }
+    ],
+    "errors": {}
+  },
+  "owned_objects_deleted_with_uid_preconditions": true,
+  "retained_evidence_claim": {
+    "pvc_name": "q04-pod-cgroup-c-evidence-20260919-c",
+    "pvc_uid": "b1e16e99-90d5-42b7-b802-dca6643170be",
+    "phase": "Bound",
+    "retained": true,
+    "automatic_delete": false,
+    "recovery_identity": {
+      "pvc_name": "q04-pod-cgroup-c-evidence-20260919-c",
+      "pvc_uid": "b1e16e99-90d5-42b7-b802-dca6643170be",
+      "pv_name": "pvc-b1e16e99-90d5-42b7-b802-dca6643170be",
+      "pv_uid": "c0629afb-4db0-4e93-b289-eb0b8f37bcc6",
+      "namespace": "pdf-t09a-validation",
+      "node": "internal-a2a-vs6-local-worker2",
+      "access_modes": [
+        "ReadWriteOnce"
+      ],
+      "storage_class": "standard",
+      "capacity": "1Gi",
+      "mount_path": "/q04-evidence",
+      "run_as_uid": 1000,
+      "run_as_gid": 1000,
+      "fs_group": 1000,
+      "automatic_delete": false,
+      "recovery_mode": "read-only helper Pod on the bound node"
+    }
+  },
+  "post_cleanup_vm_oom_proof": true,
+  "final_identity_and_health": true,
+  "disposition": "CLEANED_WITH_DURABLE_EVIDENCE"
+}

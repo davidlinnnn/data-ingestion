@@ -1,0 +1,40 @@
+{
+  "admission": {
+    "continuous_seconds": 61.16605266596889,
+    "maximum_full_psi_avg10": 0.0,
+    "minimum_available_bytes": 8247615488,
+    "samples": 49,
+    "vm_oom_kill": 0
+  },
+  "cleanup": "CLEANED_WITH_PVC_RETAINED_WORKLOAD_EVIDENCE_INCOMPLETE",
+  "cleanup_marker_defect": {
+    "error": "NotADirectoryError",
+    "path": "state/yolo-pod-cgroup-h/worker-1.log/stopped.json",
+    "required_fix": "filter worker-* cleanup roots to directories and cover the sibling worker-N.log path"
+  },
+  "controller_samples_before_rejection": {
+    "first_time": 1789836459.3067367,
+    "last_time": 1789836530.1577628,
+    "maximum_full_psi_avg10": 0.0,
+    "maximum_memory_current_bytes": 1674448896,
+    "minimum_available_bytes": 6758825984,
+    "samples": 184,
+    "vm_oom_kill": 0
+  },
+  "offending_node_sample": {
+    "persisted": false,
+    "reason": "verify_runtime_sample rejected the row before vm-controller.jsonl append",
+    "signal": "positive node full-memory PSI avg10"
+  },
+  "pod_attribution": {
+    "first_time": 1789836459.7883275,
+    "last_time": 1789836528.946989,
+    "maximum_full_psi_avg10": 0.0,
+    "maximum_memory_current_bytes": 1120079872,
+    "maximum_owned_major_faults": 0,
+    "maximum_owned_pss_bytes": 1177697280,
+    "samples": 272
+  },
+  "result": "FAIL_VM_PSI_GUARD",
+  "schema_version": 1
+}

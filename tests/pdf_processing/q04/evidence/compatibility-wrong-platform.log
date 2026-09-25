@@ -1,0 +1,28 @@
+E
+======================================================================
+ERROR: test_q03_compatibility (unittest.loader._FailedTest.test_q03_compatibility)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_q03_compatibility
+Traceback (most recent call last):
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q03/test_q03_compatibility.py", line 7, in <module>
+    from temporalio.exceptions import ApplicationError
+  File "/private/tmp/t01-type-deps/temporalio/__init__.py", line 11, in <module>
+    from .service import __version__ as __sdk_version
+  File "/private/tmp/t01-type-deps/temporalio/service.py", line 20, in <module>
+    import temporalio.bridge.client
+  File "/private/tmp/t01-type-deps/temporalio/bridge/client.py", line 15, in <module>
+    import temporalio.bridge.runtime
+  File "/private/tmp/t01-type-deps/temporalio/bridge/runtime.py", line 14, in <module>
+    import temporalio.bridge.temporal_sdk_bridge
+ImportError: dlopen(/private/tmp/t01-type-deps/temporalio/bridge/temporal_sdk_bridge.abi3.so, 0x0002): tried: '/private/tmp/t01-type-deps/temporalio/bridge/temporal_sdk_bridge.abi3.so' (slice is not valid mach-o file), '/System/Volumes/Preboot/Cryptexes/OS/private/tmp/t01-type-deps/temporalio/bridge/temporal_sdk_bridge.abi3.so' (no such file), '/private/tmp/t01-type-deps/temporalio/bridge/temporal_sdk_bridge.abi3.so' (slice is not valid mach-o file)
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)

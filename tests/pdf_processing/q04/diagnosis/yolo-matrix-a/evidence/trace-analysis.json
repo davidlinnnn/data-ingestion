@@ -1,0 +1,253 @@
+{
+  "acl_comparison": {
+    "acl_fixture_09_attribution_trace": {
+      "baseline_cgroup_bytes": 2248318976,
+      "cleanup_cgroup_bytes": 2281771008,
+      "diagnostic_residual_at_peak_bytes": 1855757312,
+      "owned_descendant_max_pss_bytes": 603068416,
+      "owned_pss_at_peak_bytes": 1996055552,
+      "parser_max_pss_bytes": 1345460224,
+      "sampled_peak_cgroup_bytes": 3851812864,
+      "source_sha256": "14ab0dbb55fc553954bfde2eea6fd7ee9b7590b9719dcc77a5c476bd3bd6cca0"
+    },
+    "limits": [
+      "ACL PSS class maxima are not simultaneous and cannot be summed.",
+      "YOLO captured a warm-parser lifetime peak RSS, but no synchronized current RSS/PSS, memory.stat, complete process tree, or post-cleanup cgroup sample.",
+      "Different fixture phases make the cgroup values comparative observations, not a scaling ratio."
+    ],
+    "yolo_fixture_07_guard_trace": {
+      "cleanup_cgroup_bytes": null,
+      "diagnostic_residual_at_peak_bytes": null,
+      "first_worker_sample_cgroup_bytes": 2503032832,
+      "owned_pss_at_peak_bytes": null,
+      "parser_reported_peak_rss_kib": 2076100,
+      "sampled_peak_cgroup_bytes": 4337156096
+    }
+  },
+  "analysis_actions": {
+    "deployment_mutation": false,
+    "production_changed": false,
+    "runtime_started": false,
+    "workflow_submitted": false
+  },
+  "cause_boundary": {
+    "established": [
+      "the sampled shared cgroup crossed the fixed guard after assembly was scheduled",
+      "one warm parser completed three capture requests and remained represented as ready",
+      "the configured assembly restore code path would use a fresh child if restore invocation was reached",
+      "PSI, VM OOM, cgroup OOM, telemetry-gap, and VM-memory-floor guards did not fire"
+    ],
+    "supported_not_proven": [
+      "assembly-period materialization or restore-document construction contributed to the rise"
+    ],
+    "unresolved": [
+      "whether and when assembly spawned a fresh restore child",
+      "whether the warm parser and a fresh child were simultaneously alive",
+      "simultaneous RSS/PSS of warm parser, assembly child, worker, and controller",
+      "anon/file/kernel split and page-cache contribution",
+      "concurrent unrelated coordinator-process contribution",
+      "post-cleanup cgroup release"
+    ]
+  },
+  "guard": {
+    "ceiling_bytes": 4294967296,
+    "censored_at_guard_stop": true,
+    "counterfactual_uncensored_peak_bounded": false,
+    "first_breach_bytes": 4303867904,
+    "sampled_maximum_after_cancel_request": true,
+    "sampled_maximum_bytes": 4337156096,
+    "sampled_maximum_bytes_over_ceiling": 42188800,
+    "sampled_maximum_is_required_limit": false
+  },
+  "immutable_evidence": {
+    "all_top_level_hashes_verified": true,
+    "artifact_count": 23,
+    "diagnosed_producer_hashes_match_staged_runtime": true,
+    "remote_tar_sha256": "1300f24aea574e4c921e275f3dca6ba4354252e94da3a225f77d91d37a35ea94"
+  },
+  "parser_semantics": {
+    "assembly_restore_would_use_fresh_child_if_invoked": true,
+    "assembly_scheduled_at": "2026-09-18T13:39:42.741689629Z",
+    "capture_uses_warm_parser": true,
+    "fresh_child_identity_in_worker_samples": false,
+    "fresh_child_spawn_observed": false,
+    "last_warm_parser_completed_at": "2026-09-18T13:39:42.625197+00:00",
+    "maximum_parser_count": 3,
+    "parser_count_is_process_count": false,
+    "parser_count_meaning": "completed requests in one WarmParser lifetime",
+    "sampled_stage_is_stale_during_assembly": true,
+    "source_hashes": {
+      "execution.py": "f6a6be4fdda73e87308eb14335cbd9455473f4edeeac0034dc76c03c5f40326d",
+      "supervision.py": "4b3978d0c4710dda90335af866b6f73a6ab889bd714258f5c6cf5e22bfd3d135",
+      "worker.py": "bd7105271dcb8e548671c4220447d619924e234d6596ecdfcab7e9ddfb911b68"
+    },
+    "warm_parser_pids": [
+      2327
+    ],
+    "warm_parser_request_ids": [
+      "f2c3459a358847a284cf2ea201606ec1",
+      "8a67dd14544a432180dcc98e1e2a2e86",
+      "b077194d4adb4a1ca6629d23a43bc61c"
+    ]
+  },
+  "recommendation": {
+    "capture": [
+      "250 ms cgroup memory.current/memory.stat/memory.events/PSI through post-cleanup",
+      "identity-fenced process tree with RSS/PSS, faults, and CPU for controller, worker, warm parser, and fresh child",
+      "explicit warm-parser request state plus fresh-child PID and operation kind"
+    ],
+    "isolated_worker_cgroup": {
+      "benefit": "separates owned worker and children from unrelated coordinator processes",
+      "cost": "changes measurement topology and still does not prove Kubernetes Pod replacement or emptyDir cleanup",
+      "use": "second step if shared-cgroup attribution remains ambiguous"
+    },
+    "keep_current_guard": true,
+    "next_measurement": "one fresh-only attribution calibration after separate authorization",
+    "pod_drain_relation": "an owned single-container Pod would provide a distinct container cgroup and better attribution, but requires the separately reviewed Deployment, UID/label fencing, shared bundle/state/evidence paths, replacement readiness, CRI absence, and emptyDir proof before drain testing",
+    "raise_guard_from_this_trace": false
+  },
+  "resource_scope": {
+    "cgroup_oom_kill_values": [
+      0
+    ],
+    "exclusive_owner_attribution_supported": false,
+    "maximum_psi_full_avg10": 0.0,
+    "maximum_sample_gap_seconds": 0.5076174736022949,
+    "memory_stat_present": false,
+    "minimum_available_bytes": 7200411648,
+    "post_cleanup_memory_sample_present": false,
+    "sample_count": 207,
+    "shared_coordinator_cgroup": true,
+    "synchronized_current_process_rss_or_pss_present": false,
+    "vm_oom_kill_values": [
+      0
+    ],
+    "warm_parser_lifetime_peak_rss_present": true
+  },
+  "scope": "offline_only_no_runtime",
+  "timeline": {
+    "activities": [
+      {
+        "completed_at": "2026-09-18T13:39:08.320102627Z",
+        "kind": "prepare",
+        "scheduled_at": "2026-09-18T13:39:08.203582877Z",
+        "scheduled_event_id": "5"
+      },
+      {
+        "completed_at": "2026-09-18T13:39:24.395349635Z",
+        "kind": "group",
+        "pages": [
+          1,
+          5
+        ],
+        "scheduled_at": "2026-09-18T13:39:08.330647252Z",
+        "scheduled_event_id": "11"
+      },
+      {
+        "completed_at": "2026-09-18T13:39:38.037032919Z",
+        "kind": "group",
+        "pages": [
+          6,
+          10
+        ],
+        "scheduled_at": "2026-09-18T13:39:24.407672801Z",
+        "scheduled_event_id": "17"
+      },
+      {
+        "completed_at": "2026-09-18T13:39:42.730420296Z",
+        "kind": "group",
+        "pages": [
+          11,
+          15
+        ],
+        "scheduled_at": "2026-09-18T13:39:38.048396419Z",
+        "scheduled_event_id": "23"
+      },
+      {
+        "completed_at": null,
+        "kind": "assembly",
+        "scheduled_at": "2026-09-18T13:39:42.741689629Z",
+        "scheduled_event_id": "29"
+      }
+    ],
+    "boundaries": [
+      {
+        "available_bytes": 9049411584,
+        "event_time": 1789738748.181128,
+        "memory_current_bytes": 2504400896,
+        "name": "workflow_started",
+        "parser_count": 0,
+        "sample_offset_seconds": -0.1462726593017578,
+        "sample_time": 1789738748.0348554,
+        "sampled_parser_stage": null
+      },
+      {
+        "available_bytes": 8036556800,
+        "event_time": 1789738764.395349,
+        "memory_current_bytes": 3520454656,
+        "name": "group_1_completed",
+        "parser_count": 1,
+        "sample_offset_seconds": 0.22430062294006348,
+        "sample_time": 1789738764.6196496,
+        "sampled_parser_stage": "RapidOcrModel"
+      },
+      {
+        "available_bytes": 7999381504,
+        "event_time": 1789738778.037032,
+        "memory_current_bytes": 3556569088,
+        "name": "group_2_completed",
+        "parser_count": 2,
+        "sample_offset_seconds": 0.14776277542114258,
+        "sample_time": 1789738778.1847947,
+        "sampled_parser_stage": "stage_enter"
+      },
+      {
+        "available_bytes": 7622901760,
+        "event_time": 1789738782.73042,
+        "memory_current_bytes": 3930976256,
+        "name": "group_3_completed",
+        "parser_count": 3,
+        "sample_offset_seconds": -0.02394700050354004,
+        "sample_time": 1789738782.706473,
+        "sampled_parser_stage": "checkpoint_commit"
+      },
+      {
+        "available_bytes": 7622901760,
+        "event_time": 1789738782.741689,
+        "memory_current_bytes": 3930976256,
+        "name": "assembly_scheduled",
+        "parser_count": 3,
+        "sample_offset_seconds": -0.03521585464477539,
+        "sample_time": 1789738782.706473,
+        "sampled_parser_stage": "checkpoint_commit"
+      },
+      {
+        "available_bytes": 7247986688,
+        "event_time": 1789738790.2485085,
+        "memory_current_bytes": 4303867904,
+        "name": "first_guard_breach",
+        "parser_count": 3,
+        "sample_offset_seconds": 0.0,
+        "sample_time": 1789738790.2485085,
+        "sampled_parser_stage": "checkpoint_commit"
+      },
+      {
+        "available_bytes": 7200411648,
+        "event_time": 1789738791.2518764,
+        "memory_current_bytes": 4337156096,
+        "name": "sampled_maximum",
+        "parser_count": 3,
+        "sample_offset_seconds": 0.0,
+        "sample_time": 1789738791.2518764,
+        "sampled_parser_stage": "checkpoint_commit"
+      }
+    ],
+    "cleanup_finished_at": 1789738797.6900299,
+    "cleanup_started_at": 1789738795.2159348,
+    "last_progress_status": "assembling",
+    "post_cancel_activity_completion_warning": true,
+    "processing_complete": false,
+    "workflow_cancel_requested_at": "2026-09-18T13:39:50.738144175Z"
+  },
+  "verdict": "RED_CGROUP_GUARD_DURING_ASSEMBLY"
+}

@@ -1,0 +1,75 @@
+{
+  "status": "STOPPED_AQ_POD_PSI_BEFORE_REQUIRED_RELATIONSHIP_HOOK",
+  "run_id": "q04-relationship-pod-cgroup-20260925-aq",
+  "source_commit": "75fa9b8",
+  "raw_root": "/private/tmp/q04-relationship-pod-cgroup-20260925-aq",
+  "pre_inference_gates": 11,
+  "fresh_native": {
+    "status": "complete",
+    "registered_pages": 51,
+    "registered_components": 7,
+    "document_sha256": "70673bdc5cb548d37c81efa91bb1c5460f71f94148bdb5d1218a319c6af9f152",
+    "activity_failed_events": 0
+  },
+  "trigger": {
+    "controller_stop_utc": "2026-09-24T17:18:27.313Z",
+    "reason": "VM PSI guard breached",
+    "node_psi_full_avg10": 0.18,
+    "pod_psi_full_avg10": 0.18,
+    "allowed_node_psi_full_avg10": 0,
+    "node_available_bytes": 5135486976,
+    "node_available_floor_bytes": 1610612736,
+    "pod_memory_current_bytes": 2166820864,
+    "pod_memory_max_bytes": 5368709120,
+    "pod_oom_kill": 0,
+    "vm_oom_kill": 0,
+    "controller_samples": 705,
+    "trigger_sample_retained": true
+  },
+  "host_probe": {
+    "samples": 1269,
+    "cgroups_at_start_and_end": 153,
+    "max_gap_seconds": 0.27402305603027344,
+    "window": "10 seconds before through 1 second after controller stop",
+    "window_samples": 42,
+    "node_full_delta_microseconds": 37559,
+    "aq_pod_full_delta_microseconds": 36294,
+    "aq_container_full_delta_microseconds": 36741,
+    "aq_pod_uid": "b826f5eb-4f51-48bb-a9bc-0fcb7c84e472",
+    "aq_container_id": "1777c9e685978464e3702307d541e13ae5fb000d5b57b058604b243272cdb57d",
+    "remote_stop": true,
+    "transport_exit_zero": true,
+    "remote_absence_verified": true,
+    "complete": true
+  },
+  "interrupted_native": {
+    "required_hook_observed": false,
+    "recovery_ran": false,
+    "replay_ran": false,
+    "workflow_execution": "COMPLETED",
+    "business_status": "failed",
+    "business_error": "activity_budget_exhausted",
+    "processing_complete": false,
+    "registered_pages": 51,
+    "registered_components": 2,
+    "selected_components": 7,
+    "activity_failed_events": 0,
+    "cancel_request_utc": "2026-09-24T17:18:27.364Z"
+  },
+  "evidence": {
+    "terminal_status": "INCOMPLETE",
+    "inventory_files": 50,
+    "inventory_sha256": "5cf60d494c784d4cb183a42a8a5d1117227d34bc7e6f813314306d5b1c859d2f",
+    "inventory_exact_set_sizes_hashes_verified": true,
+    "cleanup_complete": true
+  },
+  "cleanup": {
+    "owned_runtime_absent": true,
+    "emptydirs_absent": true,
+    "owned_objects_deleted_with_uid_preconditions": true,
+    "evidence_pvc": "q04-pod-cgroup-aq-evidence-20260925-aq",
+    "evidence_pvc_uid": "706f50ca-4218-4450-8a39-63236105e32d",
+    "evidence_pvc_phase": "Bound",
+    "held_deployments_exact_off": 32
+  }
+}

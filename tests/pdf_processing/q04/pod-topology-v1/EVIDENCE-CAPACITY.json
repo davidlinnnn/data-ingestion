@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "measured_at": "2026-09-19",
+  "measurement": "local retained tar member inventory; no cluster access",
+  "historical_runs": [
+    {
+      "name": "q04-yolo-attribution-20260918-b",
+      "archive_bytes": 4126720,
+      "uncompressed_bytes": 4076910,
+      "inventory_files": 43,
+      "jsonl_total_bytes": 1856308,
+      "jsonl_max_bytes": 1681093
+    },
+    {
+      "name": "q04-yolo-lifecycle-20260919-a",
+      "archive_bytes": 9287680,
+      "uncompressed_bytes": 9236767,
+      "inventory_files": 48,
+      "jsonl_total_bytes": 2000695,
+      "jsonl_max_bytes": 1746466
+    },
+    {
+      "name": "q04-yolo-matrix-20260918-a",
+      "archive_bytes": 716800,
+      "uncompressed_bytes": 677916,
+      "inventory_files": 37,
+      "jsonl_total_bytes": 210657,
+      "jsonl_max_bytes": 102042
+    },
+    {
+      "name": "q04-yolo-reviewed-20260919-b",
+      "archive_bytes": 26316800,
+      "uncompressed_bytes": 26220356,
+      "inventory_files": 101,
+      "jsonl_total_bytes": 4712396,
+      "jsonl_max_bytes": 4234743
+    }
+  ],
+  "historical_maxima": {
+    "archive_bytes": 26316800,
+    "uncompressed_bytes": 26220356,
+    "inventory_files": 101,
+    "jsonl_total_bytes": 4712396,
+    "jsonl_max_bytes": 4234743
+  },
+  "claim": {
+    "requested_bytes": 1073741824,
+    "stop_free_bytes": 134217728,
+    "maximum_evidence_bytes": 939524096,
+    "usable_to_historical_uncompressed_ratio": 35.83185765928592,
+    "storage_class": "standard",
+    "access_mode": "ReadWriteOnce",
+    "automatic_delete": false
+  },
+  "stop_contract": "Stop before a new durable record when logical evidence bytes would exceed 939524096, filesystem free bytes are below 134217728, or sampled free bytes fall below 134217728.",
+  "limitations": [
+    "The retained archives are evidence from prior fixture-07 process-mode runs, not a guarantee for a future Pod run.",
+    "The local-path provisioner is node-local durability and is not an off-cluster backup.",
+    "Admission and every runtime sample still enforce the fixed memory, PSI, OOM, cgroup, and evidence-volume guards."
+  ]
+}
