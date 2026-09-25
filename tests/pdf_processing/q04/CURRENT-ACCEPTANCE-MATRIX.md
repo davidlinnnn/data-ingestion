@@ -311,6 +311,16 @@ execution, reuse and interruption behavior require requalification.
   samples, 42 terminal inventory hashes, host observer and cleanup passed.
   AU PVC remains Bound and the 32 held Deployments remain exact/off. See
   [AU results](pod-topology-v46/first-window-evidence/RESULTS.md).
+- AV: the process-drain harness stopped before injection because its custom
+  host incorrectly required a remote Pod handle in Pod-local mode. No process
+  recovery was tested. See [AV results](pod-topology-v47/first-window-evidence/RESULTS.md).
+- AW: one controlled Pod-local worker-process drain did replace worker
+  generation 1 with 2, and the workflow completed 51 pages. The consumer
+  rejected a full typed-graph delta against the frozen native reference; the
+  terminal inventory was incomplete and process attribution did not qualify.
+  No process-recovery row is promoted. Raw failure export, object prefix and
+  Bound PVC are retained; cleanup and 32 exact/off held Deployments were
+  checked. See [AW results](pod-topology-v48/first-window-evidence/RESULTS.md).
 
 All historical failures, raw evidence, PVCs and prefixes remain retained. Q's
 82 sealed inventory entries / 83 archive files passed independent verification;
@@ -322,8 +332,10 @@ records under `sentinel/` and `pod-topology-v*/`.
 ## Next execution
 
 AS proves the required relationship interruption/recovery/replay gate; AU
-proves active telemetry-loss fail-closed. Next are actual process and Pod
-drain/recovery and the supported operating-bounds handoff to #44.
+proves active telemetry-loss fail-closed. AW exercised process drain but
+failed the frozen exact-graph gate. Diagnose that divergence before another
+process run. Actual Pod drain/recovery and the supported operating-bounds
+handoff to #44 remain open.
 AQ's node/Pod pressure origin was localized, but its process/allocator cause
 remains unknown because AS's optional phase hook did not load. Do not infer a
 false guard trigger, increase memory or relax the zero limit. Correct the
