@@ -14,6 +14,12 @@ RUN_ID = 'q04-pod-loss-pod-cgroup-20260925-bf'
 
 
 def object_identity(kube, expected_max: int) -> dict:
+    def quantity_bytes(value: str) -> int:
+        for suffix, size in (('Gi', 1073741824), ('Mi', 1048576)):
+            if value.endswith(suffix):
+                return int(value[:-len(suffix)]) * size
+        raise ValueError('unsupported object-service memory quantity')
+
     pods = kube.json('get', 'pods', '-l', 'app=pdf-objects')['items']
     if len(pods) != 1:
         raise ValueError('exact object-service Pod count changed')
@@ -24,9 +30,8 @@ def object_identity(kube, expected_max: int) -> dict:
             or container.get('ready') is not True
             or container.get('restartCount') != 0
             or len(pod['spec']['containers']) != 1
-            or pod['spec']['containers'][0]['resources']['limits']['memory']
-            != str(expected_max // 1048576) + 'Mi'
-            or expected_max % 1048576
+            or quantity_bytes(pod['spec']['containers'][0]['resources']['limits']['memory'])
+            != expected_max
             or not container['containerID'].startswith('containerd://')):
         raise ValueError('object-service Pod placement or memory contract changed')
     return {'pod_name': pod['metadata']['name'],
