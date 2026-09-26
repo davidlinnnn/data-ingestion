@@ -59,7 +59,7 @@ def adopt_budget(
     expected = {**PARSER_BUDGETS, "max_requests": 20}
     if before != expected:
         raise ValueError("baseline parser budgets changed")
-    if not config.get("run_id", "").startswith("q04-"):
+    if config.get("run_id") != run_id:
         raise ValueError("initialized run identity changed")
     if "08" not in config.get("profiles", {}):
         raise ValueError("fixture-08 profile missing")

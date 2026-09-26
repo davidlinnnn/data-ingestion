@@ -7,14 +7,14 @@ import pod_topology_ah as previous
 
 
 base = previous.base
-base.PHASE = "t09a-bounds-bi"
+base.PHASE = "t09a-bounds-bj"
 base.DEPLOYMENT = base.PHASE + "-activities"
 base.RUN_LABEL = base.PHASE
 base.WORKFLOW_QUEUE = base.PHASE + "-workflows"
 base.ACTIVITY_QUEUE = base.PHASE + "-08"
-base.OBJECT_PREFIX = "t09a/bounds-20260926-bi/"
-base.EVIDENCE_PVC = "t09a-bounds-bi-evidence-20260926"
-base.EVIDENCE_DIRECTORY_NAME = "t09a-bounds-20260926-bi"
+base.OBJECT_PREFIX = "t09a/bounds-20260926-bj/"
+base.EVIDENCE_PVC = "t09a-bounds-bj-evidence-20260926"
+base.EVIDENCE_DIRECTORY_NAME = "t09a-bounds-20260926-bj"
 base.PRODUCER_MANIFEST = base.ROOT / "tests/pdf_processing/t09a_bounds/BI-MANIFEST.json"
 base.FROZEN_TEST_FILES = tuple(json.loads(base.PRODUCER_MANIFEST.read_text())["test_files"])
 base.POD_ONLY_FILES = tuple(dict.fromkeys(base.POD_ONLY_FILES + (

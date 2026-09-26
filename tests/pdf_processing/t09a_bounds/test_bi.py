@@ -1,4 +1,5 @@
 import argparse
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -7,9 +8,30 @@ from unittest import mock
 from sentinel import run_warm_pod_cgroup_bi as run
 from candidate.warm_v3_reference_bi import verify_v3_bundle
 import pod_preflight_bi
+import pod_workload_p
 
 
 class BoundsWindowTest(unittest.TestCase):
+    def test_budget_adoption_requires_exact_initialized_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp)
+            config = {
+                "parser_budgets": pod_workload_p.PARSER_BUDGETS,
+                "run_id": run.RUN_IDENTITY,
+                "profiles": {"08": {}},
+                "queues": {"08": "initial"},
+            }
+            (state / "config.json").write_text(json.dumps(config))
+            pod_workload_p.adopt_budget(
+                state, state / "adoption.json", run_id=run.RUN_IDENTITY,
+                workflow_queue="workflow", activity_queue="activity",
+            )
+            self.assertEqual(json.loads((state / "config.json").read_text())["run_id"], run.RUN_IDENTITY)
+            with self.assertRaisesRegex(ValueError, "initialized run identity changed"):
+                pod_workload_p.adopt_budget(
+                    state, state / "rejected.json", run_id="different-run",
+                )
+
     def test_projection_and_launch_use_new_identity(self):
         self.assertEqual(run.offline_check()["status"], "PASS_OFFLINE_ONLY")
         self.assertEqual(verify_v3_bundle(run.BUNDLE)[0]["status"], "REVIEWED_EXACT_V3")
