@@ -29,8 +29,15 @@ ConfigMaps with UID preconditions, retained the BK evidence PVC, and exported
 the controller evidence. MinIO was restored to 512Mi and Ready 1/1; the BK
 Deployment is absent. BI and BJ evidence PVCs and object prefixes were retained.
 
-The phase record explicitly says fresh-output equality is pending; this
-window establishes sequence/recycle/resource behavior, not standalone fresh
-equivalence. #44 still needs an agreed sustainable object-service setting and
-qualification with the normal Deployment set restored. Do not infer those from
-one 1 GiB isolated window.
+The phase record was written with fresh-output equality pending. A post-run
+comparison against the accepted current-v3 fresh results completed that check:
+BK's full `document.json` SHA and `full_reference_graph_sha256` match AI's fresh
+Wiki06 and native outputs and AJ's fresh YOLO07 and AIMA08 outputs. Both BK
+Wiki06 runs also match each other. All five BK accepted records are verified
+and processing-complete, and retain the reviewed v3 continuation identity.
+This comparison reuses the already accepted AI/AJ fresh runs; BK did not repeat
+fresh-mode executions.
+
+#44 still needs an agreed sustainable object-service setting and qualification
+with the normal Deployment set restored. Do not infer those from one 1 GiB
+isolated window.
