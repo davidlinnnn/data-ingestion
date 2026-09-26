@@ -17,11 +17,11 @@ sys.modules[_spec.name] = base
 _spec.loader.exec_module(base)
 
 
-PHASE = "bounds-pod-cgroup-bj"
-RUN_ID = "t09a-bounds-20260926-bj"
-WORKFLOW_QUEUE = "t09a-bounds-bj-workflows"
-ACTIVITY_QUEUE = "t09a-bounds-bj-08"
-EVIDENCE_ROOT = Path("/q04-evidence/t09a-bounds-20260926-bj")
+PHASE = "bounds-pod-cgroup-bk"
+RUN_ID = "t09a-bounds-20260926-bk"
+WORKFLOW_QUEUE = "t09a-bounds-bk-workflows"
+ACTIVITY_QUEUE = "t09a-bounds-bk-08"
+EVIDENCE_ROOT = Path("/q04-evidence/t09a-bounds-20260926-bk")
 
 
 def build_measurement_argv(args, run_id: str, authorization_sha256: str) -> list[str]:

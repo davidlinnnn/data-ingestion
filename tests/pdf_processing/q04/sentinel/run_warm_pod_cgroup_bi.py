@@ -12,6 +12,7 @@ if str(Q04) not in sys.path:
     sys.path.insert(0, str(Q04))
 
 import pod_topology_bi as topology
+from pod_remote_evidence_bi import FINAL_REQUIRED, IncrementalEvidenceMirror, pull_once
 from sentinel import object_limit_trial_bh as object_trial
 from sentinel import object_monitor_bh
 
@@ -32,12 +33,12 @@ finally:
         sys.modules["pod_topology_ah"] = previous
 
 base = ah.base
-PHASE = "bounds-pod-cgroup-bj"
-RUN_IDENTITY = "t09a-bounds-20260926-bj"
-PREFIX = "t09a/bounds-20260926-bj/"
-OUT = Path("/private/tmp/t09a-bounds-20260926-bj")
-OBJECT_OUT = Path("/private/tmp/t09a-bounds-object-20260926-bj")
-BUNDLE = Path("/private/tmp/q44-inputs-warm-20260926-bj")
+PHASE = "bounds-pod-cgroup-bk"
+RUN_IDENTITY = "t09a-bounds-20260926-bk"
+PREFIX = "t09a/bounds-20260926-bk/"
+OUT = Path("/private/tmp/t09a-bounds-20260926-bk")
+OBJECT_OUT = Path("/private/tmp/t09a-bounds-object-20260926-bk")
+BUNDLE = Path("/private/tmp/q44-inputs-warm-20260926-bk")
 RECORD = Q04.parent / "t09a_bounds"
 EVIDENCE = "/q04-evidence/" + topology.EVIDENCE_DIRECTORY_NAME
 
@@ -88,6 +89,9 @@ def workload_argv():
 
 base.preflight_argv = preflight_argv
 base.workload_argv = workload_argv
+base.FINAL_REQUIRED = FINAL_REQUIRED
+base.IncrementalEvidenceMirror = IncrementalEvidenceMirror
+base.pull_once = pull_once
 adapted_window = ah.adapt_execute_window()
 
 
@@ -98,6 +102,7 @@ def build_offline_manifest():
         "bounds_topology": Q04 / "pod_topology_bi.py",
         "bounds_preflight": Q04 / "pod_preflight_bi.py",
         "bounds_workload": Q04 / "pod_workload_bi.py",
+        "bounds_remote_evidence": Q04 / "pod_remote_evidence_bi.py",
         "bounds_candidate": RECORD / "BI-MANIFEST.json",
         "bounds_runtime": RECORD / "RUNTIME-INTEGRATION-MANIFEST.json",
         "bounds_source": RECORD / "SOURCE-MANIFEST.json",

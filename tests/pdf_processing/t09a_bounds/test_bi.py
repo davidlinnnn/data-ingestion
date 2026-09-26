@@ -1,6 +1,9 @@
 import argparse
+import hashlib
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -9,9 +12,38 @@ from sentinel import run_warm_pod_cgroup_bi as run
 from candidate.warm_v3_reference_bi import verify_v3_bundle
 import pod_preflight_bi
 import pod_workload_p
+from pod_remote_evidence_bi import IncrementalEvidenceMirror, PodEvidenceIdentity
 
 
 class BoundsWindowTest(unittest.TestCase):
+    def test_remote_snapshot_accepts_bounded_phase_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config = b"{}"
+            (root / "state" / run.PHASE).mkdir(parents=True)
+            (root / "state/config.json").write_bytes(config)
+            (root / "state" / run.PHASE / "config.json").write_bytes(config)
+            identity = PodEvidenceIdentity(
+                pod_uid="pod", container_id="container", worker_pid=999999,
+                worker_start_ticks=1, config_sha256=hashlib.sha256(config).hexdigest(),
+            )
+            for name, value in {
+                "transport-identity.json": identity.__dict__,
+                "supervisor-ownership.json": {"pid": identity.worker_pid, "start_ticks": 1},
+                "ownership.json": {"config_sha256": identity.config_sha256},
+                "workload-exit.json": {}, "cleanup-complete.json": {},
+            }.items():
+                (root / name).write_text(json.dumps(value))
+            mirror = IncrementalEvidenceMirror(root / "mirror", identity)
+            result = subprocess.run(
+                [sys.executable, "-c", mirror.request_program(str(root))],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f"state/{run.PHASE}/config.json", {
+                item["path"] for item in json.loads(result.stdout)["files"]
+            })
+
     def test_budget_adoption_requires_exact_initialized_identity(self):
         with tempfile.TemporaryDirectory() as tmp:
             state = Path(tmp)
