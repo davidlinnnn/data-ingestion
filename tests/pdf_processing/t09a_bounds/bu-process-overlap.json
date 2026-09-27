@@ -1,0 +1,69 @@
+{
+  "source": "/private/tmp/t09a-bounds-20260927-bu",
+  "ocr_pid": 219,
+  "warm_pid": 131,
+  "timeline": [
+    {
+      "seconds_before_stop": 1.5188288688659668,
+      "warm_anon_bytes": 1156014080,
+      "warm_cpu_ticks": 12859,
+      "ocr_anon_bytes": 36982784,
+      "ocr_minor_faults": 10525,
+      "ocr_major_faults": 123
+    },
+    {
+      "seconds_before_stop": 1.253354787826538,
+      "warm_anon_bytes": 1156014080,
+      "warm_cpu_ticks": 12859,
+      "ocr_anon_bytes": 77545472,
+      "ocr_minor_faults": 35354,
+      "ocr_major_faults": 170
+    },
+    {
+      "seconds_before_stop": 0.9738621711730957,
+      "warm_anon_bytes": 1156014080,
+      "warm_cpu_ticks": 12859,
+      "ocr_anon_bytes": 410357760,
+      "ocr_minor_faults": 247747,
+      "ocr_major_faults": 318
+    },
+    {
+      "seconds_before_stop": 0.6744670867919922,
+      "warm_anon_bytes": 1156014080,
+      "warm_cpu_ticks": 12859,
+      "ocr_anon_bytes": 561590272,
+      "ocr_minor_faults": 339801,
+      "ocr_major_faults": 323
+    },
+    {
+      "seconds_before_stop": 0.37644100189208984,
+      "warm_anon_bytes": 1156014080,
+      "warm_cpu_ticks": 12859,
+      "ocr_anon_bytes": 523321344,
+      "ocr_minor_faults": 360981,
+      "ocr_major_faults": 323
+    },
+    {
+      "seconds_before_stop": 0.07760977745056152,
+      "warm_anon_bytes": 1156014080,
+      "warm_cpu_ticks": 12859,
+      "ocr_anon_bytes": 404672512,
+      "ocr_minor_faults": 448565,
+      "ocr_major_faults": 323
+    }
+  ],
+  "reclaim_deltas": {
+    "node_vmstat": {
+      "pgscan_direct": 9728,
+      "pgsteal_direct": 9728,
+      "pgscan_kswapd": 26496
+    },
+    "memory_stat": {
+      "pgscan_direct": 0,
+      "pgsteal_direct": 0,
+      "pgscan_kswapd": 0
+    }
+  },
+  "conclusion": "OCR allocation overlaps VM reclaim while warm parser is idle",
+  "not_proven": "which process initiated reclaim or caused object PSI"
+}

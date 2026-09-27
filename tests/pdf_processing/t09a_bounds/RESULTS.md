@@ -309,3 +309,38 @@ an inference from MemAvailable alone. It does not identify the allocating
 process, prove which reclaim operation stalled the object process, or prove
 that adding memory is necessary. Compaction counters did not change in these
 last two seconds. The historical scope names are retained in raw evidence.
+
+
+## BU process attribution follow-up
+
+`diagnose_bu_overlap.py /private/tmp/t09a-bounds-20260927-bu` replays the
+retained process and VM samples without cluster access. Its assertions pass;
+derived results are in `bu-process-overlap.json`. The growing child is PID
+219, matched to the recorded lifecycle-child OCR command. In the last 1.52
+seconds before stop its anonymous RSS grows from 36,982,784 to a sampled
+peak of 561,590,272 bytes. Warm parser PID 131 remains at 1,156,014,080
+anonymous bytes with unchanged CPU ticks throughout these samples.
+Temporal schedules `component_ocr` for `#/pictures/0` at 00:48:56.785 UTC,
+before the 00:48:58.658 stop. Thus the active allocation burst is OCR,
+not a currently executing warm-parser inference. The idle parser's retained
+memory overlaps that burst.
+
+Over the corresponding VM sample window, direct scan/steal both increase
+9,728 and background scan increases 26,496. The worker leaf's matching
+memory.stat reclaim counters do not increase. Those leaf counters describe
+reclaimed pages charged to the cgroup; they do not establish which task
+initiated VM reclaim. This is temporal attribution of an allocation burst,
+not proof that OCR alone caused the object-service stall. The exact object
+and worker leaf max/high/OOM events remain zero; historical parent limits
+and per-task reclaim stacks are unavailable, so ancestor effects and other
+VM activity are not ruled out.
+
+Code confirms enrichment constructs a fresh OCR Execution independently of
+the warm parser. Killing that parser before OCR would alter the tested
+cross-document request-20 lifetime; do not apply that as an incidental fix.
+The existing AR phase instrumentation is available, but AR never reached
+inference and AS lost its hook through descendant PYTHONPATH replacement.
+Neither supplies the missing phase attribution for BU. A future targeted
+OCR probe must first demonstrate its markers in the actual descendant
+launch path. No new runtime, acceptance change, or production change was
+made during this follow-up.

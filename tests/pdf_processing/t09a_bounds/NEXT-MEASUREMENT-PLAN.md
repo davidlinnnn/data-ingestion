@@ -83,3 +83,16 @@ compaction-counter change in the last two seconds. Do not repeat this read.
 The remaining diagnostic gap is process/ancestor attribution, not whether
 reclaim happened. Resolve that gap before choosing another configuration;
 current evidence does not justify increasing memory or changing acceptance.
+
+
+## After process attribution
+
+The existing BU evidence now identifies the growing OCR child, while its
+warm parser is idle with retained memory. Use the existing OCR phase probe
+to distinguish imports, crop construction, engine initialization and inference
+in a targeted diagnostic before considering a full acceptance window. First
+validate marker delivery through the real descendant launch path (AR failed
+before inference; AS lost its startup hook). Preserve output equivalence and
+the request-20 warm-parser lifetime. Do not remove the warm parser, lower
+render scale, or alter zero-PSI acceptance merely to make this pass. The
+current data do not identify a safe production fix yet.
