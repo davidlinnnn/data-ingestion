@@ -1,4 +1,4 @@
-"""Retain the reviewed v3 oracle while binding the OCS-only NumPy hugepage policy."""
+"""Retain the reviewed v3 oracle while binding the OCR-only NumPy hugepage policy."""
 
 import copy
 import json
@@ -33,7 +33,7 @@ def verify_v3_bundle(bundle: Path):
     normalized["producer"]["continuation.py"] = current["source_continuation"]["sha256"]
     normalized["base_profile"]["method"]["continuation"] = current["source_continuation"]
     require(sha(canonical(normalized).encode()) == current["source_candidate_canonical_sha256"],
-            "BI bundle differs beyond reviewed warm-child/test, OCS execution policy and v3 continuation")
+            "BI bundle differs beyond reviewed warm-child/test, OCR execution policy and v3 continuation")
     return reviewed, inputs
 
 
