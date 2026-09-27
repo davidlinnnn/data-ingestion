@@ -159,3 +159,25 @@ limits and retained samples first; if a new measurement is necessary, collect
 per-task reclaim attribution at the trigger. Merely adding another lettered
 runner, moving between kind nodes, increasing the object limit or weakening
 zero-PSI acceptance is not an evidence-backed remedy. #44 remains open.
+
+## After CD / CE / CF / CG (current)
+
+CG is the first retained successful normal32-on mixed window after the OCR
+policy fix: complete sequence, post-recycle completion, full fresh-reference
+JSON equality, unchanged resource guards and restoration all passed. CD with
+the same producer/config failed late with object full PSI+417us; changing the
+probe did not fix production. Preserve both verdicts.
+
+Do not run another unchanged full matrix just to accumulate a pass. The
+functional sequence and output comparison are now verified for CG. Remaining
+#44 questions are intermittent object pressure and sustainable operating scope.
+The direct PSI caller probe is ready for a future independently justified
+measurement; it captured no target event in CG. CD supports a refault/read-wait
+hypothesis but did not prove thread-to-target attribution; CE idle and CF bounded
+read-only tests did not reproduce it. No additional production memory tuning or
+zero-PSI rule change is justified from these results alone.
+
+A critical scope/criterion decision must be explicit before changing the
+zero-event contract or declaring the temporary1Gi setting permanent. Until
+then keep object512Mi after each run, preserve all32-off resting state, and keep
+#44 open. The code fix/evidence can be reviewed independently of that decision.

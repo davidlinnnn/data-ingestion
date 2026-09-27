@@ -572,3 +572,14 @@ observed; object file refaults and MinIO read-wait stacks narrow the hypothesis
 to cache/read pressure, without proving thread-to-object attribution. Planned
 recycle was reached. Failure sealing and restoration passed; #44 remains open.
 See `normal-topology-cd/first-window-evidence/RESULTS.md`.
+
+## CG bounded normal-topology success (2026-09-27)
+
+The same fixed five-document sequence passed all formal guards with 32 held
+Deployments active, the OCR launch-policy fix, and temporary object1Gi. Full
+JSON and reviewed checks equal the accepted fresh references for all five
+results. 29 group requests, one planned recycle and final completion passed.
+Object full PSI and max-event deltas were zero. Independent cleanup passed.
+No new production fix occurred between CD and CG: this single success does not
+resolve earlier intermittent object PSI failures or establish permanent object
+sizing. #44 remains open. See `normal-topology-cg/first-window-evidence/RESULTS.md`.
