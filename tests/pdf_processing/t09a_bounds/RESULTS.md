@@ -17,6 +17,10 @@ limit. Issue #44 remains open.
 | BO | `t09a-bounds-20260926-bo` | Passed outer admission with 32 Deployments active, then stopped before inference: the Pod projection omitted two required files. No workload claim. |
 | BP | `t09a-bounds-20260926-bp` | Passed all 11 pre-inference gates and started the first warm Wiki 06 workload. Node full PSI reached 0.18 and the existing guard stopped the run. Workload failed; no normal-topology qualification. |
 | BQ | `t09a-bounds-20260926-bq` | Passed admission and all 11 pre-inference gates. First warm Wiki 06 stopped at node full PSI 0.18. BQ worker cgroup also recorded full PSI; no normal-topology qualification. |
+| BR | `t09a-bounds-20260926-br` | Passed admission, all 11 gates, and warm 06/07/08. Stopped on exact object-container full PSI during native; sealed failure evidence and restored services. No normal-topology qualification. |
+| BS | `t09a-bounds-20260927-bs` | Stopped before Pod creation: relocated worker's admission still expected worker2's node UID. No workload or capacity conclusion. |
+| BT | `t09a-bounds-20260927-bt` | Passed admission; 10/11 pre-inference gates passed. Image gate still expected worker2 after the worker moved to worker1. No inference or capacity conclusion. |
+| BU | `t09a-bounds-20260927-bu` | Passed admission and 11/11 gates with worker1; stopped during first Wiki 06 on exact object-container full PSI with 32 historical Deployments on worker2. Failure evidence sealed and services restored. |
 
 BK evidence: `/private/tmp/t09a-bounds-20260926-bk` and retained PVC
 `t09a-bounds-bk-evidence-20260926`. The sequence was Wiki 06, YOLO 07,
@@ -172,9 +176,12 @@ At the stop, object memory.current was 510,640,128 bytes of a temporary
 1,073,741,824-byte limit; memory.events max and OOM stayed zero. The nearest
 node sample had full-PSI avg10 zero, MemAvailable 3,688,820,736 bytes, worker
 cgroup memory 1,705,410,560 bytes and zero OOM events. Node full-PSI avg10
-rose later during cleanup, so it did not cause this guard stop. The full-PSI
-counter is a measured stall, but this evidence does not establish why it
-occurred or justify changing the zero-event acceptance rule.
+rose later during cleanup, so the later 0.18 avg10 value did not cause this
+guard stop. The separate node observer also read a 9-microsecond increase in
+the exact object-container leaf cgroup in the half-second before the stop;
+node full-PSI total increased 4 microseconds in that interval. These counters
+are not additive. The full-PSI counter is a measured stall, but this evidence
+does not establish why it occurred or justify changing the zero-event rule.
 
 Native Temporal cancellation completed after the guard stop; its retained
 `failure.json` records `CancelledError`. The fourth warm segment and parser
@@ -192,4 +199,65 @@ no owned pods, no BR Pod, BR PVC Bound, and object service restored to
 
 #44 remains open. BR resolved the terminal-evidence loss seen in BQ but did
 not complete the full mixed-warm workload under the existing pressure gate.
-No further runtime was started.
+No further runtime was started at that point.
+
+The live #44 candidate explicitly requires zero full-PSI violations. BK and
+BR both pinned the worker and object service to worker2 with the same temporary
+1 GiB object limit: BK completed with the 32 historical Deployments off and
+zero object full PSI; BR stopped with those Deployments on, even though its
+object memory peak (515,792,896 bytes) was below BK's (739,414,016 bytes).
+This supports treating the normal topology as a distinct unqualified state;
+it does not prove which colocated workload or kernel path produced the stall.
+The object Deployment is currently pinned to worker2, uses PVC `object-data`,
+and requests only 128Mi while limited to 512Mi at idle. Changing placement or
+requests would be a different operating configuration, not a repeat of BR.
+
+BS and BT tested a distinct placement with the object service and all 32
+historical Deployments still pinned to worker2, and a fresh Q04 worker pinned
+to the existing worker1 node. The pinned image was imported to worker1 with
+the same manifest digest. BS was rejected before Pod creation because an
+inherited admission check still pinned worker2's node UID. BT fixed that
+exact identity check and passed admission, but its Pod pre-inference image gate
+still pinned worker2; 10/11 gates passed and no inference began. Both runs
+stopped without retry, the 32 Deployments returned to zero, and object
+service returned to 512Mi/Ready. These failures do not measure capacity.
+Focused local tests now cover worker1 UID/boot and the projected image-node
+check; historical BS/BT files and evidence remain unchanged. BS created no
+evidence PVC; BT's PVC remains Bound. Their controller records are at
+`/private/tmp/t09a-normal-topology-20260927-bs` and
+`/private/tmp/t09a-normal-topology-20260927-bt`.
+
+BU used another fresh identity with both exact-node checks corrected. Local
+projection, source/import, capacity contract, full command and cleanup tests
+passed. Admission and all 11 Pod pre-inference gates passed. During first
+Wiki 06, the exact object-container cgroup full-PSI total first rose to
+21 microseconds and the unchanged zero-event guard stopped the run at
+2026-09-27 00:48:58.658 UTC. At that sample object memory.current was
+251,420,672 bytes of the temporary 1 GiB limit, with no max/OOM events; its
+observed peak was 286,998,528 bytes. The worker1 node sample at the stop had
+MemAvailable 3,774,865,408 bytes, full-PSI avg10 zero, worker cgroup
+1,855,229,952 bytes and no OOM. The worker2 outer sample 0.34 seconds later
+had MemAvailable 3,917,807,616 bytes, full-PSI avg10 zero and no OOM. The
+node2 observer separately recorded exact object-leaf pressure; node full-PSI
+total had also increased before the stop even though avg10 rounded to zero.
+Cgroup and node counters are not additive, and the source of the preceding
+node pressure is not identified.
+
+Temporal history has 10 ActivityTaskCompleted events and no ActivityTaskFailed
+event before the guard stop. Cancellation followed; execution COMPLETED with
+business `status=failed`, `activity_budget_exhausted`,
+`processing_complete=false` and `canonical_accepted=false`. The first Wiki
+case did not produce an accepted result; later cases and parser recycle were
+not reached. The retained PVC and local failure export contain workload exit,
+complete cleanup markers and a durable `INCOMPLETE` manifest. Forensic
+transport finalized `FAILURE_EVIDENCE_RETAINED`. Independent cluster checks
+found all 32 historical Deployment UIDs at zero/no ready Pods, BU Pod absent,
+BU PVC Bound, and object service 512Mi/Ready. Evidence:
+`/private/tmp/t09a-bounds-20260927-bu`,
+`/private/tmp/t09a-bounds-object-20260927-bu`, and
+`/private/tmp/t09a-normal-topology-20260927-bu`.
+
+The worker1 relocation did not prevent object cgroup full PSI on worker2.
+It cannot be counted as a successful normal-topology configuration. Do not
+increase the object limit on these data: BU used less than 0.3 GiB and had no
+max/OOM event. No further runtime followed this failed controlled window.

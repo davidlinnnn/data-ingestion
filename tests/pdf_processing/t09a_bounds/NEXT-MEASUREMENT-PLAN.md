@@ -20,11 +20,40 @@ cancelled when the object-service cgroup full-PSI total rose by 9 microseconds
 with no max/OOM event and memory.current about 511MB of 1GiB. The existing
 zero-event guard correctly stopped the run. No retry or threshold change.
 
-The next decision is whether zero *any* cgroup full-PSI microseconds is the
-intended #44 acceptance condition for the temporary object limit. Review the
-BR object trace alongside the accepted workload requirement and prior object
-measurements; if the condition remains, first identify a workload/environment
-change that can plausibly avoid the stall, then prepare a fresh identity and
-one controlled run. If the condition should instead express a sustained
-pressure bound, that is an acceptance-standard change requiring a concrete
-proposal before implementation. Do not repeat BR unchanged.
+The live #44 candidate explicitly requires zero full-PSI violations. BR's
+9-microsecond object-container event is independently visible in the node
+observer and fails that rule. Do not repeat BR unchanged or raise the object
+limit merely because it stopped: BR used only about half of 1 GiB, had no
+max/OOM event, and the cause of its cgroup stall is not isolated.
+
+Before another runtime, choose and document one materially different, feasible
+operating configuration for the existing cluster. In particular, inspect the
+worker2 placement and storage constraints before proposing any relocation;
+the current object Deployment is pinned there and uses PVC `object-data`.
+Keep the existing zero-PSI/OOM guards unless #44 explicitly adopts a new
+criterion. A new configuration needs a fresh identity/prefix, one controlled
+window, failure stop, and restoration proof. BK remains the proven isolated
+case; normal 32-Deployment operation remains unqualified.
+
+## After BU
+
+The distinct worker1 placement was tested. BS and BT stopped on inherited
+node-identity checks before inference; each defect has a focused local
+regression and historical evidence remains intact. BU passed those checks,
+admission and all 11 pre-inference gates, but stopped during first Wiki 06
+when the exact object-container cgroup accumulated full PSI on worker2. Its
+object memory peaked below 0.3 GiB of the temporary 1 GiB limit, with no
+max/OOM event. Failure evidence sealed and the cluster was independently
+restored. Moving only the Q04 worker off worker2 therefore did not qualify
+the 32-Deployment topology.
+
+Do not launch another unchanged full workload or raise the object limit based
+on BU. The next useful work is a decision on the supported operating scope:
+BK proves the fixed serial workload only with the 32 historical Deployments
+held off and a temporary, observed 1 GiB object limit; BR and BU show that
+the all-on state fails the existing zero-full-PSI gate in two worker
+placements. Treat all-on operation and permanent object sizing as
+unqualified until a specific alternative configuration addresses the
+observed node2/object pressure and passes the same guards. Keep #44 open and
+publish the measured boundary through the normal mainline review; no
+additional runtime is justified by these results alone.
