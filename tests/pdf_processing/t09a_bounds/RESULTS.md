@@ -549,3 +549,17 @@ Pre-runtime review found an ambiguous Kubernetes patch-response cleanup gap.
 CB now records the authorized identity before activation; an applied-then-
 timeout regression reproduces and verifies the correction. Historical
 controllers were not rewritten.
+
+## CC direct-reclaim attribution (2026-09-27)
+
+CC preserved the CB workload and guards under a new identity, with a
+host-PID/cgroup direct-reclaim trace. It again failed the formal object
+full-PSI gate, now just after all 11 Wiki06 OCR components completed and
+before finalization started. The CC worker Pod did initiate reclaim during
+OCR, but the last traced direct-reclaim event was 17.1 seconds before the
+object PSI stop; VM reclaim and compaction counters were flat at the stop.
+Thus direct reclaim is real but is not established as this stop's immediate
+cause. The object stall mechanism remains unknown. Temporal's COMPLETED
+execution has business status failed, and #44 remains unqualified. Failure
+evidence, held-Deployment restoration, object restoration, and tracer cleanup
+passed. See `normal-topology-cc/first-window-evidence/RESULTS.md`.
