@@ -72,3 +72,19 @@ Next candidate is reversible, ancestor-effective memory.low working-set protecti
 (trial768MiB), retaining memory.max1Gi and all guards; not yet applied or qualified.
 No new hardware or relaxed PSI rule is proposed. #44 remains open,#45 blocked,#51
 unchanged. Evidence: normal-topology-cp/first-window-evidence/RESULTS.md.
+
+### CQ: temporary protection setup rejected before workload
+
+CQ applied768MiB memory.low along seven ancestors, but the Burstable ancestor
+reset0 after56.64s. All11 pre-inference gates passed; the unchanged protection
+guard stopped before workload launch. No workflows/functional results, object
+PSI0 and target calls0; this does not test the remedy's effectiveness. Systemd
+MemoryLow=0 plus the upstream one-minute QoS update supports a reconciliation
+hypothesis, not proof of the writing process. Next correct policy ownership and
+verify persistence before any further full workload; no raw-write retry.
+
+Four helper regressions, actual image imports and retained actual-guard replay
+pass. Standards0; Spec timeout race fixed and re-review0. Independent cleanup
+passed including original memory.low values,32off/object512Mi/health200 and no
+owned diagnostics. PVC/prefix retained. Commits bee73bd,44be657 plus evidence.
+#44 remains open,#45 blocked,#51 unchanged. Evidence: normal-topology-cq/first-window-evidence/RESULTS.md.

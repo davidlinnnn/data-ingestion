@@ -102,6 +102,8 @@ def main():
     for source,name in [(OBJECT/'object-pressure.jsonl','object-pressure.jsonl.gz'),
         (OUTER/'object-stall-trace.jsonl','object-stall-trace.jsonl.gz')]:
         (DEST/name).write_bytes(gzip.compress(source.read_bytes(),mtime=0))
+    if (OBJECT/'memory-low').exists():
+        shutil.copytree(OBJECT/'memory-low',DEST/'memory-low',dirs_exist_ok=True)
     print(json.dumps({k:analysis[k] for k in ['controller_status','samples','max_gap_seconds','maximum_object_bytes','object_full_delta_us']}))
     print('target calls:',len(target),'unattributed calls:',len(unknown),'business results:',len(results))
 

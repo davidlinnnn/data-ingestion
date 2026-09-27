@@ -235,3 +235,15 @@ setting and may move reclaim to siblings; check effective hierarchy/restoration
 locally first, measure one new real-workload window, fail-stop and restore every
 value plus32-off/object512Mi. Do not use memory.min or increase hardware here.
 See normal-topology-cp/first-window-evidence/RESULTS.md for cause, evidence and limits.
+
+## After CQ (current): fix policy ownership before another workload
+
+CQ applied768MiB low to seven ancestors, then the Burstable slice reset0 after
+56.64s. The guard stopped before workload; zero object PSI is not qualification.
+Systemd MemoryLow was0; the one-minute QoS reconciliation is consistent with this
+reset, but the exact writer is untraced. Raw cgroup writes are not a stable policy.
+Next evaluate a reversible systemd runtime MemoryLow setting, snapshot manager
+and kernel values, and gate inference on persistence through two reconciliation
+intervals. Do not use a reapply loop or bypass the guard. Local interruption and
+restoration checks precede a new identity; no unchanged CQ retry. All original
+values/32off/object512Mi restored. See normal-topology-cq/first-window-evidence/RESULTS.md.
