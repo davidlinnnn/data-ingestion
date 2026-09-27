@@ -247,3 +247,18 @@ and kernel values, and gate inference on persistence through two reconciliation
 intervals. Do not use a reapply loop or bypass the guard. Local interruption and
 restoration checks precede a new identity; no unchanged CQ retry. All original
 values/32off/object512Mi restored. See normal-topology-cq/first-window-evidence/RESULTS.md.
+
+## After CR (current): protection persists, allocator PSI remains
+
+CR manager-owned protection survived125s admission and all2,459 samples. Four
+fixtures completed with full document/checks equality. Final06 stopped after
+exact MinIO directory-metadata allocation PSI89us, then Temporal cancellation
+and business failure after5pages. Leaf low events+30, no high/max/OOM; this is
+best-effort protection being reclaimed, not CQ's reset or proven cap exhaustion.
+One earlier trace call is unattributed; exact pre-stop target call is retained.
+Original policy/override,raw low values,32off/object512Mi/health200 and owned
+runtime cleanup independently passed. Six regressions and actual guard replay
+pass; review issue fixed. No automatic retry or permanent policy/criterion change.
+Next functional-diagnostic proposal requires an explicit critical decision on
+object PSI stop behavior; see normal-topology-cr/NEXT-DECISION.md. #44 remains
+open,#45 blocked,#51 unchanged. Results: normal-topology-cr/first-window-evidence/RESULTS.md.

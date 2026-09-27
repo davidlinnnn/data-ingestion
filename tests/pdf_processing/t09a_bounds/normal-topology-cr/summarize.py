@@ -72,10 +72,12 @@ def main():
         'first_sample':samples[0],'last_sample':samples[-1]}
     if (RAW/'controller-stop.json').exists():
         analysis['controller_stop'] = read(RAW/'controller-stop.json')
-    vm = [json.loads(line) for line in (RAW/'vm-controller.jsonl').read_text().splitlines()]
+    vm_path = RAW/'vm-controller.jsonl'
+    vm = ([json.loads(line) for line in vm_path.read_text().splitlines()]
+          if vm_path.exists() else read(OBJECT/'protection-readiness.json'))
     boundary = analysis.get('controller_stop',{}).get('time',vm[-1]['time'])
     analysis['vm_sample_at_stop'] = next(row for row in reversed(vm) if row['time']<=boundary)
-    analysis['worker_max_bytes'] = max(row['memory_current'] for row in vm)
+    analysis['worker_max_bytes'] = max((row['memory_current'] for row in vm if 'memory_current' in row),default=None)
     analysis['vm_minimum_available_bytes'] = min(row['available'] for row in vm)
     write('pressure-attribution.json',analysis)
     evidence = RAW/('evidence' if controller['runner_exit_code']==0 else 'failure-evidence')
@@ -94,6 +96,7 @@ def main():
             'cancellation_time':next((e['eventTime'] for e in events if e['eventType']=='EVENT_TYPE_WORKFLOW_EXECUTION_CANCEL_REQUESTED'),None)})
     write('temporal-reconciliation.json',results)
     for source,name in [(RAW/'pod-pre-inference-gates.json','pre-inference-gates.json'),
+        (OBJECT/'protection-readiness.json','protection-readiness.json'),
         (RAW/'outer-cleanup.json','outer-cleanup.json'),(OBJECT/'trial-cleanup.json','object-trial-cleanup.json'),
         (OUTER/'held-topology-controller.json','held-topology-controller.json'),
         (evidence/'cleanup-complete.json','cleanup-complete.json'),

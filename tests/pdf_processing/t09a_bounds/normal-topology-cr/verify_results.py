@@ -23,3 +23,8 @@ assert trial["object_observer"]["full_psi_delta_us"] == 0
 assert trial["object_observer"]["max_events_delta"] == 0
 assert load(ROOT/"first-window-evidence/independent-cleanup.json")["status"] == "PASS"
 print("PASS: five full JSON/check comparisons; 29 groups, one recycle; object guards and cleanup")
+
+readiness = load(ROOT/'first-window-evidence/protection-readiness.json')
+assert readiness[-1]['time']-readiness[0]['time']>=125
+assert load(ROOT/'first-window-evidence/independent-cleanup.json')['memory_low']['verified_restored']
+print('PASS:125s protection persistence admission and manager/kernel restoration')
