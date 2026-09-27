@@ -163,9 +163,9 @@ try:
         raise ValueError('VM OOM baseline changed')
     record['baseline'] = record['samples'][-1]
     for item in rows:
-        patch(item, 0, 1)
         activated.append({'namespace': item['metadata']['namespace'],
                           'name': item['metadata']['name'], 'uid': item['metadata']['uid']})
+        patch(item, 0, 1)
     deadline = time.monotonic() + 180
     while True:
         rows = current()
