@@ -61,7 +61,8 @@ def execute(request):
         raise
     crop.save(out/'figure.png')
     t = time.perf_counter()
-    result = RapidOCR()(crop)
+    # Match the worker's four-CPU budget instead of sizing pools from the shared VM.
+    result = RapidOCR(params={'EngineConfig.onnxruntime.intra_op_num_threads': 4})(crop)
     if not isinstance(result, RapidOCROutput):
         raise TypeError("Expected complete OCR output")
     report = {

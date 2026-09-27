@@ -1,0 +1,83 @@
+{
+  "matched_ocr_calls": 30,
+  "host_tgids": [
+    1111107
+  ],
+  "container_pid": 219,
+  "process_start_ticks": 43510614,
+  "container_tids": [
+    219,
+    226,
+    227,
+    228
+  ],
+  "engine_created_stalling_tids": [
+    226,
+    227,
+    228
+  ],
+  "first_call": 1790529747.8634708,
+  "last_call": 1790529748.012861,
+  "all_calls_during_inference": true,
+  "anonymous_fault_stacks": 18,
+  "unknown_calls": [],
+  "vm_counter_delta": {
+    "allocstall_movable": 30,
+    "pgscan_direct": 1921,
+    "pgscan_kswapd": 23976,
+    "compact_stall": 0
+  },
+  "vm_full_total_delta_us": 7695,
+  "maximum_vm_full_avg10": 0.0,
+  "before_inference_available": 3900907520,
+  "before_inference_worker_bytes": 1786089472,
+  "inference_seconds": 0.5662167072296143,
+  "controller_stop": {
+    "time": 1790529749.32263,
+    "monotonic": 626531.236502541,
+    "type": "RuntimeError",
+    "reason": "Pod workload failed; no retry",
+    "automatic_retry": false
+  },
+  "representative_call": {
+    "time": 1790529747.8634808,
+    "caller": "__alloc_pages_noprof",
+    "task": {
+      "tid": 1111188,
+      "tgid": 1111107,
+      "cgroup": "0::/docker/c133dba5f37cf108a47be9abc525d0c6ed68556e8de9270e74c922a0efaea805/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-podcd2b9c8a_477b_4d34_ad10_1348594a9225.slice/cri-containerd-a8329f66b01f26b57657344d24bb81e2e6a8d7192311a45697480c4b68e4abcf.scope",
+      "nspid": [
+        1111188,
+        104596,
+        228
+      ],
+      "nstgid": [
+        1111107,
+        104568,
+        219
+      ],
+      "start_ticks": 43510791,
+      "tgid_start_ticks": 43510614,
+      "name": "python",
+      "threads": 19
+    },
+    "stack": [
+      "psi_memstall_enter",
+      "__alloc_pages_noprof",
+      "__folio_alloc_noprof",
+      "vma_alloc_zeroed_movable_folio",
+      "__handle_mm_fault",
+      "handle_mm_fault",
+      "do_page_fault",
+      "do_translation_fault",
+      "do_mem_abort",
+      "el0_da",
+      "el0t_64_sync_handler",
+      "el0t_64_sync"
+    ]
+  },
+  "vm_counter_interval": {
+    "before": 1790529747.4286816,
+    "after": 1790529748.5545502
+  }
+}

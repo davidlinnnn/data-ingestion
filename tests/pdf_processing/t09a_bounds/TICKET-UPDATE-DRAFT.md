@@ -125,3 +125,35 @@ independently passed; historical PVCs/prefixes retained. No more guards relaxed.
 - With the actual CS inherited THP policy and unchanged VM avg10 predicate, native Wiki06 capture plus resident parser and OCR completed in48.90s: VM avg10=0, no OOM/max.32 Deployments stayed off. This is not normal-topology acceptance; CS child/pool attribution remains unknown.
 - Retained failed instrumentation/control variants with explicit exclusions. All owned containers/parser removed; object512Mi Ready and32off independently checked. Replay: `python3 -B tests/pdf_processing/t09a_bounds/ocr-thread-probe/verify.py`. See `ocr-thread-probe/RESULTS.md`.
 - Next: first-component allocation attribution under existing normal topology, preserving grouped capture and recording host/container PID mapping. No full-matrix retry, criterion relaxation, #44 closure, or #45 unblock.
+
+## CY/CZ and production thread bound (local draft; #44 remains open)
+
+CY reproduces OCR allocator/reclaim pressure under normal32-on load with exact
+NStgid/start-time mapping:230 entries across OCR main+17 engine-created threads,
+VM avg10 eventually0.18, no compaction. Planned first-output failure preceded the
+delayed average guard; it did not cause the earlier pressure.
+
+CZ changes only the supported diagnostic intra-op parameter to4. It records30
+entries across4 OCR threads, direct scans1921 versus38353, VM avg10=0 and object
+full PSI delta0. Full first-component report except timing and PNG bytes equal CY.
+There is residual reclaim and the measured starting memory differs between runs;
+this is a bounded improvement, not proof of universal zero pressure.
+
+Production now explicitly bounds the shared component OCR constructor to4. Actual
+production-path regression is red on automatic [0,0,0] native sessions before the
+change and green on [4,4,4] afterward, preserving complete report/crop. Existing
+OCR NumPy/lifecycle regression passes. A preliminary regression control stopped
+on its older cumulative-PSI predicate and is excluded, not counted as the red case.
+
+Both controlled runs stop after one component, attempt1/non-retryable; business
+processing_complete=false,28pages/0registered components. No later components,
+complete fixture graph, full29group sequence or recycle was validated here. All
+32 Deployments restored off, object512Mi/Ready/HTTP200, owned processes/tracers gone,
+low policies restored, PVCs/prefixes retained.
+
+Next: bind the changed production OCR source into a fresh input/projection and
+review its unchanged oracle boundary, then one full mixed diagnostic under the
+existing CS policy. Do not reuse CY/CZ frozen producer manifests or promote narrow
+component evidence to full acceptance. No #44 closure/#45 unblock/#51 reopening.
+Reports: normal-topology-{cy,cz}/first-window-evidence/RESULTS.md and
+ocr-thread-probe/production-regression/README.md.
