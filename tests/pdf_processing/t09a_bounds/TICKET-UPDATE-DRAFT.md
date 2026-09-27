@@ -103,3 +103,18 @@ pass; review issue fixed. No automatic retry or permanent policy/criterion chang
 Next functional-diagnostic proposal requires an explicit critical decision on
 object PSI stop behavior; see normal-topology-cr/NEXT-DECISION.md. #44 remains
 open,#45 blocked,#51 unchanged. Results: normal-topology-cr/first-window-evidence/RESULTS.md.
+
+### CS: approved functional diagnostic stopped on VM pressure
+
+User approved the object PSI diagnostic. CS retained/allowed117us atavg10=0,
+but unchanged VM PSI avg10=0.18 stopped firstWiki06 during component_ocr.
+28pages were registered,0of11components; business failure follows cancellation,
+not a preceding ActivityTaskFailed. A22,894us VM pressure interval contains173
+allocator calls across18threads in the exact worker container, with anonymous
+page-fault stacks and no compaction increment. Exact child/pool mapping remains
+unproven. Installed RapidOCR leaves ONNX thread options at defaults; next isolate
+this component with PID/pool attribution rather than repeat the full matrix.
+5newguardtests+6existingprotectiontests and actual failure replay pass. Standards0,
+Spec wording issue fixed/re-review0. Full manager/kernel/32off/object512Mi cleanup
+independently passed; historical PVCs/prefixes retained. No more guards relaxed.
+#44 remains open,#45 blocked,#51 unchanged. Evidence: normal-topology-cs/first-window-evidence/RESULTS.md.

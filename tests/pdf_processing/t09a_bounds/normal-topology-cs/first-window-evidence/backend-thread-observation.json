@@ -1,0 +1,9 @@
+{
+  "source": "read-only inspection of existing pdf-checkpoint-prototype:linux-v2 image; no model import/inference",
+  "rapidocr_config": "/experiment/.venv/lib/python3.12/site-packages/rapidocr/config.yaml",
+  "intra_op_num_threads": -1,
+  "inter_op_num_threads": -1,
+  "wrapper_behavior": "only sets SessionOptions thread values if configured value != -1 and 1 <= value <= cpu count",
+  "producer_call": "src/pdf_processing/ocr.py: result = RapidOCR()(crop)",
+  "conclusion": "backend defaults are not explicitly bounded here; mapping observed threads to a particular pool is unproven"
+}

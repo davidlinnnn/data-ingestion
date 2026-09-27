@@ -14,7 +14,8 @@ for index, sid in enumerate(("06", "07", "08", "native", "06")):
     assert load(warm/"checks.json") == load(fresh/"checks.json"), sid
     assert load(warm/"result.json")["processing_complete"], sid
     assert load(warm/"accepted.json")["verified"], sid
-    rows.append(sid)
+    rows.append({"fixture":warm.name,"reference":str(fresh),"processing_complete":True,
+                 "full_document_equal":True,"full_checks_equal":True})
 proof = load(WARM/"warm-proof.json")
 assert proof["groups"] == 29 and proof["recycles"] == 1 and len(proof["pids"]) == 2
 trial = load(ROOT/"first-window-evidence/object-trial-cleanup.json")
@@ -29,3 +30,7 @@ readiness = load(ROOT/'first-window-evidence/protection-readiness.json')
 assert readiness[-1]['time']-readiness[0]['time']>=125
 assert load(ROOT/'first-window-evidence/independent-cleanup.json')['memory_low']['verified_restored']
 print('PASS:125s protection persistence admission and manager/kernel restoration')
+
+E=ROOT/'first-window-evidence'
+(E/'fresh-output-comparison.json').write_text(json.dumps(rows,indent=2)+'\n')
+(E/'warm-proof.json').write_text(json.dumps(proof,indent=2)+'\n')

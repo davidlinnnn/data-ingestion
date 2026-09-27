@@ -70,6 +70,9 @@ def main():
         'target_calls':target,'unattributed_calls':unknown,
         'first_object_psi':{'before':samples[max(0,onset-1)],'first':samples[onset]} if onset is not None else None,
         'first_sample':samples[0],'last_sample':samples[-1]}
+    analysis['object_psi_policy'] = controller['object_psi_policy']
+    analysis['maximum_object_full_avg10'] = max(r['object_full_avg10'] for r in samples)
+    analysis['original_zero_object_full_psi_passed'] = analysis['object_full_delta_us']==0
     if (RAW/'controller-stop.json').exists():
         analysis['controller_stop'] = read(RAW/'controller-stop.json')
     vm_path = RAW/'vm-controller.jsonl'
