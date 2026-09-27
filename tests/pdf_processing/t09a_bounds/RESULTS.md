@@ -261,3 +261,51 @@ The worker1 relocation did not prevent object cgroup full PSI on worker2.
 It cannot be counted as a successful normal-topology configuration. Do not
 increase the object limit on these data: BU used less than 0.3 GiB and had no
 max/OOM event. No further runtime followed this failed controlled window.
+
+
+## Measurement-scope correction after BU (2026-09-27)
+
+A concurrent, read-only probe of worker1 and worker2 confirms that they share
+one Linux VM memory domain. Raw readings are retained in
+`shared-memory-domain-20260927.json`: identical boot ID, MemTotal
+12,232,696 kB, MemAvailable 7,738,416 kB, and global full-PSI total
+4,372,512 microseconds. Both Docker memory limits are unset and both node
+cgroup roots report `memory.max=max`. Their private cgroup namespaces differ,
+as do their root cgroup full-PSI totals (117,152 versus 3,523,729 microseconds).
+
+Therefore historical fields named node PSI/MemAvailable are VM-wide readings,
+not independent node capacity measurements. Worker1 relocation tested Pod
+placement, **not memory-domain isolation**. Any earlier implication that it
+isolated worker2 memory pressure is withdrawn. The observer scans only its
+visible node cgroup subtree while reading global VM PSI; it cannot attribute
+all global pressure to that node or exhaustively explain it. Counter deltas
+across scopes must not be subtracted as an attribution budget.
+
+A local replay through the actual BU `verify_sample` function (with unrelated
+base guards stubbed) accepts an unchanged object sample and rejects the first
+real increase: full PSI +21 microseconds, max +0, all OOM counters zero,
+memory.current 251,420,672 bytes of 1 GiB. The stop condition was real under
+the existing zero-event rule, not an avg10 parsing error. Linux documents
+that microsecond totals can capture stalls too short to affect averages:
+https://docs.kernel.org/accounting/psi.html . This replay does not rerun
+inference or validate the unrelated base guards.
+
+Known causal sequence remains object PSI observation -> controller stop ->
+workflow cancellation -> failed business result. No ActivityTaskFailed
+preceded the stop. The allocation/reclaim mechanism and originating workload
+behind that brief stall remain unknown. Spare MemAvailable and no OOM do not
+prove sufficient capacity or make the guard false. This diagnostic made no
+cluster mutations and launched no workload; the prior restored state remains
+unchanged by it. Q04/#51 acceptance is not reopened; #44 remains unqualified.
+
+
+Existing BU samples do contain reclaim counters. The derived, reproducible
+interval deltas are in `bu-pre-stop-reclaim.json`. In the intervals ending
+1.075, 0.811, 0.553 and 0.002 seconds before stop, `allocstall_movable`
+increased by 32, 88, 14 and 17; `pgscan_direct` increased by 2,048, 5,696,
+896 and 1,088. Background file reclaim also increased. This supports actual
+VM allocation stalls/direct reclaim near the object PSI event, rather than
+an inference from MemAvailable alone. It does not identify the allocating
+process, prove which reclaim operation stalled the object process, or prove
+that adding memory is necessary. Compaction counters did not change in these
+last two seconds. The historical scope names are retained in raw evidence.

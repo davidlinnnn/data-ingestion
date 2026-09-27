@@ -54,6 +54,32 @@ held off and a temporary, observed 1 GiB object limit; BR and BU show that
 the all-on state fails the existing zero-full-PSI gate in two worker
 placements. Treat all-on operation and permanent object sizing as
 unqualified until a specific alternative configuration addresses the
-observed node2/object pressure and passes the same guards. Keep #44 open and
+observed shared-VM/object pressure and passes the same guards. Keep #44 open and
 publish the measured boundary through the normal mainline review; no
 additional runtime is justified by these results alone.
+
+
+## Scope correction and next useful measurement
+
+The post-BU read-only probe proves worker1 and worker2 share the VM memory
+and global PSI domain (see RESULTS). Relocation within this kind cluster
+cannot test memory-domain isolation. Do not repeat that experiment or
+interpret a single node cgroup scan as a complete VM pressure attribution.
+
+Before any next full workload, inspect existing VM reclaim/compaction counters
+and the pressure of both node cgroup roots together. If historical samples
+lack those counters, explicitly retain that causal uncertainty. Any future
+controlled window should correlate one VM-wide series with both node-root
+and exact worker/object leaf series, using the existing observers; do not
+add another runner copy just for this diagnosis. This improves attribution,
+not the pass criteria. A further workload needs a concrete hypothesis about
+contention that the chosen configuration changes; neither another Pod move
+nor a larger object limit is justified by the present evidence.
+
+
+The historical-counter inspection is now complete: BU shows allocation
+stalls and direct/background reclaim immediately before stop, with no
+compaction-counter change in the last two seconds. Do not repeat this read.
+The remaining diagnostic gap is process/ancestor attribution, not whether
+reclaim happened. Resolve that gap before choosing another configuration;
+current evidence does not justify increasing memory or changing acceptance.
