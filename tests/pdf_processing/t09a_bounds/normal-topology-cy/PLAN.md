@@ -11,7 +11,7 @@ capture and assembly/object traffic. A projected, diagnostic-only sitecustomize
 hook records OCR PID/start-time, native thread IDs and engine/inference boundaries.
 After first OCR output, retain report/crop then deliberately raise
 CY_DIAGNOSTIC_FIRST_COMPONENT_COMPLETE. This causes expected business failure and
-existing fail-stop cleanup; it is not ingestion success. An exclusive entry marker
+existing non-retryable configuration-error path and fail-stop cleanup; it is not ingestion success. An exclusive entry marker
 blocks any second OCR attempt before inference. If a resource guard trips sooner,
 retain that failure instead. No automatic retry and no full matrix is permitted.
 

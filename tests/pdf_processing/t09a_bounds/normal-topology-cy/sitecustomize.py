@@ -32,6 +32,7 @@ def lines(frame, event, arg):
                 shutil.copyfile(out/name, ROOT/name)
             mark('result_written')
             (ROOT/'planned-stop.json').write_text(json.dumps({'reason':'first_component_complete', 'time':time.time(), 'business_success':False}))
+            (out/'failure.json').write_text(json.dumps({'category':'configuration','code':'cy_diagnostic_first_component_complete'}))
             raise RuntimeError('CY_DIAGNOSTIC_FIRST_COMPONENT_COMPLETE')
     return lines
 

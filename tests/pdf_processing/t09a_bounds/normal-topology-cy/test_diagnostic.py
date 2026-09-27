@@ -29,6 +29,13 @@ with tempfile.TemporaryDirectory() as temporary:
         finally:sys.settrace(None)
     assert json.loads((hook.ROOT/'planned-stop.json').read_text())['business_success'] is False
     assert (hook.ROOT/'figure.png').read_bytes()==b'crop'
+    failure=json.loads((out/'failure.json').read_text())
+    sys.path.insert(0,str(ROOT.parents[3]/'src'))
+    from pdf_processing.processing import reject
+    from temporalio.exceptions import ApplicationError
+    try:reject(failure['code'],failure['category'])
+    except ApplicationError as error:assert error.non_retryable
+    else:raise AssertionError('planned stop must prevent activity retry')
     rows=[json.loads(line) for line in (hook.ROOT/'phases.jsonl').read_text().splitlines()]
     assert [row['stage'] for row in rows]==['ocr_enter','result_written']
     assert all(row['pid']==os.getpid() and row['threads'] and row['start_ticks']>0 for row in rows)
