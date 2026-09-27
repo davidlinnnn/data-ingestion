@@ -1,0 +1,116 @@
+{
+  "matched_ocr_calls": 230,
+  "host_tgids": [
+    1074490
+  ],
+  "container_pid": 219,
+  "process_start_ticks": 43414297,
+  "container_tids": [
+    219,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242
+  ],
+  "engine_created_stalling_tids": [
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242
+  ],
+  "ocr_main_thread_stalled": true,
+  "first_call": 1790528784.814753,
+  "last_call": 1790528785.717815,
+  "all_calls_during_inference": true,
+  "anonymous_fault_stacks": 99,
+  "unknown_calls": [
+    {
+      "time": 1790528596.746848,
+      "tid": 1064306,
+      "caller": "folio_wait_bit_common"
+    }
+  ],
+  "vm_counter_delta": {
+    "allocstall_movable": 231,
+    "pgscan_direct": 38353,
+    "pgscan_kswapd": 47720,
+    "compact_stall": 0
+  },
+  "vm_full_total_delta_us": 39026,
+  "controller_stop": {
+    "time": 1790528786.932342,
+    "monotonic": 625568.839705916,
+    "type": "ValueError",
+    "reason": "VM PSI guard breached",
+    "automatic_retry": false
+  },
+  "first_positive_vm_avg10": {
+    "time": 1790528786.9312024,
+    "psi_full_avg10": 0.18,
+    "available": 4996198400,
+    "memory_current": 687431680
+  },
+  "representative_call": {
+    "time": 1790528784.814756,
+    "caller": "__alloc_pages_noprof",
+    "task": {
+      "tid": 1074490,
+      "tgid": 1074490,
+      "cgroup": "0::/docker/c133dba5f37cf108a47be9abc525d0c6ed68556e8de9270e74c922a0efaea805/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod893cb144_12e3_4d2e_9c4e_46dcd1f6121f.slice/cri-containerd-b421bf59c9d62300d57243d8a1140f779f7a2bd9dc7a568877e007c0b74c9259.scope",
+      "nspid": [
+        1074490,
+        92845,
+        219
+      ],
+      "nstgid": [
+        1074490,
+        92845,
+        219
+      ],
+      "start_ticks": 43414297,
+      "tgid_start_ticks": 43414297,
+      "name": "python",
+      "threads": 61
+    },
+    "stack": [
+      "psi_memstall_enter",
+      "__alloc_pages_noprof",
+      "__folio_alloc_noprof",
+      "vma_alloc_zeroed_movable_folio",
+      "__handle_mm_fault",
+      "handle_mm_fault",
+      "do_page_fault",
+      "do_translation_fault",
+      "do_mem_abort",
+      "el0_da",
+      "el0t_64_sync_handler",
+      "el0t_64_sync"
+    ]
+  }
+}
