@@ -18,6 +18,7 @@ def identity(tid):
                 "nspid": [int(x) for x in status.get("NSpid", "").split()],
                 "nstgid": [int(x) for x in status.get("NStgid", "").split()],
                 "start_ticks": int((path / "stat").read_text().rsplit(") ", 1)[1].split()[19]),
+                "tgid_start_ticks": int((Path("/proc") / status["Tgid"].strip() / "stat").read_text().rsplit(") ", 1)[1].split()[19]),
                 "name": status["Name"].strip(), "threads": int(status["Threads"])}
     except (FileNotFoundError, ProcessLookupError):
         return {"tid": tid, "absent_at_read": True}

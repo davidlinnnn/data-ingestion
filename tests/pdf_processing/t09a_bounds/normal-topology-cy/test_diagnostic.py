@@ -43,4 +43,5 @@ tracer=load('cy_tracer',ROOT/'psi_call_trace.py')
 identity=tracer.identity(os.getpid())
 assert identity['nspid'][-1]==os.getpid() and identity['nstgid'][-1]==os.getpid()
 assert identity['start_ticks']>0 and identity['threads']>0
+assert identity['tgid_start_ticks']==identity['start_ticks']
 print('PASS: first output retained then deliberate stop; second attempt blocked before OCR; PID namespace/start-time identity')
