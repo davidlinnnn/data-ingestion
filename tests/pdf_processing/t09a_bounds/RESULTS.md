@@ -344,3 +344,45 @@ Neither supplies the missing phase attribution for BU. A future targeted
 OCR probe must first demonstrate its markers in the actual descendant
 launch path. No new runtime, acceptance change, or production change was
 made during this follow-up.
+
+
+## BV bounded OCR diagnostic (not an acceptance run)
+
+One network-disabled container used the existing Linux image, the accepted
+BK Wiki06 document and fixture06 picture0, with the production Execution
+and lifecycle-child launch path. The 32 held Deployments were independently
+verified off and the object service 512Mi/Ready; neither was changed. Hard
+memory limit was 5 GiB, stop watermark 4 GiB, VM admission floor 4.5 GiB,
+runtime floor 1.5 GiB, workload deadline 120 seconds and outer deadline 150.
+The diagnostic additionally stopped on any VM/container full-PSI total
+increase. **That total-based VM/container rule is stricter than the historical
+VM avg10 guard; it is not an unchanged acceptance policy.** No acceptance
+standard was modified. BV cannot be counted as a failed full #44 matrix run.
+
+BV stopped in the plain baseline, about one second after startup. Retained
+samples show VM full PSI +12,362 us and diagnostic cgroup full PSI +12,743 us,
+with both avg10 fields still zero. The trigger memory.current was 524,062,720
+bytes, VM MemAvailable 7,604,617,216 bytes, and max/OOM events zero. There was
+no warm parser in this diagnostic. This demonstrates that a local cgroup
+stall can occur without warm-parser overlap or the 32 active Deployments;
+it does not prove the same low-level cause as BU, nor rule out background
+VM effects. OCR logs show detection/classification/recognition ONNX models
+being loaded before the stop, but do not locate the stall within initialization
+versus inference.
+
+The observed variant never started: ordered phase markers and output
+equivalence were **not obtained**. Baseline-first ordering was unsuitable
+for a fail-stop phase diagnostic; preserve this limitation rather than
+claiming the planned measurement succeeded. No retry occurred. The exact
+owned container exited and was removed; raw results remain under
+`/private/tmp/t09a-ocr-phase-20260927-bv`, with selected evidence retained in
+`ocr-phase-probe/bv-evidence`.
+
+A cheap local regression now exercises the actual supervisor environment
+assembly and actual lifecycle launcher with a no-inference fake OCR module.
+It proves that the workspace/src startup hook produces `ocr_enter` despite
+supervisor PYTHONPATH replacement. Run
+`python3 tests/pdf_processing/t09a_bounds/ocr-phase-probe/test_hook.py`.
+This verifies marker transport only, not real OCR phase coverage or output
+equivalence. The preserved AS observer is reused with imports/document markers;
+no production source or historical runner was edited.

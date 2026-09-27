@@ -96,3 +96,22 @@ before inference; AS lost its startup hook). Preserve output equivalence and
 the request-20 warm-parser lifetime. Do not remove the warm parser, lower
 render scale, or alter zero-PSI acceptance merely to make this pass. The
 current data do not identify a safe production fix yet.
+
+
+## After BV
+
+The isolated plain OCR diagnostic also encountered a brief local PSI stall,
+so warm-parser overlap is not a necessary condition. Do not implement parser
+recycling as the presumed remedy. Marker transport is now locally verified,
+but the plain-first run stopped before the observed variant. A future
+explicitly selected diagnostic should collect phases in its first child,
+then attempt an uninstrumented equivalence comparison only if it finishes.
+Keep the BV identity consumed. Distinguish the additional total-based
+diagnostic abort from the historical VM avg10 acceptance guard; do not claim
+these are identical. Until actual phase evidence exists, initialization versus
+inference and the underlying reclaim mechanism remain unknown. No production
+memory tuning is justified yet.
+
+The prepared `ocr-phase-probe/run.py` now orders observed before plain and
+removes the trace variable for the plain child. It has not been executed.
+The exact BV script is frozen in `ocr-phase-probe/bv-evidence/run.py`.
