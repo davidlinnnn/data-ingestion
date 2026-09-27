@@ -15,7 +15,7 @@ cgroup directory. Preserve that failure; this is not an all-tools PASS.
 | Worker maximum / VM minimum available |2,803,494,912 /2,739,621,888bytes |
 | VM/worker full PSI avg10 and OOM | No violations; VM maxavg10=0,OOM=0 |
 | Object telemetry |2543samples,maxgap0.265s,max734,707,712bytes;fullPSIdelta0 |
-| Managed object protection admission |125.339s continuous enclosing samples,all7levels768MiB |
+| Managed object protection admission |125.339s continuous samples at6visible levels;separate host checks verify7levels at768MiB |
 | Durable terminal/export,worker/scratch cleanup | PASS |
 | Independent restoration |32off,no ownedPods,object512Mi/Ready/HTTP200,low restored,PVCBound |
 | Auxiliary node-wide cgroup attribution | INCOMPLETE; early traversal race |
@@ -45,7 +45,7 @@ unchanged. No second full runtime was started to hide this tool failure.
 The125s deadline starts before the first VM sample. Their first/last timestamps
 span124.998252s, so the old post-check incorrectly rejected the run. Continuous
 object telemetry enclosing these endpoints spans125.338789s,has<1s gaps and
-shows every required ancestor at768MiB. verify_results.py checks those actual
+shows all6visible ancestors at768MiB; separate host checks verify7levels. verify_results.py checks those actual
 samples with the original125s requirement; no threshold/tolerance was relaxed.
 
 ## What this establishes

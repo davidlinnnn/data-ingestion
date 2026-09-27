@@ -37,6 +37,8 @@ end = next(row for row in samples if row['time'] >= readiness[-1]['time'])
 protection = [row for row in samples if start['time'] <= row['time'] <= end['time']]
 assert end['time'] - start['time'] >= 125
 assert max(b['time'] - a['time'] for a, b in zip(protection, protection[1:])) < 1
+assert all(len(row['ancestors']) == 6 for row in protection)
+assert load(ROOT/'first-window-evidence/memory-low/check.json') == {'verified': True, 'levels': 7}
 assert all(int(level['memory_low']) == 805306368 for row in protection for level in row['ancestors'])
 assert load(ROOT/'first-window-evidence/independent-cleanup.json')['memory_low']['verified_restored']
 print('PASS:125s protection persistence admission and manager/kernel restoration')
