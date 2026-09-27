@@ -23,5 +23,5 @@ outer-guard handoff subprocess regressions. A preparation-only broad identity
 replacement initially changed bundle identifier names and was corrected
 before any runtime; the actual projected import/configuration check catches it.
 
-Runtime status: NOT_STARTED. The full result, not these local checks, decides
+Runtime status: FAILED_OBJECT_PSI; complete failure evidence and restoration verified. The full result, not these local checks, decides
 whether this candidate qualifies. Historical runners and manifests are intact.

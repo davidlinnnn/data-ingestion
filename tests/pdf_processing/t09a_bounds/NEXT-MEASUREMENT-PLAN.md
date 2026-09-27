@@ -144,3 +144,18 @@ verify it locally, and exercise the original full workload with its original
 formal guards. Preserve the required request-20 warm lifetime and 32-service
 scope; do not infer those from the isolated picture0 success. The diagnostic
 extra total-PSI rule remains separate from formal acceptance. Keep #44 open.
+
+
+## After CB: full topology still fails; do not repeat unchanged
+
+CB passed the actual source/bundle and all pre-inference checks, then stopped
+on object full PSI during first OCR. The latest frozen failure evidence shows
+direct reclaim without compaction in the pre-stop interval. Do not characterize
+all stops as NumPy THP compaction or declare the isolated fix sufficient.
+
+The next diagnostic needs to distinguish VM/global reclaim, ancestor pressure,
+and workload allocation under the all-on condition. Inspect existing ancestor
+limits and retained samples first; if a new measurement is necessary, collect
+per-task reclaim attribution at the trigger. Merely adding another lettered
+runner, moving between kind nodes, increasing the object limit or weakening
+zero-PSI acceptance is not an evidence-backed remedy. #44 remains open.
