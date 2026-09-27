@@ -216,3 +216,22 @@ sampler and the direct PSI tracer. Preserve the trigger and classify charge-limi
 versus page-read-wait/global-reclaim behavior. Existing guards and output checks
 remain unchanged. There is no proven new fix to apply; a pass alone cannot establish
 intermittent resolution. Keep #44 open and object512Mi/all32-off after the run.
+
+
+## After CP (current): target workingset-read PSI proven
+
+The real mixed workload reproduced object PSI155us at onset. Fourteen exact
+MinIO calls before the guard stop entered from read_pages/folio_wait_bit_common,
+with ext4 file reads, not try_charge_memcg. Leaf/Pod remained below1Gi and all
+observed ancestor high/max/OOM counters were0. Prior global/object reclaim and
+refault growth support the workingset-read mechanism. Guard stop preceded
+Temporal cancellation and the native business failure. No automatic retry.
+
+Stop generic attribution-only runs. The next candidate is reversible best-effort
+object working-set protection using memory.low along the exact ancestor path;
+current values are0. Trial768MiB covers CG's observed object peak without raising
+memory.max1Gi or changing any formal guard. It is not a proven permanent resource
+setting and may move reclaim to siblings; check effective hierarchy/restoration
+locally first, measure one new real-workload window, fail-stop and restore every
+value plus32-off/object512Mi. Do not use memory.min or increase hardware here.
+See normal-topology-cp/first-window-evidence/RESULTS.md for cause, evidence and limits.

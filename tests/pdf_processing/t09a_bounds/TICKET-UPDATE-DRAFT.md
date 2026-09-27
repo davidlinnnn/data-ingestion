@@ -50,3 +50,25 @@ owned diagnostics were removed. No producer/configuration/acceptance change.
 Next, if executing a further runtime, use the actual mixed producer once with
 ancestor plus direct-caller evidence; stop standalone idle/read variants.
 #44/#45/#51 status conclusions remain unchanged. Evidence: `object-stall-probe/co-normal/RESULTS.md`.
+
+
+### CP: mixed-workload stop classified by direct evidence
+
+CP reproduced the unchanged object PSI guard during native51. Exact MinIO
+read_pages/folio_wait_bit_common stacks occurred before the155us onset sample,
+then controller stop, then Temporal cancellation. At onset object~472MiB/1Gi,
+all observed ancestor high/max/OOM events0, swap0; earlier reclaim/refault activity
+supports workingset page-read waits. This is distinct from the resting512MiB
+charge-limit mechanism. No ActivityTaskFailed preceded cancellation; native
+COMPLETED only at execution level, with business failed/activity_budget_exhausted,
+processing_complete=false and15pages. Final06 did not start.
+
+The first three full document/check graphs match accepted fresh results. Full
+mixed/recycle qualification failed this run. Trigger/stack/guard/Temporal checks
+and independent cleanup passed;32off, object512Mi/health200, runtime/tracers absent,
+PVC Bound and prefixes retained. Preparation:f0d7578, Standards0/Spec0 review.
+
+Next candidate is reversible, ancestor-effective memory.low working-set protection
+(trial768MiB), retaining memory.max1Gi and all guards; not yet applied or qualified.
+No new hardware or relaxed PSI rule is proposed. #44 remains open,#45 blocked,#51
+unchanged. Evidence: normal-topology-cp/first-window-evidence/RESULTS.md.
