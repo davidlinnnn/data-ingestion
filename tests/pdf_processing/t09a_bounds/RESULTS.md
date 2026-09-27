@@ -563,3 +563,12 @@ cause. The object stall mechanism remains unknown. Temporal's COMPLETED
 execution has business status failed, and #44 remains unqualified. Failure
 evidence, held-Deployment restoration, object restoration, and tracer cleanup
 passed. See `normal-topology-cc/first-window-evidence/RESULTS.md`.
+
+## CD object-stall measurement (2026-09-27)
+
+Four full fixture results passed local checks, but the final Wiki06 stopped
+with object full PSI +417us. No immediate swap/direct-reclaim increase was
+observed; object file refaults and MinIO read-wait stacks narrow the hypothesis
+to cache/read pressure, without proving thread-to-object attribution. Planned
+recycle was reached. Failure sealing and restoration passed; #44 remains open.
+See `normal-topology-cd/first-window-evidence/RESULTS.md`.
