@@ -28,10 +28,17 @@ object_state = trial.capture(kube)
 health = kube.run(['exec','coordinator','--','/experiment/.venv/bin/python','-c',
     'import urllib.request;print(urllib.request.urlopen("http://objects:9000/minio/health/live",timeout=5).status)'],timeout=15)
 assert health.strip()=='200'
-pvc = kube.json('get','pvc','t09a-bounds-cr-evidence-20260927')
-assert pvc['status']['phase']=='Bound'
-start = json.loads(Path('/private/tmp/t09a-bounds-object-20260927-cr/object-pressure.jsonl').read_text().splitlines()[0])
-monitor.verify_remote_absence(['t09a-bounds-20260927-cr',start['pod_uid'],start['container_id']])
+pvcs = kube.json('get','pvc','--field-selector','metadata.name=t09a-bounds-cr-evidence-20260927')['items']
+if pvcs:
+    assert len(pvcs)==1 and pvcs[0]['status']['phase']=='Bound'
+else:
+    assert not Path('/private/tmp/t09a-bounds-20260927-cr').exists(), 'PVC missing after workload setup began'
+observer_path = Path('/private/tmp/t09a-bounds-object-20260927-cr/object-pressure.jsonl')
+needles = ['t09a-bounds-20260927-cr','','']  # Before start, match any observer for this run.
+if observer_path.exists() and observer_path.stat().st_size:
+    start = json.loads(observer_path.read_text().splitlines()[0])
+    needles[1:] = [start['pod_uid'],start['container_id']]
+monitor.verify_remote_absence(needles)
 containers = subprocess.check_output(['docker','ps','-a','--format','{{.Names}}'],text=True,timeout=15).splitlines()
 assert not [n for n in containers if n.startswith('q44-')]
 node = 'internal-a2a-vs6-local-worker2'
@@ -43,7 +50,8 @@ assert not [n for n in instances if n.startswith('q44')]
 protection_result = protection.host('verify-restored',Path('/private/tmp/t09a-bounds-object-20260927-cr/memory-low'))
 result = {'memory_low':protection_result,'status':'PASS','held_deployments':32,'held_owned_pods':owned,
     'object_limit':object_state['old_limit'],'object_ready':True,'object_health_http':200,
-    'worker_pod_absent':True,'evidence_pvc':pvc['metadata']['name'],'evidence_pvc_phase':'Bound',
+    'worker_pod_absent':True,'evidence_pvc':pvcs[0]['metadata']['name'] if pvcs else None,
+    'evidence_pvc_phase':'Bound' if pvcs else 'not_created',
     'object_observer_absent':True,'diagnostic_containers_absent':True,'private_trace_instances_absent':True}
 destination = Path(__file__).parent/'first-window-evidence'
 destination.mkdir(exist_ok=True)

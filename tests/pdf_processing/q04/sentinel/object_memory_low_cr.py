@@ -202,9 +202,14 @@ def host(action, directory, container_id=''):
     if action=='check' and manager_low()!=str(LOW):
         raise ValueError('manager protection changed')
     if action=='verify-restored':
-        expected = json.loads(manager_file.read_text())
-        if manager_snapshot()!=expected:
-            raise ValueError('manager property/override not restored')
+        if manager_file.exists():
+            expected = json.loads(manager_file.read_text())
+            if manager_snapshot()!=expected:
+                raise ValueError('manager property/override not restored')
+        else:
+            manager_snapshot()  # Still require the manager's baseline protection.
+        if not (directory/'snapshot.json').exists():
+            return {'verified_restored':True,'raw_not_started':True}
     return raw_host(action,directory,container_id)
 
 
