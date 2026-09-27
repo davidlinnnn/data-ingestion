@@ -157,3 +157,20 @@ existing CS policy. Do not reuse CY/CZ frozen producer manifests or promote narr
 component evidence to full acceptance. No #44 closure/#45 unblock/#51 reopening.
 Reports: normal-topology-{cy,cz}/first-window-evidence/RESULTS.md and
 ocr-thread-probe/production-regression/README.md.
+
+## DB: production OCR bound full mixed window
+
+One attempt with production970f28c, fresh OCR-only producer binding, no hook or
+constructor override. All5 full graphs/checks equal AI/AJ,all5business complete,
+29groups,recycle20 and post-recycle pass.1399worker samples complete,worker max
+2,803,494,912bytes,VM minavailable2,739,621,888bytes,no PSIavg10/OOM violations.
+Object2543samples,max734,707,712bytes,fullPSIdelta0. Durable export and independent
+restoration pass (32off,object512Mi/Ready/200,low restored,PVC retained).
+Outer exit1 is preserved: an auxiliary node observer died before workload on a
+Python3.11 disappearing-directory race during object rollout; formal guard
+telemetry remained complete. Minimal new observer passes actual-platform red/green
+regression; no automatic full retry. Readiness post-check now uses continuous
+object samples proving125.339s protection instead of the124.998s VM sample span.
+Functional mixed-window qualification passes; auxiliary whole-node attribution
+is incomplete. #44 remains open for supported bounds/permanent object policy;
+#51accepted history unchanged. See normal-topology-db/first-window-evidence/RESULTS.md.
