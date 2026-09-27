@@ -421,3 +421,71 @@ container absent, all 32 held Deployment identities off, object service
 retained script, markers, samples, logs and cleanup:
 `ocr-phase-probe/bw-evidence`. No producer code, cluster setting, or
 acceptance criterion changed.
+
+
+## Root cause isolated: NumPy hugepage advice triggers synchronous compaction
+
+The installed RapidOCR already sets `enable_cpu_mem_arena: false`; toggling
+that setting would not address this reproduction. The VM has THP enabled
+`always` and defrag set to `madvise`. At inspection, its Normal zone had no
+free order-9/order-10 blocks despite substantial aggregate free memory.
+That is a fragmentation snapshot, not a historical proof of BU zone state.
+
+Four distinct bounded experiments tested one control at a time, using the
+same Wiki06 picture0 and stricter diagnostic total-PSI abort. None retried
+a failed identity, changed host settings, or activated the 32 Deployments:
+
+| Run | Control | Result | VM / cgroup full PSI delta | Compaction stalls |
+| --- | --- | --- | --- | --- |
+| BX | Disable THP only in diagnostic process/descendants | OCR + plain/observed comparison complete | 0 / 0 us | Not sampled |
+| BY | Restore process THP after BX warmed caches | Stop at inference entry | 26,595 / 29,382 us | 12 |
+| BZ | THP enabled, only `NUMPY_MADVISE_HUGEPAGE=0` | OCR + comparison complete | 0 / 0 us | 0 |
+| CA | Actual OCR-only launcher fix; parent policy unchanged | OCR + comparison complete | 0 / 0 us | 0 |
+
+BX/BZ/CA reports and crop bytes also match one another exactly after removing
+elapsed time. BZ/CA still record THP allocations (631/658 VM-wide), so the
+successful control does not require eliminating every hugepage. The evidence
+supports **NumPy's hugepage advice entering synchronous compaction during
+OCR allocations on this VM** as the cause of this isolated stop. The THP
+reversal makes a warmed-file-cache-only explanation insufficient. VM counters
+are global, and no kernel stack was captured; the exact allocation/operator
+and whether every historical BU/BR stop had this same cause remain unproven.
+
+This mechanism matches the documented Linux `defrag=madvise` behavior:
+[Linux THP controls](https://docs.kernel.org/admin-guide/mm/transhuge.html).
+NumPy documents that its advice can be disabled before import:
+[NumPy global state](https://numpy.org/doc/2.0/reference/global_state.html).
+The advice is a performance policy, not an OCR/model acceptance threshold.
+No memory increase or cluster replacement is justified by this reproduction.
+
+The minimal fix in `src/pdf_processing/execution.py` sets that variable only
+in the environment of `pdf_processing.ocr` children, before Python/NumPy
+imports, and preserves it through the lifecycle wrapper. Parent and non-OCR
+children retain their environment; parser lifetime, model files, render scale,
+and guards are unchanged. The real-child regression first failed in both
+launch paths, then passed after the fix. Three cancellation/cleanup tests and
+three warm-continuity tests pass. An initial test command used the wrong
+class name for the cancellation tests; the corrected invocation passed.
+Standards and Spec reviews of `c53ac6b...d1ed706` found no actionable issues.
+
+Run `python3 tests/pdf_processing/t09a_bounds/ocr-phase-probe/verify_thp_diagnosis.py`
+to recheck the retained comparisons. Each BX/BY/BZ/CA exact container is
+independently absent; all 32 held Deployments are off and object service
+512Mi/Ready. Evidence is under `ocr-phase-probe/{bx,by,bz,ca}-evidence` and
+`/private/tmp/t09a-ocr-phase-20260927-{bx,by,bz,ca}`.
+
+### Acceptance boundary after the fix
+
+| Scope | Status |
+| --- | --- |
+| Q04/#51 historical accepted baseline | Remains recorded; not reclassified by diagnostics |
+| OCR-only launch policy, wrapper and cleanup | Regression passed |
+| Wiki06 picture0 OCR with actual fix | Complete, zero PSI/compaction stalls, matching outputs |
+| New source full Q04 matrix / normal 32-Deployment #44 workload | Not run |
+| Sustainable permanent object sizing / #44 closure | Not established |
+
+This is a tested fix for the isolated reproducer, not permission to close
+#44 or claim the changed producer passed the full matrix. A next controlled
+acceptance must project the new execution source in a fresh producer/bundle
+contract and retain the original formal guards. Do not run a historical
+frozen manifest against the changed source or silently rewrite old manifests.

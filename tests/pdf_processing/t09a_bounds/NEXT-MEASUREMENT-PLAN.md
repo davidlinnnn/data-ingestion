@@ -129,3 +129,18 @@ OCR outputs and warm-parser continuity. The exact allocator/operator remains
 unknown; a new runtime needs a specific candidate or discriminating probe,
 not another unchanged BW invocation. BW's additional total-based abort and
 the formal acceptance guards remain explicitly distinct.
+
+
+## After BX/BY/BZ/CA: a tested fix exists
+
+Stop exploratory OCR runs: the THP reversal and narrower NumPy-only control
+isolate a correctable mechanism. `Execution.fresh_child` now applies
+`NUMPY_MADVISE_HUGEPAGE=0` only to OCR children. The exact code candidate
+completed real OCR with zero PSI/compaction stalls and matching output.
+
+Next is integration qualification, not another identical diagnostic: create
+a fresh source projection/input producer contract for this execution change,
+verify it locally, and exercise the original full workload with its original
+formal guards. Preserve the required request-20 warm lifetime and 32-service
+scope; do not infer those from the isolated picture0 success. The diagnostic
+extra total-PSI rule remains separate from formal acceptance. Keep #44 open.
