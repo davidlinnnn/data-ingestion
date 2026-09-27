@@ -118,3 +118,10 @@ this component with PID/pool attribution rather than repeat the full matrix.
 Spec wording issue fixed/re-review0. Full manager/kernel/32off/object512Mi cleanup
 independently passed; historical PVCs/prefixes retained. No more guards relaxed.
 #44 remains open,#45 blocked,#51 unchanged. Evidence: normal-topology-cs/first-window-evidence/RESULTS.md.
+
+## CT–CX OCR thread diagnosis (local draft)
+
+- Confirmed default three ONNX pools expand OCR from7 to58 threads in a4-CPU-quota container with18 visible CPUs. A diagnostic-only intra-op=4 copy reduced engine-ready threads to16; full OCR report except timing and PNG bytes match. Minor faults did not fall, so this is not a proven PSI remedy and no production thread patch was made.
+- With the actual CS inherited THP policy and unchanged VM avg10 predicate, native Wiki06 capture plus resident parser and OCR completed in48.90s: VM avg10=0, no OOM/max.32 Deployments stayed off. This is not normal-topology acceptance; CS child/pool attribution remains unknown.
+- Retained failed instrumentation/control variants with explicit exclusions. All owned containers/parser removed; object512Mi Ready and32off independently checked. Replay: `python3 -B tests/pdf_processing/t09a_bounds/ocr-thread-probe/verify.py`. See `ocr-thread-probe/RESULTS.md`.
+- Next: first-component allocation attribution under existing normal topology, preserving grouped capture and recording host/container PID mapping. No full-matrix retry, criterion relaxation, #44 closure, or #45 unblock.

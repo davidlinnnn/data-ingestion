@@ -21,3 +21,9 @@ container child and library pool is missing. Do not start another full matrix.
 No VM PSI threshold change,new hardware,permanent memory policy,or ticket closing
 is authorized/implied by the CS result. Existing normal diagnostic work remains
 authorized; no additional repeated permission is needed for the scoped investigation.
+
+CT–CX follow-up is recorded in `../ocr-thread-probe/RESULTS.md`. Default native
+pool expansion is confirmed and the4-thread component output is equal, but the
+CS reclaim mechanism was not reproduced with32off, even with a real resident
+parser. Do not promote that candidate as a PSI fix. Remaining measurement must
+retain the normal-load/grouped-capture context and capture the missing PID map.
