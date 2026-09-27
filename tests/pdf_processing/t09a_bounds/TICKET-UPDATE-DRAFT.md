@@ -14,3 +14,24 @@ CD immediately before this still failed late in final Wiki06 on object full PSI+
 Evidence: `tests/pdf_processing/t09a_bounds/normal-topology-{cd,cg}/first-window-evidence/RESULTS.md`. Local check: `python3 tests/pdf_processing/t09a_bounds/normal-topology-cg/verify_results.py`. Four targeted activation/interruption/OCR-policy regressions passed; real tracer startup/cleanup probes passed after fixing close-before-switch ordering.
 
 Do not repeat an unchanged full matrix just to collect another pass. Keep the current guards and resting topology while deciding the remaining sustainable-scope requirement; changes to the zero-event criterion or permanent resource setting need an explicit decision.
+
+
+### Follow-up: idle object-pressure cause isolated (CH–CN)
+
+A short read-only probe now reproduced real MinIO server PSI at resting512MiB:
+exact task/cgroup stacks show ext4 directory reads entering `try_charge_memcg`.
+A same-process contrast raised both container and Pod caps temporarily to1GiB:
+30s of continued cache work produced no new PSI/direct reclaim. Restoring512MiB
+brought PSI back within0.51s, with Pod-local max events+2 while the leaf max counter
+stayed unchanged. This exposes an ancestor-event diagnostic blind spot; the
+formal PSI stop still works. Effective limits were restored and the32-off /
+object512Mi/Ready/health200 / no-tracer cleanup checks passed.
+
+CJ is excluded because our version query contaminated it; CL is excluded because
+its leaf-only limit change left the Pod capped512MiB. CK/CM/CN supply the corrected
+attribution and reversal. The offline evidence check passes. No production code,
+acceptance criterion, permanent resource configuration or historical evidence
+was changed. These results explain the idle512MiB mechanism, **not the exact
+CD1GiB stop**; #44 remains open, #45 blocked, #51 unchanged. Next use ancestor-aware
+short measurement under the original scope before considering another full run.
+Evidence: `tests/pdf_processing/t09a_bounds/object-stall-probe/RESULTS.md`.

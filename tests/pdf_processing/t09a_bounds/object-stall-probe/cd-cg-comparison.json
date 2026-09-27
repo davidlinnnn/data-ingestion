@@ -1,0 +1,51 @@
+{
+  "comparison": [
+    {
+      "run": "cd",
+      "guard_replay": "FAIL",
+      "guard_error": "object-service max/full-PSI event during mixed warm run",
+      "duration_seconds": 406.9424331188202,
+      "minimum_available_bytes": 2960109568,
+      "maximum_worker_bytes": 2863972352,
+      "maximum_object_bytes": 662261760,
+      "object_full_psi_delta_us": 420,
+      "node_vmstat_delta": {
+        "pgscan_direct": 14994,
+        "pgscan_kswapd": 744300,
+        "compact_stall": 27,
+        "allocstall_movable": 166,
+        "thp_fault_alloc": 220
+      },
+      "memory_stat_delta": {
+        "pgscan_direct": 128,
+        "pgscan_kswapd": 95020,
+        "workingset_refault_file": 82562,
+        "thp_fault_alloc": 2
+      }
+    },
+    {
+      "run": "cg",
+      "guard_replay": "PASS",
+      "guard_error": null,
+      "duration_seconds": 414.2880115509033,
+      "minimum_available_bytes": 2849722368,
+      "maximum_worker_bytes": 2608893952,
+      "maximum_object_bytes": 734961664,
+      "object_full_psi_delta_us": 0,
+      "node_vmstat_delta": {
+        "pgscan_direct": 5749,
+        "pgscan_kswapd": 434849,
+        "compact_stall": 65,
+        "allocstall_movable": 103,
+        "thp_fault_alloc": 182
+      },
+      "memory_stat_delta": {
+        "pgscan_direct": 1742,
+        "pgscan_kswapd": 42051,
+        "workingset_refault_file": 7491,
+        "thp_fault_alloc": 1
+      }
+    }
+  ],
+  "limitation": "CD stopped before the last document completed; durations and completed work differ. Counter differences are correlations, not causal proof."
+}

@@ -181,3 +181,23 @@ A critical scope/criterion decision must be explicit before changing the
 zero-event contract or declaring the temporary1Gi setting permanent. Until
 then keep object512Mi after each run, preserve all32-off resting state, and keep
 #44 open. The code fix/evidence can be reviewed independently of that decision.
+
+
+## After CH–CN (current): effective ancestor limit matters
+
+A small idle reproduction now attributes512MiB PSI to the actual MinIO server's
+ext4 directory reads entering `try_charge_memcg`. The same process continued
+cache work without PSI for30s with both leaf and Pod at1GiB; after restoring both
+limits, PSI and Pod-only max events returned in0.51s. Container-only events miss
+this ancestor pressure. No production or permanent resource change was made.
+
+Two diagnostics are explicitly excluded: CJ was contaminated by our version-query
+subprocess; CL changed only the leaf and left the effective Pod cap512MiB. The
+corrected CM/CN contrast and raw records are in `object-stall-probe/RESULTS.md`.
+This explains the reproducible idle512MiB case, not the historical CD1GiB stop.
+
+Next capture effective ancestor limits/local events and direct PSI callers in
+a short directory-read observation under the original1GiB/full-topology scope.
+A full ingestion rerun needs a concrete candidate fix or a discriminating
+workload hypothesis; do not repeat CG merely to get another pass. Keep guards,
+32-off resting state and object512Mi unchanged; #44 stays open.
