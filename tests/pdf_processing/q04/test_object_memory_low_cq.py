@@ -1,6 +1,7 @@
 """Actual protection writes: hierarchy, sibling allocation and partial-failure rollback."""
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 from sentinel import object_memory_low_cq as trial
@@ -42,6 +43,18 @@ class ProtectionTest(unittest.TestCase):
             with self.assertRaisesRegex(OSError,'caller failed'):
                 trial.apply(snapshot)
         self.assertTrue(all((p/'memory.low').read_text()=='0' for p in self.paths))
+
+    def test_timeout_stops_remote_writer_before_caller_can_restore(self):
+        with patch.object(trial.subprocess,'check_output',side_effect=[
+                'kind-image','node',subprocess.TimeoutExpired('docker run',20)]), \
+                patch.object(trial,'stop_helper') as stop:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                trial.host('enter',self.root/'journal','cid')
+            stop.assert_called_once_with('enter')
+        # A killed caller can leave a helper before journal creation: stop it first.
+        with patch.object(trial,'stop_helper') as stop:
+            self.assertTrue(trial.host('restore',self.root/'missing')['not_started'])
+            self.assertEqual([c.args[0] for c in stop.call_args_list],['enter','restore'])
 
     def test_existing_sibling_protection_rejects_before_writes(self):
         sibling=self.leaf.parent/'sibling';sibling.mkdir()

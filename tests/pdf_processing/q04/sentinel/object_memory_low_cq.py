@@ -94,8 +94,22 @@ def apply(snapshot):
         raise
 
 
+def stop_helper(action):
+    name = 'q44-cq-protection-'+action
+    result = subprocess.run(['docker','rm','--force',name],capture_output=True,text=True,timeout=15)
+    if result.returncode and 'No such container' not in result.stderr:
+        raise RuntimeError('cannot stop protection helper: '+result.stderr)
+    remaining = subprocess.check_output(['docker','ps','-a','--filter','name=^/'+name+'$',
+                                         '--format','{{.Names}}'],text=True,timeout=10).strip()
+    if remaining:
+        raise RuntimeError('protection helper remains: '+remaining)
+
+
 def host(action, directory, container_id=''):
     directory = Path(directory)
+    if action=='restore':
+        stop_helper('enter')
+        stop_helper('restore')
     if action=='restore' and not (directory/'snapshot.json').exists():
         return {'restored':True,'not_started':True}
     directory.mkdir(exist_ok=True)
@@ -105,7 +119,11 @@ def host(action, directory, container_id=''):
         '--network=none','--privileged','--cgroupns=host','--read-only',
         '-v',str(directory.resolve())+':/state','--entrypoint','python3',image,'-c',
         Path(__file__).read_text(),action,'--container-id',container_id,'--node-id',node_id]
-    return json.loads(subprocess.check_output(command,text=True,timeout=20))
+    try:
+        return json.loads(subprocess.check_output(command,text=True,timeout=20))
+    except BaseException:
+        stop_helper(action)
+        raise
 
 
 if __name__=='__main__':
