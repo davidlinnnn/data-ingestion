@@ -75,6 +75,6 @@ def profile(frame, event, arg):
             mark('inference_start' if event == 'call' else 'inference_ready')
 
 
-if 'PDF_PROCESS_LIFECZCLE_FD' in os.environ and 'pdf_processing.ocr' in sys.argv:
+if 'PDF_PROCESS_LIFECYCLE_FD' in os.environ and 'pdf_processing.ocr' in sys.argv:
     sys.settrace(trace)
     sys.setprofile(profile)

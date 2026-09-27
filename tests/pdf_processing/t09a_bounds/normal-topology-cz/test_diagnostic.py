@@ -4,9 +4,14 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
+subprocess.run([sys.executable,'-B','-c',
+    'import sys,sitecustomize; assert sys.gettrace() is sitecustomize.trace; assert sys.getprofile() is sitecustomize.profile',
+    'pdf_processing.ocr'], check=True, env={**os.environ,'PYTHONPATH':str(ROOT),
+    'PYTHONDONTWRITEBYTECODE':'1','PDF_PROCESS_LIFECYCLE_FD':'0'})
 
 def load(name,path):
     spec=importlib.util.spec_from_file_location(name,path)
