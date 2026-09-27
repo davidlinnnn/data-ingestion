@@ -386,3 +386,38 @@ supervisor PYTHONPATH replacement. Run
 This verifies marker transport only, not real OCR phase coverage or output
 equivalence. The preserved AS observer is reused with imports/document markers;
 no production source or historical runner was edited.
+
+
+## BW observed-first OCR diagnostic
+
+User-authorized BW ran once with the same BV diagnostic limits and isolated
+fixture scope, observed variant first. The actual supervisor/lifecycle/hook
+transport regression passed before launch. The real OCR child emitted seven
+ordered stages: entry, imports ready, document ready, crop ready, engine
+start, engine ready, inference start. No inference-ready or result-written
+marker exists. The plain comparison never started, so output equivalence
+remains unverified. This is diagnostic evidence, not #44 acceptance.
+
+PSS at entry/imports/document/crop/engine-ready was respectively 16,206 /
+82,724 / 90,932 / 118,312 / 187,708 KiB. The last clean PSI sample was at
+1790475008.730323; engine ready at 1790475008.796534; inference start at
+1790475008.798784; the trigger sample at 1790475008.833052. Thus the stall
+is bounded to a 102.73 ms interval spanning late initialization and early
+inference, with the trigger sampled 34.27 ms after inference began. The
+sampling does **not** prove whether the stall itself preceded or followed
+inference entry, nor identify an ONNX operator or allocator.
+
+In that interval global full PSI rose 2,499 us and diagnostic cgroup full PSI
+3,190 us; both avg10 values remained zero. Cgroup memory increased from
+114,462,720 to 319,356,928 bytes. Trigger VM available memory was
+7,627,632,640 bytes, with zero OOM/max events. As in BV, the total-based
+abort is an additional diagnostic rule, not the historical VM avg10 gate.
+PSS and cgroup charges are different measurements and must not be subtracted
+as a memory accounting identity.
+
+BW fail-stopped and did not retry. Independent cleanup verified its exact
+container absent, all 32 held Deployment identities off, object service
+512Mi/Ready. Raw artifacts: `/private/tmp/t09a-ocr-phase-20260927-bw`;
+retained script, markers, samples, logs and cleanup:
+`ocr-phase-probe/bw-evidence`. No producer code, cluster setting, or
+acceptance criterion changed.

@@ -115,3 +115,17 @@ memory tuning is justified yet.
 The prepared `ocr-phase-probe/run.py` now orders observed before plain and
 removes the trace variable for the plain child. It has not been executed.
 The exact BV script is frozen in `ocr-phase-probe/bv-evidence/run.py`.
+
+
+## After BW
+
+Phase delivery now works in real OCR. BW narrows the first measured stall
+to late ONNX initialization / the first milliseconds of inference; imports,
+document decoding and crop construction finished earlier. Do not keep
+repeating the full workflow. Next inspect the installed OCR/ONNX session
+configuration and the first inference allocation path against this bracket.
+Any proposed memory optimization must preserve model artifacts, render scale,
+OCR outputs and warm-parser continuity. The exact allocator/operator remains
+unknown; a new runtime needs a specific candidate or discriminating probe,
+not another unchanged BW invocation. BW's additional total-based abort and
+the formal acceptance guards remain explicitly distinct.
