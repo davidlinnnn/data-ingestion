@@ -35,3 +35,18 @@ was changed. These results explain the idle512MiB mechanism, **not the exact
 CD1GiB stop**; #44 remains open, #45 blocked, #51 unchanged. Next use ancestor-aware
 short measurement under the original scope before considering another full run.
 Evidence: `tests/pdf_processing/t09a_bounds/object-stall-probe/RESULTS.md`.
+
+
+### CO follow-up: normal-topology short control completed
+
+With all32 Deployments Ready and both exact object/Pod caps temporarily1GiB,
+30s idle plus20 preserved-object reads (4,066,907 bytes) produced no object/Pod
+PSI, max or OOM increments. Direct tracing captured36 other VM stalls and none
+in the exact object container; there was no VM direct/background reclaim. This
+short control did not reproduce CD's mixed-workload pressure and is not a fix.
+Local cap/trigger-persistence checks and retained guard/trace/cleanup verification
+passed. Both limits restored512Mi, all32 returned off, service health200, and all
+owned diagnostics were removed. No producer/configuration/acceptance change.
+Next, if executing a further runtime, use the actual mixed producer once with
+ancestor plus direct-caller evidence; stop standalone idle/read variants.
+#44/#45/#51 status conclusions remain unchanged. Evidence: `object-stall-probe/co-normal/RESULTS.md`.

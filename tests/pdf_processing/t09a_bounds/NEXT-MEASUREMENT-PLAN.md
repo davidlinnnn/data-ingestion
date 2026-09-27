@@ -201,3 +201,18 @@ a short directory-read observation under the original1GiB/full-topology scope.
 A full ingestion rerun needs a concrete candidate fix or a discriminating
 workload hypothesis; do not repeat CG merely to get another pass. Keep guards,
 32-off resting state and object512Mi unchanged; #44 stays open.
+
+
+## After CO (current): return to the missing mixed-load interaction
+
+The short1GiB/all32-on control completed30s idle and20 preserved-object reads
+without object/Pod PSI or max/OOM increments. No VM direct/background reclaim
+occurred; exact-target tracer calls were absent. All cleanup checks passed.
+This is a negative diagnostic control, not resolution of historical CD.
+
+Do not add another standalone idle/read variant. The remaining discriminating
+runtime is the real [06,07,08,native,06] mixed producer, once, with CO's ancestor
+sampler and the direct PSI tracer. Preserve the trigger and classify charge-limit
+versus page-read-wait/global-reclaim behavior. Existing guards and output checks
+remain unchanged. There is no proven new fix to apply; a pass alone cannot establish
+intermittent resolution. Keep #44 open and object512Mi/all32-off after the run.

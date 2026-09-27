@@ -108,3 +108,12 @@ trigger sample and exact MinIO TGID. Use the short directory-read observation
 first; proceed to full ingestion only if a specific fix or discriminating
 workload hypothesis requires it. Keep the existing zero-event guards and all32-off
 resting state; permanent resource/acceptance changes remain a separate decision.
+
+
+## CO follow-up
+
+The proposed1GiB/all32-on short control is complete:30s idle plus20 read-only
+objects produced no target PSI, with effective ancestor limits recorded. No VM
+reclaim occurred, so this did not reproduce the original mixed-load state.
+See [CO results](co-normal/RESULTS.md). Stop standalone idle/read variants;
+any next runtime needs the actual mixed producer plus ancestor/direct-call evidence.
