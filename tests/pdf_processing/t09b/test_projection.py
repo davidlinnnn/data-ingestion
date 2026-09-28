@@ -40,7 +40,8 @@ class ProjectionTest(unittest.TestCase):
                     paths[item['path']] = maps[ref['name']][item['key']]
             for name in ('candidate_pod_workload.py', 'candidate_pod_preflight.py',
                          'candidate_pod_remote_evidence.py', 'candidate_pod_workload_b3.py',
-                         'candidate_pod_preflight_b3.py', 'candidate_pod_remote_evidence_b3.py'):
+                         'candidate_pod_preflight_b3.py', 'candidate_pod_remote_evidence_b3.py',
+                         'candidate_window.py', 'candidate_window_b3.py'):
                 self.assertIn(f'tests/pdf_processing/t09b/{name}', paths)
             projected = Path(directory) / 'workspace'
             for path, contents in paths.items():
@@ -55,6 +56,14 @@ class ProjectionTest(unittest.TestCase):
                                          str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
                                         env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
+            script = (
+                'import sys; from pathlib import Path; '
+                f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
+                'import candidate_window_b3; '
+                'assert candidate_window_b3.IDENTITY["run_id"] == "t09b-calibration-20260929-b3"'
+            )
+            subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
+                           cwd='/', check=True, capture_output=True, text=True, timeout=20)
 
     def test_real_render_contains_measured_worker_and_inactive_resources(self):
         with tempfile.TemporaryDirectory() as directory:

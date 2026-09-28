@@ -7,6 +7,7 @@ for old, new in {
     'candidate_pod_workload.py': 'candidate_pod_workload_b3.py',
     'candidate_pod_preflight.py': 'candidate_pod_preflight_b3.py',
     'candidate_pod_remote_evidence.py': 'candidate_pod_remote_evidence_b3.py',
+    'candidate_window.py': 'candidate_window_b3.py',
     'candidate_runner.py': 'candidate_runner_b3.py',
     'candidate_contract.py': 'candidate_contract_b3.py',
     'CANDIDATE-RUNTIME-INTEGRATION-MANIFEST.json': 'CANDIDATE-B3-RUNTIME-INTEGRATION-MANIFEST.json',
@@ -17,5 +18,5 @@ exec(compile(source, __file__, 'exec'), globals())
 # The B3 entry points are thin source-transform wrappers. Their immutable B2
 # templates must be projected beside them; they are not executable entry points.
 for name in ('candidate_pod_workload.py', 'candidate_pod_preflight.py',
-             'candidate_pod_remote_evidence.py'):
+             'candidate_pod_remote_evidence.py', 'candidate_window.py'):
     base.HARNESS_FILES[f'tests/pdf_processing/t09b/{name}'] = HERE / name

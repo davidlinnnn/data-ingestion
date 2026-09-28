@@ -1,5 +1,15 @@
 # T09b local measurement slice
 
+## Latest controlled result: B3 stopped before inference
+
+See `b3-evidence/RESULTS.md`. B3 passed admission and ten pre-inference gates,
+but the projected candidate window imported a B2-only contract that was absent
+from its B3 source projection. No workflow, object write or inference started.
+This is an identity-projection defect, not an A/B measurement. Cleanup restored
+held workloads off and retained the evidence PVC. A projected-workspace regression
+now exercises the exact B3 import chain; the next group-10 cell uses a fresh
+identity and is not a B3 retry.
+
 ## Latest controlled result: B2 group-10 diagnostic passed
 
 See `b2-evidence/RESULTS.md`. The single B2 execution passed all 11 gates,
