@@ -1,0 +1,11 @@
+--- production/src/pdf_processing/ocr.py
++++ cu-only/src/pdf_processing/ocr.py
+@@ -61,7 +61,7 @@
+         raise
+     crop.save(out/'figure.png')
+     t = time.perf_counter()
+-    result = RapidOCR()(crop)
++    result = RapidOCR(params={'EngineConfig.onnxruntime.intra_op_num_threads': 4})(crop)
+     if not isinstance(result, RapidOCROutput):
+         raise TypeError("Expected complete OCR output")
+     report = {

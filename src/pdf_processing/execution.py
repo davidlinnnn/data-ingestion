@@ -177,6 +177,9 @@ class Execution:
             control_parent = control_child = None
             command = [sys.executable, '-m', module]
             options = {}
+            if module == 'pdf_processing.ocr':
+                # Avoid synchronous THP compaction during NumPy's OCR allocations.
+                options['env'] = {**os.environ, 'NUMPY_MADVISE_HUGEPAGE': '0'}
             cancelled = None
             async with process_lifecycle_transition() as synchronized:
                 if not synchronized:
@@ -189,7 +192,7 @@ class Execution:
                     control_parent.setblocking(False)
                     command = [sys.executable, '-m', 'pdf_processing.lifecycle_child', module]
                     options = {
-                        'env': {**os.environ, 'PDF_PROCESS_LIFECYCLE_FD': str(control_child.fileno())},
+                        'env': {**options.get('env', os.environ), 'PDF_PROCESS_LIFECYCLE_FD': str(control_child.fileno())},
                         'pass_fds': (control_child.fileno(),),
                     }
                 spawning = asyncio.create_task(asyncio.create_subprocess_exec(

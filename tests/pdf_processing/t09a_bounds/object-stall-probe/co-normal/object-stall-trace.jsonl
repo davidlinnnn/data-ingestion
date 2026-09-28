@@ -1,0 +1,709 @@
+{"kind": "start", "run_id": "object-normal-co", "time": 1790491063.9856853, "monotonic": 422672.827270116, "pid": 819811, "start_ticks": 42267272, "self_cgroup": "0::/docker/0c526bc51b6103fa3a92125bd2a024aa7db82642922d6f90ff2f0378d5d68d6f"}
+{"kind": "trace", "read_at": 1790491064.2717714, "line": "            etcd-2209    [003] ..... 422673.113234: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 2209, "tgid": 2161, "cgroup": "0::/docker/1febdda42fb21f67f95d3222e51b35bbee19fda46b638c55f9e63cf33737cec0/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod02888a91065e8f6645b375c963e39312.slice/cri-containerd-730767df53ba1b7e174c3b44f65aefee2fc4754933f2f015e5cb052c89882763.scope"}}
+{"kind": "trace", "read_at": 1790491064.2720368, "line": "            etcd-2209    [003] ..... 422673.113244: <stack trace>"}
+{"kind": "trace", "read_at": 1790491064.2720437, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491064.2720466, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491064.272049, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491064.2720551, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491064.2720587, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491064.2720647, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491064.272068, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491064.2720878, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491064.2720904, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491064.272092, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491064.272094, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491064.2720957, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491064.2720976, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491064.2720993, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491064.2721012, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491064.272103, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491064.2721062, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491064.2721205, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491064.805984, "line": "         kubelet-1581    [003] ..... 422673.647472: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 1581, "tgid": 1542, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet.service"}}
+{"kind": "trace", "read_at": 1790491064.80613, "line": "         kubelet-1581    [003] ..... 422673.647476: <stack trace>"}
+{"kind": "trace", "read_at": 1790491064.8062294, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491064.8062363, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491064.8062391, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491064.8062437, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491064.8062456, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491064.8062475, "line": " => __ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491064.8062627, "line": " => ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491064.8062654, "line": " => ext4_reserve_inode_write"}
+{"kind": "trace", "read_at": 1790491064.806267, "line": " => __ext4_mark_inode_dirty"}
+{"kind": "trace", "read_at": 1790491064.806269, "line": " => ext4_ext_tree_init"}
+{"kind": "trace", "read_at": 1790491064.8062704, "line": " => __ext4_new_inode"}
+{"kind": "trace", "read_at": 1790491064.8062725, "line": " => ext4_create"}
+{"kind": "trace", "read_at": 1790491064.8062744, "line": " => path_openat"}
+{"kind": "trace", "read_at": 1790491064.8062758, "line": " => do_filp_open"}
+{"kind": "trace", "read_at": 1790491064.8062775, "line": " => do_sys_openat2"}
+{"kind": "trace", "read_at": 1790491064.8062797, "line": " => __arm64_sys_openat"}
+{"kind": "trace", "read_at": 1790491064.8062816, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491064.8062835, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491064.8062854, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491064.8062875, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491064.8062913, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491067.2736208, "line": "         kubelet-1546    [016] ..... 422676.114177: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 1546, "tgid": 1542, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet.service"}}
+{"kind": "trace", "read_at": 1790491067.2737904, "line": "         kubelet-1546    [016] ..... 422676.114180: <stack trace>"}
+{"kind": "trace", "read_at": 1790491067.2737963, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491067.2737987, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491067.2738006, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491067.2738025, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491067.2738042, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491067.2738059, "line": " => __ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491067.2738075, "line": " => ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491067.2738094, "line": " => ext4_reserve_inode_write"}
+{"kind": "trace", "read_at": 1790491067.2738109, "line": " => __ext4_mark_inode_dirty"}
+{"kind": "trace", "read_at": 1790491067.2738125, "line": " => ext4_ext_tree_init"}
+{"kind": "trace", "read_at": 1790491067.273814, "line": " => __ext4_new_inode"}
+{"kind": "trace", "read_at": 1790491067.2738159, "line": " => ext4_create"}
+{"kind": "trace", "read_at": 1790491067.2738178, "line": " => path_openat"}
+{"kind": "trace", "read_at": 1790491067.2738197, "line": " => do_filp_open"}
+{"kind": "trace", "read_at": 1790491067.273821, "line": " => do_sys_openat2"}
+{"kind": "trace", "read_at": 1790491067.2738228, "line": " => __arm64_sys_openat"}
+{"kind": "trace", "read_at": 1790491067.2738242, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491067.2738261, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491067.2738276, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491067.27383, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491067.2738314, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491067.5624797, "line": "           <...>-809254  [001] ..... 422676.402894: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 809254, "tgid": 809254, "cgroup": "0::/"}}
+{"kind": "trace", "read_at": 1790491067.56266, "line": "           <...>-809254  [001] ..... 422676.402899: <stack trace>"}
+{"kind": "trace", "read_at": 1790491067.5626676, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491067.5626702, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491067.5626733, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491067.562676, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491067.5626783, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491067.5626802, "line": " => __ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491067.5626824, "line": " => ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491067.5626843, "line": " => ext4_reserve_inode_write"}
+{"kind": "trace", "read_at": 1790491067.5626864, "line": " => __ext4_mark_inode_dirty"}
+{"kind": "trace", "read_at": 1790491067.5626888, "line": " => __ext4_ext_dirty"}
+{"kind": "trace", "read_at": 1790491067.5626907, "line": " => ext4_ext_insert_extent"}
+{"kind": "trace", "read_at": 1790491067.5626929, "line": " => ext4_ext_map_blocks"}
+{"kind": "trace", "read_at": 1790491067.5626955, "line": " => ext4_map_blocks"}
+{"kind": "trace", "read_at": 1790491067.5626976, "line": " => ext4_do_writepages"}
+{"kind": "trace", "read_at": 1790491067.5626998, "line": " => ext4_writepages"}
+{"kind": "trace", "read_at": 1790491067.562702, "line": " => do_writepages"}
+{"kind": "trace", "read_at": 1790491067.5627038, "line": " => __writeback_single_inode"}
+{"kind": "trace", "read_at": 1790491067.562706, "line": " => writeback_sb_inodes"}
+{"kind": "trace", "read_at": 1790491067.5627081, "line": " => wb_writeback"}
+{"kind": "trace", "read_at": 1790491067.5627115, "line": " => wb_workfn"}
+{"kind": "trace", "read_at": 1790491067.562714, "line": " => process_one_work"}
+{"kind": "trace", "read_at": 1790491067.5627165, "line": " => worker_thread"}
+{"kind": "trace", "read_at": 1790491067.5627196, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491067.5627222, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491068.946972, "line": "           <...>-823681  [004] ..... 422677.787549: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 823681, "tgid": 823681, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-podbe816284_9b90_4cf8_b6b0_03c6d3aa3a72.slice/cri-containerd-292cc5a7cf20a4c18b36f74cf210d40a9e91e6d284fab4675017988edbf0c003.scope"}}
+{"kind": "trace", "read_at": 1790491068.9471943, "line": "           <...>-823681  [004] ..... 422677.787553: <stack trace>"}
+{"kind": "trace", "read_at": 1790491068.9472115, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491068.947215, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491068.9472175, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491068.9472194, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491068.9472213, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491068.947223, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491068.9472249, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491068.9472263, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491068.947228, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491068.9472296, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491068.9472327, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491068.9472358, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491068.947238, "line": " => ovl_dir_read_merged"}
+{"kind": "trace", "read_at": 1790491068.9472396, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491068.9472413, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491068.9472427, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491068.9472446, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491068.947246, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491068.9472475, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491068.9472492, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491068.9472518, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491068.9472535, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491068.9472554, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491068.9472866, "line": "           <...>-823689  [007] ..... 422677.787860: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 823689, "tgid": 823689, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-poddf7fc514_d117_43e0_b18f_7f00428d8996.slice/cri-containerd-392728b14515d2fc9b8e49cd7ca5ab87506e3d0f194ca23f632bc57693e7b7d7.scope"}}
+{"kind": "trace", "read_at": 1790491068.947381, "line": "           <...>-823689  [007] ..... 422677.787864: <stack trace>"}
+{"kind": "trace", "read_at": 1790491068.9473846, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491068.9473863, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491068.9473882, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491068.9473896, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491068.9473915, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491068.947393, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491068.9473948, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491068.9473963, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491068.9473984, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491068.9474, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491068.9474018, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491068.9474041, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491068.9474058, "line": " => ovl_iterate_real"}
+{"kind": "trace", "read_at": 1790491068.9474072, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491068.9474092, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491068.947412, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491068.947415, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491068.9474168, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491068.9474185, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491068.94742, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491068.9474218, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491068.9474235, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491068.9474258, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.2953105, "line": "           <...>-823908  [003] ..... 422678.135874: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 823908, "tgid": 823908, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-podbb82629e_0f94_408a_82bb_a3f350ee4e90.slice/cri-containerd-c57f1a032e9fcd4b3f9496644df891f8b4b65d1b4a3a666542f560e208520a24.scope"}}
+{"kind": "trace", "read_at": 1790491069.2954943, "line": "           <...>-823908  [003] ..... 422678.135879: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.2955008, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.2955031, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.295505, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.295507, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.2955084, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.2955103, "line": " => __ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491069.2955117, "line": " => ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491069.2955136, "line": " => ext4_reserve_inode_write"}
+{"kind": "trace", "read_at": 1790491069.2955153, "line": " => __ext4_mark_inode_dirty"}
+{"kind": "trace", "read_at": 1790491069.295517, "line": " => ext4_ext_tree_init"}
+{"kind": "trace", "read_at": 1790491069.2955186, "line": " => __ext4_new_inode"}
+{"kind": "trace", "read_at": 1790491069.2955203, "line": " => ext4_mkdir"}
+{"kind": "trace", "read_at": 1790491069.2955217, "line": " => vfs_mkdir"}
+{"kind": "trace", "read_at": 1790491069.2955234, "line": " => ovl_mkdir_real"}
+{"kind": "trace", "read_at": 1790491069.295525, "line": " => ovl_create_real"}
+{"kind": "trace", "read_at": 1790491069.2955267, "line": " => ovl_create_temp"}
+{"kind": "trace", "read_at": 1790491069.2955282, "line": " => ovl_copy_up_one"}
+{"kind": "trace", "read_at": 1790491069.2955298, "line": " => ovl_copy_up_flags"}
+{"kind": "trace", "read_at": 1790491069.295532, "line": " => ovl_copy_up"}
+{"kind": "trace", "read_at": 1790491069.2955337, "line": " => ovl_create_object"}
+{"kind": "trace", "read_at": 1790491069.2955353, "line": " => ovl_mkdir"}
+{"kind": "trace", "read_at": 1790491069.295537, "line": " => vfs_mkdir"}
+{"kind": "trace", "read_at": 1790491069.2955384, "line": " => do_mkdirat"}
+{"kind": "trace", "read_at": 1790491069.2955399, "line": " => __arm64_sys_mkdirat"}
+{"kind": "trace", "read_at": 1790491069.2955415, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.2955432, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.2955449, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.2955463, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.295548, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.361471, "line": "          python-823681  [005] ..... 422678.202056: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.3615222, "line": "          python-823681  [005] ..... 422678.202059: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.3615274, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.3615298, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.3615317, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.3615336, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.3615353, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.361537, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491069.3615386, "line": " => ext4_bread_batch"}
+{"kind": "trace", "read_at": 1790491069.36154, "line": " => __ext4_find_entry"}
+{"kind": "trace", "read_at": 1790491069.361542, "line": " => ext4_lookup"}
+{"kind": "trace", "read_at": 1790491069.3615434, "line": " => __lookup_slow"}
+{"kind": "trace", "read_at": 1790491069.3615456, "line": " => lookup_one_unlocked"}
+{"kind": "trace", "read_at": 1790491069.3615472, "line": " => ovl_lookup_single"}
+{"kind": "trace", "read_at": 1790491069.361549, "line": " => ovl_lookup_layer"}
+{"kind": "trace", "read_at": 1790491069.3615506, "line": " => ovl_lookup"}
+{"kind": "trace", "read_at": 1790491069.3615525, "line": " => path_openat"}
+{"kind": "trace", "read_at": 1790491069.361554, "line": " => do_filp_open"}
+{"kind": "trace", "read_at": 1790491069.3615553, "line": " => do_sys_openat2"}
+{"kind": "trace", "read_at": 1790491069.3615572, "line": " => __arm64_sys_openat"}
+{"kind": "trace", "read_at": 1790491069.3615587, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.361561, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.3615627, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.3615644, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.361566, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.4457204, "line": "          python-823908  [008] ..... 422678.286230: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.4457755, "line": "          python-823908  [008] ..... 422678.286235: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.4457812, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.4457839, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.4457855, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.4457874, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.445789, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.4457908, "line": " => __ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491069.4457924, "line": " => ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491069.4457946, "line": " => ext4_reserve_inode_write"}
+{"kind": "trace", "read_at": 1790491069.4457963, "line": " => __ext4_mark_inode_dirty"}
+{"kind": "trace", "read_at": 1790491069.4457982, "line": " => ext4_ext_tree_init"}
+{"kind": "trace", "read_at": 1790491069.4457996, "line": " => __ext4_new_inode"}
+{"kind": "trace", "read_at": 1790491069.4458013, "line": " => ext4_mkdir"}
+{"kind": "trace", "read_at": 1790491069.445803, "line": " => vfs_mkdir"}
+{"kind": "trace", "read_at": 1790491069.4458046, "line": " => ovl_mkdir_real"}
+{"kind": "trace", "read_at": 1790491069.445806, "line": " => ovl_create_real"}
+{"kind": "trace", "read_at": 1790491069.445808, "line": " => ovl_create_temp"}
+{"kind": "trace", "read_at": 1790491069.4458103, "line": " => ovl_copy_up_one"}
+{"kind": "trace", "read_at": 1790491069.4458122, "line": " => ovl_copy_up_flags"}
+{"kind": "trace", "read_at": 1790491069.4458137, "line": " => ovl_copy_up"}
+{"kind": "trace", "read_at": 1790491069.4458153, "line": " => ovl_create_object"}
+{"kind": "trace", "read_at": 1790491069.4458168, "line": " => ovl_mkdir"}
+{"kind": "trace", "read_at": 1790491069.4458184, "line": " => vfs_mkdir"}
+{"kind": "trace", "read_at": 1790491069.4458199, "line": " => do_mkdirat"}
+{"kind": "trace", "read_at": 1790491069.4458215, "line": " => __arm64_sys_mkdirat"}
+{"kind": "trace", "read_at": 1790491069.4458232, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.4458253, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.4458272, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.4458292, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.4458306, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.6229966, "line": "            runc-824237  [016] ..... 422678.463560: psi_memstall_enter <-read_pages", "identity": {"tid": 824237, "tgid": 824230, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/system.slice/containerd.service"}}
+{"kind": "trace", "read_at": 1790491069.6232126, "line": "            runc-824237  [016] ..... 422678.463564: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.6232228, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.623225, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790491069.6232271, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790491069.623229, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790491069.623231, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491069.6232328, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491069.6232343, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.623236, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.6232376, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491069.6232393, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491069.623241, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491069.6232424, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491069.6232443, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.6232464, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.6232479, "line": "            runc-824237  [016] ..... 422678.463588: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.6232502, "line": "            runc-824237  [016] ..... 422678.463591: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.623252, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.6232538, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.6232553, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491069.623257, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491069.6232586, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.6232605, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.6232626, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491069.6232648, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491069.6232672, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491069.6232727, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491069.6232746, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.6232762, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.6723566, "line": "           <...>-821276  [009] ..... 422678.512839: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 821276, "tgid": 821276, "cgroup": "0::/"}}
+{"kind": "trace", "read_at": 1790491069.6725168, "line": "           <...>-821276  [009] ..... 422678.512843: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.6725261, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.6725314, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.6725352, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.672537, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.672539, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.6725407, "line": " => ext4_read_block_bitmap_nowait"}
+{"kind": "trace", "read_at": 1790491069.6725426, "line": " => ext4_read_block_bitmap"}
+{"kind": "trace", "read_at": 1790491069.6725464, "line": " => ext4_mb_mark_context"}
+{"kind": "trace", "read_at": 1790491069.6725483, "line": " => ext4_mb_mark_diskspace_used"}
+{"kind": "trace", "read_at": 1790491069.6725502, "line": " => ext4_mb_new_blocks"}
+{"kind": "trace", "read_at": 1790491069.6725519, "line": " => ext4_ext_map_blocks"}
+{"kind": "trace", "read_at": 1790491069.6725574, "line": " => ext4_map_blocks"}
+{"kind": "trace", "read_at": 1790491069.6725593, "line": " => ext4_do_writepages"}
+{"kind": "trace", "read_at": 1790491069.672561, "line": " => ext4_writepages"}
+{"kind": "trace", "read_at": 1790491069.6725624, "line": " => do_writepages"}
+{"kind": "trace", "read_at": 1790491069.6725655, "line": " => __writeback_single_inode"}
+{"kind": "trace", "read_at": 1790491069.672568, "line": " => writeback_sb_inodes"}
+{"kind": "trace", "read_at": 1790491069.6725695, "line": " => wb_writeback"}
+{"kind": "trace", "read_at": 1790491069.6725714, "line": " => wb_workfn"}
+{"kind": "trace", "read_at": 1790491069.6725752, "line": " => process_one_work"}
+{"kind": "trace", "read_at": 1790491069.672579, "line": " => worker_thread"}
+{"kind": "trace", "read_at": 1790491069.672581, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491069.6725848, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491069.6725867, "line": "           <...>-805105  [017] ..... 422678.512845: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 805105, "tgid": 805105, "cgroup": "0::/"}}
+{"kind": "trace", "read_at": 1790491069.6726356, "line": "           <...>-805105  [017] ..... 422678.512845: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.672639, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.6726427, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.6726449, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.672647, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.6726491, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.6726513, "line": " => ext4_read_block_bitmap_nowait"}
+{"kind": "trace", "read_at": 1790491069.6726553, "line": " => ext4_read_block_bitmap"}
+{"kind": "trace", "read_at": 1790491069.6726573, "line": " => ext4_mb_mark_context"}
+{"kind": "trace", "read_at": 1790491069.672659, "line": " => ext4_mb_mark_diskspace_used"}
+{"kind": "trace", "read_at": 1790491069.6726606, "line": " => ext4_mb_new_blocks"}
+{"kind": "trace", "read_at": 1790491069.672662, "line": " => ext4_ext_map_blocks"}
+{"kind": "trace", "read_at": 1790491069.672664, "line": " => ext4_map_blocks"}
+{"kind": "trace", "read_at": 1790491069.6726665, "line": " => ext4_do_writepages"}
+{"kind": "trace", "read_at": 1790491069.6726694, "line": " => ext4_writepages"}
+{"kind": "trace", "read_at": 1790491069.672671, "line": " => do_writepages"}
+{"kind": "trace", "read_at": 1790491069.6726727, "line": " => __writeback_single_inode"}
+{"kind": "trace", "read_at": 1790491069.6726766, "line": " => writeback_sb_inodes"}
+{"kind": "trace", "read_at": 1790491069.67268, "line": " => wb_writeback"}
+{"kind": "trace", "read_at": 1790491069.6726832, "line": " => wb_workfn"}
+{"kind": "trace", "read_at": 1790491069.6726854, "line": " => process_one_work"}
+{"kind": "trace", "read_at": 1790491069.6726868, "line": " => worker_thread"}
+{"kind": "trace", "read_at": 1790491069.6726885, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491069.67269, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491069.6769738, "line": "   kworker/u72:5-821276  [009] ..... 422678.517543: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.6770344, "line": "   kworker/u72:5-821276  [009] ..... 422678.517547: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.6770432, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.677046, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.6770487, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.677051, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.6770535, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.6770558, "line": " => ext4_read_block_bitmap_nowait"}
+{"kind": "trace", "read_at": 1790491069.677058, "line": " => ext4_read_block_bitmap"}
+{"kind": "trace", "read_at": 1790491069.6770604, "line": " => ext4_mb_mark_context"}
+{"kind": "trace", "read_at": 1790491069.6770625, "line": " => ext4_mb_mark_diskspace_used"}
+{"kind": "trace", "read_at": 1790491069.6770647, "line": " => ext4_mb_new_blocks"}
+{"kind": "trace", "read_at": 1790491069.677067, "line": " => ext4_ext_map_blocks"}
+{"kind": "trace", "read_at": 1790491069.677069, "line": " => ext4_map_blocks"}
+{"kind": "trace", "read_at": 1790491069.677071, "line": " => ext4_do_writepages"}
+{"kind": "trace", "read_at": 1790491069.6770735, "line": " => ext4_writepages"}
+{"kind": "trace", "read_at": 1790491069.6770754, "line": " => do_writepages"}
+{"kind": "trace", "read_at": 1790491069.6770778, "line": " => __writeback_single_inode"}
+{"kind": "trace", "read_at": 1790491069.6770802, "line": " => writeback_sb_inodes"}
+{"kind": "trace", "read_at": 1790491069.6770825, "line": " => wb_writeback"}
+{"kind": "trace", "read_at": 1790491069.6770847, "line": " => wb_workfn"}
+{"kind": "trace", "read_at": 1790491069.6770904, "line": " => process_one_work"}
+{"kind": "trace", "read_at": 1790491069.677093, "line": " => worker_thread"}
+{"kind": "trace", "read_at": 1790491069.6770952, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491069.6770976, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491069.7008238, "line": "          python-823681  [005] ..... 422678.541373: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7008736, "line": "          python-823681  [005] ..... 422678.541377: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.700879, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.7008817, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7008834, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.7008855, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.7008872, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.7008889, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491069.7008905, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491069.7008922, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491069.7008939, "line": " => dx_probe"}
+{"kind": "trace", "read_at": 1790491069.7008955, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491069.7008972, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491069.700899, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.7009003, "line": " => ovl_iterate_real"}
+{"kind": "trace", "read_at": 1790491069.7009022, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.700904, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491069.7009058, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.700908, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.70091, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491069.7009122, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.7009163, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.700918, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.70092, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.700926, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.7013943, "line": "          python-823689  [014] ..... 422678.542027: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7014048, "line": "          python-823689  [014] ..... 422678.542030: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.7014074, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.7014093, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.701411, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.7014127, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.7014143, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.701416, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491069.7014174, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491069.7014196, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491069.701421, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491069.701423, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491069.7014246, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491069.7014263, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.7014277, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.7014294, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491069.7014313, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.7014332, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.701435, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491069.7014372, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.701476, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.7015088, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.7015133, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.7015166, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.7015712, "line": "          python-823689  [014] ..... 422678.542096: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7015872, "line": "          python-823689  [014] ..... 422678.542112: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.701592, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.7016184, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.701626, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.7016287, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.7016308, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.7016327, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491069.701635, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491069.7016368, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491069.7016404, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491069.7016466, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491069.701649, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491069.7016518, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.7016551, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.7016625, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491069.7016652, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.7016678, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.701671, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491069.701677, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.7016795, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.7016823, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.7017078, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.7017102, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.7034004, "line": "          python-823681  [005] ..... 422678.544028: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7034202, "line": "          python-823681  [005] ..... 422678.544031: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.7034228, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.7034247, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7034264, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.7034283, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.70343, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.7034316, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491069.7034333, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491069.7034347, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491069.7034366, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491069.7034383, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491069.70344, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491069.7034414, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.703443, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.703445, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491069.703447, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.7034533, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.7034547, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491069.7034564, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.703458, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.7034595, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.7034614, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.7034628, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.7036, "line": "          python-823681  [005] ..... 422678.544225: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7036288, "line": "          python-823681  [005] ..... 422678.544227: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.7036335, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.7036357, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.7036378, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491069.7036395, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491069.703645, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491069.7036467, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491069.7036486, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491069.7036624, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491069.7036674, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491069.7036693, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491069.703671, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491069.703673, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.703675, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.70368, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491069.7036817, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491069.7036834, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491069.7036853, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491069.703779, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491069.703793, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491069.703816, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491069.703819, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.7038214, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.896768, "line": "        kindnetd-134862  [012] ..... 422678.737334: psi_memstall_enter <-read_pages", "identity": {"tid": 134862, "tgid": 5614, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-pod978c6ea9_e7ed_4f90_85ab_5cbf9764f3d2.slice/cri-containerd-6a71c90bde479e07780b6494c82c90337b35e25ca9baac1795e6281b86d66d12.scope"}}
+{"kind": "trace", "read_at": 1790491069.8970444, "line": "        kindnetd-134862  [012] ..... 422678.737337: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.8970575, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.8970623, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790491069.8970644, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790491069.8970675, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790491069.8970711, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491069.8970726, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491069.8970745, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.897076, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.8970778, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491069.8970814, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491069.8970838, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491069.8970852, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491069.8970873, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.8970888, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491069.8970902, "line": "        kindnetd-134862  [012] ..... 422678.737362: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.8970933, "line": "        kindnetd-134862  [012] ..... 422678.737365: <stack trace>"}
+{"kind": "trace", "read_at": 1790491069.8970952, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491069.8970983, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491069.8971007, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491069.8971026, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491069.897104, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.8971057, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491069.8971071, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491069.897109, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491069.8971157, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491069.8971176, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491069.897122, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491069.8971264, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491070.6561534, "line": "           <...>-824870  [007] ..... 422679.496731: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 824870, "absent_at_read": true}}
+{"kind": "trace", "read_at": 1790491070.6562588, "line": "           <...>-824870  [007] ..... 422679.496735: <stack trace>"}
+{"kind": "trace", "read_at": 1790491070.6562648, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491070.656267, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491070.6562693, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491070.6562707, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491070.6562726, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491070.656274, "line": " => __ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491070.656276, "line": " => ext4_get_inode_loc"}
+{"kind": "trace", "read_at": 1790491070.6562774, "line": " => ext4_reserve_inode_write"}
+{"kind": "trace", "read_at": 1790491070.656279, "line": " => __ext4_mark_inode_dirty"}
+{"kind": "trace", "read_at": 1790491070.6562808, "line": " => ext4_ext_tree_init"}
+{"kind": "trace", "read_at": 1790491070.6562824, "line": " => __ext4_new_inode"}
+{"kind": "trace", "read_at": 1790491070.6562839, "line": " => ext4_create"}
+{"kind": "trace", "read_at": 1790491070.656286, "line": " => vfs_create"}
+{"kind": "trace", "read_at": 1790491070.6562874, "line": " => ovl_create_real"}
+{"kind": "trace", "read_at": 1790491070.656289, "line": " => ovl_create_or_link"}
+{"kind": "trace", "read_at": 1790491070.6562908, "line": " => ovl_create_object"}
+{"kind": "trace", "read_at": 1790491070.6562924, "line": " => ovl_create"}
+{"kind": "trace", "read_at": 1790491070.6562939, "line": " => path_openat"}
+{"kind": "trace", "read_at": 1790491070.6562958, "line": " => do_filp_open"}
+{"kind": "trace", "read_at": 1790491070.6562972, "line": " => do_sys_openat2"}
+{"kind": "trace", "read_at": 1790491070.6562986, "line": " => __arm64_sys_openat"}
+{"kind": "trace", "read_at": 1790491070.6563005, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491070.656303, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491070.6563044, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491070.656306, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491070.6563077, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491082.9671218, "line": "      khugepaged-139     [004] ..... 422691.807693: psi_memstall_enter <-__alloc_pages_direct_compact", "identity": {"tid": 139, "tgid": 139, "cgroup": "0::/"}}
+{"kind": "trace", "read_at": 1790491082.967394, "line": "      khugepaged-139     [004] ..... 422691.807696: <stack trace>"}
+{"kind": "trace", "read_at": 1790491082.9674056, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491082.9674094, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491082.9674118, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491082.9674134, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491082.9674168, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491082.967422, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491082.9674294, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491082.9674356, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491082.9674432, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491082.9685988, "line": "      khugepaged-139     [004] ..... 422691.809208: psi_memstall_enter <-__alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491082.9686406, "line": "      khugepaged-139     [004] ..... 422691.809214: <stack trace>"}
+{"kind": "trace", "read_at": 1790491082.9686463, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491082.968651, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491082.9686542, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491082.968656, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491082.9686594, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491082.9686651, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491082.968668, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491082.9686697, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491082.968674, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491082.9706593, "line": "      khugepaged-139     [004] ..... 422691.811230: psi_memstall_enter <-__alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491082.9707162, "line": "      khugepaged-139     [004] ..... 422691.811233: <stack trace>"}
+{"kind": "trace", "read_at": 1790491082.9707248, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491082.9707303, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491082.9707358, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491082.9707417, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491082.970745, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491082.9707487, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491082.970754, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491082.9707627, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491082.9707675, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491093.207765, "line": "      khugepaged-139     [004] ..... 422702.048339: psi_memstall_enter <-__alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491093.2078335, "line": "      khugepaged-139     [004] ..... 422702.048342: <stack trace>"}
+{"kind": "trace", "read_at": 1790491093.207842, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491093.2078454, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491093.2078478, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491093.2078536, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491093.207856, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491093.2078578, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491093.2078602, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491093.207863, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491093.2078671, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491101.395427, "line": "      kube-proxy-2802    [003] ..... 422710.235676: psi_memstall_enter <-read_pages", "identity": {"tid": 2802, "tgid": 2685, "cgroup": "0::/docker/1febdda42fb21f67f95d3222e51b35bbee19fda46b638c55f9e63cf33737cec0/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-besteffort.slice/kubelet-kubepods-besteffort-podf712bd92_9e2d_4932_9016_3bdf775088f6.slice/cri-containerd-0aced9f1295a684f90b378bbc5ab42e04b2e2b93203c6a9bdebdab1cd104f4ac.scope"}}
+{"kind": "trace", "read_at": 1790491101.3958464, "line": "      kube-proxy-2802    [003] ..... 422710.235683: <stack trace>"}
+{"kind": "trace", "read_at": 1790491101.3958573, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491101.395861, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790491101.395864, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790491101.3958669, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790491101.3958695, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491101.395872, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491101.3958745, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3958771, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3958795, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491101.3958817, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491101.3958843, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491101.3958874, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491101.39589, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491101.3958924, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491101.3958948, "line": "      kube-proxy-2802    [003] ..... 422710.235734: psi_memstall_enter <-read_pages"}
+{"kind": "trace", "read_at": 1790491101.3958979, "line": "      kube-proxy-2802    [003] ..... 422710.235735: <stack trace>"}
+{"kind": "trace", "read_at": 1790491101.3959005, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491101.3959029, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790491101.3959053, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790491101.3959076, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790491101.3959098, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491101.3959124, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491101.3959148, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.395917, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3959198, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491101.3959224, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491101.3959248, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491101.395928, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491101.3959305, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491101.3959384, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491101.3959408, "line": "      kube-proxy-2802    [003] ..... 422710.235738: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491101.395944, "line": "      kube-proxy-2802    [003] ..... 422710.235738: <stack trace>"}
+{"kind": "trace", "read_at": 1790491101.3959472, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491101.3959649, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491101.395973, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491101.3959754, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491101.3959777, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3959804, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3959832, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491101.3959887, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491101.395991, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491101.3959932, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491101.395996, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491101.3959992, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491101.3960793, "line": "      kube-proxy-2802    [003] ..... 422710.236587: psi_memstall_enter <-read_pages"}
+{"kind": "trace", "read_at": 1790491101.3960905, "line": "      kube-proxy-2802    [003] ..... 422710.236591: <stack trace>"}
+{"kind": "trace", "read_at": 1790491101.3960948, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491101.3960972, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790491101.3960996, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790491101.396102, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790491101.396105, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491101.3961072, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491101.3961093, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3961122, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3961146, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491101.3961174, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491101.3961205, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491101.3961265, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491101.3961291, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491101.3961313, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491101.396134, "line": "      kube-proxy-2802    [003] ..... 422710.236613: psi_memstall_enter <-read_pages"}
+{"kind": "trace", "read_at": 1790491101.3961372, "line": "      kube-proxy-2802    [003] ..... 422710.236616: <stack trace>"}
+{"kind": "trace", "read_at": 1790491101.3961444, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491101.396147, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790491101.3961492, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790491101.3961523, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790491101.396155, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491101.396158, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491101.396161, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.396164, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3961666, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491101.3961694, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491101.3961725, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491101.3961754, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491101.396178, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491101.3961806, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491101.3961835, "line": "      kube-proxy-2802    [003] ..... 422710.236624: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491101.3961902, "line": "      kube-proxy-2802    [003] ..... 422710.236624: <stack trace>"}
+{"kind": "trace", "read_at": 1790491101.396193, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491101.3961957, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491101.3961985, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790491101.3962007, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790491101.3962035, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3962064, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790491101.3962133, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790491101.3962154, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790491101.3962178, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790491101.396221, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790491101.3962274, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491101.3962297, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790491103.450079, "line": "      khugepaged-139     [008] ..... 422712.290477: psi_memstall_enter <-__alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491103.4501977, "line": "      khugepaged-139     [008] ..... 422712.290485: <stack trace>"}
+{"kind": "trace", "read_at": 1790491103.4502099, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491103.4502218, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491103.4502325, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491103.450243, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491103.4502547, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491103.450265, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491103.4502745, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491103.4502792, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491103.4502833, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491113.6874933, "line": "      khugepaged-139     [008] ..... 422722.527957: psi_memstall_enter <-__alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491113.6875508, "line": "      khugepaged-139     [008] ..... 422722.527960: <stack trace>"}
+{"kind": "trace", "read_at": 1790491113.6875558, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491113.6875582, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491113.6875606, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491113.6875622, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491113.6875637, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491113.6875653, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491113.687567, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491113.6875694, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491113.6875732, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491113.688098, "line": "      khugepaged-139     [008] ..... 422722.528618: psi_memstall_enter <-__alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491113.6881166, "line": "      khugepaged-139     [008] ..... 422722.528625: <stack trace>"}
+{"kind": "trace", "read_at": 1790491113.688119, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491113.6881208, "line": " => __alloc_pages_direct_compact"}
+{"kind": "trace", "read_at": 1790491113.6881223, "line": " => __alloc_pages_noprof"}
+{"kind": "trace", "read_at": 1790491113.6881242, "line": " => __folio_alloc_noprof"}
+{"kind": "trace", "read_at": 1790491113.6881256, "line": " => alloc_charge_folio"}
+{"kind": "trace", "read_at": 1790491113.6881287, "line": " => hpage_collapse_scan_pmd"}
+{"kind": "trace", "read_at": 1790491113.6881316, "line": " => khugepaged"}
+{"kind": "trace", "read_at": 1790491113.6881335, "line": " => kthread"}
+{"kind": "trace", "read_at": 1790491113.6881368, "line": " => ret_from_fork"}
+{"kind": "trace", "read_at": 1790491113.974638, "line": "         kubelet-2844    [015] ..... 422722.815074: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 2844, "tgid": 1542, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet.service"}}
+{"kind": "trace", "read_at": 1790491113.9748054, "line": "         kubelet-2844    [015] ..... 422722.815078: <stack trace>"}
+{"kind": "trace", "read_at": 1790491113.9748116, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790491113.9748147, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790491113.974817, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790491113.9748192, "line": " => find_get_block_common"}
+{"kind": "trace", "read_at": 1790491113.974821, "line": " => bdev_getblk"}
+{"kind": "trace", "read_at": 1790491113.9748232, "line": " => ext4_getblk"}
+{"kind": "trace", "read_at": 1790491113.974825, "line": " => ext4_bread"}
+{"kind": "trace", "read_at": 1790491113.9748278, "line": " => __ext4_read_dirblock"}
+{"kind": "trace", "read_at": 1790491113.9748297, "line": " => htree_dirblock_to_tree"}
+{"kind": "trace", "read_at": 1790491113.9748316, "line": " => ext4_htree_fill_tree"}
+{"kind": "trace", "read_at": 1790491113.9748335, "line": " => ext4_readdir"}
+{"kind": "trace", "read_at": 1790491113.9748352, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491113.974837, "line": " => ovl_iterate_real"}
+{"kind": "trace", "read_at": 1790491113.974839, "line": " => ovl_iterate"}
+{"kind": "trace", "read_at": 1790491113.9748409, "line": " => wrap_directory_iterator"}
+{"kind": "trace", "read_at": 1790491113.974843, "line": " => shared_ovl_iterate"}
+{"kind": "trace", "read_at": 1790491113.9748452, "line": " => iterate_dir"}
+{"kind": "trace", "read_at": 1790491113.974848, "line": " => __arm64_sys_getdents64"}
+{"kind": "trace", "read_at": 1790491113.9748504, "line": " => invoke_syscall.constprop.0"}
+{"kind": "trace", "read_at": 1790491113.9748526, "line": " => do_el0_svc"}
+{"kind": "trace", "read_at": 1790491113.9748576, "line": " => el0_svc"}
+{"kind": "trace", "read_at": 1790491113.9748597, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790491113.9748616, "line": " => el0t_64_sync"}
+{"kind": "end", "run_id": "object-normal-co", "time": 1790491119.3747473, "buffer_stats": {"cpu17": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422678.512845\nnow ts: 422728.215523\ndropped events: 0\nread events: 2\n", "cpu16": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422676.114177\nnow ts: 422728.215541\ndropped events: 0\nread events: 6\n", "cpu15": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422722.815074\nnow ts: 422728.215552\ndropped events: 0\nread events: 2\n", "cpu14": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422678.542027\nnow ts: 422728.215563\ndropped events: 0\nread events: 4\n", "cpu13": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 422728.215573\ndropped events: 0\nread events: 0\n", "cpu12": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422678.737334\nnow ts: 422728.215582\ndropped events: 0\nread events: 4\n", "cpu11": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 422728.215591\ndropped events: 0\nread events: 0\n", "cpu10": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 422728.215600\ndropped events: 0\nread events: 0\n", "cpu9": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422678.512839\nnow ts: 422728.215609\ndropped events: 0\nread events: 4\n", "cpu8": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422678.286230\nnow ts: 422728.215616\ndropped events: 0\nread events: 8\n", "cpu7": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422677.787860\nnow ts: 422728.215624\ndropped events: 0\nread events: 4\n", "cpu6": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 422728.215632\ndropped events: 0\nread events: 0\n", "cpu5": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422678.202056\nnow ts: 422728.215640\ndropped events: 0\nread events: 8\n", "cpu4": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422677.787549\nnow ts: 422728.215658\ndropped events: 0\nread events: 10\n", "cpu3": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422673.113234\nnow ts: 422728.215666\ndropped events: 0\nread events: 18\n", "cpu2": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 422728.215674\ndropped events: 0\nread events: 0\n", "cpu1": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 422676.402894\nnow ts: 422728.215682\ndropped events: 0\nread events: 2\n", "cpu0": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 422728.215691\ndropped events: 0\nread events: 0\n"}}
