@@ -1,5 +1,32 @@
 # T09b local measurement slice
 
+## SDK and worker adapter follow-up
+
+Eight tests now pass using `/private/tmp/t09b-sdk-venv/bin/python -B -m unittest
+discover -s tests/pdf_processing/t09b -p 'test_*.py' -v`. This isolated environment
+contains boto3 1.40.24, botocore 1.40.76 and temporalio 1.23.0. No project runtime
+dependencies or cluster resources were changed.
+
+The loopback HTTP test uses the actual SDK: a 503 response causes two server-side
+PUT payloads for one submitted application payload; the SDK reports one retry.
+A truncated GET produces an incomplete record retaining only bytes actually
+returned to the caller. The first test expected only IncompleteReadError; observed
+botocore raises ResponseStreamingError on this transport. The test now accepts
+both SDK truncation classifications without changing the measurement behavior.
+Server shutdown and thread exit are checked.
+
+`worker_measurement.install(processing, emit)` supplies an opt-in Temporal Worker
+interceptor, to pass as `interceptors=[...]`. It wraps the existing S3 client before
+polling and scopes every Activity by workflow/run/activity/attempt. SDK-interface
+tests cover prepare/group/assembly/OCR/finalize and cancellation context cleanup.
+These are interceptor invocation tests, not a live Temporal worker execution.
+
+Still pending: connect this adapter and a durable sink to the new runtime launch,
+reconcile interrupted operations, measure transport-attempt bytes and buffering,
+and review the complete runtime contract. The loopback server proves the counting
+distinction; it does not supply a production wire-traffic collector. Baseline has
+not started. The previous slice record below is retained as historical context.
+
 2026-09-28: six focused unittest cases pass with:
 
 ```sh
