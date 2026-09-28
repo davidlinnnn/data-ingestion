@@ -54,6 +54,11 @@ class GuardTest(unittest.TestCase):
         with self.assertRaises(TimeoutError):
             run.verify_sample(self.vm, 0)
 
+    def test_truncated_object_ancestor_telemetry_stops(self):
+        self.trigger['ancestors'] = self.trigger['ancestors'][:1]
+        with self.assertRaisesRegex(ValueError, 'telemetry missing'):
+            run.verify_sample(self.vm, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

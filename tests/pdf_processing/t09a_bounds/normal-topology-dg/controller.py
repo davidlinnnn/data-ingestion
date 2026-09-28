@@ -39,6 +39,7 @@ trace = None
 trace_log = None
 trace_owner = None
 TRACE_CONTAINER = 'q44-dg-object-stall'
+TRACE_INSTANCE = 'q44_' + runner.RUN_IDENTITY.replace('-', '_')
 
 
 def current():
@@ -182,10 +183,10 @@ def start_trace():
 
 
 def stop_trace():
-    if trace is None:
-        return
-    if trace_owner is not None and trace.poll() is None:
-        program = '''import os,signal,sys
+    errors = []
+    try:
+        if trace is not None and trace.poll() is None and trace_owner is not None:
+            program = '''import os,signal,sys
 from pathlib import Path
 pid=int(sys.argv[1]);expected=int(sys.argv[2]);path=Path('/proc')/str(pid)/'stat'
 if path.exists():
@@ -193,15 +194,69 @@ if path.exists():
  if actual!=expected: raise ValueError('trace PID identity changed')
  os.kill(pid,signal.SIGTERM)
 '''
-        subprocess.run(['docker', 'exec', TRACE_CONTAINER, 'python3', '-c', program,
-                        str(trace_owner['pid']), str(trace_owner['start_ticks'])],
-                       check=True, timeout=15)
-    try:
-        result = trace.wait(timeout=25)
-        if result != 0:
-            raise RuntimeError('object-stall trace exit ' + str(result) + ': ' + trace.stderr.read())
+            try:
+                subprocess.run(['docker', 'exec', TRACE_CONTAINER, 'python3', '-c', program,
+                                str(trace_owner['pid']), str(trace_owner['start_ticks'])],
+                               check=True, timeout=15)
+            except Exception as error:
+                errors.append('targeted stop: ' + repr(error))
+        if trace is not None and trace.poll() is None:
+            try:
+                trace.wait(timeout=25 if trace_owner is not None and not errors else 0)
+            except subprocess.TimeoutExpired:
+                try:
+                    label = subprocess.check_output(
+                        ['docker', 'inspect', '--format', '{{index .Config.Labels "q04-run"}}',
+                         TRACE_CONTAINER], text=True, timeout=10).strip()
+                    if label != runner.RUN_IDENTITY:
+                        raise ValueError('trace container label changed')
+                    subprocess.run(['docker', 'stop', '--time', '5', TRACE_CONTAINER],
+                                   check=True, timeout=15)
+                except Exception as error:
+                    errors.append('fallback stop: ' + repr(error))
+                try:
+                    trace.wait(timeout=15)
+                except Exception as error:
+                    errors.append('trace wait: ' + repr(error))
+        if trace is not None and trace.poll() not in (None, 0) and not errors:
+            errors.append('object-stall trace exit ' + str(trace.returncode) + ': ' + trace.stderr.read())
     finally:
-        trace_log.close()
+        if trace_log is not None:
+            trace_log.close()
+        try:
+            inspected = subprocess.run(
+                ['docker', 'inspect', '--format', '{{index .Config.Labels "q04-run"}}',
+                 TRACE_CONTAINER], capture_output=True, text=True, timeout=10)
+            if inspected.returncode == 0:
+                if inspected.stdout.strip() != runner.RUN_IDENTITY:
+                    raise ValueError('trace container label changed')
+                subprocess.run(['docker', 'rm', '--force', TRACE_CONTAINER],
+                               check=True, capture_output=True, text=True, timeout=15)
+            elif 'No such object' not in inspected.stderr:
+                raise RuntimeError(inspected.stderr.strip())
+            remaining = subprocess.check_output(
+                ['docker', 'ps', '-a', '--filter', 'name=^/' + TRACE_CONTAINER + '$',
+                 '--format', '{{.Names}}'], text=True, timeout=10).strip()
+            if remaining:
+                raise RuntimeError('trace container remains: ' + remaining)
+        except Exception as error:
+            errors.append('container removal: ' + repr(error))
+        try:
+            image = subprocess.check_output(
+                ['docker', 'inspect', '--format', '{{.Config.Image}}', runner.topology.NODE],
+                text=True, timeout=15).strip()
+            cleanup = ('mount -t tracefs tracefs /sys/kernel/tracing; '
+                       'd=/sys/kernel/tracing/instances/$1; '
+                       'if [ -d "$d" ]; then echo 0 > "$d/tracing_on"; '
+                       'echo nop > "$d/current_tracer"; rmdir "$d"; fi; test ! -e "$d"')
+            subprocess.run(
+                ['docker', 'run', '--rm', '--pull=never', '--network=none', '--privileged',
+                 '--read-only', '--entrypoint', 'sh', image, '-c', cleanup, 'cleanup',
+                 TRACE_INSTANCE], check=True, timeout=20)
+        except Exception as error:
+            errors.append('trace instance removal: ' + repr(error))
+    if errors:
+        raise RuntimeError('; '.join(errors))
 
 
 

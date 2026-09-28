@@ -180,19 +180,28 @@ def build_offline_manifest():
         "bounds_preflight": Q04 / "pod_preflight_dg.py",
         "bounds_workload": Q04 / "pod_workload_dg.py",
         "bounds_remote_evidence": Q04 / "pod_remote_evidence_dg.py",
+        "bounds_controller": RECORD / "controller.py",
+        "bounds_qualifier": RECORD / "verify_results.py",
         "bounds_candidate": Q04.parent / "t09a_bounds/normal-topology-db/DB-MANIFEST.json",
         "bounds_runtime": RECORD / "RUNTIME-INTEGRATION-MANIFEST.json",
         "bounds_source": RECORD / "SOURCE-MANIFEST.json",
         "bounds_worker": RECORD / "WORKER.yaml",
+        "object_policy": Q04.parent / "t09a_bounds/object_policy.py",
+        "outer_guard_handoff": Q04.parent / "t09a_bounds/outer_guard_handoff.py",
+        "observer_guard": Q04.parent / "t09a_bounds/normal-topology-dc/observer_guard.py",
         "object_trial": Path(object_trial.__file__),
         "object_monitor": Path(object_monitor_bh.__file__),
         "object_probe": Path(object_cgroup_probe_db.__file__),
+        "object_trace": Q04.parent / "t09a_bounds/object-stall-probe/psi_call_trace.py",
     }
     value["sources"].update({key: base.sha256(path.read_bytes())
                              for key, path in paths.items()})
     value["authorization_scope"] = authorization_scope()
     value["authorization_scope_sha256"] = ah.authorization_scope_sha256()
     value["exact_single_run_command"] = exact_command()
+    value["exact_controller_command"] = shlex.join([
+        str(base.LOCAL_PYTHON), "-B", str((RECORD / "controller.py").resolve())
+    ])
     value["bundle_inputs_sha256"] = base.sha256((BUNDLE / "inputs.json").read_bytes())
     return value
 
@@ -225,6 +234,8 @@ def verify_object_monitor():
         raise monitor.error
     first = monitor.samples[0]
     for row in monitor.samples[checked_samples:]:
+        if len(first["ancestors"]) < 2 or len(row["ancestors"]) < 2:
+            raise ValueError("object-service Pod/container telemetry missing")
         if (row["object_full_avg10"] > 0
                 or row["memory_events"]["max"] != first["memory_events"]["max"]
                 or any(row["memory_events"][key] != 0
