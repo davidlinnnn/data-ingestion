@@ -14,7 +14,8 @@ class SafePathTest(unittest.TestCase):
                    PYTHONPATH=os.pathsep.join(str(root / path) for path in (
                        'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
                        'tests/pdf_processing/q03')))
-        for name in ('worker.py', 'baseline_window.py', 'pod_workload.py', 'pod_preflight.py'):
+        for name in ('worker.py', 'baseline_window.py', 'pod_workload.py', 'pod_preflight.py',
+                     'pod_workload_a7.py', 'pod_preflight_a7.py'):
             with self.subTest(name=name):
                 result = subprocess.run([sys.executable, '-B', str(here / name), '--help'],
                                         env=env, cwd='/', capture_output=True, text=True, timeout=20)
