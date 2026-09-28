@@ -8,8 +8,8 @@ sys.path.insert(0, str(HERE.parent / 'q04'))
 sys.path.insert(0, str(HERE))
 import pod_preflight_dh as inherited
 
-inherited.PHASE = inherited.TOPOLOGY_PHASE = 't09b-calibration-a4'
-inherited.RUN_ID = 't09b-calibration-20260928-a4'
+inherited.PHASE = inherited.TOPOLOGY_PHASE = 't09b-calibration-a5'
+inherited.RUN_ID = 't09b-calibration-20260928-a5'
 source = inspect.getsource(inherited.verify_workload_imports_ah)
 replacements = {
     '"candidate.warm_pod_window_db"': '"baseline_window"',
