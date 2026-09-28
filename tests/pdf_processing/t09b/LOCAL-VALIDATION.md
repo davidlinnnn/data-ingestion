@@ -1,6 +1,22 @@
 # T09b local measurement slice
 
-## Latest controlled result: A2 stopped at object Pod max events
+## Latest controlled result: A3 stopped at node full PSI
+
+See `a3-evidence/RESULTS.md`. The single A3 diagnostic at `2bfa48c` passed all
+11 pre-inference gates and confirmed that the repaired evidence race is active in
+the real entrypoint. Recording object Pod max events instead of stopping on them
+allowed the fresh workflow to begin: prepare completed for 28 pages and the first
+execute group reached `RapidOcrModel`.
+
+The unchanged outer node guard then observed full PSI avg10 `0.18` and initiated
+interruption. VM/object OOM counters stayed zero and available memory stayed above
+the floor. Temporal completed with the business result
+`failed / activity_budget_exhausted`; this is not ingestion success. Failure
+evidence sealed completely, all 32 Deployments returned off, no owned Pod or trace
+container remains, and the A3 PVC is retained. Restored/replay and the calibration
+comparison remain unexecuted.
+
+## Prior controlled result: A2 stopped at object Pod max events
 
 See a2-evidence/RESULTS.md. The fresh A2 execution at 9808c04 passed all 11
 pre-inference gates, then stopped when the object Pod local max counter increased

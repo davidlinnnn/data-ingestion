@@ -1,0 +1,198 @@
+{
+  "run_identity": "t09b-calibration-20260928-a3",
+  "automatic_retry": false,
+  "stop_reason": "outer VM runtime PSI guard breached",
+  "object_service": {
+    "samples": 831,
+    "container_max_events_delta": 0,
+    "pod_local_max_events_start": 277,
+    "pod_local_max_events_end": 382,
+    "pod_local_max_events_delta": 105,
+    "maximum_memory_current": 1073463296,
+    "memory_max": 1073741824,
+    "maximum_full_psi_avg10": 0.0,
+    "maximum_oom_counters": {
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    }
+  },
+  "outer_guard_first_positive": {
+    "time": 1790609323.2098482,
+    "available_bytes": 4204961792,
+    "oom_kill": 0,
+    "full_psi_avg10": 0.18
+  },
+  "worker_first_positive": {
+    "time": 1790609323.2396936,
+    "available": 4193755136,
+    "memory_current": 1565933568,
+    "psi_full_avg10": 0.18,
+    "parser": {
+      "ready": true,
+      "restarts": 1,
+      "recycles": 0,
+      "handoffs": 0,
+      "last_local_progress": "2026-09-28T15:28:42.728180+00:00",
+      "termination_reason": null,
+      "pid": 131,
+      "request_id": "a24ee832729f4014b9a7d72719292241",
+      "observed_at": "2026-09-28T15:28:34.541724+00:00",
+      "forced_kill": false,
+      "stage": "RapidOcrModel"
+    }
+  },
+  "worker_previous_sample": {
+    "time": 1790609322.7385044,
+    "available": 4205522944,
+    "memory_current": 1566621696,
+    "psi_full_avg10": 0.0,
+    "parser": {
+      "ready": true,
+      "restarts": 1,
+      "recycles": 0,
+      "handoffs": 0,
+      "last_local_progress": "2026-09-28T15:28:42.728180+00:00",
+      "termination_reason": null,
+      "pid": 131,
+      "request_id": "a24ee832729f4014b9a7d72719292241",
+      "observed_at": "2026-09-28T15:28:34.541724+00:00",
+      "forced_kill": false,
+      "stage": "RapidOcrModel"
+    }
+  },
+  "worker_maximum_memory_current": 1950990336,
+  "temporal": {
+    "event_count": 17,
+    "workflow_started_at": "2026-09-28T15:28:34.373863424Z",
+    "cancel_requested_at": "2026-09-28T15:28:43.492028803Z",
+    "completed_at": "2026-09-28T15:28:43.510794428Z",
+    "business_result": {
+      "canonical_accepted": false,
+      "error": {
+        "category": "infrastructure",
+        "code": "activity_budget_exhausted"
+      },
+      "observed_at": "2026-09-28T15:28:43.500377+00:00",
+      "pages": 28,
+      "plan": "pdf-plan-v1:9088a17a6d95d6cf950db2bfd941972f6a1540a37d6055000de25024f7b1ee9f",
+      "processing_complete": false,
+      "registered_pages": 0,
+      "status": "failed",
+      "steps": [],
+      "version": 1
+    }
+  },
+  "causal_order": [
+    "outer node PSI avg10 reached 0.18",
+    "outer guard recorded interruption and signalled runner",
+    "worker observed the same node PSI and sealed partial activity evidence",
+    "Temporal cancellation was requested",
+    "workflow completed with failed/activity_budget_exhausted"
+  ],
+  "node_attribution_trigger_window": [
+    {
+      "kind": "sample",
+      "started_at": 1790609321.0909786,
+      "ended_at": 1790609321.597781,
+      "node_full_delta_us": 0,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609321.597781,
+      "ended_at": 1790609322.111802,
+      "node_full_delta_us": 11653,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609322.111802,
+      "ended_at": 1790609322.6191354,
+      "node_full_delta_us": 10823,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609322.6191354,
+      "ended_at": 1790609323.126689,
+      "node_full_delta_us": 2575,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609323.126689,
+      "ended_at": 1790609323.6347313,
+      "node_full_delta_us": 10760,
+      "cgroup_full_delta_us": {
+        ".": 47,
+        "kubelet.slice": 46,
+        "kubelet.slice/kubelet-kubepods.slice": 54,
+        "kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice": 53,
+        "kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-poda7a6e87b_c9cc_471e_871d_e262bf2fc17f.slice": 50,
+        "kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-poda7a6e87b_c9cc_471e_871d_e262bf2fc17f.slice/cri-containerd-bf4e1ab91cd54ac388980ca1904c216c9af9705b37f36f7dd0b2e1e47926cf53.scope": 50
+      },
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609323.6347313,
+      "ended_at": 1790609324.143694,
+      "node_full_delta_us": 2965,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609324.143694,
+      "ended_at": 1790609324.6554184,
+      "node_full_delta_us": 0,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    },
+    {
+      "kind": "sample",
+      "started_at": 1790609324.6554184,
+      "ended_at": 1790609325.1631322,
+      "node_full_delta_us": 0,
+      "cgroup_full_delta_us": {},
+      "new_cgroups": [],
+      "removed_cgroups": [],
+      "target": null
+    }
+  ],
+  "trace_event_process_counts_near_trigger": {
+    "python": 188,
+    "runc": 140,
+    "kswapd0": 52,
+    "<...>": 28,
+    "dockerd": 20,
+    "jbd2/vda1-8": 8,
+    "python3": 6,
+    "etcd": 2,
+    "temporal": 2
+  },
+  "unknowns": [
+    "node attribution did not account for all node full-stall microseconds",
+    "trace process names do not prove which allocation caused the node PSI threshold crossing",
+    "A3 does not establish sufficient capacity or an accepted baseline"
+  ]
+}
