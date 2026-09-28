@@ -15,7 +15,7 @@ from minio_trace import accounting
 
 
 class TraceSession:
-    def __init__(self, command, output, bucket, prefix):
+    def __init__(self, command, output, bucket, prefix, marker_prefix=None):
         self.condition = Condition()
         self.seen = set()
         self.error = None
@@ -30,16 +30,18 @@ class TraceSession:
         except BaseException:
             self.output.close()
             raise
-        self.thread = Thread(target=self._read, args=(bucket, prefix), daemon=True)
+        self.thread = Thread(target=self._read, args=(bucket, prefix, marker_prefix), daemon=True)
         self.thread.start()
 
-    def _read(self, bucket, prefix):
+    def _read(self, bucket, prefix, marker_prefix):
         try:
             for line in self.process.stdout:
                 event = json.loads(line)
                 if not isinstance(event, dict) or not isinstance(event.get('request'), dict):
                     raise ValueError('invalid native trace record')
                 row = accounting(event, bucket, prefix)
+                if row is None and marker_prefix is not None:
+                    row = accounting(event, bucket, marker_prefix)
                 if row is None:
                     continue
                 self.output.write(json.dumps(row) + '\n')

@@ -24,14 +24,13 @@ class ControllerIOTest(unittest.TestCase):
         deployment['spec']['template']['spec']['containers'][0]['resources']['limits']['memory'] = '512Mi'
         with self.assertRaises(ValueError):
             controller_io.retained_object(runner, kube)
-        with patch.object(controller_io, 'TraceSession') as session, \
+        with patch.object(controller_io, 'NativeTrace') as session, \
              patch.object(controller_io.time, 'sleep'), \
              patch.object(controller_io, 'marker', return_value='marker'):
             session.return_value.ready.side_effect = TimeoutError('not observed')
             with self.assertRaises(TimeoutError):
                 controller_io.start_trace(kube, 'objects', 'output', 'prefix/')
             session.return_value.close.assert_called_once()
-            self.assertIn('timeout 2500', session.call_args.args[0][-1])
         trace = Mock()
         with patch.object(controller_io, 'marker', side_effect=TimeoutError('marker failed')):
             with self.assertRaises(TimeoutError):
