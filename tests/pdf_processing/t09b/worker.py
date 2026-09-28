@@ -24,6 +24,11 @@ from worker_measurement import install_store
 from publication_buffers import instrument
 
 
+def process_start_ticks(pid, proc_root=Path('/proc')):
+    stat = (proc_root / str(pid) / 'stat').read_text()
+    return int(stat[stat.rfind(')') + 1:].split()[19])
+
+
 async def cleanup_owned_work(parser, scratch):
     """Remove scratch only after every owned process has confirmed exit."""
     from pdf_processing.execution import stop_owned_children
@@ -57,7 +62,9 @@ async def run(config_path, out, generation):
     actual = {p.name: sha(p.read_bytes()) for p in Path(pdf_processing.__file__).parent.glob('*.py')}
     require(actual == config['producer'], 'worker producer drift')
     out.mkdir(parents=True, exist_ok=False)
-    identity = {'pid': os.getpid(), 'created': psutil.Process().create_time(), 'generation': generation, 'config_sha256': sha(config_path.read_bytes())}
+    identity = {'pid': os.getpid(), 'created': psutil.Process().create_time(),
+                'start_ticks': process_start_ticks(os.getpid()),
+                'generation': generation, 'config_sha256': sha(config_path.read_bytes())}
     (out/'ownership.json').write_text(json.dumps(identity))
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()

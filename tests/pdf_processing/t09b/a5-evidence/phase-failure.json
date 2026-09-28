@@ -1,0 +1,4 @@
+{
+  "type": "CalledProcessError",
+  "reason": "Command '['/experiment/.venv/bin/python', '-c', \"import os,psutil,signal,sys,time\\npid,parent,sig,child,created=int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]),float(sys.argv[5])\\np=psutil.Process(parent)\\nassert p.create_time()==created\\nassert any('t09b/worker.py' in x for x in p.cmdline())\\nt=psutil.Process(pid)\\nassert (pid==parent and not child) or (child and parent in [a.pid for a in t.parents()] and 'pdf_processing.warm_child' in t.cmdline())\\nos.kill(pid,sig)\\nif sig==signal.SIGSTOP:\\n deadline=time.monotonic()+3\\n while t.status()!=psutil.STATUS_STOPPED:\\n  assert time.monotonic()<deadline\\n  time.sleep(.02)\\n\", '112', '112', '15', '0', '1790611380.56']' returned non-zero exit status 1."
+}

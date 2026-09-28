@@ -1,6 +1,21 @@
 # T09b local measurement slice
 
-## Latest controlled result: A3 stopped at node full PSI
+## Latest controlled result: A5 business sequence passed, terminal acceptance incomplete
+
+See `a5-evidence/RESULTS.md`. The single A5 execution passed all 11 gates and
+completed the fixed 06/07/08/native/06 sequence with 28/15/12/51/28 registered
+pages, 29 groups and one parser recycle. Controlled worker shutdown then failed
+inside the acceptance helper before the measurement contract, traffic and
+terminal evidence were finalized, so A5 is not accepted.
+
+Retained process evidence excludes early worker exit and PID reuse. The old
+helper discarded stderr, so its exact failed assertion is unknown. The in-Pod
+worker path now publishes/fences on Linux start ticks and preserves helper
+diagnostics. Thirty local regressions pass, and a bounded Linux check with the
+actual helper proved graceful stop, mismatch rejection and forced cleanup. A5
+cleanup left all 32 held Deployments off and retained its Bound evidence PVC.
+
+## Prior controlled result: A3 stopped at node full PSI
 
 See `a3-evidence/RESULTS.md`. The single A3 diagnostic at `2bfa48c` passed all
 11 pre-inference gates and confirmed that the repaired evidence race is active in

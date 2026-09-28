@@ -101,6 +101,7 @@ class StartupTest(unittest.TestCase):
                 spec = importlib.util.spec_from_file_location('t09b_test_runner', Path(__file__).with_name('worker.py'))
                 runner = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(runner)
+                runner.process_start_ticks = lambda _pid: 1
                 asyncio.run(run())
             self.assertEqual(calls, ['a', 'b'])
             self.assertEqual(exits, ['b', 'a'])

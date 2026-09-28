@@ -12,6 +12,17 @@ from host import Host as BaseHost
 from host_be import lifecycle_boundary
 
 
+def checked_helper(command, timeout):
+    try:
+        return subprocess.run(command, check=True, timeout=timeout,
+                              capture_output=True, text=True).stdout
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or error.stdout or "no diagnostic output").strip()
+        raise RuntimeError(
+            f"worker lifecycle helper failed ({error.returncode}): {detail}"
+        ) from error
+
+
 class Host(BaseHost):
     def signal(self, pid, sig, child=False):
         try:
@@ -28,12 +39,14 @@ class Host(BaseHost):
             identity = self.current / "ownership.json"
         ready = json.loads(identity.read_text())
         script = '''import os,psutil,signal,sys,time
-pid,parent,sig,child,created=int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]),float(sys.argv[5])
+pid,parent,sig,child,start_ticks=int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5])
 p=psutil.Process(parent)
-assert p.create_time()==created
-assert any('t09b/worker.py' in x for x in p.cmdline())
+raw=open(f'/proc/{parent}/stat').read()
+observed=int(raw[raw.rfind(')')+1:].split()[19])
+assert observed==start_ticks,f'worker identity changed: expected start_ticks {start_ticks}, observed {observed}'
+assert any('t09b/worker.py' in x for x in p.cmdline()),'worker command identity changed'
 t=psutil.Process(pid)
-assert (pid==parent and not child) or (child and parent in [a.pid for a in t.parents()] and 'pdf_processing.warm_child' in t.cmdline())
+assert (pid==parent and not child) or (child and parent in [a.pid for a in t.parents()] and 'pdf_processing.warm_child' in t.cmdline()),'signal target is not owned'
 os.kill(pid,sig)
 if sig==signal.SIGSTOP:
  deadline=time.monotonic()+3
@@ -42,22 +55,24 @@ if sig==signal.SIGSTOP:
   time.sleep(.02)
 '''
         command = [self.config["python"], "-c", script, str(pid), str(ready["pid"]),
-                   str(sig), str(int(child)), str(ready["created"])]
+                   str(sig), str(int(child)), str(ready["start_ticks"])]
         if self.pod:
             current = self.inventory()
             require(current["metadata"]["uid"] == self.pod["metadata"]["uid"],
                     "Pod identity changed")
             command = ["kubectl", "-n", self.config["pod_namespace"], "exec",
                        self.pod["metadata"]["name"], "--", *command]
-        subprocess.run(command, check=True, timeout=20, capture_output=True)
+        checked_helper(command, 20)
 
     def force_stop(self):
         ready = json.loads((self.current / "ownership.json").read_text())
         script = """import psutil,sys,json
-pid,created=int(sys.argv[1]),float(sys.argv[2])
+pid,start_ticks=int(sys.argv[1]),int(sys.argv[2])
 try: p=psutil.Process(pid)
 except psutil.NoSuchProcess: print(json.dumps({'already_absent':True}));sys.exit(0)
-assert p.create_time()==created and any('t09b/worker.py' in x for x in p.cmdline())
+raw=open(f'/proc/{pid}/stat').read();observed=int(raw[raw.rfind(')')+1:].split()[19])
+assert observed==start_ticks,'worker start_ticks changed'
+assert any('t09b/worker.py' in x for x in p.cmdline()),'worker command identity changed'
 children=p.children(recursive=True)
 for child in reversed(children):
  try: child.kill()
@@ -69,11 +84,11 @@ assert not alive
 print(json.dumps({'forced':True,'owned_pids':[x.pid for x in children]+[pid]}))
 """
         command = [self.config["python"], "-c", script, str(ready["pid"]),
-                   str(ready["created"])]
+                   str(ready["start_ticks"])]
         if self.pod:
             command = ["kubectl", "-n", self.config["pod_namespace"], "exec",
                        self.pod["metadata"]["name"], "--", *command]
-        output = subprocess.check_output(command, text=True, timeout=15)
+        output = checked_helper(command, 15)
         (self.current / "forced-cleanup.json").write_text(output)
 
     async def start(self):
