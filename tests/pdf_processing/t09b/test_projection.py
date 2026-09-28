@@ -8,6 +8,54 @@ import unittest
 
 
 class ProjectionTest(unittest.TestCase):
+    def test_b3_wrappers_keep_their_templates_in_the_projected_workspace(self):
+        here = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'render'
+            output.mkdir()
+            env = dict(os.environ, PYTHONSAFEPATH='1', PYTHONDONTWRITEBYTECODE='1',
+                       PYTHONPATH=os.pathsep.join(map(str, (here, here.parent / 'q04'))))
+            script = (
+                'from pathlib import Path; from runtime_wiring import configure; '
+                'r=configure(topology_name="candidate_topology_b3", '
+                'evidence_name="candidate_pod_remote_evidence_b3", '
+                'identity="t09b-calibration-20260929-b3", record_name="runtime-b3-test", '
+                'preflight_name="candidate_pod_preflight_b3.py", '
+                'workload_name="candidate_pod_workload_b3.py"); '
+                'out=Path(__import__("sys").argv[1]); '
+                'r.topology.render(out / "worker.json", out / "source-manifest.json")'
+            )
+            subprocess.run([sys.executable, '-B', '-c', script, str(output)], env=env,
+                           cwd='/', check=True, capture_output=True, text=True, timeout=30)
+            topology = json.loads((output / 'worker.json').read_text())
+            maps = {item['metadata']['name']: item['data'] for item in topology['items']
+                    if item['kind'] == 'ConfigMap'}
+            deployment = next(item for item in topology['items'] if item['kind'] == 'Deployment')
+            workspace = next(v for v in deployment['spec']['template']['spec']['volumes']
+                             if v['name'] == 'workspace')
+            paths = {}
+            for source in workspace['projected']['sources']:
+                ref = source['configMap']
+                for item in ref['items']:
+                    paths[item['path']] = maps[ref['name']][item['key']]
+            for name in ('candidate_pod_workload.py', 'candidate_pod_preflight.py',
+                         'candidate_pod_remote_evidence.py', 'candidate_pod_workload_b3.py',
+                         'candidate_pod_preflight_b3.py', 'candidate_pod_remote_evidence_b3.py'):
+                self.assertIn(f'tests/pdf_processing/t09b/{name}', paths)
+            projected = Path(directory) / 'workspace'
+            for path, contents in paths.items():
+                target = projected / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(contents)
+            child_env = dict(env, PYTHONPATH=os.pathsep.join(str(projected / path) for path in (
+                'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
+                'tests/pdf_processing/q03')))
+            for name in ('candidate_pod_workload_b3.py', 'candidate_pod_preflight_b3.py'):
+                result = subprocess.run([sys.executable, '-B',
+                                         str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
+                                        env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_real_render_contains_measured_worker_and_inactive_resources(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)/'render'
