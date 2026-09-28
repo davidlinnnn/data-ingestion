@@ -15,17 +15,21 @@ sys.path.insert(0, str(HERE.parent / 'q04'))
 sys.path.insert(0, str(HERE))
 
 
-def configure():
+def configure(*, topology_name='topology', evidence_name='pod_remote_evidence',
+              identity='t09b-calibration-20260929-a6',
+              bundle=Path('/private/tmp/q44-inputs-warm-20260928-db'),
+              record_name='runtime-a6', preflight_name='pod_preflight.py',
+              workload_name='pod_workload.py'):
     # Seed topology before the guarded engine defines its keyword defaults.
     # Rebinding module globals afterward does not update Python default values.
     modules = []
-    for name in ('topology', 'pod_remote_evidence'):
+    for name in (topology_name, evidence_name):
         spec = importlib.util.spec_from_file_location('t09b_' + name, HERE / (name + '.py'))
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
         modules.append(module)
-        if name == 'topology':
+        if name == topology_name:
             previous = sys.modules.get('pod_topology_dh')
             sys.modules['pod_topology_dh'] = module.base
             try:
@@ -38,21 +42,20 @@ def configure():
     topology, evidence = modules
     base, ah = runner.base, runner.ah
     layout = topology.base
-    identity = 't09b-calibration-20260929-a6'
     phase = layout.PHASE
     values = dict(PHASE=phase, RUN_IDENTITY=identity, PREFIX=layout.OBJECT_PREFIX,
                   OUT=Path('/private/tmp') / identity,
-                  BUNDLE=Path('/private/tmp/q44-inputs-warm-20260928-db'),
+                  BUNDLE=bundle,
                   EVIDENCE_DIRECTORY_NAME=layout.EVIDENCE_DIRECTORY_NAME,
                   EVIDENCE='/q04-evidence/' + layout.EVIDENCE_DIRECTORY_NAME,
-                  WORKER_YAML=HERE / 'runtime-a6/WORKER.yaml',
-                  OFFLINE_MANIFEST=HERE / 'runtime-a6/RUNNER-MANIFEST.json')
+                  WORKER_YAML=HERE / record_name / 'WORKER.yaml',
+                  OFFLINE_MANIFEST=HERE / record_name / 'RUNNER-MANIFEST.json')
     for module in (runner, ah, base):
         for key, value in values.items():
             setattr(module, key, value)
     runner.topology = ah.pod_topology = base.pod_topology = layout
     runner.OBJECT_OUT = Path('/private/tmp') / (identity + '-object')
-    runner.RECORD = HERE / 'runtime-a6'
+    runner.RECORD = HERE / record_name
     runner.object_monitor_bh.RUN_ID = identity
     for key in ('DEPLOYMENT', 'RUN_LABEL', 'NODE', 'NAMESPACE'):
         setattr(base, key, getattr(layout, key))
@@ -149,11 +152,11 @@ def configure():
         return adapted
 
     def preflight_argv():
-        return [part.replace('/q04/pod_preflight_ah.py', '/t09b/pod_preflight.py')
+        return [part.replace('/q04/pod_preflight_ah.py', '/t09b/' + preflight_name)
                 for part in runner._ah_preflight_argv()]
 
     def workload_argv():
-        return [part.replace('/q04/pod_workload_ah.py', '/t09b/pod_workload.py')
+        return [part.replace('/q04/pod_workload_ah.py', '/t09b/' + workload_name)
                 for part in runner._ah_workload_argv()]
 
     runner.preflight_argv = base.preflight_argv = preflight_argv
