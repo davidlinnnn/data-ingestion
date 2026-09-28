@@ -2,12 +2,14 @@
 
 Status2026-09-28: OCR fixes are integrated at57fcc2e. The user approved the
 limited initial scope and native object request768Mi/limit1Gi/Recreate
-candidate, without persistent host memory.low overrides. Permanent adoption
-requires complete qualification. DC stopped during first object rollout on
-Service connection refusal before any workload; original128Mi/512Mi and
-RollingUpdate were restored. #44 remains open. See the
-[approved plan](normal-topology-dc/PLAN.md) and
-[DC result](normal-topology-dc/first-window-evidence/RESULTS.md).
+candidate without persistent host memory.low overrides. DC stopped before
+workload on HTTP connection refusal; its readiness fix passed DD rollout and
+replacement. DD then stopped between native group Activities on27us new object full PSI
+(final867us). Three documents completed and equal fresh references, but the
+five-document window/recycle/terminal measurement did not qualify. Exact
+128Mi/512Mi/RollingUpdate restored;32off and services healthy. Permanent
+adoption remains unqualified and #44 OPEN. See [DD result](normal-topology-dd/first-window-evidence/RESULTS.md)
+and [recovery impact mapping](RECOVERY-IMPACT.md).
 
 ## Verified configuration
 
@@ -51,14 +53,18 @@ configured maxima remain unqualified. Concurrency,whole books,scan-first and
 universal language/PPT coverage remain outside this initial scope.
 
 The native768Mi request/1Gi limit candidate has no explicit host protection.
-A request supplies scheduler accounting; actual cgroup low/min values must be
-observed. It cannot inherit DB's managed-low qualification. DC did not reach
-the workload and supplies no capacity or PSI conclusion.
+DD measured container/Pod low=min=0. It cannot inherit DB's managed-low
+qualification. DD object peak539,328,512bytes and zero max/OOM show no observed
+limit hit; the27us trigger does not establish a capacity deficit or false PSI.
+The precise task/kernel stall mechanism remains unknown. No threshold changed.
 
-Remaining: qualify the concrete native setting with the fixed five-document
-window,original zero-new-object-full-PSI condition,all business/output/resource
-and cleanup gates,then retain on PASS or restore on failure. The readiness
-helper now waits for actual Service HTTP200 within the original deadline;
-local red/green and read-only coordinator checks passed. DC was not retried.
-Inherited Q04 recovery results retain their original identities and require
-an explicit impact mapping before closure. #45 remains blocked and #51 closed.
+Remaining: diagnose the object stall with a minimal read/write probe and direct
+callsite/latency evidence, then decide a sustainable object policy before a
+new full qualification. No automatic retry of DD. Original zero-new-full-PSI
+and all other gates remain declared. Actual Service readiness, Pod replacement,
+PVC identity and old-object readback passed DD; no repeat of unchanged readiness
+regressions is needed. [Recovery impact](RECOVERY-IMPACT.md) preserves original
+Q04 identities and records the affected dependency projections and current local
+checks. It does not claim32-on interruption/recovery capacity. #45 remains
+blocked and #51 closed. Arbitrary maxima/concurrency/intermittent reliability
+remain outside approved initial support, not passed deployment guarantees.
