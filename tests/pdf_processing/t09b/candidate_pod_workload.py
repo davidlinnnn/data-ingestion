@@ -1,4 +1,4 @@
-"""T09b B1 supervisor using retained deadlines and cleanup."""
+"""T09b B2 supervisor using retained deadlines and cleanup."""
 import inspect
 import json
 from pathlib import Path
@@ -8,8 +8,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / 'q04'))
 import pod_workload_p as base
 
-PHASE = 't09b-calibration-b1'
-RUN_ID = 't09b-calibration-20260929-b1'
+PHASE = 't09b-calibration-b2'
+RUN_ID = 't09b-calibration-20260929-b2'
 MANIFEST = 'tests/pdf_processing/t09b/CANDIDATE-RUNTIME-INTEGRATION-MANIFEST.json'
 
 

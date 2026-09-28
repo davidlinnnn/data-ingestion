@@ -1,4 +1,4 @@
-"""Prepare or execute one guarded T09b group-10 B1 candidate."""
+"""Prepare or execute one guarded T09b group-10 B2 candidate."""
 import json
 from pathlib import Path
 import shlex
@@ -11,7 +11,7 @@ from candidate_contract import IDENTITY, SCOPE
 
 runner = configure(topology_name='candidate_topology',
                    evidence_name='candidate_pod_remote_evidence',
-                   identity='t09b-calibration-20260929-b1', record_name='runtime-b1',
+                   identity='t09b-calibration-20260929-b2', record_name='runtime-b2',
                    preflight_name='candidate_pod_preflight.py',
                    workload_name='candidate_pod_workload.py')
 base = runner.base
@@ -35,7 +35,7 @@ def integration_manifest():
         'identity': IDENTITY,
         'adoption': {
             'status': 'AUTHORIZED_BY_USER',
-            'scope': 'One controlled T09b group-10 B1 candidate; existing resource guards; no retry.',
+            'scope': 'One controlled T09b group-10 B2 candidate; existing resource guards; no retry.',
         },
     }
 

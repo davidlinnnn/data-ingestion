@@ -33,8 +33,10 @@ def verify_output(result, expected):
     assert load(result / 'checks.json') == expected['checks']
 
 
-def qualify(runtime: Path, objects: Path, controller: Path):
-    state = runtime / 'evidence/state/t09b-calibration-a6'
+def qualify(runtime: Path, objects: Path, controller: Path, *, phase='t09b-calibration-a6',
+            expected_groups=29, expected_recycles=1, expected_generations=2,
+            expected_recycle_at=20):
+    state = runtime / 'evidence/state' / phase
     expected = approved_outputs()
     comparisons = []
     business = []
@@ -60,12 +62,15 @@ def qualify(runtime: Path, objects: Path, controller: Path):
         comparisons.append({'fixture': result.name, 'full_document_equal': True,
                             'full_checks_equal': True, 'processing_complete': True})
     proof = load(state / 'warm-proof.json')
-    assert proof['groups'] == 29 and proof['recycles'] == 1 and len(proof['pids']) == 2
-    measurement = runtime / 'evidence/state/t09b-calibration-a6-measurement'
+    assert proof['groups'] == expected_groups
+    assert proof['recycles'] == expected_recycles
+    assert len(proof['pids']) == expected_generations
+    measurement = runtime / 'evidence/state' / (phase + '-measurement')
     contract = load(measurement / 'measurement-contract.json')
     assert contract['workload_succeeded'] and contract['qualification_complete']
-    assert contract['group_requests'] == 29 and contract['request_recycle'] == 20
-    assert contract['parser_generations'] == 2
+    assert contract['group_requests'] == expected_groups
+    assert contract['request_recycle'] == expected_recycle_at
+    assert contract['parser_generations'] == expected_generations
     assert contract['process_lifecycle']['status'] == 'PASS'
     assert contract['resource_gate']['status'] == 'PASS'
     assert contract['automatic_retry'] is False
@@ -100,7 +105,8 @@ def qualify(runtime: Path, objects: Path, controller: Path):
         assert all(int(fields[key]) == 0 for key in
                    ('overrun', 'commit overrun', 'dropped events'))
     result = {'status': 'PASS_DIAGNOSTIC_ONLY', 'comparisons': comparisons,
-              'groups': 29, 'recycle_at': 20, 'parser_generations': 2,
+              'groups': expected_groups, 'recycle_at': expected_recycle_at,
+              'parser_generations': expected_generations,
               'object_full_psi_delta_us': observer['object_observer']['full_psi_delta_us'],
               'object_max_events_delta': observer['object_observer']['max_events_delta'],
               'maximum_object_full_avg10': observer['maximum_object_full_avg10'],
@@ -111,10 +117,13 @@ def qualify(runtime: Path, objects: Path, controller: Path):
     server = [json.loads(line) for line in (controller / 'native-traffic.jsonl').read_text().splitlines()]
     lifecycle = load(controller / 'native-trace-lifecycle.json')
     assert lifecycle['remote_stopped'] is True
-    traffic = reconcile_run(runtime / 'evidence/state', 't09b-calibration-a6', server, 't09a', lifecycle)
+    traffic = reconcile_run(runtime / 'evidence/state', phase, server, 't09a', lifecycle)
     (controller / 'traffic-reconciliation.json').write_text(json.dumps(traffic, indent=2) + '\n')
     assert traffic['complete'], traffic['errors']
     result['traffic_complete'] = True
+    from storage_cost import summarize
+    storage = summarize(state / 'worker-1/storage.jsonl')
+    (controller / 'storage-cost.json').write_text(json.dumps(storage, indent=2) + '\n')
     result['buffering_scope'] = 'publication inputs only; full buffering calibration remains pending'
     (controller / 'qualification.json').write_text(json.dumps(result, indent=2) + '\n')
     return result

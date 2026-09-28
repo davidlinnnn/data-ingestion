@@ -1,4 +1,4 @@
-"""Failure-aware B1 evidence export with the required storage ledger."""
+"""Failure-aware B2 evidence export with the required storage ledger."""
 from pathlib import Path
 import sys
 
@@ -7,7 +7,7 @@ sys.path.insert(0, str(HERE.parent / 'q04'))
 import pod_remote_evidence_dh as inherited
 
 old_phase = inherited.PHASE
-PHASE = 't09b-calibration-b1'
+PHASE = 't09b-calibration-b2'
 MEASUREMENT = PHASE + '-measurement'
 inherited.PHASE = PHASE
 inherited.MEASUREMENT = MEASUREMENT

@@ -1,4 +1,4 @@
-"""Fixed inner launch contract for the T09b B1 group-10 candidate."""
+"""Fixed inner launch contract for the T09b B2 group-10 candidate."""
 
 SCOPE = {
     'sequence': ['06', '07', '08', 'native', '06'],
@@ -9,7 +9,7 @@ SCOPE = {
     'measurement': 'complete process attribution and group-10 single-parser lifecycle',
 }
 IDENTITY = {
-    'phase': 't09b-calibration-b1',
-    'run_id': 't09b-calibration-20260929-b1',
-    'prefix': 't09b/calibration-20260929-b1/',
+    'phase': 't09b-calibration-b2',
+    'run_id': 't09b-calibration-20260929-b2',
+    'prefix': 't09b/calibration-20260929-b2/',
 }

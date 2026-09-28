@@ -1,4 +1,4 @@
-"""Retain T09b gates while checking the B1 candidate entry points."""
+"""Retain T09b gates while checking the B2 candidate entry points."""
 import inspect
 from pathlib import Path
 import sys
@@ -8,8 +8,8 @@ sys.path.insert(0, str(HERE.parent / 'q04'))
 sys.path.insert(0, str(HERE))
 import pod_preflight_dh as inherited
 
-inherited.PHASE = inherited.TOPOLOGY_PHASE = 't09b-calibration-b1'
-inherited.RUN_ID = 't09b-calibration-20260929-b1'
+inherited.PHASE = inherited.TOPOLOGY_PHASE = 't09b-calibration-b2'
+inherited.RUN_ID = 't09b-calibration-20260929-b2'
 source = inspect.getsource(inherited.verify_workload_imports_ah)
 replacements = {
     '"candidate.warm_pod_window_db"': '"candidate_window"',
