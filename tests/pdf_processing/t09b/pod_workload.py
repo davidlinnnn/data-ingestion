@@ -8,8 +8,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / 'q04'))
 import pod_workload_p as base
 
-PHASE = 't09b-calibration-a5'
-RUN_ID = 't09b-calibration-20260928-a5'
+PHASE = 't09b-calibration-a6'
+RUN_ID = 't09b-calibration-20260929-a6'
 MANIFEST = 'tests/pdf_processing/t09b/RUNTIME-INTEGRATION-MANIFEST.json'
 
 

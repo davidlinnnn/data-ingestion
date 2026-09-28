@@ -22,7 +22,7 @@ from qualify_baseline import qualify
 sys.path.insert(0, str(ROOT / 'tests/pdf_processing/t09a_bounds/normal-topology-dh'))
 from terminal_vm_guard import runtime_psi_is_telemetry, terminal_proofs
 RUNNER = HERE / 'runner.py'
-OUT = Path('/private/tmp/t09b-controller-20260928-a5')
+OUT = Path('/private/tmp/t09b-controller-20260929-a6')
 OUT.mkdir(exist_ok=False)
 
 spec = importlib.util.spec_from_file_location('bo_controlled_runner', RUNNER)
@@ -45,7 +45,7 @@ trace = None
 trace_log = None
 trace_owner = None
 native_trace = None
-TRACE_CONTAINER = 't09b-a5-object-stall'
+TRACE_CONTAINER = 't09b-a6-object-stall'
 TRACE_INSTANCE = 'q44_' + runner.RUN_IDENTITY.replace('-', '_')
 
 

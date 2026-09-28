@@ -17,15 +17,15 @@ from runtime_wiring import configure
 r = configure()
 for command, filename in ((r.preflight_argv(), 'pod_preflight.py'), (r.workload_argv(), 'pod_workload.py')):
     assert command[1] == '/workspace/tests/pdf_processing/t09b/' + filename
-    assert command[command.index('--prefix') + 1] == 't09b/calibration-20260928-a5/'
+    assert command[command.index('--prefix') + 1] == 't09b/calibration-20260929-a6/'
     assert not any('bounds-dh' in part or 'bounds-20260928-dh' in part for part in command)
 scope = r.authorization_scope()
-assert scope['phase'] == 't09b-calibration-a5'
+assert scope['phase'] == 't09b-calibration-a6'
 assert scope['automatic_retry'] is False
 assert scope['workload_seconds'] == 825
 assert scope['container_hard_limit_bytes'] == 5368709120
 assert scope['expected_parser_generations'] == 2
-assert 'state/t09b-calibration-a5/worker-1/storage.jsonl' in r.base.FINAL_REQUIRED
+assert 'state/t09b-calibration-a6/worker-1/storage.jsonl' in r.base.FINAL_REQUIRED
 g = r.adapted_window.__globals__
 assert g['IncrementalEvidenceMirror'] is r.base.IncrementalEvidenceMirror
 assert g['workload_argv']()[1].endswith('/t09b/pod_workload.py')

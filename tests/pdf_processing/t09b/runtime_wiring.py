@@ -38,21 +38,21 @@ def configure():
     topology, evidence = modules
     base, ah = runner.base, runner.ah
     layout = topology.base
-    identity = 't09b-calibration-20260928-a5'
+    identity = 't09b-calibration-20260929-a6'
     phase = layout.PHASE
     values = dict(PHASE=phase, RUN_IDENTITY=identity, PREFIX=layout.OBJECT_PREFIX,
                   OUT=Path('/private/tmp') / identity,
                   BUNDLE=Path('/private/tmp/q44-inputs-warm-20260928-db'),
                   EVIDENCE_DIRECTORY_NAME=layout.EVIDENCE_DIRECTORY_NAME,
                   EVIDENCE='/q04-evidence/' + layout.EVIDENCE_DIRECTORY_NAME,
-                  WORKER_YAML=HERE / 'runtime-a5/WORKER.yaml',
-                  OFFLINE_MANIFEST=HERE / 'runtime-a5/RUNNER-MANIFEST.json')
+                  WORKER_YAML=HERE / 'runtime-a6/WORKER.yaml',
+                  OFFLINE_MANIFEST=HERE / 'runtime-a6/RUNNER-MANIFEST.json')
     for module in (runner, ah, base):
         for key, value in values.items():
             setattr(module, key, value)
     runner.topology = ah.pod_topology = base.pod_topology = layout
     runner.OBJECT_OUT = Path('/private/tmp') / (identity + '-object')
-    runner.RECORD = HERE / 'runtime-a5'
+    runner.RECORD = HERE / 'runtime-a6'
     runner.object_monitor_bh.RUN_ID = identity
     for key in ('DEPLOYMENT', 'RUN_LABEL', 'NODE', 'NAMESPACE'):
         setattr(base, key, getattr(layout, key))
