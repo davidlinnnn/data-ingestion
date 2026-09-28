@@ -22,7 +22,12 @@ class ScopedActivity(ActivityInboundInterceptor):
 
 def install(processing, emit):
     """Call before Worker starts; preserve Store and its production behavior."""
-    if isinstance(processing.store.client, MeasuredClient):
+    return install_store(processing.store, emit)
+
+
+def install_store(store, emit):
+    """Install once before the multi-profile worker loop on a shared Store."""
+    if isinstance(store.client, MeasuredClient):
         raise ValueError('measurement already installed')
-    processing.store.client = MeasuredClient(processing.store.client, emit)
+    store.client = MeasuredClient(store.client, emit)
     return StorageMeasurement()

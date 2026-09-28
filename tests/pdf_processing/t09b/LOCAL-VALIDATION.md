@@ -1,5 +1,25 @@
 # T09b local measurement slice
 
+## Durable interruption follow-up
+
+Ten tests pass, including an actual subprocess exiting with os._exit inside
+the client call. `Ledger` exclusively creates its output, flushes/fsyncs each
+start before the SDK call and each finish after completion/body close. Reconcile
+rejects unmatched/duplicate records, changed call identity, malformed tails,
+empty evidence and pending calls. A complete ledger means operation coverage,
+not successful business output or complete wire measurement.
+
+The shared-Store seam in `q04/worker.py` creates Store once before a loop of
+profile Workers. `install_store(store, sink)` must run once before that loop;
+each Worker receives the returned interceptor. Do not install per profile.
+The runtime owner must close the ledger after Activities stop, then reconcile
+the retained file. Ledger fsync overhead is included in timed runs and must be
+matched across candidates; this mechanism has not been benchmarked in the Pod.
+
+No runtime source projection is wired yet. Transport-byte and buffering sources
+remain outstanding; the launch is not baseline-ready. Current code adds no cluster
+operations and leaves historical runners intact.
+
 ## SDK and worker adapter follow-up
 
 Eight tests now pass using `/private/tmp/t09b-sdk-venv/bin/python -B -m unittest

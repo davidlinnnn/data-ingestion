@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from threading import Lock
 from time import monotonic
+from uuid import uuid4
 
 
 _identity = ContextVar('t09b_storage_identity', default=None)
@@ -44,12 +45,17 @@ class MeasuredClient:
         if identity is None:
             raise ValueError('storage measurement scope missing')
         event = dict(identity, operation=operation, key=args['Key'],
+                     call_id=uuid4().hex,
                      started=monotonic(), delivered_bytes=0,
                      sdk_retries=None, transport_bytes=None)
         body = args.get('Body')
         if operation == 'put_object':
             # Do not consume or seek streams for measurement.
             event['submitted_bytes'] = len(body) if isinstance(body, (bytes, bytearray)) else None
+        # Durable sinks persist intent before invoking the SDK. Simple list sinks
+        # remain useful for unit tests, but cannot prove interrupted coverage.
+        if hasattr(self.emit, 'start'):
+            self.emit.start(event)
         try:
             result = getattr(self.client, operation)(**args)
         except BaseException as error:
