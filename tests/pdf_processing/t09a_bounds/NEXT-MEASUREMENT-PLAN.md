@@ -277,3 +277,32 @@ this component with PID/pool attribution rather than repeat the full matrix.
 Spec wording issue fixed/re-review0. Full manager/kernel/32off/object512Mi cleanup
 independently passed; historical PVCs/prefixes retained. No more guards relaxed.
 #44 remains open,#45 blocked,#51 unchanged. Evidence: normal-topology-cs/first-window-evidence/RESULTS.md.
+
+## After DG: decide the VM guard's terminal boundary
+
+DG is a full functional pass and a formal acceptance failure. All five outputs,
+29 groups and recycle passed before workload exit 0. Object avg10/max/OOM stayed
+zero. The only fatal event was node full PSI avg10=0.18 7.57 seconds later,
+attributed to `iptables` page reads in the three kindnet Pod cgroups while final
+Kubernetes cleanup/health was still running.
+
+Do not repeat DG unchanged. The smallest evidence-backed next step is an explicit
+decision whether the VM PSI guard remains fatal after workload exit, terminal
+worker sampling and child cleanup are durably proven. If approved, keep recording
+node PSI and direct traces through final cleanup, but use cleanup/identity/health
+checks as the terminal acceptance gates. All workload-time VM guards and every
+object/worker/resource/output/deadline guard stay unchanged. Use one new DH
+identity with no retry. Until that decision, retain object512Mi and keep #44 open.
+
+## After DH: stop acceptance reruns
+
+The approved decision was implemented and DH passed every business, resource,
+terminal, and cleanup gate in one controlled run. The object candidate is now
+retained at request768Mi/limit1Gi/`Recreate`;32 historical Deployments remain
+off. Do not run another acceptance window for the same initial scope.
+
+DH did not reproduce DG's post-workload kindnet PSI, so its exact trigger remains
+unknown. That uncertainty does not invalidate the approved terminal boundary,
+but it also does not justify broader reliability or capacity claims. Any future
+concurrency, whole-book, scan-first, or admission-maximum qualification needs a
+new explicit scope and run identity.

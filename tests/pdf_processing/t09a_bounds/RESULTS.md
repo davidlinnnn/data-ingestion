@@ -583,3 +583,34 @@ Object full PSI and max-event deltas were zero. Independent cleanup passed.
 No new production fix occurred between CD and CG: this single success does not
 resolve earlier intermittent object PSI failures or establish permanent object
 sizing. #44 remains open. See `normal-topology-cg/first-window-evidence/RESULTS.md`.
+
+## DG approved object-policy qualification (2026-09-28)
+
+DG completed all five business graphs with exact accepted outputs, 29 groups,
+request-20 recycle and complete worker resource evidence. Object avg10/max/OOM
+stayed zero; cumulative full PSI rose 974us as retained telemetry. Seven and a
+half seconds after workload exit 0, the unchanged outer VM guard saw avg10=0.18.
+Direct trace and node attribution identify page-read stalls in all three
+`kube-system/kindnet-*` Pod cgroups, outside the worker and object service.
+The guard interrupted final Pod cleanup/health, so formal acceptance failed and
+the object candidate was rolled back. A case-sensitive absent-container check
+also produced a secondary trace-cleanup false positive and is corrected.
+Independent cleanup passed. Do not rerun unchanged; the next decision is whether
+VM PSI remains fatal after durable workload/worker completion. #44 stays open.
+See `normal-topology-dg/first-window-evidence/RESULTS.md`.
+
+## DH approved initial operating-scope qualification (2026-09-28)
+
+DH ran once with the approved terminal VM PSI boundary and retained native
+object configuration. All 11 pre-inference gates, five full business outputs,
+exact AI/AJ document/check comparisons, 29 groups, request-20 recycle, worker,
+object, VM, telemetry, deadline and cleanup gates passed. Workload and runner
+exited 0 with no retry. Worker max was 2,852,814,848 bytes; object max was
+736,923,648 bytes; object full PSI delta, object avg10/max/OOM, worker avg10/OOM
+and VM avg10/OOM were all zero. Minimum VM available was 2,719,670,272 bytes.
+
+Independent cleanup passed with 32off/no owned Pods, Temporal idle, object
+health200, both PVCs Bound, and trace resources absent. The 768Mi request/1Gi
+limit/`Recreate` candidate is retained. This qualifies #44's approved initial
+serial fixture scope; arbitrary configured maxima and broader concurrency stay
+outside scope. See `normal-topology-dh/first-window-evidence/RESULTS.md`.

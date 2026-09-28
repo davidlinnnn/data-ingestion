@@ -1,4 +1,7 @@
-## Current result: bounded normal-topology sequence passed; #44 remains open
+## Current result: DH qualifies the approved initial scope; #44 is ready to close
+
+The entries below retain the diagnostic chronology that led to DH; their
+intermediate status statements are historical.
 
 CG (`t09a-bounds-20260927-cg`) completed one controlled window with all 32 recorded Deployments active, the OCR-only NumPy hugepage policy fix, temporary object1Gi, and unchanged formal memory/OOM/PSI/deadline guards.
 
@@ -186,3 +189,50 @@ persistent deployment configuration. No permanent memory/PSI policy is changed
 by the code merge. Broader configured file/page/pixel ceilings remain unqualified.
 Keep#44open/#45blocked;#51accepted history is unchanged. This text remains a
 publication draft under the original unified-mainline update instruction.
+
+## DG: full functional pass, post-workload VM guard failure
+
+DG ran once under the approved object rule. All five workflows completed with
+exact accepted documents/checks, 29 groups and request-20 recycle. Object
+avg10/max/OOM stayed zero; cumulative full PSI +974us remained telemetry.
+
+The formal run still failed. Workload exit was clean, then 7.57s later the outer
+VM guard observed full PSI avg10=0.18. Direct trace attributes the concurrent
+page-read stalls to `iptables` tasks in all three `kube-system/kindnet-*` Pods,
+not the worker or MinIO. This interrupted final Pod cleanup/health. A secondary
+case-sensitive Docker absent-container check is fixed; independent cleanup
+confirms 32off, Temporal idle, object512Mi/Ready/HTTP200, PVCs Bound, and trace
+artifacts absent. Prefix/evidence are retained.
+
+#44 remains open and the candidate was not retained. The next critical decision
+is whether VM PSI stays fatal after durable workload exit, terminal worker sample
+and child cleanup; all workload-time/resource/object/output gates would remain
+unchanged. Do not retry DG unchanged. #45 stays blocked and #51 remains closed.
+Evidence: normal-topology-dg/first-window-evidence/RESULTS.md.
+
+## DH: approved initial operating scope passes
+
+DH (`t09a-bounds-20260928-dh`) ran once with no retry under the approved
+terminal VM PSI boundary and native object request768Mi/limit1Gi/`Recreate`.
+All11 pre-inference gates and five workflows passed. Full documents/checks
+exactly match the accepted AI/AJ references; Temporal reports five complete
+business results,29 groups,request20 recycle and two parser generations.
+
+Worker1358 samples peaked at2,852,814,848bytes with no PSI/OOM violation.
+Object1995 samples peaked at736,923,648bytes with full-PSI delta0,avg10=0 and
+max/OOM delta0. Minimum VM available was2,719,670,272bytes; VM avg10/OOM stayed0.
+Workload and runner exited0. Independent functional replay and cleanup pass.
+
+The object candidate is retained. Final state:32/32 historical Deployments off,
+no owned Pods,Temporal idle,object health200,original object PVC and DH evidence
+PVC Bound,trace container/instance absent;914 DH prefix objects retained.
+The DH prefix and evidence PVC are retained; cleanup verified the original
+object PVC identity and one preserved DB object used by the runtime checks.
+It did not perform a complete inventory of every historical prefix or PVC.
+
+This satisfies #44 for the approved initial serial fixture scope and is ready
+for closure when this unified update is published. Configured admission maxima,
+concurrency,whole books and scan-first workloads remain outside scope. DH did
+not reproduce DG's post-workload kindnet PSI, so whether that earlier work came
+from cleanup or periodic reconciliation remains unknown. #51 stays closed and
+accepted. Any #45 follow-up requires its own scope review and authorization.
