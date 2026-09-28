@@ -58,9 +58,13 @@ qualification. DD object peak539,328,512bytes and zero max/OOM show no observed
 limit hit; the27us trigger does not establish a capacity deficit or false PSI.
 The precise task/kernel stall mechanism remains unknown. No threshold changed.
 
-Remaining: diagnose the object stall with a minimal read/write probe and direct
-callsite/latency evidence, then decide a sustainable object policy before a
-new full qualification. No automatic retry of DD. Original zero-new-full-PSI
+DE's minimal32MiB conditional PUT/GET probe under the candidate and32-on topology
+recorded low operation latency,zero object PSI/max/OOM and no target stall call.
+It rules out that generic operation shape as a sufficient trigger; it does not
+resolve DD's event. Remaining diagnosis is the retained DD many-small-key Store
+publish/readback shape and accumulated cache/reclaim state, then a sustainable
+object-policy decision before a new full qualification. No automatic retry of
+DD or DE. Original zero-new-full-PSI
 and all other gates remain declared. Actual Service readiness, Pod replacement,
 PVC identity and old-object readback passed DD; no repeat of unchanged readiness
 regressions is needed. [Recovery impact](RECOVERY-IMPACT.md) preserves original

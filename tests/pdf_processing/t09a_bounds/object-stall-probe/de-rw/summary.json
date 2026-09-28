@@ -1,0 +1,473 @@
+{
+  "run_id": "object-rw-de",
+  "prefix": "t09a/object-probe-20260928-de/",
+  "mode": "candidate rollout; normal32-on; bounded PUT then GET; no ingestion",
+  "automatic_retry": false,
+  "restoration_errors": [],
+  "operations": [
+    {
+      "kind": "put",
+      "key": "t09a/object-probe-20260928-de/object-00.bin",
+      "bytes": 8388608,
+      "started_at": 1790581702.2670202,
+      "finished_at": 1790581702.2989829,
+      "latency_seconds": 0.031961958040483296
+    },
+    {
+      "kind": "get",
+      "key": "t09a/object-probe-20260928-de/object-00.bin",
+      "bytes": 8388608,
+      "started_at": 1790581702.6167386,
+      "finished_at": 1790581702.6301117,
+      "latency_seconds": 0.013373791007325053
+    },
+    {
+      "kind": "put",
+      "key": "t09a/object-probe-20260928-de/object-01.bin",
+      "bytes": 8388608,
+      "started_at": 1790581702.9264584,
+      "finished_at": 1790581702.9607728,
+      "latency_seconds": 0.03431404201546684
+    },
+    {
+      "kind": "get",
+      "key": "t09a/object-probe-20260928-de/object-01.bin",
+      "bytes": 8388608,
+      "started_at": 1790581703.3106282,
+      "finished_at": 1790581703.3190174,
+      "latency_seconds": 0.008389915979932994
+    },
+    {
+      "kind": "put",
+      "key": "t09a/object-probe-20260928-de/object-02.bin",
+      "bytes": 8388608,
+      "started_at": 1790581703.6397717,
+      "finished_at": 1790581703.6730437,
+      "latency_seconds": 0.033271500025875866
+    },
+    {
+      "kind": "get",
+      "key": "t09a/object-probe-20260928-de/object-02.bin",
+      "bytes": 8388608,
+      "started_at": 1790581703.9985435,
+      "finished_at": 1790581704.0084085,
+      "latency_seconds": 0.009865584026556462
+    },
+    {
+      "kind": "put",
+      "key": "t09a/object-probe-20260928-de/object-03.bin",
+      "bytes": 8388608,
+      "started_at": 1790581704.3445985,
+      "finished_at": 1790581704.376486,
+      "latency_seconds": 0.03188787499675527
+    },
+    {
+      "kind": "get",
+      "key": "t09a/object-probe-20260928-de/object-03.bin",
+      "bytes": 8388608,
+      "started_at": 1790581704.692768,
+      "finished_at": 1790581704.7013974,
+      "latency_seconds": 0.00862987496657297
+    }
+  ],
+  "object_before": {
+    "uid": "9e69720a-ff80-4aa5-9941-14925dfdf981",
+    "resources": {
+      "limits": {
+        "memory": "512Mi"
+      },
+      "requests": {
+        "cpu": "100m",
+        "memory": "128Mi"
+      }
+    },
+    "strategy": {
+      "rollingUpdate": {
+        "maxSurge": "25%",
+        "maxUnavailable": "25%"
+      },
+      "type": "RollingUpdate"
+    }
+  },
+  "candidate": {
+    "pod_name": "objects-6bb8bb5d95-lbq2g",
+    "pod_uid": "37d719ff-a03a-4f48-859e-54c1ee0e9b57",
+    "container_id": "09286273b0a81bcb5235509624c2f272fc34b101cb297570740c84c906ca1eb8",
+    "memory_max": 1073741824,
+    "node": "internal-a2a-vs6-local-worker2"
+  },
+  "server_processes": [
+    {
+      "pid": 1433741,
+      "argv": [
+        "minio",
+        "server",
+        "/data"
+      ]
+    }
+  ],
+  "baseline": {
+    "time": 1790581692.744346,
+    "levels": [
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod37d719ff_a03a_4f48_859e_54c1ee0e9b57.slice/cri-containerd-09286273b0a81bcb5235509624c2f272fc34b101cb297570740c84c906ca1eb8.scope",
+        "max": "1073741824",
+        "high": "max",
+        "current": 121241600,
+        "swap": 0,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+        "stat": {
+          "anon": 77709312,
+          "file": 42135552,
+          "kernel": 1396736,
+          "pgscan_direct": 0,
+          "pgscan_kswapd": 0,
+          "workingset_refault_file": 0
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod37d719ff_a03a_4f48_859e_54c1ee0e9b57.slice",
+        "max": "1073741824",
+        "high": "max",
+        "current": 121507840,
+        "swap": 0,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+        "stat": {
+          "anon": 77746176,
+          "file": 42135552,
+          "kernel": 1626112,
+          "pgscan_direct": 0,
+          "pgscan_kswapd": 0,
+          "workingset_refault_file": 0
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice",
+        "max": "max",
+        "high": "max",
+        "current": 1610739712,
+        "swap": 4096,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3690440\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3662434\n",
+        "stat": {
+          "anon": 611196928,
+          "file": 823119872,
+          "kernel": 175767552,
+          "pgscan_direct": 45124599,
+          "pgscan_kswapd": 3932852,
+          "workingset_refault_file": 40231385
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice",
+        "max": "12526280704",
+        "high": "max",
+        "current": 1724907520,
+        "swap": 4096,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3807662\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3778553\n",
+        "stat": {
+          "anon": 656007168,
+          "file": 874897408,
+          "kernel": 193019904,
+          "pgscan_direct": 45192338,
+          "pgscan_kswapd": 4561941,
+          "workingset_refault_file": 40244801
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice",
+        "max": "max",
+        "high": "max",
+        "current": 1872908288,
+        "swap": 339968,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3630110\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3600734\n",
+        "stat": {
+          "anon": 772247552,
+          "file": 897822720,
+          "kernel": 200876032,
+          "pgscan_direct": 45208456,
+          "pgscan_kswapd": 4635440,
+          "workingset_refault_file": 40247547
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup",
+        "max": "max",
+        "high": "max",
+        "current": 2958962688,
+        "swap": 91631616,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3750481\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3720490\n",
+        "stat": {
+          "anon": 1001824256,
+          "file": 1593835520,
+          "kernel": 323526656,
+          "pgscan_direct": 45252678,
+          "pgscan_kswapd": 5093965,
+          "workingset_refault_file": 40290137
+        }
+      }
+    ],
+    "processes": "671518\n",
+    "vm": {
+      "available": 7762173952,
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=5516913\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=5334026\n",
+      "stat": {
+        "oom_kill": 0,
+        "pgscan_direct": 794003,
+        "pgscan_kswapd": 11495580,
+        "compact_stall": 7590,
+        "allocstall_movable": 5592,
+        "workingset_refault_file": 41936911
+      }
+    },
+    "phase": "candidate-baseline"
+  },
+  "all_ready_at": 1790581701.930152,
+  "observed": {
+    "time": 1790581704.8645508,
+    "levels": [
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod37d719ff_a03a_4f48_859e_54c1ee0e9b57.slice/cri-containerd-09286273b0a81bcb5235509624c2f272fc34b101cb297570740c84c906ca1eb8.scope",
+        "max": "1073741824",
+        "high": "max",
+        "current": 162869248,
+        "swap": 0,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+        "stat": {
+          "anon": 84664320,
+          "file": 75771904,
+          "kernel": 2433024,
+          "pgscan_direct": 0,
+          "pgscan_kswapd": 0,
+          "workingset_refault_file": 0
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod37d719ff_a03a_4f48_859e_54c1ee0e9b57.slice",
+        "max": "1073741824",
+        "high": "max",
+        "current": 163135488,
+        "swap": 0,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+        "stat": {
+          "anon": 84701184,
+          "file": 75771904,
+          "kernel": 2662400,
+          "pgscan_direct": 0,
+          "pgscan_kswapd": 0,
+          "workingset_refault_file": 0
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice",
+        "max": "max",
+        "high": "max",
+        "current": 3814469632,
+        "swap": 4096,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3690441\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3662435\n",
+        "stat": {
+          "anon": 2536808448,
+          "file": 1003175936,
+          "kernel": 272769024,
+          "pgscan_direct": 45124599,
+          "pgscan_kswapd": 3932852,
+          "workingset_refault_file": 40231995
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice",
+        "max": "12526280704",
+        "high": "max",
+        "current": 3928854528,
+        "swap": 4096,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3807663\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3778554\n",
+        "stat": {
+          "anon": 2581622784,
+          "file": 1054953472,
+          "kernel": 290131968,
+          "pgscan_direct": 45192338,
+          "pgscan_kswapd": 4561941,
+          "workingset_refault_file": 40245411
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup/kubelet.slice",
+        "max": "max",
+        "high": "max",
+        "current": 4090294272,
+        "swap": 339968,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3630111\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3600735\n",
+        "stat": {
+          "anon": 2697654272,
+          "file": 1081466880,
+          "kernel": 301658112,
+          "pgscan_direct": 45208456,
+          "pgscan_kswapd": 4635440,
+          "workingset_refault_file": 40248157
+        }
+      },
+      {
+        "path": "/sys/fs/cgroup",
+        "max": "max",
+        "high": "max",
+        "current": 5377527808,
+        "swap": 91631616,
+        "events_local": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3750482\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=3720491\n",
+        "stat": {
+          "anon": 3086913536,
+          "file": 1785020416,
+          "kernel": 458178560,
+          "pgscan_direct": 45252678,
+          "pgscan_kswapd": 5093965,
+          "workingset_refault_file": 40290777
+        }
+      }
+    ],
+    "processes": "671518\n",
+    "vm": {
+      "available": 5588217856,
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=5516937\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=5334050\n",
+      "stat": {
+        "oom_kill": 0,
+        "pgscan_direct": 794003,
+        "pgscan_kswapd": 11495580,
+        "compact_stall": 7590,
+        "allocstall_movable": 5592,
+        "workingset_refault_file": 41946018
+      }
+    },
+    "phase": "window-complete"
+  },
+  "status": "NO_PSI_IN_BOUNDED_RW",
+  "restoration": "verified_zero_replicas_and_no_owned_pods",
+  "object_decision": {
+    "decision": "restored",
+    "configuration": {
+      "resources": {
+        "limits": {
+          "memory": "512Mi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": "25%",
+          "maxUnavailable": "25%"
+        },
+        "type": "RollingUpdate"
+      }
+    },
+    "pod": {
+      "pod_name": "objects-8865c4db6-g4fcs",
+      "pod_uid": "d5c99696-e146-44cb-b85d-69e0d63ab7db",
+      "container_id": "82bbe2337d3a9287aa21986065c0054aba83f0749d9dbc7658c59d19bf959438",
+      "memory_max": 536870912,
+      "node": "internal-a2a-vs6-local-worker2"
+    }
+  },
+  "final_health": {
+    "healthy": true,
+    "running": [],
+    "objects": 200
+  },
+  "candidate_applied": true,
+  "finished_at": 1790581714.940777
+}

@@ -117,3 +117,18 @@ objects produced no target PSI, with effective ancestor limits recorded. No VM
 reclaim occurred, so this did not reproduce the original mixed-load state.
 See [CO results](co-normal/RESULTS.md). Stop standalone idle/read variants;
 any next runtime needs the actual mixed producer plus ancestor/direct-call evidence.
+
+## DE follow-up
+
+After DD rejected the native candidate on27us new object full PSI, DE tested the
+smallest missing write path: a fresh candidate Pod, all32 Deployments Ready, and
+four conditional8MiB PUTs each followed by one GET. It wrote/read32MiB with
+PUT latency at most34.3ms and GET latency at most13.4ms. Exact object/Pod full
+PSI,max and OOM deltas were zero; no target MinIO stall call was captured.
+Exact rollback and independent cleanup passed. See [DE results](de-rw/RESULTS.md).
+
+This negative control rules out generic large-object PUT/GET plus32-on as a
+sufficient trigger. DD instead retained464 objects with a strongly small-object
+distribution and reached about478MiB at onset. If diagnosis continues, replay
+that many-small-key Store publish/readback shape under a fresh bounded prefix;
+do not repeat DE or another full PDF window unchanged.
