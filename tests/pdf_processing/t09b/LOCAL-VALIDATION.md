@@ -1,5 +1,21 @@
 # T09b local measurement slice
 
+## Latest controlled result: B2 group-10 diagnostic passed
+
+See `b2-evidence/RESULTS.md`. The single B2 execution passed all 11 gates,
+completed the 06/07/08/native/06 sequence with exact full outputs, reconciled
+10,016 client calls to server attempts, passed resource gates and shut down
+cleanly. Group size 10 used 16 groups and one parser generation without recycle;
+its 520.27-second runner duration is effectively level with A6's 524.75 seconds
+in this first unmatched comparison. B2 is `PASS_DIAGNOSTIC_ONLY`; matched-order
+repetitions, complete buffering/checkpoint measurement, recovery comparison and
+final-bound revalidation remain before #45 acceptance.
+
+The earlier B1 command invoked the inner runner without its required outer
+controller and stopped at admission before Kubernetes resources or inference.
+That harness invocation error was not retried or reused; B2 used a fresh identity
+through the reviewed outer controller.
+
 ## Latest controlled result: A6 group-5 diagnostic passed
 
 See `a6-evidence/RESULTS.md`. The single A6 execution passed 11 gates, completed
