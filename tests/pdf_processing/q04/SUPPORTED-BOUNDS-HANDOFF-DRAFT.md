@@ -11,3 +11,14 @@ BF's user-authorized temporary 1 GiB object-service trial lasted only through na
 BH subsequently qualified one in-flight Kubernetes Activity Pod loss/replacement on the same frozen native producer. It deleted the old Pod after five registered pages, confirmed old runtime/scratch absence, started the interrupted Activity at attempt 2 on one replacement Pod, and completed 51 pages/seven components with exact accepted document/graph output in about 199 seconds under a BH-scoped finite 300-second Temporal budget. Independent verification covered 521 old-Pod and 480 replacement-Pod process/cgroup samples, 64 terminal inventory members, and all 303 retained objects (177,938,447 bytes); node full-PSI avg10 and VM OOM delta stayed zero. The temporary 1 GiB MinIO cgroup peaked at 536,842,240 bytes across 1,336 samples, with zero max/full-PSI deltas, then was restored to 512 MiB. This is a measured outcome for **one serial native request with the 32 historical Deployments off**, not a recommended permanent memory limit. See `pod-topology-v59/RESULTS.md`.
 
 Unqualified conditions for #44: MinIO's sustainable bound and behavior with the 32 historical Deployments restored; concurrency/group-size changes (#45); longer or different documents, whole-book, scan-first/unreliable-native-layer and universal language/PPT support. #44 remains responsible for final operating-scope acceptance. Publish the exact conditions, measured peaks and exclusions; do not turn this single 1 GiB trial into a general service sizing or deployment guarantee.
+
+## Later production OCR qualification (DB)
+
+The earlier measurements above remain identity-specific historical evidence.
+The production OCR fixes now have one passing normal32-on mixed functional
+window with full outputs/recycle and complete mandatory resource telemetry.
+See [current measured scope](../t09a_bounds/OPERATING-SCOPE.md) and
+[DB evidence](../t09a_bounds/normal-topology-db/first-window-evidence/RESULTS.md).
+Permanent object policy and broader input/concurrency limits still require an
+explicit operating-scope decision. DB's auxiliary whole-node observer failure
+is retained and prevents an all-tools-PASS claim.

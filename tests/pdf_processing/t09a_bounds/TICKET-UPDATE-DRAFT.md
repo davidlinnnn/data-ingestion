@@ -174,3 +174,15 @@ object samples proving125.339s protection instead of the124.998s VM sample span.
 Functional mixed-window qualification passes; auxiliary whole-node attribution
 is incomplete. #44 remains open for supported bounds/permanent object policy;
 #51accepted history unchanged. See normal-topology-db/first-window-evidence/RESULTS.md.
+
+## Integration and remaining operating-scope decision
+
+The OCR source changes and DB functional result are ready for integration via
+PR#62. OPERATING-SCOPE.md records the exact serial fixture/resource conditions,
+observed peaks,auxiliary-observer limitation and remaining deployment gates.
+The next substantive decision is whether to adopt the measured1GiB object cap
+plus manager-owned768MiB low as a permanent candidate and qualify its actual
+persistent deployment configuration. No permanent memory/PSI policy is changed
+by the code merge. Broader configured file/page/pixel ceilings remain unqualified.
+Keep#44open/#45blocked;#51accepted history is unchanged. This text remains a
+publication draft under the original unified-mainline update instruction.
