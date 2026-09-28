@@ -24,7 +24,7 @@ class ProjectionTest(unittest.TestCase):
                 ref = source['configMap']
                 for item in ref['items']:
                     paths[item['path']] = maps[ref['name']][item['key']]
-            for name in ('worker.py', 't09b_host.py', 'worker_measurement.py',
+            for name in ('worker.py', 't09b_host.py', 'baseline_window.py', 'worker_measurement.py',
                          'storage_measurement.py', 'storage_ledger.py'):
                 self.assertEqual(paths[f'tests/pdf_processing/t09b/{name}'],
                                  Path(__file__).with_name(name).read_text())

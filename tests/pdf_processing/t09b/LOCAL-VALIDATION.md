@@ -1,5 +1,28 @@
 # T09b local measurement slice
 
+## Native trace and coordinator follow-up
+
+Fourteen local tests pass. `baseline_window.py` selects T09b Host in the existing
+DB measurement engine, preserving its complete-output oracle and group-5 contract;
+the entry point is included in the inactive source projection. The outer supervisor
+still needs a fresh integration manifest and complete launch wiring.
+
+Bounded read-only probes against the existing MinIO container used a unique missing
+object HEAD request. Nonverbose/path-filtered probes produced no records; a verbose
+12-second probe produced two records with request/response fields and callStats
+rx, tx, duration and timeToFirstByte. Only field types were returned; headers and
+bodies were discarded. The missing object returned the expected error. Trace ended
+with timeout exit 124, not a workload failure. No objects or workloads were created.
+
+`minio_trace.py` retains only records within a bucket/prefix boundary, validates
+integer byte counts, removes query/header/body data, and retains failed HTTP status.
+Its local test covers 404 accounting, prefix isolation and missing counters. This
+establishes the available schema, not end-to-end completeness or byte semantics:
+successful known-size read/write calibration, observer separation, trace readiness/
+loss detection and orderly stop reconciliation are still required. Duration remains
+raw until units are verified. Counters are server HTTP callStats, not TCP packet
+bytes or application-only payload sizes. Buffer measurement also remains pending.
+
 ## Host and source projection follow-up
 
 Thirteen local tests pass. `t09b_host.py` targets the measured worker consistently
