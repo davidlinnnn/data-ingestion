@@ -1,5 +1,19 @@
 # T09b local measurement slice
 
+## Latest controlled result: A2 stopped at object Pod max events
+
+See a2-evidence/RESULTS.md. The fresh A2 execution at 9808c04 passed all 11
+pre-inference gates, then stopped when the object Pod local max counter increased
+under its unchanged 1 GiB cap. All 529 object samples retain zero OOM counters.
+This was one execution, with 26 local regressions passing beforehand; no retries,
+cache flushes, resource changes or threshold relaxation followed.
+
+Read-only PVC recovery showed supervisor/init/worker startup despite the outer
+NOT_STARTED summary. No Temporal executions were found on A2's unique workflow
+queue. The startup/guard evidence race is an unresolved tooling defect, and
+recovered artifacts are not a successful terminal seal. Controller cleanup
+restored all 32 Deployments off and retained the A2 Bound evidence PVC.
+
 ## Current result: A1 attempted, diagnosed, cleaned up
 
 See a1-evidence/RESULTS.md. The controller was executed once at 0f8cf8f after
