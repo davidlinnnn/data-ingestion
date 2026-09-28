@@ -14,8 +14,8 @@ sys.path.insert(0, str(HERE))
 
 
 def configure():
-    from sentinel import run_warm_pod_cgroup_dh as runner
-    # Import after the historical runner so the final topology is the T09b one.
+    # Seed topology before the guarded engine defines its keyword defaults.
+    # Rebinding module globals afterward does not update Python default values.
     modules = []
     for name in ('topology', 'pod_remote_evidence'):
         spec = importlib.util.spec_from_file_location('t09b_' + name, HERE / (name + '.py'))
@@ -23,6 +23,16 @@ def configure():
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
         modules.append(module)
+        if name == 'topology':
+            previous = sys.modules.get('pod_topology_dh')
+            sys.modules['pod_topology_dh'] = module.base
+            try:
+                from sentinel import run_warm_pod_cgroup_dh as runner
+            finally:
+                if previous is None:
+                    sys.modules.pop('pod_topology_dh', None)
+                else:
+                    sys.modules['pod_topology_dh'] = previous
     topology, evidence = modules
     base, ah = runner.base, runner.ah
     layout = topology.base

@@ -1,5 +1,15 @@
 # T09b local measurement slice
 
+## Current result: A1 attempted, diagnosed, cleaned up
+
+See a1-evidence/RESULTS.md. The controller was executed once at 0f8cf8f after
+local regression, review and actual native-trace lifecycle validation. Capacity
+admission passed; historical Python keyword defaults caused the created Deployment
+identity check to fail before workflow/inference. The default-binding root cause
+is repaired and covered by the real failing checker regression; all 26 tests pass.
+No runtime retry occurred. A1 evidence/manifests remain frozen, and 32 historical
+Deployments are restored off. Older pending/status sections below are historical.
+
 ## Remote ledger export
 
 T09b now has a failure-aware remote mirror using the existing DH transport.

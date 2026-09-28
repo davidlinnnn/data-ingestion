@@ -29,6 +29,13 @@ assert g['IncrementalEvidenceMirror'] is r.base.IncrementalEvidenceMirror
 assert g['workload_argv']()[1].endswith('/t09b/pod_workload.py')
 assert g['OUT'] == r.OUT
 assert g['verify_runtime_sample'] is r.base.verify_runtime_sample
+deployment = {{'metadata': {{'uid': 'created'}}}}
+owned = [{{'kind': 'Deployment', 'name': r.base.DEPLOYMENT, 'uid': 'created'}}]
+assert r.base.validate_created_deployment(deployment, owned) is deployment
+import inspect
+for name in ('validate_pod', 'capture_cleanup_identity', 'await_worker_pod',
+             'validate_created_deployment', 'cleanup_deployment_and_pod'):
+    assert 't09a-bounds-dh' not in str(inspect.signature(getattr(r.base, name))), name
 for entry in (r.offline_check, r.exact_command):
     try:
         entry()
