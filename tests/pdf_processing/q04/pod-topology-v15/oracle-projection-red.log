@@ -1,0 +1,28 @@
+F
+======================================================================
+FAIL: test_complete_aima_oracle_reads_only_projected_dependencies (test_pod_aima_oracle_projection.ProjectedOracleTest.test_complete_aima_oracle_reads_only_projected_dependencies)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/test_pod_aima_oracle_projection.py", line 41, in test_complete_aima_oracle_reads_only_projected_dependencies
+    self.assertEqual(result.returncode,0,result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 8, in <module>
+  File "/var/folders/44/stsd7cv1021b18wpbqpj54tm0000gn/T/tmpjevth0gz/tests/pdf_processing/q04/consumer.py", line 155, in check_fixture
+    verdicts = score(document, candidate)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/var/folders/44/stsd7cv1021b18wpbqpj54tm0000gn/T/tmpjevth0gz/tests/pdf_processing/q02/oracle/score.py", line 44, in score
+    historical_hashes = json.loads((ROOT.parents[1]/'t09a/evidence/code-source-oracle.json').read_text())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/44/stsd7cv1021b18wpbqpj54tm0000gn/T/tmpjevth0gz/tests/pdf_processing/t09a/evidence/code-source-oracle.json'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.064s
+
+FAILED (failures=1)

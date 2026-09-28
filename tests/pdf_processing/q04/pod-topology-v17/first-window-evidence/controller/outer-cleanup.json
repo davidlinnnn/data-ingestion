@@ -1,0 +1,63 @@
+{
+  "primary_error": "PodIdentityRejected('exactly one created Deployment identity required')",
+  "persistent_channel_close_errors": {},
+  "persistent_channels_closed": true,
+  "workload_evidence": {
+    "status": "NOT_STARTED",
+    "supervisor": "NOT_STARTED",
+    "workflow": "NOT_STARTED",
+    "inference": "NOT_STARTED",
+    "controller_export_complete": false
+  },
+  "policy": {
+    "controller_export_complete": false,
+    "remove_owned_runtime": false,
+    "retain_evidence_pvc": true
+  },
+  "controller_export_complete": false,
+  "retained_for_evidence_recovery": false,
+  "terminal_stop_proven": false,
+  "owned_object_deletion": {
+    "deleted": [
+      {
+        "kind": "Deployment",
+        "name": "q04-pod-cgroup-r-activities",
+        "uid": "bc9c5e64-fa41-4048-8425-d8bc1ed554ef"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-harness-f67dd600c9c28907",
+        "uid": "73ef6310-9326-425a-b6fd-d22be1894fe2"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-code-f7a5de6a607668e9",
+        "uid": "d809590a-7519-4acc-ac03-2c181cea00a8"
+      }
+    ],
+    "retained": [
+      {
+        "kind": "PersistentVolumeClaim",
+        "name": "q04-pod-cgroup-r-evidence-20260921-r",
+        "uid": "a023602d-87e6-499b-9275-6abeb11f92ed"
+      }
+    ],
+    "errors": {}
+  },
+  "owned_objects_deleted_with_uid_preconditions": true,
+  "retained_evidence_claim": {
+    "pvc_name": "q04-pod-cgroup-r-evidence-20260921-r",
+    "pvc_uid": "a023602d-87e6-499b-9275-6abeb11f92ed",
+    "phase": "Pending",
+    "retained": true,
+    "automatic_delete": false
+  },
+  "post_cleanup_vm_oom_proof": true,
+  "final_identity_and_health": true,
+  "disposition": "CLEANED_WITH_PVC_RETAINED_WORKLOAD_NOT_STARTED",
+  "evidence_state": {
+    "local_controller_evidence_persisted": true,
+    "pvc_retained": true,
+    "workload_evidence": "NOT_STARTED"
+  }
+}

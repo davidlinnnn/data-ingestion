@@ -1,0 +1,92 @@
+{
+  "executed_commit": "2619844",
+  "status": "FAIL_ATTRIBUTION_CONTRACT_NOT_PROMOTED",
+  "automatic_retry": false,
+  "sample_count": 1023,
+  "incomplete_sample_count": 54,
+  "process_unknown_counts": [
+    {
+      "ownership": "shared_cgroup_other",
+      "reason": "PermissionError",
+      "command_sha256": "d1750f4987f0f1657c272aa5bad1b18d9f13b8ef307c789460b006ee2fdb9fe3",
+      "count": 35
+    },
+    {
+      "ownership": "shared_cgroup_other",
+      "reason": "FileNotFoundError",
+      "command_sha256": null,
+      "count": 6
+    }
+  ],
+  "coverage_reason_counts": {
+    "process_set_changed_during_sample": 19,
+    "cgroup_process_read_incomplete": 34,
+    "FileNotFoundError": 2,
+    "process_transition_read_incomplete": 6
+  },
+  "node_samples": 681,
+  "node_min_available_bytes": 6570520576,
+  "outer_max_cgroup_bytes": 1725132800,
+  "attribution_max_cgroup_bytes": 1768689664,
+  "node_max_full_avg10": 0.0,
+  "cgroup_max_full_avg10": 0.0,
+  "max_attribution_gap_seconds": 0.4079650829953607,
+  "all_vm_oom_zero": true,
+  "all_cgroup_oom_zero": true,
+  "all_three_business_results_complete": true,
+  "temporal_event_counts": {
+    "q04-yolo-pod-cgroup-20260920-j-replay-07-78dd1e38620c42689771f2e0448d9674": {
+      "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED": 1,
+      "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED": 12,
+      "EVENT_TYPE_WORKFLOW_TASK_STARTED": 12,
+      "EVENT_TYPE_WORKFLOW_TASK_COMPLETED": 12,
+      "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED": 11,
+      "EVENT_TYPE_ACTIVITY_TASK_STARTED": 11,
+      "EVENT_TYPE_ACTIVITY_TASK_COMPLETED": 11,
+      "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED": 1
+    },
+    "q04-yolo-pod-cgroup-20260920-j-restored-07-3fe1833e9d2d47db875da4bebd560613": {
+      "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED": 1,
+      "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED": 12,
+      "EVENT_TYPE_WORKFLOW_TASK_STARTED": 12,
+      "EVENT_TYPE_WORKFLOW_TASK_COMPLETED": 12,
+      "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED": 11,
+      "EVENT_TYPE_ACTIVITY_TASK_STARTED": 11,
+      "EVENT_TYPE_ACTIVITY_TASK_COMPLETED": 11,
+      "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED": 1
+    },
+    "q04-yolo-pod-cgroup-20260920-j-fresh-07-ae41b9791d7941e992da0c95179f7f6e": {
+      "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED": 1,
+      "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED": 12,
+      "EVENT_TYPE_WORKFLOW_TASK_STARTED": 12,
+      "EVENT_TYPE_WORKFLOW_TASK_COMPLETED": 12,
+      "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED": 11,
+      "EVENT_TYPE_ACTIVITY_TASK_STARTED": 11,
+      "EVENT_TYPE_ACTIVITY_TASK_COMPLETED": 11,
+      "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED": 1
+    }
+  },
+  "controller_stop": {
+    "time": 1789862326.6651578,
+    "monotonic": 328389.009160791,
+    "type": "RuntimeError",
+    "reason": "Pod workload failed; no retry",
+    "automatic_retry": false
+  },
+  "workload_exit": {
+    "automatic_retry": false,
+    "finished_at": 1789862326.4367075,
+    "forced": false,
+    "returncode": 1,
+    "timed_out": false
+  },
+  "seal_status": "INCOMPLETE",
+  "seal_entries": 77,
+  "pending_index_not_promoted": true,
+  "unknowns": [
+    "Exact program identity behind shared-cgroup command hash is not proven.",
+    "PermissionError lacks filename and errno, so the failing status vs smaps read and its cause remain unknown.",
+    "PSS for unknown samples cannot be reconstructed or treated as zero.",
+    "Incomplete process coverage prevents qualification; sampled cgroup continuity alone does not justify relaxing the contract."
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "info": {
+    "chainID": "sha256:4201ad12e888c97fc276551db522b1a8587c0b2e30bf0105786303c7614cda66",
+    "imageSpec": {
+      "architecture": "arm64",
+      "config": {
+        "Cmd": [
+          "k8s/worker.py"
+        ],
+        "Entrypoint": [
+          "/experiment/.venv/bin/python"
+        ],
+        "Env": [
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "LANG=C.UTF-8",
+          "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+          "PYTHON_VERSION=3.12.13",
+          "PYTHON_SHA256=c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684",
+          "HF_HUB_OFFLINE=1",
+          "OMP_NUM_THREADS=4",
+          "OPENBLAS_NUM_THREADS=4"
+        ],
+        "WorkingDir": "/experiment"
+      },
+      "created": "2026-09-11T11:08:53.601943881Z",
+      "history": [
+        {
+          "comment": "debuerreotype 0.17",
+          "created": "2026-08-03T00:00:00Z",
+          "created_by": "# debian.sh --arch 'arm64' out/ 'trixie' '@1785715200'"
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:07:55.021011351Z",
+          "created_by": "ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "empty_layer": true
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:07:55.021011351Z",
+          "created_by": "ENV LANG=C.UTF-8",
+          "empty_layer": true
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:07:55.021011351Z",
+          "created_by": "RUN /bin/sh -c set -eux; \tapt-get update; \tapt-get install -y --no-install-recommends \t\tca-certificates \t\tnetbase \t\ttzdata \t; \tapt-get dist-clean # buildkit"
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:07:55.021011351Z",
+          "created_by": "ENV GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+          "empty_layer": true
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:07:55.021011351Z",
+          "created_by": "ENV PYTHON_VERSION=3.12.13",
+          "empty_layer": true
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:07:55.021011351Z",
+          "created_by": "ENV PYTHON_SHA256=c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684",
+          "empty_layer": true
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:19:20.169202059Z",
+          "created_by": "RUN /bin/sh -c set -eux; \t\tsavedAptMark=\"$(apt-mark showmanual)\"; \tapt-get update; \tapt-get install -y --no-install-recommends \t\tdpkg-dev \t\tgcc \t\tgnupg \t\tlibbluetooth-dev \t\tlibbz2-dev \t\tlibc6-dev \t\tlibdb-dev \t\tlibffi-dev \t\tlibgdbm-dev \t\tliblzma-dev \t\tlibncursesw5-dev \t\tlibreadline-dev \t\tlibsqlite3-dev \t\tlibssl-dev \t\tmake \t\ttk-dev \t\tuuid-dev \t\twget \t\txz-utils \t\tzlib1g-dev \t; \t\twget -O python.tar.xz \"https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz\"; \techo \"$PYTHON_SHA256 *python.tar.xz\" | sha256sum -c -; \twget -O python.tar.xz.asc \"https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc\"; \tGNUPGHOME=\"$(mktemp -d)\"; export GNUPGHOME; \tgpg --batch --keyserver hkps://keys.openpgp.org --recv-keys \"$GPG_KEY\"; \tgpg --batch --verify python.tar.xz.asc python.tar.xz; \tgpgconf --kill all; \trm -rf \"$GNUPGHOME\" python.tar.xz.asc; \tmkdir -p /usr/src/python; \ttar --extract --directory /usr/src/python --strip-components=1 --file python.tar.xz; \trm python.tar.xz; \t\tcd /usr/src/python; \tgnuArch=\"$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)\"; \t./configure \t\t--build=\"$gnuArch\" \t\t--enable-loadable-sqlite-extensions \t\t--enable-optimizations \t\t--enable-option-checking=fatal \t\t--enable-shared \t\t$(test \"${gnuArch%%-*}\" != 'riscv64' \u0026\u0026 echo '--with-lto') \t\t--with-ensurepip \t; \tnproc=\"$(nproc)\"; \tEXTRA_CFLAGS=\"$(dpkg-buildflags --get CFLAGS)\"; \tLDFLAGS=\"$(dpkg-buildflags --get LDFLAGS)\"; \tLDFLAGS=\"${LDFLAGS:-} -Wl,--strip-all\"; \tarch=\"$(dpkg --print-architecture)\"; arch=\"${arch##*-}\"; \tcase \"$arch\" in \t\tamd64|arm64) \t\t\tEXTRA_CFLAGS=\"${EXTRA_CFLAGS:-} -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer\"; \t\t\t;; \t\ti386) \t\t\t;; \t\t*) \t\t\tEXTRA_CFLAGS=\"${EXTRA_CFLAGS:-} -fno-omit-frame-pointer\"; \t\t\t;; \tesac; \tmake -j \"$nproc\" \t\t\"EXTRA_CFLAGS=${EXTRA_CFLAGS:-}\" \t\t\"LDFLAGS=${LDFLAGS:-}\" \t; \trm python; \tmake -j \"$nproc\" \t\t\"EXTRA_CFLAGS=${EXTRA_CFLAGS:-}\" \t\t\"LDFLAGS=${LDFLAGS:-} -Wl,-rpath='\\$\\$ORIGIN/../lib'\" \t\tpython \t; \tmake install; \t\tcd /; \trm -rf /usr/src/python; \t\tfind /usr/local -depth \t\t\\( \t\t\t\\( -type d -a \\( -name test -o -name tests -o -name idle_test \\) \\) \t\t\t-o \\( -type f -a \\( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \\) \\) \t\t\\) -exec rm -rf '{}' + \t; \t\tldconfig; \t\tapt-mark auto '.*' \u003e /dev/null; \tapt-mark manual $savedAptMark; \tfind /usr/local -type f -executable -not \\( -name '*tkinter*' \\) -exec ldd '{}' ';' \t\t| awk '/=\u003e/ { so = $(NF-1); if (index(so, \"/usr/local/\") == 1) { next }; gsub(\"^/(usr/)?\", \"\", so); printf \"*%s\\n\", so }' \t\t| sort -u \t\t| xargs -rt dpkg-query --search \t\t| awk 'sub(\":$\", \"\", $1) { print $1 }' \t\t| sort -u \t\t| xargs -r apt-mark manual \t; \tapt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \tapt-get dist-clean; \t\texport PYTHONDONTWRITEBYTECODE=1; \tpython3 --version; \tpip3 --version # buildkit"
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:19:20.281993732Z",
+          "created_by": "RUN /bin/sh -c set -eux; \tfor src in idle3 pip3 pydoc3 python3 python3-config; do \t\tdst=\"$(echo \"$src\" | tr -d 3)\"; \t\t[ -s \"/usr/local/bin/$src\" ]; \t\t[ ! -e \"/usr/local/bin/$dst\" ]; \t\tln -svT \"$src\" \"/usr/local/bin/$dst\"; \tdone # buildkit"
+        },
+        {
+          "comment": "buildkit.dockerfile.v0",
+          "created": "2026-08-05T01:19:20.281993732Z",
+          "created_by": "CMD [\"python3\"]",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-09-11T10:52:47.308852087Z",
+          "created_by": "/bin/sh -c apt-get update \u0026\u0026 apt-get install -y --no-install-recommends libglib2.0-0 libgl1 libgomp1     \u0026\u0026 rm -rf /var/lib/apt/lists/*"
+        },
+        {
+          "created": "2026-09-11T10:52:56.473132049Z",
+          "created_by": "/bin/sh -c pip install --no-cache-dir uv==0.8.22"
+        },
+        {
+          "created": "2026-09-11T10:52:56.883337758Z",
+          "created_by": "/bin/sh -c #(nop) WORKDIR /experiment"
+        },
+        {
+          "created": "2026-09-11T10:52:57.083827925Z",
+          "created_by": "/bin/sh -c #(nop) COPY multi:a28bacff16eaa204ab4770689bd8c12831a526b2a62b4a86c3208dbc2ac6b230 in ./ "
+        },
+        {
+          "created": "2026-09-11T10:57:58.702905175Z",
+          "created_by": "/bin/sh -c #(nop) COPY file:aeb150d35e5ca4097068346821b91d4299904aafb59d79a08ec4a2a7272fa9b0 in k8s/linux-requirements.txt "
+        },
+        {
+          "created": "2026-09-11T10:59:26.199719133Z",
+          "created_by": "/bin/sh -c uv venv .venv --python /usr/local/bin/python3 \u0026\u0026 uv pip install --python .venv/bin/python --no-deps -r k8s/linux-requirements.txt"
+        },
+        {
+          "created": "2026-09-11T11:00:06.273926304Z",
+          "created_by": "/bin/sh -c uv pip install --python .venv/bin/python --no-deps --index-url https://download.pytorch.org/whl/cpu torch==2.14.0+cpu torchvision==0.29.0+cpu"
+        },
+        {
+          "created": "2026-09-11T11:00:10.122918458Z",
+          "created_by": "/bin/sh -c #(nop) COPY file:a8c820f5b2b83dd61e4e084f7d4cc4c5424ff90dbaf85b220be94453088611c0 in ./ "
+        },
+        {
+          "created": "2026-09-11T11:00:18.781351212Z",
+          "created_by": "/bin/sh -c uv pip install --python .venv/bin/python -r temporal-requirements.txt boto3==1.40.24"
+        },
+        {
+          "created": "2026-09-11T11:00:20.969649338Z",
+          "created_by": "/bin/sh -c #(nop) COPY multi:4fee32b26a6efa6754145f65c75e7289c9a7df1914d8ee798681b52bda51234c in ./ "
+        },
+        {
+          "created": "2026-09-11T11:00:22.646636006Z",
+          "created_by": "/bin/sh -c #(nop) COPY file:0c4ec9faa0ce0db7b4158b7c92e5b977e49ec1d8ad8eea3f7823999bcbc17f87 in evidence/native-method.json "
+        },
+        {
+          "created": "2026-09-11T11:00:24.360284132Z",
+          "created_by": "/bin/sh -c #(nop) COPY dir:dac1bdae2df0daf902809383bd39beecff5d2586519c5480e8b66d89d60adf76 in fixtures/ "
+        },
+        {
+          "created": "2026-09-11T11:00:33.437139136Z",
+          "created_by": "/bin/sh -c #(nop) COPY dir:f095221ab85349220bf2649b0d7aee792c06f911ac70df6b5e6c4af12173dad7 in PROTOTYPE-wipe-me/hf/ "
+        },
+        {
+          "created": "2026-09-11T11:08:48.22600742Z",
+          "created_by": "/bin/sh -c #(nop) COPY dir:cc4e83f991ae5f40a84e89fc1ca6586c93e657f36da722151d0cd80262383f94 in k8s/ "
+        },
+        {
+          "created": "2026-09-11T11:08:50.049076755Z",
+          "created_by": "/bin/sh -c #(nop)  ENV HF_HUB_OFFLINE=1 OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-09-11T11:08:51.835135922Z",
+          "created_by": "/bin/sh -c #(nop)  ENTRYPOINT [\"/experiment/.venv/bin/python\"]",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-09-11T11:08:53.601943881Z",
+          "created_by": "/bin/sh -c #(nop)  CMD [\"k8s/worker.py\"]",
+          "empty_layer": true
+        }
+      ],
+      "os": "linux",
+      "rootfs": {
+        "diff_ids": [
+          "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1",
+          "sha256:30bf6dd11127f697a0a8397835b6864f927345a311a8c60f36ee4b90dd815ae9",
+          "sha256:f28353dc58c1134df0f08aeb19debe221a69c915efff3053257f2b839cce0a20",
+          "sha256:f869b4fd07c513748c823e406165a6d9972ecc450023601a62439584935f078c",
+          "sha256:fb63ba3cdb22f98f38dff4a14e8d8e6a91c1e618377f7792920ef394cd5f6321",
+          "sha256:b57a818311bbc553ba59a9bc9c92472532481fc2994d51a5488759e78f35d56c",
+          "sha256:27d3fd3f846b75522015f2efa2f5a272fe75923def9a8309f69dd738c47f339b",
+          "sha256:0f7c6b24613acb7638f85081448f37f652243dc58a9f1a1d4384f456a61925d6",
+          "sha256:20434e371ec6112e4147c8b4a4b18aef8dd92d265414ade8002b85007cb30aff",
+          "sha256:04a2c639720c6c359a4e161539d401b2e0bf309f8c3378ac64ecd2f58635ea0d",
+          "sha256:9bc10671b4227dd569d55d6ff7cfa1cb5d18f41c8d08790134b1465d87873ef7",
+          "sha256:ac4a90dd238acd3a99d54b8a83a04f6f203400cf0ed92b8d9c5f4d6ffacaf447",
+          "sha256:c388599029611cf3b0e31e07fd8a2c03a2dbde662d12717e50c87c9551d0cc33",
+          "sha256:4ed58949ca99c02dca5b306febd46aa4e3c1e54a8f23fda1091743ae24406986",
+          "sha256:a5c30893dc67a4c10f73c0dd375ed18176b9e680ffa26d90c003be6eff1fa5b5",
+          "sha256:8e36b739216c96d0dcd35df6564477c8556582a5758fb72ede86db073e40a307",
+          "sha256:8fee129727002d808c79cc62f53b406f56b0302c71bf3b5fd9e549932dd6378c",
+          "sha256:915daf44430e1822e1d5ddc94978a30173a7373bd4d7e0dd8477ebbbd5725fc1"
+        ],
+        "type": "layers"
+      }
+    }
+  },
+  "status": {
+    "id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+    "pinned": false,
+    "repoDigests": [
+      "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0"
+    ],
+    "repoTags": [
+      "docker.io/library/pdf-checkpoint-prototype:linux-v2"
+    ],
+    "size": "1059927810",
+    "username": ""
+  }
+}

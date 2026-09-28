@@ -1,0 +1,79 @@
+{
+  "request": {
+    "version": 2,
+    "completion": "required_picture_ocr_v1",
+    "profile": "native-v1",
+    "request_id": "8d0f82ef52534ebaa7e57a24e6a087a5",
+    "source_revision": "t04-fault:component_failure",
+    "artifact": {
+      "key": "final/sources/fault-component_failure.pdf",
+      "version_id": "f0a31942-2283-4138-88dc-7ba307e4b307",
+      "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+      "name": "fault.pdf"
+    }
+  },
+  "workflow": "fault-523d1d80cea5443f937326a9b476258c",
+  "result": {
+    "canonical_accepted": false,
+    "error": {
+      "category": "parser",
+      "code": "injected_ocr_failure"
+    },
+    "observed_at": "2026-09-13T03:09:06.065864+00:00",
+    "pages": 1,
+    "parsed_result": "pdf-parsed-v1:749bb158eaa63c81fea61613cf90ca839832168c57e0bd974b219996aa3eb152",
+    "plan": "pdf-plan-v1:6545e78998791cae859cf9f1468d4d9c25e6009c72b4e569b8adaeb2e8e302d5",
+    "processing_complete": false,
+    "registered_components": 1,
+    "registered_pages": 1,
+    "selected_components": 2,
+    "selection": "pdf-selection-v1:29bdca93e5bb11ba98690b597d268a8bce0bd75232517e6396c88f0b19068382",
+    "status": "failed",
+    "steps": [
+      {
+        "observed_at": "2026-09-13T03:08:55.714347+00:00",
+        "operation": "b543588c8a3f41163c0ab5be026ce5a2b4da781b9d12570bf867c36476a3e375",
+        "reused": false,
+        "seconds": 8.88185025400162,
+        "stage": "group",
+        "storage": {
+          "get_bytes": 168855,
+          "get_seconds": 0.016860791023646016,
+          "put_bytes": 62823,
+          "put_seconds": 0.019348498986801133
+        }
+      },
+      {
+        "observed_at": "2026-09-13T03:08:59.236033+00:00",
+        "operation": "749bb158eaa63c81fea61613cf90ca839832168c57e0bd974b219996aa3eb152",
+        "parsed_result": "pdf-parsed-v1:749bb158eaa63c81fea61613cf90ca839832168c57e0bd974b219996aa3eb152",
+        "reused": false,
+        "seconds": 3.5066447940043872,
+        "stage": "assembly",
+        "storage": {
+          "get_bytes": 530371,
+          "get_seconds": 0.034949998022057116,
+          "put_bytes": 91764,
+          "put_seconds": 0.018716917002166156
+        }
+      },
+      {
+        "component": "#/pictures/0",
+        "observed_at": "2026-09-13T03:09:00.013245+00:00",
+        "operation": "pdf-component-v1:6d8a3ce6368613ca720071b7e534c18a9a73981eb316b1f7f9ae76dc916f5361",
+        "outcome": "text_detected",
+        "reused": false,
+        "stage": "component_ocr"
+      }
+    ],
+    "version": 1
+  },
+  "attempts": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    3
+  ]
+}

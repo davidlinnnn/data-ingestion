@@ -1,0 +1,38 @@
+Completing activity as failed ({'activity_id': '1', 'activity_type': 'pdf_processing_step_v1', 'attempt': 1, 'namespace': 'default', 'task_queue': 'second-read-488413cbe1f94747848daa7d9bc22713', 'workflow_id': 'second-read-488413cbe1f94747848daa7d9bc22713', 'workflow_run_id': '01a09959-afeb-7826-9a33-1db1c1bddef2', 'workflow_type': 'SecondRead'})
+Traceback (most recent call last):
+  File "/app/pdf_processing/processing.py", line 208, in run
+    return await Enrichment(self).run(value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/pdf_processing/enrichment.py", line 43, in run
+    parsed = await asyncio.to_thread(self.read, parsed_id, 'parsed-result.json')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/pdf_processing/enrichment.py", line 33, in read
+    data = self.store.read_artifact(entries[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/pdf_processing/object_store.py", line 112, in read_artifact
+    raise StoreFailure('integrity', 'committed_payload_missing')
+pdf_processing.object_store.StoreFailure: committed_payload_missing
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 318, in _handle_start_activity_task
+    result = await self._execute_activity(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 669, in _execute_activity
+    return await impl.execute_activity(input)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/experiment/.venv/lib/python3.12/site-packages/temporalio/worker/_activity.py", line 864, in execute_activity
+    return await input.fn(*input.args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/pdf_processing/processing.py", line 213, in run
+    reject(error.code, error.category)
+  File "/app/pdf_processing/processing.py", line 30, in reject
+    raise ApplicationError(code, {'category': category, 'code': code},
+temporalio.exceptions.ApplicationError: integrity: committed_payload_missing

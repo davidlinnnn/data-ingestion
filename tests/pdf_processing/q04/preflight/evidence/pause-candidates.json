@@ -1,0 +1,667 @@
+{
+  "authorized": false,
+  "proposed_target_replicas": 0,
+  "captured_at": "2026-09-16T13:56:48.730805+00:00",
+  "deployments": [
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "activities",
+      "uid": "e85f2d98-3967-4f3a-b8ac-3cad6b67efbf",
+      "resourceVersion": "656536",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-7b877576cc-h2jh2",
+        "coordinator",
+        "workflows-5f89b5458c-vf4k2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "objects",
+      "uid": "68da72a3-d241-4815-b011-8a2847eb6cb8",
+      "resourceVersion": "656262",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-7b877576cc-h2jh2",
+        "coordinator",
+        "workflows-5f89b5458c-vf4k2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "temporal",
+      "uid": "3625e9ec-f914-4158-b8ea-62808ad454e9",
+      "resourceVersion": "656265",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-7b877576cc-h2jh2",
+        "coordinator",
+        "workflows-5f89b5458c-vf4k2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "workflows",
+      "uid": "76080d5e-7d36-420c-a137-ea876d96ccc4",
+      "resourceVersion": "656537",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-7b877576cc-h2jh2",
+        "coordinator",
+        "workflows-5f89b5458c-vf4k2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "activities",
+      "uid": "a8cc35cb-e573-437a-8d9a-22313fab9e35",
+      "resourceVersion": "656531",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-85cd689c7f-wlj6q",
+        "coordinator",
+        "workflows-7666c546c7-7hfxm"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "objects",
+      "uid": "4ecb44ce-68cd-441d-a57b-7d0011db20ff",
+      "resourceVersion": "656253",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-85cd689c7f-wlj6q",
+        "coordinator",
+        "workflows-7666c546c7-7hfxm"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "temporal",
+      "uid": "a3f5b91f-2cf2-4e26-a687-e0c4f5295e0d",
+      "resourceVersion": "656225",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-85cd689c7f-wlj6q",
+        "coordinator",
+        "workflows-7666c546c7-7hfxm"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "workflows",
+      "uid": "33375e63-f88f-48e2-bdf9-89e6ad8007d2",
+      "resourceVersion": "656533",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-85cd689c7f-wlj6q",
+        "coordinator",
+        "workflows-7666c546c7-7hfxm"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "activities",
+      "uid": "f07fb1ed-db49-4726-b583-a47b92fb9058",
+      "resourceVersion": "656521",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-6f9ddc75f5-f2q25",
+        "coordinator",
+        "workflows-86cbcb645-dxv46"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "objects",
+      "uid": "1dcd9af2-5ba3-4dd3-8a32-791bfe924a1e",
+      "resourceVersion": "656287",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-6f9ddc75f5-f2q25",
+        "coordinator",
+        "workflows-86cbcb645-dxv46"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "temporal",
+      "uid": "addb5865-279a-430d-97b2-4ba4f70aabaf",
+      "resourceVersion": "656289",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-6f9ddc75f5-f2q25",
+        "coordinator",
+        "workflows-86cbcb645-dxv46"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "workflows",
+      "uid": "d776ad65-853b-475d-85b0-59abe6ccc925",
+      "resourceVersion": "656519",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-6f9ddc75f5-f2q25",
+        "coordinator",
+        "workflows-86cbcb645-dxv46"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "activities",
+      "uid": "ace4dbdf-36cd-44b6-9767-928be3ebc758",
+      "resourceVersion": "656528",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-57f967cf66-lgrgv",
+        "coordinator",
+        "workflows-9fcf45545-xdsv2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "objects",
+      "uid": "f066a15b-ca17-40db-a212-786373f9cda5",
+      "resourceVersion": "656288",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-57f967cf66-lgrgv",
+        "coordinator",
+        "workflows-9fcf45545-xdsv2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "temporal",
+      "uid": "2079d4c4-7cb2-48d6-b539-0f29077d8c86",
+      "resourceVersion": "656307",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-57f967cf66-lgrgv",
+        "coordinator",
+        "workflows-9fcf45545-xdsv2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "workflows",
+      "uid": "e37e8d2c-b151-4b46-805d-cbd67f61b0e3",
+      "resourceVersion": "656541",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-57f967cf66-lgrgv",
+        "coordinator",
+        "workflows-9fcf45545-xdsv2"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "activities",
+      "uid": "4ca318d9-093c-4ada-9184-eec75c5094d4",
+      "resourceVersion": "656544",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-646f94d7d9-glwzw",
+        "coordinator",
+        "workflows-7478c7745f-lm6h5"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "objects",
+      "uid": "c8f1a916-0b66-4e13-b5fa-15493a3e1a65",
+      "resourceVersion": "656312",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-646f94d7d9-glwzw",
+        "coordinator",
+        "workflows-7478c7745f-lm6h5"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "temporal",
+      "uid": "b3526e9c-3faa-41b4-a098-dcae0f5e634b",
+      "resourceVersion": "656309",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-646f94d7d9-glwzw",
+        "coordinator",
+        "workflows-7478c7745f-lm6h5"
+      ],
+      "matching_inference_processes": 0
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "workflows",
+      "uid": "d28986b9-3697-4800-adcf-f5915ead4417",
+      "resourceVersion": "656546",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ],
+      "running_workflows": 0,
+      "temporal_query": "complete",
+      "temporal_health": true,
+      "objects_ready": 200,
+      "process_checks": [
+        "activities-646f94d7d9-glwzw",
+        "coordinator",
+        "workflows-7478c7745f-lm6h5"
+      ],
+      "matching_inference_processes": 0
+    }
+  ]
+}

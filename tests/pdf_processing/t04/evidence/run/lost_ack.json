@@ -1,0 +1,86 @@
+{
+  "request": {
+    "version": 2,
+    "completion": "required_picture_ocr_v1",
+    "profile": "native-v1",
+    "request_id": "db3ac8130c474263bc9ae072429c52ec",
+    "source_revision": "t04-fault:lost_ack",
+    "artifact": {
+      "key": "final/sources/fault-lost_ack.pdf",
+      "version_id": "d5fbbe97-67af-4086-a15e-4d25c27c055f",
+      "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+      "name": "fault.pdf"
+    }
+  },
+  "workflow": "fault-22665e23cd93468fbd21fac96bcb8f5d",
+  "result": {
+    "canonical_accepted": false,
+    "error": null,
+    "observed_at": "2026-09-13T03:07:51.743702+00:00",
+    "pages": 1,
+    "parsed_result": "pdf-parsed-v1:e2f3ddb3c59b64e9f6ca221693da8491c376a65c002c089ef4b3a583a064a3eb",
+    "plan": "pdf-plan-v1:2043205b495eb19eabb75aed9bbe3e1cdd9d7b4c1d8e38ff73ed099c9163803b",
+    "processing_complete": true,
+    "processing_result": "pdf-complete-v1:9f66707d191b53087eb185fac2e298c4a7d773e944dd82078f431b673cbf80c1",
+    "registered_components": 2,
+    "registered_pages": 1,
+    "selected_components": 2,
+    "selection": "pdf-selection-v1:d4fc6124d17ef0b1b6653c1f0fce54a418c04f6f412bcfe9db13607f36aec329",
+    "status": "complete",
+    "steps": [
+      {
+        "observed_at": "2026-09-13T03:07:40.756057+00:00",
+        "operation": "5566f777fcc9260ed360c948722ee70812f2acdb14275189032687979dde312e",
+        "reused": false,
+        "seconds": 8.397737170002074,
+        "stage": "group",
+        "storage": {
+          "get_bytes": 168781,
+          "get_seconds": 0.015828457988391165,
+          "put_bytes": 62804,
+          "put_seconds": 0.017694998983643018
+        }
+      },
+      {
+        "observed_at": "2026-09-13T03:07:46.201844+00:00",
+        "operation": "e2f3ddb3c59b64e9f6ca221693da8491c376a65c002c089ef4b3a583a064a3eb",
+        "parsed_result": "pdf-parsed-v1:e2f3ddb3c59b64e9f6ca221693da8491c376a65c002c089ef4b3a583a064a3eb",
+        "reused": true,
+        "seconds": 0.03244325099512935,
+        "stage": "assembly",
+        "storage": {
+          "get_bytes": 317354,
+          "get_seconds": 0.02568662699923152,
+          "put_bytes": 1313,
+          "put_seconds": 0.003620041003159713
+        }
+      },
+      {
+        "component": "#/pictures/0",
+        "observed_at": "2026-09-13T03:07:49.047150+00:00",
+        "operation": "pdf-component-v1:48a3c246f5c3ef472bef8dd09b360474d16f282dda46d5b81197abbde476427d",
+        "outcome": "text_detected",
+        "reused": true,
+        "stage": "component_ocr"
+      },
+      {
+        "component": "#/pictures/1",
+        "observed_at": "2026-09-13T03:07:49.620604+00:00",
+        "operation": "pdf-component-v1:c0218c20eef9ab67dd54e6c598c734e5dfbab5569392c2da2d491cedd2449f8d",
+        "outcome": "text_detected",
+        "reused": false,
+        "stage": "component_ocr"
+      }
+    ],
+    "version": 1
+  },
+  "attempts": [
+    1,
+    1,
+    2,
+    1,
+    2,
+    1,
+    2
+  ]
+}

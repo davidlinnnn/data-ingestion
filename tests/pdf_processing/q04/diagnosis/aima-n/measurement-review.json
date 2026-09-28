@@ -1,0 +1,100 @@
+{
+  "status": "OFFLINE_DIAGNOSIS_NOT_ACCEPTANCE",
+  "raw_source": "/private/tmp/q04-aima-pod-cgroup-20260920-n/failure-evidence/state/aima-pod-cgroup-n-measurement/resource-attribution.jsonl",
+  "qualification_unchanged": false,
+  "unknown_pss_preserved": true,
+  "existing_classifier_results": [
+    {
+      "status": "classified_confirmed_exit",
+      "index": 395,
+      "pid": 628,
+      "start_ticks": 14247156,
+      "prior_command_class": "fresh_owned_child",
+      "pss_bytes": null,
+      "process_attribution_complete": false,
+      "cgroup_readings_complete": true
+    },
+    {
+      "status": "classified_confirmed_exit",
+      "index": 414,
+      "pid": 113,
+      "start_ticks": 14236924,
+      "prior_command_class": "worker",
+      "pss_bytes": null,
+      "process_attribution_complete": false,
+      "cgroup_readings_complete": true
+    }
+  ],
+  "peak_index": 290,
+  "lifecycle_events": [
+    {
+      "sample": 241,
+      "time": 1789867790.1961696,
+      "event": {
+        "command_class": "warm_parser",
+        "event": "birth_observed",
+        "pid": 132,
+        "start_ticks": 14243073
+      }
+    },
+    {
+      "sample": 308,
+      "time": 1789867807.529689,
+      "event": {
+        "command_class": "fresh_parse_child",
+        "event": "birth_observed",
+        "pid": 187,
+        "start_ticks": 14244810
+      }
+    },
+    {
+      "sample": 308,
+      "time": 1789867807.529689,
+      "event": {
+        "command_class": "warm_parser",
+        "event": "exit_observed",
+        "pid": 132,
+        "start_ticks": 14243073
+      }
+    },
+    {
+      "sample": 339,
+      "time": 1789867815.5456827,
+      "event": {
+        "command_class": "fresh_parse_child",
+        "event": "exit_observed",
+        "pid": 187,
+        "start_ticks": 14244810
+      }
+    }
+  ],
+  "marker_observations": [
+    {
+      "sample": 308,
+      "label": "warm_handoff_observed",
+      "meaning": "worker_supervision_sample_after_warm_reap",
+      "observed_at": 1789867807.529689,
+      "source": "external_runtime_files"
+    },
+    {
+      "sample": 309,
+      "label": "workflow_progress_assembling_observed",
+      "meaning": "workflow_query_state_not_activity_start",
+      "observed_at": 1789867807.7857661,
+      "source": "external_runtime_files"
+    },
+    {
+      "sample": 413,
+      "label": "cancel_requested",
+      "meaning": "owned_workflow_cancel_callback_invoked",
+      "observed_at": 1789867836.4501033,
+      "source": "controller_callback"
+    }
+  ],
+  "limits": [
+    "Sampling observes warm exit and fresh birth in the same interval; their sub-sample order is not proven by this stream alone.",
+    "Workflow query time is not the actual Activity start time.",
+    "PSS at both failed reads remains unknown.",
+    "N original qualification remains failed; no rule enabled retroactively."
+  ]
+}

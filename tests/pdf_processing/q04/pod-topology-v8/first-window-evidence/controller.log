@@ -1,0 +1,39 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/local/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/q04-evidence/q04-yolo-pod-cgroup-20260920-i/ownership.json'
+command terminated with exit code 1
+Traceback (most recent call last):
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_i.py", line 1996, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_i.py", line 1991, in main
+    execute_window(args)
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_i.py", line 1758, in execute_window
+    transport_future.result(timeout=remaining_timeout(
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_i.py", line 1606, in execute_window
+    transport_future.result()
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/pod_remote_evidence_i.py", line 390, in pull_once
+    return mirror.ingest(json.loads(raw), received_at=now())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/pod_remote_evidence_i.py", line 260, in ingest
+    raise ValueError("remote evidence disappeared: " + ", ".join(disappeared))
+ValueError: remote evidence disappeared: state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/07.pdf, state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/pdf-qnnw2l8u/process.log, state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/pdf-qnnw2l8u/result/checkpoints/page-0001.json, state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/pdf-qnnw2l8u/result/checkpoints/page-0001.png, state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/pdf-qnnw2l8u/result/compatibility.json, state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/pdf-qnnw2l8u/result/events.jsonl, state/yolo-pod-cgroup-i/worker-1/scratch/07/activity-pk1usiz1/pdf-qnnw2l8u/result/method.json

@@ -1,0 +1,67 @@
+{
+  "scope": "Local harness verification only; no new Temporal/K8s runtime acceptance",
+  "base_commit": "a82d1c8",
+  "production_changed": false,
+  "producer": {
+    "relationship_method.py": "e37bf681fb7b4dedfdd7de05cf64d541120bf2b56a22032284c7eac63b34cf80",
+    "enrichment.py": "f95d0ac8ca62a76bca8f03c1ee0fcea05f55957eea7cbc289dfd49271f1cca4b",
+    "compatibility.py": "95f7024e97d687dfb9c657d84aa6b17cd6f0772fcb7665716baec3e9a1e0ce43",
+    "temporal.py": "5a3c5b2f5514ca7d793b6d69d0ed00c52b778dbe54e5af5f5b9a17c0d50beb12",
+    "execution.py": "f6a6be4fdda73e87308eb14335cbd9455473f4edeeac0034dc76c03c5f40326d",
+    "processing_workflow.py": "11b35c2d17e889447b1921d4bdece45ffe841b479d5d1c54f647b275ecb782c0",
+    "rollout_workflow.py": "9e5af1af0659186f279d45e92c96ee46e84f7fd737394a1ed33edbb3ef07f8b6",
+    "__init__.py": "0618cd3d1c2dcb31f3d55be51482527ae8b04da932147c6d3a247a2921352712",
+    "continuation.py": "791e2ebef036d6f2468fb607162a135eecb3c4eaa056d4e35b1a81bffde49772",
+    "ocr.py": "1f8e665bb0d034bce21dbbf9526866533579c9f7c7009e50a2d31a58dfdb831e",
+    "supervision.py": "4b3978d0c4710dda90335af866b6f73a6ab889bd714258f5c6cf5e22bfd3d135",
+    "routing.py": "eeb6b8e6265e003b737c300a3a5f37461c6e0e24923282cda4a3319629ddd282",
+    "warm_child.py": "75c325385496c43d417c73597ace32183dbbdbf97fac41c9608810b2a9f38657",
+    "routed_activity.py": "bd69b51a52c2a48225149697091e34d6214225b794f8b82765737fc863b45944",
+    "processing.py": "f5bbf92b97c2b7a70dde895e4467f144d0fbfeeb5f5c68be8bd2f8d3fe5e6a25",
+    "parse.py": "57854c5a8cfa83cdb521ea9355b0b8b499e69e9e51b8c1729b6f60a2cb55270c",
+    "evidence.py": "d9156c232112f5511880468d6767c1e34da8e105b3cc9eed6c9ce2233a26f2bc",
+    "relationships.py": "3d0db0a0aea2687e791380e365269fefb9ae4f0e60e9a53fec0c879a74378fc9",
+    "preflight.py": "13f08bb6d335d9cc3f67ce7c762411eda69f8371136f2ffdf7a552cfcc7a1122",
+    "object_store.py": "22d6d25d9e037d622aa7c681451d37543276287076f4bdef2f5fdcc50a2ce907"
+  },
+  "suite_tests": 93,
+  "private_bundle": "/private/tmp/q04-inputs-local-v3",
+  "private_bundle_sha256": "9a54e4bfbe811bf551dcee3ebc5a1b3ccfdcc0243cdbafca3f32c56c7f571fc2",
+  "reference_graphs": {
+    "native": "616f9e2a73f530de42e16f9b451356c7549d46f68563e5c9513a046c47bc6135",
+    "06": "a936ed723ca31098e6104560759e2bc130c66d94d4dd3cb6b8471f0c9bc1d263",
+    "07": "a3ac9eb345949cdc83423ba1ae38c794400e8f4f89061056c1102517b6a1e6a1",
+    "09": "aaa62538d423472fd4999675fdcd39501eaa11bce89d630843c8609177533c6c",
+    "10": "893af666a8dac763bd79ed217b3f2defe474af4b9bafed1acecafdf3de8b4c57",
+    "08": "7fb90a662e77789c0827a02e17d364718ea76f79e96718ff750a2883e227e92c"
+  },
+  "source_oracles": {
+    "06-table-full-audit.json": "fac43ce0e40930f8416f70c255d87ea215ab0e436b32dd5af26d1ef231827843",
+    "07-table-full-audit.json": "310f8693ce20c484422a6080cbcbd2bd6431d0209e558376d61d76b0d44b003d",
+    "new-source-oracle.json": "dad86fc1dcfa728ad4e4d1b50c1ca3996974b888847edc9e1d8b3a352aa84a9c",
+    "quality-oracle.json": "f9494c36cc7d628a73658f14b0a6637e20540641b8815c7313f9cbc6120d0bb2",
+    "aima-code.json": "ae3176eb987341243a90dc0fb4a476be3286f2f63c56196c8706f8067788ae7c",
+    "continuation-oracle.json": "63e3a8a7a83709430eb59e6e42c7334f1abd88528e21a93e197b5c45c7186e71"
+  },
+  "harness": {
+    "tests/pdf_processing/q04/worker.py": "bd7105271dcb8e548671c4220447d619924e234d6596ecdfcab7e9ddfb911b68",
+    "tests/pdf_processing/q04/audit.py": "d02e43e8b2e0e0340334e465601528c612da6a9bcf949a8707d6a7dc1945e061",
+    "tests/pdf_processing/q04/host.py": "3a13a865d3f7307a1f98f21a2fc197428d5f42fc9736284067a92d44c9e86e35",
+    "tests/pdf_processing/q04/telemetry.py": "47d7f8c0be128a3a7a805a8c699d96313a7ecd97f046d93b701409595c26337c",
+    "tests/pdf_processing/q04/test_adapter.py": "b705aabe00ae6e7aa059205c6950e6ca9d1a3800e97eaf387d763b80e7018753",
+    "tests/pdf_processing/q04/consumer.py": "1c7ddf8fc291e1b21d8478b2219e65d7dc93325b689da14ce323a7267f523d0c",
+    "tests/pdf_processing/q04/contracts.py": "b1b90523528a71a20a97c05e6bccfb3054a41caaaa0c16086d9bfe5547e5a3ba",
+    "tests/pdf_processing/q04/run_suite.py": "1ebe946642edbba534499f4472ee23c30d258b74080d9fe014d662576f4a15c6",
+    "tests/pdf_processing/q04/test_consumer.py": "04088bf4a90fd29ba3562aee1fe78763d37919b342cb53b13c646464eef8cc93",
+    "tests/pdf_processing/q04/q04_runtime.py": "7aa6bcf8b04b8bcfe0abad373f793bbf85fbda74763d743f9cf1d6cf7cdb43e6",
+    "tests/pdf_processing/q04/prepare.py": "0096c09043b20713c4c0c5bd5ab987de516f2e76421c7bb89d909f5596e26d80",
+    "tests/pdf_processing/q04/test_controller.py": "99907def51684f40a0e3c5832d092f4866b4f28fe6e0ba83912e4eb683831ef9"
+  },
+  "retained_content_evidence": {
+    "10.json": "ae4fb3c13be138a4d40c939104b7f43de6eadd9a4726f1ff5226da9944fa9ace",
+    "06.json": "045c133471e053f4d0c98d7ab79ecc27daa4c851b8118f71b77d44bec64beb06",
+    "07.json": "e434fcbd3def6f1911ccc11cba599290a194f512f1d6dd46e60697a33dc86b2d",
+    "native.json": "76cee5fa023abb3f0b137589f2632ba98923faf71675053f5865c2e8e825750d",
+    "09.json": "32bf568a25a4f9c7d85d3673edeb6e715b76b6a7bba41552aa224d2945f15afe"
+  }
+}

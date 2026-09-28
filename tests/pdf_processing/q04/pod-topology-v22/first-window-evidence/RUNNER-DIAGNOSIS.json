@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-w",
+  "workload_exit": {
+    "returncode": 1,
+    "timed_out": false,
+    "forced": false,
+    "failure": "ValueError: process attribution incomplete"
+  },
+  "workload": {
+    "five_workflows_completed": true,
+    "group_requests": 29,
+    "parser_pids": [
+      131,
+      1836
+    ],
+    "request_recycles": 1
+  },
+  "resource": {
+    "outer_min_available_bytes": 5319372800,
+    "outer_max_cgroup_bytes": 2501464064,
+    "inner_max_cgroup_bytes": 2481524736,
+    "max_node_full_psi_avg10": 0.0,
+    "max_cgroup_full_psi_avg10": 0.0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0,
+    "sample_count": 1425,
+    "maximum_gap_seconds": 0.7204645839810837
+  },
+  "process_attribution": {
+    "status": "incomplete",
+    "hard_incomplete_sample_indexes": [
+      711,
+      745,
+      1065,
+      1111
+    ],
+    "classified_exit_indexes": [
+      1111
+    ],
+    "unclassified_indexes": [
+      711,
+      745,
+      1065
+    ],
+    "unclassified_causes": {
+      "711": "child birth during sample",
+      "745": "child exit during sample plus process read disappearance",
+      "1065": "child birth during sample"
+    }
+  },
+  "causal_chain": [
+    "29-group sequence and five Temporal workflows completed",
+    "collector stopped after owned cleanup",
+    "qualification rejected three unclassified process-set transitions",
+    "candidate raised ValueError",
+    "Pod supervisor recorded returncode 1",
+    "outer controller stopped without retry and cleaned owned runtime"
+  ],
+  "excluded_causes": [
+    "node PSI",
+    "Pod cgroup PSI",
+    "VM OOM",
+    "cgroup OOM",
+    "workload deadline",
+    "supervisor interruption",
+    "ingestion activity failure"
+  ],
+  "unknowns": [
+    "Whether X will observe another unhandled transition shape cannot be known before its one controlled run"
+  ],
+  "root_cause": "The sampler retried only direct proc-identity disappearance, not process-set changes observed between its before/after scans; safe child births remained incomplete and a bounded child exit was not classifiable."
+}

@@ -1,0 +1,5 @@
+# AV process-drain diagnostic stop
+
+The single AV run (`q04-process-drain-pod-cgroup-20260925-av`) passed pre-inference and reached five registered native pages with the next group active. It stopped before draining the worker: the new `host_av.Host.drain()` required `self.pod` to be populated, but Pod-local `pod_workload_p.adopt_budget()` intentionally sets `config['pod_namespace']=None`. `self.pod=None` selects the existing owned local-process branch of `Host.drain()`; it does not mean the acceptance Deployment or Pod was absent. AV therefore proves no process-drain or recovery row.
+
+The failure was retained as `owned Pod and active collector required for process drain`. Owned workflow cancellation, worker stop, parser/scratch absence, controller export, UID-fenced Pod/Deployment/ConfigMap deletion and host-observer stop completed. The AV evidence PVC remains Bound at UID `9bc36129-06bc-4fd1-924c-31e4094a5ac5`; raw evidence is under `/private/tmp/q04-process-drain-pod-cgroup-20260925-av/`. No automatic retry occurred. AW removes the redundant adapter and uses a new identity with the existing process-drain branch; all previous evidence is retained.

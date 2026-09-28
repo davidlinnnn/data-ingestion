@@ -1,0 +1,5 @@
+# Q04 BD: complete terminal inventory drain
+
+BC proved the inner worker-process drain/recovery phase, but its controller attempted final qualification after mirroring only 12.6 of 22.5 MB of the immutable document. The Pod-local terminal manifest and all source hashes were complete; the controller had drained only files in the smaller `FINAL_REQUIRED` set. BD retains a fresh run identity and changes the final transport loop to continue until **every path listed in the terminal manifest** is fully mirrored. The existing finalizer still checks exact bytes, hashes, path set, capacity, terminal status and ownership. A local regression check reproduces the incomplete large-member condition and verifies that the loop cannot finish early.
+
+The AH bundle/producer, BC-specific worker readiness and ownership fix, reviewed current-v3 oracle, zero node PSI and all other resource guards, deadlines, process-drain injection, 768 MiB MinIO trial, exact read-only object Pod/cgroup observer, cleanup and no-retry policy remain unchanged. BD is one controlled execution. Even a clean process-recovery result does not prove Pod drain/recovery or close #51.

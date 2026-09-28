@@ -1,0 +1,55 @@
+........E...F
+======================================================================
+ERROR: test_formatted_json_delivery (test_publication.Publication.test_formatted_json_delivery)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/q01-q02-integration/src/pdf_processing/enrichment.py", line 214, in relationship_evidence
+    raise ValueError('relationship_evidence_attribution_mismatch')
+ValueError: relationship_evidence_attribution_mismatch
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/private/tmp/q01-q02-integration/tests/pdf_processing/q02/test_publication.py", line 110, in test_formatted_json_delivery
+    async def test_formatted_json_delivery(self): await self.attempt('formatted_json')
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q01-q02-integration/tests/pdf_processing/q02/test_publication.py", line 97, in attempt
+    result = await Enrichment(processing).run(value)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q01-q02-integration/src/pdf_processing/enrichment.py", line 153, in run
+    final['relationships'] = await self.relationship_evidence(plan, selection, document, final['content_evidence'])
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q01-q02-integration/src/pdf_processing/enrichment.py", line 227, in relationship_evidence
+    reject(str(error), 'integrity')
+  File "/private/tmp/q01-q02-integration/src/pdf_processing/processing.py", line 31, in reject
+    raise ApplicationError(code, {'category': category, 'code': code},
+temporalio.exceptions.ApplicationError: integrity: relationship_evidence_attribution_mismatch
+
+======================================================================
+FAIL: test_wrong_document_digest_rejected (test_publication.Publication.test_wrong_document_digest_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/private/tmp/q01-q02-integration/tests/pdf_processing/q02/test_publication.py", line 111, in test_wrong_document_digest_rejected
+    async def test_wrong_document_digest_rejected(self): await self.attempt('wrong_document_digest')
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q01-q02-integration/tests/pdf_processing/q02/test_publication.py", line 105, in attempt
+    with self.assertRaises(ApplicationError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ApplicationError not raised
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.150s
+
+FAILED (failures=1, errors=1)

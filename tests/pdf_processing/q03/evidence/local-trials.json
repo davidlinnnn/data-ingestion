@@ -1,0 +1,64 @@
+{
+  "scope": "Local-only preparation; no Temporal, K8s, shared-storage writes or service pauses",
+  "retained_non_successes": [
+    {
+      "phase": "initial real evidence rendering",
+      "result": "failed on historical cref serialization",
+      "evidence": "02-harness-serialization-error.log",
+      "resolution": "Serialize a new test copy using Docling save_as_json; retain historical bytes"
+    },
+    {
+      "phase": "full suite bootstrap in sandbox",
+      "result": "psutil sysctl PermissionError; suite suspended before tests",
+      "evidence": "full-suite-sandbox-interrupted.log",
+      "resolution": "Verified pid 69528 command and cwd, resumed/terminated own process; reran with local process-query permission"
+    },
+    {
+      "phase": "full suite initial discovery",
+      "result": "50 tests, 3 import errors from t04/fixtures shadowing q02/fixtures",
+      "evidence": "full-suite-import-error.log",
+      "resolution": "Prepend each suite directory immediately before discovery"
+    },
+    {
+      "phase": "initial type checks",
+      "result": "test exception fields then runtime protobuf literals/import path",
+      "evidence": [
+        "typecheck-initial.log",
+        "typecheck-runtime-initial.log"
+      ],
+      "resolution": "Typed failure wrapper, explicit protobuf fields, correct test paths"
+    }
+  ],
+  "tdd": [
+    {
+      "slice": "four required structures with explicit representation",
+      "red": "01-red.log",
+      "green": "01-green.log"
+    },
+    {
+      "slice": "release gate prevents complete registration",
+      "red": "02-red.log",
+      "green": "02-green.log"
+    },
+    {
+      "slice": "hash-consistent unreadable source image",
+      "red": "03-red.log",
+      "green": "03-green.log"
+    },
+    {
+      "slice": "unsupported representation difference rejected",
+      "red": "04-red.log",
+      "green": "04-green.log"
+    },
+    {
+      "slice": "boolean/float symbol and comparison ranges rejected",
+      "red": "05-red.log",
+      "green": "05-green.log"
+    },
+    {
+      "slice": "PNG chunk checksums without decodable pixels rejected",
+      "red": "06-red.log",
+      "green": "06-green.log"
+    }
+  ]
+}

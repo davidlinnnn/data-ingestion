@@ -1,0 +1,358 @@
+{
+  "acceptance": false,
+  "acceptance_claimed": false,
+  "attribution": {
+    "baseline": {
+      "all_process_pss_bytes": 85202944,
+      "diagnostic_unattributed_bytes": 2432800768,
+      "memory_current_bytes": 2518003712,
+      "memory_stat": {
+        "anon": 73166848,
+        "file": 2371465216,
+        "file_mapped": 970752,
+        "inactive_file": 2360029184,
+        "kernel": 72290304,
+        "shmem": 0,
+        "slab": 71152048
+      },
+      "owned_pss_bytes": 78239744,
+      "time": 1789773208.4820628
+    },
+    "baseline_to_peak_delta": {
+      "all_process_pss_bytes": 2370610176,
+      "diagnostic_unattributed_bytes": -307213312,
+      "memory_current_bytes": 2063396864,
+      "memory_stat_bytes": {
+        "anon": 2021302272,
+        "file": 23502848,
+        "file_mapped": 340201472,
+        "inactive_file": 23494656,
+        "kernel": 10600448,
+        "shmem": 4096,
+        "slab": 2712368
+      },
+      "owned_pss_bytes": 2371066880
+    },
+    "class_pss_maxima_not_additive": {
+      "controller": 100069376,
+      "fresh_owned_child": 7130112,
+      "fresh_parse_child": 661430272,
+      "owned_descendant": 6189056,
+      "warm_parser": 1945032704,
+      "worker": 85368832
+    },
+    "collector_errors": [],
+    "collector_output_bytes": 1681093,
+    "collector_total_sample_wall_seconds": 2.1981199590081815,
+    "collector_total_thread_cpu_seconds": 2.195092611999998,
+    "complete": false,
+    "decision_boundary": "missing controller cancel_requested marker keeps the measurement incomplete; Temporal history and cancel-outcome are retained but are not substituted post hoc",
+    "first_observed_markers": {
+      "baseline_before_worker": 1789773208.474672,
+      "before_worker_start": 1789773208.4823127,
+      "cancel_outcome_file_observed": 1789773301.3234951,
+      "fresh_parse_process_birth_observed": 1789773297.7082927,
+      "merged_directory_observed": 1789773297.4483922,
+      "owned_cleanup_finished": 1789773305.833377,
+      "per_case_admission_passed": 1789773269.8408015,
+      "post_cleanup_sample": 1789773305.8354313,
+      "worker_ready": 1789773209.507947,
+      "workflow_intent_file_observed": 1789773269.9331858,
+      "workflow_progress_assembling_observed": 1789773297.7082927,
+      "workflow_record_file_observed": 1789773269.9331858
+    },
+    "hard_incomplete_sample_indexes": [],
+    "incomplete_samples": 0,
+    "maximum_gap_seconds": 0.2643636249995325,
+    "missing_required_observation_labels": [
+      "cancel_requested"
+    ],
+    "observed_conclusion": "baseline-to-peak growth is owned anonymous process memory; warm_parser and fresh_parse_child overlap at peak; diagnostic residual declines",
+    "peak": {
+      "all_process_pss_bytes": 2455813120,
+      "bytes_over_guard": 286433280,
+      "diagnostic_unattributed_bytes": 2125587456,
+      "memory_current_bytes": 4581400576,
+      "memory_events": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_pressure_raw": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+      "memory_stat": {
+        "anon": 2094469120,
+        "file": 2394968064,
+        "file_mapped": 341172224,
+        "inactive_file": 2383523840,
+        "kernel": 82890752,
+        "shmem": 4096,
+        "slab": 73864416
+      },
+      "owned_pss_bytes": 2449306624,
+      "processes": [
+        {
+          "command_class": "owned_descendant",
+          "ownership": "shared_cgroup_other",
+          "pid": 1,
+          "ppid": 0,
+          "pss_bytes": 164864,
+          "rss_anon_bytes": 106496,
+          "rss_bytes": 1470464,
+          "rss_file_bytes": 1363968,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "owned_descendant",
+          "ownership": "shared_cgroup_other",
+          "pid": 11,
+          "ppid": 1,
+          "pss_bytes": 165888,
+          "rss_anon_bytes": 102400,
+          "rss_bytes": 1576960,
+          "rss_file_bytes": 1474560,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "owned_descendant",
+          "ownership": "shared_cgroup_other",
+          "pid": 2534,
+          "ppid": 0,
+          "pss_bytes": 5769216,
+          "rss_anon_bytes": 5103616,
+          "rss_bytes": 11182080,
+          "rss_file_bytes": 6078464,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "controller",
+          "ownership": "shared_cgroup_other",
+          "pid": 2680,
+          "ppid": 0,
+          "pss_bytes": 182272,
+          "rss_anon_bytes": 118784,
+          "rss_bytes": 1515520,
+          "rss_file_bytes": 1396736,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "controller",
+          "ownership": "shared_cgroup_other",
+          "pid": 2686,
+          "ppid": 2680,
+          "pss_bytes": 224256,
+          "rss_anon_bytes": 102400,
+          "rss_bytes": 1683456,
+          "rss_file_bytes": 1581056,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "controller",
+          "ownership": "owned",
+          "pid": 2687,
+          "ppid": 2686,
+          "pss_bytes": 84167680,
+          "rss_anon_bytes": 75173888,
+          "rss_bytes": 105254912,
+          "rss_file_bytes": 30081024,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "worker",
+          "ownership": "owned",
+          "pid": 2712,
+          "ppid": 2687,
+          "pss_bytes": 82601984,
+          "rss_anon_bytes": 75399168,
+          "rss_bytes": 103759872,
+          "rss_file_bytes": 28360704,
+          "rss_shmem_bytes": 0
+        },
+        {
+          "command_class": "warm_parser",
+          "ownership": "owned",
+          "pid": 2745,
+          "ppid": 2712,
+          "pss_bytes": 1655742464,
+          "rss_anon_bytes": 1380888576,
+          "rss_bytes": 1735901184,
+          "rss_file_bytes": 355008512,
+          "rss_shmem_bytes": 4096
+        },
+        {
+          "command_class": "fresh_parse_child",
+          "ownership": "owned",
+          "pid": 2800,
+          "ppid": 2712,
+          "pss_bytes": 626794496,
+          "rss_anon_bytes": 557473792,
+          "rss_bytes": 706576384,
+          "rss_file_bytes": 149102592,
+          "rss_shmem_bytes": 0
+        }
+      ],
+      "time": 1789773303.645834
+    },
+    "peak_seconds_after_cancel_request": 2.3959848880767822,
+    "post_cleanup": {
+      "all_process_pss_bytes": 107032576,
+      "diagnostic_unattributed_bytes": 2430226432,
+      "memory_current_bytes": 2537259008,
+      "owned_pss_bytes": 100069376,
+      "time": 1789773305.8354313
+    },
+    "post_cleanup_seconds_after_cancel_request": 4.585582256317139,
+    "required_observations_in_order": false,
+    "samples": 379,
+    "status": "incomplete",
+    "temporal_cancel_requested_at": "2026-09-18T23:15:01.249849208Z",
+    "temporal_workflow_completed_at": "2026-09-18T23:15:01.261274625Z"
+  },
+  "cleanup": {
+    "incomplete_publication_absent": [
+      "q04-bf3908f27ef0482883726697d5931478"
+    ],
+    "live_state_unchanged": true,
+    "orphans": [],
+    "owner_cleanup_errors": [],
+    "phase_errors": {},
+    "reservation_released": true,
+    "running_after_cleanup": [],
+    "scratch_remaining": [],
+    "source_state_unchanged": true,
+    "unexpected_active_processes": [],
+    "verified": true
+  },
+  "deployment_mutated": false,
+  "fixture": "07",
+  "historical_evidence_changed": false,
+  "identity": {
+    "all_remote_identities_absent_before": true,
+    "boot_id": "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3",
+    "bundle_sha256": "9e46ad75379dffed05c5e25ec36b22fdf0d680e30e7d2b298d5ac355d0e039f2",
+    "container_id": "containerd://75d02af07009f1d7152d6a68958cee5f43508ec1dd0ae327142a42db5e429ca5",
+    "container_restart_count": 1,
+    "container_started_at": "2026-09-17T13:46:12Z",
+    "coordinator_uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+    "live_state_sha256": "dc46d94aa1ef645fe9c77e637f74535e517cc82b47d65ec291810b11a474b261",
+    "local_output_absent_before": true,
+    "pid1_start_ticks": 733,
+    "source_state_sha256": "2a3264316e0a859b2a490b3724af09c2df16959b35d9c8116b02e078f50f0636"
+  },
+  "issue_closed": false,
+  "measurement_complete": false,
+  "modes": [
+    "fresh"
+  ],
+  "outcome": "FRESH_CGROUP_GUARD_ATTRIBUTED_MEASUREMENT_INCOMPLETE",
+  "outer_admission": {
+    "continuous_seconds": 60.653542277999804,
+    "maximum_cgroup_bytes": 2459123712,
+    "maximum_psi_full_avg10": 0.18,
+    "minimum_available_bytes": 8837328896,
+    "observed_seconds": 143.54628898199735,
+    "passed": true,
+    "resets": 28,
+    "samples": 143,
+    "vm_oom_kill_values": [
+      0
+    ]
+  },
+  "per_case_admission": {
+    "cgroup_oom_kill": 0,
+    "maximum_cgroup_bytes": 2592174080,
+    "maximum_psi_full_avg10": 0.0,
+    "maximum_sample_gap_seconds": 0.5074028968811035,
+    "minimum_available_bytes": 8703275008,
+    "observed_seconds": 60.375916719436646,
+    "passed": true,
+    "samples": 121,
+    "vm_oom_kill_values": [
+      0
+    ]
+  },
+  "phase": "yolo-attribution-b",
+  "preferred_followup": {
+    "automatic_retry": false,
+    "discard_conditions": [
+      "owned PSS does not align with memory.current in a complete measurement",
+      "warm_parser and fresh_parse_child are not simultaneously live"
+    ],
+    "implementation_focus": "bind assembly fresh-child and warm-parser lifetimes to cancellation; prevent their post-cancel overlap before changing any threshold",
+    "minimum_measurement_fix": "emit/observe the controller cancel request when trial guard cancellation occurs before run.active is cleared, then repeat only after a new reviewed runner and separate authorization"
+  },
+  "private_artifacts": {
+    "admission.json": "94d0c0534899a2605dd34fdfc567c04a3a3f235c7b09dd973eb12c37e6a25ec0",
+    "capacity.json": "98a9f8a83f9bf373109d6e3eb5680267f54907c07658d5e8329edec4050e1bed",
+    "capture.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cleanup.json": "c2372906e98180c728fa27c003205cf53cab544854a668ea4b89d81b636b33c0",
+    "coordinator-identity.json": "2bfe58d9bf5d823da07e64813c680044a4fab2e2caebc70d6999a6c70a7aab3c",
+    "frozen-postcheck.json": "8a95f14edacad479efd65f7c86b6db3df6e65ab06a9a0c2c06e9a72e4532aebb",
+    "frozen-precheck.json": "080ec80c1d34ece83c30921d6161403522f6fb4cb0807fdc6c6f047ce95fb1d8",
+    "health-after.json": "4d1ddd020f87da47e61516d3595dcedfc46b12f03658302e1eb6d3524fdd0ff2",
+    "health-before.json": "570241f8e3d982550df2fd47b9c390bb34a35c2b4e7c46bd4b6e2cb5c29965fa",
+    "held-services-after.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "held-services-before.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "init.log": "19fc27cf82436c172bbaa9c50103a00a7c7856fa1e653e8476eae68ca4c3a08a",
+    "inputs-copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lease-state.json": "d648aab8f117c08c9d437aa96761142c68292d2d715431c7c54740747f5b798a",
+    "old-request-binding.json": "c6039bb6504492bedfd6f377038afeb59bc47d6df1f063237f59682c4f8794fd",
+    "q04_runtime.py-copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "remote-evidence.tar": "4505366203e9824d8c8b312a8c7a8ebfd07e2fb2781b7aca5667515e34122062",
+    "reservation.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runner-manifest.json": "9c035015cff05517a5134fc4f98756eb9460a06b1fc3ba1d7ed16d5782709a79",
+    "runtime-precheck.json": "cab20bd50c1a656de25b141494c02a914481c56722ce96d549fae24208343cce",
+    "runtime-staging.json": "973ad2153c51f9543856a3cb5d7dcd66b8b1d00b33533e0d482a192789ed7dc6",
+    "runtime-transport.log": "b7f96cc60f0e31a6f98816161473bf5f45c0702b8d7f48b7ffc48172055ed0e2",
+    "state-init.json": "e99bd14a3e0ece1f216b2fe6cab96fa35be5a7455b86626363d17c61e0f0dd4e"
+  },
+  "production_changed": false,
+  "profile_changed": false,
+  "remote_evidence_bytes": 4126720,
+  "run_id": "q04-c084987e5c5047f0b9346ab1a26a1d66",
+  "runner_commit": "1d72b0cc97c6f63f82b0e30703c17934ecb346ab",
+  "scope": "YOLO_FIXTURE_07_ATTRIBUTION_B",
+  "services": {
+    "all_expected_uids": true,
+    "all_replicas_zero_after": true,
+    "all_replicas_zero_before": true,
+    "before_after_snapshot_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "historical_deployments": 32,
+    "object_readiness_after": 200,
+    "object_readiness_before": 200,
+    "running_workflows_after": [],
+    "running_workflows_before": [],
+    "temporal_healthy_after": true,
+    "temporal_healthy_before": true
+  },
+  "window": {
+    "authorized_ends_at": "2026-09-18T23:36:01.253414+00:00",
+    "finished_at": "2026-09-18T23:15:11.000754+00:00",
+    "retry_count": 0,
+    "started_at": "2026-09-18T23:11:01.253414+00:00"
+  },
+  "workload": {
+    "canonical_accepted": false,
+    "cgroup_ceiling_bytes": 4294967296,
+    "complete_delivery": false,
+    "consumer_oracles_evaluated": false,
+    "failure": "cgroup budget exceeded",
+    "first_guard_breach_at": "2026-09-18T23:15:00.962838+00:00",
+    "first_guard_breach_bytes": 4302082048,
+    "fresh_accepted": false,
+    "group_steps": 3,
+    "last_status": "assembling",
+    "outcome": "guard_stop",
+    "pages": 15,
+    "processing_complete": false,
+    "progress_records": 62,
+    "registered_pages": 15,
+    "request_id": "q04-bf3908f27ef0482883726697d5931478",
+    "source_sha256": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab",
+    "source_version_id": "afaa5cde-adb1-4fd0-bde1-5c0aab9f7dee",
+    "temporal_status": "COMPLETED",
+    "workflow_id": "q04-c084987e5c5047f0b9346ab1a26a1d66-fresh-07-186e3614688f478e92f9ce1ed9c4eb53"
+  }
+}

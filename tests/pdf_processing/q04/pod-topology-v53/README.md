@@ -1,0 +1,5 @@
+# Q04 BB: worker sample before readiness
+
+BA reached the exact 51-page current-v3 result under the 768 MiB MinIO limit trial and did not trigger the node PSI guard, but its replacement worker advertised Ready 155 microseconds before its first resource sample. The existing coverage gate then failed before `accepted.json` and terminal qualification. BB uses a fresh identity and a minimal shared-worker ordering fix: the first telemetry row must be committed before `ready.json` is published. The new local regression test observed the missing readiness function fail, then passed after the fix; BB's projected worker source is bound by its source manifest.
+
+The AH producer, reviewed native oracle, process-drain injection, zero node PSI threshold, all cgroup/OOM/memory floors and deadlines, object-service 768 MiB trial setting, read-only exact Pod/cgroup observer, cleanup and no-retry policy are unchanged. BB is one controlled execution. A clean BB result can qualify process recovery only; Pod drain/recovery and #51 closure remain separate.

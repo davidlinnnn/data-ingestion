@@ -1,0 +1,8 @@
+{
+  "original_cs_guard": "tests/pdf_processing/q04/sentinel/run_yolo_pod_cgroup_p.py",
+  "function": "def verify_runtime_sample(row: dict, baseline_oom: int) -> None:\n    if row[\"available\"] < VM_RUNTIME_FLOOR_BYTES:\n        raise ValueError(\"VM runtime memory floor breached\")\n    if row[\"psi_full_avg10\"] != 0:\n        raise ValueError(\"VM PSI guard breached\")\n    if row[\"vm_oom_kill\"] != baseline_oom:\n        raise ValueError(\"VM OOM counter changed\")\n    events = row[\"memory_events\"]\n    if any(events.get(name, 0) != 0 for name in (\"oom\", \"oom_kill\", \"oom_group_kill\")):\n        raise ValueError(\"worker cgroup OOM counter changed\")\n    if row[\"memory_current\"] > CGROUP_GUARD_BYTES:\n        raise ValueError(\"4 GiB qualification guard breached\")\n    if (\n        row.get(\"evidence_used_bytes\", 2**63) > 939_524_096\n        or row.get(\"evidence_free_bytes\", -1) < 134_217_728\n        or row.get(\"evidence_filesystem_free_bytes\", -1) < 134_217_728\n    ):\n        raise ValueError(\"evidence PVC stop watermark reached\")",
+  "cw_sample_passes_original_cs_vm_guard": true,
+  "cs_trigger_0_18_rejected": true,
+  "probe_difference": "Remove stricter legacy diagnostic cumulative-total predicate; existing CS VM avg10 threshold remains exactly zero",
+  "not_a_pvc_verification": true
+}

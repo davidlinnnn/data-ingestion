@@ -1,0 +1,100 @@
+{
+  "status": "PASS_AN_REAL_METHOD_INVALIDATION_AND_ORIGINAL_REPLAY_ONLY",
+  "run_id": "q04-method-pod-cgroup-20260924-an",
+  "prefix": "q04/method-pod-cgroup-20260924-an/",
+  "raw_root": "/private/tmp/q04-method-pod-cgroup-20260924-an",
+  "pre_inference_gates": 11,
+  "workflows": [
+    {
+      "mode": "fresh",
+      "workflow_id": "q04-method-pod-cgroup-20260924-an-fresh-native-a2f3e89437b64ccaacd9e1805e6e33c9",
+      "worker_generation": 1,
+      "request_id": "q04-f8989d627cee4cf8bb375160fe8ed9b7",
+      "source_artifact": {
+        "name": "native.pdf",
+        "key": "q04/method-pod-cgroup-20260924-an/sources/native.pdf",
+        "version_id": "a466c691-9b10-4fdf-8a2b-4caa1b1b3381",
+        "sha256": "d58be5fc39608dc9aec45194c602436d793f2f2bf56f267d0e38d6258a9f7a9e"
+      },
+      "profile_release": "q04-887fc4ffa5abefc19fc292a525e4668d2b593bb05d9625a0da1f92c6de3a8c6c",
+      "document_sha256": "70673bdc5cb548d37c81efa91bb1c5460f71f94148bdb5d1218a319c6af9f152",
+      "graph_sha256": "9f1b0ef9ed561df0c4a5748d5c49554e8f5ad3bb38764d94a51d3433f4d94972",
+      "processing_result": "pdf-complete-v1:975f05bd72b0882e3782030a26f9923e610ec39329fd6829e2009c2389ac505b",
+      "upstream_reused": 0,
+      "terminal_event": "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED"
+    },
+    {
+      "mode": "invalidation",
+      "workflow_id": "q04-method-pod-cgroup-20260924-an-invalidation-native-08044d932b844d72acd9b9658fe23a39",
+      "worker_generation": 2,
+      "request_id": "q04-2f527559467b48a980efd9344b512444",
+      "source_artifact": {
+        "name": "native.pdf",
+        "key": "q04/method-pod-cgroup-20260924-an/sources/native.pdf",
+        "version_id": "a466c691-9b10-4fdf-8a2b-4caa1b1b3381",
+        "sha256": "d58be5fc39608dc9aec45194c602436d793f2f2bf56f267d0e38d6258a9f7a9e"
+      },
+      "profile_release": "q04-f9a3bde5bbe9b9e600733da58f9f9fc2d6f2b2dd70b9d1200e169e1ab1a252f4",
+      "document_sha256": "616f9e2a73f530de42e16f9b451356c7549d46f68563e5c9513a046c47bc6135",
+      "graph_sha256": "89bdb85383ed28ddcd3d5d6e6ea1e0669e96bc78c8b80ce31242a0d24060cc2d",
+      "processing_result": "pdf-complete-v1:f6c1844fa57dea9004238cdadafa1fc5ea99251d4bbff68fab26dd8ec78a15a1",
+      "upstream_reused": 0,
+      "terminal_event": "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED"
+    },
+    {
+      "mode": "replay",
+      "workflow_id": "q04-method-pod-cgroup-20260924-an-replay-native-27d9c990ef494d5dad2b52b8b7439e65",
+      "worker_generation": 2,
+      "request_id": "q04-f8989d627cee4cf8bb375160fe8ed9b7",
+      "source_artifact": {
+        "name": "native.pdf",
+        "key": "q04/method-pod-cgroup-20260924-an/sources/native.pdf",
+        "version_id": "a466c691-9b10-4fdf-8a2b-4caa1b1b3381",
+        "sha256": "d58be5fc39608dc9aec45194c602436d793f2f2bf56f267d0e38d6258a9f7a9e"
+      },
+      "profile_release": "q04-887fc4ffa5abefc19fc292a525e4668d2b593bb05d9625a0da1f92c6de3a8c6c",
+      "document_sha256": "70673bdc5cb548d37c81efa91bb1c5460f71f94148bdb5d1218a319c6af9f152",
+      "graph_sha256": "9f1b0ef9ed561df0c4a5748d5c49554e8f5ad3bb38764d94a51d3433f4d94972",
+      "processing_result": "pdf-complete-v1:975f05bd72b0882e3782030a26f9923e610ec39329fd6829e2009c2389ac505b",
+      "upstream_reused": 12,
+      "terminal_event": "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED"
+    }
+  ],
+  "old_new_upstream_operations_disjoint": true,
+  "resource": {
+    "samples": 1128,
+    "maximum_gap_seconds": 0.6287409169599414,
+    "transition_windows": [
+      {
+        "duration_seconds": 0.5259319580509327,
+        "label": "method_worker_shutdown",
+        "sampler_lock_acquired": true
+      },
+      {
+        "duration_seconds": 0.0005030420143157244,
+        "label": "method_worker_start",
+        "sampler_lock_acquired": true
+      },
+      {
+        "duration_seconds": 0.36822312604635954,
+        "label": "controlled_worker_shutdown",
+        "sampler_lock_acquired": true
+      }
+    ],
+    "gate_status": "PASS",
+    "incomplete_samples": 0
+  },
+  "terminal": {
+    "status": "PASS_CANDIDATE",
+    "cleanup_complete": true,
+    "inventory_files": 72,
+    "inventory_sha256": "b35dfc33f0e2aaf983e9ccbb01dff356f30b130ae516d520cab9a19cc90a264b"
+  },
+  "cleanup": {
+    "old_runtime_absent": true,
+    "emptydirs_absent": true,
+    "pvc_name": "q04-pod-cgroup-an-evidence-20260924-an",
+    "pvc_phase": "Bound",
+    "owned_objects_deleted_with_uid_preconditions": true
+  }
+}

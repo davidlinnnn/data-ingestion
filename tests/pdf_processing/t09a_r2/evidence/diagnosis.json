@@ -1,0 +1,757 @@
+{
+  "historical": [
+    {
+      "trial": "warm-1-07",
+      "pod_uid": "07f37963-511d-4f1d-abe8-0886e9e4cb83",
+      "container": "58b82ec240d6ac225b0b14dfc40a36be2e28b6c888e245e42057ab5c8c2db70d",
+      "termination": {
+        "containerID": "containerd://58b82ec240d6ac225b0b14dfc40a36be2e28b6c888e245e42057ab5c8c2db70d",
+        "exitCode": 137,
+        "finishedAt": "2026-09-13T14:35:50Z",
+        "reason": "OOMKilled",
+        "startedAt": "2026-09-13T14:33:46Z"
+      },
+      "kernel_event": "[Sun Sep 13 14:35:49 2026] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=cri-containerd-c67f057c5d7de9186ec39039fa9a3aff7c23514045711f5301df99410bfe646e.scope,mems_allowed=0,global_oom,task_memcg=/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod07f37963_511d_4f1d_abe8_0886e9e4cb83.slice/cri-containerd-58b82ec240d6ac225b0b14dfc40a36be2e28b6c888e245e42057ab5c8c2db70d.scope,task=python,pid=1016229,uid=0",
+      "memory_lines": [
+        "[Sun Sep 13 14:35:49 2026] Node 0 active_anon:3657288kB inactive_anon:3723484kB active_file:37900kB inactive_file:24188kB unevictable:728kB isolated(anon):0kB isolated(file):0kB mapped:45500kB dirty:21604kB writeback:0kB shmem:28076kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:3201024kB writeback_tmp:0kB kernel_stack:41552kB pagetables:53028kB sec_pagetables:0kB all_unreclaimable? no",
+        "[Sun Sep 13 14:35:49 2026] Free swap  = 160kB",
+        "[Sun Sep 13 14:35:49 2026] Total swap = 1048572kB"
+      ],
+      "process_rss_by_name": {
+        "python": 2660610048,
+        "minio": 2155573248,
+        "temporal": 1316810752,
+        "kube-apiserver": 376336384,
+        "containerd-shim": 234778624,
+        "containerd": 167813120,
+        "kubelet": 167792640,
+        "kube-controller": 90505216,
+        "etcd": 85106688,
+        "initd": 68726784,
+        "kindnetd": 56180736,
+        "kube-proxy": 51769344,
+        "postgres": 51269632,
+        "coredns": 39579648,
+        "dockerd": 33492992,
+        "kube-scheduler": 30060544,
+        "nats-server": 16097280,
+        "local-path-prov": 10964992,
+        "systemd-journal": 7229440,
+        "pause": 6365184,
+        "sleep": 5234688,
+        "sh": 4874240,
+        "systemd": 4235264,
+        "registry": 757760,
+        "rpcbind": 692224,
+        "bash": 671744,
+        "login": 421888,
+        "containerd-star": 401408,
+        "rpc.statd": 348160,
+        "rosetta-mount": 319488,
+        "rpc.idmapd": 299008
+      },
+      "largest_processes": [
+        {
+          "pid": 1016229,
+          "rss_bytes": 1528107008,
+          "swap_bytes": 0,
+          "name": "python"
+        },
+        {
+          "pid": 2100,
+          "rss_bytes": 376336384,
+          "swap_bytes": 0,
+          "name": "kube-apiserver"
+        },
+        {
+          "pid": 946496,
+          "rss_bytes": 295063552,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 1018688,
+          "rss_bytes": 250171392,
+          "swap_bytes": 0,
+          "name": "python"
+        },
+        {
+          "pid": 589950,
+          "rss_bytes": 232079360,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 831291,
+          "rss_bytes": 224063488,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 623378,
+          "rss_bytes": 212697088,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 626744,
+          "rss_bytes": 198135808,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 592792,
+          "rss_bytes": 192483328,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 570340,
+          "rss_bytes": 184279040,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 734308,
+          "rss_bytes": 182472704,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 631566,
+          "rss_bytes": 176525312,
+          "swap_bytes": 0,
+          "name": "minio"
+        }
+      ],
+      "retries": [
+        {
+          "attempt": 2,
+          "scheduled": {
+            "id": 29,
+            "kind": "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED",
+            "time": "2026-09-13T14:35:46.516855428Z",
+            "activity": "pdf_processing_step_v1",
+            "queue": "t09a-pdf",
+            "stage": "execute",
+            "operation_kind": "assembly",
+            "range": [
+              1,
+              15
+            ]
+          }
+        }
+      ],
+      "stable": false
+    },
+    {
+      "trial": "warm-3-native",
+      "pod_uid": "07f37963-511d-4f1d-abe8-0886e9e4cb83",
+      "container": "0044452d488ca4d8236b71f601e8a93c37ed2045d8950d0e22d2dac8b0213443",
+      "termination": {
+        "containerID": "containerd://0044452d488ca4d8236b71f601e8a93c37ed2045d8950d0e22d2dac8b0213443",
+        "exitCode": 137,
+        "finishedAt": "2026-09-13T14:38:37Z",
+        "reason": "OOMKilled",
+        "startedAt": "2026-09-13T14:35:51Z"
+      },
+      "kernel_event": "[Sun Sep 13 14:38:35 2026] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=restricted,mems_allowed=0,global_oom,task_memcg=/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod07f37963_511d_4f1d_abe8_0886e9e4cb83.slice/cri-containerd-0044452d488ca4d8236b71f601e8a93c37ed2045d8950d0e22d2dac8b0213443.scope,task=python,pid=1019653,uid=0",
+      "memory_lines": [
+        "[Sun Sep 13 14:38:35 2026] Node 0 active_anon:3307992kB inactive_anon:4144348kB active_file:948kB inactive_file:4424kB unevictable:728kB isolated(anon):0kB isolated(file):0kB mapped:18592kB dirty:2332kB writeback:0kB shmem:21632kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:3203072kB writeback_tmp:0kB kernel_stack:41472kB pagetables:51672kB sec_pagetables:0kB all_unreclaimable? no",
+        "[Sun Sep 13 14:38:35 2026] Free swap  = 68kB",
+        "[Sun Sep 13 14:38:35 2026] Total swap = 1048572kB"
+      ],
+      "process_rss_by_name": {
+        "python": 2714595328,
+        "minio": 2161315840,
+        "temporal": 1311371264,
+        "kube-apiserver": 381489152,
+        "containerd-shim": 240631808,
+        "kubelet": 164659200,
+        "containerd": 164130816,
+        "kube-controller": 87994368,
+        "etcd": 81842176,
+        "kindnetd": 56233984,
+        "kube-proxy": 52928512,
+        "postgres": 51437568,
+        "dockerd": 43233280,
+        "coredns": 39182336,
+        "initd": 38301696,
+        "kube-scheduler": 30060544,
+        "nats-server": 16097280,
+        "local-path-prov": 10964992,
+        "systemd-journal": 7618560,
+        "pause": 6365184,
+        "sleep": 5234688,
+        "sh": 4874240,
+        "systemd": 3874816,
+        "containerd-star": 3444736,
+        "rpcbind": 724992,
+        "bash": 671744,
+        "registry": 462848,
+        "login": 421888,
+        "rpc.statd": 348160,
+        "rosetta-mount": 319488,
+        "rpc.idmapd": 299008
+      },
+      "largest_processes": [
+        {
+          "pid": 1019653,
+          "rss_bytes": 1775587328,
+          "swap_bytes": 0,
+          "name": "python"
+        },
+        {
+          "pid": 2100,
+          "rss_bytes": 381489152,
+          "swap_bytes": 0,
+          "name": "kube-apiserver"
+        },
+        {
+          "pid": 946496,
+          "rss_bytes": 305209344,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 589950,
+          "rss_bytes": 231993344,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 831291,
+          "rss_bytes": 223137792,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 623378,
+          "rss_bytes": 212328448,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 626744,
+          "rss_bytes": 198373376,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 592792,
+          "rss_bytes": 192749568,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 570340,
+          "rss_bytes": 184610816,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 734308,
+          "rss_bytes": 182472704,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 631566,
+          "rss_bytes": 176738304,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 831176,
+          "rss_bytes": 155385856,
+          "swap_bytes": 0,
+          "name": "temporal"
+        }
+      ],
+      "retries": [
+        {
+          "attempt": 2,
+          "scheduled": {
+            "id": 53,
+            "kind": "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED",
+            "time": "2026-09-13T14:38:32.777243088Z",
+            "activity": "pdf_processing_step_v1",
+            "queue": "t09a-pdf",
+            "stage": "execute",
+            "operation_kind": "group",
+            "range": [
+              36,
+              40
+            ]
+          }
+        }
+      ],
+      "stable": false
+    },
+    {
+      "trial": "warm-4-06",
+      "pod_uid": "07f37963-511d-4f1d-abe8-0886e9e4cb83",
+      "container": "82dff8eba73c82ba7b877b05eaf1ece695ca81e9c0bd02590421aa90c47cd6dc",
+      "termination": {
+        "containerID": "containerd://82dff8eba73c82ba7b877b05eaf1ece695ca81e9c0bd02590421aa90c47cd6dc",
+        "exitCode": 137,
+        "finishedAt": "2026-09-13T14:40:57Z",
+        "reason": "OOMKilled",
+        "startedAt": "2026-09-13T14:38:52Z"
+      },
+      "kernel_event": "[Sun Sep 13 14:40:56 2026] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=restricted,mems_allowed=0,global_oom,task_memcg=/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod07f37963_511d_4f1d_abe8_0886e9e4cb83.slice/cri-containerd-82dff8eba73c82ba7b877b05eaf1ece695ca81e9c0bd02590421aa90c47cd6dc.scope,task=python,pid=1022151,uid=0",
+      "memory_lines": [
+        "[Sun Sep 13 14:40:56 2026] Node 0 active_anon:3800996kB inactive_anon:3649452kB active_file:1248kB inactive_file:1736kB unevictable:728kB isolated(anon):0kB isolated(file):0kB mapped:18652kB dirty:2548kB writeback:0kB shmem:21252kB shmem_thp:0kB shmem_pmdmapped:0kB anon_thp:3205120kB writeback_tmp:0kB kernel_stack:41424kB pagetables:51968kB sec_pagetables:0kB all_unreclaimable? no",
+        "[Sun Sep 13 14:40:56 2026] Free swap  = 76kB",
+        "[Sun Sep 13 14:40:56 2026] Total swap = 1048572kB"
+      ],
+      "process_rss_by_name": {
+        "python": 2676858880,
+        "minio": 2173370368,
+        "temporal": 1316462592,
+        "kube-apiserver": 386220032,
+        "containerd-shim": 270008320,
+        "kubelet": 168030208,
+        "containerd": 164990976,
+        "kube-controller": 88141824,
+        "etcd": 82939904,
+        "kindnetd": 55631872,
+        "postgres": 51785728,
+        "kube-proxy": 51679232,
+        "coredns": 39350272,
+        "dockerd": 38772736,
+        "initd": 34963456,
+        "kube-scheduler": 30298112,
+        "nats-server": 16711680,
+        "local-path-prov": 10964992,
+        "pause": 6365184,
+        "systemd": 5914624,
+        "sleep": 5234688,
+        "containerd-star": 5066752,
+        "systemd-journal": 5066752,
+        "sh": 4874240,
+        "registry": 1581056,
+        "bash": 671744,
+        "rpcbind": 585728,
+        "login": 421888,
+        "rpc.statd": 348160,
+        "rosetta-mount": 319488,
+        "rpc.idmapd": 299008
+      },
+      "largest_processes": [
+        {
+          "pid": 1022151,
+          "rss_bytes": 1771249664,
+          "swap_bytes": 0,
+          "name": "python"
+        },
+        {
+          "pid": 2100,
+          "rss_bytes": 386220032,
+          "swap_bytes": 0,
+          "name": "kube-apiserver"
+        },
+        {
+          "pid": 946496,
+          "rss_bytes": 314081280,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 589950,
+          "rss_bytes": 231993344,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 831291,
+          "rss_bytes": 225185792,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 623378,
+          "rss_bytes": 212586496,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 626744,
+          "rss_bytes": 198225920,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 592792,
+          "rss_bytes": 192425984,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 570340,
+          "rss_bytes": 184864768,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 734308,
+          "rss_bytes": 182595584,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 631566,
+          "rss_bytes": 176730112,
+          "swap_bytes": 0,
+          "name": "minio"
+        },
+        {
+          "pid": 831176,
+          "rss_bytes": 155222016,
+          "swap_bytes": 0,
+          "name": "temporal"
+        }
+      ],
+      "retries": [
+        {
+          "attempt": 2,
+          "scheduled": {
+            "id": 35,
+            "kind": "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED",
+            "time": "2026-09-13T14:40:52.795947292Z",
+            "activity": "pdf_processing_step_v1",
+            "queue": "t09a-pdf",
+            "stage": "execute",
+            "operation_kind": "group",
+            "range": [
+              21,
+              25
+            ]
+          }
+        }
+      ],
+      "stable": false
+    }
+  ],
+  "current_meminfo": {
+    "MemTotal": 8319410176,
+    "MemFree": 167297024,
+    "MemAvailable": 1755602944,
+    "Buffers": 295137280,
+    "Cached": 1338175488,
+    "SwapCached": 40071168,
+    "Active": 4041564160,
+    "Inactive": 3320942592,
+    "Active(anon)": 3386589184,
+    "Inactive(anon)": 2497081344,
+    "Active(file)": 654974976,
+    "Inactive(file)": 823861248,
+    "Unevictable": 733184,
+    "Mlocked": 0,
+    "SwapTotal": 1073737728,
+    "SwapFree": 272031744,
+    "Zswap": 0,
+    "Zswapped": 0,
+    "Dirty": 16384,
+    "Writeback": 0,
+    "AnonPages": 5668646912,
+    "Mapped": 528539648,
+    "Shmem": 154783744,
+    "KReclaimable": 317710336,
+    "Slab": 514117632,
+    "SReclaimable": 317710336,
+    "SUnreclaim": 196407296,
+    "KernelStack": 41385984,
+    "PageTables": 46587904,
+    "SecPageTables": 0,
+    "NFS_Unstable": 0,
+    "Bounce": 0,
+    "WritebackTmp": 0,
+    "CommitLimit": 5233442816,
+    "Committed_AS": 17859227648,
+    "VmallocTotal": 138535235485696,
+    "VmallocUsed": 10743808,
+    "VmallocChunk": 0,
+    "Percpu": 30228480,
+    "AnonHugePages": 3277848576,
+    "ShmemHugePages": 0,
+    "ShmemPmdMapped": 0,
+    "FileHugePages": 0,
+    "FilePmdMapped": 0,
+    "Hugepagesize": 2097152,
+    "Hugetlb": 0
+  },
+  "kubelet_memory": {
+    "time": "2026-09-14T10:42:17Z",
+    "availableBytes": 2888503296,
+    "usageBytes": 5977636864,
+    "workingSetBytes": 5430906880,
+    "rssBytes": 4566700032,
+    "pageFaults": 624641987,
+    "majorPageFaults": 4534096,
+    "psi": {
+      "full": {
+        "total": 116379083,
+        "avg10": 0,
+        "avg60": 0,
+        "avg300": 0
+      },
+      "some": {
+        "total": 294043935,
+        "avg10": 0,
+        "avg60": 0,
+        "avg300": 0
+      }
+    }
+  },
+  "current_pods": [
+    {
+      "namespace": "pdf-t06-validation",
+      "pod": "objects-8865c4db6-9wqvg",
+      "working_set_bytes": 238727168
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "pod": "objects-77db79d55d-46v26",
+      "working_set_bytes": 237801472
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "pod": "objects-8865c4db6-nxprz",
+      "working_set_bytes": 236867584
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "pod": "objects-77db79d55d-jhvss",
+      "working_set_bytes": 220401664
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "pod": "objects-77db79d55d-s424q",
+      "working_set_bytes": 207777792
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "pod": "objects-77db79d55d-4xtrr",
+      "working_set_bytes": 194801664
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "pod": "objects-77db79d55d-tlkds",
+      "working_set_bytes": 192090112
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "pod": "objects-8865c4db6-gjbsn",
+      "working_set_bytes": 187011072
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "pod": "objects-77db79d55d-8tvvd",
+      "working_set_bytes": 181194752
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "pod": "temporal-bf44c7c45-58wpj",
+      "working_set_bytes": 158003200
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "pod": "temporal-bf44c7c45-8m8mj",
+      "working_set_bytes": 157679616
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "pod": "activities-7b877576cc-w9gsh",
+      "working_set_bytes": 144654336
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "pod": "objects-8865c4db6-bqmvr",
+      "working_set_bytes": 137601024
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "pod": "temporal-bf44c7c45-gl9dw",
+      "working_set_bytes": 127074304
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "pod": "temporal-bf44c7c45-645zg",
+      "working_set_bytes": 126312448
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "pod": "temporal-bf44c7c45-lrcgw",
+      "working_set_bytes": 125083648
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "pod": "temporal-bf44c7c45-wqvgj",
+      "working_set_bytes": 124977152
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "pod": "temporal-bf44c7c45-g2dpt",
+      "working_set_bytes": 122535936
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "pod": "objects-8865c4db6-h49jg",
+      "working_set_bytes": 116297728
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "pod": "temporal-bf44c7c45-vb8w9",
+      "working_set_bytes": 116248576
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "pod": "temporal-bf44c7c45-flqjw",
+      "working_set_bytes": 108130304
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "pod": "temporal-bf44c7c45-jq4v4",
+      "working_set_bytes": 103067648
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "pod": "temporal-bf44c7c45-rzv5s",
+      "working_set_bytes": 102043648
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "pod": "activities-57f967cf66-5v2pg",
+      "working_set_bytes": 77529088
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "pod": "activities-6f9ddc75f5-pgs7w",
+      "working_set_bytes": 64729088
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "pod": "activities-85cd689c7f-mwxjd",
+      "working_set_bytes": 64000000
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "pod": "activities-646f94d7d9-r68dn",
+      "working_set_bytes": 62988288
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "pod": "workflows-68d56448dd-bkxn6",
+      "working_set_bytes": 45518848
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "pod": "workflows-7666c546c7-sctgk",
+      "working_set_bytes": 45293568
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "pod": "workflows-5f89b5458c-tzzh4",
+      "working_set_bytes": 45219840
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "pod": "workflows-7777548d67-dk7wt",
+      "working_set_bytes": 45191168
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "pod": "workflows-86cbcb645-pgb4g",
+      "working_set_bytes": 44990464
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "pod": "workflows-9fcf45545-kp478",
+      "working_set_bytes": 44306432
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "pod": "workflows-66ff95cd9b-d2ccj",
+      "working_set_bytes": 40370176
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "pod": "workflows-7478c7745f-zsgfg",
+      "working_set_bytes": 39768064
+    },
+    {
+      "namespace": "kube-system",
+      "pod": "kindnet-p8ghw",
+      "working_set_bytes": 25878528
+    },
+    {
+      "namespace": "kube-system",
+      "pod": "kube-proxy-krh82",
+      "working_set_bytes": 20975616
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "pod": "nats-6f54cdc898-s94vr",
+      "working_set_bytes": 20717568
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 18612224
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "pod": "coordinator",
+      "working_set_bytes": 4272128
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 4247552
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 3244032
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 700416
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 700416
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 696320
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "pod": "coordinator",
+      "working_set_bytes": 696320
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 692224
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 688128
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "pod": "coordinator",
+      "working_set_bytes": 684032
+    }
+  ],
+  "long_run_capacity_gate": false,
+  "gate_definition": "3GiB MemAvailable admission minimum, maintained for 60s with no new OOM/pressure; not a supported maximum or leak diagnosis",
+  "interpretation": "Matched global OOM and exhausted swap. Aggregate workload capacity is implicated; exact exclusive cause and warm growth remain unproved."
+}

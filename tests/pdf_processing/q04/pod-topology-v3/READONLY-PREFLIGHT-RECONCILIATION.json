@@ -1,0 +1,363 @@
+{
+  "expected_first_observable_failure": {
+    "automatic_retry": false,
+    "earliest_unproven_gate": "mount_and_path",
+    "known_failure_if_aggregate_preflight_is_reached": "models",
+    "workload_status": "NOT_STARTED"
+  },
+  "gates": {
+    "cgroup": {
+      "reason": "the future D container-specific 5 GiB memory.max and initial OOM counters do not exist",
+      "status": "NOT_OBSERVABLE"
+    },
+    "configuration": {
+      "observed": "generated D scope, budgets, frozen bundle digest and every staged source hash are exact",
+      "runtime_gap": "projected ConfigMap bytes and staged control files remain NOT_OBSERVABLE",
+      "status": "PASS_LOCAL_ONLY"
+    },
+    "durable_filesystem": {
+      "observed": "real filesystem tests cover exclusive mkdir, lstat, symlink/owner/mode rejection, parent fsync, file fsync, atomic rename, readback and cleanup fsync",
+      "runtime_gap": "the exact D local-path hostPath remains NOT_OBSERVABLE",
+      "status": "PASS_LOCAL_ONLY"
+    },
+    "models": {
+      "expected_artifacts": 17,
+      "expected_total_files": 35,
+      "hash_mismatches": [],
+      "missing": [
+        "rapidocr/PP-OCRv6_det_small.onnx",
+        "rapidocr/PP-OCRv6_rec_small.onnx",
+        "rapidocr/ch_ppocr_mobile_v2.0_cls_mobile.onnx"
+      ],
+      "observed_expected_paths": 14,
+      "observed_total_files": 49,
+      "status": "FAIL_IF_PINNED_IMAGE_UNCHANGED"
+    },
+    "object_storage": {
+      "bucket_versioning": "Enabled",
+      "d_prefix_unused": true,
+      "object_health": 200,
+      "status": "PASS_READ_ONLY_REFERENCE_POD"
+    },
+    "packages_imports": {
+      "packages": {
+        "boto3": "1.40.24",
+        "pillow": "12.3.0",
+        "psutil": "7.2.2",
+        "temporalio": "1.23.0"
+      },
+      "status": "PASS_READ_ONLY_REFERENCE_POD"
+    },
+    "python_executable": {
+      "executable": "/experiment/.venv/bin/python",
+      "python": "3.12.13",
+      "status": "PASS_READ_ONLY_REFERENCE_POD"
+    },
+    "image_identity": {
+      "observed": "repository-platform-manifest imageID is bound by the committed OCI/CRI chain",
+      "runtime_gap": "D Pod UID, container ID and zero restart count remain NOT_OBSERVABLE",
+      "status": "PARTIAL_REUSABLE_EVIDENCE"
+    },
+    "mount_and_path": {
+      "reason": "requires the future D PVC mounted into the future UID/GID 1000 Pod",
+      "status": "NOT_OBSERVABLE"
+    },
+    "pvc_pv_backend": {
+      "observed": "standard uses rancher.io/local-path and hostPath DirectoryOrCreate; hostPath has no ownership management",
+      "runtime_gap": "new D claim/PV UIDs and binding remain NOT_OBSERVABLE",
+      "status": "PARTIAL_REUSABLE_EVIDENCE"
+    },
+    "source_hashes": {
+      "observed": "every generated producer and harness source hash is exact locally",
+      "runtime_gap": "projected ConfigMap bytes remain NOT_OBSERVABLE",
+      "status": "PASS_LOCAL_ONLY"
+    },
+    "temporal": {
+      "status": "PASS_READ_ONLY_REFERENCE_POD",
+      "temporal_healthy": true,
+      "temporal_running": []
+    }
+  },
+  "held_deployments": {
+    "all_replicas_ready_zero": true,
+    "all_uid_matches": true,
+    "deployments": [
+      {
+        "expected_uid": "259b0f80-708a-4812-811b-a7a09b745182",
+        "name": "objects",
+        "namespace": "pdf-integration-0913",
+        "observed_uid": "259b0f80-708a-4812-811b-a7a09b745182",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "0349117b-a490-491c-94d5-f65e9482d3d3",
+        "name": "temporal",
+        "namespace": "pdf-integration-0913",
+        "observed_uid": "0349117b-a490-491c-94d5-f65e9482d3d3",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "bae74b2b-196f-4d04-bf4b-b038703a292e",
+        "name": "workflows",
+        "namespace": "pdf-integration-0913",
+        "observed_uid": "bae74b2b-196f-4d04-bf4b-b038703a292e",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "9e757dea-9784-4949-9be4-5b9cb24c5e74",
+        "name": "objects",
+        "namespace": "pdf-s1-warm-lifecycle",
+        "observed_uid": "9e757dea-9784-4949-9be4-5b9cb24c5e74",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "7e1af4d6-e842-4e8d-a0d5-685d2f5a64e5",
+        "name": "temporal",
+        "namespace": "pdf-s1-warm-lifecycle",
+        "observed_uid": "7e1af4d6-e842-4e8d-a0d5-685d2f5a64e5",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "ffe26620-66db-4026-a6b9-94c578727cea",
+        "name": "objects",
+        "namespace": "pdf-t01-validation",
+        "observed_uid": "ffe26620-66db-4026-a6b9-94c578727cea",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "320fe1c6-3e2b-429e-93f6-e49f9d39f5d7",
+        "name": "temporal",
+        "namespace": "pdf-t01-validation",
+        "observed_uid": "320fe1c6-3e2b-429e-93f6-e49f9d39f5d7",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "f59cf4d2-40ee-4ff9-8beb-acbcea46070c",
+        "name": "objects",
+        "namespace": "pdf-t02-validation",
+        "observed_uid": "f59cf4d2-40ee-4ff9-8beb-acbcea46070c",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "0ba710b1-9886-4dd5-9aeb-1ee410653a9c",
+        "name": "temporal",
+        "namespace": "pdf-t02-validation",
+        "observed_uid": "0ba710b1-9886-4dd5-9aeb-1ee410653a9c",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "e56eb1f7-d62e-4668-b738-685cf1a52c98",
+        "name": "workflows",
+        "namespace": "pdf-t02-validation",
+        "observed_uid": "e56eb1f7-d62e-4668-b738-685cf1a52c98",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "e85f2d98-3967-4f3a-b8ac-3cad6b67efbf",
+        "name": "activities",
+        "namespace": "pdf-t03-validation",
+        "observed_uid": "e85f2d98-3967-4f3a-b8ac-3cad6b67efbf",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "68da72a3-d241-4815-b011-8a2847eb6cb8",
+        "name": "objects",
+        "namespace": "pdf-t03-validation",
+        "observed_uid": "68da72a3-d241-4815-b011-8a2847eb6cb8",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "3625e9ec-f914-4158-b8ea-62808ad454e9",
+        "name": "temporal",
+        "namespace": "pdf-t03-validation",
+        "observed_uid": "3625e9ec-f914-4158-b8ea-62808ad454e9",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "76080d5e-7d36-420c-a137-ea876d96ccc4",
+        "name": "workflows",
+        "namespace": "pdf-t03-validation",
+        "observed_uid": "76080d5e-7d36-420c-a137-ea876d96ccc4",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "a8cc35cb-e573-437a-8d9a-22313fab9e35",
+        "name": "activities",
+        "namespace": "pdf-t04-validation",
+        "observed_uid": "a8cc35cb-e573-437a-8d9a-22313fab9e35",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "4ecb44ce-68cd-441d-a57b-7d0011db20ff",
+        "name": "objects",
+        "namespace": "pdf-t04-validation",
+        "observed_uid": "4ecb44ce-68cd-441d-a57b-7d0011db20ff",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "a3f5b91f-2cf2-4e26-a687-e0c4f5295e0d",
+        "name": "temporal",
+        "namespace": "pdf-t04-validation",
+        "observed_uid": "a3f5b91f-2cf2-4e26-a687-e0c4f5295e0d",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "33375e63-f88f-48e2-bdf9-89e6ad8007d2",
+        "name": "workflows",
+        "namespace": "pdf-t04-validation",
+        "observed_uid": "33375e63-f88f-48e2-bdf9-89e6ad8007d2",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "f07fb1ed-db49-4726-b583-a47b92fb9058",
+        "name": "activities",
+        "namespace": "pdf-t05-validation",
+        "observed_uid": "f07fb1ed-db49-4726-b583-a47b92fb9058",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "1dcd9af2-5ba3-4dd3-8a32-791bfe924a1e",
+        "name": "objects",
+        "namespace": "pdf-t05-validation",
+        "observed_uid": "1dcd9af2-5ba3-4dd3-8a32-791bfe924a1e",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "addb5865-279a-430d-97b2-4ba4f70aabaf",
+        "name": "temporal",
+        "namespace": "pdf-t05-validation",
+        "observed_uid": "addb5865-279a-430d-97b2-4ba4f70aabaf",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "d776ad65-853b-475d-85b0-59abe6ccc925",
+        "name": "workflows",
+        "namespace": "pdf-t05-validation",
+        "observed_uid": "d776ad65-853b-475d-85b0-59abe6ccc925",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "ace4dbdf-36cd-44b6-9767-928be3ebc758",
+        "name": "activities",
+        "namespace": "pdf-t06-validation",
+        "observed_uid": "ace4dbdf-36cd-44b6-9767-928be3ebc758",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "f066a15b-ca17-40db-a212-786373f9cda5",
+        "name": "objects",
+        "namespace": "pdf-t06-validation",
+        "observed_uid": "f066a15b-ca17-40db-a212-786373f9cda5",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "2079d4c4-7cb2-48d6-b539-0f29077d8c86",
+        "name": "temporal",
+        "namespace": "pdf-t06-validation",
+        "observed_uid": "2079d4c4-7cb2-48d6-b539-0f29077d8c86",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "e37e8d2c-b151-4b46-805d-cbd67f61b0e3",
+        "name": "workflows",
+        "namespace": "pdf-t06-validation",
+        "observed_uid": "e37e8d2c-b151-4b46-805d-cbd67f61b0e3",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "4ca318d9-093c-4ada-9184-eec75c5094d4",
+        "name": "activities",
+        "namespace": "pdf-t07-validation",
+        "observed_uid": "4ca318d9-093c-4ada-9184-eec75c5094d4",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "c8f1a916-0b66-4e13-b5fa-15493a3e1a65",
+        "name": "objects",
+        "namespace": "pdf-t07-validation",
+        "observed_uid": "c8f1a916-0b66-4e13-b5fa-15493a3e1a65",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "b3526e9c-3faa-41b4-a098-dcae0f5e634b",
+        "name": "temporal",
+        "namespace": "pdf-t07-validation",
+        "observed_uid": "b3526e9c-3faa-41b4-a098-dcae0f5e634b",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "d28986b9-3697-4800-adcf-f5915ead4417",
+        "name": "workflows",
+        "namespace": "pdf-t07-validation",
+        "observed_uid": "d28986b9-3697-4800-adcf-f5915ead4417",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "97bbad2f-b01d-4a89-b5d6-d9d20b039f93",
+        "name": "objects",
+        "namespace": "pdf-t08-validation",
+        "observed_uid": "97bbad2f-b01d-4a89-b5d6-d9d20b039f93",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      },
+      {
+        "expected_uid": "5ecdd805-d686-4d43-ba19-dbb16f91f3bb",
+        "name": "temporal",
+        "namespace": "pdf-t08-validation",
+        "observed_uid": "5ecdd805-d686-4d43-ba19-dbb16f91f3bb",
+        "ready_replicas": 0,
+        "spec_replicas": 0
+      }
+    ],
+    "expected": 32,
+    "identity_source": "sentinel/run_yolo_lifecycle_a.py:CANDIDATES",
+    "observed": 32,
+    "observed_rows_sha256": "100c8276b880c3d0ee4a7214f1eba0e86252f05ada79281f95b8b1dedbf50e07",
+    "restored": false
+  },
+  "identity": {
+    "boot_id": "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3",
+    "node": "internal-a2a-vs6-local-worker2",
+    "node_uid": "b33ff221-3443-4b27-83bd-01ce69d0bb01",
+    "reference_container_id": "containerd://75d02af07009f1d7152d6a68958cee5f43508ec1dd0ae327142a42db5e429ca5",
+    "reference_image": "pdf-checkpoint-prototype:linux-v2",
+    "reference_image_id": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+    "reference_pod": "coordinator",
+    "reference_pod_uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+    "reference_restart_count": 1,
+    "scope": "The existing Pod proves immutable image contents and read-only service observations only. Its UID, cgroup and restart count do not satisfy the future D Pod identity gate."
+  },
+  "mode": "read-only existing-resource reconciliation; no D Pod or PVC created",
+  "observed_at": "2026-09-19",
+  "schema_version": 1
+}

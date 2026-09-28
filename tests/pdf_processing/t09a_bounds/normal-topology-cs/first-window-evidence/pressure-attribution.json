@@ -1,0 +1,965 @@
+{
+  "controller_status": "runner_failed",
+  "samples": 1479,
+  "max_gap_seconds": 0.2657814025878906,
+  "maximum_object_bytes": 352731136,
+  "object_full_delta_us": 117,
+  "target_calls": [
+    {
+      "time": 1790525924.5560794,
+      "caller": "__alloc_pages_noprof",
+      "task": {
+        "tid": 1001455,
+        "tgid": 1001437,
+        "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope"
+      },
+      "stack": [
+        "psi_memstall_enter",
+        "__alloc_pages_noprof",
+        "__folio_alloc_noprof",
+        "page_cache_ra_unbounded",
+        "page_cache_ra_order",
+        "page_cache_sync_ra",
+        "filemap_get_pages",
+        "filemap_read",
+        "generic_file_read_iter",
+        "ext4_file_read_iter",
+        "vfs_read",
+        "ksys_read",
+        "__arm64_sys_read",
+        "invoke_syscall.constprop.0",
+        "do_el0_svc",
+        "el0_svc",
+        "el0t_64_sync_handler",
+        "el0t_64_sync"
+      ]
+    },
+    {
+      "time": 1790525924.5563943,
+      "caller": "__alloc_pages_noprof",
+      "task": {
+        "tid": 1001455,
+        "tgid": 1001437,
+        "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope"
+      },
+      "stack": [
+        "psi_memstall_enter",
+        "__alloc_pages_noprof",
+        "__folio_alloc_noprof",
+        "filemap_get_pages",
+        "filemap_read",
+        "generic_file_read_iter",
+        "ext4_file_read_iter",
+        "vfs_read",
+        "ksys_read",
+        "__arm64_sys_read",
+        "invoke_syscall.constprop.0",
+        "do_el0_svc",
+        "el0_svc",
+        "el0t_64_sync_handler",
+        "el0t_64_sync"
+      ]
+    }
+  ],
+  "unattributed_calls": [],
+  "first_object_psi": {
+    "before": {
+      "ancestors": [
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+          "events_local": {
+            "high": 0,
+            "low": 26,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 0,
+          "memory_current": 348069888,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "1073741824",
+          "memory_min": "0",
+          "stat": {
+            "anon": 275845120,
+            "file": 67395584,
+            "kernel": 4333568,
+            "pgscan_direct": 576,
+            "pgscan_kswapd": 2432,
+            "workingset_refault_file": 296
+          },
+          "swap_current": 0
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice",
+          "events_local": {
+            "high": 0,
+            "low": 1,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 0,
+          "memory_current": 348352512,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "1073741824",
+          "memory_min": "0",
+          "stat": {
+            "anon": 275881984,
+            "file": 67411968,
+            "kernel": 4562944,
+            "pgscan_direct": 576,
+            "pgscan_kswapd": 2432,
+            "workingset_refault_file": 296
+          },
+          "swap_current": 0
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3521784,
+          "memory_current": 3472478208,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "max",
+          "memory_min": "0",
+          "stat": {
+            "anon": 2833383424,
+            "file": 366305280,
+            "kernel": 249384960,
+            "pgscan_direct": 44734954,
+            "pgscan_kswapd": 3185910,
+            "workingset_refault_file": 39852949
+          },
+          "swap_current": 4096
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3614292,
+          "memory_current": 3581554688,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "12526280704",
+          "memory_min": "0",
+          "stat": {
+            "anon": 2878087168,
+            "file": 411389952,
+            "kernel": 266911744,
+            "pgscan_direct": 44802285,
+            "pgscan_kswapd": 3810800,
+            "workingset_refault_file": 39861884
+          },
+          "swap_current": 4096
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3452566,
+          "memory_current": 3753160704,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "max",
+          "memory_min": "0",
+          "stat": {
+            "anon": 2993295360,
+            "file": 446517248,
+            "kernel": 278474752,
+            "pgscan_direct": 44814858,
+            "pgscan_kswapd": 3865722,
+            "workingset_refault_file": 39864213
+          },
+          "swap_current": 299008
+        },
+        {
+          "cgroup": "/sys/fs/cgroup",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3564125,
+          "memory_current": 4992626688,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "max",
+          "memory_min": "0",
+          "stat": {
+            "anon": 3389681664,
+            "file": 1088032768,
+            "kernel": 433946624,
+            "pgscan_direct": 44844341,
+            "pgscan_kswapd": 4259314,
+            "workingset_refault_file": 39899551
+          },
+          "swap_current": 107929600
+        }
+      ],
+      "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+      "container_id": "56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b",
+      "kind": "sample",
+      "memory_current": 348069888,
+      "memory_events": {
+        "high": 0,
+        "low": 26,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_max": 1073741824,
+      "node_full_avg10": 0.0,
+      "node_full_total_us": 4838112,
+      "object_full_avg10": 0.0,
+      "object_full_total_us": 0,
+      "pod_uid": "6e22a259-efae-4b65-8755-ae8d4a173ce8",
+      "time": 1790525924.501077,
+      "vmstat": {
+        "allocstall_movable": 4809,
+        "compact_stall": 7313,
+        "oom_kill": 0,
+        "pgscan_direct": 712286,
+        "pgscan_kswapd": 9486843,
+        "workingset_refault_file": 41265492
+      }
+    },
+    "first": {
+      "ancestors": [
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+          "events_local": {
+            "high": 0,
+            "low": 87,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 117,
+          "memory_current": 329572352,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "1073741824",
+          "memory_min": "0",
+          "stat": {
+            "anon": 275845120,
+            "file": 49512448,
+            "kernel": 3960832,
+            "pgscan_direct": 4288,
+            "pgscan_kswapd": 3136,
+            "workingset_refault_file": 296
+          },
+          "swap_current": 0
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice",
+          "events_local": {
+            "high": 0,
+            "low": 1,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 117,
+          "memory_current": 329854976,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "1073741824",
+          "memory_min": "0",
+          "stat": {
+            "anon": 275881984,
+            "file": 49528832,
+            "kernel": 4190208,
+            "pgscan_direct": 4288,
+            "pgscan_kswapd": 3136,
+            "workingset_refault_file": 296
+          },
+          "swap_current": 0
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3521879,
+          "memory_current": 3453964288,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "max",
+          "memory_min": "0",
+          "stat": {
+            "anon": 2833395712,
+            "file": 347635712,
+            "kernel": 248983552,
+            "pgscan_direct": 44738666,
+            "pgscan_kswapd": 3186806,
+            "workingset_refault_file": 39852949
+          },
+          "swap_current": 4096
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3614386,
+          "memory_current": 3563040768,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "12526280704",
+          "memory_min": "0",
+          "stat": {
+            "anon": 2878099456,
+            "file": 392720384,
+            "kernel": 266510336,
+            "pgscan_direct": 44805997,
+            "pgscan_kswapd": 3811696,
+            "workingset_refault_file": 39861884
+          },
+          "swap_current": 4096
+        },
+        {
+          "cgroup": "/sys/fs/cgroup/kubelet.slice",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3452744,
+          "memory_current": 3734659072,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "max",
+          "memory_min": "0",
+          "stat": {
+            "anon": 2993307648,
+            "file": 427847680,
+            "kernel": 278085632,
+            "pgscan_direct": 44818570,
+            "pgscan_kswapd": 3866618,
+            "workingset_refault_file": 39864213
+          },
+          "swap_current": 299008
+        },
+        {
+          "cgroup": "/sys/fs/cgroup",
+          "events_local": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "full_total_us": 3564239,
+          "memory_current": 4974231552,
+          "memory_high": "max",
+          "memory_low": "805306368",
+          "memory_max": "max",
+          "memory_min": "0",
+          "stat": {
+            "anon": 3389767680,
+            "file": 1069363200,
+            "kernel": 433565696,
+            "pgscan_direct": 44848053,
+            "pgscan_kswapd": 4260210,
+            "workingset_refault_file": 39899551
+          },
+          "swap_current": 107929600
+        }
+      ],
+      "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+      "container_id": "56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b",
+      "kind": "sample",
+      "memory_current": 329572352,
+      "memory_events": {
+        "high": 0,
+        "low": 87,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_max": 1073741824,
+      "node_full_avg10": 0.0,
+      "node_full_total_us": 4855468,
+      "object_full_avg10": 0.0,
+      "object_full_total_us": 117,
+      "pod_uid": "6e22a259-efae-4b65-8755-ae8d4a173ce8",
+      "time": 1790525924.75269,
+      "vmstat": {
+        "allocstall_movable": 4959,
+        "compact_stall": 7313,
+        "oom_kill": 0,
+        "pgscan_direct": 722078,
+        "pgscan_kswapd": 9499067,
+        "workingset_refault_file": 41265493
+      }
+    }
+  },
+  "first_sample": {
+    "ancestors": [
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 0,
+        "memory_current": 72187904,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "1073741824",
+        "memory_min": "0",
+        "stat": {
+          "anon": 70721536,
+          "file": 57344,
+          "kernel": 1417216,
+          "pgscan_direct": 0,
+          "pgscan_kswapd": 0,
+          "workingset_refault_file": 0
+        },
+        "swap_current": 0
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 0,
+        "memory_current": 72470528,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "1073741824",
+        "memory_min": "0",
+        "stat": {
+          "anon": 70758400,
+          "file": 73728,
+          "kernel": 1646592,
+          "pgscan_direct": 0,
+          "pgscan_kswapd": 0,
+          "workingset_refault_file": 0
+        },
+        "swap_current": 0
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3521784,
+        "memory_current": 3812458496,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "max",
+        "memory_min": "0",
+        "stat": {
+          "anon": 2370129920,
+          "file": 1154494464,
+          "kernel": 265121792,
+          "pgscan_direct": 44733958,
+          "pgscan_kswapd": 2969509,
+          "workingset_refault_file": 39852565
+        },
+        "swap_current": 4096
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3614185,
+        "memory_current": 3923959808,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "12526280704",
+        "memory_min": "0",
+        "stat": {
+          "anon": 2413862912,
+          "file": 1202982912,
+          "kernel": 282820608,
+          "pgscan_direct": 44801225,
+          "pgscan_kswapd": 3593439,
+          "workingset_refault_file": 39861484
+        },
+        "swap_current": 4096
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3452464,
+        "memory_current": 4099375104,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "max",
+        "memory_min": "0",
+        "stat": {
+          "anon": 2511835136,
+          "file": 1240002560,
+          "kernel": 294854656,
+          "pgscan_direct": 44813619,
+          "pgscan_kswapd": 3641981,
+          "workingset_refault_file": 39863813
+        },
+        "swap_current": 208896
+      },
+      {
+        "cgroup": "/sys/fs/cgroup",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3563297,
+        "memory_current": 5398843392,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "max",
+        "memory_min": "0",
+        "stat": {
+          "anon": 2915794944,
+          "file": 1940824064,
+          "kernel": 452321280,
+          "pgscan_direct": 44842199,
+          "pgscan_kswapd": 3999488,
+          "workingset_refault_file": 39888621
+        },
+        "swap_current": 164102144
+      }
+    ],
+    "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+    "container_id": "56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b",
+    "kind": "sample",
+    "memory_current": 72187904,
+    "memory_events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "memory_max": 1073741824,
+    "node_full_avg10": 0.0,
+    "node_full_total_us": 4802746,
+    "object_full_avg10": 0.0,
+    "object_full_total_us": 0,
+    "pod_uid": "6e22a259-efae-4b65-8755-ae8d4a173ce8",
+    "time": 1790525615.1554506,
+    "vmstat": {
+      "allocstall_movable": 4718,
+      "compact_stall": 7302,
+      "oom_kill": 0,
+      "pgscan_direct": 701677,
+      "pgscan_kswapd": 8983543,
+      "workingset_refault_file": 41172411
+    }
+  },
+  "last_sample": {
+    "ancestors": [
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+        "events_local": {
+          "high": 0,
+          "low": 97,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 117,
+        "memory_current": 352731136,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "1073741824",
+        "memory_min": "0",
+        "stat": {
+          "anon": 278843392,
+          "file": 69586944,
+          "kernel": 4300800,
+          "pgscan_direct": 4864,
+          "pgscan_kswapd": 3136,
+          "workingset_refault_file": 302
+        },
+        "swap_current": 0
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice",
+        "events_local": {
+          "high": 0,
+          "low": 1,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 117,
+        "memory_current": 353013760,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "1073741824",
+        "memory_min": "0",
+        "stat": {
+          "anon": 278880256,
+          "file": 69603328,
+          "kernel": 4530176,
+          "pgscan_direct": 4864,
+          "pgscan_kswapd": 3136,
+          "workingset_refault_file": 302
+        },
+        "swap_current": 0
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3521890,
+        "memory_current": 3496529920,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "max",
+        "memory_min": "0",
+        "stat": {
+          "anon": 2853163008,
+          "file": 370364416,
+          "kernel": 249569280,
+          "pgscan_direct": 44739242,
+          "pgscan_kswapd": 3186934,
+          "workingset_refault_file": 39852986
+        },
+        "swap_current": 4096
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3614397,
+        "memory_current": 3636158464,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "12526280704",
+        "memory_min": "0",
+        "stat": {
+          "anon": 2924707840,
+          "file": 415449088,
+          "kernel": 268001280,
+          "pgscan_direct": 44806573,
+          "pgscan_kswapd": 3811824,
+          "workingset_refault_file": 39861921
+        },
+        "swap_current": 4096
+      },
+      {
+        "cgroup": "/sys/fs/cgroup/kubelet.slice",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3452753,
+        "memory_current": 3805048832,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "max",
+        "memory_min": "0",
+        "stat": {
+          "anon": 3039105024,
+          "file": 450588672,
+          "kernel": 279621632,
+          "pgscan_direct": 44819146,
+          "pgscan_kswapd": 3866746,
+          "workingset_refault_file": 39864250
+        },
+        "swap_current": 299008
+      },
+      {
+        "cgroup": "/sys/fs/cgroup",
+        "events_local": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "full_total_us": 3564244,
+        "memory_current": 5040599040,
+        "memory_high": "max",
+        "memory_low": "805306368",
+        "memory_max": "max",
+        "memory_min": "0",
+        "stat": {
+          "anon": 3431989248,
+          "file": 1092112384,
+          "kernel": 435105792,
+          "pgscan_direct": 44848629,
+          "pgscan_kswapd": 4260338,
+          "workingset_refault_file": 39899588
+        },
+        "swap_current": 107929600
+      }
+    ],
+    "cgroup": "/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod6e22a259_efae_4b65_8755_ae8d4a173ce8.slice/cri-containerd-56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b.scope",
+    "container_id": "56c0ba9ca064c3d9128ffda62b3f021bcc53458780e8d64175b6d9ff27db160b",
+    "kind": "sample",
+    "memory_current": 352731136,
+    "memory_events": {
+      "high": 0,
+      "low": 97,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "memory_max": 1073741824,
+    "node_full_avg10": 0.0,
+    "node_full_total_us": 4913512,
+    "object_full_avg10": 0.0,
+    "object_full_total_us": 117,
+    "pod_uid": "6e22a259-efae-4b65-8755-ae8d4a173ce8",
+    "time": 1790525989.2724192,
+    "vmstat": {
+      "allocstall_movable": 5019,
+      "compact_stall": 7329,
+      "oom_kill": 0,
+      "pgscan_direct": 726110,
+      "pgscan_kswapd": 9504635,
+      "workingset_refault_file": 41268200
+    }
+  },
+  "object_psi_policy": {
+    "mode": "functional_diagnostic",
+    "stop_full_avg10_above": 0,
+    "cumulative_full_total_stop": false
+  },
+  "maximum_object_full_avg10": 0.0,
+  "original_zero_object_full_psi_passed": false,
+  "controller_stop": {
+    "time": 1790525925.335335,
+    "monotonic": 622707.361781,
+    "type": "ValueError",
+    "reason": "VM PSI guard breached",
+    "automatic_retry": false
+  },
+  "vm_sample_at_stop": {
+    "available": 3289587712,
+    "cgroup_memory_pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=33803\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=31629\n",
+    "evidence_filesystem_free_bytes": 1785494298624,
+    "evidence_free_bytes": 1060712680,
+    "evidence_used_bytes": 13029144,
+    "memory_current": 2247704576,
+    "memory_events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "memory_stat": {
+      "active_anon": 1863536640,
+      "active_file": 28753920,
+      "anon": 1863585792,
+      "anon_thp": 0,
+      "file": 343842816,
+      "file_dirty": 11063296,
+      "file_mapped": 11390976,
+      "file_thp": 0,
+      "file_writeback": 0,
+      "inactive_anon": 0,
+      "inactive_file": 315109376,
+      "kernel": 37068800,
+      "kernel_stack": 1703936,
+      "pagetables": 8667136,
+      "percpu": 5760,
+      "pgactivate": 1,
+      "pgdeactivate": 0,
+      "pgdemote_direct": 0,
+      "pgdemote_khugepaged": 0,
+      "pgdemote_kswapd": 0,
+      "pgfault": 8323126,
+      "pglazyfree": 0,
+      "pglazyfreed": 0,
+      "pgmajfault": 352,
+      "pgrefill": 234,
+      "pgscan": 28864,
+      "pgscan_direct": 2368,
+      "pgscan_khugepaged": 0,
+      "pgscan_kswapd": 26496,
+      "pgsteal": 28860,
+      "pgsteal_direct": 2368,
+      "pgsteal_khugepaged": 0,
+      "pgsteal_kswapd": 26492,
+      "sec_pagetables": 0,
+      "shmem": 4096,
+      "shmem_thp": 0,
+      "slab": 26505424,
+      "slab_reclaimable": 24718136,
+      "slab_unreclaimable": 1787288,
+      "sock": 4096,
+      "swapcached": 0,
+      "swpin_zero": 0,
+      "swpout_zero": 0,
+      "thp_collapse_alloc": 0,
+      "thp_fault_alloc": 0,
+      "thp_swpout": 0,
+      "thp_swpout_fallback": 0,
+      "unevictable": 0,
+      "vmalloc": 32768,
+      "workingset_activate_anon": 0,
+      "workingset_activate_file": 7104,
+      "workingset_nodereclaim": 0,
+      "workingset_refault_anon": 0,
+      "workingset_refault_file": 7216,
+      "workingset_restore_anon": 0,
+      "workingset_restore_file": 0,
+      "zswap": 0,
+      "zswapped": 0,
+      "zswpin": 0,
+      "zswpout": 0,
+      "zswpwb": 0
+    },
+    "node_memory_pressure": "some avg10=0.18 avg60=0.03 avg300=0.00 total=5024530\nfull avg10=0.18 avg60=0.03 avg300=0.00 total=4860727\n",
+    "node_vmstat": {
+      "allocstall_dma": 0,
+      "allocstall_dma32": 0,
+      "allocstall_movable": 5000,
+      "allocstall_normal": 28,
+      "compact_daemon_free_scanned": 0,
+      "compact_daemon_migrate_scanned": 0,
+      "compact_daemon_wake": 0,
+      "compact_fail": 4022,
+      "compact_free_scanned": 44101197,
+      "compact_isolated": 3325311,
+      "compact_migrate_scanned": 8781295,
+      "compact_stall": 7313,
+      "compact_success": 3291,
+      "pgscan_anon": 1340484,
+      "pgscan_direct": 724766,
+      "pgscan_direct_throttle": 7,
+      "pgscan_file": 53619951,
+      "pgscan_khugepaged": 24679,
+      "pgscan_kswapd": 9501627,
+      "pgsteal_anon": 410090,
+      "pgsteal_direct": 604039,
+      "pgsteal_file": 50387626,
+      "pgsteal_khugepaged": 20912,
+      "pgsteal_kswapd": 8425822,
+      "thp_collapse_alloc": 62438,
+      "thp_collapse_alloc_failed": 3,
+      "thp_deferred_split_page": 65360,
+      "thp_fault_alloc": 821237,
+      "thp_fault_fallback": 80975,
+      "thp_fault_fallback_charge": 300,
+      "thp_file_alloc": 0,
+      "thp_file_fallback": 0,
+      "thp_file_fallback_charge": 0,
+      "thp_file_mapped": 0,
+      "thp_migration_fail": 0,
+      "thp_migration_split": 0,
+      "thp_migration_success": 0,
+      "thp_scan_exceed_none_pte": 14518,
+      "thp_scan_exceed_share_pte": 0,
+      "thp_scan_exceed_swap_pte": 0,
+      "thp_split_page": 247,
+      "thp_split_page_failed": 0,
+      "thp_split_pmd": 211996,
+      "thp_swpout": 0,
+      "thp_swpout_fallback": 7,
+      "thp_underused_split_page": 0,
+      "thp_zero_page_alloc": 1,
+      "thp_zero_page_alloc_failed": 0
+    },
+    "psi_full_avg10": 0.18,
+    "sample_started_at": 1790525925.334868,
+    "time": 1790525925.335335,
+    "vm_oom_kill": 0
+  },
+  "worker_max_bytes": 2281553920,
+  "vm_minimum_available_bytes": 3261558784
+}

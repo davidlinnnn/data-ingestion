@@ -1,0 +1,78 @@
+{
+  "decision": {
+    "deployment_creation_authorized": false,
+    "issue_51_gate_remains_open": true,
+    "pod_gate_reassigned_to_issue_46": false,
+    "runtime_authorized": false
+  },
+  "pod_mode": {
+    "minimum_q04_requalification": "one new owned native-fixture drain using the integrated producer, actual Temporal/shared storage, and actual Pod replacement after the documented topology is reviewed",
+    "required_observations": [
+      "five pages committed before exact-UID deletion",
+      "first group retained; pages 6-10 alone retry on replacement",
+      "old API UID absent and replacement UID distinct",
+      "old CRI container stopped and old emptyDir absent",
+      "VM telemetry across replacement and separate old/new cgroup streams",
+      "complete checked graph equals the Q04 fresh baseline",
+      "zero forbidden publication and complete owned cleanup on failure"
+    ],
+    "status": "unqualified"
+  },
+  "process_mode": {
+    "claim_if_passed": "actual Temporal/shared-store worker-process recovery only",
+    "pod_loss_claim": false,
+    "role": "optional preflight; does not close the Pod recovery gate",
+    "status": "unproven"
+  },
+  "r3_evidence": {
+    "evidence": {
+      "integration_review": {
+        "path": "tests/pdf_processing/T09A-R3-INTEGRATION.md",
+        "sha256": "82dc4dc9bfd013500853b8afafd936594576e0f9bd7fbee7a4543bac5da22393"
+      },
+      "r3_controller": {
+        "path": "tests/pdf_processing/t09a_r3/evidence/20260914-0b537d0-c/drain-native-resume-controller.json",
+        "sha256": "bba437b172e47e65506f6dd191618236f5759764174db4ad729324cdf1f8d552"
+      },
+      "r3_matrix": {
+        "path": "tests/pdf_processing/t09a_r3/evidence/20260914-0b537d0-c/matrix.json",
+        "sha256": "4a9796b1d8c8ad80573aee0a47b02867d53ddf437c9e3ec74ca74c112bb7adbe"
+      }
+    },
+    "not_reusable_as_q04_pass": [
+      "R3 group/assembly registrations or outputs",
+      "R3 selection/OCR/evidence/finalize results",
+      "R3 attempt counts or final equality under the integrated producer",
+      "R3 resource measurements as an integrated bound"
+    ],
+    "reusable": [
+      "five-page retention and unfinished-group retry oracle",
+      "exact Pod UID delete precondition and replacement UID observation",
+      "old CRI container and emptyDir absence checks",
+      "old/new cgroup stream and continuous VM telemetry method",
+      "owned cleanup and final-equality assertion pattern"
+    ],
+    "status": "supporting_method_and_topology_only"
+  },
+  "schema_version": 1,
+  "stage_impact": {
+    "all_delivery_stages_affected": true,
+    "changed_stages": [
+      "assembly",
+      "evidence",
+      "finalize",
+      "group",
+      "ocr",
+      "selection"
+    ],
+    "r3_to_integrated_direct_changes": {
+      "assembly": true,
+      "evidence": true,
+      "finalize": true,
+      "group": true,
+      "ocr": true,
+      "selection": true
+    },
+    "source": "tests/pdf_processing/q04/evidence/static-audit-v2.json"
+  }
+}

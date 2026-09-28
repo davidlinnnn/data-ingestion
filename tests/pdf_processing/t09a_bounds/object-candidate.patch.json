@@ -1,0 +1,16 @@
+{
+  "spec": {
+    "strategy": {"type": "Recreate", "rollingUpdate": null},
+    "template": {
+      "spec": {
+        "containers": [{
+          "name": "minio",
+          "resources": {
+            "requests": {"cpu": "100m", "memory": "768Mi"},
+            "limits": {"memory": "1Gi"}
+          }
+        }]
+      }
+    }
+  }
+}

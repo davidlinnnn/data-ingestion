@@ -1,0 +1,114 @@
+{
+  "failed_gates": [
+    "workload_imports"
+  ],
+  "gates": {
+    "cgroup": {
+      "memory_max": "5368709120",
+      "oom_counters": {
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "status": "PASS"
+    },
+    "configuration": {
+      "bundle_inputs_sha256": "c11923940277d4ddbad70e7fa6f5413f846be99fead32285c3d2354e05a52ac8",
+      "capacity_sha256": "efaca92d7ffa9bb88837600d8b3bde92afb4bfdce17c8390a9bcee9901eefd80",
+      "source_manifest_sha256": "bb65177b8411ac0a8a4395e801dbce86fa202a79e0613fde0484530470461070",
+      "status": "PASS"
+    },
+    "image_identity": {
+      "container_id": "containerd://0aa90f63f7249d8bb35e98007a3333315ce46d6c4bfdf42270b47ac53648895d",
+      "image_id": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "image_id_representation": "repository-platform-manifest",
+      "node": "internal-a2a-vs6-local-worker2",
+      "pod_name": "q04-pod-cgroup-z-activities-fb6988748-5xs62",
+      "pod_uid": "0880c167-e5da-4d07-b6a8-cb5030e56eb8",
+      "restart_count": 0,
+      "status": "PASS"
+    },
+    "models": {
+      "cache_artifacts": 14,
+      "model_artifacts": 17,
+      "package_artifacts": 3,
+      "status": "PASS"
+    },
+    "mount_and_path": {
+      "capacity": {
+        "evidence_free_bytes": 1073739495,
+        "evidence_used_bytes": 2329,
+        "filesystem_free_bytes": 1799410339840,
+        "requested_bytes": 1073741824
+      },
+      "directory": {
+        "directory": true,
+        "gid": 1000,
+        "label": "application-owned-run-directory",
+        "mode": "0o700",
+        "path": "/q04-evidence/q04-warm-pod-cgroup-20260921-z",
+        "symlink": false,
+        "uid": 1000,
+        "writable": true
+      },
+      "mount": {
+        "directory": true,
+        "gid": 0,
+        "label": "storage-backend-owned-mount-root",
+        "mode": "0o777",
+        "path": "/q04-evidence",
+        "symlink": false,
+        "uid": 0,
+        "writable": true
+      },
+      "process": {
+        "gid": 1000,
+        "uid": 1000
+      },
+      "schema_version": 1,
+      "status": "PASS"
+    },
+    "object_storage": {
+      "bucket_versioning": "Enabled",
+      "object_health": 200,
+      "object_prefix_unused": true,
+      "status": "PASS"
+    },
+    "packages_imports": {
+      "packages": {
+        "boto3": "1.40.24",
+        "pillow": "12.3.0",
+        "psutil": "7.2.2",
+        "temporalio": "1.23.0"
+      },
+      "status": "PASS"
+    },
+    "python_executable": {
+      "python": "3.12.13",
+      "python_executable": "/experiment/.venv/bin/python",
+      "status": "PASS"
+    },
+    "source_hashes": {
+      "harness_files": 71,
+      "harness_set_sha256": "f74656bc2075ebd5c27374bef62f15a1db435da3767b6e182fe1a58084dcfc2f",
+      "producer_files": 20,
+      "producer_set_sha256": "f7a5de6a607668e9ff086729fb3ece0334567346d7d683277126ded4baee335c",
+      "status": "PASS"
+    },
+    "temporal": {
+      "status": "PASS",
+      "temporal_healthy": true,
+      "temporal_running": []
+    },
+    "workload_imports": {
+      "error_type": "ValueError",
+      "reason": "runtime scope digest changed",
+      "status": "FAIL"
+    }
+  },
+  "inference_started": false,
+  "object_written": false,
+  "schema_version": 1,
+  "status": "FAIL_PRE_INFERENCE",
+  "workflow_started": false
+}

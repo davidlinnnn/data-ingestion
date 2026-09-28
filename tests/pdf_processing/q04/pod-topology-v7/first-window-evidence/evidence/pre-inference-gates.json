@@ -1,0 +1,139 @@
+{
+  "failed_gates": [],
+  "gates": {
+    "cgroup": {
+      "memory_max": "5368709120",
+      "oom_counters": {
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "status": "PASS"
+    },
+    "configuration": {
+      "bundle_inputs_sha256": "67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420",
+      "capacity_sha256": "50496ce09270353db55d06e99276f42e4a8aff237301a342667f73bc59aade9a",
+      "source_manifest_sha256": "8495db4d1fcbd4ee9a054cb8ae1f74cd7304c5f55b8d1d8ece08767720ab543b",
+      "status": "PASS"
+    },
+    "image_identity": {
+      "container_id": "containerd://253612a88570b19cea1b36a6973f7cd3c7de3db03e00358583913156161275dd",
+      "image_id": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "image_id_representation": "repository-platform-manifest",
+      "node": "internal-a2a-vs6-local-worker2",
+      "pod_name": "q04-pod-cgroup-h-activities-75f798974c-bkwgr",
+      "pod_uid": "1809ed1b-fbed-426b-bb66-4c349bb59d4d",
+      "restart_count": 0,
+      "status": "PASS"
+    },
+    "models": {
+      "cache_artifacts": 14,
+      "model_artifacts": 17,
+      "package_artifacts": 3,
+      "status": "PASS"
+    },
+    "mount_and_path": {
+      "capacity": {
+        "evidence_free_bytes": 1073739495,
+        "evidence_used_bytes": 2329,
+        "filesystem_free_bytes": 1801951145984,
+        "requested_bytes": 1073741824
+      },
+      "directory": {
+        "directory": true,
+        "gid": 1000,
+        "label": "application-owned-run-directory",
+        "mode": "0o700",
+        "path": "/q04-evidence/q04-yolo-pod-cgroup-20260920-h",
+        "symlink": false,
+        "uid": 1000,
+        "writable": true
+      },
+      "mount": {
+        "directory": true,
+        "gid": 0,
+        "label": "storage-backend-owned-mount-root",
+        "mode": "0o777",
+        "path": "/q04-evidence",
+        "symlink": false,
+        "uid": 0,
+        "writable": true
+      },
+      "process": {
+        "gid": 1000,
+        "uid": 1000
+      },
+      "schema_version": 1,
+      "status": "PASS"
+    },
+    "object_storage": {
+      "bucket_versioning": "Enabled",
+      "object_health": 200,
+      "object_prefix_unused": true,
+      "status": "PASS"
+    },
+    "packages_imports": {
+      "packages": {
+        "boto3": "1.40.24",
+        "pillow": "12.3.0",
+        "psutil": "7.2.2",
+        "temporalio": "1.23.0"
+      },
+      "status": "PASS"
+    },
+    "python_executable": {
+      "python": "3.12.13",
+      "python_executable": "/experiment/.venv/bin/python",
+      "status": "PASS"
+    },
+    "source_hashes": {
+      "harness_files": 52,
+      "harness_set_sha256": "e59f878bf9b0c1ae813f13d1c761c8ab56e81c022105fedb262c0dc21ca8d65a",
+      "producer_files": 20,
+      "producer_set_sha256": "a6501b471bd3193a7b0e890b386174a022aa9f1b63dca6432ae85e14b9f5af3d",
+      "status": "PASS"
+    },
+    "temporal": {
+      "status": "PASS",
+      "temporal_healthy": true,
+      "temporal_running": []
+    },
+    "workload_imports": {
+      "modules": [
+        "candidate.yolo_reviewed_window",
+        "pod_init_h",
+        "pod_workload_h",
+        "pod_remote_evidence_h"
+      ],
+      "reviewed_contract": {
+        "artifact_sha256": {
+          "candidate_inputs": "67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420",
+          "equivalence_bundle": "d249a3894b004d27adde302bd75176e4df5886be75343f7e17c80b0c5ba83dc8",
+          "historical_methods": "eb58ea3afd15952ef06390d62e3f5fc48f7f213d046e2ca210b11f247b8b83a9",
+          "main_review": "678ca47d52f9fd3346618c1a597d5929df3fd7459b598aae8e051c9ca9c460bd",
+          "parser_budgets": "b418d07d18500681a1b9e6828621c31d26fb5d3ba01791f3c2a64bda00407551",
+          "reference_graph": "a3ac9eb345949cdc83423ba1ae38c794400e8f4f89061056c1102517b6a1e6a1",
+          "resource_analysis": "d14792535dc0d37ec9d86a5316aab744250c070b5fa0cddb4155161c9880be69",
+          "resource_bundle": "0ab2656b51e12a05ec568eb9455bb1f0f1abf12922b5ae5c3170731ef4c7a76c",
+          "source_pdf": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab"
+        },
+        "review_status": "ACCEPTED_FOR_NEXT_FIXTURE07_CANDIDATE_ONLY",
+        "runtime_identity": {
+          "driver_lock": "/q04-control/yolo-pod-cgroup-h.driver.lock",
+          "local_output": "/private/tmp/q04-yolo-pod-cgroup-20260920-h",
+          "phase": "yolo-pod-cgroup-h",
+          "prefix": "q04/yolo-pod-cgroup-20260920-h/",
+          "remote_root": "/q04-control",
+          "runner_dir": "/workspace/tests/pdf_processing/q04"
+        },
+        "status": "PASS"
+      },
+      "status": "PASS"
+    }
+  },
+  "inference_started": false,
+  "object_written": false,
+  "schema_version": 1,
+  "status": "PASS_PRE_INFERENCE",
+  "workflow_started": false
+}

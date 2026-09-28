@@ -1,0 +1,88 @@
+{
+  "normal": {
+    "wall_seconds": 112.25380275900011,
+    "started_activities": 13,
+    "registered": 13,
+    "reused": 0,
+    "observed_completed_stage_inputs": {
+      "model_initialization": 0,
+      "PagePreprocessingModel": 51,
+      "RapidOcrModel": 51,
+      "LayoutModel": 51,
+      "TableStructureModel": 51,
+      "PageAssembleModel": 51,
+      "checkpoint_commit": 51,
+      "checkpoint_load": 51,
+      "document_assembly": 0
+    },
+    "io_successful_requests": {
+      "get_bytes": 327662184,
+      "put_bytes": 76449916,
+      "get_seconds": 0.6860444949998055,
+      "put_seconds": 0.647183168000538
+    },
+    "accepted_payload_bytes": 76402784,
+    "completed_identity_recomputation": [],
+    "ocr_label_recall": 1.0
+  },
+  "fault": {
+    "wall_seconds": 244.75592519499992,
+    "started_activities": 17,
+    "registered": 13,
+    "reused": 1,
+    "observed_completed_stage_inputs": {
+      "model_initialization": 0,
+      "PagePreprocessingModel": 61,
+      "RapidOcrModel": 61,
+      "LayoutModel": 61,
+      "TableStructureModel": 61,
+      "PageAssembleModel": 58,
+      "checkpoint_commit": 58,
+      "checkpoint_load": 102,
+      "document_assembly": 0
+    },
+    "io_successful_requests": {
+      "get_bytes": 327661155,
+      "put_bytes": 76449567,
+      "get_seconds": 0.6992929539960642,
+      "put_seconds": 0.6361878800016711
+    },
+    "accepted_payload_bytes": 76402620,
+    "completed_identity_recomputation": [],
+    "ocr_label_recall": 1.0,
+    "fault_recovery": [
+      {
+        "point": "registered_before_activity_ack",
+        "seconds_to_registered_or_reused": 15.788862466812134
+      },
+      {
+        "point": "parse_after_page_7_before_group_registration",
+        "seconds_to_registered_or_reused": 41.186662673950195
+      },
+      {
+        "point": "after_one_shared_object_before_registration",
+        "seconds_to_registered_or_reused": 33.29530119895935
+      },
+      {
+        "point": "assembly_at_reading_order_entry",
+        "seconds_to_registered_or_reused": 22.371842622756958
+      },
+      {
+        "point": "ocr_before_inference_after_engine_init",
+        "seconds_to_registered_or_reused": 18.192749500274658
+      }
+    ]
+  },
+  "reuse": {
+    "wall_seconds": 0.5232665420001013,
+    "started_activities": 0,
+    "registered": 0,
+    "reused": 13,
+    "observed_completed_stage_inputs": {},
+    "io_successful_requests": {},
+    "accepted_payload_bytes": 0,
+    "completed_identity_recomputation": [],
+    "ocr_label_recall": null
+  },
+  "limits": "Single local kind node; stage counts are persisted completed-call observations, not exact in-flight model invocations. Upload polling adds up to one second per accepted Activity. I/O excludes failed requests and process-lost counters. No production throughput/HA claim."
+}

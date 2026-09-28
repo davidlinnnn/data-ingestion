@@ -1,0 +1,106 @@
+{
+  "platform": "Linux-6.12.76-linuxkit-aarch64-with-glibc2.41",
+  "producer": {
+    "__init__.py": "0618cd3d1c2dcb31f3d55be51482527ae8b04da932147c6d3a247a2921352712",
+    "execution.py": "66ae3bdf936b6e5e9238de2dcddaaf99e8103460b452d5da578a00dfe5c0575c",
+    "object_store.py": "7289a3733fccebd829b6fb44cdeded130124a1f4cc1b2fa19a614cc2ee2f0d7d",
+    "ocr.py": "9a469dc363f08d52beead5ceb9ff5feae26b4a4adb33feca1eef10713b0cc70c",
+    "parse.py": "e4d1dd1121a96130db6a47efb9de68c0e63f58e23813bfdbe6bfc4f2a6a4ecfe",
+    "preflight.py": "13f08bb6d335d9cc3f67ce7c762411eda69f8371136f2ffdf7a552cfcc7a1122",
+    "processing.py": "25de559f222027ab2272cdd1dfcb4a299e49d1816987ffa9ea43a82e04e8e2a3",
+    "processing_workflow.py": "83d07a8fbd0d951bf9cf951438f9f8ecb47ca8fb000a4f0a53db1689de081632",
+    "supervision.py": "66637b44e2c7b91bc7282d4d72db1d4025cf857165402f17dbf2ad3961101df4",
+    "temporal.py": "5a3c5b2f5514ca7d793b6d69d0ed00c52b778dbe54e5af5f5b9a17c0d50beb12",
+    "warm_child.py": "75c325385496c43d417c73597ace32183dbbdbf97fac41c9608810b2a9f38657"
+  },
+  "python": "3.12.13",
+  "pods": [
+    {
+      "name": "activities-69bc6d8449-9p4ll",
+      "uid": "ebbc378e-6a94-4492-a0c8-5026e4134638",
+      "node": "internal-a2a-vs6-local-worker2",
+      "images": [
+        "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+      ],
+      "resources": [
+        {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "coordinator",
+      "uid": "0c6b4f9c-10c9-42bd-a491-306b28f47adf",
+      "node": "internal-a2a-vs6-local-worker2",
+      "images": [
+        "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+      ],
+      "resources": [
+        {}
+      ]
+    },
+    {
+      "name": "objects-77db79d55d-s424q",
+      "uid": "575b6e92-13c3-4218-8a5e-9b02a6d99835",
+      "node": "internal-a2a-vs6-local-worker2",
+      "images": [
+        "docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e"
+      ],
+      "resources": [
+        {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "temporal-bf44c7c45-vb8w9",
+      "uid": "c8fa3952-dfee-4132-8fab-66e44f4fd28e",
+      "node": "internal-a2a-vs6-local-worker2",
+      "images": [
+        "docker.io/temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d"
+      ],
+      "resources": [
+        {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "workflows-86cbcb645-pgb4g",
+      "uid": "804baa7b-858e-41b3-b247-dab9b20c9737",
+      "node": "internal-a2a-vs6-local-worker2",
+      "images": [
+        "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+      ],
+      "resources": [
+        {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "q04-proc-startup-20260920",
+  "uid": "e3b9380b-866e-41df-bcc4-920ffecd2942",
+  "spec": {
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+      "name": "q04-proc-startup-20260920"
+    },
+    "spec": {
+      "restartPolicy": "Never",
+      "activeDeadlineSeconds": 120,
+      "nodeName": "internal-a2a-vs6-local-worker2",
+      "automountServiceAccountToken": false,
+      "securityContext": {
+        "runAsUser": 1000,
+        "runAsGroup": 1000
+      },
+      "containers": [
+        {
+          "name": "probe",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "imagePullPolicy": "Never",
+          "command": [
+            "/bin/sleep",
+            "110"
+          ],
+          "resources": {
+            "requests": {
+              "memory": "64Mi",
+              "cpu": "100m"
+            },
+            "limits": {
+              "memory": "256Mi",
+              "cpu": "1"
+            }
+          },
+          "securityContext": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            }
+          },
+          "startupProbe": {
+            "exec": {
+              "command": [
+                "/bin/true"
+              ]
+            },
+            "periodSeconds": 2,
+            "failureThreshold": 15
+          }
+        }
+      ]
+    }
+  }
+}

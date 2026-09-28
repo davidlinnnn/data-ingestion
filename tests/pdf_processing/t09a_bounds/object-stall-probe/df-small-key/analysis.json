@@ -1,0 +1,55 @@
+{
+  "status": "PASS_NEGATIVE_CONTROL",
+  "formal_guard_failures": [],
+  "operations": {
+    "objects": 256,
+    "batches": 16,
+    "bytes_each_direction": 2737516,
+    "source_prefix": "t09a/bounds-20260928-dd/",
+    "destination_prefix": "t09a/object-probe-20260928-df/",
+    "latency_seconds": {
+      "source_get_seconds": {
+        "minimum": 0.0006275830091908574,
+        "median": 0.0007703960000071675,
+        "maximum": 0.006910249998327345
+      },
+      "put_seconds": {
+        "minimum": 0.0013415419962257147,
+        "median": 0.0017078750242944807,
+        "maximum": 0.007376916008070111
+      },
+      "dest_get_seconds": {
+        "minimum": 0.0005792920128442347,
+        "median": 0.0007368959777522832,
+        "maximum": 0.0011435830383561552
+      }
+    }
+  },
+  "samples": 79,
+  "maximum_object_bytes": 204230656,
+  "minimum_vm_available": 5466816512,
+  "object_full_psi_delta_us": 0.0,
+  "object_local_event_deltas": {
+    "low": 0,
+    "high": 0,
+    "max": 0,
+    "oom": 0,
+    "oom_kill": 0,
+    "oom_group_kill": 0
+  },
+  "vm_counter_deltas": {
+    "oom_kill": 0,
+    "pgscan_direct": 0,
+    "pgscan_kswapd": 0,
+    "compact_stall": 2,
+    "allocstall_movable": 0,
+    "workingset_refault_file": 10355
+  },
+  "vm_callers": {
+    "folio_wait_bit_common": 10,
+    "__alloc_pages_direct_compact": 2
+  },
+  "target_object_calls": [],
+  "trace_loss": 0,
+  "interpretation": "DD many-small-key copy/readback did not reproduce object PSI"
+}

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "candidate": "q04-yolo-resource-v1",
+  "fixture": "07",
+  "status": "PENDING_MAIN_APPROVAL",
+  "runtime_active": false,
+  "production_change": false,
+  "source_run": "yolo-lifecycle-a",
+  "source_archive_sha256": "5c183da78740cb68cc7114dc06a4e2a7bd890b17c7f7637dd69adc8495bb9bc9",
+  "source_analysis_sha256": "d14792535dc0d37ec9d86a5316aab744250c070b5fa0cddb4155161c9880be69",
+  "candidate_parser_budgets_sha256": "b418d07d18500681a1b9e6828621c31d26fb5d3ba01791f3c2a64bda00407551",
+  "baseline_parser_budgets": {
+    "startup_seconds": 120,
+    "no_progress_seconds": 180,
+    "terminate_seconds": 5,
+    "reap_seconds": 5,
+    "max_requests": 20
+  },
+  "allowed_diff": {
+    "max_requests": {
+      "before": 20,
+      "after": 1
+    }
+  },
+  "unchanged_resource_gate": {
+    "max_cgroup_bytes": 4294967296,
+    "sample_contract": "all complete 250 ms attribution samples, with owned_cleanup_finished and post_cleanup_sample on the final sample",
+    "oom_max": 0,
+    "psi_full_avg10_max": 0.0
+  },
+  "evidence_basis": {
+    "same_warm_parser_pid_for_three_groups": true,
+    "reported_recycles": [
+      0,
+      0,
+      0
+    ],
+    "parser_peak_rss_high_water_kib": [
+      1820176,
+      1906860,
+      1994884
+    ],
+    "only_violation": {
+      "sample_index": 322,
+      "phase": "group_3_warm_parse",
+      "memory_current_bytes": 4403523584
+    },
+    "warm_fresh_overlap": false
+  },
+  "success_conditions": [
+    "all attribution samples are complete",
+    "every sample is at or below 4294967296 bytes and the final sample carries owned_cleanup_finished and post_cleanup_sample",
+    "warm/fresh overlap remains absent and handoff is observed",
+    "fresh graph/oracle and cleanup gates pass under a new identity"
+  ],
+  "fallback": "If this candidate still fails, stop lifecycle tuning and use a dedicated cgroup or Linux validation host under the same 4 GiB limit.",
+  "validator_sha256": "7ac32da2f53c8e9846c071cd77e8bc628e838f7b880eda16ab88bab57903d29d"
+}

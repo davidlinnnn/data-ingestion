@@ -1,0 +1,73 @@
+{
+  "trial": "preflight-10",
+  "sid": "10",
+  "started": 1789388415.5584111,
+  "status": "failed_or_interrupted",
+  "pod": "r2-activities-20260914-0b537d0-b-6d6bf8bf64-d4kg9",
+  "pod_uid": "41124705-f2f9-4354-9a87-a10c57358845",
+  "before": [
+    {
+      "allocatedResources": {
+        "cpu": "100m",
+        "memory": "256Mi"
+      },
+      "containerID": "containerd://195b5fd0502eee3884b25153cdab295ad47432d43320e43720bf2203fde62e3f",
+      "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+      "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "lastState": {},
+      "name": "worker",
+      "ready": true,
+      "resources": {
+        "limits": {
+          "cpu": "4",
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        }
+      },
+      "restartCount": 0,
+      "started": true,
+      "state": {
+        "running": {
+          "startedAt": "2026-09-14T12:20:16Z"
+        }
+      },
+      "user": {
+        "linux": {
+          "gid": 0,
+          "supplementalGroups": [
+            0
+          ],
+          "uid": 0
+        }
+      },
+      "volumeMounts": [
+        {
+          "mountPath": "/app/pdf_processing",
+          "name": "code"
+        },
+        {
+          "mountPath": "/driver",
+          "name": "driver"
+        },
+        {
+          "mountPath": "/scratch",
+          "name": "scratch"
+        },
+        {
+          "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "name": "kube-api-access-gc9tk",
+          "readOnly": true,
+          "recursiveReadOnly": "Disabled"
+        }
+      ]
+    }
+  ],
+  "oom_before": 28,
+  "submitted_at": 1789388417.1030772,
+  "error": "Verifier failed; retain log",
+  "finished": 1789388420.23002,
+  "continuous_observation": false
+}

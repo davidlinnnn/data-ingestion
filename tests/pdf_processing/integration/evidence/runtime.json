@@ -1,0 +1,804 @@
+[
+  {
+    "name": "activities-68dd5cdc7f-89r89",
+    "uid": "9e72d98b-aacb-49ff-b2ac-b81f0e62b55e",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "worker",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "settings": [
+          {
+            "name": "TASK_QUEUE",
+            "value": "integration-pdf"
+          },
+          {
+            "name": "LIMITS",
+            "value": "{\"max_bytes\":4194304,\"max_pages\":100,\"max_page_pixels\":20000000,\"preflight_seconds\":30,\"child_seconds\":540}"
+          },
+          {
+            "name": "DRAIN_SECONDS",
+            "value": "30"
+          },
+          {
+            "name": "PARSER_BUDGETS",
+            "value": "{\"terminate_seconds\":5,\"reap_seconds\":5}"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "containerID": "containerd://2987c233d7f09145a685ef699c4ae39781b926d656c6382b77adba1e5f5dc755",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {
+          "terminated": {
+            "containerID": "containerd://779de302978aba61b48b7b3d0eb930fa2ebb60b07f3c620512c4e237292940a6",
+            "exitCode": 1,
+            "finishedAt": "2026-09-13T05:52:43Z",
+            "reason": "Error",
+            "startedAt": "2026-09-13T05:52:42Z"
+          }
+        },
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "restartCount": 2,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T05:52:58Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-f8xn4",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "coordinator",
+    "uid": "87cb883d-6f71-47c0-9d12-99c148ca9573",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "coordinator",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {},
+        "settings": []
+      }
+    ],
+    "statuses": [
+      {
+        "containerID": "containerd://b3713ed43b990214cab0d989882eaa51b4c36f81a3bb9f0b487219cb62e1bb8c",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {},
+        "name": "coordinator",
+        "ready": true,
+        "resources": {},
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T05:52:41Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/fixtures",
+            "name": "fixtures"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-mgwtq",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "objects-8865c4db6-gjbsn",
+    "uid": "bcba00a6-b7b0-4ca9-9872-2e5ac6beddd4",
+    "grace_seconds": 30,
+    "containers": [
+      {
+        "name": "minio",
+        "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "settings": []
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        },
+        "containerID": "containerd://905becd77328d67587e1a07ab9f726634277cf69d0d087d4f2dcdb40e836bc05",
+        "image": "docker.io/minio/minio:latest",
+        "imageID": "docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "lastState": {},
+        "name": "minio",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T05:52:44Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/data",
+            "name": "data"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-sggqq",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ocr-active",
+    "uid": "b252416b-5d4d-4c6a-bd44-44f134caf929",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "worker",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "settings": [
+          {
+            "name": "TASK_QUEUE",
+            "value": "integration-active"
+          },
+          {
+            "name": "LIMITS",
+            "value": "{\"max_bytes\":4194304,\"max_pages\":100,\"max_page_pixels\":20000000,\"preflight_seconds\":30,\"child_seconds\":540}"
+          },
+          {
+            "name": "DRAIN_SECONDS",
+            "value": "30"
+          },
+          {
+            "name": "PARSER_BUDGETS",
+            "value": "{\"terminate_seconds\":5,\"reap_seconds\":5}"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "containerID": "containerd://21aaff2c34b950d7745c3bcfdbf64de81e82635e05ab9f324779f8a9711e571d",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {},
+        "name": "worker",
+        "ready": false,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": false,
+        "state": {
+          "terminated": {
+            "containerID": "containerd://21aaff2c34b950d7745c3bcfdbf64de81e82635e05ab9f324779f8a9711e571d",
+            "exitCode": 0,
+            "finishedAt": "2026-09-13T05:57:03Z",
+            "reason": "Completed",
+            "startedAt": "2026-09-13T05:56:13Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-r8blp",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ocr-active-recovery",
+    "uid": "732ee49d-0d1d-4a31-bd3d-04d08a4519e5",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "worker",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "settings": [
+          {
+            "name": "TASK_QUEUE",
+            "value": "integration-active"
+          },
+          {
+            "name": "LIMITS",
+            "value": "{\"max_bytes\":4194304,\"max_pages\":100,\"max_page_pixels\":20000000,\"preflight_seconds\":30,\"child_seconds\":540}"
+          },
+          {
+            "name": "DRAIN_SECONDS",
+            "value": "30"
+          },
+          {
+            "name": "PARSER_BUDGETS",
+            "value": "{\"terminate_seconds\":5,\"reap_seconds\":5}"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "containerID": "containerd://2bc73933c40fb06bd9f09ec77555d457ce126d192eea3b7c3046bfff4abc0fe3",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {},
+        "name": "worker",
+        "ready": false,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": false,
+        "state": {
+          "terminated": {
+            "containerID": "containerd://2bc73933c40fb06bd9f09ec77555d457ce126d192eea3b7c3046bfff4abc0fe3",
+            "exitCode": 0,
+            "finishedAt": "2026-09-13T05:57:10Z",
+            "reason": "Completed",
+            "startedAt": "2026-09-13T05:57:05Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-zd9fp",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ocr-publication",
+    "uid": "4a1510be-faa2-473c-9ef6-b347187f7e6a",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "worker",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "settings": [
+          {
+            "name": "TASK_QUEUE",
+            "value": "integration-publication"
+          },
+          {
+            "name": "LIMITS",
+            "value": "{\"max_bytes\":4194304,\"max_pages\":100,\"max_page_pixels\":20000000,\"preflight_seconds\":30,\"child_seconds\":540}"
+          },
+          {
+            "name": "DRAIN_SECONDS",
+            "value": "30"
+          },
+          {
+            "name": "PARSER_BUDGETS",
+            "value": "{\"terminate_seconds\":5,\"reap_seconds\":5}"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "containerID": "containerd://15d5727e9ab45365db43899260e84ac957cacf1b9bf8592d3b87710272b32a91",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {},
+        "name": "worker",
+        "ready": false,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": false,
+        "state": {
+          "terminated": {
+            "containerID": "containerd://15d5727e9ab45365db43899260e84ac957cacf1b9bf8592d3b87710272b32a91",
+            "exitCode": 0,
+            "finishedAt": "2026-09-13T05:58:02Z",
+            "reason": "Completed",
+            "startedAt": "2026-09-13T05:57:10Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-9khzf",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ocr-publication-recovery",
+    "uid": "9a945ed5-ea37-4130-881c-5683f12b869d",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "worker",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "settings": [
+          {
+            "name": "TASK_QUEUE",
+            "value": "integration-publication"
+          },
+          {
+            "name": "LIMITS",
+            "value": "{\"max_bytes\":4194304,\"max_pages\":100,\"max_page_pixels\":20000000,\"preflight_seconds\":30,\"child_seconds\":540}"
+          },
+          {
+            "name": "DRAIN_SECONDS",
+            "value": "30"
+          },
+          {
+            "name": "PARSER_BUDGETS",
+            "value": "{\"terminate_seconds\":5,\"reap_seconds\":5}"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        },
+        "containerID": "containerd://52db771ddbe503213c26132466ec1e8a06c41386368b7437a379db9aee079dde",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {},
+        "name": "worker",
+        "ready": false,
+        "resources": {
+          "limits": {
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "256Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": false,
+        "state": {
+          "terminated": {
+            "containerID": "containerd://52db771ddbe503213c26132466ec1e8a06c41386368b7437a379db9aee079dde",
+            "exitCode": 0,
+            "finishedAt": "2026-09-13T05:58:07Z",
+            "reason": "Completed",
+            "startedAt": "2026-09-13T05:58:04Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-wzqhd",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "temporal-bf44c7c45-645zg",
+    "uid": "4353f881-3506-4426-8a38-f46fd189463e",
+    "grace_seconds": 30,
+    "containers": [
+      {
+        "name": "temporal",
+        "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "settings": []
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        },
+        "containerID": "containerd://5d635600b4c32c6e3f6e69d904d6521b019386a821f6861e26c07c2bbe838ded",
+        "image": "docker.io/temporalio/temporal:1.8.3",
+        "imageID": "docker.io/temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+        "lastState": {},
+        "name": "temporal",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T05:52:44Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 1000,
+            "supplementalGroups": [
+              1000
+            ],
+            "uid": 1000
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/data",
+            "name": "data"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-fg4lt",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workflows-68d56448dd-bkxn6",
+    "uid": "9d91449d-b88a-4ee7-92a4-01617c5cec88",
+    "grace_seconds": 60,
+    "containers": [
+      {
+        "name": "worker",
+        "image": "pdf-checkpoint-prototype:linux-v2",
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "settings": [
+          {
+            "name": "TASK_QUEUE",
+            "value": "integration-workflows"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "memory": "128Mi"
+        },
+        "containerID": "containerd://29d1393fcfddac0bc885ba087482d61d10a8de8be4f5864dbec9e5346a93dbc7",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+        "lastState": {
+          "terminated": {
+            "containerID": "containerd://5fbfa668b5e69da16f2cc31a686372f888ed809d3a897610fd2796297a5f48c9",
+            "exitCode": 1,
+            "finishedAt": "2026-09-13T05:52:43Z",
+            "reason": "Error",
+            "startedAt": "2026-09-13T05:52:42Z"
+          }
+        },
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "memory": "512Mi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "restartCount": 2,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-13T05:52:56Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 0,
+            "supplementalGroups": [
+              0
+            ],
+            "uid": 0
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/app/pdf_processing",
+            "name": "code"
+          },
+          {
+            "mountPath": "/driver",
+            "name": "driver"
+          },
+          {
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+            "name": "kube-api-access-kzczr",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          }
+        ]
+      }
+    ]
+  }
+]

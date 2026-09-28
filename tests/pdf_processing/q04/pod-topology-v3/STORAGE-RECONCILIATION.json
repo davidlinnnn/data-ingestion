@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "observation_mode": "read-only",
+  "observed_date": "2026-09-19",
+  "cluster": {
+    "context": "kind-internal-a2a-vs6-local",
+    "server_version": "v1.34.3",
+    "csidrivers": []
+  },
+  "storage_class": {
+    "name": "standard",
+    "uid": "7ce057a9-1c62-434a-8e51-b25d2fdc51a2",
+    "provisioner": "rancher.io/local-path",
+    "reclaim_policy": "Delete",
+    "volume_binding_mode": "WaitForFirstConsumer"
+  },
+  "provisioner": {
+    "namespace": "local-path-storage",
+    "deployment": "local-path-provisioner",
+    "deployment_uid": "dca24ade-e4d0-45bb-b915-c96cab77fa1f",
+    "image": "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88",
+    "configmap": "local-path-config",
+    "configmap_uid": "8474ed2f-02de-41c1-baac-a20415895ad4",
+    "node_path": "/var/local-path-provisioner",
+    "setup": "mkdir -m 0777 -p \"$VOL_DIR\""
+  },
+  "retained_c_volume": {
+    "pvc": "q04-pod-cgroup-c-evidence-20260919-c",
+    "pvc_uid": "b1e16e99-90d5-42b7-b802-dca6643170be",
+    "pv": "pvc-b1e16e99-90d5-42b7-b802-dca6643170be",
+    "pv_uid": "c0629afb-4db0-4e93-b289-eb0b8f37bcc6",
+    "pv_source": {
+      "kind": "hostPath",
+      "type": "DirectoryOrCreate",
+      "path": "/var/local-path-provisioner/pvc-b1e16e99-90d5-42b7-b802-dca6643170be_pdf-t09a-validation_q04-pod-cgroup-c-evidence-20260919-c"
+    },
+    "observed_mount_root": {
+      "uid": 0,
+      "gid": 0,
+      "mode": "0777",
+      "entries": []
+    }
+  },
+  "applicability": {
+    "fsgroup_mount_root_ownership_required": false,
+    "reason": "The bound PV is an in-tree hostPath volume. The Kubernetes PersistentVolume API states that hostPath volumes do not support ownership management, and the deployed local-path setup creates the backing directory as 0777.",
+    "mount_root_contract": "directory, not symlink, initially empty, reviewed hostPath backend, writable and searchable by UID/GID 1000",
+    "application_directory_contract": "new run identity creates one exclusive child at mode 0700; lstat must report UID/GID 1000, a directory and no symlink; durable write/fsync/atomic-rename/readback and capacity checks must pass",
+    "cluster_runtime_feasibility": "NOT_YET_PROVEN_WITH_A_LIVE_D_POD"
+  },
+  "official_sources": [
+    "https://kubernetes.io/docs/reference/kubernetes-api/core/persistent-volume-v1/",
+    "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+    "https://github.com/rancher/local-path-provisioner/blob/master/deploy/local-path-storage.yaml"
+  ],
+  "mutations_performed": false
+}

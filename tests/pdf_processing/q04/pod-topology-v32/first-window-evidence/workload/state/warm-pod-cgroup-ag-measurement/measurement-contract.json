@@ -1,0 +1,47 @@
+{
+  "workload": "Wiki06-YOLO07-AIMA08-native-Wiki06",
+  "workload_succeeded": true,
+  "qualification_complete": true,
+  "cgroup_resource_complete": true,
+  "group_requests": 29,
+  "request_recycle": 20,
+  "parser_generations": 2,
+  "process_lifecycle": {
+    "status": "PASS",
+    "pids": [
+      131,
+      1836
+    ],
+    "identities": {
+      "131": [
+        131,
+        21086455
+      ],
+      "1836": [
+        1836,
+        21107889
+      ]
+    },
+    "exits": 2
+  },
+  "resource_gate": {
+    "status": "PASS",
+    "limit_bytes": 4294967296,
+    "samples_evaluated": 1425,
+    "incomplete_sample_indexes": [],
+    "process_attribution_incomplete_sample_indexes": [],
+    "classified_cgroup_transition_sample_indexes": [],
+    "memory_violations": [],
+    "oom_violations": [],
+    "psi_violations": [],
+    "final_sample_index": 1424,
+    "final_sample_labels": [
+      "owned_cleanup_finished",
+      "post_cleanup_sample"
+    ],
+    "final_sample_has_cleanup_markers": true,
+    "summary_errors": [],
+    "rule": "all 250 ms cgroup readings must remain continuous, at or below 4 GiB with zero OOM and full PSI avg10; process PSS remains unknown for a separately classified confirmed-exit transition; the final sample must carry both cleanup markers"
+  },
+  "automatic_retry": false
+}

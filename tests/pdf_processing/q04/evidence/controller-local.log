@@ -1,0 +1,54 @@
+E.Traceback (most recent call last):
+  File "<string>", line 6, in <module>
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/psutil/__init__.py", line 978, in children
+    ppid_map = _ppid_map()
+               ^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/psutil/__init__.py", line 256, in _ppid_map
+    for pid in pids():
+               ^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/psutil/__init__.py", line 1485, in pids
+    ret = sorted(_psplatform.pids())
+                 ^^^^^^^^^^^^^^^^^^
+  File "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/psutil/_psosx.py", line 320, in pids
+    ls = cext.pids()
+         ^^^^^^^^^^^
+PermissionError: [Errno 1] Operation not permitted (originated from sysctl() malloc 1/3)
+E
+======================================================================
+ERROR: test_replay_drives_actual_checked_consumer_and_retains_history (test_controller.Controller.test_replay_drives_actual_checked_consumer_and_retains_history)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/test_controller.py", line 67, in test_replay_drives_actual_checked_consumer_and_retains_history
+    outcome=await run.trial('native','replay','exact',previous)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/q04_runtime.py", line 132, in trial
+    'request_id': 'q04-'+uuid.uuid4().hex, 'source_revision': fixture['source_revision']}
+                                                              ~~~~~~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'source_revision'
+
+======================================================================
+ERROR: test_force_cleanup_targets_only_owned_process_tree (test_controller.OwnedProcesses.test_force_cleanup_targets_only_owned_process_tree)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/test_controller.py", line 105, in test_force_cleanup_targets_only_owned_process_tree
+    host.force_stop()
+  File "/private/tmp/q04-acceptance/tests/pdf_processing/q04/host.py", line 108, in force_stop
+    output = subprocess.check_output(command, text=True, timeout=15)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python', '-c', "import psutil,sys,json\npid,created=int(sys.argv[1]),float(sys.argv[2])\ntry: p=psutil.Process(pid)\nexcept psutil.NoSuchProcess: print(json.dumps({'already_absent':True}));sys.exit(0)\nassert p.create_time()==created and any('q04/worker.py' in x for x in p.cmdline())\nchildren=p.children(recursive=True)\nfor child in reversed(children):\n try: child.kill()\n except psutil.NoSuchProcess: pass\np.kill()\ngone,alive=psutil.wait_procs(children+[p],timeout=5)\nalive=[x for x in alive if x.status()!=psutil.STATUS_ZOMBIE]\nassert not alive\nprint(json.dumps({'forced':True,'owned_pids':[x.pid for x in children]+[pid]}))\n", '84259', '1789565010.257148']' returned non-zero exit status 1.
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.163s
+
+FAILED (errors=2)

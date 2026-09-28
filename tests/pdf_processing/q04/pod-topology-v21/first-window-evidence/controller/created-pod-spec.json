@@ -1,0 +1,724 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "creationTimestamp": "2026-09-21T12:50:56Z",
+    "generateName": "q04-pod-cgroup-v-activities-8bb57667d-",
+    "generation": 1,
+    "labels": {
+      "pod-template-hash": "8bb57667d",
+      "q04-run": "q04-pod-cgroup-v",
+      "q04-topology": "q04-pod-cgroup-v"
+    },
+    "name": "q04-pod-cgroup-v-activities-8bb57667d-m87mn",
+    "namespace": "pdf-t09a-validation",
+    "ownerReferences": [
+      {
+        "apiVersion": "apps/v1",
+        "blockOwnerDeletion": true,
+        "controller": true,
+        "kind": "ReplicaSet",
+        "name": "q04-pod-cgroup-v-activities-8bb57667d",
+        "uid": "68ecf28e-7ae8-4613-b2f2-23ea88f16c1f"
+      }
+    ],
+    "resourceVersion": "974867",
+    "uid": "447e2b4c-990e-4d21-bc36-7395385ac372"
+  },
+  "spec": {
+    "automountServiceAccountToken": false,
+    "containers": [
+      {
+        "command": [
+          "/bin/sh",
+          "-c",
+          "sleep infinity"
+        ],
+        "env": [
+          {
+            "name": "AWS_ACCESS_KEY_ID",
+            "valueFrom": {
+              "secretKeyRef": {
+                "key": "AWS_ACCESS_KEY_ID",
+                "name": "store-access"
+              }
+            }
+          },
+          {
+            "name": "AWS_SECRET_ACCESS_KEY",
+            "valueFrom": {
+              "secretKeyRef": {
+                "key": "AWS_SECRET_ACCESS_KEY",
+                "name": "store-access"
+              }
+            }
+          },
+          {
+            "name": "PYTHONPATH",
+            "value": "/workspace/src:/workspace/tests/pdf_processing/q04:/workspace/tests/pdf_processing/q02:/workspace/tests/pdf_processing/q03"
+          },
+          {
+            "name": "HF_HUB_OFFLINE",
+            "value": "1"
+          },
+          {
+            "name": "TRANSFORMERS_OFFLINE",
+            "value": "1"
+          },
+          {
+            "name": "OMP_NUM_THREADS",
+            "value": "4"
+          },
+          {
+            "name": "TEMPORAL_ADDRESS",
+            "value": "temporal:7233"
+          },
+          {
+            "name": "OBJECT_ENDPOINT",
+            "value": "http://objects:9000"
+          },
+          {
+            "name": "OBJECT_BUCKET",
+            "value": "t09a"
+          },
+          {
+            "name": "OBJECT_PREFIX",
+            "value": "q04/warm-pod-cgroup-20260921-v/"
+          },
+          {
+            "name": "MODEL_CACHE",
+            "value": "/experiment/PROTOTYPE-wipe-me/hf"
+          }
+        ],
+        "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "imagePullPolicy": "IfNotPresent",
+        "name": "worker",
+        "resources": {
+          "limits": {
+            "cpu": "4",
+            "ephemeral-storage": "4Gi",
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "ephemeral-storage": "3Gi",
+            "memory": "4Gi"
+          }
+        },
+        "securityContext": {
+          "allowPrivilegeEscalation": false,
+          "capabilities": {
+            "drop": [
+              "ALL"
+            ]
+          },
+          "readOnlyRootFilesystem": true
+        },
+        "startupProbe": {
+          "exec": {
+            "command": [
+              "/bin/sh",
+              "-c",
+              "test -d /q04-control && test -w /q04-evidence"
+            ]
+          },
+          "failureThreshold": 15,
+          "periodSeconds": 2,
+          "successThreshold": 1,
+          "timeoutSeconds": 1
+        },
+        "terminationMessagePath": "/dev/termination-log",
+        "terminationMessagePolicy": "File",
+        "volumeMounts": [
+          {
+            "mountPath": "/workspace",
+            "name": "workspace",
+            "readOnly": true
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/q04-control",
+            "name": "control"
+          },
+          {
+            "mountPath": "/q04-evidence",
+            "name": "evidence"
+          },
+          {
+            "mountPath": "/tmp",
+            "name": "tmp"
+          }
+        ]
+      }
+    ],
+    "dnsPolicy": "ClusterFirst",
+    "enableServiceLinks": true,
+    "nodeName": "internal-a2a-vs6-local-worker2",
+    "nodeSelector": {
+      "kubernetes.io/hostname": "internal-a2a-vs6-local-worker2"
+    },
+    "preemptionPolicy": "PreemptLowerPriority",
+    "priority": 0,
+    "restartPolicy": "Always",
+    "schedulerName": "default-scheduler",
+    "securityContext": {
+      "fsGroup": 1000,
+      "runAsGroup": 1000,
+      "runAsNonRoot": true,
+      "runAsUser": 1000,
+      "seccompProfile": {
+        "type": "RuntimeDefault"
+      }
+    },
+    "serviceAccount": "default",
+    "serviceAccountName": "default",
+    "terminationGracePeriodSeconds": 60,
+    "tolerations": [
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/not-ready",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      },
+      {
+        "effect": "NoExecute",
+        "key": "node.kubernetes.io/unreachable",
+        "operator": "Exists",
+        "tolerationSeconds": 300
+      }
+    ],
+    "volumes": [
+      {
+        "name": "workspace",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "f000-8e2c1f727276",
+                    "path": "src/pdf_processing/__init__.py"
+                  },
+                  {
+                    "key": "f001-96b2408f4fed",
+                    "path": "src/pdf_processing/compatibility.py"
+                  },
+                  {
+                    "key": "f002-db255403f3c5",
+                    "path": "src/pdf_processing/continuation.py"
+                  },
+                  {
+                    "key": "f003-d1a415eb3f9a",
+                    "path": "src/pdf_processing/enrichment.py"
+                  },
+                  {
+                    "key": "f004-90897352eb37",
+                    "path": "src/pdf_processing/evidence.py"
+                  },
+                  {
+                    "key": "f005-b1534f3f58d7",
+                    "path": "src/pdf_processing/execution.py"
+                  },
+                  {
+                    "key": "f006-e866d5f2fd60",
+                    "path": "src/pdf_processing/object_store.py"
+                  },
+                  {
+                    "key": "f007-377ffb0b844f",
+                    "path": "src/pdf_processing/ocr.py"
+                  },
+                  {
+                    "key": "f008-de084f025a26",
+                    "path": "src/pdf_processing/parse.py"
+                  },
+                  {
+                    "key": "f009-aa8506ad9809",
+                    "path": "src/pdf_processing/preflight.py"
+                  },
+                  {
+                    "key": "f010-d522d840b730",
+                    "path": "src/pdf_processing/processing.py"
+                  },
+                  {
+                    "key": "f011-59667bfb44df",
+                    "path": "src/pdf_processing/processing_workflow.py"
+                  },
+                  {
+                    "key": "f012-cba48bc6ddc6",
+                    "path": "src/pdf_processing/relationship_method.py"
+                  },
+                  {
+                    "key": "f013-d00479b87a76",
+                    "path": "src/pdf_processing/relationships.py"
+                  },
+                  {
+                    "key": "f014-c05223c2c4a2",
+                    "path": "src/pdf_processing/rollout_workflow.py"
+                  },
+                  {
+                    "key": "f015-18a2d1702a29",
+                    "path": "src/pdf_processing/routed_activity.py"
+                  },
+                  {
+                    "key": "f016-dd37693731fd",
+                    "path": "src/pdf_processing/routing.py"
+                  },
+                  {
+                    "key": "f017-e4f69b9b2597",
+                    "path": "src/pdf_processing/supervision.py"
+                  },
+                  {
+                    "key": "f018-ab5cbcef4dc4",
+                    "path": "src/pdf_processing/temporal.py"
+                  },
+                  {
+                    "key": "f019-17406361d9a2",
+                    "path": "src/pdf_processing/warm_child.py"
+                  }
+                ],
+                "name": "q04-pod-code-f7a5de6a607668e9"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "f000-149fcd76f069",
+                    "path": "deploy/pdf-processing/worker.py"
+                  },
+                  {
+                    "key": "f001-822727647491",
+                    "path": "tests/pdf_processing/q02/oracle/caption-oracle.json"
+                  },
+                  {
+                    "key": "f002-05310967d2d2",
+                    "path": "tests/pdf_processing/q02/oracle/p2/header-oracle.json"
+                  },
+                  {
+                    "key": "f003-52fd20f49045",
+                    "path": "tests/pdf_processing/q02/oracle/role_oracle.py"
+                  },
+                  {
+                    "key": "f004-85e18979db4c",
+                    "path": "tests/pdf_processing/q02/oracle/score.py"
+                  },
+                  {
+                    "key": "f005-2bdec63e0769",
+                    "path": "tests/pdf_processing/q02/oracle/source_segments.py"
+                  },
+                  {
+                    "key": "f006-ad8a5c77d9b5",
+                    "path": "tests/pdf_processing/q03/reviewed-representation.json"
+                  },
+                  {
+                    "key": "f007-340095bbc3fe",
+                    "path": "tests/pdf_processing/q04/audit.py"
+                  },
+                  {
+                    "key": "f008-881646be5a84",
+                    "path": "tests/pdf_processing/q04/candidate/__init__.py"
+                  },
+                  {
+                    "key": "f009-ae580783706a",
+                    "path": "tests/pdf_processing/q04/candidate/aima_image_supplement.py"
+                  },
+                  {
+                    "key": "f010-58dfed15f0d4",
+                    "path": "tests/pdf_processing/q04/candidate/aima_pod_window_o.py"
+                  },
+                  {
+                    "key": "f011-b98f5a38c700",
+                    "path": "tests/pdf_processing/q04/candidate/aima_pod_window_q.py"
+                  },
+                  {
+                    "key": "f012-f65747cfb818",
+                    "path": "tests/pdf_processing/q04/candidate/candidate_matrix_window.py"
+                  },
+                  {
+                    "key": "f013-1713e47dc261",
+                    "path": "tests/pdf_processing/q04/candidate/warm_pod_window_r.py"
+                  },
+                  {
+                    "key": "f014-e026ce20d8ee",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-equivalence-v1/BUNDLE.json"
+                  },
+                  {
+                    "key": "f015-0e8ace3d531d",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-equivalence-v2/ADOPTION.json"
+                  },
+                  {
+                    "key": "f016-cc2f6877f0b0",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-resource-v1/BUNDLE.json"
+                  },
+                  {
+                    "key": "f017-982b5d23c08c",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-resource-v1/PARSER-BUDGETS.json"
+                  },
+                  {
+                    "key": "f018-5f54e82583d9",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-reviewed-b-fail/RETAINED-REPLAY.json"
+                  },
+                  {
+                    "key": "f019-b20cf5a59720",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-reviewed-v1/MAIN-REVIEW.json"
+                  },
+                  {
+                    "key": "f020-60d6bd4c946b",
+                    "path": "tests/pdf_processing/q04/candidate/yolo-reviewed-v1/MANIFEST.json"
+                  },
+                  {
+                    "key": "f021-274c7e17123e",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_candidate_measure.py"
+                  },
+                  {
+                    "key": "f022-8936fa30660a",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_candidate_window.py"
+                  },
+                  {
+                    "key": "f023-61f9d2f520f8",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_equivalence_candidate.py"
+                  },
+                  {
+                    "key": "f024-e6ba84d60ab4",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_lifecycle.py"
+                  },
+                  {
+                    "key": "f025-997925c3bb7d",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_resource_candidate.py"
+                  },
+                  {
+                    "key": "f026-7d2b4f1468af",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_reviewed_candidate_window.py"
+                  },
+                  {
+                    "key": "f027-dd23f270e322",
+                    "path": "tests/pdf_processing/q04/candidate/yolo_reviewed_window.py"
+                  },
+                  {
+                    "key": "f028-500f89145bea",
+                    "path": "tests/pdf_processing/q04/consumer.py"
+                  },
+                  {
+                    "key": "f029-4142d355019d",
+                    "path": "tests/pdf_processing/q04/contracts.py"
+                  },
+                  {
+                    "key": "f030-327d8992069f",
+                    "path": "tests/pdf_processing/q04/diagnosis/yolo-lifecycle-a/evidence/resource-peak.json"
+                  },
+                  {
+                    "key": "f031-a7cf042db06f",
+                    "path": "tests/pdf_processing/q04/fixtures.json"
+                  },
+                  {
+                    "key": "f032-622145c95924",
+                    "path": "tests/pdf_processing/q04/host.py"
+                  },
+                  {
+                    "key": "f033-1fa1ab984fc1",
+                    "path": "tests/pdf_processing/q04/pod-topology-v1/INTEGRATION-MANIFEST.json"
+                  },
+                  {
+                    "key": "f034-3bf1430cc3a6",
+                    "path": "tests/pdf_processing/q04/pod-topology-v15/RUNTIME-INTEGRATION-MANIFEST.json"
+                  },
+                  {
+                    "key": "f035-0f493e68f8b8",
+                    "path": "tests/pdf_processing/q04/pod-topology-v21/RUNTIME-INTEGRATION-MANIFEST.json"
+                  },
+                  {
+                    "key": "f036-fd05a998307a",
+                    "path": "tests/pdf_processing/q04/pod_durable_evidence.py"
+                  },
+                  {
+                    "key": "f037-6e06eafa7955",
+                    "path": "tests/pdf_processing/q04/pod_evidence_directory_d.py"
+                  },
+                  {
+                    "key": "f038-4a9b5dabc6b9",
+                    "path": "tests/pdf_processing/q04/pod_init_p.py"
+                  },
+                  {
+                    "key": "f039-784b69249e9d",
+                    "path": "tests/pdf_processing/q04/pod_preflight_p.py"
+                  },
+                  {
+                    "key": "f040-eba418b77884",
+                    "path": "tests/pdf_processing/q04/pod_preflight_q.py"
+                  },
+                  {
+                    "key": "f041-579630da3a0c",
+                    "path": "tests/pdf_processing/q04/pod_preflight_v.py"
+                  },
+                  {
+                    "key": "f042-3f5130df87da",
+                    "path": "tests/pdf_processing/q04/pod_remote_evidence_p.py"
+                  },
+                  {
+                    "key": "f043-e1402f5afaf7",
+                    "path": "tests/pdf_processing/q04/pod_remote_evidence_v.py"
+                  },
+                  {
+                    "key": "f044-c364207beb84",
+                    "path": "tests/pdf_processing/q04/pod_topology_v.py"
+                  },
+                  {
+                    "key": "f045-d4d7bcd06625",
+                    "path": "tests/pdf_processing/q04/pod_workload_p.py"
+                  },
+                  {
+                    "key": "f046-00fca4bd7825",
+                    "path": "tests/pdf_processing/q04/pod_workload_v.py"
+                  },
+                  {
+                    "key": "f047-3d3e0cbd1cf2",
+                    "path": "tests/pdf_processing/q04/prepare.py"
+                  },
+                  {
+                    "key": "f048-ce59b02eeeb6",
+                    "path": "tests/pdf_processing/q04/q04_runtime.py"
+                  },
+                  {
+                    "key": "f049-d93a5daca941",
+                    "path": "tests/pdf_processing/q04/run_suite.py"
+                  },
+                  {
+                    "key": "f050-e6da79a6a0ce",
+                    "path": "tests/pdf_processing/q04/sentinel/acl_resource_telemetry.py"
+                  },
+                  {
+                    "key": "f051-56be5eed833e",
+                    "path": "tests/pdf_processing/q04/sentinel/aima_attribution_telemetry_o.py"
+                  },
+                  {
+                    "key": "f052-64b6c69d3c63",
+                    "path": "tests/pdf_processing/q04/sentinel/aima_attribution_telemetry_q.py"
+                  },
+                  {
+                    "key": "f053-bad5c4ae1efb",
+                    "path": "tests/pdf_processing/q04/sentinel/run_candidate_batch.py"
+                  },
+                  {
+                    "key": "f054-a11e55314a87",
+                    "path": "tests/pdf_processing/q04/sentinel/run_candidate_matrix_phase.py"
+                  },
+                  {
+                    "key": "f055-b1e3f0e4e2a8",
+                    "path": "tests/pdf_processing/q04/sentinel/yolo_attribution_telemetry.py"
+                  },
+                  {
+                    "key": "f056-84a3416572fe",
+                    "path": "tests/pdf_processing/q04/sentinel/yolo_reviewed_attribution_telemetry.py"
+                  },
+                  {
+                    "key": "f057-d855b2ad3ab1",
+                    "path": "tests/pdf_processing/q04/telemetry.py"
+                  },
+                  {
+                    "key": "f058-6473faa178ec",
+                    "path": "tests/pdf_processing/q04/test_adapter.py"
+                  },
+                  {
+                    "key": "f059-c79ebfaec5a1",
+                    "path": "tests/pdf_processing/q04/test_aima_attribution_q.py"
+                  },
+                  {
+                    "key": "f060-757a02cee327",
+                    "path": "tests/pdf_processing/q04/test_candidate_batch_runner.py"
+                  },
+                  {
+                    "key": "f061-42930aa4901a",
+                    "path": "tests/pdf_processing/q04/test_consumer.py"
+                  },
+                  {
+                    "key": "f062-d9a5c45a5d22",
+                    "path": "tests/pdf_processing/q04/test_controller.py"
+                  },
+                  {
+                    "key": "f063-f7a9581c3bce",
+                    "path": "tests/pdf_processing/q04/test_host.py"
+                  },
+                  {
+                    "key": "f064-d31ce7b2b52d",
+                    "path": "tests/pdf_processing/q04/test_pod_q.py"
+                  },
+                  {
+                    "key": "f065-3bee37fab7dc",
+                    "path": "tests/pdf_processing/q04/test_warm_continuity.py"
+                  },
+                  {
+                    "key": "f066-436350b6124c",
+                    "path": "tests/pdf_processing/q04/worker.py"
+                  },
+                  {
+                    "key": "f067-6d544a9ebcd2",
+                    "path": "tests/pdf_processing/q04/yolo_lifecycle_offline_suite.py"
+                  },
+                  {
+                    "key": "f068-7fc460918f49",
+                    "path": "tests/pdf_processing/t09a/evidence/code-source-oracle.json"
+                  },
+                  {
+                    "key": "f069-90016e9cb982",
+                    "path": "tests/pdf_processing/t09a_r3/evidence/20260914-0b537d0-c/actual-methods.json"
+                  }
+                ],
+                "name": "q04-pod-harness-932e9c6a43820819"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "2Gi"
+        },
+        "name": "scratch"
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "256Mi"
+        },
+        "name": "control"
+      },
+      {
+        "name": "evidence",
+        "persistentVolumeClaim": {
+          "claimName": "q04-pod-cgroup-v-evidence-20260921-v"
+        }
+      },
+      {
+        "emptyDir": {
+          "sizeLimit": "512Mi"
+        },
+        "name": "tmp"
+      }
+    ]
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-21T12:51:01Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "PodReadyToStartContainers"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-21T12:51:00Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "Initialized"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-21T12:51:03Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-21T12:51:03Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "ContainersReady"
+      },
+      {
+        "lastProbeTime": null,
+        "lastTransitionTime": "2026-09-21T12:51:00Z",
+        "observedGeneration": 1,
+        "status": "True",
+        "type": "PodScheduled"
+      }
+    ],
+    "containerStatuses": [
+      {
+        "allocatedResources": {
+          "cpu": "100m",
+          "ephemeral-storage": "3Gi",
+          "memory": "4Gi"
+        },
+        "containerID": "containerd://e207adca1979cdd40778f872e326c56aa66bac66463ffeff715b44b2d400f4e7",
+        "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+        "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+        "lastState": {},
+        "name": "worker",
+        "ready": true,
+        "resources": {
+          "limits": {
+            "cpu": "4",
+            "ephemeral-storage": "4Gi",
+            "memory": "5Gi"
+          },
+          "requests": {
+            "cpu": "100m",
+            "ephemeral-storage": "3Gi",
+            "memory": "4Gi"
+          }
+        },
+        "restartCount": 0,
+        "started": true,
+        "state": {
+          "running": {
+            "startedAt": "2026-09-21T12:51:00Z"
+          }
+        },
+        "user": {
+          "linux": {
+            "gid": 1000,
+            "supplementalGroups": [
+              1000
+            ],
+            "uid": 1000
+          }
+        },
+        "volumeMounts": [
+          {
+            "mountPath": "/workspace",
+            "name": "workspace",
+            "readOnly": true,
+            "recursiveReadOnly": "Disabled"
+          },
+          {
+            "mountPath": "/scratch",
+            "name": "scratch"
+          },
+          {
+            "mountPath": "/q04-control",
+            "name": "control"
+          },
+          {
+            "mountPath": "/q04-evidence",
+            "name": "evidence"
+          },
+          {
+            "mountPath": "/tmp",
+            "name": "tmp"
+          }
+        ]
+      }
+    ],
+    "hostIP": "172.19.0.3",
+    "hostIPs": [
+      {
+        "ip": "172.19.0.3"
+      }
+    ],
+    "observedGeneration": 1,
+    "phase": "Running",
+    "podIP": "10.244.1.63",
+    "podIPs": [
+      {
+        "ip": "10.244.1.63"
+      }
+    ],
+    "qosClass": "Burstable",
+    "startTime": "2026-09-21T12:51:00Z"
+  }
+}

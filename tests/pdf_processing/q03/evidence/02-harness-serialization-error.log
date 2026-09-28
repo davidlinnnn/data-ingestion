@@ -1,0 +1,40 @@
+E
+======================================================================
+ERROR: test_selected_disposition_delivers_all_four_and_gate_prevents_completion (test_q03_publication.Q03Publication.test_selected_disposition_delivers_all_four_and_gate_prevents_completion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/q03-structural-symbols/src/pdf_processing/evidence.py", line 88, in execute
+    items = graph_items(document)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/q03-structural-symbols/src/pdf_processing/evidence.py", line 49, in graph_items
+    visit(document[root]['self_ref'])
+  File "/private/tmp/q03-structural-symbols/src/pdf_processing/evidence.py", line 44, in visit
+    visit(child['$ref'])
+          ~~~~~^^^^^^^^
+KeyError: '$ref'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/private/tmp/q03-structural-symbols/tests/pdf_processing/q03/test_q03_publication.py", line 9, in test_selected_disposition_delivers_all_four_and_gate_prevents_completion
+    final, binding, _ = await deliver()
+                        ^^^^^^^^^^^^^^^
+  File "/private/tmp/q03-structural-symbols/tests/pdf_processing/q03/delivery.py", line 45, in deliver
+    files = copy.deepcopy(rendered_files())
+                          ^^^^^^^^^^^^^^^^
+  File "/private/tmp/q03-structural-symbols/tests/pdf_processing/q03/delivery.py", line 30, in rendered_files
+    execute({'out': str(root/'out'), 'parsed': str(root/'document.json'),
+  File "/private/tmp/q03-structural-symbols/src/pdf_processing/evidence.py", line 224, in execute
+    raise ChildFailure('integrity', str(error)) from error
+pdf_processing.execution.ChildFailure: '$ref'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.029s
+
+FAILED (errors=1)

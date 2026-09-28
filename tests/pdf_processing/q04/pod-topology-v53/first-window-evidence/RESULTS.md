@@ -1,0 +1,7 @@
+# BB: frozen bundle correctly rejected shared-worker drift
+
+BB had a fresh identity and projected the readiness ordering fix by modifying shared `worker.py`. It stopped at the `configuration` pre-inference gate: `verify_bundle` reported `bundle harness drift; prepare a new bundle`. The AH bundle correctly pins the original shared worker bytes. Other pre-inference gates, including model provenance and exact source projection, passed. `inference_started=false`, `workflow_started=false` and `object_written=false`; BB provides no process-recovery or 768 MiB trial result.
+
+The runner stopped without retry. Owned Deployment, ConfigMaps and Pod were deleted with UID preconditions; the BB evidence PVC remains Bound at UID `3b35c467-1cbd-4713-b472-d16f3964e3ae`. The read-only host observer exited and was removed, but its terminal coverage rejected a 332.121-second sampling interval after the gate failure. This is incomplete observer evidence, not a clean pressure trace. Raw local evidence and the unused BB object prefix remain retained.
+
+The shared `worker.py` was restored to the AH-pinned bytes. The next fresh-identity runner uses distinct `worker_bc.py` and `host_bc.py` in its projected harness while preserving the frozen AH bundle; local `verify_bundle` and exact projected imports now run before runtime. The first-sample-before-Ready fix remains in the distinct worker. Q04 resource guards and the temporary 768 MiB MinIO limit trial are unchanged.

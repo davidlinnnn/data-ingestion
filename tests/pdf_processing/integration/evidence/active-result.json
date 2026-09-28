@@ -1,0 +1,144 @@
+{
+  "workflow_id": "integration-active-3d496fe90ccc44a8af55733fa8a03763",
+  "request": {
+    "version": 2,
+    "completion": "required_picture_ocr_v1",
+    "request_id": "e6d6dbccc95c460daa8a9d5d6df2ea08",
+    "profile": "native-v1",
+    "source_revision": "integration:active",
+    "artifact": {
+      "key": "final/sources/lifecycle-active.pdf",
+      "version_id": "82db546c-00c7-46e8-a16a-ca3cfa2686c6",
+      "name": "multiple.pdf",
+      "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023"
+    }
+  },
+  "result": {
+    "canonical_accepted": false,
+    "error": null,
+    "observed_at": "2026-09-13T05:57:09.683065+00:00",
+    "pages": 1,
+    "parsed_result": "pdf-parsed-v1:b9715596036d286f54ef6b2deb04aa3a0253332fa5e964c235268e3a4c8ea347",
+    "plan": "pdf-plan-v1:29e152e97cc441c8268f299d7e1ccb4276c41c4daff4e93733ea26289962a023",
+    "processing_complete": true,
+    "processing_result": "pdf-complete-v1:563a70777828ec3e78ccb93c7ef18a21eabc0325c12c8bb458de7aa77bbf4f86",
+    "registered_components": 2,
+    "registered_pages": 1,
+    "selected_components": 2,
+    "selection": "pdf-selection-v1:8e14cc779a32b22b1bf5f495b0d169e3bab673f2c157945fcf3bdcb5842faf35",
+    "status": "complete",
+    "steps": [
+      {
+        "observed_at": "2026-09-13T05:56:26.960985+00:00",
+        "operation": "780c504db5df46b97a9dc2003a27fa7fcf46977802af603e1c2779dc45f649aa",
+        "parser": {
+          "completed_at": "2026-09-13T05:56:26.913242+00:00",
+          "forced_kill": false,
+          "last_local_progress": "2026-09-13T05:56:26.885673+00:00",
+          "memory": {
+            "peak_rss": 1039588,
+            "units": "KiB"
+          },
+          "observed_at": "2026-09-13T05:56:14.456326+00:00",
+          "pid": 34,
+          "ready": true,
+          "recycles": 0,
+          "request_id": "09556879f38345c1bd03060a5756f384",
+          "restarts": 1,
+          "stage": "checkpoint_commit",
+          "termination_reason": null
+        },
+        "reused": false,
+        "seconds": 12.512253629996849,
+        "stage": "group",
+        "storage": {
+          "get_bytes": 170573,
+          "get_seconds": 0.02525674800563138,
+          "put_bytes": 63529,
+          "put_seconds": 0.024169083997549023
+        }
+      },
+      {
+        "observed_at": "2026-09-13T05:56:33.127903+00:00",
+        "operation": "b9715596036d286f54ef6b2deb04aa3a0253332fa5e964c235268e3a4c8ea347",
+        "parsed_result": "pdf-parsed-v1:b9715596036d286f54ef6b2deb04aa3a0253332fa5e964c235268e3a4c8ea347",
+        "reused": false,
+        "seconds": 6.144586085996707,
+        "stage": "assembly",
+        "storage": {
+          "get_bytes": 532702,
+          "get_seconds": 0.05498696099675726,
+          "put_bytes": 91910,
+          "put_seconds": 0.025650040995969903
+        }
+      },
+      {
+        "component": "#/pictures/0",
+        "observed_at": "2026-09-13T05:57:08.428470+00:00",
+        "operation": "pdf-component-v1:0098a24ae7074b996404ba2a09f8bff359d0f3835fc50f06c5368140c538987f",
+        "outcome": "text_detected",
+        "reused": false,
+        "stage": "component_ocr"
+      },
+      {
+        "component": "#/pictures/1",
+        "observed_at": "2026-09-13T05:57:09.582181+00:00",
+        "operation": "pdf-component-v1:46977f516536233795e928a1efedddedf2a09564a0ead9f44ad7a7dd4d77b883",
+        "outcome": "text_detected",
+        "reused": false,
+        "stage": "component_ocr"
+      }
+    ],
+    "version": 1
+  },
+  "attempts": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1
+  ],
+  "final": {
+    "assembly": "b9715596036d286f54ef6b2deb04aa3a0253332fa5e964c235268e3a4c8ea347",
+    "canonical_accepted": false,
+    "enrichments": [
+      {
+        "component": "#/pictures/0",
+        "operation": "pdf-component-v1:0098a24ae7074b996404ba2a09f8bff359d0f3835fc50f06c5368140c538987f",
+        "outcome": "text_detected"
+      },
+      {
+        "component": "#/pictures/1",
+        "operation": "pdf-component-v1:46977f516536233795e928a1efedddedf2a09564a0ead9f44ad7a7dd4d77b883",
+        "outcome": "text_detected"
+      }
+    ],
+    "parsed_result": "pdf-parsed-v1:b9715596036d286f54ef6b2deb04aa3a0253332fa5e964c235268e3a4c8ea347",
+    "plan": "pdf-plan-v1:29e152e97cc441c8268f299d7e1ccb4276c41c4daff4e93733ea26289962a023",
+    "processing_complete": true,
+    "quality_accepted": false,
+    "required_work": {
+      "components": 2,
+      "ocr": "complete",
+      "pages": 1
+    },
+    "selection": "pdf-selection-v1:8e14cc779a32b22b1bf5f495b0d169e3bab673f2c157945fcf3bdcb5842faf35",
+    "source": {
+      "artifact": {
+        "key": "final/sources/lifecycle-active.pdf",
+        "name": "multiple.pdf",
+        "sha256": "4b34935f1f5c042f0e5d6e725b189bb317a61cdc82414596e9d55285ff3f6023",
+        "version_id": "82db546c-00c7-46e8-a16a-ca3cfa2686c6"
+      },
+      "completion": "required_picture_ocr_v1",
+      "profile": "native-v1",
+      "request_id": "e6d6dbccc95c460daa8a9d5d6df2ea08",
+      "source_revision": "integration:active",
+      "version": 2
+    },
+    "status": "complete",
+    "version": 1
+  }
+}

@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 457, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 452, in main
+    asyncio.run(run_window(args))
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 398, in run_window
+    lifecycle = validate_process_evidence(summary, proof)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 146, in validate_process_evidence
+    require(summary["process_attribution_complete"], "process attribution incomplete")
+  File "/workspace/tests/pdf_processing/q04/consumer.py", line 16, in require
+    raise ValueError(reason)
+ValueError: process attribution incomplete

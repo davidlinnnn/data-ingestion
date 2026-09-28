@@ -1,0 +1,103 @@
+{
+  "scope": "ACL_FIXTURE_09_PROCESS_WINDOW_V3_A",
+  "outcome": "DRIVER_COMMAND_RENDERING_FAILURE_BEFORE_WORKFLOW",
+  "acceptance": false,
+  "runner_commit": "3251c3eda00ee8c8d37de80838a6df35ca695613",
+  "runtime_source": "18be1b3fbcb929921ec986a1a0bf93e4be995b4d",
+  "run_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9",
+  "phase": "acl-window-v3-a",
+  "fixture": "09",
+  "requested_modes": [
+    "fresh",
+    "restored",
+    "exact replay"
+  ],
+  "window": {
+    "started_at": "2026-09-17T14:41:07.529004+00:00",
+    "authorized_ends_at": "2026-09-17T15:06:07.529004+00:00",
+    "finished_at": "2026-09-17T14:42:14.141158+00:00",
+    "retry_count": 0
+  },
+  "identity": {
+    "coordinator_uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+    "container_id": "containerd://75d02af07009f1d7152d6a68958cee5f43508ec1dd0ae327142a42db5e429ca5",
+    "container_restart_count": 1,
+    "container_started_at": "2026-09-17T13:46:12Z",
+    "boot_id": "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3",
+    "pid_1_start_ticks": 733,
+    "bundle_sha256": "b729891aa381ae25eef6ec2fbceefcdb43703d441762eafbb388627792833297",
+    "state_sha256": "6f83b29e73357e6576643948f18f0be2d461ae7285e433f2c810c5f8d4aca5b7"
+  },
+  "outer_admission": {
+    "passed": true,
+    "samples": 61,
+    "observed_seconds": 60.709722361999866,
+    "continuous_seconds": 60.70115294499965,
+    "resets": 0,
+    "minimum_available_bytes": 9713946624,
+    "maximum_psi_full_avg10": 0.0,
+    "maximum_cgroup_bytes": 2177032192,
+    "vm_oom_kill_values": [
+      0
+    ],
+    "cgroup_oom_kill": 0
+  },
+  "failure": {
+    "stage": "pre_runtime_bundle_verification",
+    "transport_returncode": 1,
+    "type": "SyntaxError",
+    "message": "invalid decimal literal",
+    "cause": "nested shell rendering removed Python quotes around the bundle path",
+    "matrix_command_reached": false,
+    "workflow_started": false,
+    "inference_started": false
+  },
+  "cleanup": {
+    "verified": true,
+    "errors": [],
+    "running_after_cleanup": [],
+    "remaining_owned_cwd_pids": [],
+    "scratch_remaining": [],
+    "frozen_state_unchanged": true,
+    "reservation_released": true,
+    "qualification_lock_held_after_release": false,
+    "phase_exists_after_cleanup": false,
+    "vm_oom_kill_after_release": 0,
+    "cgroup_oom_kill_after_release": 0
+  },
+  "services": {
+    "temporal_healthy_before": true,
+    "temporal_healthy_after": true,
+    "running_workflows_before": [],
+    "running_workflows_after": [],
+    "object_readiness_before": 200,
+    "object_readiness_after": 200,
+    "historical_deployments": 32,
+    "all_replicas_zero_before": true,
+    "all_replicas_zero_after": true,
+    "snapshots_identical": true,
+    "snapshot_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4"
+  },
+  "private_artifacts": {
+    "admission-v3.json": "c09d7e86d4551524a795d33196c9334e6e929ea68b5ba0ef18d0981f65c41c9c",
+    "capacity.json": "b482938e5a1b1eb65cb88e5066079178995b3d2821f06a2bcd43e4333c856eee",
+    "cleanup.json": "14cf1b89c9e565cdca321147a28aa920d58c2bcfef082b27eb1e2ac2510cc58a",
+    "coordinator-identity.json": "2bfe58d9bf5d823da07e64813c680044a4fab2e2caebc70d6999a6c70a7aab3c",
+    "frozen-precheck.json": "92fb983c0def2ad9035b48c08ecdfa96cb0b56f525b221ed829743362b91c0d5",
+    "frozen-postcheck.json": "06fc7fbe64b03b5e322887c7f5fdd87ddc49a426ab4f8932e0ef36f8557c6424",
+    "health-before.json": "150af0741f7967e81aa43c680b65a5d291eb8e56a0a5d857801decc7499381a6",
+    "health-after.json": "e0265cc00cc5535acfcb07b12730d3a2f200adf084e78c0781007043ec229e0d",
+    "held-services-before.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "held-services-after.json": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "lease-state.json": "4980e6a59c5460e6b01b389ab77e35342a0a1bea3ee6ebf0756ef9fc675e45f7",
+    "post-final-check.json": "e28fc0b9c2026300a40cc274dec68df815bc1a2fde34a9699676195a4ff2ffb5",
+    "remote-evidence.tar": "802266c5a6ebd931615cd817ad41d64cf8445545ce482721ecc978d58a55776d",
+    "runner-manifest.json": "00926b6d0a86bc6ea02b2ef539353a0d6bde5dde4cc270008c711476379f425c",
+    "runtime-error.log": "73aea4f630b9538de3891d562a8262cb24f71e342b5d0f074d1daa3ac9963bd6",
+    "runtime-precheck.json": "af19cba62cf3e09a0834f077301fbcdf0112c734bc9f9fad5921701a70d33a5f",
+    "runtime-transport.log": "b7f96cc60f0e31a6f98816161473bf5f45c0702b8d7f48b7ffc48172055ed0e2"
+  },
+  "historical_trials_changed": false,
+  "production_changed": false,
+  "issue_closed": false
+}

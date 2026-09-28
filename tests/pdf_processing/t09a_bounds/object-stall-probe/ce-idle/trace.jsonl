@@ -1,0 +1,61 @@
+{"kind": "start", "run_id": "object-idle-ce", "time": 1790486827.7839925, "monotonic": 418436.676607058, "pid": 736580}
+{"kind": "trace", "read_at": 1790486838.3260942, "line": "         dockerd-373     [017] ..... 418447.217340: psi_memstall_enter <-swap_read_folio", "identity": {"tid": 373, "tgid": 370, "cgroup": "0::/restricted"}}
+{"kind": "trace", "read_at": 1790486838.332503, "line": "         dockerd-373     [017] ..... 418447.217346: <stack trace>"}
+{"kind": "trace", "read_at": 1790486838.3325255, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790486838.3325312, "line": " => swap_read_folio"}
+{"kind": "trace", "read_at": 1790486838.3325357, "line": " => swap_cluster_readahead"}
+{"kind": "trace", "read_at": 1790486838.3325393, "line": " => swapin_readahead"}
+{"kind": "trace", "read_at": 1790486838.332543, "line": " => do_swap_page"}
+{"kind": "trace", "read_at": 1790486838.3325503, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486838.332555, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486838.3325584, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790486838.332562, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790486838.332565, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790486838.3325677, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790486838.332571, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790486838.332574, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790486838.332577, "line": "         dockerd-373     [017] ..... 418447.217394: psi_memstall_enter <-folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790486838.3325815, "line": "         dockerd-373     [017] ..... 418447.217394: <stack trace>"}
+{"kind": "trace", "read_at": 1790486838.3325856, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790486838.332589, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790486838.3325918, "line": " => __folio_lock_or_retry"}
+{"kind": "trace", "read_at": 1790486838.3325949, "line": " => do_swap_page"}
+{"kind": "trace", "read_at": 1790486838.332598, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486838.3326008, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486838.3326042, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790486838.3326073, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790486838.3326106, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790486838.3326185, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790486838.332622, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790486838.3326252, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790486868.8686967, "line": "           <...>-737007  [014] ..... 418477.759945: psi_memstall_enter <-folio_wait_bit_common", "identity": {"tid": 737007, "tgid": 737007, "cgroup": "0::/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-besteffort.slice/kubelet-kubepods-besteffort-podd91cdabd_11a5_4264_87d6_eaca1612c6c6.slice/cri-containerd-c17bf6c00ef11d23e9dffbaf83911ec35ad4e21121567fb3fec7d26aa191279e.scope"}}
+{"kind": "trace", "read_at": 1790486868.8690052, "line": "           <...>-737007  [014] ..... 418477.759949: <stack trace>"}
+{"kind": "trace", "read_at": 1790486868.869015, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790486868.869019, "line": " => folio_wait_bit_common"}
+{"kind": "trace", "read_at": 1790486868.8690233, "line": " => __folio_lock"}
+{"kind": "trace", "read_at": 1790486868.869027, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790486868.86903, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486868.8690329, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486868.869036, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790486868.869039, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790486868.8690422, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790486868.8690453, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790486868.8690486, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790486868.869053, "line": " => el0t_64_sync"}
+{"kind": "trace", "read_at": 1790486872.0003545, "line": "  kube-apiserver-2185    [012] ..... 418480.891508: psi_memstall_enter <-read_pages", "identity": {"tid": 2185, "tgid": 2076, "cgroup": "0::/docker/1febdda42fb21f67f95d3222e51b35bbee19fda46b638c55f9e63cf33737cec0/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-podc1d187935871b3191e08a379bc232292.slice/cri-containerd-b0c6093b56b103a7ef5937267b1ab335b2bb05ad36fc67212ca75a735397c856.scope"}}
+{"kind": "trace", "read_at": 1790486872.0008962, "line": "  kube-apiserver-2185    [012] ..... 418480.891516: <stack trace>"}
+{"kind": "trace", "read_at": 1790486872.0009172, "line": " => psi_memstall_enter"}
+{"kind": "trace", "read_at": 1790486872.0009248, "line": " => read_pages"}
+{"kind": "trace", "read_at": 1790486872.0009315, "line": " => page_cache_ra_unbounded"}
+{"kind": "trace", "read_at": 1790486872.000938, "line": " => page_cache_ra_order"}
+{"kind": "trace", "read_at": 1790486872.000944, "line": " => filemap_fault"}
+{"kind": "trace", "read_at": 1790486872.00095, "line": " => __do_fault"}
+{"kind": "trace", "read_at": 1790486872.0009558, "line": " => __handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486872.0009618, "line": " => handle_mm_fault"}
+{"kind": "trace", "read_at": 1790486872.000968, "line": " => do_page_fault"}
+{"kind": "trace", "read_at": 1790486872.0009742, "line": " => do_translation_fault"}
+{"kind": "trace", "read_at": 1790486872.00098, "line": " => do_mem_abort"}
+{"kind": "trace", "read_at": 1790486872.0009859, "line": " => el0_da"}
+{"kind": "trace", "read_at": 1790486872.0009925, "line": " => el0t_64_sync_handler"}
+{"kind": "trace", "read_at": 1790486872.0010054, "line": " => el0t_64_sync"}
+{"kind": "end", "run_id": "object-idle-ce", "time": 1790486872.8092759, "buffer_stats": {"cpu17": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 418447.217340\nnow ts: 418481.700803\ndropped events: 0\nread events: 4\n", "cpu16": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700819\ndropped events: 0\nread events: 0\n", "cpu15": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700830\ndropped events: 0\nread events: 0\n", "cpu14": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 418477.759945\nnow ts: 418481.700840\ndropped events: 0\nread events: 2\n", "cpu13": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700849\ndropped events: 0\nread events: 0\n", "cpu12": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts: 418480.891508\nnow ts: 418481.700857\ndropped events: 0\nread events: 2\n", "cpu11": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700865\ndropped events: 0\nread events: 0\n", "cpu10": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700874\ndropped events: 0\nread events: 0\n", "cpu9": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700882\ndropped events: 0\nread events: 0\n", "cpu8": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700889\ndropped events: 0\nread events: 0\n", "cpu7": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700902\ndropped events: 0\nread events: 0\n", "cpu6": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700910\ndropped events: 0\nread events: 0\n", "cpu5": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700917\ndropped events: 0\nread events: 0\n", "cpu4": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700924\ndropped events: 0\nread events: 0\n", "cpu3": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700932\ndropped events: 0\nread events: 0\n", "cpu2": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700939\ndropped events: 0\nread events: 0\n", "cpu1": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700946\ndropped events: 0\nread events: 0\n", "cpu0": "entries: 0\noverrun: 0\ncommit overrun: 0\nbytes: 0\noldest event ts:     0.000000\nnow ts: 418481.700953\ndropped events: 0\nread events: 0\n"}}

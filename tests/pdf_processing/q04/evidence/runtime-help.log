@@ -1,0 +1,33 @@
+usage: q04_runtime.py [-h] --phase {init,matrix,warm,drain,guard} --bundle
+                      BUNDLE --state STATE --capacity CAPACITY [--name NAME]
+                      [--fresh FRESH] [--fixture {native,06,07,08,09,10}]
+                      [--model-cache MODEL_CACHE] [--temporal TEMPORAL]
+                      [--endpoint ENDPOINT] [--bucket BUCKET]
+                      [--prefix PREFIX] [--pod-namespace POD_NAMESPACE]
+                      [--trial-seconds TRIAL_SECONDS] [--capacity-approved]
+
+Q04 actual Activities/shared-storage matrix; requires a newly approved
+capacity file. Only --help is a local dry run. Use prepare.py and
+test_adapter.py before capacity coordination. No service scaling, historical
+pauses or source deletion is built in.
+
+options:
+  -h, --help            show this help message and exit
+  --phase {init,matrix,warm,drain,guard}
+  --bundle BUNDLE
+  --state STATE
+  --capacity CAPACITY
+  --name NAME
+  --fresh FRESH         Fresh matrix directory or JSON mapping fixture IDs to
+                        immutable fresh case directories
+  --fixture {native,06,07,08,09,10}
+                        Subset for matrix only; allows separately coordinated
+                        windows
+  --model-cache MODEL_CACHE
+  --temporal TEMPORAL
+  --endpoint ENDPOINT
+  --bucket BUCKET
+  --prefix PREFIX
+  --pod-namespace POD_NAMESPACE
+  --trial-seconds TRIAL_SECONDS
+  --capacity-approved

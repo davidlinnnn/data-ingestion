@@ -1,0 +1,156 @@
+{
+  "scope": "ACL_FIXTURE_09_PROCESS_WINDOW_V3_B",
+  "outcome": "FRESH_CGROUP_GUARD_REJECTION",
+  "acceptance": false,
+  "runner_commit": "8e44d6f5a9414bcaefca34217e75cdfa43a2403c",
+  "runtime_source": "18be1b3fbcb929921ec986a1a0bf93e4be995b4d",
+  "run_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9",
+  "phase": "acl-window-v3-b",
+  "fixture": "09",
+  "window": {
+    "started_at": "2026-09-17T15:09:45.145504+00:00",
+    "authorized_ends_at": "2026-09-17T15:34:45.145504+00:00",
+    "finished_at": "2026-09-17T15:12:01.961453+00:00",
+    "retry_count": 0
+  },
+  "identity": {
+    "coordinator_uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+    "container_id": "containerd://75d02af07009f1d7152d6a68958cee5f43508ec1dd0ae327142a42db5e429ca5",
+    "container_restart_count": 1,
+    "container_started_at": "2026-09-17T13:46:12Z",
+    "boot_id": "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3",
+    "pid_1_start_ticks": 733,
+    "bundle_sha256": "b729891aa381ae25eef6ec2fbceefcdb43703d441762eafbb388627792833297",
+    "state_sha256": "6f83b29e73357e6576643948f18f0be2d461ae7285e433f2c810c5f8d4aca5b7",
+    "all_nine_remote_identities_absent_before": true,
+    "local_output_absent_before": true
+  },
+  "outer_admission": {
+    "passed": true,
+    "samples": 61,
+    "observed_seconds": 60.663619318999736,
+    "continuous_seconds": 60.645159318999504,
+    "resets": 0,
+    "minimum_available_bytes": 9683513344,
+    "maximum_cgroup_bytes": 2178662400,
+    "maximum_psi_full_avg10": 0.0,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0
+  },
+  "per_case_admission": {
+    "passed": true,
+    "samples": 121,
+    "observed_seconds": 60.436103105545044,
+    "minimum_available_bytes": 9530527744,
+    "maximum_cgroup_bytes": 2311819264,
+    "maximum_psi_full_avg10": 0.0,
+    "maximum_sample_gap_seconds": 0.5118343830108643,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0
+  },
+  "active_fresh_resources": {
+    "samples": 15,
+    "observed_seconds": 7.035731077194214,
+    "minimum_available_bytes": 8533536768,
+    "maximum_cgroup_bytes": 3297214464,
+    "cgroup_ceiling_bytes": 3221225472,
+    "maximum_bytes_over_cgroup_ceiling": 75988992,
+    "first_breach_at": "2026-09-17T15:11:54.914059+00:00",
+    "first_breach_stage": "RapidOcrModel",
+    "maximum_psi_full_avg10": 0.0,
+    "maximum_sample_gap_seconds": 0.5066173076629639,
+    "vm_oom_kill": 0,
+    "cgroup_oom_kill": 0
+  },
+  "modes": {
+    "fresh": {
+      "started": true,
+      "accepted": false,
+      "failure": "cgroup budget exceeded",
+      "workflow_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9-fresh-09-d9f88a98696b4e0abcd7e7e44ac03459",
+      "temporal_status": "COMPLETED",
+      "processing_complete": false,
+      "canonical_accepted": false,
+      "registered_pages": 0,
+      "pages": 3,
+      "steps": [],
+      "application_error": {
+        "category": "infrastructure",
+        "code": "activity_budget_exhausted"
+      }
+    },
+    "restored": {
+      "started": false,
+      "accepted": false,
+      "reason": "fresh failed; terminal no-retry window"
+    },
+    "exact_replay": {
+      "started": false,
+      "accepted": false,
+      "reason": "fresh failed; no accepted request available"
+    }
+  },
+  "cleanup": {
+    "verified": true,
+    "case_outcomes": {
+      "cancel": true,
+      "result_task": true,
+      "worker_stop": true,
+      "publication_audit": true,
+      "history_capture": true
+    },
+    "errors": [],
+    "orphans": [],
+    "running_after_cleanup": [],
+    "remaining_owned_cwd_pids": [],
+    "scratch_remaining": [],
+    "incomplete_publication_absent": [
+      "q04-63f02e6b09d747a699de93513c539589"
+    ],
+    "worker_pid": 489,
+    "parser_pid": 522,
+    "parser_absent": true,
+    "frozen_state_unchanged": true,
+    "reservation_released": true,
+    "reservation_pid_alive_after_release": false,
+    "shared_lock_held_after_release": false,
+    "driver_lock_held_after_release": false,
+    "vm_oom_kill_after_release": 0,
+    "cgroup_oom_kill_after_release": 0
+  },
+  "services": {
+    "temporal_healthy_before": true,
+    "temporal_healthy_after": true,
+    "temporal_healthy_final": true,
+    "running_workflows_before": [],
+    "running_workflows_after": [],
+    "running_workflows_final": [],
+    "object_readiness_before": 200,
+    "object_readiness_after": 200,
+    "object_readiness_final": 200,
+    "historical_deployments": 32,
+    "all_expected_uids": true,
+    "all_replicas_zero_before": true,
+    "all_replicas_zero_after": true,
+    "all_replicas_zero_final": true,
+    "matching_pods_absent_final": true,
+    "before_after_snapshot_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4"
+  },
+  "private_artifacts": {
+    "artifact-manifest.json": "98a2ef44c70a0c0dfbde77f781762c1b8f7931104353423ff2a597bbf91843f5",
+    "admission-v3.json": "cdf7dc7fca37bc4cc18664c1ac5b3b4a2352652b6d06d2e064a969d5e5a92490",
+    "cleanup.json": "06f5d2deb49e69817702047ce5b53a06f59dbec7346e6595c1cfced00aa2769b",
+    "fresh-workflow-summary.json": "795ad4094c0529fc8c69b61e8a4fd961290d6cfb5da703e862749a8611c2f380",
+    "lease-state.json": "e994983c5aed304d011c995c881e5a7804470fd38dbfbb4272c9f2dd7e0df5c9",
+    "mode-summary.json": "3a48828b57bc551b643936901368907b62ba107e8237e76ef92c6e388c142451",
+    "post-final-check.json": "baf273b240a713205029786daa13ae2e46e96c341206239867604d70a9c05997",
+    "remote-evidence.tar": "7e5f1733622aa750784834742692acb126f9c7efe1076e9cf58f82ff8817c829",
+    "resource-summary.json": "53e48480cd4a5152a46c1448ac5c2888504b6123521b25042a229c40c4d6a43c",
+    "runtime-error.log": "b3439bfacea928d4577b1f075d1b439e531ec196a5edb8e672baf772565996b0"
+  },
+  "historical_v3a_changed": false,
+  "production_changed": false,
+  "profile_changed": false,
+  "deployment_mutated": false,
+  "issue_closed": false
+}

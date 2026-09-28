@@ -1,0 +1,104 @@
+{
+  "artifacts": {
+    "candidate_inputs": "67eba79d6125c536ab728edb4f7d8ee070d8aead49384f4afc3a48c78267d420",
+    "equivalence_bundle": "d249a3894b004d27adde302bd75176e4df5886be75343f7e17c80b0c5ba83dc8",
+    "historical_methods": "eb58ea3afd15952ef06390d62e3f5fc48f7f213d046e2ca210b11f247b8b83a9",
+    "main_review": "678ca47d52f9fd3346618c1a597d5929df3fd7459b598aae8e051c9ca9c460bd",
+    "parser_budgets": "b418d07d18500681a1b9e6828621c31d26fb5d3ba01791f3c2a64bda00407551",
+    "reference_graph": "a3ac9eb345949cdc83423ba1ae38c794400e8f4f89061056c1102517b6a1e6a1",
+    "resource_analysis": "d14792535dc0d37ec9d86a5316aab744250c070b5fa0cddb4155161c9880be69",
+    "resource_bundle": "0ab2656b51e12a05ec568eb9455bb1f0f1abf12922b5ae5c3170731ef4c7a76c",
+    "source_pdf": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab"
+  },
+  "authorization_scope": {
+    "automatic_retry": false,
+    "candidate": "q04-yolo-reviewed-v1",
+    "fixture": "07",
+    "general_normalization": false,
+    "historical_reference_mutated": false,
+    "max_requests": 1,
+    "modes": [
+      "fresh",
+      "restored",
+      "replay"
+    ],
+    "production_default_changed": false,
+    "topology": "q04-independent-worker-pod-v1"
+  },
+  "authorization_scope_sha256": "daaa66f0845b38ae1d14637bde546e060dd94417904b88ad2934041807bc83e3",
+  "candidate": "q04-yolo-reviewed-v1",
+  "derived_from_manifest_sha256": "84317df682e3bc84b51456fa1a21121d4f06fac76f017d19f6c84ac09846de93",
+  "failure_policy": {
+    "automatic_retry": false,
+    "historical_evidence_preserved": true,
+    "other_fixture_policy_inherited": false,
+    "resource_failure_next_step": "return to main for a dedicated cgroup or Linux host decision"
+  },
+  "fixture": "07",
+  "identity": {
+    "driver_lock": "/q04-control/yolo-pod-cgroup-m.driver.lock",
+    "local_output": "/private/tmp/q04-yolo-pod-cgroup-20260920-m",
+    "phase": "yolo-pod-cgroup-m",
+    "prefix": "q04/yolo-pod-cgroup-20260920-m/",
+    "remote_root": "/q04-control",
+    "runner_dir": "/workspace/tests/pdf_processing/q04"
+  },
+  "modes": [
+    "fresh",
+    "restored",
+    "replay"
+  ],
+  "oracle_policy": {
+    "accepted_pair_count": 2,
+    "general_normalization": false,
+    "historical_failure_reclassified": false,
+    "historical_reference_mutated": false,
+    "kind": "fixture-local-source-reviewed-equivalence"
+  },
+  "parser_policy": {
+    "after_max_requests": 1,
+    "before_max_requests": 20,
+    "concurrency_changed": false,
+    "group_size_changed": false,
+    "parser_budgets": {
+      "max_requests": 1,
+      "no_progress_seconds": 180,
+      "reap_seconds": 5,
+      "startup_seconds": 120,
+      "terminate_seconds": 5
+    },
+    "production_default_changed": false,
+    "scope": "this fixture-07 candidate window only"
+  },
+  "production_default_changed": false,
+  "resource_gate": {
+    "all_cgroup_samples_complete": true,
+    "final_sample_labels": [
+      "owned_cleanup_finished",
+      "post_cleanup_sample"
+    ],
+    "full_psi_avg10_max": 0.0,
+    "max_cgroup_bytes": 4294967296,
+    "maximum_gap_seconds": 1.0,
+    "oom_increment_max": 0,
+    "process_attribution_policy": {
+      "adjacent_complete_enumeration_required": true,
+      "classified_exit_applies_to_cgroup_qualification_only": true,
+      "exact_exit_event_required": true,
+      "peak_process_attribution_complete_required": true,
+      "pss_substitution_allowed": false,
+      "raw_incomplete_preserved": true,
+      "same_cgroup_required": true,
+      "same_pid_start_ticks_required": true
+    },
+    "required_oom_counters": [
+      "oom",
+      "oom_group_kill",
+      "oom_kill"
+    ],
+    "sample_interval_seconds": 0.25
+  },
+  "runtime_authorized": false,
+  "schema_version": 1,
+  "status": "HISTORICAL_FAILED_RECONCILED_OFFLINE"
+}

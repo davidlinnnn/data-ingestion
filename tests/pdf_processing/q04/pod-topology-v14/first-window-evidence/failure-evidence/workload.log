@@ -1,0 +1,51 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/tests/pdf_processing/q04/candidate/aima_pod_window_o.py", line 252, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/workspace/tests/pdf_processing/q04/candidate/aima_pod_window_o.py", line 247, in main
+    asyncio.run(run_window(args))
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/candidate/aima_pod_window_o.py", line 216, in run_window
+    await run_measured_window(args)
+  File "/workspace/tests/pdf_processing/q04/candidate/aima_pod_window_o.py", line 185, in run_measured_window
+    raise primary_error
+  File "/workspace/tests/pdf_processing/q04/candidate/aima_pod_window_o.py", line 133, in run_measured_window
+    await q04_runtime.main(runtime_args)
+  File "/workspace/tests/pdf_processing/q04/q04_runtime.py", line 363, in main
+    record = await run.trial(sid, mode, mode+'-'+sid, fresh.get(sid))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/q04_runtime.py", line 257, in trial
+    accepted = await asyncio.to_thread(Consumer(self.store, target).verify, result, request, profile, fixture, Path(self.config['bundle'])/'oracles')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/consumer.py", line 296, in verify
+    checks = check_fixture(fixture['id'], document, evidence, relations, profile['content_evidence']['relationships'], oracles)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/q04/consumer.py", line 155, in check_fixture
+    verdicts = score(document, candidate)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/..2026_09_20_03_29_25.1781515268/tests/pdf_processing/q02/oracle/score.py", line 44, in score
+    historical_hashes = json.loads((ROOT.parents[1]/'t09a/evidence/code-source-oracle.json').read_text())
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/..2026_09_20_03_29_25.1781515268/tests/pdf_processing/t09a/evidence/code-source-oracle.json'

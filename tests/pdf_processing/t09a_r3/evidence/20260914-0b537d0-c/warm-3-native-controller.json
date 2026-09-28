@@ -1,0 +1,139 @@
+{
+  "trial": "warm-3-native",
+  "sid": "native",
+  "started": 1789389448.91019,
+  "status": "passed",
+  "pod": "r2-activities-20260914-0b537d0-c-5f6c5d4bd6-2x7xf",
+  "pod_uid": "d2fbe40d-a0b5-4100-85a4-c1883a940bd9",
+  "before": [
+    {
+      "allocatedResources": {
+        "cpu": "100m",
+        "memory": "256Mi"
+      },
+      "containerID": "containerd://72b8bc027b4db2c0f3425cfe17398f7944fe7e2458bfebea1102d4e9ca095fbf",
+      "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+      "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "lastState": {},
+      "name": "worker",
+      "ready": true,
+      "resources": {
+        "limits": {
+          "cpu": "4",
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        }
+      },
+      "restartCount": 0,
+      "started": true,
+      "state": {
+        "running": {
+          "startedAt": "2026-09-14T12:34:47Z"
+        }
+      },
+      "user": {
+        "linux": {
+          "gid": 0,
+          "supplementalGroups": [
+            0
+          ],
+          "uid": 0
+        }
+      },
+      "volumeMounts": [
+        {
+          "mountPath": "/app/pdf_processing",
+          "name": "code"
+        },
+        {
+          "mountPath": "/driver",
+          "name": "driver"
+        },
+        {
+          "mountPath": "/scratch",
+          "name": "scratch"
+        },
+        {
+          "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "name": "kube-api-access-57jbq",
+          "readOnly": true,
+          "recursiveReadOnly": "Disabled"
+        }
+      ]
+    }
+  ],
+  "oom_before": 28,
+  "submitted_at": 1789389449.586266,
+  "complete_observed_at": 1789389556.468962,
+  "final_vm": {
+    "time": 1789389557.7965178,
+    "available": 2663256064,
+    "oom_kill": 28,
+    "raw": "MemTotal:        8124424 kB\nMemFree:          843048 kB\nMemAvailable:    2600836 kB\nBuffers:          124364 kB\nCached:          1563772 kB\nSwapCached:         2944 kB\nActive:          3629836 kB\nInactive:        2772872 kB\nActive(anon):    2936848 kB\nInactive(anon):  1849064 kB\nActive(file):     692988 kB\nInactive(file):   923808 kB\nUnevictable:         500 kB\nMlocked:               0 kB\nSwapTotal:       1048572 kB\nSwapFree:         143024 kB\nZswap:                 0 kB\nZswapped:              0 kB\nDirty:             24072 kB\nWriteback:             0 kB\nAnonPages:       4618456 kB\nMapped:           654584 kB\nShmem:             71608 kB\nKReclaimable:     344352 kB\nSlab:             525448 kB\nSReclaimable:     344352 kB\nSUnreclaim:       181096 kB\nKernelStack:       30496 kB\nPageTables:        35992 kB\nSecPageTables:         0 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:     5110784 kB\nCommitted_AS:   13931092 kB\nVmallocTotal:   135288315904 kB\nVmallocUsed:       10060 kB\nVmallocChunk:          0 kB\nPercpu:            29520 kB\nAnonHugePages:   2166784 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:         0 kB\nFilePmdMapped:         0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nnr_free_pages 210762\nnr_zone_inactive_anon 462266\nnr_zone_active_anon 734212\nnr_zone_inactive_file 230952\nnr_zone_active_file 173247\nnr_zone_unevictable 125\nnr_zone_write_pending 6018\nnr_mlock 0\nnr_bounce 0\nnr_zspages 0\nnr_free_cma 0\nnr_inactive_anon 462266\nnr_active_anon 734212\nnr_inactive_file 230952\nnr_active_file 173247\nnr_unevictable 125\nnr_slab_reclaimable 86088\nnr_slab_unreclaimable 45274\nnr_isolated_anon 0\nnr_isolated_file 0\nworkingset_nodes 26040\nworkingset_refault_anon 6981012\nworkingset_refault_file 108541775\nworkingset_activate_anon 794484\nworkingset_activate_file 22313748\nworkingset_restore_anon 788859\nworkingset_restore_file 7616370\nworkingset_nodereclaim 377593\nnr_anon_pages 1154614\nnr_mapped 163646\nnr_file_pages 422770\nnr_dirty 6018\nnr_writeback 0\nnr_writeback_temp 0\nnr_shmem 17902\nnr_shmem_hugepages 0\nnr_shmem_pmdmapped 0\nnr_file_hugepages 0\nnr_file_pmdmapped 0\nnr_anon_transparent_hugepages 1058\nnr_vmscan_write 7087782\nnr_vmscan_immediate_reclaim 967\nnr_dirtied 15464416\nnr_written 20274922\nnr_throttled_written 0\nnr_kernel_misc_reclaimable 0\nnr_foll_pin_acquired 0\nnr_foll_pin_released 0\nnr_kernel_stack 30496\nnr_page_table_pages 8998\nnr_sec_page_table_pages 0\nnr_swapcached 736\npgdemote_kswapd 0\npgdemote_direct 0\npgdemote_khugepaged 0\nnr_dirty_threshold 118439\nnr_dirty_background_threshold 59147\nnr_memmap_pages 0\nnr_memmap_boot_pages 32768\npgpgin 620356825\npgpgout 104443892\npswpin 6269963\npswpout 6276188\npgalloc_dma 510868690\npgalloc_dma32 0\npgalloc_normal 1022644362\npgalloc_movable 0\nallocstall_dma 0\nallocstall_dma32 0\nallocstall_normal 5842\nallocstall_movable 678051\npgskip_dma 2177\npgskip_dma32 0\npgskip_normal 4906\npgskip_movable 0\npgfree 1555972612\npgactivate 26276683\npgdeactivate 0\npglazyfree 0\npgfault 1040888423\npgmajfault 9911383\npglazyfreed 0\npgrefill 164338495\npgreuse 3386465\npgsteal_kswapd 127496830\npgsteal_direct 35888147\npgsteal_khugepaged 225674\npgscan_kswapd 185361347\npgscan_direct 63127330\npgscan_khugepaged 275683\npgscan_direct_throttle 4\npgscan_anon 37375748\npgscan_file 211890459\npgsteal_anon 7516409\npgsteal_file 156578065\npginodesteal 1438\nslabs_scanned 75233644\nkswapd_inodesteal 320165\nkswapd_low_wmark_hit_quickly 13050\nkswapd_high_wmark_hit_quickly 32383\npageoutrun 49141\npgrotated 7538302\ndrop_pagecache 0\ndrop_slab 0\noom_kill 28\npgmigrate_success 18003611\npgmigrate_fail 119199\nthp_migration_success 0\nthp_migration_fail 0\nthp_migration_split 0\ncompact_migrate_scanned 93988563\ncompact_free_scanned 664296267\ncompact_isolated 37119325\ncompact_stall 139845\ncompact_fail 130915\ncompact_success 8930\ncompact_daemon_wake 20\ncompact_daemon_migrate_scanned 26634\ncompact_daemon_free_scanned 337420\nhtlb_buddy_alloc_success 0\nhtlb_buddy_alloc_fail 0\nunevictable_pgs_culled 7961\nunevictable_pgs_scanned 0\nunevictable_pgs_rescued 0\nunevictable_pgs_mlocked 0\nunevictable_pgs_munlocked 0\nunevictable_pgs_cleared 0\nunevictable_pgs_stranded 0\nthp_fault_alloc 749797\nthp_fault_fallback 388225\nthp_fault_fallback_charge 13\nthp_collapse_alloc 8803\nthp_collapse_alloc_failed 829\nthp_file_alloc 0\nthp_file_fallback 0\nthp_file_fallback_charge 0\nthp_file_mapped 0\nthp_split_page 1418\nthp_split_page_failed 0\nthp_deferred_split_page 20100\nthp_underused_split_page 0\nthp_split_pmd 56178\nthp_scan_exceed_none_pte 2653\nthp_scan_exceed_swap_pte 317\nthp_scan_exceed_share_pte 0\nthp_zero_page_alloc 1\nthp_zero_page_alloc_failed 0\nthp_swpout 0\nthp_swpout_fallback 274\nballoon_inflate 0\nballoon_deflate 0\nballoon_migrate 0\nswap_ra 1664908\nswap_ra_hit 924081\nswpin_zero 730761\nswpout_zero 722052\nksm_swpin_copy 825\ncow_ksm 0\nzswpin 0\nzswpout 0\nzswpwb 0\nnr_unstable 0\nsome avg10=0.00 avg60=0.01 avg300=0.00 total=384900697\nfull avg10=0.00 avg60=0.01 avg300=0.00 total=375624270\n"
+  },
+  "after": [
+    {
+      "allocatedResources": {
+        "cpu": "100m",
+        "memory": "256Mi"
+      },
+      "containerID": "containerd://72b8bc027b4db2c0f3425cfe17398f7944fe7e2458bfebea1102d4e9ca095fbf",
+      "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+      "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+      "lastState": {},
+      "name": "worker",
+      "ready": true,
+      "resources": {
+        "limits": {
+          "cpu": "4",
+          "memory": "5Gi"
+        },
+        "requests": {
+          "cpu": "100m",
+          "memory": "256Mi"
+        }
+      },
+      "restartCount": 0,
+      "started": true,
+      "state": {
+        "running": {
+          "startedAt": "2026-09-14T12:34:47Z"
+        }
+      },
+      "user": {
+        "linux": {
+          "gid": 0,
+          "supplementalGroups": [
+            0
+          ],
+          "uid": 0
+        }
+      },
+      "volumeMounts": [
+        {
+          "mountPath": "/app/pdf_processing",
+          "name": "code"
+        },
+        {
+          "mountPath": "/driver",
+          "name": "driver"
+        },
+        {
+          "mountPath": "/scratch",
+          "name": "scratch"
+        },
+        {
+          "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+          "name": "kube-api-access-57jbq",
+          "readOnly": true,
+          "recursiveReadOnly": "Disabled"
+        }
+      ]
+    }
+  ],
+  "finished": 1789389557.839206,
+  "continuous_observation": true
+}

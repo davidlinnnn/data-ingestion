@@ -1,0 +1,71 @@
+{
+  "status": "STOPPED_NODE_PSI_BEFORE_WORKFLOW",
+  "run_id": "q04-relationship-pod-cgroup-20260925-ap",
+  "source_commit": "2a3760f",
+  "raw_root": "/private/tmp/q04-relationship-pod-cgroup-20260925-ap",
+  "pre_inference_gates": 11,
+  "workflow_started": false,
+  "trigger": {
+    "controller_stop_utc": "2026-09-24T16:46:22.445Z",
+    "reason": "VM PSI guard breached",
+    "node_psi_full_avg10": 0.18,
+    "allowed_node_psi_full_avg10": 0,
+    "node_available_bytes": 7067918336,
+    "pod_memory_current_bytes": 314884096,
+    "pod_memory_max_bytes": 5368709120,
+    "pod_oom_kill": 0,
+    "vm_oom_kill": 0,
+    "controller_samples": 177,
+    "trigger_sample_retained": true
+  },
+  "probe": {
+    "samples": 715,
+    "max_gap_seconds": 0.26830315589904785,
+    "visible_cgroups": 68,
+    "window": "10 seconds before through 1 second after controller stop",
+    "window_samples": 43,
+    "node_full_delta_microseconds": 20218,
+    "visible_cgroup_full_delta_microseconds": 0,
+    "event_offset_seconds": -1.085,
+    "remote_stop": true,
+    "transport_exit_zero": true,
+    "remote_absence_verified": true,
+    "complete": true
+  },
+  "visibility_follow_up": {
+    "kind_node": "internal-a2a-vs6-local-worker2",
+    "docker_cgroup_namespace_mode": "private",
+    "pid1_cgroup": "0::/init.scope",
+    "probe_process_cgroup": "0::/init.scope",
+    "cgroup2_mount": "/sys/fs/cgroup",
+    "global_full_total_microseconds_at_follow_up": 2616044,
+    "visible_root_full_total_microseconds_at_follow_up": 2033693,
+    "host_scope_cgroup_count": 153,
+    "host_scope_global_and_root_full_total_microseconds": 2617181,
+    "kind_worker2_host_cgroup": "/docker/0d08ea948508551ee2177390d1fbb0165aa65de2479ce4d049f0815aed04d91d",
+    "host_idle_probe": {
+      "raw_path": "/private/tmp/q04-host-cgroup-idle-20260925.jsonl",
+      "samples": 19,
+      "max_gap_seconds": 0.2691226005554199,
+      "node_full_delta_microseconds": 0,
+      "cgroups_at_start_and_end": 153
+    },
+    "ap_stall_source": "unknown"
+  },
+  "evidence": {
+    "terminal_status": "INCOMPLETE",
+    "inventory_files": 26,
+    "inventory_sha256": "04a1b6f0004a5d4eaf29405030112d8730605cf7b60f38841b0a06b221ec3d84",
+    "inventory_exact_set_sizes_hashes_verified": true,
+    "cleanup_complete": true
+  },
+  "cleanup": {
+    "owned_runtime_absent": true,
+    "emptydirs_absent": true,
+    "owned_objects_deleted_with_uid_preconditions": true,
+    "evidence_pvc": "q04-pod-cgroup-ap-evidence-20260925-ap",
+    "evidence_pvc_uid": "2d1a218c-7394-43a2-a249-d83d4dc4f5cc",
+    "evidence_pvc_phase": "Bound",
+    "held_deployments_exact_off": 32
+  }
+}

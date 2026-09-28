@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/tmp/t09a-r2-20260914-0b537d0-b-test/verify.py", line 126, in <module>
+    if __name__=='__main__': asyncio.run(main())
+                             ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/tmp/t09a-r2-20260914-0b537d0-b-test/verify.py", line 77, in main
+    assert result['status']=='complete', result.get('error')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'category': 'input', 'code': 'invalid_source_reference'}
+command terminated with exit code 1

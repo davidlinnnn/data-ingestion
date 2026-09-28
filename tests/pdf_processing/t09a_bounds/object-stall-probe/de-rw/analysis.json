@@ -1,0 +1,50 @@
+{
+  "status": "PASS_NEGATIVE_CONTROL",
+  "formal_guard_failures": [],
+  "operations": {
+    "puts": 4,
+    "gets": 4,
+    "bytes_each": 8388608,
+    "written_bytes": 33554432,
+    "read_bytes": 33554432,
+    "latency_seconds": {
+      "put": {
+        "minimum": 0.03188787499675527,
+        "median": 0.03261672903317958,
+        "maximum": 0.03431404201546684
+      },
+      "get": {
+        "minimum": 0.008389915979932994,
+        "median": 0.009247729496564716,
+        "maximum": 0.013373791007325053
+      }
+    }
+  },
+  "samples": 58,
+  "maximum_object_bytes": 162869248,
+  "minimum_vm_available": 5582422016,
+  "object_full_psi_delta_us": 0.0,
+  "object_local_event_deltas": {
+    "low": 0,
+    "high": 0,
+    "max": 0,
+    "oom": 0,
+    "oom_kill": 0,
+    "oom_group_kill": 0
+  },
+  "vm_counter_deltas": {
+    "oom_kill": 0,
+    "pgscan_direct": 0,
+    "pgscan_kswapd": 0,
+    "compact_stall": 0,
+    "allocstall_movable": 0,
+    "workingset_refault_file": 9107
+  },
+  "vm_callers": {
+    "folio_wait_bit_common": 11,
+    "read_pages": 6
+  },
+  "target_object_calls": [],
+  "trace_loss": 0,
+  "interpretation": "bounded generic S3 PUT/GET did not reproduce DD object PSI"
+}

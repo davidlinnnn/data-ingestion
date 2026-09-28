@@ -1,0 +1,129 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "name": "q04-yolo-readiness-preflight-b",
+    "namespace": "pdf-t09a-validation",
+    "labels": {
+      "q04-run": "q04-yolo-readiness-preflight-20260919-b"
+    }
+  },
+  "spec": {
+    "replicas": 0,
+    "revisionHistoryLimit": 0,
+    "strategy": {
+      "type": "Recreate"
+    },
+    "selector": {
+      "matchLabels": {
+        "app": "q04-yolo-readiness-preflight-b",
+        "q04-run": "q04-yolo-readiness-preflight-20260919-b"
+      }
+    },
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "q04-yolo-readiness-preflight-b",
+          "q04-run": "q04-yolo-readiness-preflight-20260919-b"
+        }
+      },
+      "spec": {
+        "automountServiceAccountToken": false,
+        "nodeName": "internal-a2a-vs6-local-worker2",
+        "terminationGracePeriodSeconds": 60,
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 1000,
+          "runAsGroup": 1000,
+          "fsGroup": 1000
+        },
+        "containers": [
+          {
+            "name": "worker",
+            "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+            "imagePullPolicy": "IfNotPresent",
+            "command": [
+              "/bin/sh",
+              "-c",
+              "sleep infinity"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "4Gi"
+              },
+              "limits": {
+                "cpu": "4",
+                "memory": "5Gi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "scratch",
+                "mountPath": "/scratch"
+              },
+              {
+                "name": "control",
+                "mountPath": "/q04-control"
+              },
+              {
+                "name": "evidence",
+                "mountPath": "/q04-evidence"
+              },
+              {
+                "name": "tmp",
+                "mountPath": "/tmp"
+              }
+            ],
+            "readinessProbe": {
+              "exec": {
+                "command": [
+                  "/bin/sh",
+                  "-c",
+                  "test -d /q04-control && test -w /q04-evidence"
+                ]
+              },
+              "periodSeconds": 2,
+              "failureThreshold": 15
+            }
+          }
+        ],
+        "volumes": [
+          {
+            "name": "scratch",
+            "emptyDir": {
+              "sizeLimit": "2Gi"
+            }
+          },
+          {
+            "name": "control",
+            "emptyDir": {
+              "sizeLimit": "64Mi"
+            }
+          },
+          {
+            "name": "evidence",
+            "emptyDir": {
+              "sizeLimit": "64Mi"
+            }
+          },
+          {
+            "name": "tmp",
+            "emptyDir": {
+              "sizeLimit": "256Mi"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "outer_exit_code": 1,
+  "runner_exit_code": 0,
+  "observer_last_sample_time": 1790533175.6689036,
+  "observer_missing_end": true,
+  "observer_error": "node attribution stop: RuntimeError('node attribution exit 1: Traceback (most recent call last):\\n  File \"<stdin>\", line 122, in <module>\\n  File \"<stdin>\", line 110, in main\\n  File \"<stdin>\", line 23, in snapshot\\n  File \"/usr/lib/python3.11/pathlib.py\", line 969, in rglob\\n    for p in selector.select_from(self):\\n  File \"/usr/lib/python3.11/pathlib.py\", line 408, in _select_from\\n    for starting_point in self._iterate_directories(parent_path, is_dir, scandir):\\n  File \"/usr/lib/python3.11/pathlib.py\", line 398, in _iterate_directories\\n    for p in self._iterate_directories(path, is_dir, scandir):\\n  File \"/usr/lib/python3.11/pathlib.py\", line 398, in _iterate_directories\\n    for p in self._iterate_directories(path, is_dir, scandir):\\n  File \"/usr/lib/python3.11/pathlib.py\", line 398, in _iterate_directories\\n    for p in self._iterate_directories(path, is_dir, scandir):\\n  [Previous line repeated 1 more time]\\n  File \"/usr/lib/python3.11/pathlib.py\", line 387, in _iterate_directories\\n    with scandir(parent_path) as scandir_it:\\n         ^^^^^^^^^^^^^^^^^^^^\\n  File \"/usr/lib/python3.11/pathlib.py\", line 939, in _scandir\\n    return os.scandir(self)\\n           ^^^^^^^^^^^^^^^^\\nFileNotFoundError: [Errno 2] No such file or directory: \\'/sys/fs/cgroup/kubelet.slice/kubelet-kubepods.slice/kubelet-kubepods-burstable.slice/kubelet-kubepods-burstable-pod0e0ab06b_1077_4f12_b855_a426580214f0.slice\\'\\n')",
+  "observer_failure_stage": "before workload, during object Pod rollout",
+  "worker_guard_samples": 1399,
+  "object_guard_samples": 2543,
+  "readiness_vm_first_last_seconds": 124.99825191497803,
+  "continuous_object_protection_seconds": 125.33878874778748,
+  "observation_limit": "auxiliary per-cgroup node attribution absent after early rollout; authoritative VM/worker/object guards and full output evidence remain complete",
+  "regression_before": "FileNotFoundError in Python3.11 rglob traversal; permission error silently suppressed",
+  "regression_after": "2 tests PASS on same Linux Python3.11; skip only vanished descendants, propagate permission errors",
+  "historical_controller_unchanged": true,
+  "next_observer": "tests/pdf_processing/q04/sentinel/node_pressure_attribution_db.py"
+}

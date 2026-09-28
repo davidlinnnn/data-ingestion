@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "run_identity": "q04-warm-pod-cgroup-20260921-s",
+  "execution_commit": "78063af",
+  "failure_stage": "worker_pod_ready_then_pre_inference_import_before_workload",
+  "observed_error": "FileNotFoundError: /workspace/tests/pdf_processing/q04/pod_preflight_q.py",
+  "pod_identity": {
+    "name": "q04-pod-cgroup-s-activities-55dd884c6c-tzp7t",
+    "uid": "4a32d734-7fba-46bf-84c3-ab006dcfb4cc",
+    "node": "internal-a2a-vs6-local-worker2"
+  },
+  "projection_membership": {
+    "pod_preflight_s.py": true,
+    "pod_preflight_q.py": false,
+    "pod_preflight_p.py": true
+  },
+  "root_cause": "S preflight dynamically loads pod_preflight_q.py, but pod_topology_s omitted that transitive source from the projected workspace.",
+  "test_gap": "Local tests imported from the full checkout instead of reconstructing the ConfigMap projection, so the missing transitive file was masked.",
+  "causal_classification": {
+    "acceptance_harness_source_projection": "PROVEN_ROOT_CAUSE",
+    "pod_startup": "PASSED",
+    "pre_inference": "FAILED_BEFORE_GATES_COMPLETE",
+    "workflow": "NOT_STARTED",
+    "activity": "NOT_STARTED",
+    "inference": "NOT_STARTED",
+    "cluster_capacity": "NOT_CAUSAL_WORKLOAD_NOT_STARTED",
+    "psi": "NOT_CAUSAL",
+    "oom": "NOT_CAUSAL",
+    "ingestion_implementation": "NOT_EXERCISED"
+  },
+  "s_retry_forbidden": true,
+  "thresholds_changed": false,
+  "fix": "T includes the complete transitive preflight engine in the projected source set and tests imports from a reconstructed projected workspace."
+}

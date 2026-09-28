@@ -1,0 +1,50 @@
+{
+  "primary_error": "TimeoutError('worker Pod readiness expired')",
+  "policy": {
+    "controller_export_complete": false,
+    "remove_owned_runtime": true,
+    "retain_evidence_pvc": true
+  },
+  "controller_export_complete": false,
+  "retained_for_evidence_recovery": false,
+  "terminal_stop_proven": false,
+  "deployment_scaled_zero": true,
+  "owned_object_deletion": {
+    "deleted": [
+      {
+        "kind": "Deployment",
+        "name": "q04-pod-cgroup-a-activities",
+        "uid": "790e7ca4-c5e6-4fe5-9b15-c0ebb962fe7d"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-harness-b371166fdfa8f6da",
+        "uid": "e91bbd9d-bfb7-4232-bf2e-fb3d8cf2ff32"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-code-a6501b471bd3193a",
+        "uid": "a4e5562e-0470-489c-bf99-dc731f0c3a42"
+      }
+    ],
+    "retained": [
+      {
+        "kind": "PersistentVolumeClaim",
+        "name": "q04-pod-cgroup-a-evidence-20260919-a",
+        "uid": "ecba9310-5378-4e2b-a5c7-928ae194c86f"
+      }
+    ],
+    "errors": {}
+  },
+  "owned_objects_deleted_with_uid_preconditions": true,
+  "retained_evidence_claim": {
+    "pvc_name": "q04-pod-cgroup-a-evidence-20260919-a",
+    "pvc_uid": "ecba9310-5378-4e2b-a5c7-928ae194c86f",
+    "phase": "Bound",
+    "retained": true,
+    "automatic_delete": false
+  },
+  "final_identity_and_health": false,
+  "final_identity_or_health_error": "ValueError('owned worker Pod already exists')",
+  "disposition": "NEEDS_INTERVENTION"
+}

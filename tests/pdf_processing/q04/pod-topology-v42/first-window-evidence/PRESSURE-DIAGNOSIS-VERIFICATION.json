@@ -1,0 +1,42 @@
+{
+  "sources": {
+    "aq_raw_root": "/private/tmp/q04-relationship-pod-cgroup-20260925-aq",
+    "an_raw_root": "/private/tmp/q04-method-pod-cgroup-20260924-an",
+    "aq_pod_uid": "b826f5eb-4f51-48bb-a9bc-0fcb7c84e472",
+    "aq_container_id": "1777c9e685978464e3702307d541e13ae5fb000d5b57b058604b243272cdb57d"
+  },
+  "dominant_host_samples": [
+    {"seconds_before_stop": 1.536, "node_full_delta_us": 14643, "aq_pod_full_delta_us": 14596, "aq_container_full_delta_us": 13895},
+    {"seconds_before_stop": 1.274, "node_full_delta_us": 22677, "aq_pod_full_delta_us": 21698, "aq_container_full_delta_us": 22846}
+  ],
+  "reclaim_window": {
+    "relative_seconds": [-2.284, -1.067],
+    "vm_allocstall_movable_delta": 60,
+    "vm_pgscan_direct_delta": 8847,
+    "vm_compact_stall_delta": 0,
+    "vm_thp_fault_alloc_delta": 4,
+    "vm_thp_fault_fallback_delta": 2,
+    "pod_anon_delta_bytes": 387842048,
+    "pod_memory_high_max_oom_events": 0,
+    "observer_cgroup_full_delta_us": 0
+  },
+  "bounded_comparison": {
+    "aq_max_warm_parser_plus_fresh_child_pss_bytes": 2131881984,
+    "aq_pod_memory_at_that_sample_bytes": 2369269760,
+    "aq_max_controller_full_avg10": 0.18,
+    "an_max_warm_parser_plus_fresh_child_pss_bytes": 2095304704,
+    "an_pod_memory_at_that_sample_bytes": 2228969472,
+    "an_max_controller_full_avg10": 0.0,
+    "environment_matched": false
+  },
+  "classification": {
+    "stall_location": "AQ Pod/container cgroup",
+    "growing_child_pid": 812,
+    "growing_child_command": "/experiment/.venv/bin/python -m pdf_processing.lifecycle_child pdf_processing.ocr",
+    "growing_child_command_sha256": "9ca90fdc9543697b8bde9da81653eb0c0403ff51533d4abb8f00c47d276a9cb6",
+    "stalled_pid_or_allocator": "unknown",
+    "thp_compaction_cause": "not established",
+    "guard_false_positive": false,
+    "acceptance_result": "stopped before required-relationship hook"
+  }
+}

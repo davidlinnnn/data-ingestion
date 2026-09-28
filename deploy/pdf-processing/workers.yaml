@@ -1,0 +1,51 @@
+# Environment template: substitute image digest, namespace, addresses and Secret.
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pdf-workflows, namespace: knowledge-processing}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: pdf-workflows}}
+  template:
+    metadata: {labels: {app: pdf-workflows}}
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: worker
+        image: registry.example/pdf-processing@sha256:REPLACE_WITH_QUALIFIED_DIGEST
+        env:
+        - {name: WORKER_ROLE, value: workflow}
+        - {name: TEMPORAL_ADDRESS, value: 'temporal:7233'}
+        - {name: TASK_QUEUE, value: pdf-workflows-v1}
+        - {name: DRAIN_SECONDS, value: '30'}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pdf-activities, namespace: knowledge-processing}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: pdf-activities}}
+  template:
+    metadata: {labels: {app: pdf-activities}}
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: worker
+        image: registry.example/pdf-processing@sha256:REPLACE_WITH_QUALIFIED_DIGEST
+        envFrom: [{secretRef: {name: pdf-object-store}}]
+        env:
+        - {name: WORKER_ROLE, value: activity}
+        - {name: TEMPORAL_ADDRESS, value: 'temporal:7233'}
+        - {name: TASK_QUEUE, value: pdf-native-v1}
+        - {name: OBJECT_ENDPOINT, value: 'http://objects:9000'}
+        - {name: OBJECT_BUCKET, value: pdf-processing}
+        - {name: OBJECT_PREFIX, value: native-v1}
+        - {name: MODEL_CACHE, value: /experiment/PROTOTYPE-wipe-me/hf}
+        - {name: PROFILE_FILE, value: /app/profiles/native-v1.json}
+        - {name: SCRATCH, value: /scratch}
+        - {name: PARSER_MODE, value: warm}
+        - {name: DRAIN_SECONDS, value: '30'}
+        - {name: PARSER_BUDGETS, value: '{"startup_seconds":120,"no_progress_seconds":180,"terminate_seconds":5,"reap_seconds":5,"max_requests":100}'}
+        resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 5Gi}}
+        volumeMounts: [{name: scratch, mountPath: /scratch}]
+      volumes:
+      - {name: scratch, emptyDir: {sizeLimit: 1Gi}}

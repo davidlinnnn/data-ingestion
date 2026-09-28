@@ -1,0 +1,85 @@
+{
+  "namespace": "pdf-t07-validation",
+  "bucket": "t07",
+  "prefix": "final",
+  "workflow_queue": "t07-workflows",
+  "activity_workers": "Fresh per-scenario real Temporal Workers in coordinator; dedicated t07-matrix-* queues. The activities Deployment is used only by the initial red/green reprocess driver.",
+  "pods": [
+    {
+      "name": "activities-646f94d7d9-r68dn",
+      "uid": "e2b9593d-d696-4c86-8f33-0adb0cc1180d",
+      "node": "internal-a2a-vs6-local-worker2",
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+          "image_id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+        }
+      ]
+    },
+    {
+      "name": "coordinator",
+      "uid": "e2cebf98-6360-45cb-8d8d-d4cecf7d399c",
+      "node": "internal-a2a-vs6-local-worker2",
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+          "image_id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+        }
+      ]
+    },
+    {
+      "name": "objects-8865c4db6-nxprz",
+      "uid": "0e821ec0-7746-4cff-805d-de158df995cc",
+      "node": "internal-a2a-vs6-local-worker2",
+      "containers": [
+        {
+          "name": "minio",
+          "image": "docker.io/minio/minio:latest",
+          "image_id": "docker.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e"
+        }
+      ]
+    },
+    {
+      "name": "temporal-bf44c7c45-58wpj",
+      "uid": "9e0a87b1-3623-4b01-9cc0-c337bc999b85",
+      "node": "internal-a2a-vs6-local-worker2",
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "docker.io/temporalio/temporal:1.8.3",
+          "image_id": "docker.io/temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d"
+        }
+      ]
+    },
+    {
+      "name": "workflows-7478c7745f-zsgfg",
+      "uid": "c2c362d2-efd3-4b38-bb04-73000a902c9a",
+      "node": "internal-a2a-vs6-local-worker2",
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-checkpoint-prototype:linux-v2",
+          "image_id": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce"
+        }
+      ]
+    }
+  ],
+  "producer": {
+    "enrichment.py": "60ea31862bd5879d9c01982e04ad834f35d34c24d6cd08e0c6ecbb30695ea5ca",
+    "compatibility.py": "80fd4f0d10e1ce55d14d4597be2c002d56223b4cbe8ffd1e99948f5059c27034",
+    "temporal.py": "5a3c5b2f5514ca7d793b6d69d0ed00c52b778dbe54e5af5f5b9a17c0d50beb12",
+    "execution.py": "f6a6be4fdda73e87308eb14335cbd9455473f4edeeac0034dc76c03c5f40326d",
+    "processing_workflow.py": "599ed08423749594b3085d557f2bdc4dcadef7486de079b5702322bc82953f08",
+    "__init__.py": "0618cd3d1c2dcb31f3d55be51482527ae8b04da932147c6d3a247a2921352712",
+    "ocr.py": "1f8e665bb0d034bce21dbbf9526866533579c9f7c7009e50a2d31a58dfdb831e",
+    "supervision.py": "4b3978d0c4710dda90335af866b6f73a6ab889bd714258f5c6cf5e22bfd3d135",
+    "warm_child.py": "75c325385496c43d417c73597ace32183dbbdbf97fac41c9608810b2a9f38657",
+    "processing.py": "1ae6cec65068e87dd37599dd45db6aaa0340308464f6345017c080ec0e509a85",
+    "parse.py": "d30f88af0347e4275d3d2ea0a31e5a77cbe7714cad3b82cc40e1553399348c9d",
+    "evidence.py": "b67d0c8a42215a3cbbe28a4d1c9cb47a2329b8434b383e6f1be718cc68bb0755",
+    "preflight.py": "13f08bb6d335d9cc3f67ce7c762411eda69f8371136f2ffdf7a552cfcc7a1122",
+    "object_store.py": "22d6d25d9e037d622aa7c681451d37543276287076f4bdef2f5fdcc50a2ce907"
+  }
+}

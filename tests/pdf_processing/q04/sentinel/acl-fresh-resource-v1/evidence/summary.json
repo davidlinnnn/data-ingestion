@@ -1,0 +1,711 @@
+{
+  "admission": {
+    "candidate_cgroup_ceiling_bytes": 4294967296,
+    "outer": {
+      "continuous_seconds": 60.70213560999764,
+      "maximum_cgroup": 2189733888,
+      "maximum_psi": 0.0,
+      "minimum_available": 9480679424,
+      "observed_seconds": 60.713593484997546,
+      "oom_values": [
+        0
+      ],
+      "passed": true,
+      "resets": 0,
+      "samples": 61
+    },
+    "outer_required_available_bytes": 4831838208,
+    "outer_required_continuous_seconds": 60,
+    "per_case": {
+      "duration_seconds": 60.391379594802856,
+      "maximum_cgroup_bytes": 2321952768,
+      "maximum_psi_full_avg10": 0.0,
+      "minimum_available_bytes": 9336369152,
+      "samples": 121
+    },
+    "per_case_required_available_bytes": 3221225472,
+    "per_case_required_continuous_seconds": 60
+  },
+  "boundaries": {
+    "issue_51_closed": false,
+    "memory_peak_is_current_run_peak": false,
+    "memory_peak_is_shared_cgroup_lifetime_high_water": true,
+    "production_sizing_claim": false,
+    "q04_complete": false,
+    "replay_run": false,
+    "residual_is_diagnostic_only": true,
+    "restored_run": false,
+    "sampled_memory_current_is_measurement_series": true
+  },
+  "cleanup": {
+    "independent_post_release": {
+      "candidate_pods_absent": true,
+      "cgroup_oom_kill": 0,
+      "deployments": 32,
+      "deployments_all_zero": true,
+      "driver_lock_available": true,
+      "frozen_state_sha256": "6f83b29e73357e6576643948f18f0be2d461ae7285e433f2c810c5f8d4aca5b7",
+      "global_lock_available": true,
+      "owned_processes": [],
+      "running_owned_workflows": [],
+      "scratch_remaining": [],
+      "t09a": {
+        "healthy": true,
+        "objects": 200,
+        "running": [],
+        "time": 1789685365.5172951
+      },
+      "time": 1789685365.7196152,
+      "vm_oom_kill": 0
+    },
+    "owner_cleanup_current_workflow_status": [
+      {
+        "status": "COMPLETED",
+        "workflow_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9-fresh-09-52c5a5c8d9d442b8a24c4d974a1f5320"
+      }
+    ],
+    "owner_cleanup_error_scope": "three stale historical fixture-10 workflow files were absent from Temporal; current fresh workflow and owned resources were clean",
+    "owner_cleanup_errors": [
+      {
+        "error": "workflow not found for ID: q04-7b4f958ff3ac4e2da5b54dcaa66914b9-fresh-10-e63a256b9dcc4805883132910ee5ee57",
+        "workflow": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9-fresh-10-e63a256b9dcc4805883132910ee5ee57"
+      },
+      {
+        "error": "workflow not found for ID: q04-7b4f958ff3ac4e2da5b54dcaa66914b9-replay-10-27ce936e09b1496e96d5f89b6fab1969",
+        "workflow": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9-replay-10-27ce936e09b1496e96d5f89b6fab1969"
+      },
+      {
+        "error": "workflow not found for ID: q04-7b4f958ff3ac4e2da5b54dcaa66914b9-restored-10-1899285656f0402687ae335d16d544d5",
+        "workflow": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9-restored-10-1899285656f0402687ae335d16d544d5"
+      }
+    ],
+    "owner_cleanup_orphans": [],
+    "owner_cleanup_remaining_owned_cwd_pids": [],
+    "owner_cleanup_running_after": [],
+    "owner_cleanup_scratch_remaining": [],
+    "phase_cleanup": {
+      "attribution": {
+        "complete": true,
+        "errors": [],
+        "maximum_gap_seconds": 0.26132991700069397,
+        "samples": 323
+      },
+      "errors": {}
+    },
+    "runner_cleanup_verified": false,
+    "runner_errors": [
+      {
+        "reason": "fresh resource driver failed; retain logs, no retry",
+        "type": "AssertionError"
+      },
+      {
+        "cleanup": "Command '['kubectl', '--context', 'kind-internal-a2a-vs6-local', '--request-timeout=15s', '-n', 'pdf-t09a-validation', 'exec', '-i', 'coordinator', '--', 'env', 'PYTHONDONTWRITEBYTECODE=1', '/experiment/.venv/bin/python', '-']' returned non-zero exit status 1."
+      }
+    ]
+  },
+  "evidence": {
+    "held_services_after_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "held_services_before_sha256": "d078c3649a3c520eee4abfe0e1d35183a96514390b70bd373f9d564051e0e5f4",
+    "original_evidence_preserved": true,
+    "post_review_manifest": {
+      "artifacts": 21,
+      "sha256": "98f7f4330906e80cc45710af6b5fa57b737058fd92eb18e02c277f4530dfeddb"
+    },
+    "raw_root": "/private/tmp/q04-acl-fresh-resource-20260917-v1",
+    "remote_evidence_tar": {
+      "bytes": 3184640,
+      "sha256": "403572ecd268e5abf47fe56430762b4274867bbca0e2da03ef1bbffa68eb985a"
+    },
+    "runner_manifest_sha256": "2782f41758d39ef15c083ecb33cba20efc6dd6acb9a56eabcdfda4279dffcd3c"
+  },
+  "fresh": {
+    "artifact": {
+      "key": "q04/keynote-18be1b3-20260916-b/sources/09.pdf",
+      "name": "09.pdf",
+      "sha256": "bd33fffb2c91f35225f5b89feb29a93013f4814558ac578bef000b632fd169bf",
+      "version_id": "25106ff1-270d-4628-a18f-9f328b3d9d01"
+    },
+    "cleanup": {
+      "cancel": {
+        "ok": true
+      },
+      "history": {
+        "ok": true
+      },
+      "publication": {
+        "ok": true
+      },
+      "result-task": {
+        "ok": true
+      },
+      "worker-stop": {
+        "ok": true
+      }
+    },
+    "failure": {
+      "injection": null,
+      "reason": "unreviewed full graph delta; retain output and source-review before acceptance",
+      "type": "ValueError"
+    },
+    "request_id": "q04-46a0bd74a5064bb1af1a6e912dbf8768",
+    "workflow_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9-fresh-09-52c5a5c8d9d442b8a24c4d974a1f5320",
+    "workflow_result": {
+      "canonical_accepted": false,
+      "pages": 3,
+      "processing_complete": true,
+      "registered_components": 2,
+      "registered_pages": 3,
+      "selected_components": 2,
+      "status": "complete",
+      "steps": [
+        {
+          "observed_at": "2026-09-17T22:47:24.196571+00:00",
+          "operation": "f29ac086c22c04f1262b7507e3200526d4f71215cf3460cd9598e0d4d7e71fad",
+          "parser": {
+            "completed_at": "2026-09-17T22:47:24.111061+00:00",
+            "forced_kill": false,
+            "last_local_progress": "2026-09-17T22:47:24.087070+00:00",
+            "memory": {
+              "peak_rss": 1398568,
+              "units": "KiB"
+            },
+            "observed_at": "2026-09-17T22:47:15.189831+00:00",
+            "pid": 832,
+            "ready": true,
+            "recycles": 0,
+            "request_id": "5f015d16951341aab82dc396ec578040",
+            "restarts": 1,
+            "stage": "checkpoint_commit",
+            "termination_reason": null
+          },
+          "reused": false,
+          "seconds": 9.017071878999559,
+          "stage": "group",
+          "storage": {
+            "get_bytes": 7612758,
+            "get_seconds": 0.03437962498719571,
+            "put_bytes": 2550248,
+            "put_seconds": 0.04502295700876857
+          }
+        },
+        {
+          "observed_at": "2026-09-17T22:47:32.139435+00:00",
+          "operation": "3842363f950d7a7963792c931e39f9b3f357c911f2b21441f7555063f5c9d4c8",
+          "parsed_result": "pdf-parsed-v2:555683cf342da77f590b357f14d0e2837cdeed95270fcd832d00c21cf46ef70f",
+          "reused": false,
+          "seconds": 7.924465711999801,
+          "stage": "assembly",
+          "storage": {
+            "get_bytes": 11935859,
+            "get_seconds": 0.06421537999995053,
+            "put_bytes": 1082378,
+            "put_seconds": 0.02291033400251763
+          }
+        },
+        {
+          "component": "#/pictures/0",
+          "observed_at": "2026-09-17T22:47:33.176503+00:00",
+          "operation": "pdf-component-v1:694ff815a40d49bb1491088777cb9cb8356555255ab36f30260939956ad8a792",
+          "outcome": "text_detected",
+          "reused": false,
+          "stage": "component_ocr"
+        },
+        {
+          "component": "#/pictures/1",
+          "observed_at": "2026-09-17T22:47:34.373509+00:00",
+          "operation": "pdf-component-v1:5166fc1d4fb44df57cd35e4fc04756a2d42416af8b579f130035ed74a7073a3a",
+          "outcome": "text_detected",
+          "reused": false,
+          "stage": "component_ocr"
+        }
+      ]
+    }
+  },
+  "identity": {
+    "boot_id": "c01b81ac-b0fd-4ce6-8cda-f0da74b9bbd3",
+    "bundle_sha256": "b729891aa381ae25eef6ec2fbceefcdb43703d441762eafbb388627792833297",
+    "coordinator": {
+      "container_id": "containerd://75d02af07009f1d7152d6a68958cee5f43508ec1dd0ae327142a42db5e429ca5",
+      "pod_uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+      "restart_count": 1,
+      "started_at": "2026-09-17T13:46:12Z"
+    },
+    "frozen_state_sha256": "6f83b29e73357e6576643948f18f0be2d461ae7285e433f2c810c5f8d4aca5b7",
+    "model_differences": {},
+    "models": 17,
+    "package_differences": {},
+    "packages": 112,
+    "pid1_start_ticks": 733,
+    "prefix": "q04/keynote-18be1b3-20260916-b/",
+    "producer_matches": true,
+    "profile_matches": true,
+    "run_id": "q04-7b4f958ff3ac4e2da5b54dcaa66914b9"
+  },
+  "oracle": {
+    "accepted": false,
+    "component_ocr_outcomes": [
+      "text_detected",
+      "text_detected"
+    ],
+    "diagnostic_after_graph_rejection": {
+      "acceptance_override": false,
+      "artifact": {
+        "key": "q04/keynote-18be1b3-20260916-b/sources/09.pdf",
+        "name": "09.pdf",
+        "sha256": "bd33fffb2c91f35225f5b89feb29a93013f4814558ac578bef000b632fd169bf",
+        "version_id": "25106ff1-270d-4628-a18f-9f328b3d9d01"
+      },
+      "eq2_has_text_item": true,
+      "equation_count": 6,
+      "equation_review_ids": [
+        "eq1",
+        "eq2",
+        "eq3",
+        "eq4",
+        "eq5",
+        "eq6"
+      ],
+      "graph_rejection_retained": true,
+      "graph_shape": {
+        "items": 134,
+        "pictures": 2,
+        "tables": 0,
+        "types": {
+          "caption": 2,
+          "formula": 5,
+          "list": 2,
+          "list_item": 8,
+          "page_footer": 3,
+          "picture": 2,
+          "section_header": 6,
+          "text": 104,
+          "unspecified": 2
+        }
+      },
+      "representation_observations": 3,
+      "request_id": "q04-46a0bd74a5064bb1af1a6e912dbf8768",
+      "status": "DIAGNOSTIC_FAIL_AFTER_GRAPH_REJECTION",
+      "typed_coverage": [
+        {
+          "actual_items": 40,
+          "expected_items": 40,
+          "processed_page": 1,
+          "zipped_mismatches": []
+        },
+        {
+          "actual_items": 69,
+          "expected_items": 68,
+          "processed_page": 2,
+          "zipped_mismatches": [
+            {
+              "actual_type": "text",
+              "expected_type": "text",
+              "index": 59,
+              "ref": "#/texts/97"
+            },
+            {
+              "actual_type": "text",
+              "expected_type": "formula",
+              "index": 60,
+              "ref": "#/texts/98"
+            },
+            {
+              "actual_type": "formula",
+              "expected_type": "section_header",
+              "index": 61,
+              "ref": "#/texts/99"
+            },
+            {
+              "actual_type": "section_header",
+              "expected_type": "text",
+              "index": 62,
+              "ref": "#/texts/100"
+            },
+            {
+              "actual_type": "text",
+              "expected_type": "text",
+              "index": 63,
+              "ref": "#/texts/101"
+            },
+            {
+              "actual_type": "text",
+              "expected_type": "formula",
+              "index": 64,
+              "ref": "#/texts/102"
+            },
+            {
+              "actual_type": "formula",
+              "expected_type": "text",
+              "index": 65,
+              "ref": "#/texts/103"
+            },
+            {
+              "actual_type": "text",
+              "expected_type": "text",
+              "index": 66,
+              "ref": "#/texts/104"
+            },
+            {
+              "actual_type": "text",
+              "expected_type": "page_footer",
+              "index": 67,
+              "ref": "#/texts/105"
+            }
+          ]
+        },
+        {
+          "actual_items": 21,
+          "expected_items": 21,
+          "processed_page": 3,
+          "zipped_mismatches": []
+        }
+      ]
+    },
+    "graph_delta": {
+      "actual_graph_sha256": "c4f4b0153258d03cc3e67f5bca3e8b9ccf13b16ceeb2a7963a49b110e6f8bff2",
+      "added_source_segments": [],
+      "changed_collections": [
+        "body",
+        "groups",
+        "texts"
+      ],
+      "expected_graph_sha256": "32e9eed4fa46748f5d8f509687a448f94633926ad826c59efc4ea93941cf7783",
+      "removed_source_segments": [],
+      "status": "SOURCE_REVIEW_REQUIRED"
+    },
+    "pre_graph_contracts_reached": true
+  },
+  "resource_measurement": {
+    "active_and_cleanup_after_admission": {
+      "maximum_cgroup_bytes": 3733815296,
+      "maximum_psi_full_avg10": 0.0,
+      "minimum_available_bytes": 7897296896,
+      "samples": 42
+    },
+    "attribution": {
+      "auxiliary_issue_count": 0,
+      "complete": true,
+      "incomplete_samples": 0,
+      "markers": {
+        "before_worker_start": {
+          "cgroup_minus_owned_pss_bytes": 2167110656,
+          "memory_current": 2269274112,
+          "memory_events": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "memory_peak": 3457347584,
+          "memory_stat": {
+            "anon": 93794304,
+            "file": 2116190208,
+            "file_mapped": 1060864,
+            "inactive_file": 2105257984,
+            "kernel": 58429440,
+            "shmem": 0,
+            "slab": 57116304
+          },
+          "owned_pss_total_bytes": 102163456,
+          "time": 1789685173.8547664
+        },
+        "collector_started_before_worker": {
+          "cgroup_minus_owned_pss_bytes": 2170208256,
+          "memory_current": 2248318976,
+          "memory_events": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "memory_peak": 3457347584,
+          "memory_stat": {
+            "anon": 73039872,
+            "file": 2116186112,
+            "file_mapped": 970752,
+            "inactive_file": 2105253888,
+            "kernel": 58150912,
+            "shmem": 0,
+            "slab": 57007064
+          },
+          "owned_pss_total_bytes": 78110720,
+          "time": 1789685173.6016526
+        },
+        "collector_stopped_after_cleanup": {
+          "cgroup_minus_owned_pss_bytes": 2166450176,
+          "memory_current": 2281771008,
+          "memory_events": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "memory_peak": 3937529856,
+          "memory_stat": {
+            "anon": 104005632,
+            "file": 2118406144,
+            "file_mapped": 4501504,
+            "inactive_file": 2107109376,
+            "kernel": 58544128,
+            "shmem": 0,
+            "slab": 57244672
+          },
+          "owned_pss_total_bytes": 115320832,
+          "time": 1789685256.0388944
+        },
+        "per_case_admission_passed": {
+          "cgroup_minus_owned_pss_bytes": 2164108288,
+          "memory_current": 2354163712,
+          "memory_events": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "memory_peak": 3457347584,
+          "memory_stat": {
+            "anon": 173293568,
+            "file": 2119168000,
+            "file_mapped": 5521408,
+            "inactive_file": 2108215296,
+            "kernel": 59875328,
+            "shmem": 0,
+            "slab": 57515512
+          },
+          "owned_pss_total_bytes": 190055424,
+          "time": 1789685235.1352754
+        },
+        "worker_ready": {
+          "cgroup_minus_owned_pss_bytes": 2165886976,
+          "memory_current": 2320654336,
+          "memory_events": {
+            "high": 0,
+            "low": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "memory_peak": 3457347584,
+          "memory_stat": {
+            "anon": 143683584,
+            "file": 2116210688,
+            "file_mapped": 1368064,
+            "inactive_file": 2105274368,
+            "kernel": 59486208,
+            "shmem": 0,
+            "slab": 57347408
+          },
+          "owned_pss_total_bytes": 154767360,
+          "time": 1789685174.877465
+        }
+      },
+      "sample_duration_seconds": {
+        "max": 0.008673541000462137,
+        "mean": 0.00408425865022564,
+        "p95": 0.005961112498334841
+      },
+      "sample_gap_seconds": {
+        "max": 0.26132991700069397,
+        "mean": 0.2560155262515493,
+        "p95": 0.2600790438025797
+      }
+    },
+    "cgroup": {
+      "baseline": {
+        "cgroup_minus_owned_pss_bytes": 2170208256,
+        "memory_current": 2248318976,
+        "memory_events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory_peak": 3457347584,
+        "memory_stat": {
+          "anon": 73039872,
+          "file": 2116186112,
+          "file_mapped": 970752,
+          "inactive_file": 2105253888,
+          "kernel": 58150912,
+          "shmem": 0,
+          "slab": 57007064
+        },
+        "owned_pss_total_bytes": 78110720,
+        "time": 1789685173.6016526
+      },
+      "cleanup_final": {
+        "cgroup_minus_owned_pss_bytes": 2166450176,
+        "memory_current": 2281771008,
+        "memory_events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory_peak": 3937529856,
+        "memory_stat": {
+          "anon": 104005632,
+          "file": 2118406144,
+          "file_mapped": 4501504,
+          "inactive_file": 2107109376,
+          "kernel": 58544128,
+          "shmem": 0,
+          "slab": 57244672
+        },
+        "owned_pss_total_bytes": 115320832,
+        "time": 1789685256.0388944
+      },
+      "maximum_memory_current": 3851812864,
+      "minimum_memory_current": 2248318976,
+      "oom_kill_values": [
+        0
+      ],
+      "sampled_peak": {
+        "cgroup_minus_owned_pss_bytes": 1855757312,
+        "memory_current": 3851812864,
+        "memory_events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory_peak": 3918979072,
+        "memory_stat": {
+          "anon": 1644310528,
+          "file": 2124513280,
+          "file_mapped": 338100224,
+          "inactive_file": 2113560576,
+          "kernel": 67268608,
+          "shmem": 4096,
+          "slab": 59089136
+        },
+        "owned_pss_total_bytes": 1996055552,
+        "time": 1789685250.9532192
+      },
+      "sampled_peak_offset_seconds": 77.35156655311584,
+      "shared_lifetime_memory_peak_first": 3457347584,
+      "shared_lifetime_memory_peak_is_run_peak": false,
+      "shared_lifetime_memory_peak_last": 3937529856
+    },
+    "diagnostic_residual": {
+      "acceptance_metric": false,
+      "at_cgroup_peak_bytes": 1855757312,
+      "baseline_bytes": 2170208256,
+      "cleanup_final_bytes": 2166450176,
+      "maximum_bytes": 2170208256
+    },
+    "owned_processes": {
+      "baseline_pss_bytes": 78110720,
+      "classes": {
+        "controller": {
+          "max_cpu_ticks": 270,
+          "max_major_faults": 0,
+          "max_minor_faults": 27153,
+          "max_pss_bytes": 115320832,
+          "max_rss_anon_bytes": 98471936,
+          "max_rss_bytes": 130191360,
+          "max_rss_file_bytes": 31719424,
+          "samples": 323
+        },
+        "owned_descendant": {
+          "max_cpu_ticks": 857,
+          "max_major_faults": 0,
+          "max_minor_faults": 134289,
+          "max_pss_bytes": 603068416,
+          "max_rss_anon_bytes": 533065728,
+          "max_rss_bytes": 683532288,
+          "max_rss_file_bytes": 153591808,
+          "samples": 43
+        },
+        "parser": {
+          "max_cpu_ticks": 1447,
+          "max_major_faults": 0,
+          "max_minor_faults": 207349,
+          "max_pss_bytes": 1345460224,
+          "max_rss_anon_bytes": 1006149632,
+          "max_rss_bytes": 1358327808,
+          "max_rss_file_bytes": 352370688,
+          "samples": 80
+        },
+        "worker": {
+          "max_cpu_ticks": 251,
+          "max_major_faults": 0,
+          "max_minor_faults": 34021,
+          "max_pss_bytes": 85642240,
+          "max_rss_anon_bytes": 77852672,
+          "max_rss_bytes": 106139648,
+          "max_rss_file_bytes": 28352512,
+          "samples": 322
+        }
+      },
+      "cleanup_final_pss_bytes": 115320832,
+      "maximum_pss_bytes": 1996055552,
+      "maximum_pss_offset_seconds": 77.35156655311584,
+      "pss_at_cgroup_peak_bytes": 1996055552
+    },
+    "per_case_admission": {
+      "duration_seconds": 60.391379594802856,
+      "maximum_cgroup_bytes": 2321952768,
+      "maximum_psi_full_avg10": 0.0,
+      "minimum_available_bytes": 9336369152,
+      "samples": 121
+    },
+    "scope": {
+      "duration_seconds": 82.43724179267883,
+      "fixture": "09",
+      "mode": "fresh",
+      "phase": "acl-fresh-resource-v1",
+      "samples": 323
+    },
+    "worker_guard": {
+      "cgroup_oom_kill_values": [
+        0
+      ],
+      "gap_seconds": {
+        "max": 0.5077309608459473,
+        "p95": 0.5060803771018981
+      },
+      "maximum_cgroup_bytes": 3733815296,
+      "maximum_psi_full_avg10": 0.0,
+      "minimum_available_bytes": 7897296896,
+      "samples": 163,
+      "vm_oom_kill_values": [
+        0
+      ]
+    }
+  },
+  "runner": {
+    "commit": "3fde5e36e0e639112aec54d20c69f574b31247e7",
+    "fixture": "09",
+    "modes": [
+      "fresh"
+    ],
+    "parent": "2a2d8d8",
+    "phase": "acl-fresh-resource-v1",
+    "retry_count": 0
+  },
+  "status": "FAIL_GRAPH_AND_TYPED_COVERAGE; RESOURCE_MEASUREMENT_COMPLETE; INDEPENDENT_CLEANUP_PASS",
+  "window": {
+    "actual_date_taipei": "2026-09-18",
+    "cleanup_seconds": 300,
+    "ended_epoch": 1789685260.848585,
+    "fixed_identity_date": "20260917",
+    "reserved_seconds": 1500,
+    "started_epoch": 1789685112.1222541
+  }
+}

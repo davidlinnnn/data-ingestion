@@ -1,0 +1,103 @@
+{
+  "status": "PREPARATION_ONLY",
+  "q04_accepted": false,
+  "base_commit": "6d929e101a865f9e4bf887ace9dbb2866617dcae",
+  "producer": {
+    "relationship_method.py": "e37bf681fb7b4dedfdd7de05cf64d541120bf2b56a22032284c7eac63b34cf80",
+    "enrichment.py": "f95d0ac8ca62a76bca8f03c1ee0fcea05f55957eea7cbc289dfd49271f1cca4b",
+    "compatibility.py": "95f7024e97d687dfb9c657d84aa6b17cd6f0772fcb7665716baec3e9a1e0ce43",
+    "temporal.py": "5a3c5b2f5514ca7d793b6d69d0ed00c52b778dbe54e5af5f5b9a17c0d50beb12",
+    "execution.py": "f6a6be4fdda73e87308eb14335cbd9455473f4edeeac0034dc76c03c5f40326d",
+    "processing_workflow.py": "11b35c2d17e889447b1921d4bdece45ffe841b479d5d1c54f647b275ecb782c0",
+    "rollout_workflow.py": "9e5af1af0659186f279d45e92c96ee46e84f7fd737394a1ed33edbb3ef07f8b6",
+    "__init__.py": "0618cd3d1c2dcb31f3d55be51482527ae8b04da932147c6d3a247a2921352712",
+    "continuation.py": "791e2ebef036d6f2468fb607162a135eecb3c4eaa056d4e35b1a81bffde49772",
+    "ocr.py": "1f8e665bb0d034bce21dbbf9526866533579c9f7c7009e50a2d31a58dfdb831e",
+    "supervision.py": "4b3978d0c4710dda90335af866b6f73a6ab889bd714258f5c6cf5e22bfd3d135",
+    "routing.py": "eeb6b8e6265e003b737c300a3a5f37461c6e0e24923282cda4a3319629ddd282",
+    "warm_child.py": "75c325385496c43d417c73597ace32183dbbdbf97fac41c9608810b2a9f38657",
+    "routed_activity.py": "bd69b51a52c2a48225149697091e34d6214225b794f8b82765737fc863b45944",
+    "processing.py": "f5bbf92b97c2b7a70dde895e4467f144d0fbfeeb5f5c68be8bd2f8d3fe5e6a25",
+    "parse.py": "57854c5a8cfa83cdb521ea9355b0b8b499e69e9e51b8c1729b6f60a2cb55270c",
+    "evidence.py": "d9156c232112f5511880468d6767c1e34da8e105b3cc9eed6c9ce2233a26f2bc",
+    "relationships.py": "3d0db0a0aea2687e791380e365269fefb9ae4f0e60e9a53fec0c879a74378fc9",
+    "preflight.py": "13f08bb6d335d9cc3f67ce7c762411eda69f8371136f2ffdf7a552cfcc7a1122",
+    "object_store.py": "22d6d25d9e037d622aa7c681451d37543276287076f4bdef2f5fdcc50a2ce907"
+  },
+  "r3_sealed_files_checked": 61,
+  "q03_full_cases": 4,
+  "q03_full_private_files_checked": 20,
+  "q03_matrix_cases": 22,
+  "q03_private_files_checked": 499,
+  "direct_stage_dependency_changes": {
+    "r3_to_integrated": {
+      "group": true,
+      "assembly": true,
+      "selection": true,
+      "ocr": true,
+      "evidence": true,
+      "finalize": true
+    },
+    "evidence_policy": {
+      "group": false,
+      "assembly": false,
+      "selection": false,
+      "ocr": false,
+      "evidence": true,
+      "finalize": true
+    },
+    "continuation.py": {
+      "group": true,
+      "assembly": true,
+      "selection": false,
+      "ocr": false,
+      "evidence": false,
+      "finalize": false
+    },
+    "relationship_method.py": {
+      "group": false,
+      "assembly": false,
+      "selection": false,
+      "ocr": false,
+      "evidence": true,
+      "finalize": true
+    }
+  },
+  "fixtures_checked": [
+    {
+      "id": "native",
+      "sha256": "d58be5fc39608dc9aec45194c602436d793f2f2bf56f267d0e38d6258a9f7a9e"
+    },
+    {
+      "id": "06",
+      "sha256": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69"
+    },
+    {
+      "id": "07",
+      "sha256": "e6bda9784cfd83fd38c92a1162731aa1ec3413dbe1505946611595bfe59f29ab"
+    },
+    {
+      "id": "08",
+      "sha256": "b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980"
+    },
+    {
+      "id": "09",
+      "sha256": "bd33fffb2c91f35225f5b89feb29a93013f4814558ac578bef000b632fd169bf"
+    },
+    {
+      "id": "10",
+      "sha256": "b9919f9684bc6fdfda2f8ead641607e8cb4c10c2abd7842db2d96ec8579d1d9e"
+    }
+  ],
+  "note": "False direct projection does not authorize reuse after upstream input identity changes.",
+  "bindings": {
+    "tests/pdf_processing/q04/fixtures.json": "8c7be51c09d38a17ef0d7d92a8e207dd425b46cfc73b3da90f089a99cf761a0a",
+    "tests/pdf_processing/q04/audit.py": "d02e43e8b2e0e0340334e465601528c612da6a9bcf949a8707d6a7dc1945e061",
+    "tests/pdf_processing/q03/runtime.py": "127c1abffd6f4861bcea1eea55b18cecabe0bdf0849ab6ee8f18d898250c43eb",
+    "tests/pdf_processing/q03/reviewed-representation.json": "b0af26fc2e6c8039a535acd5b1571cfcd411242c22398417a1b60637e59b2e01",
+    "tests/pdf_processing/q03/evidence/runtime-20260916/manifest.json": "a1146301ce6d0f6c783722d504d8d56d231ee0af46c22f8bd1ad96c0baae0e03",
+    "tests/pdf_processing/q03/evidence/runtime-20260916/d-manifest.json": "a1f8360d42681a4126f8835d3ec8f70e770dcac0810977456f4b2d5ec951e6db",
+    "tests/pdf_processing/q01_q02/evidence/runtime-20260916/summary.json": "d42839b429fce42821ff5d7532c283f6365efd74b1890729eac5b49b0b2cbb52",
+    "tests/pdf_processing/t09a_r3/evidence/seal.json": "422585778e0db0cacb9f36f0aa4db80549841cd5203e6cdf12910795561fff8e"
+  }
+}

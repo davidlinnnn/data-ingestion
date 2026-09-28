@@ -1,0 +1,5 @@
+# Q04 BA: corrected provenance path under the bounded 768 MiB trial
+
+AZ stopped before inference because generated preflight arguments named nonexistent `RETAINED-REPLAZ.json`. BA uses a fresh run ID, prefix, PVC, Deployment and observer name; the provenance path is the frozen `RETAINED-REPLAY.json`. A regression test verifies that this exact preflight argument resolves to a file in the projected workspace.
+
+BA otherwise repeats the reviewed AZ single-variable trial: the existing `objects` Deployment keeps the temporary 768 MiB container limit, 128 MiB request, same image/PVC/node and exact new Pod UID `a84384de-8292-439e-b8ce-d75a70816d3f`. The AH producer, current-v3 native oracle, zero node PSI guard, resource thresholds, deadlines, process-drain injection, cleanup, and one-run/no-retry policy are unchanged. The host observer binds to the exact object Pod UID, cgroup and 768 MiB limit. A BA pass can qualify process recovery only; Pod recovery and #51 closure require separate evidence.

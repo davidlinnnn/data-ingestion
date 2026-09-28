@@ -1,0 +1,4178 @@
+{
+  "captured_at": "2026-09-16T13:56:48.730805+00:00",
+  "deployments": [
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "nats",
+      "uid": "be4f5b34-56b6-46a8-8153-7ea1a950ece5",
+      "resourceVersion": "76363",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "nats",
+          "image": "internal-a2a-local-nats:2.14.5",
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "postgres",
+      "uid": "7ef47e1a-2591-442a-869d-f9931d7db4a6",
+      "resourceVersion": "547671",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "postgres",
+          "image": "internal-a2a-local-postgres:18",
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "reference-inventory-runtime",
+      "uid": "4c7a6c82-d10c-4a6a-be3b-ca9262cc40b1",
+      "resourceVersion": "656683",
+      "replicas": 2,
+      "ready": 2,
+      "containers": [
+        {
+          "name": "agent-server",
+          "image": "internal-a2a-reference@sha256:b0f8ca5d26d1fffddcb1175d539f12d0613a7da4679fa79145f9df43164a094a",
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "1Gi"
+            },
+            "requests": {
+              "cpu": "250m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "kube-system",
+      "name": "coredns",
+      "uid": "869fd4ad-b3c9-4c20-892e-62b9f5af5c5a",
+      "resourceVersion": "414271",
+      "replicas": 2,
+      "ready": 2,
+      "containers": [
+        {
+          "name": "coredns",
+          "image": "registry.k8s.io/coredns/coredns:v1.12.1",
+          "resources": {
+            "limits": {
+              "memory": "170Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "70Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "local-path-storage",
+      "name": "local-path-provisioner",
+      "uid": "dca24ade-e4d0-45bb-b915-c96cab77fa1f",
+      "resourceVersion": "414305",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "local-path-provisioner",
+          "image": "docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88",
+          "resources": {}
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "activities",
+      "uid": "f5c858dc-5999-4d85-ace1-79a8bb784d52",
+      "resourceVersion": "516384",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "objects",
+      "uid": "259b0f80-708a-4812-811b-a7a09b745182",
+      "resourceVersion": "656147",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "temporal",
+      "uid": "0349117b-a490-491c-94d5-f65e9482d3d3",
+      "resourceVersion": "656209",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "workflows",
+      "uid": "bae74b2b-196f-4d04-bf4b-b038703a292e",
+      "resourceVersion": "656534",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "objects",
+      "uid": "9e757dea-9784-4949-9be4-5b9cb24c5e74",
+      "resourceVersion": "656189",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "temporal",
+      "uid": "7e1af4d6-e842-4e8d-a0d5-685d2f5a64e5",
+      "resourceVersion": "656200",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "worker",
+      "uid": "76eb8dc3-0351-42ea-b310-63593f519dd6",
+      "resourceVersion": "498257",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "experiment",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "name": "objects",
+      "uid": "ffe26620-66db-4026-a6b9-94c578727cea",
+      "resourceVersion": "656145",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "name": "temporal",
+      "uid": "320fe1c6-3e2b-429e-93f6-e49f9d39f5d7",
+      "resourceVersion": "656115",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "activities",
+      "uid": "fdeb74b1-cd17-439f-b6a2-273fdfb748dc",
+      "resourceVersion": "499826",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "method-mismatch",
+      "uid": "e0bbe4be-38de-45aa-be7f-96be3dad23f2",
+      "resourceVersion": "499827",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "objects",
+      "uid": "f59cf4d2-40ee-4ff9-8beb-acbcea46070c",
+      "resourceVersion": "656126",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "temporal",
+      "uid": "0ba710b1-9886-4dd5-9aeb-1ee410653a9c",
+      "resourceVersion": "656218",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "workflows",
+      "uid": "e56eb1f7-d62e-4668-b738-685cf1a52c98",
+      "resourceVersion": "656524",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "activities",
+      "uid": "e85f2d98-3967-4f3a-b8ac-3cad6b67efbf",
+      "resourceVersion": "656536",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "objects",
+      "uid": "68da72a3-d241-4815-b011-8a2847eb6cb8",
+      "resourceVersion": "656262",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "temporal",
+      "uid": "3625e9ec-f914-4158-b8ea-62808ad454e9",
+      "resourceVersion": "656265",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "workflows",
+      "uid": "76080d5e-7d36-420c-a137-ea876d96ccc4",
+      "resourceVersion": "656537",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "activities",
+      "uid": "a8cc35cb-e573-437a-8d9a-22313fab9e35",
+      "resourceVersion": "656531",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "objects",
+      "uid": "4ecb44ce-68cd-441d-a57b-7d0011db20ff",
+      "resourceVersion": "656253",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "temporal",
+      "uid": "a3f5b91f-2cf2-4e26-a687-e0c4f5295e0d",
+      "resourceVersion": "656225",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "workflows",
+      "uid": "33375e63-f88f-48e2-bdf9-89e6ad8007d2",
+      "resourceVersion": "656533",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "activities",
+      "uid": "f07fb1ed-db49-4726-b583-a47b92fb9058",
+      "resourceVersion": "656521",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "objects",
+      "uid": "1dcd9af2-5ba3-4dd3-8a32-791bfe924a1e",
+      "resourceVersion": "656287",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "temporal",
+      "uid": "addb5865-279a-430d-97b2-4ba4f70aabaf",
+      "resourceVersion": "656289",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "workflows",
+      "uid": "d776ad65-853b-475d-85b0-59abe6ccc925",
+      "resourceVersion": "656519",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "activities",
+      "uid": "ace4dbdf-36cd-44b6-9767-928be3ebc758",
+      "resourceVersion": "656528",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "objects",
+      "uid": "f066a15b-ca17-40db-a212-786373f9cda5",
+      "resourceVersion": "656288",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "temporal",
+      "uid": "2079d4c4-7cb2-48d6-b539-0f29077d8c86",
+      "resourceVersion": "656307",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "workflows",
+      "uid": "e37e8d2c-b151-4b46-805d-cbd67f61b0e3",
+      "resourceVersion": "656541",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "activities",
+      "uid": "4ca318d9-093c-4ada-9184-eec75c5094d4",
+      "resourceVersion": "656544",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "objects",
+      "uid": "c8f1a916-0b66-4e13-b5fa-15493a3e1a65",
+      "resourceVersion": "656312",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "temporal",
+      "uid": "b3526e9c-3faa-41b4-a098-dcae0f5e634b",
+      "resourceVersion": "656309",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "workflows",
+      "uid": "d28986b9-3697-4800-adcf-f5915ead4417",
+      "resourceVersion": "656546",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "activities",
+      "uid": "9039cb67-1dc5-4e4d-8268-ba02d69598a8",
+      "resourceVersion": "542514",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "objects",
+      "uid": "97bbad2f-b01d-4a89-b5d6-d9d20b039f93",
+      "resourceVersion": "656314",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-assembly",
+      "uid": "ba08ec08-9892-4ab1-9e15-ce9afb290b9d",
+      "resourceVersion": "549929",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-component-ocr",
+      "uid": "17773d38-eeb4-4a8b-984f-21c688d0cf8a",
+      "resourceVersion": "549963",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-finalize",
+      "uid": "238a012d-873b-4a5e-9373-a997706dbdbf",
+      "resourceVersion": "550003",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-group",
+      "uid": "4209f9dd-4836-4d36-b59a-c98a0a550286",
+      "resourceVersion": "549918",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-prepare",
+      "uid": "4f4800bf-124f-4298-b301-d2d4e2ff0c89",
+      "resourceVersion": "549909",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-select",
+      "uid": "06432d5d-a75d-4976-8b08-f0986462f000",
+      "resourceVersion": "549941",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v1-workflow",
+      "uid": "998b09c5-c54d-47a5-9193-deafd22933ed",
+      "resourceVersion": "549896",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-assembly",
+      "uid": "77bb8cfa-0f65-4efc-9aac-d515646999ff",
+      "resourceVersion": "549743",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-component-ocr",
+      "uid": "de80532a-962c-4ca4-9cb0-96140daaa77a",
+      "resourceVersion": "550005",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-finalize",
+      "uid": "d33bd667-6b06-4db7-a50e-1eea693b1344",
+      "resourceVersion": "549766",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-group",
+      "uid": "cd60b12f-912c-4efc-9de3-04dd168a73b4",
+      "resourceVersion": "549737",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-prepare",
+      "uid": "e8275d1b-a792-47d1-b9d1-a9ea3227e756",
+      "resourceVersion": "549720",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-select",
+      "uid": "5b9191cf-981c-46ca-9834-240220e41f6e",
+      "resourceVersion": "549754",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "t08-v2-workflow",
+      "uid": "7895d52a-209b-4662-81f2-f628f4f82b54",
+      "resourceVersion": "549998",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "64Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "temporal",
+      "uid": "5ecdd805-d686-4d43-ba19-dbb16f91f3bb",
+      "resourceVersion": "656313",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "workflows",
+      "uid": "e804dd8c-ace3-456e-b4bc-0358fcc002ff",
+      "resourceVersion": "542525",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "activities",
+      "uid": "a8a60e3e-a2a3-4aeb-9a5d-471bf2b2f53f",
+      "resourceVersion": "552016",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "cpu": "4",
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "objects",
+      "uid": "9e69720a-ff80-4aa5-9941-14925dfdf981",
+      "resourceVersion": "542339",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "minio",
+          "image": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "r2-activities-20260914-0b537d0-b",
+      "uid": "ec1123c2-8102-418b-a172-9d9962c34f51",
+      "resourceVersion": "586428",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "cpu": "4",
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "r2-activities-20260914-0b537d0-c",
+      "uid": "d97d725d-e3ea-467d-8f99-963ec173be28",
+      "resourceVersion": "591985",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "cpu": "4",
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "256Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "r2-workflows-20260914-0b537d0-b",
+      "uid": "75e38956-0ab5-4ac1-b5ef-b4c7a9411803",
+      "resourceVersion": "586439",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "r2-workflows-20260914-0b537d0-c",
+      "uid": "16d15173-ff84-4f60-92e4-73a47f665016",
+      "resourceVersion": "591996",
+      "replicas": 0,
+      "ready": 0,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "temporal",
+      "uid": "428a8f97-093a-46f8-b5ea-ce321a2910b3",
+      "resourceVersion": "542343",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "temporal",
+          "image": "temporalio/temporal@sha256:cea463d98a8d6def4420f903ea5c3fcd0d85c8d10fbcc2770a50c12fff2eb26d",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "workflows",
+      "uid": "81637cb1-edb2-46b9-a531-f6e3d9103e10",
+      "resourceVersion": "546504",
+      "replicas": 1,
+      "ready": 1,
+      "containers": [
+        {
+          "name": "worker",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "512Mi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "coordinators": [
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "coordinator",
+      "uid": "87cb883d-6f71-47c0-9d12-99c148ca9573",
+      "resourceVersion": "515169",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "integration-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "integration-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "integration-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-mgwtq",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-mgwtq",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://b3713ed43b990214cab0d989882eaa51b4c36f81a3bb9f0b487219cb62e1bb8c"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "coordinator",
+      "uid": "bd1eb22f-5813-436c-9590-11ecb540954e",
+      "resourceVersion": "643867",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "s1-code"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "s1-source"
+          },
+          "name": "source"
+        },
+        {
+          "name": "kube-api-access-jmn4r",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "experiment",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
+          "mounts": [
+            {
+              "mountPath": "/s1/code",
+              "name": "code"
+            },
+            {
+              "mountPath": "/s1/src/pdf_processing",
+              "name": "source"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-jmn4r",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "experiment",
+          "ready": true,
+          "restartCount": 1,
+          "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "containerID": "containerd://41acf543769fa0aed5e1427af3d8b528ba4b64582b752411923d6f408e2d3d70"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "name": "coordinator",
+      "uid": "e3da960e-209a-46aa-83fc-9e406f96c16c",
+      "resourceVersion": "641127",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "name": "kube-api-access-c7s2p",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "experiment",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {
+            "limits": {
+              "memory": "5Gi"
+            },
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
+          "mounts": [
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-c7s2p",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "experiment",
+          "ready": true,
+          "restartCount": 1,
+          "imageID": "docker.io/library/pdf-t08-runtime@sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+          "containerID": "containerd://075bebd0c4abe94b2efd6faf25647e110ec7f0633e0141e3c8add83ad8dc62f1"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "coordinator",
+      "uid": "30ff40d0-9a83-4972-aea8-2bd0a626c79f",
+      "resourceVersion": "498193",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t02-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t02-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t02-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-475gv",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-475gv",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://e544a2215f3d765e799c79add87797397d67260458965db41fcc3fc02c3a115b"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "coordinator",
+      "uid": "7727b301-6730-427d-927d-7e94fd4be420",
+      "resourceVersion": "501715",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t03-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t03-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t03-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-bdgdf",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-bdgdf",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://db839260515d1453ae441170c65d3151c3611c1820c15fce622c7574412da67b"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "coordinator",
+      "uid": "379f29a2-223f-4d55-b83b-e1d308d20ba6",
+      "resourceVersion": "502536",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t04-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t04-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t04-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-mhpkg",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-mhpkg",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://d0a3b6045c5a6cafa65fa711481c56e97365ecb41998ad7f793e6096d3a47d9f"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "coordinator",
+      "uid": "0c6b4f9c-10c9-42bd-a491-306b28f47adf",
+      "resourceVersion": "502144",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t05-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t05-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t05-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-wpcf8",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-wpcf8",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://3793bc9522cc5917a924bdc4197e645fe7ff855d9797b3fdc75773d77d4b14cd"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "coordinator",
+      "uid": "7ec48b12-9bd4-4b0e-83f2-454764fa174d",
+      "resourceVersion": "528921",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t06-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t06-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t06-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-wkcqr",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-wkcqr",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://9802b379476385cd4808fbb852785fad68b13d26dab6b0f086c877abb1c105af"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "coordinator",
+      "uid": "e2cebf98-6360-45cb-8d8d-d4cecf7d399c",
+      "resourceVersion": "535756",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t07-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t07-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t07-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-sb4wg",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-sb4wg",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://a386ec9108686fe7e69794cd8b93367a306cadaf47d425a1f8b51e21b6282ad4"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "coordinator",
+      "uid": "a66c0d68-3c48-4087-8c25-3393872a193e",
+      "resourceVersion": "541917",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t08-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t08-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t08-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-ctnp8",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-ctnp8",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://e34d8e54bce6421d5155400f46e9f48a8ffa0e46375fbce75e438ec01955ee53"
+        }
+      ]
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "coordinator",
+      "uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+      "resourceVersion": "542273",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "volumes": [
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-package"
+          },
+          "name": "code"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-driver"
+          },
+          "name": "driver"
+        },
+        {
+          "configMap": {
+            "defaultMode": 420,
+            "name": "t09a-fixtures"
+          },
+          "name": "fixtures"
+        },
+        {
+          "name": "kube-api-access-z6sz2",
+          "projected": {
+            "defaultMode": 420,
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ],
+                  "name": "kube-root-ca.crt"
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      },
+                      "path": "namespace"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "coordinator",
+          "image": "pdf-checkpoint-prototype:linux-v2",
+          "resources": {},
+          "mounts": [
+            {
+              "mountPath": "/app/pdf_processing",
+              "name": "code"
+            },
+            {
+              "mountPath": "/driver",
+              "name": "driver"
+            },
+            {
+              "mountPath": "/fixtures",
+              "name": "fixtures"
+            },
+            {
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+              "name": "kube-api-access-z6sz2",
+              "readOnly": true
+            }
+          ]
+        }
+      ],
+      "statuses": [
+        {
+          "name": "coordinator",
+          "ready": true,
+          "restartCount": 0,
+          "imageID": "sha256:60b91ce18ac0ef8d4efdec17e79946278f44f62c9fc346b7e19214d8b8ad10ce",
+          "containerID": "containerd://c89cd88621ed71cb0a792f16e8ed27746e5c14c87a5cf0db0e21ff78d1f960da"
+        }
+      ]
+    }
+  ],
+  "pods": [
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "nats-6f54cdc898-s94vr",
+      "uid": "041290f3-092e-4cd4-9113-3d21ec3298e2",
+      "resourceVersion": "414045",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "nats-6f54cdc898",
+          "uid": "eb2fb7b1-f1e4-40d7-a323-ef33affa5e1e"
+        }
+      ],
+      "labels": {
+        "app.kubernetes.io/name": "nats",
+        "pod-template-hash": "6f54cdc898"
+      }
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "postgres-9b47444fc-phhgr",
+      "uid": "07520864-1d0c-4cd6-9a47-a21119db880a",
+      "resourceVersion": "547667",
+      "node": "internal-a2a-vs6-local-worker",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "postgres-9b47444fc",
+          "uid": "20a203bf-2da9-460b-bf73-a768063817a3"
+        }
+      ],
+      "labels": {
+        "app.kubernetes.io/name": "postgres",
+        "pod-template-hash": "9b47444fc"
+      }
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "reference-inventory-jetstream-bootstrap-6f5fg",
+      "uid": "63e44b4a-4b76-4c22-9194-54924a817f49",
+      "resourceVersion": "414012",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [
+        {
+          "apiVersion": "batch/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "Job",
+          "name": "reference-inventory-jetstream-bootstrap",
+          "uid": "69e8f80b-d58b-4a9a-b1c1-3c5f78e5fa0f"
+        }
+      ],
+      "labels": {
+        "app.kubernetes.io/component": "jetstream-bootstrap",
+        "app.kubernetes.io/name": "reference-inventory",
+        "batch.kubernetes.io/controller-uid": "69e8f80b-d58b-4a9a-b1c1-3c5f78e5fa0f",
+        "batch.kubernetes.io/job-name": "reference-inventory-jetstream-bootstrap",
+        "controller-uid": "69e8f80b-d58b-4a9a-b1c1-3c5f78e5fa0f",
+        "job-name": "reference-inventory-jetstream-bootstrap"
+      }
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "reference-inventory-migration-g8qfl",
+      "uid": "7190f02f-7daf-4be5-8586-9ac2178fd344",
+      "resourceVersion": "414009",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [
+        {
+          "apiVersion": "batch/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "Job",
+          "name": "reference-inventory-migration",
+          "uid": "d22b7854-9126-4906-9898-afff923021a6"
+        }
+      ],
+      "labels": {
+        "app.kubernetes.io/component": "migration",
+        "app.kubernetes.io/name": "reference-inventory",
+        "batch.kubernetes.io/controller-uid": "d22b7854-9126-4906-9898-afff923021a6",
+        "batch.kubernetes.io/job-name": "reference-inventory-migration",
+        "controller-uid": "d22b7854-9126-4906-9898-afff923021a6",
+        "job-name": "reference-inventory-migration"
+      }
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "reference-inventory-runtime-685cf57cdf-7zfth",
+      "uid": "eedb3c12-a91d-4eae-96da-fe27158ba8d0",
+      "resourceVersion": "656663",
+      "node": "internal-a2a-vs6-local-worker",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "reference-inventory-runtime-685cf57cdf",
+          "uid": "e7a78b4e-7f40-4033-8bfe-936e4daa05bf"
+        }
+      ],
+      "labels": {
+        "app.kubernetes.io/component": "runtime",
+        "app.kubernetes.io/name": "reference-inventory",
+        "pod-template-hash": "685cf57cdf"
+      }
+    },
+    {
+      "namespace": "internal-a2a-vs6-local",
+      "name": "reference-inventory-runtime-685cf57cdf-fcvk5",
+      "uid": "384505ef-0f7b-4301-8d86-73ae05d8b6d8",
+      "resourceVersion": "656611",
+      "node": "internal-a2a-vs6-local-worker",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "reference-inventory-runtime-685cf57cdf",
+          "uid": "e7a78b4e-7f40-4033-8bfe-936e4daa05bf"
+        }
+      ],
+      "labels": {
+        "app.kubernetes.io/component": "runtime",
+        "app.kubernetes.io/name": "reference-inventory",
+        "pod-template-hash": "685cf57cdf"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "coredns-66bc5c9577-c9gf9",
+      "uid": "1b6aa6c3-31a1-45e5-a7d8-f8922f1d0aa9",
+      "resourceVersion": "551947",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "coredns-66bc5c9577",
+          "uid": "8e902df4-0ebe-4e29-9583-d2d751a68204"
+        }
+      ],
+      "labels": {
+        "k8s-app": "kube-dns",
+        "pod-template-hash": "66bc5c9577"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "coredns-66bc5c9577-j58wk",
+      "uid": "483ffb50-71cc-4342-98a5-7192b54ed966",
+      "resourceVersion": "414267",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "coredns-66bc5c9577",
+          "uid": "8e902df4-0ebe-4e29-9583-d2d751a68204"
+        }
+      ],
+      "labels": {
+        "k8s-app": "kube-dns",
+        "pod-template-hash": "66bc5c9577"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "etcd-internal-a2a-vs6-local-control-plane",
+      "uid": "c1aba3e0-a3b4-4099-857d-e6072c8deddb",
+      "resourceVersion": "414192",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "v1",
+          "controller": true,
+          "kind": "Node",
+          "name": "internal-a2a-vs6-local-control-plane",
+          "uid": "29345908-f0d9-4ff8-9fb5-d0cac1cdbf4f"
+        }
+      ],
+      "labels": {
+        "component": "etcd",
+        "tier": "control-plane"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kindnet-298wn",
+      "uid": "f3597b64-4cdd-469b-921a-87602f1a1dcc",
+      "resourceVersion": "414052",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "DaemonSet",
+          "name": "kindnet",
+          "uid": "508fed1e-3385-4f05-9003-c9c549f42f30"
+        }
+      ],
+      "labels": {
+        "app": "kindnet",
+        "controller-revision-hash": "8649d9d988",
+        "k8s-app": "kindnet",
+        "pod-template-generation": "1",
+        "tier": "node"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kindnet-gsvvc",
+      "uid": "b58d9091-9235-4f82-9ebc-3e4a98ee151b",
+      "resourceVersion": "547674",
+      "node": "internal-a2a-vs6-local-worker",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "DaemonSet",
+          "name": "kindnet",
+          "uid": "508fed1e-3385-4f05-9003-c9c549f42f30"
+        }
+      ],
+      "labels": {
+        "app": "kindnet",
+        "controller-revision-hash": "8649d9d988",
+        "k8s-app": "kindnet",
+        "pod-template-generation": "1",
+        "tier": "node"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kindnet-p8ghw",
+      "uid": "978c6ea9-e7ed-4f90-85ab-5cbf9764f3d2",
+      "resourceVersion": "414047",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "DaemonSet",
+          "name": "kindnet",
+          "uid": "508fed1e-3385-4f05-9003-c9c549f42f30"
+        }
+      ],
+      "labels": {
+        "app": "kindnet",
+        "controller-revision-hash": "8649d9d988",
+        "k8s-app": "kindnet",
+        "pod-template-generation": "1",
+        "tier": "node"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-apiserver-internal-a2a-vs6-local-control-plane",
+      "uid": "06b75874-0042-4af5-9db3-267d56cab067",
+      "resourceVersion": "543667",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "v1",
+          "controller": true,
+          "kind": "Node",
+          "name": "internal-a2a-vs6-local-control-plane",
+          "uid": "29345908-f0d9-4ff8-9fb5-d0cac1cdbf4f"
+        }
+      ],
+      "labels": {
+        "component": "kube-apiserver",
+        "tier": "control-plane"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-controller-manager-internal-a2a-vs6-local-control-plane",
+      "uid": "23603a5b-b3cf-4f94-b1b3-6556d40222e8",
+      "resourceVersion": "551992",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "v1",
+          "controller": true,
+          "kind": "Node",
+          "name": "internal-a2a-vs6-local-control-plane",
+          "uid": "29345908-f0d9-4ff8-9fb5-d0cac1cdbf4f"
+        }
+      ],
+      "labels": {
+        "component": "kube-controller-manager",
+        "tier": "control-plane"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-proxy-5pxjg",
+      "uid": "f712bd92-9e2d-4932-9016-3bdf775088f6",
+      "resourceVersion": "414050",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "DaemonSet",
+          "name": "kube-proxy",
+          "uid": "a0ba62b3-7c7c-4fb2-b15a-e43c4f88f347"
+        }
+      ],
+      "labels": {
+        "controller-revision-hash": "55c7cb7b75",
+        "k8s-app": "kube-proxy",
+        "pod-template-generation": "1"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-proxy-krh82",
+      "uid": "d91cdabd-11a5-4264-87d6-eaca1612c6c6",
+      "resourceVersion": "414051",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "DaemonSet",
+          "name": "kube-proxy",
+          "uid": "a0ba62b3-7c7c-4fb2-b15a-e43c4f88f347"
+        }
+      ],
+      "labels": {
+        "controller-revision-hash": "55c7cb7b75",
+        "k8s-app": "kube-proxy",
+        "pod-template-generation": "1"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-proxy-qshs4",
+      "uid": "1ce26471-86ba-4387-b722-336287ac60db",
+      "resourceVersion": "547672",
+      "node": "internal-a2a-vs6-local-worker",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "DaemonSet",
+          "name": "kube-proxy",
+          "uid": "a0ba62b3-7c7c-4fb2-b15a-e43c4f88f347"
+        }
+      ],
+      "labels": {
+        "controller-revision-hash": "55c7cb7b75",
+        "k8s-app": "kube-proxy",
+        "pod-template-generation": "1"
+      }
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-scheduler-internal-a2a-vs6-local-control-plane",
+      "uid": "6e014d4d-edd5-44a9-a85f-8efdf80adbc6",
+      "resourceVersion": "551998",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "v1",
+          "controller": true,
+          "kind": "Node",
+          "name": "internal-a2a-vs6-local-control-plane",
+          "uid": "29345908-f0d9-4ff8-9fb5-d0cac1cdbf4f"
+        }
+      ],
+      "labels": {
+        "component": "kube-scheduler",
+        "tier": "control-plane"
+      }
+    },
+    {
+      "namespace": "local-path-storage",
+      "name": "local-path-provisioner-5c4cdb564f-f87n5",
+      "uid": "ceece5c8-cc12-48c1-8a27-e28aa26adec6",
+      "resourceVersion": "414303",
+      "node": "internal-a2a-vs6-local-control-plane",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "local-path-provisioner-5c4cdb564f",
+          "uid": "147f9358-4504-47e0-ae53-642838042b1f"
+        }
+      ],
+      "labels": {
+        "app": "local-path-provisioner",
+        "pod-template-hash": "5c4cdb564f"
+      }
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "coordinator",
+      "uid": "87cb883d-6f71-47c0-9d12-99c148ca9573",
+      "resourceVersion": "515169",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "objects-8865c4db6-7lcqj",
+      "uid": "bb9470b9-5d38-41d3-be78-5618a9fae294",
+      "resourceVersion": "656068",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-8865c4db6",
+          "uid": "90186c54-4d89-4ffa-aece-a36f009a16d6"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "8865c4db6"
+      }
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "ocr-active",
+      "uid": "b252416b-5d4d-4c6a-bd44-44f134caf929",
+      "resourceVersion": "515661",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "ocr-active-recovery",
+      "uid": "732ee49d-0d1d-4a31-bd3d-04d08a4519e5",
+      "resourceVersion": "515680",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "ocr-publication",
+      "uid": "4a1510be-faa2-473c-9ef6-b347187f7e6a",
+      "resourceVersion": "515769",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "ocr-publication-recovery",
+      "uid": "9a945ed5-ea37-4130-881c-5683f12b869d",
+      "resourceVersion": "515784",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "temporal-bf44c7c45-z277r",
+      "uid": "fe6df4c6-e2f8-449f-b12e-446c64bf5ff2",
+      "resourceVersion": "656078",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "e20dd284-2498-4af7-a199-30fcf33f7c24"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-integration-0913",
+      "name": "workflows-68d56448dd-6phrj",
+      "uid": "782e9d5d-cd3d-4acc-b827-bef5a59c3284",
+      "resourceVersion": "656514",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-68d56448dd",
+          "uid": "e1d6af0f-4513-4043-a4ff-b668be56dd9b"
+        }
+      ],
+      "labels": {
+        "app": "integration-workflows",
+        "pod-template-hash": "68d56448dd"
+      }
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "coordinator",
+      "uid": "bd1eb22f-5813-436c-9590-11ecb540954e",
+      "resourceVersion": "643867",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "objects-77db79d55d-f2ztl",
+      "uid": "c2ced427-9999-4b7e-81aa-7381adeb7f85",
+      "resourceVersion": "656071",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-77db79d55d",
+          "uid": "51b29836-f554-46e7-ad32-3840b69b6fbc"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "77db79d55d"
+      }
+    },
+    {
+      "namespace": "pdf-s1-warm-lifecycle",
+      "name": "temporal-bf44c7c45-mlgn9",
+      "uid": "af8d6d10-8945-4891-a38c-45f5c35056d7",
+      "resourceVersion": "656075",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "873512e6-7c08-4823-afad-93266b2d5bc8"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "name": "coordinator",
+      "uid": "e3da960e-209a-46aa-83fc-9e406f96c16c",
+      "resourceVersion": "641127",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {
+        "app": "pdf-coordinator"
+      }
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "name": "objects-77db79d55d-tndfg",
+      "uid": "c84d0475-f2ec-4983-a8c8-37620056e9e2",
+      "resourceVersion": "656064",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-77db79d55d",
+          "uid": "fd3b2cdd-c232-48bc-b265-a5e839cb20ce"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "77db79d55d"
+      }
+    },
+    {
+      "namespace": "pdf-t01-validation",
+      "name": "temporal-bf44c7c45-5452k",
+      "uid": "54ad9973-a009-4d15-b58f-87123515a9ae",
+      "resourceVersion": "656057",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "702c9c6c-2fb0-4a36-a90a-e915554c2bf7"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "coordinator",
+      "uid": "30ff40d0-9a83-4972-aea8-2bd0a626c79f",
+      "resourceVersion": "498193",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "objects-77db79d55d-jz84t",
+      "uid": "b187c701-fbdd-497f-b8d1-bafc0cc34934",
+      "resourceVersion": "656061",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-77db79d55d",
+          "uid": "d82f543c-db11-439a-a2b9-13ae47eaf637"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "77db79d55d"
+      }
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "temporal-bf44c7c45-bwsh7",
+      "uid": "b8259221-7c00-440a-b646-aff9e68bc7de",
+      "resourceVersion": "656081",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "c33346e3-b2c4-4240-8b31-978458f3b86e"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t02-validation",
+      "name": "workflows-7777548d67-pv9xt",
+      "uid": "073dd2b8-caa4-4eed-b5ce-43e54d18d489",
+      "resourceVersion": "656505",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-7777548d67",
+          "uid": "8614419a-73b7-43b7-9140-3202c244a4f3"
+        }
+      ],
+      "labels": {
+        "app": "t02-workflows",
+        "pod-template-hash": "7777548d67"
+      }
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "activities-7b877576cc-h2jh2",
+      "uid": "6cb279ad-e8d0-4476-ae5f-010026ef4aac",
+      "resourceVersion": "656515",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "activities-7b877576cc",
+          "uid": "f451782d-b901-4d0e-b0ce-f352fd1bcda4"
+        }
+      ],
+      "labels": {
+        "app": "t03-activities",
+        "pod-template-hash": "7b877576cc"
+      }
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "coordinator",
+      "uid": "7727b301-6730-427d-927d-7e94fd4be420",
+      "resourceVersion": "501715",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "objects-77db79d55d-pht5g",
+      "uid": "7a5a6dae-957f-49b4-9be4-c695027ed108",
+      "resourceVersion": "656157",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-77db79d55d",
+          "uid": "eba6091a-57f4-42f3-bdc3-4ab974a77f68"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "77db79d55d"
+      }
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "temporal-bf44c7c45-rctff",
+      "uid": "9e1adf32-2a32-4b49-9f91-1e5a4b95b039",
+      "resourceVersion": "656154",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "e8f553a6-09e2-4659-ac62-700e8dcacf74"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t03-validation",
+      "name": "workflows-5f89b5458c-vf4k2",
+      "uid": "b663bc82-8b40-440d-a526-349b3850f614",
+      "resourceVersion": "656517",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-5f89b5458c",
+          "uid": "eba36e9b-a832-4294-8ec4-11fe13474fc9"
+        }
+      ],
+      "labels": {
+        "app": "t03-workflows",
+        "pod-template-hash": "5f89b5458c"
+      }
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "activities-85cd689c7f-wlj6q",
+      "uid": "ef6294ca-b353-47a1-afde-2909a2ac46c2",
+      "resourceVersion": "656511",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "activities-85cd689c7f",
+          "uid": "59c820f3-ce27-4209-bc09-3e3dcd0726aa"
+        }
+      ],
+      "labels": {
+        "app": "t04-activities",
+        "pod-template-hash": "85cd689c7f"
+      }
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "coordinator",
+      "uid": "379f29a2-223f-4d55-b83b-e1d308d20ba6",
+      "resourceVersion": "502536",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "objects-77db79d55d-vz29z",
+      "uid": "ba336c31-9511-4b9c-9a04-33b042608656",
+      "resourceVersion": "656160",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-77db79d55d",
+          "uid": "4bae0466-a538-4aa1-9470-5da7e3b3f46e"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "77db79d55d"
+      }
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "temporal-bf44c7c45-q859d",
+      "uid": "562e573d-1149-4cd2-b0af-00623ac38429",
+      "resourceVersion": "656163",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "edfc5177-2429-49e9-8bca-2061683d4378"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t04-validation",
+      "name": "workflows-7666c546c7-7hfxm",
+      "uid": "03c11266-44dc-4dd0-ba8a-1124432030c2",
+      "resourceVersion": "656513",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-7666c546c7",
+          "uid": "6565c652-90c0-4f57-a6b5-cc72c10c85de"
+        }
+      ],
+      "labels": {
+        "app": "t04-workflows",
+        "pod-template-hash": "7666c546c7"
+      }
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "activities-6f9ddc75f5-f2q25",
+      "uid": "f3956f9f-efe8-4f6d-bf0b-de0640b39980",
+      "resourceVersion": "656503",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "activities-6f9ddc75f5",
+          "uid": "0723d1e8-67bf-44b3-9fb1-de1b3ae792ab"
+        }
+      ],
+      "labels": {
+        "app": "t05-activities",
+        "pod-template-hash": "6f9ddc75f5"
+      }
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "coordinator",
+      "uid": "0c6b4f9c-10c9-42bd-a491-306b28f47adf",
+      "resourceVersion": "502144",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "deadline-expiry",
+      "uid": "d3ef10af-a0d5-4984-9c91-5704c79b9b16",
+      "resourceVersion": "511887",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "deadline-recovery",
+      "uid": "043494a1-fb20-4bd2-a250-9a74e281270b",
+      "resourceVersion": "512004",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Succeeded",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "objects-77db79d55d-p4tdm",
+      "uid": "5494954b-bc35-4cc7-a1cd-ba720f83e408",
+      "resourceVersion": "656240",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-77db79d55d",
+          "uid": "d1179b04-6b3b-4757-8b03-315180a9a4f6"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "77db79d55d"
+      }
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "temporal-bf44c7c45-9trrq",
+      "uid": "614d71d0-7dbe-4902-a77a-cc70aac6d2da",
+      "resourceVersion": "656234",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "c9f86cd2-2629-4405-970e-6e8edc49a5e5"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t05-validation",
+      "name": "workflows-86cbcb645-dxv46",
+      "uid": "3cc97bd7-4473-4e93-992e-c8f412c7698b",
+      "resourceVersion": "656501",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-86cbcb645",
+          "uid": "e19a09bb-232f-4dab-8c62-9c320c10d581"
+        }
+      ],
+      "labels": {
+        "app": "t05-workflows",
+        "pod-template-hash": "86cbcb645"
+      }
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "activities-57f967cf66-lgrgv",
+      "uid": "c5d90957-af09-402b-8b14-a07855954da1",
+      "resourceVersion": "656508",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "activities-57f967cf66",
+          "uid": "b364bfd7-254b-4c52-94ff-451aa579f35e"
+        }
+      ],
+      "labels": {
+        "app": "t06-activities",
+        "pod-template-hash": "57f967cf66"
+      }
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "coordinator",
+      "uid": "7ec48b12-9bd4-4b0e-83f2-454764fa174d",
+      "resourceVersion": "528921",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "objects-8865c4db6-h5fww",
+      "uid": "8fd657af-6a3f-49c2-a1d4-1a8e1dc8f8b2",
+      "resourceVersion": "656243",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-8865c4db6",
+          "uid": "c65ff3a2-2b40-48a0-a2ef-d4ffe78bfbd6"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "8865c4db6"
+      }
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "temporal-bf44c7c45-kv2fq",
+      "uid": "f4f46752-d172-43e3-bc94-ea830f69362f",
+      "resourceVersion": "656237",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "127ddfa1-73d1-4c4e-8591-9ea5c59f4a79"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t06-validation",
+      "name": "workflows-9fcf45545-xdsv2",
+      "uid": "0a80b993-b6f7-4d3d-b389-93edcf1ef1c3",
+      "resourceVersion": "656538",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-9fcf45545",
+          "uid": "410f8d1d-997d-4a18-9c46-465a896d11d2"
+        }
+      ],
+      "labels": {
+        "app": "t06-workflows",
+        "pod-template-hash": "9fcf45545"
+      }
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "activities-646f94d7d9-glwzw",
+      "uid": "edca6395-785e-49ed-9cd6-34973fb31ab7",
+      "resourceVersion": "656540",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "activities-646f94d7d9",
+          "uid": "041dcfa5-d887-4b81-9218-8a0e6fb87d43"
+        }
+      ],
+      "labels": {
+        "app": "t07-activities",
+        "pod-template-hash": "646f94d7d9"
+      }
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "coordinator",
+      "uid": "e2cebf98-6360-45cb-8d8d-d4cecf7d399c",
+      "resourceVersion": "535756",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "objects-8865c4db6-xq2gl",
+      "uid": "ffc9a6db-5e07-49ea-8287-2c4df80046e6",
+      "resourceVersion": "656298",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-8865c4db6",
+          "uid": "27983795-06d8-422b-a626-656bcbf0e869"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "8865c4db6"
+      }
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "temporal-bf44c7c45-89v64",
+      "uid": "64d8e841-fecc-48be-86fc-5669099a6a27",
+      "resourceVersion": "656294",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "7110197d-fbff-4f90-a37f-59191641a45f"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t07-validation",
+      "name": "workflows-7478c7745f-lm6h5",
+      "uid": "902ef886-708a-441d-bfc5-517ad94c19b7",
+      "resourceVersion": "656543",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-7478c7745f",
+          "uid": "5078239e-8344-4450-9fcc-ce4274eef8e8"
+        }
+      ],
+      "labels": {
+        "app": "t07-workflows",
+        "pod-template-hash": "7478c7745f"
+      }
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "coordinator",
+      "uid": "a66c0d68-3c48-4087-8c25-3393872a193e",
+      "resourceVersion": "541917",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "objects-8865c4db6-wzcjf",
+      "uid": "30f6ffb1-f7fd-41c4-a6a0-ebf272969fee",
+      "resourceVersion": "656290",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-8865c4db6",
+          "uid": "7b55b603-9f24-4a9c-a052-d2114be5fee1"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "8865c4db6"
+      }
+    },
+    {
+      "namespace": "pdf-t08-validation",
+      "name": "temporal-bf44c7c45-4xbzr",
+      "uid": "66bac8cd-496e-4212-b29f-fa3cbdffe8c8",
+      "resourceVersion": "656303",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "d64be86c-a245-434d-b0ce-f253cce94311"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "coordinator",
+      "uid": "39c4bf45-45ae-4646-8d7b-ec47b2c61785",
+      "resourceVersion": "542273",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [],
+      "labels": {}
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "objects-8865c4db6-bqmvr",
+      "uid": "ee7b24cb-bdb7-408a-9ec8-093d2ab5ac00",
+      "resourceVersion": "542334",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "objects-8865c4db6",
+          "uid": "6c424bdd-a5a0-4034-bf65-5efa303603c0"
+        }
+      ],
+      "labels": {
+        "app": "pdf-objects",
+        "pod-template-hash": "8865c4db6"
+      }
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "temporal-bf44c7c45-wqvgj",
+      "uid": "a7a6e87b-c9cc-471e-871d-e262bf2fc17f",
+      "resourceVersion": "542338",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "temporal-bf44c7c45",
+          "uid": "e720169e-8fe4-40e5-87d8-93fa8b1d1913"
+        }
+      ],
+      "labels": {
+        "app": "pdf-temporal",
+        "pod-template-hash": "bf44c7c45"
+      }
+    },
+    {
+      "namespace": "pdf-t09a-validation",
+      "name": "workflows-66ff95cd9b-d2ccj",
+      "uid": "65a38614-22ed-4c07-9006-8817c2e529ad",
+      "resourceVersion": "546493",
+      "node": "internal-a2a-vs6-local-worker2",
+      "phase": "Running",
+      "owners": [
+        {
+          "apiVersion": "apps/v1",
+          "blockOwnerDeletion": true,
+          "controller": true,
+          "kind": "ReplicaSet",
+          "name": "workflows-66ff95cd9b",
+          "uid": "df899d18-5206-4890-9657-5878ca3df02f"
+        }
+      ],
+      "labels": {
+        "app": "t09a-workflows",
+        "pod-template-hash": "66ff95cd9b"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "namespace": null,
+      "name": "internal-a2a-vs6-local-control-plane",
+      "uid": "29345908-f0d9-4ff8-9fb5-d0cac1cdbf4f",
+      "resourceVersion": "665530",
+      "capacity": {
+        "cpu": "18",
+        "ephemeral-storage": "1916694008Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124424Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "18",
+        "ephemeral-storage": "1916694008Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124424Ki",
+        "pods": "110"
+      },
+      "conditions": [
+        {
+          "lastHeartbeatTime": "2026-09-16T13:54:53Z",
+          "lastTransitionTime": "2026-08-28T13:47:58Z",
+          "message": "kubelet has sufficient memory available",
+          "reason": "KubeletHasSufficientMemory",
+          "status": "False",
+          "type": "MemoryPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:54:53Z",
+          "lastTransitionTime": "2026-08-28T13:47:58Z",
+          "message": "kubelet has no disk pressure",
+          "reason": "KubeletHasNoDiskPressure",
+          "status": "False",
+          "type": "DiskPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:54:53Z",
+          "lastTransitionTime": "2026-08-28T13:47:58Z",
+          "message": "kubelet has sufficient PID available",
+          "reason": "KubeletHasSufficientPID",
+          "status": "False",
+          "type": "PIDPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:54:53Z",
+          "lastTransitionTime": "2026-09-13T13:56:16Z",
+          "message": "kubelet is posting ready status",
+          "reason": "KubeletReady",
+          "status": "True",
+          "type": "Ready"
+        }
+      ]
+    },
+    {
+      "namespace": null,
+      "name": "internal-a2a-vs6-local-worker",
+      "uid": "bfdeceea-67a2-4d7f-ac32-8b97efda6d71",
+      "resourceVersion": "665445",
+      "capacity": {
+        "cpu": "18",
+        "ephemeral-storage": "1916694008Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124424Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "18",
+        "ephemeral-storage": "1916694008Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124424Ki",
+        "pods": "110"
+      },
+      "conditions": [
+        {
+          "lastHeartbeatTime": "2026-09-16T13:53:56Z",
+          "lastTransitionTime": "2026-08-28T13:48:09Z",
+          "message": "kubelet has sufficient memory available",
+          "reason": "KubeletHasSufficientMemory",
+          "status": "False",
+          "type": "MemoryPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:53:56Z",
+          "lastTransitionTime": "2026-08-28T13:48:09Z",
+          "message": "kubelet has no disk pressure",
+          "reason": "KubeletHasNoDiskPressure",
+          "status": "False",
+          "type": "DiskPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:53:56Z",
+          "lastTransitionTime": "2026-08-28T13:48:09Z",
+          "message": "kubelet has sufficient PID available",
+          "reason": "KubeletHasSufficientPID",
+          "status": "False",
+          "type": "PIDPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:53:56Z",
+          "lastTransitionTime": "2026-09-13T14:20:02Z",
+          "message": "kubelet is posting ready status",
+          "reason": "KubeletReady",
+          "status": "True",
+          "type": "Ready"
+        }
+      ]
+    },
+    {
+      "namespace": null,
+      "name": "internal-a2a-vs6-local-worker2",
+      "uid": "b33ff221-3443-4b27-83bd-01ce69d0bb01",
+      "resourceVersion": "665646",
+      "capacity": {
+        "cpu": "18",
+        "ephemeral-storage": "1916694008Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124424Ki",
+        "pods": "110"
+      },
+      "allocatable": {
+        "cpu": "18",
+        "ephemeral-storage": "1916694008Ki",
+        "hugepages-1Gi": "0",
+        "hugepages-2Mi": "0",
+        "hugepages-32Mi": "0",
+        "hugepages-64Ki": "0",
+        "memory": "8124424Ki",
+        "pods": "110"
+      },
+      "conditions": [
+        {
+          "lastHeartbeatTime": "2026-09-16T13:56:10Z",
+          "lastTransitionTime": "2026-08-28T13:48:09Z",
+          "message": "kubelet has sufficient memory available",
+          "reason": "KubeletHasSufficientMemory",
+          "status": "False",
+          "type": "MemoryPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:56:10Z",
+          "lastTransitionTime": "2026-08-28T13:48:09Z",
+          "message": "kubelet has no disk pressure",
+          "reason": "KubeletHasNoDiskPressure",
+          "status": "False",
+          "type": "DiskPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:56:10Z",
+          "lastTransitionTime": "2026-08-28T13:48:09Z",
+          "message": "kubelet has sufficient PID available",
+          "reason": "KubeletHasSufficientPID",
+          "status": "False",
+          "type": "PIDPressure"
+        },
+        {
+          "lastHeartbeatTime": "2026-09-16T13:56:10Z",
+          "lastTransitionTime": "2026-09-13T14:50:00Z",
+          "message": "kubelet is posting ready status",
+          "reason": "KubeletReady",
+          "status": "True",
+          "type": "Ready"
+        }
+      ]
+    }
+  ]
+}
