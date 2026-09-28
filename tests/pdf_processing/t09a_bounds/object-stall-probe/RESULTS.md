@@ -132,3 +132,19 @@ sufficient trigger. DD instead retained464 objects with a strongly small-object
 distribution and reached about478MiB at onset. If diagnosis continues, replay
 that many-small-key Store publish/readback shape under a fresh bounded prefix;
 do not repeat DE or another full PDF window unchanged.
+
+## DF follow-up
+
+DF performed the bounded follow-up once: source GET, conditional destination
+PUT and exact destination GET for the256 smallest retained DD objects under a
+fresh prefix, with all32 Deployments Ready and the same candidate and guards.
+All256 objects (2,737,516bytes) completed in16 batches. Object full PSI,
+max and OOM deltas were zero; no direct target MinIO stall was captured. Exact
+rollback and independent cleanup passed. See [DF results](df-small-key/RESULTS.md).
+
+This second negative control rules out the bounded many-small-key copy/readback
+shape as a sufficient trigger. It leaves the complete producer chronology,
+accumulated cache/reclaim state and intermittent background filesystem work
+unseparated. Stop standalone object-only variants: a further runtime is useful
+only if it traces the exact object caller during a bounded mixed producer window
+for a concrete policy candidate. Do not repeat DD unchanged.
