@@ -1,5 +1,12 @@
 # T09b local measurement slice
 
+## Latest controlled result: A7 group-5 diagnostic passed
+
+See `a7-evidence/RESULTS.md`. A7 completed all five exact-output workflows with
+29 groups, one parser recycle and two parser generations. Traffic and resource
+qualification passed and cleanup restored held workloads off. This completes the
+B4→A7 matched order; one fresh A→B normal-path pair remains.
+
 ## Latest controlled result: B4 group-10 diagnostic passed
 
 See `b4-evidence/RESULTS.md`. B4 passed all 11 gates, completed the fixed
