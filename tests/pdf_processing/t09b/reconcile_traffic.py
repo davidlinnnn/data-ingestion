@@ -6,6 +6,28 @@ measure packets lost before reaching MinIO or transport framing overhead.
 from collections import defaultdict
 
 
+def reconcile_run(state, phase, server, bucket, trace):
+    """Require every worker generation, including interrupted ones, in coverage."""
+    roots = sorted(path for path in (state / phase).glob('worker-*') if path.is_dir())
+    paths = [root / 'storage.jsonl' for root in roots]
+    missing = [str(path) for path in paths if not path.is_file()]
+    marker_ids = {trace.get('ready_call_id'), trace.get('final_call_id')} - {None}
+    workload_server = [row for row in server if row.get('call_id') not in marker_ids]
+    report = reconcile_ledgers([path for path in paths if path.is_file()], workload_server, bucket)
+    if not roots or missing:
+        report['errors'].append('worker storage evidence missing')
+    if (trace.get('collector_stopped') is not True or not trace.get('ready_call_id')
+            or not trace.get('final_call_id') or trace['ready_call_id'] == trace['final_call_id']):
+        report['errors'].append('trace lifecycle evidence incomplete')
+    for call_id in marker_ids:
+        if not any(row.get('call_id') == call_id and 200 <= row['status'] < 300 for row in server):
+            report['errors'].append('trace boundary marker missing from retained records')
+    report.update(complete=report['complete'] and not report['errors'],
+                  worker_generations=len(roots), missing_ledgers=missing,
+                  excluded_marker_calls=len(server) - len(workload_server))
+    return report
+
+
 def reconcile_ledgers(paths, server, bucket):
     from storage_ledger import reconcile as reconcile_ledger
     ledgers = [reconcile_ledger(path) for path in paths]
@@ -66,14 +88,24 @@ if __name__ == '__main__':
     import json
     from pathlib import Path
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--ledger', action='append', required=True, type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--ledger', action='append', type=Path)
+    source.add_argument('--state', type=Path, help='exported state containing all worker generations')
+    parser.add_argument('--phase')
+    parser.add_argument('--trace', type=Path, help='TraceSession.finish lifecycle JSON')
     parser.add_argument('--server', required=True, type=Path,
                         help='sanitized MinIO accounting JSONL')
     parser.add_argument('--bucket', required=True)
     parser.add_argument('--out', required=True, type=Path)
     args = parser.parse_args()
     rows = [json.loads(line) for line in args.server.read_text().splitlines()]
-    report = reconcile_ledgers(args.ledger, rows, args.bucket)
+    if args.state:
+        if not args.phase or not args.trace:
+            parser.error('--state requires --phase and --trace')
+        report = reconcile_run(args.state, args.phase, rows, args.bucket,
+                               json.loads(args.trace.read_text()))
+    else:
+        report = reconcile_ledgers(args.ledger, rows, args.bucket)
     with args.out.open('x') as stream:
         json.dump(report, stream, indent=2)
         stream.write('\n')

@@ -1,5 +1,24 @@
 # T09b local measurement slice
 
+## Managed trace and run reconciliation
+
+TraceSession now owns the local native-trace process and reader, streams only
+sanitized records, rejects premature exit/malformed output, waits for distinct
+readiness/final marker IDs and bounds shutdown. Its caller must issue markers at
+the actual workload boundaries, poll health during work, and supply a finite
+remote timeout; terminating local kubectl does not prove remote process cleanup.
+
+reconcile_run and the reconciliation CLI's --state/--phase/--trace mode require
+storage ledgers from every discovered worker generation, including failed ones,
+and successful boundary markers in retained server records. Marker traffic is
+excluded. Missing worker ledgers, incomplete lifecycle evidence or interrupted
+calls cannot pass through a selected subset of successful ledger files.
+
+Twenty-two local tests pass, including real subprocess trace startup/shutdown,
+sanitization and malformed early exit. Both Standards and Spec reviews found
+zero actionable defects in this slice. This does not yet wire the outer runtime
+caller, remote evidence export or final acceptance; baseline remains unstarted.
+
 ## Pod supervisor and preflight integration
 
 The fresh T09b supervisor now invokes baseline_window.py with the A1 identity and

@@ -2,10 +2,31 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
-from reconcile_traffic import reconcile, reconcile_ledgers
+from reconcile_traffic import reconcile, reconcile_ledgers, reconcile_run
 
 
 class ReconciliationTest(unittest.TestCase):
+    def test_missing_worker_generation_cannot_be_omitted(self):
+        root = Path(__file__).parent / 'boto-correlated-evidence'
+        evidence = json.loads((root / 'result.json').read_text())
+        trace = dict(collector_stopped=True, ready_call_id='ready', final_call_id='final')
+        records = [dict(evidence['records'][0], call_id='ready'), *evidence['records'],
+                   dict(evidence['records'][0], call_id='final')]
+        with TemporaryDirectory() as directory:
+            state = Path(directory)
+            worker = state / 'phase' / 'worker-1'
+            worker.mkdir(parents=True)
+            (worker / 'storage.jsonl').write_text((root / 'storage.jsonl').read_text())
+            (worker.parent / 'worker-1.log').write_text('log')
+            self.assertTrue(reconcile_run(state, 'phase', records, 't09a', trace)['complete'])
+            self.assertFalse(reconcile_run(state, 'phase', records, 't09a', {})['complete'])
+            self.assertFalse(reconcile_run(state, 'phase', evidence['records'], 't09a', trace)['complete'])
+            (worker.parent / 'worker-2').mkdir()
+            report = reconcile_run(state, 'phase', records, 't09a', trace)
+            self.assertFalse(report['complete'])
+            self.assertEqual(report['worker_generations'], 2)
+            self.assertEqual(len(report['missing_ledgers']), 1)
+
     def test_unfinished_call_cannot_disappear_from_traffic_report(self):
         root = Path(__file__).parent / 'boto-correlated-evidence'
         evidence = json.loads((root / 'result.json').read_text())
