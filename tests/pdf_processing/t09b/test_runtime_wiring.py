@@ -17,15 +17,15 @@ from runtime_wiring import configure
 r = configure()
 for command, filename in ((r.preflight_argv(), 'pod_preflight.py'), (r.workload_argv(), 'pod_workload.py')):
     assert command[1] == '/workspace/tests/pdf_processing/t09b/' + filename
-    assert command[command.index('--prefix') + 1] == 't09b/calibration-20260928-a3/'
+    assert command[command.index('--prefix') + 1] == 't09b/calibration-20260928-a4/'
     assert not any('bounds-dh' in part or 'bounds-20260928-dh' in part for part in command)
 scope = r.authorization_scope()
-assert scope['phase'] == 't09b-calibration-a3'
+assert scope['phase'] == 't09b-calibration-a4'
 assert scope['automatic_retry'] is False
 assert scope['workload_seconds'] == 825
 assert scope['container_hard_limit_bytes'] == 5368709120
 assert scope['expected_parser_generations'] == 2
-assert 'state/t09b-calibration-a3/worker-1/storage.jsonl' in r.base.FINAL_REQUIRED
+assert 'state/t09b-calibration-a4/worker-1/storage.jsonl' in r.base.FINAL_REQUIRED
 g = r.adapted_window.__globals__
 assert g['IncrementalEvidenceMirror'] is r.base.IncrementalEvidenceMirror
 assert g['workload_argv']()[1].endswith('/t09b/pod_workload.py')
@@ -73,7 +73,7 @@ print('PASS: guarded runner binding; no runtime executed')
                                 capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_actual_entrypoint_keeps_race_fix_and_a3_policy(self):
+    def test_actual_entrypoint_keeps_race_fix_and_a4_policy(self):
         here = Path(__file__).resolve().parent
         script = f'''
 import importlib.util
@@ -84,8 +84,9 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 r = module.runner
 assert 'supervisor_start_confirmed' in r.adapted_window.__code__.co_varnames
-assert r.verify_object_monitor is module.verify_object_monitor_a3
+assert r.verify_object_monitor is module.verify_object_monitor_a4
 assert r.OBJECT_PSI_POLICY['memory_events_max'] == 'recorded_boundary_event_not_immediate_stop'
+assert r.OBJECT_PSI_POLICY['node_full_psi_avg10'] == 'runtime_telemetry_not_immediate_stop'
 assert r.OBJECT_PSI_POLICY['diagnostic_only'] is True
 assert r.authorization_scope()['automatic_retry'] is False
 events = dict(max=10, oom=0, oom_kill=0, oom_group_kill=0)
@@ -107,8 +108,20 @@ try:
 except ValueError as error:
     assert 'PSI' in str(error)
 else:
-    raise AssertionError('positive full PSI did not stop A3')
-print('PASS: A3 entrypoint retains evidence fix and diagnostic guard')
+    raise AssertionError('positive object full PSI did not stop A4')
+row = dict(available=r.base.VM_RUNTIME_FLOOR_BYTES, psi_full_avg10=0.2,
+           vm_oom_kill=0, memory_events={{'oom': 0, 'oom_kill': 0, 'oom_group_kill': 0}},
+           memory_current=r.base.CGROUP_GUARD_BYTES,
+           evidence_used_bytes=0, evidence_free_bytes=134217728,
+           evidence_filesystem_free_bytes=134217728)
+module.verify_runtime_sample_a4(row, 0)
+try:
+    module.verify_runtime_sample_a4({{**row, 'vm_oom_kill': 1}}, 0)
+except ValueError as error:
+    assert 'OOM' in str(error)
+else:
+    raise AssertionError('VM OOM did not stop A4')
+print('PASS: A4 retains hard guards while node full PSI is telemetry')
 '''
         result = subprocess.run([sys.executable, '-B', '-c', script], cwd='/',
                                 capture_output=True, text=True, timeout=20)

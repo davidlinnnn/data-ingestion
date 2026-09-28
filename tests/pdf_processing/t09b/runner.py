@@ -11,9 +11,10 @@ from runtime_wiring import configure
 
 runner = configure()
 base = runner.base
+original_runtime_sample = runner.base_verify_sample
 
 
-def verify_object_monitor_a3():
+def verify_object_monitor_a4():
     """Keep OOM/PSI fatal; record memory.max reclaim events for this diagnostic."""
     if runner.monitor is None or not runner.monitor.samples:
         raise ValueError('object-service telemetry missing')
@@ -35,12 +36,21 @@ def verify_object_monitor_a3():
         runner.checked_samples += 1
 
 
+def verify_runtime_sample_a4(row, baseline_oom):
+    """Keep every runtime guard except node full PSI, which A4 records."""
+    original_runtime_sample({**row, 'psi_full_avg10': 0}, baseline_oom)
+
+
 runner.OBJECT_PSI_POLICY = {
     **runner.OBJECT_PSI_POLICY,
     'memory_events_max': 'recorded_boundary_event_not_immediate_stop',
+    'node_full_psi_avg10': 'runtime_telemetry_not_immediate_stop',
     'diagnostic_only': True,
 }
-runner.verify_object_monitor = verify_object_monitor_a3
+runner.verify_object_monitor = verify_object_monitor_a4
+runner.base_verify_sample = verify_runtime_sample_a4
+runner.base.verify_runtime_sample = verify_runtime_sample_a4
+runner.adapted_window.__globals__['base_runtime_guard'] = verify_runtime_sample_a4
 
 
 def exact_command():

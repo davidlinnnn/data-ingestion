@@ -9,6 +9,10 @@ import sys
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent/'q04'))
 sys.path.insert(0, str(HERE))
+import q04_runtime
+from runtime_policy import Run
+
+q04_runtime.Run = Run
 from candidate import warm_pod_window_db
 from t09b_host import Host
 

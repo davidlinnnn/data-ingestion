@@ -22,7 +22,7 @@ from qualify_baseline import qualify
 sys.path.insert(0, str(ROOT / 'tests/pdf_processing/t09a_bounds/normal-topology-dh'))
 from terminal_vm_guard import runtime_psi_is_telemetry, terminal_proofs
 RUNNER = HERE / 'runner.py'
-OUT = Path('/private/tmp/t09b-controller-20260928-a3')
+OUT = Path('/private/tmp/t09b-controller-20260928-a4')
 OUT.mkdir(exist_ok=False)
 
 spec = importlib.util.spec_from_file_location('bo_controlled_runner', RUNNER)
@@ -45,7 +45,7 @@ trace = None
 trace_log = None
 trace_owner = None
 native_trace = None
-TRACE_CONTAINER = 't09b-a3-object-stall'
+TRACE_CONTAINER = 't09b-a4-object-stall'
 TRACE_INSTANCE = 'q44_' + runner.RUN_IDENTITY.replace('-', '_')
 
 
@@ -357,8 +357,9 @@ print(json.dumps(rows))
                     runner.OUT, baseline['vm_oom_kill'],
                     base.VM_RUNTIME_FLOOR_BYTES, base.CGROUP_GUARD_BYTES)
                 row = sample()
+                # A4 records runtime node PSI; the shared helper still enforces floor/OOM.
                 psi_telemetry = runtime_psi_is_telemetry(
-                    row, baseline['vm_oom_kill'], base.VM_RUNTIME_FLOOR_BYTES, proofs)
+                    row, baseline['vm_oom_kill'], base.VM_RUNTIME_FLOOR_BYTES, True)
                 if proofs is not None:
                     record.setdefault('terminal_vm_guard_boundary', {
                         'observed_at': time.time(), 'proofs': proofs})

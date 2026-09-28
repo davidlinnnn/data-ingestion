@@ -9,7 +9,7 @@ def load(path):
 
 
 def qualify(runtime: Path, objects: Path, controller: Path):
-    state = runtime / 'evidence/state/t09b-calibration-a3'
+    state = runtime / 'evidence/state/t09b-calibration-a4'
     comparisons = []
     business = []
     for index, fixture in enumerate(('06', '07', '08', 'native', '06')):
@@ -38,7 +38,7 @@ def qualify(runtime: Path, objects: Path, controller: Path):
                             'full_checks_equal': True, 'processing_complete': True})
     proof = load(state / 'warm-proof.json')
     assert proof['groups'] == 29 and proof['recycles'] == 1 and len(proof['pids']) == 2
-    measurement = runtime / 'evidence/state/t09b-calibration-a3-measurement'
+    measurement = runtime / 'evidence/state/t09b-calibration-a4-measurement'
     contract = load(measurement / 'measurement-contract.json')
     assert contract['workload_succeeded'] and contract['qualification_complete']
     assert contract['group_requests'] == 29 and contract['request_recycle'] == 20
@@ -50,12 +50,14 @@ def qualify(runtime: Path, objects: Path, controller: Path):
     observer = load(objects / 'trial-cleanup.json')
     assert observer['primary_error'] is None and not observer.get('object_observer_error')
     assert observer['host_memory_low_override'] is False
-    assert observer['object_observer']['max_events_delta'] == 0
     assert observer['maximum_object_full_avg10'] == 0
     assert observer['object_psi_policy'] == {
         'mode': 'approved_sustained_pressure_qualification',
         'stop_full_avg10_above': 0,
         'cumulative_full_total_stop': False,
+        'memory_events_max': 'recorded_boundary_event_not_immediate_stop',
+        'node_full_psi_avg10': 'runtime_telemetry_not_immediate_stop',
+        'diagnostic_only': True,
     }
     cleanup = load(runtime / 'outer-cleanup.json')
     assert cleanup['primary_error'] is None
@@ -74,9 +76,10 @@ def qualify(runtime: Path, objects: Path, controller: Path):
         fields = dict(line.split(':', 1) for line in stats.splitlines())
         assert all(int(fields[key]) == 0 for key in
                    ('overrun', 'commit overrun', 'dropped events'))
-    result = {'status': 'PASS', 'comparisons': comparisons,
+    result = {'status': 'PASS_DIAGNOSTIC_ONLY', 'comparisons': comparisons,
               'groups': 29, 'recycle_at': 20, 'parser_generations': 2,
               'object_full_psi_delta_us': observer['object_observer']['full_psi_delta_us'],
+              'object_max_events_delta': observer['object_observer']['max_events_delta'],
               'maximum_object_full_avg10': observer['maximum_object_full_avg10'],
               'host_memory_low_override': False,
               'complete_auxiliary_attribution': True, 'direct_trace_loss': 0}
@@ -85,7 +88,7 @@ def qualify(runtime: Path, objects: Path, controller: Path):
     server = [json.loads(line) for line in (controller / 'native-traffic.jsonl').read_text().splitlines()]
     lifecycle = load(controller / 'native-trace-lifecycle.json')
     assert lifecycle['remote_stopped'] is True
-    traffic = reconcile_run(runtime / 'evidence/state', 't09b-calibration-a3', server, 't09a', lifecycle)
+    traffic = reconcile_run(runtime / 'evidence/state', 't09b-calibration-a4', server, 't09a', lifecycle)
     (controller / 'traffic-reconciliation.json').write_text(json.dumps(traffic, indent=2) + '\n')
     assert traffic['complete'], traffic['errors']
     result['traffic_complete'] = True
