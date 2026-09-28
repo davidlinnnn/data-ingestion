@@ -1,5 +1,27 @@
 # T09b local measurement slice
 
+## Host and source projection follow-up
+
+Thirteen local tests pass. `t09b_host.py` targets the measured worker consistently
+for launch, graceful signal and force-stop identity checks, retaining the existing
+lifecycle lock. A local command-capture test verifies full worker argv and both
+cleanup paths. `topology.py` renders a distinct inactive A1 Pod/PVC/prefix using
+the accepted DB resource builder and includes all measurement source files. The
+projection test reconstructs ConfigMap mount contents and compares them with the
+actual worker/modules; replicas remain zero. No manifest was applied.
+
+Read-only cluster inspection found the existing object Pod healthy and the
+installed `mc admin trace` supports JSON, prefix filtering, request/response byte
+filters and request tracing. Prefer validating that native source over writing a
+transport proxy. Its JSON byte fields and completeness still need a bounded probe;
+help output is capability discovery, not traffic evidence. Do not persist verbose
+authorization headers or source payloads in measurement output.
+
+Still pending: coordinator selection of the T09b host, complete preflight/outer
+guard launch wiring, native trace validation, and buffering observations. The
+rendered topology alone cannot start a qualified baseline. Existing cluster and
+main branch were not changed.
+
 ## Measured worker lifecycle follow-up
 
 The new `t09b/worker.py` preserves the `q04/worker_bc.py` lifecycle and adds the
