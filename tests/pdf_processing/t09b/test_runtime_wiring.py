@@ -9,8 +9,10 @@ class RuntimeWiringTest(unittest.TestCase):
     def test_actual_runner_targets_fresh_workload_and_evidence(self):
         here = Path(__file__).resolve().parent
         script = f'''
+from pathlib import Path
 import sys
 sys.path.insert(0, {str(here)!r})
+here = Path({str(here)!r})
 from runtime_wiring import configure
 r = configure()
 for command, filename in ((r.preflight_argv(), 'pod_preflight.py'), (r.workload_argv(), 'pod_workload.py')):
@@ -29,6 +31,28 @@ assert g['IncrementalEvidenceMirror'] is r.base.IncrementalEvidenceMirror
 assert g['workload_argv']()[1].endswith('/t09b/pod_workload.py')
 assert g['OUT'] == r.OUT
 assert g['verify_runtime_sample'] is r.base.verify_runtime_sample
+assert 'supervisor_start_confirmed' in r.adapted_window.__code__.co_varnames
+assert set(('startup_identity', 'base_runtime_guard')) <= set(r.adapted_window.__code__.co_names)
+import subprocess, tarfile, tempfile
+with tempfile.TemporaryDirectory() as temp:
+    with tarfile.open(here / 'a2-evidence/retained-pvc.tar.gz') as archive:
+        archive.extractall(temp, filter='data')
+    evidence = str(Path(temp) / 't09b-calibration-20260928-a2')
+    class LocalChannel:
+        def run(self, program):
+            result = subprocess.run([sys.executable, '-B', '-c', program],
+                                    capture_output=True, text=True, check=True)
+            return result.stdout.strip()
+    owner = g['startup_identity'](LocalChannel(), evidence)
+    assert owner['pid'] is not None and owner['start_ticks'] is not None
+    assert owner['config_sha256'] is not None
+    (Path(evidence) / 'ownership.json').unlink()
+    owner = g['startup_identity'](LocalChannel(), evidence)
+    assert owner['pid'] is not None and owner['start_ticks'] is not None
+    assert owner['config_sha256'] is None
+    status, detail = r.base.workload_evidence_classification(
+        supervisor_identity_published=True, evidence_captured=False)
+    assert status == 'INCOMPLETE' and detail['supervisor'] == 'START_CONFIRMED'
 deployment = {{'metadata': {{'uid': 'created'}}}}
 owned = [{{'kind': 'Deployment', 'name': r.base.DEPLOYMENT, 'uid': 'created'}}]
 assert r.base.validate_created_deployment(deployment, owned) is deployment

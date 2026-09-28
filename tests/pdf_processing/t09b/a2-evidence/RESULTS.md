@@ -58,3 +58,18 @@ cache-heavy service; changing it is an acceptance-policy decision requiring
 explicit approval. Do not simply repeat A2 or increase memory to obtain a pass.
 #45 remains open: no baseline performance, group/concurrency comparison or recovery
 cost has been accepted. The prior diagnostic zombie caveat remains unchanged.
+
+## Follow-up repair
+
+The T09b adapter now treats supervisor ownership and complete transport identity
+as separate startup milestones. While coordinator ownership is still being
+published, the node/cgroup runtime guard remains active and the object-service
+qualification waits for the evidence mirror. Once the mirror exists, any earlier
+object event is still observed and stops the run. Failure cleanup uses confirmed
+supervisor startup for owned stop and classification, so this A2 timing is
+`START_CONFIRMED / INCOMPLETE`, never `NOT_STARTED`.
+
+The regression test replays the retained A2 PVC archive, removes coordinator
+ownership to reproduce the 65 ms partial-identity window, and verifies the
+classification. This is a local repair only; it did not launch or accept another
+runtime and did not change the max-event gate.
