@@ -8,7 +8,7 @@ import unittest
 
 
 class ProjectionTest(unittest.TestCase):
-    def test_b3_wrappers_keep_their_templates_in_the_projected_workspace(self):
+    def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'render'
@@ -17,11 +17,11 @@ class ProjectionTest(unittest.TestCase):
                        PYTHONPATH=os.pathsep.join(map(str, (here, here.parent / 'q04'))))
             script = (
                 'from pathlib import Path; from runtime_wiring import configure; '
-                'r=configure(topology_name="candidate_topology_b3", '
-                'evidence_name="candidate_pod_remote_evidence_b3", '
-                'identity="t09b-calibration-20260929-b3", record_name="runtime-b3-test", '
-                'preflight_name="candidate_pod_preflight_b3.py", '
-                'workload_name="candidate_pod_workload_b3.py"); '
+                f'r=configure(topology_name="candidate_topology_{slot}", '
+                f'evidence_name="candidate_pod_remote_evidence_{slot}", '
+                f'identity="t09b-calibration-20260929-{slot}", record_name="runtime-{slot}-test", '
+                f'preflight_name="candidate_pod_preflight_{slot}.py", '
+                f'workload_name="candidate_pod_workload_{slot}.py"); '
                 'out=Path(__import__("sys").argv[1]); '
                 'r.topology.render(out / "worker.json", out / "source-manifest.json")'
             )
@@ -39,9 +39,9 @@ class ProjectionTest(unittest.TestCase):
                 for item in ref['items']:
                     paths[item['path']] = maps[ref['name']][item['key']]
             for name in ('candidate_pod_workload.py', 'candidate_pod_preflight.py',
-                         'candidate_pod_remote_evidence.py', 'candidate_pod_workload_b3.py',
-                         'candidate_pod_preflight_b3.py', 'candidate_pod_remote_evidence_b3.py',
-                         'candidate_window.py', 'candidate_window_b3.py'):
+                         'candidate_pod_remote_evidence.py', f'candidate_pod_workload_{slot}.py',
+                         f'candidate_pod_preflight_{slot}.py', f'candidate_pod_remote_evidence_{slot}.py',
+                         'candidate_window.py', f'candidate_window_{slot}.py'):
                 self.assertIn(f'tests/pdf_processing/t09b/{name}', paths)
             projected = Path(directory) / 'workspace'
             for path, contents in paths.items():
@@ -51,7 +51,7 @@ class ProjectionTest(unittest.TestCase):
             child_env = dict(env, PYTHONPATH=os.pathsep.join(str(projected / path) for path in (
                 'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
                 'tests/pdf_processing/q03')))
-            for name in ('candidate_pod_workload_b3.py', 'candidate_pod_preflight_b3.py'):
+            for name in (f'candidate_pod_workload_{slot}.py', f'candidate_pod_preflight_{slot}.py'):
                 result = subprocess.run([sys.executable, '-B',
                                          str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
                                         env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
@@ -59,11 +59,17 @@ class ProjectionTest(unittest.TestCase):
             script = (
                 'import sys; from pathlib import Path; '
                 f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
-                'import candidate_window_b3; '
-                'assert candidate_window_b3.IDENTITY["run_id"] == "t09b-calibration-20260929-b3"'
+                f'import candidate_window_{slot}; '
+                f'assert candidate_window_{slot}.IDENTITY["run_id"] == "t09b-calibration-20260929-{slot}"'
             )
             subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                            cwd='/', check=True, capture_output=True, text=True, timeout=20)
+
+    def test_b3_wrappers_keep_their_templates_in_the_projected_workspace(self):
+        self._assert_projected_candidate('b3')
+
+    def test_b4_wrappers_keep_their_templates_in_the_projected_workspace(self):
+        self._assert_projected_candidate('b4')
 
     def test_real_render_contains_measured_worker_and_inactive_resources(self):
         with tempfile.TemporaryDirectory() as directory:
