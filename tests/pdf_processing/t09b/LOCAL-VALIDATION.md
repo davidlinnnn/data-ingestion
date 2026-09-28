@@ -1,5 +1,14 @@
 # T09b local measurement slice
 
+## Latest controlled result: B4 group-10 diagnostic passed
+
+See `b4-evidence/RESULTS.md`. B4 passed all 11 gates, completed the fixed
+06/07/08/native/06 sequence with exact full outputs, reconciled 10,016 client
+calls to server attempts, and shut down cleanly. Its 517.67-second duration is
+the second valid group-10 observation. B4 remains `PASS_DIAGNOSTIC_ONLY`; the
+next cell is the matched group-5 baseline, followed by the remaining planned
+comparison, recovery and final-bound work.
+
 ## Latest controlled result: B3 stopped before inference
 
 See `b3-evidence/RESULTS.md`. B3 passed admission and ten pre-inference gates,
