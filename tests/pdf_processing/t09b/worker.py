@@ -15,6 +15,8 @@ import signal
 import sys
 import time
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from consumer import require, sha
 from telemetry import sample
 from storage_ledger import Ledger, reconcile

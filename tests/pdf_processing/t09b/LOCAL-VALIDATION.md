@@ -1,5 +1,35 @@
 # T09b local measurement slice
 
+## Pod supervisor and preflight integration
+
+The fresh T09b supervisor now invokes baseline_window.py with the A1 identity and
+integration manifest, retaining the historical 825-second workload contract,
+drain and terminal cleanup engine. The preflight retains DH capacity/resource
+checks and validates the actual measured entry points and fresh scope. A local
+probe against the retained DB input bundle passed its import/profile/scope checks;
+this is not the full in-Pod pre-inference gate set.
+
+Two launch defects were reproduced and fixed: PYTHONSAFEPATH=1 suppressed the
+script directory needed by the new worker/coordinator, and the projected source
+omitted host_be/host_bc dependencies. Explicit script-relative imports and the
+required projection entries fix these without disabling safe-path. Tests now
+reconstruct the actual projected filesystem and launch all four entry points
+from outside the checkout, plus check scope/argv and missing cleanup markers.
+Historical files remain unchanged. Twenty local tests pass; diff check passes.
+
+Follow-up Standards review found no documented-standard violations but identified
+one correctness defect: the preflight could resolve the old q04/pod_workload.py
+because q04 preceded t09b on sys.path. Both preflight and coordinator now retain
+t09b precedence; the projected regression asserts the resolved supervisor path
+after importing both entry points and passes. Spec review found no additional
+defects in this partial integration; outer runtime admission remains incomplete.
+
+The isolated validation environment additionally installed pypdfium2 5.13.0 and
+Pillow 12.3.0 for coordinator import checks; this changes no project dependency
+or runtime image. Full outer admission/trace lifecycle/export and complete
+buffer/checkpoint accounting remain pending. No Kubernetes resource was changed
+and no PDF baseline ran in this step.
+
 ## Current status: correlated traffic and publication buffers
 
 Validation: 17 tests passed together; the additional streaming-collector test

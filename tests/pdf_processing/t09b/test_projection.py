@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -25,8 +26,31 @@ class ProjectionTest(unittest.TestCase):
                 for item in ref['items']:
                     paths[item['path']] = maps[ref['name']][item['key']]
             for name in ('worker.py', 't09b_host.py', 'baseline_window.py', 'worker_measurement.py',
-                         'storage_measurement.py', 'storage_ledger.py'):
+                         'storage_measurement.py', 'storage_ledger.py', 'publication_buffers.py',
+                         'pod_workload.py', 'pod_preflight.py', 'RUNTIME-INTEGRATION-MANIFEST.json'):
                 self.assertEqual(paths[f'tests/pdf_processing/t09b/{name}'],
                                  Path(__file__).with_name(name).read_text())
             env = {item['name']: item.get('value') for item in pod['containers'][0]['env']}
             self.assertEqual(env['OBJECT_PREFIX'], 't09b/calibration-20260928-a1/')
+            projected = Path(directory) / 'workspace'
+            for path, contents in paths.items():
+                target = projected / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(contents)
+            child_env = dict(os.environ, PYTHONSAFEPATH='1', PYTHONDONTWRITEBYTECODE='1',
+                             PYTHONPATH=os.pathsep.join(str(projected / path) for path in (
+                                 'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
+                                 'tests/pdf_processing/q03')))
+            for name in ('worker.py', 'baseline_window.py', 'pod_workload.py', 'pod_preflight.py'):
+                result = subprocess.run([sys.executable, '-B', str(projected / 'tests/pdf_processing/t09b' / name),
+                                         '--help'], env=child_env, cwd='/', capture_output=True,
+                                        text=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+            script = (
+                'import sys; from pathlib import Path; '
+                f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
+                'import pod_preflight, baseline_window, pod_workload; '
+                f'assert Path(pod_workload.__file__).resolve() == Path({str(projected / "tests/pdf_processing/t09b/pod_workload.py")!r}).resolve()'
+            )
+            subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
+                           cwd='/', check=True, capture_output=True, text=True, timeout=20)
