@@ -8,6 +8,13 @@ PATCH = json.loads(Path(__file__).with_name('object-candidate.patch.json').read_
 RESOURCES = PATCH['spec']['template']['spec']['containers'][0]['resources']
 STRATEGY = {'type': PATCH['spec']['strategy']['type']}
 LIMIT_BYTES = 1073741824
+READY_PROGRAM = """import json,urllib.request,urllib.error
+try:
+ ready=urllib.request.urlopen('http://objects:9000/minio/health/ready',timeout=2).status==200
+except (urllib.error.URLError,TimeoutError,ConnectionError):
+ ready=False
+print(json.dumps(ready))
+"""
 
 
 def configuration(value):
@@ -54,10 +61,16 @@ def await_ready(kube, expected_bytes, *, excluded_uid='', seconds=120):
     while time.monotonic() < deadline:
         try:
             identity = object_identity(kube, expected_bytes)
-            if identity['pod_uid'] != excluded_uid:
-                return identity
         except (KeyError, IndexError, ValueError):
-            pass  # Recreate temporarily has no ready Pod.
+            time.sleep(.5)  # Recreate temporarily has no ready Pod.
+            continue
+        if identity['pod_uid'] != excluded_uid:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            if json.loads(kube.exec_python('coordinator', READY_PROGRAM,
+                                          timeout=min(10, remaining))) is True:
+                return identity
         time.sleep(.5)
     raise TimeoutError('object candidate/recovery readiness deadline')
 

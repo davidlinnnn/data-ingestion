@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).parent))
 import object_policy
@@ -72,6 +73,28 @@ class ObjectPolicyTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'outside'):
             object_policy.finish(kube, snapshot, qualified=False)
         self.assertEqual(len(kube.patches), 1)
+
+    def test_container_ready_waits_for_minio_service_ready(self):
+        # DC: Kubernetes reported the new container ready before the Service
+        # health URL accepted a connection. Container identity alone is not ready.
+        identity = {'pod_uid': 'new-object'}
+        kube = SimpleNamespace(exec_python=lambda *args, **kwargs: 'false')
+        module = SimpleNamespace(object_identity=lambda *args: identity)
+        with patch.dict(sys.modules, {'sentinel.object_monitor_bh': module}), \
+                patch.object(object_policy.time, 'sleep'), \
+                patch.object(kube, 'exec_python', side_effect=['false', 'false', 'true']) as health:
+            result = object_policy.await_ready(kube, 1073741824, excluded_uid='old-object')
+        self.assertEqual(result, identity)
+        self.assertEqual(health.call_count, 3)
+
+    def test_minio_not_ready_still_stops_at_deadline(self):
+        kube = SimpleNamespace(exec_python=lambda *args, **kwargs: 'false')
+        module = SimpleNamespace(object_identity=lambda *args: {'pod_uid': 'new-object'})
+        with patch.dict(sys.modules, {'sentinel.object_monitor_bh': module}), \
+                patch.object(object_policy.time, 'sleep'), \
+                patch.object(object_policy.time, 'monotonic', side_effect=[0, 1, 2, 121]):
+            with self.assertRaises(TimeoutError):
+                object_policy.await_ready(kube, 1073741824)
 
 
 if __name__ == '__main__':

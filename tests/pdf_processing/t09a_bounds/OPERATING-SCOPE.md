@@ -1,9 +1,13 @@
-# T09a measured operating scope after DB
+# T09a approved initial operating scope; persistent candidate pending
 
-Status: the OCR fixes are ready for integration. The fixed mixed-document
-functional window passes; #44 remains open for an accepted operating envelope.
-This document records measurements and a proposed next decision. It changes no
-acceptance criterion or permanent cluster setting.
+Status2026-09-28: OCR fixes are integrated at57fcc2e. The user approved the
+limited initial scope and native object request768Mi/limit1Gi/Recreate
+candidate, without persistent host memory.low overrides. Permanent adoption
+requires complete qualification. DC stopped during first object rollout on
+Service connection refusal before any workload; original128Mi/512Mi and
+RollingUpdate were restored. #44 remains open. See the
+[approved plan](normal-topology-dc/PLAN.md) and
+[DC result](normal-topology-dc/first-window-evidence/RESULTS.md).
 
 ## Verified configuration
 
@@ -35,23 +39,26 @@ terminal export and independent cleanup were complete. The new observer has an
 actual-platform regression fix. No missing attribution samples were inferred.
 See [DB results](normal-topology-db/first-window-evidence/RESULTS.md).
 
-## Remaining acceptance and next decision
+## Approved scope and remaining acceptance
 
-1. Adopt a permanent object-service policy only through an explicit scope
-   decision. The resting512MiB setting has reproduced ancestor charge stalls;
-   temporary1GiB alone also had historical mixed-load stalls. DB's1GiB plus
-   managed768MiB low is a measured candidate,not an installed sustainable policy.
-2. State the initial support envelope. The five fixed documents and serial
-   configuration are verified. Arbitrary documents at configured file/page/pixel
-   caps,concurrency changes,whole books and deferred scan/language/PPT claims
-   remain unqualified. Configured rejection limits are not successful capacity.
-3. If adopting the bounded candidate, implement its policy in the deployment
-   configuration and measure that concrete persistent configuration. Use one
-   new identity and the declared guard contract; stop on failure. A repetition
-   with the same temporary controller would not establish policy deployment.
+Initial support is one serial worker for the named WikiSkill28-page,
+YOLO15-page,AIMA12-page contiguous chapter and native51-page fixtures with
+required figure OCR and reviewed quality rules,including a Wiki repeat.
+Keep group5,recycle20,OCR intra-op4,4CPU,5GiB hard limit and4GiB sample guard.
+The existing100MiB/file,51page and20M-pixel/page admission caps are rejection
+ceilings. Tested PDF sizes are308,913–1,817,841bytes; arbitrary inputs at the
+configured maxima remain unqualified. Concurrency,whole books,scan-first and
+universal language/PPT coverage remain outside this initial scope.
 
-Recommended decision: carry the fixed serial scope and propose the measured
-object candidate for explicit operating-scope approval. Keep broader conditions
-as deployment gates. This needs a decision before permanent policy installation
-or #44closure; it does not require more exploratory OCR or an unchanged full
-matrix. #45 stays blocked; #51's existing acceptance remains closed.
+The native768Mi request/1Gi limit candidate has no explicit host protection.
+A request supplies scheduler accounting; actual cgroup low/min values must be
+observed. It cannot inherit DB's managed-low qualification. DC did not reach
+the workload and supplies no capacity or PSI conclusion.
+
+Remaining: qualify the concrete native setting with the fixed five-document
+window,original zero-new-object-full-PSI condition,all business/output/resource
+and cleanup gates,then retain on PASS or restore on failure. The readiness
+helper now waits for actual Service HTTP200 within the original deadline;
+local red/green and read-only coordinator checks passed. DC was not retried.
+Inherited Q04 recovery results retain their original identities and require
+an explicit impact mapping before closure. #45 remains blocked and #51 closed.
