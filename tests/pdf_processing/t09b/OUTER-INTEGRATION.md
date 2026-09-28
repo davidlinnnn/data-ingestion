@@ -1,5 +1,18 @@
 # Outer runtime integration status
 
+Read-only cluster recheck for the controller work: object Deployment still has
+768 MiB request/1 GiB limit, Recreate and one available replica. object-data PVC
+is Bound with UID ebd0ba41-443c-4971-859a-3b2ca8f5b1d4. All 32 historical
+Deployments retain expected UIDs, desired replicas zero and ready replicas zero.
+No mutation was performed by these checks.
+
+controller_io.py now checks the retained object contract without applying or
+rolling it back, and supplies unique retained HTTP trace markers. Its native
+trace helper has a finite remote timeout and closes the local reader on failed
+readiness. Explicit proof of remote trace termination remains required before
+this helper is admitted into a runtime controller. The focused test covers
+configuration mismatch, no mutation and failed-readiness cleanup.
+
 `runtime_wiring.configure()` binds the guarded DH engine to the fresh T09b
 topology, Pod entry points and evidence mirror in a dedicated interpreter.
 The isolated regression exercises actual command builders and copied window
