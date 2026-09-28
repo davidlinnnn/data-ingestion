@@ -1,5 +1,15 @@
 # T09b local measurement slice
 
+## Known-size native accounting result
+
+The fresh 16/4096-byte diagnostic succeeded with exact readback and ten observed
+HTTP 200 trace calls. GET tx exactly matches each payload; mc pipe uses multipart
+upload and PUT rx includes additional bytes. See known-size-evidence/RESULTS.md
+and retained sanitized result.json. No PDF workload or Deployment mutation occurred.
+This closes native-counter availability and the known-size mc calibration only.
+The actual boto3 path, observation completeness under interruption, buffering and
+the complete outer runtime contract are still pending. Do not label baseline ready.
+
 ## Native trace and coordinator follow-up
 
 Fourteen local tests pass. `baseline_window.py` selects T09b Host in the existing
