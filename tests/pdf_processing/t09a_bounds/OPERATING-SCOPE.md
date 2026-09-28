@@ -75,3 +75,13 @@ Q04 identities and records the affected dependency projections and current local
 checks. It does not claim32-on interruption/recovery capacity. #45 remains
 blocked and #51 closed. Arbitrary maxima/concurrency/intermittent reliability
 remain outside approved initial support, not passed deployment guarantees.
+
+## DG qualification result
+
+The approved cumulative-telemetry object policy allowed DG to complete the full
+mixed sequence with exact accepted outputs and recycle. Object avg10/max/OOM
+remained zero at the 1GiB candidate. DG still does not qualify permanent adoption:
+the unchanged outer VM guard saw avg10=0.18 after workload exit, during final
+cleanup, with stalls attributed to kindnet `iptables` tasks. The candidate was
+therefore restored to the original 512Mi configuration. Permanent object settings
+remain pending #44; no supported input or concurrency bound is expanded.

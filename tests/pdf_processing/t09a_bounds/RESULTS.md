@@ -583,3 +583,18 @@ Object full PSI and max-event deltas were zero. Independent cleanup passed.
 No new production fix occurred between CD and CG: this single success does not
 resolve earlier intermittent object PSI failures or establish permanent object
 sizing. #44 remains open. See `normal-topology-cg/first-window-evidence/RESULTS.md`.
+
+## DG approved object-policy qualification (2026-09-28)
+
+DG completed all five business graphs with exact accepted outputs, 29 groups,
+request-20 recycle and complete worker resource evidence. Object avg10/max/OOM
+stayed zero; cumulative full PSI rose 974us as retained telemetry. Seven and a
+half seconds after workload exit 0, the unchanged outer VM guard saw avg10=0.18.
+Direct trace and node attribution identify page-read stalls in all three
+`kube-system/kindnet-*` Pod cgroups, outside the worker and object service.
+The guard interrupted final Pod cleanup/health, so formal acceptance failed and
+the object candidate was rolled back. A case-sensitive absent-container check
+also produced a secondary trace-cleanup false positive and is corrected.
+Independent cleanup passed. Do not rerun unchanged; the next decision is whether
+VM PSI remains fatal after durable workload/worker completion. #44 stays open.
+See `normal-topology-dg/first-window-evidence/RESULTS.md`.

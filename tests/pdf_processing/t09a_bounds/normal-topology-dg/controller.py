@@ -232,7 +232,7 @@ if path.exists():
                     raise ValueError('trace container label changed')
                 subprocess.run(['docker', 'rm', '--force', TRACE_CONTAINER],
                                check=True, capture_output=True, text=True, timeout=15)
-            elif 'No such object' not in inspected.stderr:
+            elif 'no such object' not in inspected.stderr.lower():
                 raise RuntimeError(inspected.stderr.strip())
             remaining = subprocess.check_output(
                 ['docker', 'ps', '-a', '--filter', 'name=^/' + TRACE_CONTAINER + '$',

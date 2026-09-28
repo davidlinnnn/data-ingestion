@@ -1,0 +1,141 @@
+{
+  "primary_error": null,
+  "persistent_channel_close_errors": {},
+  "persistent_channels_closed": true,
+  "workload_evidence": {
+    "status": "CONTROLLER_EXPORT_COMPLETE",
+    "supervisor": "START_CONFIRMED",
+    "controller_export_complete": true
+  },
+  "policy": {
+    "controller_export_complete": true,
+    "remove_owned_runtime": true,
+    "retain_evidence_pvc": true
+  },
+  "controller_export_complete": true,
+  "retained_for_evidence_recovery": false,
+  "terminal_stop_proven": false,
+  "terminal_cgroup_oom_proof": true,
+  "runtime_cleanup_error": "KeyboardInterrupt()",
+  "owned_object_deletion": {
+    "deleted": [
+      {
+        "kind": "Deployment",
+        "name": "t09a-bounds-dg-activities",
+        "uid": "205a167f-5cdd-4329-8e9d-4cb54c494311"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-harness-05d6c45d13a9c1cb",
+        "uid": "49864c9a-5aee-4985-a9e2-2a7be0301e43"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-code-12760b5a300c5f8d",
+        "uid": "413ff002-e665-4374-bf34-dd8cfc797759"
+      }
+    ],
+    "retained": [
+      {
+        "kind": "PersistentVolumeClaim",
+        "name": "t09a-bounds-dg-evidence-20260928",
+        "uid": "7e2f4592-f4b5-4054-9b22-ef7bff61817a"
+      }
+    ],
+    "errors": {}
+  },
+  "owned_objects_deleted_with_uid_preconditions": true,
+  "retained_evidence_claim": {
+    "pvc_name": "t09a-bounds-dg-evidence-20260928",
+    "pvc_uid": "7e2f4592-f4b5-4054-9b22-ef7bff61817a",
+    "phase": "Bound",
+    "retained": true,
+    "automatic_delete": false,
+    "recovery_identity": {
+      "pvc_name": "t09a-bounds-dg-evidence-20260928",
+      "pvc_uid": "7e2f4592-f4b5-4054-9b22-ef7bff61817a",
+      "pv_name": "pvc-7e2f4592-f4b5-4054-9b22-ef7bff61817a",
+      "pv_uid": "b3e0b8b8-9d69-4503-8e01-2db6f5d1122f",
+      "namespace": "pdf-t09a-validation",
+      "node": "internal-a2a-vs6-local-worker",
+      "access_modes": [
+        "ReadWriteOnce"
+      ],
+      "storage_class": "standard",
+      "capacity": "1Gi",
+      "volume_backend": "rancher.io/local-path hostPath DirectoryOrCreate",
+      "host_path": "/var/local-path-provisioner/pvc-7e2f4592-f4b5-4054-9b22-ef7bff61817a_pdf-t09a-validation_t09a-bounds-dg-evidence-20260928",
+      "mount_path": "/q04-evidence",
+      "evidence_directory_name": "t09a-bounds-20260928-dg",
+      "evidence_directory": "/q04-evidence/t09a-bounds-20260928-dg",
+      "run_as_uid": 1000,
+      "run_as_gid": 1000,
+      "fs_group": 1000,
+      "automatic_delete": false,
+      "recovery_mode": "read-only helper Pod on the bound node",
+      "mount_root_permissions": {
+        "process_uid": 1000,
+        "process_gid": 1000,
+        "mount_uid": 0,
+        "mount_gid": 0,
+        "mode": "0o777",
+        "directory": true,
+        "symlink": false,
+        "writable": true,
+        "searchable": true
+      },
+      "directory_contract": {
+        "capacity": {
+          "evidence_free_bytes": 1073741824,
+          "evidence_used_bytes": 0,
+          "filesystem_free_bytes": 1784761819136,
+          "requested_bytes": 1073741824
+        },
+        "directory": {
+          "directory": true,
+          "gid": 1000,
+          "label": "application-owned-run-directory",
+          "mode": "0o700",
+          "path": "/q04-evidence/t09a-bounds-20260928-dg",
+          "symlink": false,
+          "uid": 1000,
+          "writable": true
+        },
+        "durable_probe": {
+          "atomic_rename": true,
+          "bytes": 26,
+          "directory_fsync_after_remove": true,
+          "directory_fsync_after_rename": true,
+          "file_fsync": true,
+          "probe_removed": true,
+          "readback_verified": true,
+          "sha256": "9e7da91e20900ed78b5bf470ba2f238b98b4462f983d352f865d8e91cc09c901"
+        },
+        "mount": {
+          "directory": true,
+          "gid": 0,
+          "label": "storage-backend-owned-mount-root",
+          "mode": "0o777",
+          "path": "/q04-evidence",
+          "symlink": false,
+          "uid": 0,
+          "writable": true
+        },
+        "process": {
+          "gid": 1000,
+          "uid": 1000
+        },
+        "schema_version": 1,
+        "status": "PASS"
+      }
+    }
+  },
+  "final_identity_and_health": false,
+  "final_identity_or_health_error": "ValueError('owned worker Pod already exists')",
+  "disposition": "NEEDS_INTERVENTION",
+  "evidence_state": {
+    "local_controller_evidence_persisted": true,
+    "pvc_retained": true,
+    "workload_evidence": "CONTROLLER_EXPORT_COMPLETE"
+  }
+}

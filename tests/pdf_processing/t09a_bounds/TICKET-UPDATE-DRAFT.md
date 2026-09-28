@@ -186,3 +186,23 @@ persistent deployment configuration. No permanent memory/PSI policy is changed
 by the code merge. Broader configured file/page/pixel ceilings remain unqualified.
 Keep#44open/#45blocked;#51accepted history is unchanged. This text remains a
 publication draft under the original unified-mainline update instruction.
+
+## DG: full functional pass, post-workload VM guard failure
+
+DG ran once under the approved object rule. All five workflows completed with
+exact accepted documents/checks, 29 groups and request-20 recycle. Object
+avg10/max/OOM stayed zero; cumulative full PSI +974us remained telemetry.
+
+The formal run still failed. Workload exit was clean, then 7.57s later the outer
+VM guard observed full PSI avg10=0.18. Direct trace attributes the concurrent
+page-read stalls to `iptables` tasks in all three `kube-system/kindnet-*` Pods,
+not the worker or MinIO. This interrupted final Pod cleanup/health. A secondary
+case-sensitive Docker absent-container check is fixed; independent cleanup
+confirms 32off, Temporal idle, object512Mi/Ready/HTTP200, PVCs Bound, and trace
+artifacts absent. Prefix/evidence are retained.
+
+#44 remains open and the candidate was not retained. The next critical decision
+is whether VM PSI stays fatal after durable workload exit, terminal worker sample
+and child cleanup; all workload-time/resource/object/output gates would remain
+unchanged. Do not retry DG unchanged. #45 stays blocked and #51 remains closed.
+Evidence: normal-topology-dg/first-window-evidence/RESULTS.md.

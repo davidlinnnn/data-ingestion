@@ -438,3 +438,11 @@ false guard trigger, increase memory or relax the zero limit. Correct the
 descendant trace path and review any future diagnostic separately.
 #51's scoped Q04 gates are complete after the #44 handoff and post-BH producer
 impact review; #44 retains final operating-scope acceptance.
+
+DG later completed the full #44 mixed functional sequence with exact accepted
+outputs and recycle under the approved cumulative-telemetry object policy.
+It did not close #44: the unchanged outer VM guard saw avg10=0.18 after workload
+exit during final cleanup, attributed to kindnet `iptables` page reads. The
+object candidate was rolled back and cleanup independently passed. This does
+not reopen or change #51's accepted scoped rows. See
+`../t09a_bounds/normal-topology-dg/first-window-evidence/RESULTS.md`.
