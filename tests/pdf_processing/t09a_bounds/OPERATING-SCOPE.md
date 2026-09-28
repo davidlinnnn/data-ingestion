@@ -1,27 +1,23 @@
-# T09a approved initial operating scope; persistent candidate pending
+# T09a approved initial operating scope and retained object configuration
 
-Status2026-09-28: OCR fixes are integrated at57fcc2e. The user approved the
-limited initial scope and native object request768Mi/limit1Gi/Recreate
-candidate without persistent host memory.low overrides. DC stopped before
-workload on HTTP connection refusal; its readiness fix passed DD rollout and
-replacement. DD then stopped between native group Activities on27us new object full PSI
-(final867us). Three documents completed and equal fresh references, but the
-five-document window/recycle/terminal measurement did not qualify. Exact
-128Mi/512Mi/RollingUpdate restored;32off and services healthy. Permanent
-adoption remains unqualified and #44 OPEN. See [DD result](normal-topology-dd/first-window-evidence/RESULTS.md)
-and [recovery impact mapping](RECOVERY-IMPACT.md).
+Status 2026-09-28: OCR fixes are integrated at `57fcc2e`. DH passed the user
+approved limited initial scope with native object request 768Mi, limit 1Gi,
+`Recreate`, and no host memory.low override. All five exact outputs, recycle,
+resource guards, terminal evidence, and cleanup passed; the object configuration
+is retained. Earlier DD–DG failures remain historical evidence. See
+[DH result](normal-topology-dh/first-window-evidence/RESULTS.md) and
+[recovery impact mapping](RECOVERY-IMPACT.md).
 
 ## Verified configuration
 
-DB used production `970f28c`: OCR children disable NumPy hugepage advice before
+DH used production `970f28c`: OCR children disable NumPy hugepage advice before
 imports and component OCR uses ONNX intra-op4. One serial worker on the existing
 kind VM,4CPU quota,5GiB container hard limit,4GiB sample guard; existing models,
 rendering,profiles,continuation and reviewed output oracles. All32 historical
-Deployments were temporarily active. The object service had an effective1GiB
-cap and reversible768MiB memory.low protection along its ancestor path.
-Admission,VM/worker PSI/OOM/memory floors,telemetry and deadlines remained active.
-The user-approved CS functional object policy records cumulative full PSI and
-stops on positive full avg10. DB happened to record zero cumulative object PSI.
+Deployments were temporarily active. The object service used request768Mi,
+limit1Gi and `Recreate`, with no host memory.low override. Admission,VM/worker
+PSI/OOM,memory floors,telemetry and deadlines remained active. Cumulative object
+full PSI is telemetry; positive object avg10,max or OOM remains fatal.
 
 | Evidence-backed result | Observation |
 | --- | --- |
@@ -29,19 +25,17 @@ stops on positive full avg10. DB happened to record zero cumulative object PSI.
 | Full outputs/checks | All5 equal accepted AI/AJ fresh references |
 | Warm/recycle |29groups,request20 recycle,2parser identities,post-recycle completion |
 | Business completion |All5 complete;registered pages28/15/12/51/28 |
-| Worker memory |Maximum2,803,494,912bytes,below4GiB guard |
-| VM available memory |Minimum2,739,621,888bytes;no avg10/OOM violation |
-| Object memory/pressure |Maximum734,707,712bytes;no max/OOM or full-PSI increment |
-| Cleanup |32off,object512Mi/Ready/HTTP200,all low values restored,owned runtime absent |
+| Worker memory |Maximum2,852,814,848bytes,below4GiB guard |
+| VM available memory |Minimum2,719,670,272bytes;no avg10/OOM violation |
+| Object memory/pressure |Maximum736,923,648bytes;no max/OOM or full-PSI increment |
+| Cleanup |32off,object1Gi/Ready/HTTP200,candidate retained,owned runtime absent |
 
-Those are observed outcomes,not safe maxima or capacity guarantees. The auxiliary
-whole-node cgroup observer failed before workload on a disappearing-directory
-race; outer controller exit1 is retained. Mandatory guard/process sampling,
-terminal export and independent cleanup were complete. The new observer has an
-actual-platform regression fix. No missing attribution samples were inferred.
-See [DB results](normal-topology-db/first-window-evidence/RESULTS.md).
+Those are observed outcomes,not safe maxima or capacity guarantees. All1,358
+worker and1,995 object samples,terminal export,direct trace and independent
+cleanup passed. Workload,runner and outer controller exited0. See
+[DH results](normal-topology-dh/first-window-evidence/RESULTS.md).
 
-## Approved scope and remaining acceptance
+## Approved scope and excluded bounds
 
 Initial support is one serial worker for the named WikiSkill28-page,
 YOLO15-page,AIMA12-page contiguous chapter and native51-page fixtures with
@@ -85,3 +79,18 @@ the unchanged outer VM guard saw avg10=0.18 after workload exit, during final
 cleanup, with stalls attributed to kindnet `iptables` tasks. The candidate was
 therefore restored to the original 512Mi configuration. Permanent object settings
 remain pending #44; no supported input or concurrency bound is expanded.
+
+## DH retained configuration and closure boundary
+
+DH passed one controlled full-topology qualification under the approved object
+and terminal VM PSI policies. Worker max was 2,852,814,848 bytes, object max was
+736,923,648 bytes, minimum VM available was 2,719,670,272 bytes, and no worker,
+object, or VM avg10/OOM/max violation occurred. All five outputs exactly match
+accepted references; 29 groups and request-20 recycle completed. Independent
+cleanup passed and the candidate remains 768Mi/1Gi/`Recreate`.
+
+This is the permanent object setting for the approved initial serial fixture
+scope. It does not promote admission ceilings to tested maxima or add support
+for concurrency, whole books, or scan-first workloads. DG's kindnet trigger
+source remains unknown because DH did not reproduce it. #44 is ready to close
+for the approved scope; broader bounds require a separately approved scope.

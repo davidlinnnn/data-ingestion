@@ -446,3 +446,12 @@ exit during final cleanup, attributed to kindnet `iptables` page reads. The
 object candidate was rolled back and cleanup independently passed. This does
 not reopen or change #51's accepted scoped rows. See
 `../t09a_bounds/normal-topology-dg/first-window-evidence/RESULTS.md`.
+
+DH later passed the approved final operating-scope qualification with a fresh
+identity and no retry. All five exact outputs,29 groups,request20 recycle,
+worker/object/VM guards,terminal evidence and cleanup passed. The native object
+request768Mi/limit1Gi/`Recreate` configuration is retained;32 historical
+Deployments remain off and both PVCs are Bound. This completes #44's approved
+initial serial scope and makes it ready for closure. It does not expand the
+tested input/concurrency envelope. #51 remains closed and accepted. See
+`../t09a_bounds/normal-topology-dh/first-window-evidence/RESULTS.md`.

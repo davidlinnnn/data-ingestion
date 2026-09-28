@@ -293,3 +293,16 @@ node PSI and direct traces through final cleanup, but use cleanup/identity/healt
 checks as the terminal acceptance gates. All workload-time VM guards and every
 object/worker/resource/output/deadline guard stay unchanged. Use one new DH
 identity with no retry. Until that decision, retain object512Mi and keep #44 open.
+
+## After DH: stop acceptance reruns
+
+The approved decision was implemented and DH passed every business, resource,
+terminal, and cleanup gate in one controlled run. The object candidate is now
+retained at request768Mi/limit1Gi/`Recreate`;32 historical Deployments remain
+off. Do not run another acceptance window for the same initial scope.
+
+DH did not reproduce DG's post-workload kindnet PSI, so its exact trigger remains
+unknown. That uncertainty does not invalidate the approved terminal boundary,
+but it also does not justify broader reliability or capacity claims. Any future
+concurrency, whole-book, scan-first, or admission-maximum qualification needs a
+new explicit scope and run identity.
