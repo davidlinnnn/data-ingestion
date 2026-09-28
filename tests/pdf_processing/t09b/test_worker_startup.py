@@ -85,7 +85,7 @@ class StartupTest(unittest.TestCase):
                 'psutil': SimpleNamespace(Process=lambda: SimpleNamespace(create_time=lambda: 1)),
                 'boto3': SimpleNamespace(client=lambda *args, **kwargs: S3()),
                 'pdf_processing': SimpleNamespace(__file__=str(source/'__init__.py')),
-                'pdf_processing.object_store': SimpleNamespace(Store=lambda client, *args: SimpleNamespace(client=client)),
+                'pdf_processing.object_store': SimpleNamespace(Store=lambda client, *args: SimpleNamespace(client=client, publish=lambda *a: None)),
                 'pdf_processing.processing': SimpleNamespace(Processing=Processing),
                 'pdf_processing.supervision': SimpleNamespace(WarmParser=Parser),
                 'pdf_processing.execution': SimpleNamespace(stop_owned_children=stop_children),

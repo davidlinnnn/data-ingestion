@@ -21,7 +21,7 @@ base.OBJECT_PREFIX = 't09b/calibration-20260928-a1/'
 base.EVIDENCE_PVC = 't09b-calibration-a1-evidence-20260928'
 base.EVIDENCE_DIRECTORY_NAME = 't09b-calibration-20260928-a1'
 FILES = ('worker.py', 't09b_host.py', 'baseline_window.py', 'worker_measurement.py',
-         'storage_measurement.py', 'storage_ledger.py', 'topology.py')
+         'storage_measurement.py', 'storage_ledger.py', 'publication_buffers.py', 'topology.py')
 base.HARNESS_FILES.update({f'tests/pdf_processing/t09b/{name}': HERE/name
                            for name in FILES})
 

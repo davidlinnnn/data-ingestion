@@ -19,6 +19,7 @@ from consumer import require, sha
 from telemetry import sample
 from storage_ledger import Ledger, reconcile
 from worker_measurement import install_store
+from publication_buffers import instrument
 
 
 async def cleanup_owned_work(parser, scratch):
@@ -91,6 +92,7 @@ async def run(config_path, out, generation):
     ledger_path = out/'storage.jsonl'
     ledger = Ledger(ledger_path)
     interceptor = install_store(store, ledger)
+    instrument(store, ledger)
     sampler = asyncio.create_task(observe())
     try:
         async with AsyncExitStack() as stack:

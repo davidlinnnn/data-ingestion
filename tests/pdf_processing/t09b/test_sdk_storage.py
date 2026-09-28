@@ -13,12 +13,14 @@ from storage_measurement import MeasuredClient, scope, summarize
 class SDKStorageTest(unittest.TestCase):
     def test_real_retry_and_truncated_response(self):
         uploads = []
+        correlations = []
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
                 pass
 
             def do_PUT(self):
+                correlations.append(self.headers.get('X-T09b-Call-Id'))
                 uploads.append(self.rfile.read(int(self.headers['Content-Length'])))
                 self.send_response(503 if len(uploads) == 1 else 200)
                 self.send_header('Content-Length', '0')
@@ -55,6 +57,7 @@ class SDKStorageTest(unittest.TestCase):
                 finally:
                     body.close()
             self.assertEqual(uploads, [b'payload', b'payload'])
+            self.assertEqual(correlations, [rows[0]['call_id']] * 2)
             self.assertEqual(rows[0]['sdk_retries'], 1)
             self.assertEqual(rows[1]['outcome'], 'read_incomplete')
             self.assertEqual(rows[1]['delivered_bytes'], 2)

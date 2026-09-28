@@ -1,5 +1,36 @@
 # T09b local measurement slice
 
+## Current status: correlated traffic and publication buffers
+
+Validation: 17 tests passed together; the additional streaming-collector test
+passed with the existing native-trace test. The final reconciliation changes
+also passed both focused tests. Standards review found no documented-standard
+violations; Spec review found tagged observer calls falsely rejected as unknown.
+That defect is fixed and covered, while genuinely unknown tagged calls still fail.
+
+The native collector now streams sanitized JSONL rather than accumulating verbose
+raw trace output. Each row is flushed; malformed/error/empty streams fail and
+already collected rows remain available. This is a collector entry point, not yet
+an outer-supervisor readiness or termination guarantee. A fresh GitHub #45 read
+timed out; no GitHub update was published during this slice.
+
+The actual boto3 probe now matches each of four SDK calls to native MinIO HTTP
+accounting by call ID; exact 16/4096-byte readback and cleanup passed. Evidence is
+in boto-correlated-evidence. SDK fault regression verifies the same correlation
+ID survives retries. Traffic reconciliation rejects missing attempts, incomplete
+reads, unmatched calls and incomplete ledgers, including calls interrupted before
+their finish event. Its CLI accepts all worker ledgers and sanitized server JSONL.
+
+Publication measurement records unique live bytes supplied to Store.publish,
+including concurrent calls and alias deduplication. It does not measure retained
+GET buffers or native/parser allocations. This is a partial buffering observation,
+not complete buffering attribution. Pod memory remains the aggregate bound.
+
+Runtime baseline has not started. Remaining launch work is the fresh outer
+integration, managed native trace readiness/stop/export, complete buffering scope
+and the final preflight/cleanup review. Earlier sections below are historical
+slice records; their pending lists describe the state at those times.
+
 ## Known-size native accounting result
 
 The fresh 16/4096-byte diagnostic succeeded with exact readback and ten observed

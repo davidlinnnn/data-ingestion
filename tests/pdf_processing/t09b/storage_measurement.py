@@ -13,6 +13,13 @@ from uuid import uuid4
 
 
 _identity = ContextVar('t09b_storage_identity', default=None)
+_call_id = ContextVar('t09b_storage_call_id', default=None)
+
+
+def add_trace_identity(params, **kwargs):
+    call_id = _call_id.get()
+    if call_id is not None:
+        params.setdefault('headers', {})['X-T09b-Call-Id'] = call_id
 
 
 @contextmanager
@@ -32,6 +39,9 @@ def scope(request_id, activity_id, attempt, role='workload'):
 class MeasuredClient:
     def __init__(self, client, emit):
         self.client, self.emit, self.lock = client, emit, Lock()
+        meta = getattr(client, 'meta', None)
+        if meta is not None:
+            meta.events.register('before-call.s3', add_trace_identity)
 
     def __getattr__(self, name):
         return getattr(self.client, name)
@@ -56,6 +66,7 @@ class MeasuredClient:
         # remain useful for unit tests, but cannot prove interrupted coverage.
         if hasattr(self.emit, 'start'):
             self.emit.start(event)
+        token = _call_id.set(event['call_id'])
         try:
             result = getattr(self.client, operation)(**args)
         except BaseException as error:
@@ -65,6 +76,8 @@ class MeasuredClient:
                          finished=monotonic())
             self.record(event)
             raise
+        finally:
+            _call_id.reset(token)
         event['sdk_retries'] = result.get('ResponseMetadata', {}).get('RetryAttempts')
         if operation == 'get_object':
             return {**result, 'Body': MeasuredBody(result['Body'], event, self.record,
@@ -112,7 +125,8 @@ class MeasuredBody:
 
 def summarize(events):
     """Never promote successful payloads to total wire traffic or hide retries."""
-    rows = [row for row in events if row['role'] == 'workload']
+    rows = [row for row in events if row['role'] == 'workload'
+            and row['operation'] in ('get_object', 'put_object')]
     return {
         'operations': len(rows),
         'delivered_get_bytes': sum(row['delivered_bytes'] for row in rows
