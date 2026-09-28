@@ -13,6 +13,36 @@ runner = configure()
 base = runner.base
 
 
+def verify_object_monitor_a3():
+    """Keep OOM/PSI fatal; record memory.max reclaim events for this diagnostic."""
+    if runner.monitor is None or not runner.monitor.samples:
+        raise ValueError('object-service telemetry missing')
+    if runner.monitor.error is not None:
+        raise runner.monitor.error
+    first = runner.monitor.samples[0]
+    for row in runner.monitor.samples[runner.checked_samples:]:
+        if len(first['ancestors']) < 2 or len(row['ancestors']) < 2:
+            raise ValueError('object-service Pod/container telemetry missing')
+        if (row['object_full_avg10'] > 0
+                or any(row['memory_events'][key] != 0
+                       for key in ('oom', 'oom_kill', 'oom_group_kill'))):
+            raise ValueError('object-service OOM/sustained-full-PSI qualification failure')
+        for before, level in zip(first['ancestors'][:2], row['ancestors'][:2]):
+            if (level['memory_max'] != str(runner.object_trial.TRIAL_BYTES)
+                    or any(level['events_local'][key] != before['events_local'][key]
+                           for key in ('oom', 'oom_kill', 'oom_group_kill'))):
+                raise ValueError('object-service Pod/container memory contract changed')
+        runner.checked_samples += 1
+
+
+runner.OBJECT_PSI_POLICY = {
+    **runner.OBJECT_PSI_POLICY,
+    'memory_events_max': 'recorded_boundary_event_not_immediate_stop',
+    'diagnostic_only': True,
+}
+runner.verify_object_monitor = verify_object_monitor_a3
+
+
 def exact_command():
     return shlex.join([str(base.LOCAL_PYTHON), '-B', str(Path(__file__).resolve()),
                       '--execute', '--owner', 'main-session',
@@ -41,7 +71,7 @@ def offline_check():
 runner.exact_command = base.exact_command = runner.ah.exact_command = exact_command
 runner.offline_check = base.offline_check = offline_check
 base.build_offline_manifest = build_manifest
-runner.adapted_window = runner.adapt_failure_export_window()
+# configure() already installs the T09b startup/evidence-race adapter.
 
 
 if __name__ == '__main__':

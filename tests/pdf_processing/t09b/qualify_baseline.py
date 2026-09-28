@@ -9,7 +9,7 @@ def load(path):
 
 
 def qualify(runtime: Path, objects: Path, controller: Path):
-    state = runtime / 'evidence/state/t09b-calibration-a2'
+    state = runtime / 'evidence/state/t09b-calibration-a3'
     comparisons = []
     business = []
     for index, fixture in enumerate(('06', '07', '08', 'native', '06')):
@@ -38,7 +38,7 @@ def qualify(runtime: Path, objects: Path, controller: Path):
                             'full_checks_equal': True, 'processing_complete': True})
     proof = load(state / 'warm-proof.json')
     assert proof['groups'] == 29 and proof['recycles'] == 1 and len(proof['pids']) == 2
-    measurement = runtime / 'evidence/state/t09b-calibration-a2-measurement'
+    measurement = runtime / 'evidence/state/t09b-calibration-a3-measurement'
     contract = load(measurement / 'measurement-contract.json')
     assert contract['workload_succeeded'] and contract['qualification_complete']
     assert contract['group_requests'] == 29 and contract['request_recycle'] == 20
@@ -85,7 +85,7 @@ def qualify(runtime: Path, objects: Path, controller: Path):
     server = [json.loads(line) for line in (controller / 'native-traffic.jsonl').read_text().splitlines()]
     lifecycle = load(controller / 'native-trace-lifecycle.json')
     assert lifecycle['remote_stopped'] is True
-    traffic = reconcile_run(runtime / 'evidence/state', 't09b-calibration-a2', server, 't09a', lifecycle)
+    traffic = reconcile_run(runtime / 'evidence/state', 't09b-calibration-a3', server, 't09a', lifecycle)
     (controller / 'traffic-reconciliation.json').write_text(json.dumps(traffic, indent=2) + '\n')
     assert traffic['complete'], traffic['errors']
     result['traffic_complete'] = True

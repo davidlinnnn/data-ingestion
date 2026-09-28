@@ -17,15 +17,15 @@ from runtime_wiring import configure
 r = configure()
 for command, filename in ((r.preflight_argv(), 'pod_preflight.py'), (r.workload_argv(), 'pod_workload.py')):
     assert command[1] == '/workspace/tests/pdf_processing/t09b/' + filename
-    assert command[command.index('--prefix') + 1] == 't09b/calibration-20260928-a2/'
+    assert command[command.index('--prefix') + 1] == 't09b/calibration-20260928-a3/'
     assert not any('bounds-dh' in part or 'bounds-20260928-dh' in part for part in command)
 scope = r.authorization_scope()
-assert scope['phase'] == 't09b-calibration-a2'
+assert scope['phase'] == 't09b-calibration-a3'
 assert scope['automatic_retry'] is False
 assert scope['workload_seconds'] == 825
 assert scope['container_hard_limit_bytes'] == 5368709120
 assert scope['expected_parser_generations'] == 2
-assert 'state/t09b-calibration-a2/worker-1/storage.jsonl' in r.base.FINAL_REQUIRED
+assert 'state/t09b-calibration-a3/worker-1/storage.jsonl' in r.base.FINAL_REQUIRED
 g = r.adapted_window.__globals__
 assert g['IncrementalEvidenceMirror'] is r.base.IncrementalEvidenceMirror
 assert g['workload_argv']()[1].endswith('/t09b/pod_workload.py')
@@ -68,6 +68,47 @@ for entry in (r.offline_check, r.exact_command):
     else:
         raise AssertionError('historical admission exposed')
 print('PASS: guarded runner binding; no runtime executed')
+'''
+        result = subprocess.run([sys.executable, '-B', '-c', script], cwd='/',
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_actual_entrypoint_keeps_race_fix_and_a3_policy(self):
+        here = Path(__file__).resolve().parent
+        script = f'''
+import importlib.util
+from pathlib import Path
+from types import SimpleNamespace
+spec = importlib.util.spec_from_file_location('t09b_test_runner', Path({str(here)!r}) / 'runner.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+r = module.runner
+assert 'supervisor_start_confirmed' in r.adapted_window.__code__.co_varnames
+assert r.verify_object_monitor is module.verify_object_monitor_a3
+assert r.OBJECT_PSI_POLICY['memory_events_max'] == 'recorded_boundary_event_not_immediate_stop'
+assert r.OBJECT_PSI_POLICY['diagnostic_only'] is True
+assert r.authorization_scope()['automatic_retry'] is False
+events = dict(max=10, oom=0, oom_kill=0, oom_group_kill=0)
+ancestor = dict(memory_max=str(r.object_trial.TRIAL_BYTES), events_local=events)
+first = dict(object_full_avg10=0, memory_events=events,
+             ancestors=[ancestor, ancestor])
+later_events = {{**events, 'max': 11}}
+later = dict(object_full_avg10=0, memory_events=later_events,
+             ancestors=[dict(memory_max=str(r.object_trial.TRIAL_BYTES),
+                             events_local=later_events), ancestor])
+r.monitor = SimpleNamespace(samples=[first, later], error=None)
+r.checked_samples = 0
+r.verify_object_monitor()
+assert r.checked_samples == 2
+r.monitor = SimpleNamespace(samples=[first, {{**later, 'object_full_avg10': 0.1}}], error=None)
+r.checked_samples = 0
+try:
+    r.verify_object_monitor()
+except ValueError as error:
+    assert 'PSI' in str(error)
+else:
+    raise AssertionError('positive full PSI did not stop A3')
+print('PASS: A3 entrypoint retains evidence fix and diagnostic guard')
 '''
         result = subprocess.run([sys.executable, '-B', '-c', script], cwd='/',
                                 capture_output=True, text=True, timeout=20)

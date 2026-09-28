@@ -31,7 +31,7 @@ class ProjectionTest(unittest.TestCase):
                 self.assertEqual(paths[f'tests/pdf_processing/t09b/{name}'],
                                  Path(__file__).with_name(name).read_text())
             env = {item['name']: item.get('value') for item in pod['containers'][0]['env']}
-            self.assertEqual(env['OBJECT_PREFIX'], 't09b/calibration-20260928-a2/')
+            self.assertEqual(env['OBJECT_PREFIX'], 't09b/calibration-20260928-a3/')
             projected = Path(directory) / 'workspace'
             for path, contents in paths.items():
                 target = projected / path
