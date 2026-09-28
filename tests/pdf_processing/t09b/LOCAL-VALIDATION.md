@@ -1,5 +1,25 @@
 # T09b local measurement slice
 
+## Measured worker lifecycle follow-up
+
+The new `t09b/worker.py` preserves the `q04/worker_bc.py` lifecycle and adds the
+shared Store wrapper, Activity interceptors, exclusive ledger and reconciliation.
+The sampler checks ledger sink failures; incomplete storage coverage cannot yield
+a successful worker exit. Historical worker files and production code are unchanged.
+
+Eleven tests pass. The new lifecycle test invokes this actual runner with local
+Temporal/parser/storage doubles: two profile Workers share one measured Store,
+each Activity has its own attribution, first-sample readiness is reached, a stop
+signal drains the Worker contexts in reverse order, and cleanup plus storage
+summary are written. This is not a real Temporal or Pod execution.
+
+The Pod source projection and coordinator must select this worker and include
+storage_measurement.py, storage_ledger.py and worker_measurement.py on its import
+path along with the existing Q04 harness. That launch-contract work is pending;
+do not run DH unchanged or mark T09b baseline ready. Actual transport-attempt
+bytes, in-flight buffer measurement and matched instrumentation overhead remain
+unresolved. Application payload observations alone cannot close those #45 gates.
+
 ## Durable interruption follow-up
 
 Ten tests pass, including an actual subprocess exiting with os._exit inside

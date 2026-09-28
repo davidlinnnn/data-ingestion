@@ -8,13 +8,18 @@ class Ledger:
     def __init__(self, path):
         self.stream = open(path, 'x', encoding='utf-8')
         self.lock = Lock()
+        self.error = None
 
     def write(self, kind, event):
         line = json.dumps(dict(event, kind=kind), sort_keys=True) + '\n'
         with self.lock:
-            self.stream.write(line)
-            self.stream.flush()
-            os.fsync(self.stream.fileno())
+            try:
+                self.stream.write(line)
+                self.stream.flush()
+                os.fsync(self.stream.fileno())
+            except BaseException as error:
+                self.error = type(error).__name__
+                raise
 
     def start(self, event):
         self.write('start', event)
