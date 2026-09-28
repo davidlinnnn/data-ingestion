@@ -1,7 +1,8 @@
-"""Require successful measured SDK calls to have all server-side attempts.
+"""Require measured SDK calls to have all server-side attempts.
 
-Failed calls with unknown partial transfers remain incomplete. This does not
-measure packets lost before reaching MinIO or transport framing overhead.
+An exact, unretried NoSuchKey/404 lookup is a completely observed absence.
+Other failed calls with unknown partial transfers remain incomplete. This does
+not measure packets lost before reaching MinIO or transport framing overhead.
 """
 from collections import defaultdict
 
@@ -59,13 +60,21 @@ def reconcile(client, server, bucket):
         retries = call['sdk_retries']
         if type(retries) is not int or retries < 0 or len(rows) != retries + 1:
             errors.append(f'{call_id}: attempt coverage missing')
-        if call['outcome'] not in ('call_succeeded', 'read_complete'):
+        missing_object = (
+            call['operation'] == 'get_object'
+            and call['outcome'] == 'call_failed'
+            and call.get('error_type') == 'NoSuchKey'
+            and retries == 0
+            and len(rows) == 1
+            and rows[0]['status'] == 404
+        )
+        if call['outcome'] not in ('call_succeeded', 'read_complete') and not missing_object:
             errors.append(f'{call_id}: client transfer incomplete')
         if any(row['method'] != expected_methods[call['operation']] or
                row['path'] != '/'+bucket+'/'+call['key'] for row in rows):
             errors.append(f'{call_id}: request identity mismatch')
         successful = [row for row in rows if 200 <= row['status'] < 300]
-        if not successful:
+        if not successful and not missing_object:
             errors.append(f'{call_id}: server success missing')
         if call['operation'] == 'get_object' and successful and not any(
                 row['server_tx_bytes'] == call['delivered_bytes'] for row in successful):

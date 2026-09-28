@@ -1,5 +1,15 @@
 # T09b local measurement slice
 
+## Latest controlled result: A6 group-5 diagnostic passed
+
+See `a6-evidence/RESULTS.md`. The single A6 execution passed 11 gates, completed
+the 06/07/08/native/06 sequence with exact full outputs, reconciled all 9,563
+client calls to server attempts, passed process/resource gates and shut down
+cleanly. The post-run verifier path and expected-404 accounting defects are fixed;
+31 local regressions pass. A6 is `PASS_DIAGNOSTIC_ONLY`: group-size comparison,
+complete buffering/checkpoint measurement, recovery comparison and final-bound
+revalidation remain before #45 acceptance.
+
 ## Latest controlled result: A5 business sequence passed, terminal acceptance incomplete
 
 See `a5-evidence/RESULTS.md`. The single A5 execution passed all 11 gates and

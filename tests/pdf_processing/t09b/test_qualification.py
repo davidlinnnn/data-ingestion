@@ -1,14 +1,39 @@
 import base64
+import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from qualify_baseline import qualify
+from qualify_baseline import qualify, verify_output
 
 
 class QualificationTest(unittest.TestCase):
+    def test_output_uses_complete_versioned_reference(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            document = b'{"accepted":"exact"}\n'
+            (root / 'document.json').write_bytes(document)
+            checks = {'items': 3, 'full_reference_graph_sha256': 'graph'}
+            (root / 'checks.json').write_text(json.dumps(checks))
+            verify_output(root, {
+                'document_sha256': hashlib.sha256(document).hexdigest(),
+                'checks': checks,
+            })
+            with self.assertRaises(AssertionError):
+                verify_output(root, {
+                    'document_sha256': 'changed', 'checks': checks,
+                })
+            (root / 'checks.json').write_text(json.dumps({
+                'items': 4, 'full_reference_graph_sha256': 'graph',
+            }))
+            with self.assertRaises(AssertionError):
+                verify_output(root, {
+                    'document_sha256': hashlib.sha256(document).hexdigest(),
+                    'checks': checks,
+                })
+
     def test_failed_traffic_never_leaves_overall_pass(self):
         outcome = dict(status='complete', processing_complete=True, error=None,
                        canonical_accepted=True, registered_pages=1, registered_components=1)
@@ -43,6 +68,8 @@ class QualificationTest(unittest.TestCase):
                 '{"kind":"start"}\n{"kind":"end","buffer_stats":{}}\n')
             (root / 'native-traffic.jsonl').write_text('')
             with patch('qualify_baseline.load', side_effect=lambda path: values[path.name]), \
+                 patch('qualify_baseline.approved_outputs', return_value={key: {} for key in ('06', '07', '08', 'native')}), \
+                 patch('qualify_baseline.verify_output'), \
                  patch('reconcile_traffic.reconcile_run', return_value={'complete': False, 'errors': ['missing']}):
                 with self.assertRaises(AssertionError):
                     qualify(root, root, root)

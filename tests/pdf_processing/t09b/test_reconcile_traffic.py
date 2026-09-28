@@ -64,6 +64,11 @@ class ReconciliationTest(unittest.TestCase):
         self.assertFalse(reconcile([call], [good], 'bucket')['complete'])
         partial = dict(call, outcome='read_incomplete')
         self.assertFalse(reconcile([partial], [bad, good], 'bucket')['complete'])
+        missing = dict(call, sdk_retries=0, outcome='call_failed',
+                       error_type='NoSuchKey', delivered_bytes=0)
+        absent = dict(good, status=404, server_tx_bytes=533)
+        self.assertTrue(reconcile([missing], [absent], 'bucket')['complete'])
+        self.assertFalse(reconcile([missing], [bad], 'bucket')['complete'])
         self.assertFalse(reconcile([dict(call, sdk_retries=None)], [good], 'bucket')['complete'])
         changed = dict(good, path='/bucket/other')
         self.assertFalse(reconcile([call], [bad, changed], 'bucket')['complete'])

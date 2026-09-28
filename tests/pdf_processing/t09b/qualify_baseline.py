@@ -1,23 +1,46 @@
 """Complete business/output qualification before retaining object settings."""
 import base64
+import hashlib
 import json
 from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
 
 
 def load(path):
     return json.loads(path.read_text())
 
 
+def approved_outputs():
+    q04 = HERE.parent / 'q04'
+    records = [
+        load(q04 / 'pod-topology-v34/first-window-evidence/INDEPENDENT-VERIFICATION.json'),
+        load(q04 / 'pod-topology-v35/first-window-evidence/INDEPENDENT-VERIFICATION.json'),
+    ]
+    outputs = {
+        row['fixture']: row
+        for record in records
+        for row in record['workflows']
+        if row['mode'] == 'fresh' and row['fixture'] in ('06', '07', '08', 'native')
+    }
+    for fixture, output in outputs.items():
+        output['checks'] = load(HERE / 'reference-checks' / f'{fixture}.json')
+    return outputs
+
+
+def verify_output(result, expected):
+    assert hashlib.sha256((result / 'document.json').read_bytes()).hexdigest() == expected['document_sha256']
+    assert load(result / 'checks.json') == expected['checks']
+
+
 def qualify(runtime: Path, objects: Path, controller: Path):
     state = runtime / 'evidence/state/t09b-calibration-a6'
+    expected = approved_outputs()
     comparisons = []
     business = []
     for index, fixture in enumerate(('06', '07', '08', 'native', '06')):
-        tag = 'ai' if fixture in ('06', 'native') else 'aj'
-        reference = Path(f'/private/tmp/q04-matrix-pod-cgroup-20260924-{tag}/evidence/state/matrix-pod-cgroup-{tag}/fresh-{fixture}')
         result = state / f'warm-{index}-{fixture}'
-        assert load(result / 'document.json') == load(reference / 'document.json'), fixture
-        assert load(result / 'checks.json') == load(reference / 'checks.json'), fixture
+        verify_output(result, expected[fixture])
         assert load(result / 'result.json')['processing_complete'], fixture
         assert load(result / 'accepted.json')['verified'], fixture
         events = load(result / 'history.json')['events']
