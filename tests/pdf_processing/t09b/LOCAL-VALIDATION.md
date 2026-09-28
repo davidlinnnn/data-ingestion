@@ -1,5 +1,24 @@
 # T09b local measurement slice
 
+## Remote ledger export
+
+T09b now has a failure-aware remote mirror using the existing DH transport.
+The baseline worker ledger is newline-framed during incremental export, and its
+ledger/summary are required for successful finalization. The preflight and source
+projection include this actual module. A subprocess test executes the generated
+remote snapshot twice: a partial ledger line is withheld, then appended intact
+when completed; missing terminal evidence cannot finalize as success.
+
+Twenty-three tests passed before review. Both review axes identified the same
+incorrect assumption: two parser generations do not mean two worker processes.
+The coordinator launches one worker and recycles its parser internally. The
+success requirements now correctly name worker-1 only; the focused export test
+passes after the fix. Existing run reconciliation still discovers any additional
+worker directories. No historical runner or cluster resource was changed.
+
+The outer controller still needs to select this mirror, own trace markers and
+enforce final reconciliation. Export support alone is not an executed baseline.
+
 ## Managed trace and run reconciliation
 
 TraceSession now owns the local native-trace process and reader, streams only

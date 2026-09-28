@@ -14,7 +14,7 @@ source = inspect.getsource(inherited.verify_workload_imports_ah)
 replacements = {
     '"candidate.warm_pod_window_db"': '"baseline_window"',
     '"pod_workload_db"': '"pod_workload"',
-    '"pod_remote_evidence_db"': '"worker_measurement", "publication_buffers", "storage_ledger"',
+    '"pod_remote_evidence_db"': '"pod_remote_evidence", "worker_measurement", "publication_buffers", "storage_ledger"',
     'tests/pdf_processing/t09a_bounds/normal-topology-dh/RUNTIME-INTEGRATION-MANIFEST.json':
         'tests/pdf_processing/t09b/RUNTIME-INTEGRATION-MANIFEST.json',
 }

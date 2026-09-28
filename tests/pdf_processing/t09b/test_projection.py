@@ -27,7 +27,7 @@ class ProjectionTest(unittest.TestCase):
                     paths[item['path']] = maps[ref['name']][item['key']]
             for name in ('worker.py', 't09b_host.py', 'baseline_window.py', 'worker_measurement.py',
                          'storage_measurement.py', 'storage_ledger.py', 'publication_buffers.py',
-                         'pod_workload.py', 'pod_preflight.py', 'RUNTIME-INTEGRATION-MANIFEST.json'):
+                         'pod_workload.py', 'pod_preflight.py', 'pod_remote_evidence.py', 'RUNTIME-INTEGRATION-MANIFEST.json'):
                 self.assertEqual(paths[f'tests/pdf_processing/t09b/{name}'],
                                  Path(__file__).with_name(name).read_text())
             env = {item['name']: item.get('value') for item in pod['containers'][0]['env']}
@@ -49,8 +49,9 @@ class ProjectionTest(unittest.TestCase):
             script = (
                 'import sys; from pathlib import Path; '
                 f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
-                'import pod_preflight, baseline_window, pod_workload; '
-                f'assert Path(pod_workload.__file__).resolve() == Path({str(projected / "tests/pdf_processing/t09b/pod_workload.py")!r}).resolve()'
+                'import pod_preflight, baseline_window, pod_workload, pod_remote_evidence; '
+                f'assert Path(pod_workload.__file__).resolve() == Path({str(projected / "tests/pdf_processing/t09b/pod_workload.py")!r}).resolve(); '
+                f'assert Path(pod_remote_evidence.__file__).resolve() == Path({str(projected / "tests/pdf_processing/t09b/pod_remote_evidence.py")!r}).resolve()'
             )
             subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                            cwd='/', check=True, capture_output=True, text=True, timeout=20)
