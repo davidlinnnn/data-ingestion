@@ -17,7 +17,7 @@ class StorageCostTest(unittest.TestCase):
                 dict(identity, call_id='put', operation='put_object', key='p/attempts/a/x',
                      delivered_bytes=0, submitted_bytes=10, outcome='call_succeeded'),
                 dict(identity, call_id='get-1', operation='get_object', key='p/attempts/a/x',
-                     delivered_bytes=10, outcome='read_complete'),
+                     delivered_bytes=10, peak_read_chunk_bytes=6, outcome='read_complete'),
                 dict(identity, call_id='get-2', operation='get_object', key='p/attempts/a/x',
                      delivered_bytes=10, outcome='read_complete'),
                 dict(identity, call_id='buffer', operation='publication_buffers', key='operation',
@@ -34,3 +34,4 @@ class StorageCostTest(unittest.TestCase):
             self.assertEqual(result['application_submission_ratio'], 1)
             self.assertIsNone(result['committed_payload_bytes'])
             self.assertEqual(result['peak_publication_payload_bytes'], 12)
+            self.assertEqual(result['peak_read_chunk_bytes'], 6)

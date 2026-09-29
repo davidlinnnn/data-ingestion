@@ -100,6 +100,7 @@ class MeasurementTest(unittest.TestCase):
                 body.close()
         self.assertTrue(raw.body.closed)
         self.assertEqual(rows[0]['delivered_bytes'], 2)
+        self.assertEqual(rows[0]['peak_read_chunk_bytes'], 2)
         self.assertEqual(rows[0]['outcome'], 'read_incomplete')
         self.assertEqual(summarize(rows)['unknown_retry_counts'], 1)
 

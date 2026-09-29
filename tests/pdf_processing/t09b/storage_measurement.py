@@ -105,6 +105,8 @@ class MeasuredBody:
             self.failed = True
             raise
         self.event['delivered_bytes'] += len(data)
+        self.event['peak_read_chunk_bytes'] = max(
+            self.event.get('peak_read_chunk_bytes', 0), len(data))
         return data
 
     def close(self):
