@@ -1,6 +1,15 @@
 # T09b local measurement slice
 
-## Latest controlled result: A7 group-5 diagnostic passed
+## Latest controlled result: A8 stopped before workload
+
+See `a8-evidence/RESULTS.md`. A8 passed capacity admission but its preflight
+wrapper referenced an A7 file absent from the projected Pod workspace. No
+workflow, object write or inference started, so A8 is not a group-5 replicate.
+Cleanup restored held workloads to zero and retained the evidence PVC. The
+wrappers now read projected base templates directly, and the regression runs
+them from the rendered workspace. The next group-5 cell needs a fresh identity.
+
+## Previous controlled result: A7 group-5 diagnostic passed
 
 See `a7-evidence/RESULTS.md`. A7 completed all five exact-output workflows with
 29 groups, one parser recycle and two parser generations. Traffic and resource

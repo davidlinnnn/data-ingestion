@@ -8,6 +8,48 @@ import unittest
 
 
 class ProjectionTest(unittest.TestCase):
+    def test_a8_wrappers_run_in_the_projected_workspace(self):
+        here = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'render'
+            output.mkdir()
+            env = dict(os.environ, PYTHONSAFEPATH='1', PYTHONDONTWRITEBYTECODE='1',
+                       PYTHONPATH=os.pathsep.join(map(str, (here, here.parent / 'q04'))))
+            script = (
+                'from pathlib import Path; from runtime_wiring import configure; '
+                'r=configure(topology_name="topology_a8", evidence_name="pod_remote_evidence_a8", '
+                'identity="t09b-calibration-20260929-a8", record_name="runtime-a8-test", '
+                'preflight_name="pod_preflight_a8.py", workload_name="pod_workload_a8.py"); '
+                'out=Path(__import__("sys").argv[1]); '
+                'r.topology.render(out / "worker.json", out / "source-manifest.json")'
+            )
+            subprocess.run([sys.executable, '-B', '-c', script, str(output)], env=env,
+                           cwd='/', check=True, capture_output=True, text=True, timeout=30)
+            topology = json.loads((output / 'worker.json').read_text())
+            maps = {item['metadata']['name']: item['data'] for item in topology['items']
+                    if item['kind'] == 'ConfigMap'}
+            deployment = next(item for item in topology['items'] if item['kind'] == 'Deployment')
+            workspace = next(v for v in deployment['spec']['template']['spec']['volumes']
+                             if v['name'] == 'workspace')
+            paths = {}
+            for item in workspace['projected']['sources']:
+                ref = item['configMap']
+                for entry in ref['items']:
+                    paths[entry['path']] = maps[ref['name']][entry['key']]
+            projected = Path(directory) / 'workspace'
+            for path, contents in paths.items():
+                target = projected / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(contents)
+            child_env = dict(env, PYTHONPATH=os.pathsep.join(str(projected / path) for path in (
+                'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
+                'tests/pdf_processing/q03')))
+            for name in ('pod_workload_a8.py', 'pod_preflight_a8.py'):
+                result = subprocess.run([sys.executable, '-B',
+                                         str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
+                                        env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent
         with tempfile.TemporaryDirectory() as directory:
