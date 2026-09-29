@@ -1,6 +1,14 @@
 # T09b local measurement slice
 
-## Latest controlled result: A9 trace collector stop
+## Latest controlled result: A10 trace reader validation stop
+
+A10 passed all 11 pre-inference gates and again reached the native workflow.
+The trace child process remained alive, but its reader raised `ValueError` and
+the outer controller interrupted the workload. A10 is not a group-5 replicate.
+The safe diagnostic now records which fixed processing stage failed, without
+retaining raw MinIO trace data. A fresh identity is required.
+
+## Previous controlled result: A9 trace collector stop
 
 A9 passed all 11 pre-inference gates. The 06, 07 and 08 workflows completed,
 then the native MinIO trace collector ended while the `native` workflow was

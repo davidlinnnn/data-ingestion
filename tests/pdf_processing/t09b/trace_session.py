@@ -34,11 +34,15 @@ class TraceSession:
         self.thread.start()
 
     def _read(self, bucket, prefix, marker_prefix):
+        stage = 'read'
         try:
             for line in self.process.stdout:
+                stage = 'json_decode'
                 event = json.loads(line)
+                stage = 'record_schema'
                 if not isinstance(event, dict) or not isinstance(event.get('request'), dict):
                     raise ValueError('invalid native trace record')
+                stage = 'accounting'
                 row = accounting(event, bucket, prefix)
                 if row is None and marker_prefix is not None:
                     row = accounting(event, bucket, marker_prefix)
@@ -53,7 +57,7 @@ class TraceSession:
         except BaseException as error:
             # Never retain raw JSON, stderr, headers or exception messages.
             with self.condition:
-                self.error = type(error).__name__
+                self.error = stage + ':' + type(error).__name__
         finally:
             self.output.close()
             with self.condition:
