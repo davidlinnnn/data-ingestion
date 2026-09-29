@@ -1,6 +1,15 @@
 # T09b local measurement slice
 
-## Latest controlled result: A8 stopped before workload
+## Latest controlled result: A9 trace collector stop
+
+A9 passed all 11 pre-inference gates. The 06, 07 and 08 workflows completed,
+then the native MinIO trace collector ended while the `native` workflow was
+active. The outer controller interrupted the supervisor and sealed cleanup;
+A9 is incomplete and is not a group-5 replicate. The retained diagnostic only
+reported a generic collector failure, so the collector now reports its
+sanitized exception type and child exit code. A fresh identity is required.
+
+## Previous controlled result: A8 stopped before workload
 
 See `a8-evidence/RESULTS.md`. A8 passed capacity admission but its preflight
 wrapper referenced an A7 file absent from the projected Pod workspace. No

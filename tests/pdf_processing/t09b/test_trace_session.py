@@ -32,7 +32,7 @@ class TraceSessionTest(unittest.TestCase):
             failed = TraceSession([sys.executable, '-c', 'print("{truncated")'],
                                   Path(directory) / 'failed.jsonl', 'b', 'p')
             try:
-                with self.assertRaises(RuntimeError):
+                with self.assertRaisesRegex(RuntimeError, r'error=JSONDecodeError, exit='):
                     failed.ready(first)
             finally:
                 failed.close()

@@ -62,7 +62,8 @@ class TraceSession:
 
     def check(self):
         if self.error or (not self.stopping and (self.ended or self.process.poll() is not None)):
-            raise RuntimeError('native trace failed or ended prematurely')
+            raise RuntimeError('native trace failed or ended prematurely: '
+                               f'error={self.error or "none"}, exit={self.process.poll()}')
 
     def _wait(self, call_id, timeout):
         deadline = monotonic() + timeout
