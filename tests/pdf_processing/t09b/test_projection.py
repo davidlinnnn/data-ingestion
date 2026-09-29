@@ -125,6 +125,9 @@ class ProjectionTest(unittest.TestCase):
     def test_b4_wrappers_keep_their_templates_in_the_projected_workspace(self):
         self._assert_projected_candidate('b4')
 
+    def test_b5_wrappers_keep_their_templates_in_the_projected_workspace(self):
+        self._assert_projected_candidate('b5')
+
     def test_real_render_contains_measured_worker_and_inactive_resources(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)/'render'
