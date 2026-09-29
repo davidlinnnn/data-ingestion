@@ -8,7 +8,7 @@ import unittest
 
 
 class ProjectionTest(unittest.TestCase):
-    def test_a8_wrappers_run_in_the_projected_workspace(self):
+    def _assert_projected_baseline(self, slot):
         here = Path(__file__).resolve().parent
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'render'
@@ -17,9 +17,9 @@ class ProjectionTest(unittest.TestCase):
                        PYTHONPATH=os.pathsep.join(map(str, (here, here.parent / 'q04'))))
             script = (
                 'from pathlib import Path; from runtime_wiring import configure; '
-                'r=configure(topology_name="topology_a8", evidence_name="pod_remote_evidence_a8", '
-                'identity="t09b-calibration-20260929-a8", record_name="runtime-a8-test", '
-                'preflight_name="pod_preflight_a8.py", workload_name="pod_workload_a8.py"); '
+                f'r=configure(topology_name="topology_{slot}", evidence_name="pod_remote_evidence_{slot}", '
+                f'identity="t09b-calibration-20260929-{slot}", record_name="runtime-{slot}-test", '
+                f'preflight_name="pod_preflight_{slot}.py", workload_name="pod_workload_{slot}.py"); '
                 'out=Path(__import__("sys").argv[1]); '
                 'r.topology.render(out / "worker.json", out / "source-manifest.json")'
             )
@@ -44,11 +44,17 @@ class ProjectionTest(unittest.TestCase):
             child_env = dict(env, PYTHONPATH=os.pathsep.join(str(projected / path) for path in (
                 'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
                 'tests/pdf_processing/q03')))
-            for name in ('pod_workload_a8.py', 'pod_preflight_a8.py'):
+            for name in (f'pod_workload_{slot}.py', f'pod_preflight_{slot}.py'):
                 result = subprocess.run([sys.executable, '-B',
                                          str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
                                         env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_a8_wrappers_run_in_the_projected_workspace(self):
+        self._assert_projected_baseline('a8')
+
+    def test_a9_wrappers_run_in_the_projected_workspace(self):
+        self._assert_projected_baseline('a9')
 
     def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent
