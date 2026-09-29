@@ -59,6 +59,9 @@ class ProjectionTest(unittest.TestCase):
     def test_a10_wrappers_run_in_the_projected_workspace(self):
         self._assert_projected_baseline('a10')
 
+    def test_a11_wrappers_run_in_the_projected_workspace(self):
+        self._assert_projected_baseline('a11')
+
     def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent
         with tempfile.TemporaryDirectory() as directory:

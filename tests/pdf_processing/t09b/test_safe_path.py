@@ -18,7 +18,8 @@ class SafePathTest(unittest.TestCase):
                      'pod_workload_a7.py', 'pod_preflight_a7.py',
                      'pod_workload_a8.py', 'pod_preflight_a8.py',
                      'pod_workload_a9.py', 'pod_preflight_a9.py',
-                     'pod_workload_a10.py', 'pod_preflight_a10.py'):
+                     'pod_workload_a10.py', 'pod_preflight_a10.py',
+                     'pod_workload_a11.py', 'pod_preflight_a11.py'):
             with self.subTest(name=name):
                 result = subprocess.run([sys.executable, '-B', str(here / name), '--help'],
                                         env=env, cwd='/', capture_output=True, text=True, timeout=20)
