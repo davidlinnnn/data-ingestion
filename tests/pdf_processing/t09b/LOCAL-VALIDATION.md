@@ -1,6 +1,14 @@
 # T09b local measurement slice
 
-## Latest controlled result: A10 trace reader validation stop
+## Latest controlled result: A11 group-5 diagnostic passed
+
+See `a11-evidence/RESULTS.md`. A11 completed all five exact-output workflows,
+29 groups, the request-20 recycle and two parser generations. Temporal business
+results and 9,563/9,563 traffic attempts reconcile. There was no OOM; object
+full PSI avg10 remained 0.00. A11 is `PASS_DIAGNOSTIC_ONLY` and supplies the A
+side of the final A→B matched pair. A fresh group-10 B cell remains.
+
+## Previous controlled result: A10 trace reader validation stop
 
 A10 passed all 11 pre-inference gates and again reached the native workflow.
 The trace child process remained alive, but its reader raised `ValueError` and
