@@ -1,6 +1,15 @@
 # T09b local measurement slice
 
-## Latest controlled result: A11 group-5 diagnostic passed
+## Latest controlled result: B5 group-10 diagnostic passed
+
+See `b5-evidence/RESULTS.md`. B5 completed all five exact-output workflows,
+16 groups and one parser generation without recycle. Temporal business results
+and 10,016/10,016 traffic attempts reconcile. There was no OOM; object full PSI
+avg10 remained 0.00. B5 is `PASS_DIAGNOSTIC_ONLY` and completes the final
+A11→B5 matched normal-path pair. Full buffering/checkpoint and recovery coverage
+remain before ticket closure.
+
+## Previous controlled result: A11 group-5 diagnostic passed
 
 See `a11-evidence/RESULTS.md`. A11 completed all five exact-output workflows,
 29 groups, the request-20 recycle and two parser generations. Temporal business
