@@ -510,3 +510,26 @@ Earlier successful cleanup and PVC/prefix retention proofs remain authoritative.
 Removed four accidentally tracked t09b Python3.14 bytecode cache files; raw
 runtime copies, original runners, sources and evidence remain preserved.
 #45 acceptance package is ready for dev integration review; no main merge.
+
+## Final dev integration check (2026-09-30)
+
+PR#66 whole-branch review from dev9e00ddc to8b55300: Standards0 blockers,
+Spec0 blockers; both recommend dev merge. GitHub reports MERGEABLE/CLEAN and
+no CI checks configured.
+
+All25 T09b test modules passed independently,60 tests total, using the existing
+`/private/tmp/t09b-sdk-venv/bin/python -B -m unittest <test_module>` with
+PYTHONPATH=`src:tests/pdf_processing/t09b:tests/pdf_processing/q04:tests/pdf_processing/q02:tests/pdf_processing/q03`.
+The SDK fault-server test required local127.0.0.1 socket permission; after
+sandbox denial it passed with that permission (1 test,2.999s). No cloud access
+or acceptance runtime occurred.
+
+An initial monolithic discovery under the prototype venv failed: absent boto3,
+safe-path subprocess lacking installed temporalio, missingsrc import, and
+candidate/cold entry modules mutating the same retained base in one interpreter.
+Independent subprocesses use the actual launch isolation and complete installed
+SDK environment; all60 pass. This does not claim monolithic discovery works or
+hide its failure. Original output and isolated results remain at
+`/private/tmp/t09b-final-isolated-tests.json`; earlier first discovery output
+is retained in this execution-session tool transcript. No production bug was
+patched to make the test collection pass.
