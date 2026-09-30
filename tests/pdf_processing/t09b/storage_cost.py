@@ -51,7 +51,8 @@ def summarize(path):
             'peak_publication_payload_bytes': max(
                 (row['concurrent_publication_payload_bytes'] for row in buffers), default=0),
             'peak_read_chunk_bytes': max(
-                (row.get('peak_read_chunk_bytes', 0) for row in gets), default=0),
+                (row['peak_read_chunk_bytes'] for row in gets), default=0)
+                if all('peak_read_chunk_bytes' in row for row in gets) else None,
             'expected_missing_lookups': len(expected_missing),
             'unknown_put_sizes': unknown_put_sizes,
             'sdk_retries': sum(row.get('sdk_retries') or 0 for row in puts),
