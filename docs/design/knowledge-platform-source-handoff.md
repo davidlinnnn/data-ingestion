@@ -2,11 +2,12 @@
 
 [Design index](README.md) · [Confirmed overall logical baseline](knowledge-platform-logical-design.md)
 
-**Status:** partial decisions confirmed on 2026-09-30; the source-handoff design is
-still open. This document assembles the implications of the
+**Status:** Q1–Q7 confirmed on 2026-09-30; the complete source-handoff design
+remains open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
-[Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142) in
+[Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
+[Q5 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -72,6 +73,26 @@ New source observations do not inherently require repeating all expensive work;
 reuse requires compatible inputs/methods. Exact identity representation, ordering,
 metadata-only changes, reuse rules and retained-identity lifetime remain open.
 
+### Q5 — Trusted reader policy before normal admission
+
+Normal ingestion admission requires a trustworthy, explicit reader policy whose
+meaning the platform supports. Verify submitter identity and Source-scoped
+authority separately from the document's permitted audience. Reader policies may
+identify employee accounts or groups; exact directory mappings remain detailed
+work. Upload authority does not permit broadening the source-authorized audience.
+
+Carry attributable policy evidence or reference an explicitly authorized registered
+Source default. Establish its responsible authority and applicability rather than
+accept an arbitrary uploader assertion. Missing, untrustworthy or unsupported
+required policy/authority causes normal admission to be rejected until corrected
+and resubmitted. Valid inputs proceed automatically, without per-document human
+approval. Current governance continues to apply after capture; the captured policy
+is not a permanent access grant.
+
+Policy representations, version/observation fields, change delivery, ordering and
+freshness remain detailed work. This does not select an identity provider, protocol,
+policy engine, quarantine service or approval queue.
+
 ### Q6 — Finite capture packages
 
 A Capture Package comprises the main document and explicitly declared dependencies
@@ -98,17 +119,19 @@ for adoption. Numeric workload, concurrency and resource targets remain with
 
 ## Next frontier — proposed, not confirmed
 
-The [decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) preserves the next-round recommendations.
-Q4 and Q6/Q7 have since been confirmed above. Q5 remains under clarification;
-await its answer before adopting its policy-provenance/admission choice.
+The [Q5 confirmation and next-round record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133) distinguishes the accepted
+trust rule from the following recommendations. Await user answers before adopting
+them or proceeding into dependent details.
 
 | Question | Decision to resolve |
 |---|---|
-| Q5 | Attributable policy evidence, registered delegation, supported semantics and behavior when authority cannot be established |
+| Q8 | Explicit controlled-source delivery of content, catalog metadata, policy, confirmed deletion and withdrawal changes, with appropriate operation authority |
+| Q9 | Required-package dependency failures, admission timing and whether to support partial source packages in the first slice |
+| Q10 | Retaining captured input for applicable reprocessing/evidence obligations after initial processing, distinct from intermediate cleanup |
 
-Subsequent branches include source-change ordering, metadata and policy changes,
-confirmed deletion versus withdrawal, custody release, and reviewed PDF, Markdown
-and PPTX examples. Format design does not expand the PDF core's qualified support.
+Subsequent branches include change ordering and policy freshness, custody release,
+concrete package validation, and reviewed PDF, Markdown and PPTX examples. Format
+design does not expand the PDF core's qualified support.
 
 ## Integration and ownership
 
