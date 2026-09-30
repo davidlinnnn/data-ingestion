@@ -29,6 +29,23 @@ class ColdTest(unittest.TestCase):
         self.assertIn(cold.Run,cold.ColdRun.__mro__)
         self.assertIs(cold.ColdRun.cancel_owned,cold.base.AttributedCandidateRun.cancel_owned)
 
+    def test_failed_stop_never_starts_successor(self):
+        events=[]
+        class Host:
+            async def stop(self):
+                events.append('stop')
+                raise RuntimeError('cleanup incomplete')
+            async def start(self): events.append('start')
+        class Collector:
+            async def process_transition(self,name,fn): await fn()
+        class Run:
+            async def trial(self,sid,*args):
+                events.append(sid)
+                return {'sid':sid}
+        with self.assertRaisesRegex(RuntimeError,'cleanup incomplete'):
+            asyncio.run(cold.cold_trials(Run(),Host(),Collector()))
+        self.assertEqual(events,['07','stop'])
+
     def test_same_parser_between_fixtures_is_rejected(self):
         def rows(pids):
             return [{'sid':sid,'result':{'pages':pages,'steps':[

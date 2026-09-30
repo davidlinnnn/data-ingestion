@@ -3,7 +3,7 @@ source=Path(__file__).with_name('pod_remote_evidence.py').read_text().replace('A
 source = source.replace('20260929', '20260930')
 exec(compile(source,__file__,'exec'),globals())
 
-for generation in (2,3):
+for generation in (1,2,3):
     ledger = f'state/{PHASE}/worker-{generation}/storage.jsonl'
     base.STREAM_FILES.add(ledger)
     base.FINAL_REQUIRED.update((ledger, f'state/{PHASE}/worker-{generation}/storage-summary.json', f'state/{PHASE}/worker-{generation}/stopped.json'))

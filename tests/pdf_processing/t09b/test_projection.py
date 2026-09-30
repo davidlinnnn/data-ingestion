@@ -65,6 +65,17 @@ class ProjectionTest(unittest.TestCase):
                 result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                                         cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
+            if slot == 'pc1':
+                script = (
+                    'import sys; '
+                    f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
+                    'import pod_remote_evidence_pc1 as r; '
+                    'assert all(f"state/{r.PHASE}/worker-{i}/{name}" in r.base.FINAL_REQUIRED '
+                    'for i in (1,2,3) for name in ("storage.jsonl","storage-summary.json","stopped.json"))'
+                )
+                result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
+                                        cwd='/', capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
             if slot in ('ra2', 'rb1', 'pc1'):
                 bundle = Path(directory) / 'bundle'
                 bundle.mkdir()
