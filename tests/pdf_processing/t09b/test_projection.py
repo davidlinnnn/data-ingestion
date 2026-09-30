@@ -65,7 +65,7 @@ class ProjectionTest(unittest.TestCase):
                 result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                                         cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
-            if slot in ('pc1','pc1b'):
+            if slot in ('pc1','pc1b','pc2','pc3'):
                 script = (
                     'import sys; '
                     f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
@@ -76,7 +76,7 @@ class ProjectionTest(unittest.TestCase):
                 result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                                         cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
-            if slot in ('ra2', 'rb1', 'pc1', 'pc1b'):
+            if slot in ('ra2', 'rb1', 'pc1', 'pc1b', 'pc2', 'pc3'):
                 bundle = Path(directory) / 'bundle'
                 bundle.mkdir()
                 (bundle / 'inputs.json').write_text(json.dumps({
@@ -90,8 +90,8 @@ class ProjectionTest(unittest.TestCase):
                     f'r=p.inherited.base.verify_workload_imports_q(workspace=Path({str(projected)!r}), '
                     f'bundle=Path({str(bundle)!r}), prefix="t09b/calibration-20260930-{slot}/"); '
                     'assert r["status"] == "PASS"; '
-                    f'assert r["reviewed_contract"]["sequence"] == {(["07", "08", "native"] if slot in ("pc1","pc1b") else ["native"])!r}; '
-                    f'assert r["reviewed_contract"]["group_requests"] == {17 if slot in ("pc1","pc1b") else 6 if slot == "rb1" else 11}'
+                    f'assert r["reviewed_contract"]["sequence"] == {({"pc2": ["native", "07", "08"], "pc3": ["08", "native", "07"]}.get(slot, ["07", "08", "native"]) if slot in ("pc1","pc1b","pc2","pc3") else ["native"])!r}; '
+                    f'assert r["reviewed_contract"]["group_requests"] == {17 if slot in ("pc1","pc1b","pc2","pc3") else 6 if slot == "rb1" else 11}'
                 )
                 result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                                         cwd='/', capture_output=True, text=True, timeout=20)
@@ -102,6 +102,12 @@ class ProjectionTest(unittest.TestCase):
 
     def test_pc1b_real_preflight_and_all_generation_seals(self):
         self._assert_projected_baseline('pc1b')
+
+    def test_pc2_real_rotated_preflight_and_seals(self):
+        self._assert_projected_baseline('pc2')
+
+    def test_pc3_real_rotated_preflight_and_seals(self):
+        self._assert_projected_baseline('pc3')
 
     def test_a8_wrappers_run_in_the_projected_workspace(self):
         self._assert_projected_baseline('a8')
