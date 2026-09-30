@@ -2,6 +2,8 @@ import asyncio
 from pathlib import Path
 import sys
 import unittest
+from unittest import mock
+import tempfile
 from types import SimpleNamespace
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
@@ -13,7 +15,9 @@ class ColdTest(unittest.TestCase):
         events=[]
         class Host:
             async def stop(self): events.append('stop')
-            async def start(self): events.append('start')
+            async def prepare_start(self): pass
+            async def launch_start(self): events.append('start')
+            async def await_ready(self): pass
         class Collector:
             async def process_transition(self,name,fn): await fn()
         class Run:
@@ -35,7 +39,9 @@ class ColdTest(unittest.TestCase):
             async def stop(self):
                 events.append('stop')
                 raise RuntimeError('cleanup incomplete')
-            async def start(self): events.append('start')
+            async def prepare_start(self): pass
+            async def launch_start(self): events.append('start')
+            async def await_ready(self): pass
         class Collector:
             async def process_transition(self,name,fn): await fn()
         class Run:
@@ -45,6 +51,36 @@ class ColdTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'cleanup incomplete'):
             asyncio.run(cold.cold_trials(Run(),Host(),Collector()))
         self.assertEqual(events,['07','stop'])
+
+    def test_real_transition_does_not_include_worker_readiness(self):
+        from t09b_host import Host as RealHost
+        clock=[0.0]
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            collector=cold.base.StrictAttributionCollector(root/'samples',root/'summary',observation_root=root)
+            collector._stream=object()
+            collector._last_completed=0
+            events=[]
+            class Host:
+                start=RealHost.start
+                async def stop(self):
+                    events.append('stop')
+                    collector._last_completed+=1
+                async def prepare_start(self): events.append('prepare')
+                async def launch_start(self):
+                    events.append('launch')
+                    collector._last_completed+=1
+                async def await_ready(self):
+                    events.append('ready')
+                    clock[0]+=1.009470
+            class Run:
+                async def trial(self,sid,*args):
+                    events.append(sid)
+                    return {'sid':sid}
+            with mock.patch('sentinel.aima_attribution_telemetry_q.time.monotonic',side_effect=lambda:clock[0]):
+                asyncio.run(cold.cold_trials(Run(),Host(),collector))
+            self.assertEqual(events,['07','stop','prepare','launch','ready','08','stop','prepare','launch','ready','native'])
+            self.assertTrue(all(row['duration_seconds']<=1 for row in collector._process_transition_windows))
 
     def test_same_parser_between_fixtures_is_rejected(self):
         def rows(pids):

@@ -35,7 +35,9 @@ async def cold_trials(run, host, collector):
     for index, sid in enumerate(SEQUENCE):
         if index:
             await collector.process_transition('cold_previous_worker_shutdown', host.stop)
-            await collector.process_transition('cold_next_worker_start', host.start)
+            await host.prepare_start()
+            await collector.process_transition('cold_next_worker_launch', host.launch_start)
+            await host.await_ready()
         results.append(await run.trial(sid, 'warm', f'warm-{index}-{sid}', None))
     return results
 
