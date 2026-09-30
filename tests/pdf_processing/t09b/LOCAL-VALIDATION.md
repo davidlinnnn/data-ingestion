@@ -490,3 +490,23 @@ Outstanding before baseline admission:
 The checked prototype and q04-local Python environments lack boto3. These tests
 use a deterministic client double and are not an actual SDK/network proof.
 No dependencies were installed and no transport completeness claim is made.
+
+## Final bounded support consolidation (2026-09-30)
+
+No new inference or runtime mutation. Reused A6/A7/A11/A12 raw process samples
+and retained A12 configuration/storage-cost evidence; sample/PID/start-tick
+references and reservation arithmetic independently reviewed.
+
+Necessary local regressions passed: test_cold_window4,
+test_publication_buffers1 +test_storage_cost2, test_projection16 (23 total).
+Commands use prototype venv with PYTHONPATH=/private/tmp/t09b-test-deps; storage
+checks also include tests/pdf_processing/t09b on PYTHONPATH. git diff --check
+passed. Final two-axis review found0 standards/0 spec blockers, and confirmed
+scoped buffering and conditional C nonadmission satisfy the bounded selection.
+
+Read-only cluster recap: held historical Deployments remain off; namespace
+contains only coordinator, objects, temporal and workflows Pods, no T09b Pod.
+Earlier successful cleanup and PVC/prefix retention proofs remain authoritative.
+Removed four accidentally tracked t09b Python3.14 bytecode cache files; raw
+runtime copies, original runners, sources and evidence remain preserved.
+#45 acceptance package is ready for dev integration review; no main merge.
