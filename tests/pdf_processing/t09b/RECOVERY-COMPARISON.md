@@ -15,6 +15,9 @@ RA1 failed at pre-inference imports and is excluded; its evidence is retained.
 | Server HTTP RX bytes | 149,278,025 | 149,011,515 |
 | Application read amplification | 10.5981 | 12.2779 |
 | Whole-Pod sampled peak bytes | 2,497,429,504 | 2,525,315,072 |
+| Unique registered payload bytes | 148,681,815 | 148,392,910 |
+| Total current prefix bytes | 177,937,087 | 177,638,842 |
+| Orphan attempt objects | 0 | 0 |
 
 One fault pair does not establish a recovery distribution or reliability SLA.
 Group 10 repeats twice as many pages and transfers about 15.6% more server TX
@@ -28,7 +31,6 @@ retaining group 5 and one active parser child. No accepted bound is increased.
   existing mixed-sequence replicates provide first-request cold Wiki06 only.
 - Resolve total retained/native buffering measurement and stage-time attribution;
   read-chunk/publication-input sizes and inclusive activity times are partial.
-- Record RB1 quiescent checkpoint inventory.
 - Resolve the conditional concurrency requirement: two children remain not
   admitted without a reviewed aggregate budget under existing limits. This is
   not evidence of a measured two-child runtime failure.

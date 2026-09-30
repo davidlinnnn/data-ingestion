@@ -15,8 +15,10 @@ Traffic reconciled across both worker ledgers: 3,313 client calls/server attempt
 149,011,515 B server HTTP RX and 1,867,302,641 B TX. Application read amplification
 12.2779; no missing ledgers, incomplete calls, unknown PUT sizes or SDK retries.
 Largest read chunk 22,539,322 B and publication inputs 70,573,839 B are partial
-buffer measurements, not total native/retained buffering peaks. Quiescent
-checkpoint inventory has not yet been recorded for this cell.
+buffer measurements, not total native/retained buffering peaks. At quiescence: 148,392,910 B unique registered payload, 177,638,842 B total
+current prefix, 258 objects / 20 registrations / 231 registered artifacts and
+zero orphan attempt objects. Current-version metadata only; no payload rehash,
+retention action or snapshot guarantee.
 
 Whole-Pod sampled peak 2,525,315,072 B; minimum VM available 2,845,032,448 B;
 largest sample gap 0.3966 s. No Pod/VM OOM. Object full PSI avg10 remained 0.00,
