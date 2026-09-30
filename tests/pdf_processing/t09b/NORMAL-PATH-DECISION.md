@@ -31,3 +31,23 @@ the existing memory limits or acceptance thresholds.
 
 Selection does not close #45. Selected-setting checkpoint/buffering inventory,
 matched interruption recovery, and final affected-bound publication remain.
+
+## Workflow and stage timing
+
+The six `normal-timing.json` reports derive queue and Activity execution times
+directly from every scheduled/started/completed Activity in the retained histories.
+All five requests include required OCR (11, 4, 9, 7 and 11 Activities respectively).
+Activity execution includes its storage/publication work; it is not an exclusive
+parse or publication timer. Stage sums are not workflow wall time.
+
+| Request | A workflow seconds, median (range) | B workflow seconds, median (range) |
+| --- | ---: | ---: |
+| 06, process-cold | 68.15 (67.98–68.76) | 68.10 (65.29–69.69) |
+| 07, warm | 32.96 (32.67–34.08) | 33.07 (31.03–33.89) |
+| 08, warm | 27.67 (27.45–28.37) | 27.17 (25.33–28.32) |
+| native, warm | 111.61 (110.57–115.04) | 103.59 (95.87–104.98) |
+| 06, warm repeat | 62.03 (62.01–66.00) | 57.76 (57.55–64.91) |
+
+Only the first 06 request starts with a fresh parser. These observations do not
+provide process-cold distributions for 07, 08 or native, nor controlled filesystem
+cache measurements. No p95/SLA inference is made from these three observations.

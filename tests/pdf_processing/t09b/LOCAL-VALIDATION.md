@@ -1,5 +1,15 @@
 # T09b local measurement slice
 
+## Latest controlled result: A12 selected-setting instrumentation passed
+
+See `a12-evidence/RESULTS.md`. All five exact-output workflows, 29 groups,
+request-20 recycle, two parser generations and 9,563 traffic attempts passed.
+Largest returned read chunks are now measured; full retained/native buffering
+remains a separate limitation. Cleanup and the retained Bound PVC were verified.
+The six counted matched cells now also retain complete Temporal queue/Activity
+timing reports, including every required OCR Activity. The timing summarizer's
+focused regression passes and rejects retries in normal-path statistics.
+
 ## Latest controlled result: B5 group-10 diagnostic passed
 
 See `b5-evidence/RESULTS.md`. B5 completed all five exact-output workflows,
