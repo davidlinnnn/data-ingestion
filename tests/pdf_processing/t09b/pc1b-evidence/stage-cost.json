@@ -1,0 +1,167 @@
+{
+  "scope": "Child converter wall excludes external Store publication; parser internal stage sums are not wall time. Store.publish includes its upload, registration and integrity readback. Publication is nested in Temporal activity durations; do not add these overlapping scopes. Required OCR activity times remain inclusive in process-cold-timing.json.",
+  "fixtures": [
+    {
+      "fixture": "07",
+      "parse_conversion_wall": {
+        "capture": {
+          "operations": 3,
+          "seconds_sum": 18.889989133924246,
+          "internal_stage_seconds_sum_not_wall": {
+            "LayoutModel": 10.671639213222079,
+            "PageAssembleModel": 0.0039776223711669445,
+            "PagePreprocessingModel": 0.5384474595775828,
+            "RapidOcrModel": 0.0033067500917240977,
+            "TableStructureModel": 7.720800086972304,
+            "checkpoint_commit": 0.4003026245627552,
+            "model_initialization": 0.34419900097418576,
+            "stage_enter": 0
+          }
+        },
+        "restore": {
+          "operations": 1,
+          "seconds_sum": 1.0774682920891792,
+          "internal_stage_seconds_sum_not_wall": {
+            "checkpoint_load": 0.8013133759377524,
+            "document_assembly": 0.252630207920447,
+            "model_initialization": 0.0001835830044001341
+          }
+        }
+      },
+      "publication_seconds": {
+        "assembly": {
+          "calls": 2,
+          "seconds_sum": 0.09060758200939745
+        },
+        "component_ocr": {
+          "calls": 4,
+          "seconds_sum": 0.09907020791433752
+        },
+        "finalize": {
+          "calls": 3,
+          "seconds_sum": 0.2283961670473218
+        },
+        "group": {
+          "calls": 3,
+          "seconds_sum": 0.44171887496486306
+        },
+        "prepare": {
+          "calls": 1,
+          "seconds_sum": 0.017086250009015203
+        },
+        "select": {
+          "calls": 1,
+          "seconds_sum": 0.016428916016593575
+        }
+      }
+    },
+    {
+      "fixture": "08",
+      "parse_conversion_wall": {
+        "capture": {
+          "operations": 3,
+          "seconds_sum": 10.022444129106589,
+          "internal_stage_seconds_sum_not_wall": {
+            "LayoutModel": 8.069943670998327,
+            "PageAssembleModel": 0.002670542220585048,
+            "PagePreprocessingModel": 0.45251408393960446,
+            "RapidOcrModel": 0.0015384169528260827,
+            "TableStructureModel": 1.5411202940158546,
+            "checkpoint_commit": 0.4007989588426426,
+            "model_initialization": 0.3688754589529708,
+            "stage_enter": 0
+          }
+        },
+        "restore": {
+          "operations": 1,
+          "seconds_sum": 0.9207765420433134,
+          "internal_stage_seconds_sum_not_wall": {
+            "checkpoint_load": 0.7225913340225816,
+            "document_assembly": 0.17507095902692527,
+            "model_initialization": 0.00016129098366945982
+          }
+        }
+      },
+      "publication_seconds": {
+        "assembly": {
+          "calls": 2,
+          "seconds_sum": 0.08277770807035267
+        },
+        "component_ocr": {
+          "calls": 9,
+          "seconds_sum": 0.1919361229520291
+        },
+        "finalize": {
+          "calls": 3,
+          "seconds_sum": 0.28030387591570616
+        },
+        "group": {
+          "calls": 3,
+          "seconds_sum": 0.3618422501021996
+        },
+        "prepare": {
+          "calls": 1,
+          "seconds_sum": 0.018885708996094763
+        },
+        "select": {
+          "calls": 1,
+          "seconds_sum": 0.01359949994366616
+        }
+      }
+    },
+    {
+      "fixture": "native",
+      "parse_conversion_wall": {
+        "restore": {
+          "operations": 1,
+          "seconds_sum": 2.6131740839919075,
+          "internal_stage_seconds_sum_not_wall": {
+            "checkpoint_load": 1.4130844179308042,
+            "document_assembly": 1.1737100009340793,
+            "model_initialization": 0.00016741605941206217
+          }
+        },
+        "capture": {
+          "operations": 11,
+          "seconds_sum": 65.40187228110153,
+          "internal_stage_seconds_sum_not_wall": {
+            "LayoutModel": 40.536560058477335,
+            "PageAssembleModel": 0.01950403838418424,
+            "PagePreprocessingModel": 2.6428586281836033,
+            "RapidOcrModel": 0.009596709511242807,
+            "TableStructureModel": 27.9837988903746,
+            "checkpoint_commit": 1.9938972102245316,
+            "model_initialization": 0.34705029195174575,
+            "stage_enter": 0
+          }
+        }
+      },
+      "publication_seconds": {
+        "assembly": {
+          "calls": 2,
+          "seconds_sum": 0.19515212497208267
+        },
+        "component_ocr": {
+          "calls": 7,
+          "seconds_sum": 0.1832729980815202
+        },
+        "finalize": {
+          "calls": 3,
+          "seconds_sum": 0.7404604170005769
+        },
+        "group": {
+          "calls": 11,
+          "seconds_sum": 1.7755418749293312
+        },
+        "prepare": {
+          "calls": 1,
+          "seconds_sum": 0.01869199995417148
+        },
+        "select": {
+          "calls": 1,
+          "seconds_sum": 0.018809499917551875
+        }
+      }
+    }
+  ]
+}

@@ -27,10 +27,9 @@ retaining group 5 and one active parser child. No accepted bound is increased.
 
 ## Remaining acceptance work
 
-- Complete process-cold fixture coverage for YOLO07, AIMA08 and native51;
-  existing mixed-sequence replicates provide first-request cold Wiki06 only.
-- Resolve total retained/native buffering measurement and stage-time attribution;
-  read-chunk/publication-input sizes and inclusive activity times are partial.
+- Process-cold fixture coverage is now measured at n=3; see COLD-WARM-DISTRIBUTIONS.md.
+- Resolve total retained/native buffering measurement; publication/read-chunk sizes are partial.
+  Stage scopes are now reported separately in cold cell stage-cost.json and timing reports.
 - Resolve the conditional concurrency requirement: two children remain not
   admitted without a reviewed aggregate budget under existing limits. This is
   not evidence of a measured two-child runtime failure.
