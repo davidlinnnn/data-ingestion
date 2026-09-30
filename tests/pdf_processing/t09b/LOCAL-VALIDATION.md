@@ -1,5 +1,15 @@
 # T09b local measurement slice
 
+## RA1 pre-inference stop and RA2 correction
+
+RA1 stopped at `workload_imports`: 10 gates passed, no workflow/inference/object
+write started. See `ra1-evidence/RESULTS.md`. The preflight still called the warm
+scope validator after importing the recovery module. Actual gate execution in
+the projected workspace reproduces the same error; RA2's direct recovery scope
+binding fixes it and reports the native/11-group contract. RA1 remains unchanged.
+Cleanup and retained Bound evidence PVC were verified. RA2 has a fresh identity
+and prefix; offline preparation passes before new review/live admission.
+
 ## Latest controlled result: A12 selected-setting instrumentation passed
 
 See `a12-evidence/RESULTS.md`. All five exact-output workflows, 29 groups,

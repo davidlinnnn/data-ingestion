@@ -45,25 +45,46 @@ class ProjectionTest(unittest.TestCase):
                 'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
                 'tests/pdf_processing/q03')))
             names = [f'pod_workload_{slot}.py', f'pod_preflight_{slot}.py']
-            if slot == 'ra1':
+            if slot in ('ra1', 'ra2'):
                 names.append('recovery_window.py')
             for name in names:
                 result = subprocess.run([sys.executable, '-B',
                                          str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
                                         env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
-            if slot == 'ra1':
+            if slot in ('ra1', 'ra2'):
                 script = (
                     'import sys; from pathlib import Path; '
                     f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
-                    'import pod_remote_evidence_ra1 as r; import recovery_window as w; '
+                    f'import pod_remote_evidence_{slot} as r; import recovery_window as w; '
                     'from recovery_trial import Run; '
                     'assert w.AttributedRecoveryRun.trial is Run.trial; '
                     'assert all(f"state/{r.PHASE}/worker-{i}/storage.jsonl" in r.base.FINAL_REQUIRED for i in (1,2)); '
                     'assert not any("warm-proof" in path for path in r.base.FINAL_REQUIRED)'
                 )
-                subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
-                               cwd='/', check=True, capture_output=True, text=True, timeout=20)
+                result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
+                                        cwd='/', capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+            if slot == 'ra2':
+                bundle = Path(directory) / 'bundle'
+                bundle.mkdir()
+                (bundle / 'inputs.json').write_text(json.dumps({
+                    'base_profile': {'id': 'native', 'group_pages': 5, 'method': {'continuation': {}}},
+                    'producer': {}, 'fixtures': [{'id': 'native', 'sha256': 'local',
+                        'source_revision': 'local', 'review': {'scope': 'local'}}]}))
+                script = (
+                    'import sys; from pathlib import Path; '
+                    f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
+                    'import pod_preflight_ra2 as p; '
+                    f'r=p.inherited.base.verify_workload_imports_q(workspace=Path({str(projected)!r}), '
+                    f'bundle=Path({str(bundle)!r}), prefix="t09b/calibration-20260930-ra2/"); '
+                    'assert r["status"] == "PASS"; '
+                    'assert r["reviewed_contract"]["sequence"] == ["native"]; '
+                    'assert r["reviewed_contract"]["group_requests"] == 11'
+                )
+                result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
+                                        cwd='/', capture_output=True, text=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_a8_wrappers_run_in_the_projected_workspace(self):
         self._assert_projected_baseline('a8')
@@ -82,6 +103,9 @@ class ProjectionTest(unittest.TestCase):
 
     def test_ra1_recovery_runs_in_the_projected_workspace(self):
         self._assert_projected_baseline('ra1')
+
+    def test_ra2_real_preflight_gate_accepts_recovery_scope(self):
+        self._assert_projected_baseline('ra2')
 
     def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent
