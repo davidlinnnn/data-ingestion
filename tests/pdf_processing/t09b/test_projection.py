@@ -45,14 +45,14 @@ class ProjectionTest(unittest.TestCase):
                 'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
                 'tests/pdf_processing/q03')))
             names = [f'pod_workload_{slot}.py', f'pod_preflight_{slot}.py']
-            if slot in ('ra1', 'ra2'):
+            if slot in ('ra1', 'ra2', 'rb1'):
                 names.append('recovery_window.py')
             for name in names:
                 result = subprocess.run([sys.executable, '-B',
                                          str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
                                         env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
-            if slot in ('ra1', 'ra2'):
+            if slot in ('ra1', 'ra2', 'rb1'):
                 script = (
                     'import sys; from pathlib import Path; '
                     f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
@@ -65,7 +65,7 @@ class ProjectionTest(unittest.TestCase):
                 result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                                         cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
-            if slot == 'ra2':
+            if slot in ('ra2', 'rb1'):
                 bundle = Path(directory) / 'bundle'
                 bundle.mkdir()
                 (bundle / 'inputs.json').write_text(json.dumps({
@@ -75,12 +75,12 @@ class ProjectionTest(unittest.TestCase):
                 script = (
                     'import sys; from pathlib import Path; '
                     f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
-                    'import pod_preflight_ra2 as p; '
+                    f'import pod_preflight_{slot} as p; '
                     f'r=p.inherited.base.verify_workload_imports_q(workspace=Path({str(projected)!r}), '
-                    f'bundle=Path({str(bundle)!r}), prefix="t09b/calibration-20260930-ra2/"); '
+                    f'bundle=Path({str(bundle)!r}), prefix="t09b/calibration-20260930-{slot}/"); '
                     'assert r["status"] == "PASS"; '
                     'assert r["reviewed_contract"]["sequence"] == ["native"]; '
-                    'assert r["reviewed_contract"]["group_requests"] == 11'
+                    f'assert r["reviewed_contract"]["group_requests"] == {6 if slot == "rb1" else 11}'
                 )
                 result = subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
                                         cwd='/', capture_output=True, text=True, timeout=20)
@@ -106,6 +106,9 @@ class ProjectionTest(unittest.TestCase):
 
     def test_ra2_real_preflight_gate_accepts_recovery_scope(self):
         self._assert_projected_baseline('ra2')
+
+    def test_rb1_real_preflight_gate_accepts_group_ten_recovery_scope(self):
+        self._assert_projected_baseline('rb1')
 
     def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent

@@ -1,5 +1,23 @@
 # T09b local measurement slice
 
+## RA2 group-5 recovery passed; matched RB1 prepared
+
+See `ra2-evidence/RESULTS.md`: all 11 gates passed; native51/required OCR and
+full output equality completed after one process drain at 10 durable pages.
+Only pages 11–15 repeated at attempt 2; two worker ledgers fully reconciled
+(3,108 client/server calls). Loss-to-completion bounds: 112.7156–112.7365 s.
+No OOM; cleanup and retained Bound evidence PVC verified. A read-only quiescent
+metadata inventory measured 148,681,815 B unique registered payload and
+177,937,087 B total current prefix, zero orphan attempts, without rehashing
+already verified payloads.
+
+RB1 is the matched native group-10 recovery cell with a fresh identity/prefix,
+the same 10-page durable boundary and expected attempt-2 range 11–20. It reuses
+the reviewed recovery path, exact oracle, resource limits and guards. The actual
+projected preflight gate reports native/6 groups; affected regression checks
+pass (6 tests), and offline preparation passes. Review/live admission precede
+the one controlled execution; this is not an RB1 recovery result.
+
 ## RA1 pre-inference stop and RA2 correction
 
 RA1 stopped at `workload_imports`: 10 gates passed, no workflow/inference/object
