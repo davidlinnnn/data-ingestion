@@ -147,7 +147,7 @@ for path in sorted(paths):
  size=path.stat().st_size
  if start<0 or start>size: raise ValueError('evidence offset drift: '+name)
  with path.open('rb') as stream:
-  stream.seek(start); raw=stream.read(4*1024*1024)
+  stream.seek(start); raw=stream.read(min(4*1024*1024,size-start))
  if name in streams and raw and not raw.endswith(b'\\n'):
   split=raw.rfind(b'\\n'); raw=b'' if split<0 else raw[:split+1]
  files.append({'path':name,'offset':start,'size':len(raw),'total_size':size,

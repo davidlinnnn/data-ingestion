@@ -1,0 +1,40 @@
+Traceback (most recent call last):
+  File "/workspace/tests/pdf_processing/t09b/baseline_window.py", line 22, in <module>
+    raise SystemExit(warm_pod_window_db.main())
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 492, in main
+    asyncio.run(run_window(args))
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 433, in run_window
+    raise primary_error
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 385, in run_window
+    await collector.process_transition(
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/q04/sentinel/aima_attribution_telemetry_q.py", line 1108, in process_transition
+    raise primary.with_traceback(primary_traceback)
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/q04/sentinel/aima_attribution_telemetry_q.py", line 1074, in process_transition
+    result = await operation()
+             ^^^^^^^^^^^^^^^^^
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/q04/host.py", line 210, in stop
+    await asyncio.to_thread(self.signal, ready['pid'], signal.SIGTERM)
+  File "/usr/local/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/t09b/t09b_host.py", line 19, in signal
+    return self._signal(pid, sig, child)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/..2026_09_28_16_02_52.3895054026/tests/pdf_processing/t09b/t09b_host.py", line 52, in _signal
+    subprocess.run(command, check=True, timeout=20, capture_output=True)
+  File "/usr/local/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/experiment/.venv/bin/python', '-c', "import os,psutil,signal,sys,time\npid,parent,sig,child,created=int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]),float(sys.argv[5])\np=psutil.Process(parent)\nassert p.create_time()==created\nassert any('t09b/worker.py' in x for x in p.cmdline())\nt=psutil.Process(pid)\nassert (pid==parent and not child) or (child and parent in [a.pid for a in t.parents()] and 'pdf_processing.warm_child' in t.cmdline())\nos.kill(pid,sig)\nif sig==signal.SIGSTOP:\n deadline=time.monotonic()+3\n while t.status()!=psutil.STATUS_STOPPED:\n  assert time.monotonic()<deadline\n  time.sleep(.02)\n", '112', '112', '15', '0', '1790611380.56']' returned non-zero exit status 1.

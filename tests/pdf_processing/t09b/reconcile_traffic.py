@@ -1,0 +1,121 @@
+"""Require measured SDK calls to have all server-side attempts.
+
+An exact, unretried NoSuchKey/404 lookup is a completely observed absence.
+Other failed calls with unknown partial transfers remain incomplete. This does
+not measure packets lost before reaching MinIO or transport framing overhead.
+"""
+from collections import defaultdict
+
+
+def reconcile_run(state, phase, server, bucket, trace):
+    """Require every worker generation, including interrupted ones, in coverage."""
+    roots = sorted(path for path in (state / phase).glob('worker-*') if path.is_dir())
+    paths = [root / 'storage.jsonl' for root in roots]
+    missing = [str(path) for path in paths if not path.is_file()]
+    marker_ids = {trace.get('ready_call_id'), trace.get('final_call_id')} - {None}
+    workload_server = [row for row in server if row.get('call_id') not in marker_ids]
+    report = reconcile_ledgers([path for path in paths if path.is_file()], workload_server, bucket)
+    if not roots or missing:
+        report['errors'].append('worker storage evidence missing')
+    if (trace.get('collector_stopped') is not True or not trace.get('ready_call_id')
+            or not trace.get('final_call_id') or trace['ready_call_id'] == trace['final_call_id']):
+        report['errors'].append('trace lifecycle evidence incomplete')
+    for call_id in marker_ids:
+        if not any(row.get('call_id') == call_id and 200 <= row['status'] < 300 for row in server):
+            report['errors'].append('trace boundary marker missing from retained records')
+    report.update(complete=report['complete'] and not report['errors'],
+                  worker_generations=len(roots), missing_ledgers=missing,
+                  excluded_marker_calls=len(server) - len(workload_server))
+    return report
+
+
+def reconcile_ledgers(paths, server, bucket):
+    from storage_ledger import reconcile as reconcile_ledger
+    ledgers = [reconcile_ledger(path) for path in paths]
+    report = reconcile([event for ledger in ledgers for event in ledger['events']],
+                       server, bucket)
+    for path, ledger in zip(paths, ledgers):
+        if not ledger['complete']:
+            report['errors'].append(f'{path}: incomplete storage ledger')
+    report['complete'] = report['complete'] and not report['errors']
+    return report
+
+
+def reconcile(client, server, bucket):
+    observers = {row['call_id'] for row in client if row['role'] == 'observer'}
+    groups = defaultdict(list)
+    for row in server:
+        if row.get('call_id'):
+            groups[row['call_id']].append(row)
+    seen, errors = set(), []
+    expected_methods = {'get_object': 'GET', 'put_object': 'PUT'}
+    calls = [row for row in client if row['role'] == 'workload'
+             and row['operation'] in expected_methods]
+    for call in calls:
+        call_id = call['call_id']
+        if call_id in seen:
+            errors.append('duplicate client call')
+        seen.add(call_id)
+        rows = groups[call_id]
+        retries = call['sdk_retries']
+        if type(retries) is not int or retries < 0 or len(rows) != retries + 1:
+            errors.append(f'{call_id}: attempt coverage missing')
+        missing_object = (
+            call['operation'] == 'get_object'
+            and call['outcome'] == 'call_failed'
+            and call.get('error_type') == 'NoSuchKey'
+            and retries == 0
+            and len(rows) == 1
+            and rows[0]['status'] == 404
+        )
+        if call['outcome'] not in ('call_succeeded', 'read_complete') and not missing_object:
+            errors.append(f'{call_id}: client transfer incomplete')
+        if any(row['method'] != expected_methods[call['operation']] or
+               row['path'] != '/'+bucket+'/'+call['key'] for row in rows):
+            errors.append(f'{call_id}: request identity mismatch')
+        successful = [row for row in rows if 200 <= row['status'] < 300]
+        if not successful and not missing_object:
+            errors.append(f'{call_id}: server success missing')
+        if call['operation'] == 'get_object' and successful and not any(
+                row['server_tx_bytes'] == call['delivered_bytes'] for row in successful):
+            errors.append(f'{call_id}: GET byte count mismatch')
+    if observers & seen:
+        errors.append('call identity shared by workload and observer')
+    if set(groups) - seen - observers:
+        errors.append('unmatched tagged server calls')
+    return {'complete': bool(calls) and not errors, 'client_calls': len(calls),
+            'server_attempts': sum(len(groups[key]) for key in seen),
+            'server_rx_bytes': sum(row['server_rx_bytes'] for key in seen for row in groups[key]),
+            'server_tx_bytes': sum(row['server_tx_bytes'] for key in seen for row in groups[key]),
+            'excluded_untagged_calls': sum(not row.get('call_id') for row in server),
+            'excluded_observer_calls': sum(row.get('call_id') in observers for row in server),
+            'errors': errors, 'layer': 'server HTTP counters; not total wire traffic'}
+
+
+if __name__ == '__main__':
+    import argparse
+    import json
+    from pathlib import Path
+    parser = argparse.ArgumentParser(description=__doc__)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--ledger', action='append', type=Path)
+    source.add_argument('--state', type=Path, help='exported state containing all worker generations')
+    parser.add_argument('--phase')
+    parser.add_argument('--trace', type=Path, help='TraceSession.finish lifecycle JSON')
+    parser.add_argument('--server', required=True, type=Path,
+                        help='sanitized MinIO accounting JSONL')
+    parser.add_argument('--bucket', required=True)
+    parser.add_argument('--out', required=True, type=Path)
+    args = parser.parse_args()
+    rows = [json.loads(line) for line in args.server.read_text().splitlines()]
+    if args.state:
+        if not args.phase or not args.trace:
+            parser.error('--state requires --phase and --trace')
+        report = reconcile_run(args.state, args.phase, rows, args.bucket,
+                               json.loads(args.trace.read_text()))
+    else:
+        report = reconcile_ledgers(args.ledger, rows, args.bucket)
+    with args.out.open('x') as stream:
+        json.dump(report, stream, indent=2)
+        stream.write('\n')
+    raise SystemExit(0 if report['complete'] else 1)
