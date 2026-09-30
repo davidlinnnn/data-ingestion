@@ -5,7 +5,8 @@
 **Status:** partial decisions confirmed on 2026-09-30; the source-handoff design is
 still open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
-[Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945) in
+[Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
+[Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -34,8 +35,8 @@ preserve an Asset. Equal bytes across Sources do not automatically merge Assets;
 physical byte deduplication remains a separate storage choice. Corpus membership
 reuses the Asset identity and does not expand access.
 
-Source Revision identity, metadata-only changes and observation ordering remain
-the next decisions; this agreement does not make a processing request a revision.
+Q4 below distinguishes source-version identity from processing requests. Detailed
+metadata-only changes, observation ordering and reuse rules remain open.
 
 ### Q3 — Capture readiness and custody before admission
 
@@ -50,6 +51,26 @@ identity and custody arrangement. An arbitrary local path, an unprotected expiri
 URL, or fetching latest only when execution begins does not establish that guarantee.
 The boundary does not require synchronous parsing/OCR and does not mean Canonical
 Acceptance. Exact custody duration/release and withdrawal/purge handling remain open.
+
+### Q4 — Source Revision versus processing request
+
+An Asset identifies a logical document; its Source Revision identifies a captured
+source version/observation. A processing request is a work order over selected
+captured inputs and methods. Redelivery preserves the Source Revision. Admission
+request deduplication applies; workflow/activity retries do not by themselves
+create a new source version or deliberate processing request.
+
+Method-only reprocessing retains the Source Revision and uses a new request. An
+explicitly new source version/observation can have a new Source Revision even when
+bytes are equal; ordinary re-upload alone does not establish a new source version.
+An existing observation identity cannot be silently rebound to conflicting content.
+Use reliable native source-version identity where available, otherwise an explicit
+capture identity reusable on redelivery. Digests support integrity and possible
+reuse, not source-version identity by themselves.
+
+New source observations do not inherently require repeating all expensive work;
+reuse requires compatible inputs/methods. Exact identity representation, ordering,
+metadata-only changes, reuse rules and retained-identity lifetime remain open.
 
 ### Q6 — Finite capture packages
 
@@ -78,12 +99,11 @@ for adoption. Numeric workload, concurrency and resource targets remain with
 ## Next frontier — proposed, not confirmed
 
 The [decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) preserves the next-round recommendations.
-Q6/Q7 have since been confirmed above. Q4/Q5 remain under clarification; await
-user answers before adopting their choices or proceeding into dependent details.
+Q4 and Q6/Q7 have since been confirmed above. Q5 remains under clarification;
+await its answer before adopting its policy-provenance/admission choice.
 
 | Question | Decision to resolve |
 |---|---|
-| Q4 | Captured-observation identity versus redelivery, a new source observation and method-only processing requests |
 | Q5 | Attributable policy evidence, registered delegation, supported semantics and behavior when authority cannot be established |
 
 Subsequent branches include source-change ordering, metadata and policy changes,

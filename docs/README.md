@@ -8,7 +8,7 @@ and independent spike review. Decision authority remains in GitHub Issues.
 | [Logical system design](design/knowledge-platform-logical-design.md) | User-confirmed overall responsibilities, Q1–Q25 and detailed-design handoff |
 | [Overall design review](design/knowledge-platform-overall-review.md) | Confirmed logical scope; candidate storage/protocol choices remain open |
 | [Independent overall spike](reviews/knowledge-platform-overall-spike-2026-09-28.md) | Historical review snapshot and subsequent incorporation |
-| [Source handoff](design/knowledge-platform-source-handoff.md) | Q1–Q3 and Q6/Q7 confirmed; revision and policy questions remain under discussion |
+| [Source handoff](design/knowledge-platform-source-handoff.md) | Q1–Q4 and Q6/Q7 confirmed; policy handoff remains under clarification |
 | [Domain glossary](../CONTEXT.md) | Current domain meanings |
 | [HLD](../HLD.md), [Architecture Baseline](../ARCHITECTURE-BASELINE.md), [direction review brief](reviews/architecture-direction-review.md) | Earlier supporting direction package; separate review outcomes remain pending |
 | [Knowledge Loop](diagrams/knowledge-loop.md) | Conceptual overview with future experience boundaries |
@@ -18,7 +18,7 @@ The [active wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/
 is the index for detailed decisions, PDF integration, pilot coexistence/migration,
 and operational follow-through. Its [overall logical decision](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5862945216)
 is complete. [Captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53)
-remains open; its [Q1–Q3 decisions](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) were confirmed on 2026-09-30. [Q6/Q7](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945) are also confirmed; Q4/Q5 remain under clarification.
+remains open; its [Q1–Q3 decisions](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) were confirmed on 2026-09-30. [Q6/Q7](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945) are also confirmed; [Q4](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142) is now confirmed; Q5 remains under clarification.
 
 Confirmed target contracts govern design. Necessary workflow/API migration and
 integration belong to the implementation workstream. Resource measurements inform

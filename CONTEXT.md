@@ -53,7 +53,7 @@ _Avoid_: ingestion batch, Source, Published View, access grant
 **Source Revision**:
 A captured observation of an Asset at a particular source version or observation
 point.
-_Avoid_: current source state
+_Avoid_: current source state, processing request
 
 **Capture Package**:
 The finite set of captured source artifacts comprising a main document and its
