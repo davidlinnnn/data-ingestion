@@ -1,0 +1,33 @@
+# Knowledge Platform design checkpoint
+
+[Documentation guide](../README.md)
+
+The current [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52)
+started with source-to-publication system design. The user confirmed the overall
+logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporation.
+
+- [Logical system design](knowledge-platform-logical-design.md): confirmed
+  responsibilities, Corpus and revision behavior, workflows and detailed owners.
+- [Overall design review](knowledge-platform-overall-review.md): contract outlines,
+  failure walkthroughs, persistence alternatives and follow-through checkpoints.
+- [Independent spike](../reviews/knowledge-platform-overall-spike-2026-09-28.md):
+  the reviewed historical snapshot, clarifications and subsequent confirmation.
+
+Storage selections, detailed APIs and source-handoff proposals remain open. This
+checkpoint records progress and does not constitute an implementation-ready spec.
+Decision details remain in the linked issues; the map remains their index.
+
+## Earlier direction and candidate history
+
+The [HLD](../../HLD.md) and [Architecture Baseline](../../ARCHITECTURE-BASELINE.md)
+provide the proposed direction package. Its [review brief](../reviews/architecture-direction-review.md)
+retains pending outcomes; the [scope review memo](../reviews/hld-stage-scope-review.md)
+explains why detailed mechanisms were removed from that review's commitments.
+
+Earlier detailed contracts, rationale and rejected alternatives remain available
+at the immutable [prior Baseline](https://github.com/davidlinnnn/data-ingestion/blob/babda22bfc0eeb06bed5a6af7d94717f648c5265/ARCHITECTURE-BASELINE.md),
+[prior glossary](https://github.com/davidlinnnn/data-ingestion/blob/babda22bfc0eeb06bed5a6af7d94717f648c5265/CONTEXT.md),
+and [seed registrations](https://github.com/davidlinnnn/data-ingestion/blob/babda22bfc0eeb06bed5a6af7d94717f648c5265/docs/registries/foundation-seed-registrations.md).
+Their original normative wording applies to that historical candidate, not to
+undecided mechanisms in this map. The root [CONTEXT.md](../../CONTEXT.md) is the
+current glossary.
