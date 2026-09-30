@@ -24,6 +24,24 @@ This is not a recovery runtime result: coordinator/source projection, outer
 scope, terminal reconciliation and two-worker ledger export still need wiring
 and review before the first matched interruption is admitted.
 
+## RA1 matched recovery launch prepared
+
+Fresh identity `t09b-calibration-20260930-ra1`, prefix
+`t09b/calibration-20260930-ra1/`: one native group-5 trial, one process drain
+after 10 durable pages while the next group is active, no automatic retry.
+`recovery_window.py` composes the existing attribution/cancellation hooks with
+the reviewed trial, checks the full uninterrupted native reference, and records
+injection-to-business-completion time. Both worker generations' ledgers,
+summaries, cleanup markers and recovery proof are required in terminal export.
+`qualify_recovery.py` retains the normal output/resource/traffic/cleanup gates
+and aggregates storage denominators across generations instead of double-counting
+the same object. Historical Q04 files are unchanged.
+
+The prepared inactive topology and full offline launch pass. All 50 local tests
+pass in 8.64 seconds, including actual projected coordinator imports and the
+two-generation read amplification regression. Code review and fresh cluster
+admission precede runtime; this preparation is not a recovery pass.
+
 ## Latest controlled result: B5 group-10 diagnostic passed
 
 See `b5-evidence/RESULTS.md`. B5 completed all five exact-output workflows,

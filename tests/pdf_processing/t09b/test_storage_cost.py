@@ -2,11 +2,32 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from storage_cost import summarize
+from storage_cost import summarize, summarize_ledgers
 from storage_ledger import Ledger
 
 
 class StorageCostTest(unittest.TestCase):
+    def test_same_payload_read_across_worker_replacement_counts_once_in_denominator(self):
+        with tempfile.TemporaryDirectory() as directory:
+            paths = []
+            for generation in (1, 2):
+                path = Path(directory) / f'worker-{generation}.jsonl'
+                paths.append(path)
+                ledger = Ledger(path)
+                row = dict(request_id='request', activity_id='group', attempt=generation,
+                           role='workload', sdk_retries=0, transport_bytes=None,
+                           call_id=str(generation), operation='get_object', key='p/source',
+                           delivered_bytes=10, peak_read_chunk_bytes=10, outcome='read_complete')
+                ledger.start(row)
+                ledger(row)
+                ledger.close()
+            result = summarize_ledgers(paths)['requests'][0]
+            self.assertEqual(result['read_payload_bytes'], 20)
+            self.assertEqual(result['unique_read_payload_bytes'], 10)
+            self.assertEqual(result['read_amplification'], 2)
+            with self.assertRaisesRegex(ValueError, 'complete storage ledger'):
+                summarize_ledgers([])
+
     def test_payload_amplification_and_buffer_peak(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'storage.jsonl'

@@ -44,11 +44,26 @@ class ProjectionTest(unittest.TestCase):
             child_env = dict(env, PYTHONPATH=os.pathsep.join(str(projected / path) for path in (
                 'src', 'tests/pdf_processing/q04', 'tests/pdf_processing/q02',
                 'tests/pdf_processing/q03')))
-            for name in (f'pod_workload_{slot}.py', f'pod_preflight_{slot}.py'):
+            names = [f'pod_workload_{slot}.py', f'pod_preflight_{slot}.py']
+            if slot == 'ra1':
+                names.append('recovery_window.py')
+            for name in names:
                 result = subprocess.run([sys.executable, '-B',
                                          str(projected / 'tests/pdf_processing/t09b' / name), '--help'],
                                         env=child_env, cwd='/', capture_output=True, text=True, timeout=20)
                 self.assertEqual(result.returncode, 0, result.stderr)
+            if slot == 'ra1':
+                script = (
+                    'import sys; from pathlib import Path; '
+                    f'sys.path.insert(0, {str(projected / "tests/pdf_processing/t09b")!r}); '
+                    'import pod_remote_evidence_ra1 as r; import recovery_window as w; '
+                    'from recovery_trial import Run; '
+                    'assert w.AttributedRecoveryRun.trial is Run.trial; '
+                    'assert all(f"state/{r.PHASE}/worker-{i}/storage.jsonl" in r.base.FINAL_REQUIRED for i in (1,2)); '
+                    'assert not any("warm-proof" in path for path in r.base.FINAL_REQUIRED)'
+                )
+                subprocess.run([sys.executable, '-B', '-c', script], env=child_env,
+                               cwd='/', check=True, capture_output=True, text=True, timeout=20)
 
     def test_a8_wrappers_run_in_the_projected_workspace(self):
         self._assert_projected_baseline('a8')
@@ -64,6 +79,9 @@ class ProjectionTest(unittest.TestCase):
 
     def test_a12_wrappers_run_in_the_projected_workspace(self):
         self._assert_projected_baseline('a12')
+
+    def test_ra1_recovery_runs_in_the_projected_workspace(self):
+        self._assert_projected_baseline('ra1')
 
     def _assert_projected_candidate(self, slot):
         here = Path(__file__).resolve().parent

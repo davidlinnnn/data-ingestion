@@ -5,13 +5,18 @@ from storage_ledger import reconcile
 
 
 def summarize(path):
-    ledger = reconcile(path)
-    if not ledger['complete']:
+    return summarize_ledgers([path])
+
+
+def summarize_ledgers(paths):
+    ledgers = [reconcile(path) for path in paths]
+    if not ledgers or any(not ledger['complete'] for ledger in ledgers):
         raise ValueError('complete storage ledger required')
     requests = defaultdict(list)
-    for row in ledger['events']:
-        if row['role'] == 'workload':
-            requests[row['request_id']].append(row)
+    for ledger in ledgers:
+        for row in ledger['events']:
+            if row['role'] == 'workload':
+                requests[row['request_id']].append(row)
     result = []
     for request_id, rows in sorted(requests.items()):
         gets = [row for row in rows if row['operation'] == 'get_object'
