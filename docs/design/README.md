@@ -13,8 +13,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
 - [Independent spike](../reviews/knowledge-platform-overall-spike-2026-09-28.md):
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
-Storage selections, detailed APIs and source-handoff proposals remain open. This
-checkpoint records progress and does not constitute an implementation-ready spec.
+[Captured-source handoff](knowledge-platform-source-handoff.md) records the
+confirmed Q1–Q3 decisions and the remaining interview frontier. Storage selections,
+detailed APIs and the rest of source-handoff design remain open. This checkpoint
+records progress and does not constitute an implementation-ready spec.
 Decision details remain in the linked issues; the map remains their index.
 
 ## Earlier direction and candidate history

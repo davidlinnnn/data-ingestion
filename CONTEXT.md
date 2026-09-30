@@ -40,8 +40,9 @@ _Avoid_: Asset, individual document
 
 **Asset**:
 A logical knowledge object discovered through a Source, such as an SOP or a
-business record, whose content can change over time.
-_Avoid_: Source, current file bytes
+business record, whose content can change over time. Its identity is distinct
+from its name, physical location, and current file bytes.
+_Avoid_: Source, current file bytes, filename, storage location
 
 **Corpus**:
 A platform-managed logical collection of Assets that defines a reusable knowledge

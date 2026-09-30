@@ -27,9 +27,10 @@ Use [CONTEXT.md](../../CONTEXT.md) for domain definitions.
 keeps confirmed target contracts authoritative. Workflow/API differences become
 versioned implementation migration or integration work with affected validation.
 Measured PDF resource configurations inform the operating-envelope decision only
-within their qualified scope. Source-handoff Q1–Q3 remain proposals awaiting the
-user's answers in [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5865850701);
-this checkpoint does not approve them.
+within their qualified scope. Source-handoff Q1–Q3 were subsequently
+[confirmed on 2026-09-30](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124): delegated Source submission, stable logical Asset identity, and fixed captured inputs with accountable custody before durable admission.
+The [source-handoff design](knowledge-platform-source-handoff.md) records their
+scope and remaining questions; the full source-handoff ticket remains open.
 
 ## Confirmed design inputs
 
