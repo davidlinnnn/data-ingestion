@@ -78,10 +78,18 @@ def verify_drain(root, manifest):
                  'recovery workflow not complete')
     terminal = datetime.fromisoformat(history[-1]['eventTime'].replace('Z', '+00:00')).timestamp()
     before = load(target / 'before-drain.json')
+    stopped = load(root / 'worker-1/drain-signal.json')
+    base.require(before['time'] <= stopped['signal_requested_at']
+                 <= stopped['stopped_observed_at'] <= terminal,
+                 'recovery signal timing is not ordered')
     q04_runtime.write(target / 'recovery-cost.json', {
         'durable_pages': 10, 'retried_range': proof['retried_range'],
         'repeated_pages': size, 'retained_groups': len(proof['retained']),
-        'injection_to_business_complete_seconds': terminal - before['time'],
+        'drain_request_to_business_complete_seconds': terminal - before['time'],
+        'loss_to_business_complete_seconds_bounds': [
+            terminal - stopped['stopped_observed_at'],
+            terminal - stopped['signal_requested_at']],
+        'signal_timing': stopped,
         'scope': 'one measured worker-process drain; not a recovery distribution'})
 
 

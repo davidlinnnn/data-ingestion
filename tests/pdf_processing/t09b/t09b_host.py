@@ -38,7 +38,7 @@ class Host(BaseHost):
         if not identity.exists():
             identity = self.current / "ownership.json"
         ready = json.loads(identity.read_text())
-        script = '''import os,psutil,signal,sys,time
+        script = '''import json,os,psutil,signal,sys,time
 pid,parent,sig,child,start_ticks=int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5])
 p=psutil.Process(parent)
 raw=open(f'/proc/{parent}/stat').read()
@@ -47,12 +47,14 @@ assert observed==start_ticks,f'worker identity changed: expected start_ticks {st
 assert any('t09b/worker.py' in x for x in p.cmdline()),'worker command identity changed'
 t=psutil.Process(pid)
 assert (pid==parent and not child) or (child and parent in [a.pid for a in t.parents()] and 'pdf_processing.warm_child' in t.cmdline()),'signal target is not owned'
+signal_requested_at=time.time()
 os.kill(pid,sig)
 if sig==signal.SIGSTOP:
  deadline=time.monotonic()+3
  while t.status()!=psutil.STATUS_STOPPED:
   assert time.monotonic()<deadline
   time.sleep(.02)
+ print(json.dumps({'pid':pid,'signal_requested_at':signal_requested_at,'stopped_observed_at':time.time()}))
 '''
         command = [self.config["python"], "-c", script, str(pid), str(ready["pid"]),
                    str(sig), str(int(child)), str(ready["start_ticks"])]
@@ -62,7 +64,13 @@ if sig==signal.SIGSTOP:
                     "Pod identity changed")
             command = ["kubectl", "-n", self.config["pod_namespace"], "exec",
                        self.pod["metadata"]["name"], "--", *command]
-        checked_helper(command, 20)
+        output = checked_helper(command, 20)
+        if sig == signal.SIGSTOP:
+            marker = json.loads(output)
+            require(marker['pid'] == pid
+                    and marker['stopped_observed_at'] >= marker['signal_requested_at'],
+                    'drain signal timing identity changed')
+            (self.current / 'drain-signal.json').write_text(json.dumps(marker, indent=2) + '\n')
 
     def force_stop(self):
         ready = json.loads((self.current / "ownership.json").read_text())

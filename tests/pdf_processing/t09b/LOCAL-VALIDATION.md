@@ -31,7 +31,8 @@ Fresh identity `t09b-calibration-20260930-ra1`, prefix
 after 10 durable pages while the next group is active, no automatic retry.
 `recovery_window.py` composes the existing attribution/cancellation hooks with
 the reviewed trial, checks the full uninterrupted native reference, and records
-injection-to-business-completion time. Both worker generations' ledgers,
+drain-request time and a loss-to-business-completion interval bounded by
+the actual SIGSTOP syscall request and observed stopped state. Both worker generations' ledgers,
 summaries, cleanup markers and recovery proof are required in terminal export.
 `qualify_recovery.py` retains the normal output/resource/traffic/cleanup gates
 and aggregates storage denominators across generations instead of double-counting
@@ -41,6 +42,11 @@ The prepared inactive topology and full offline launch pass. All 50 local tests
 pass in 8.64 seconds, including actual projected coordinator imports and the
 two-generation read amplification regression. Code review and fresh cluster
 admission precede runtime; this preparation is not a recovery pass.
+
+Review corrected the initial drain-request timestamp label before runtime:
+the actual signal helper now records ordered signal/stopped timestamps in
+`worker-1/drain-signal.json`, which terminal export requires. The affected
+host/projection/recovery tests pass (8 tests); the offline manifest was refreshed.
 
 ## Latest controlled result: B5 group-10 diagnostic passed
 

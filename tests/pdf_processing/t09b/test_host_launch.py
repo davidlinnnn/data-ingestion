@@ -46,6 +46,17 @@ class HostTest(unittest.TestCase):
                 self.assertIn("/proc/{parent}/stat", script)
                 self.assertEqual(send.call_args.args[0][-1], '456')
                 self.assertNotIn('q04/worker_bc.py', script)
+                send.return_value.stdout = json.dumps({
+                    'pid': 124, 'signal_requested_at': 10, 'stopped_observed_at': 11})
+                with patch.object(module.subprocess, 'run', send):
+                    host.signal(124, signal.SIGSTOP, child=True)
+                self.assertEqual(json.loads((host.current/'drain-signal.json').read_text()), {
+                    'pid': 124, 'signal_requested_at': 10, 'stopped_observed_at': 11})
+                send.return_value.stdout = json.dumps({
+                    'pid': 124, 'signal_requested_at': 12, 'stopped_observed_at': 11})
+                with patch.object(module.subprocess, 'run', send):
+                    with self.assertRaisesRegex(ValueError, 'timing identity'):
+                        host.signal(124, signal.SIGSTOP, child=True)
                 send.reset_mock()
                 send.return_value.stdout = '{}'
                 with patch.object(module.subprocess, 'run', send):

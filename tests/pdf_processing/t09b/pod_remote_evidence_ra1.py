@@ -11,3 +11,4 @@ for generation in (1, 2):
     base.FINAL_REQUIRED.update((ledger, f'state/{PHASE}/worker-{generation}/storage-summary.json'))
 base.FINAL_REQUIRED.update({f'state/{PHASE}/drain-native/{name}' for name in ('result.json','document.json','checks.json','recovery-cost.json','replacement-vm.json')})
 IncrementalEvidenceMirror.finalize = inherited._failure_aware_finalize()
+base.FINAL_REQUIRED.add(f'state/{PHASE}/worker-1/drain-signal.json')
