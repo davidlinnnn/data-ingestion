@@ -10,6 +10,20 @@ The six counted matched cells now also retain complete Temporal queue/Activity
 timing reports, including every required OCR Activity. The timing summarizer's
 focused regression passes and rejects retries in normal-path statistics.
 
+The next matched recovery trial now has a local adapter in `recovery_trial.py`.
+It reuses Q04's complete trial/cancellation path without editing historical Q04
+files, waits for 10 durable pages and the next active group, and checks exact
+retained operations and attempt-2 ranges 11–15 (group 5) / 11–20 (group 10).
+Its replacement loop records node PSI under the existing A4 runtime telemetry
+policy while retaining OOM, memory floor and replacement deadline checks.
+The actual async trial hook is exercised locally: restoring the old first-group
+comparison fails with query count 1 instead of 2 (premature drain). The fixed
+hook and complete T09b suite pass: 46 tests in 7.94 seconds, using the existing
+`/private/tmp/t09b-sdk-venv/bin/python` and repo `src` on PYTHONPATH.
+This is not a recovery runtime result: coordinator/source projection, outer
+scope, terminal reconciliation and two-worker ledger export still need wiring
+and review before the first matched interruption is admitted.
+
 ## Latest controlled result: B5 group-10 diagnostic passed
 
 See `b5-evidence/RESULTS.md`. B5 completed all five exact-output workflows,
