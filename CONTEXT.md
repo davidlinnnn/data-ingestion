@@ -55,6 +55,11 @@ A captured observation of an Asset at a particular source version or observation
 point.
 _Avoid_: current source state
 
+**Capture Package**:
+The finite set of captured source artifacts comprising a main document and its
+explicitly declared dependencies required for interpretation.
+_Avoid_: ingestion batch, arbitrary collection of hyperlinks
+
 **Canonicalization**:
 The interpretation and normalization of source observations into a reusable
 representation with attributable evidence and processing origin.

@@ -4,7 +4,8 @@
 
 **Status:** partial decisions confirmed on 2026-09-30; the source-handoff design is
 still open. This document assembles the implications of the
-[Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) in
+[Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
+[Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -20,7 +21,8 @@ this does not prescribe separate services or a management UI. Upload authority
 does not grant authority to broaden the source audience. A delegated llmwiki client
 does not become the original Source Owner simply by forwarding files.
 
-The initial actual collection and responsible roles remain to be confirmed.
+Q7 below selects the initial team/collection direction and responsible roles;
+actual identities and delegation grants must be bound during adoption.
 
 ### Q2 — Stable logical Asset identity
 
@@ -49,17 +51,40 @@ URL, or fetching latest only when execution begins does not establish that guara
 The boundary does not require synchronous parsing/OCR and does not mean Canonical
 Acceptance. Exact custody duration/release and withdrawal/purge handling remain open.
 
+### Q6 — Finite capture packages
+
+A Capture Package comprises the main document and explicitly declared dependencies
+required to interpret it. All included artifacts have fixed versions and integrity
+information under the Q3 custody guarantee. A self-contained PDF/PPTX may be one
+file; Markdown with required relative images includes those images. Ordinary
+hyperlinks remain references, without automatic recursive acquisition. Package
+representation, missing-dependency outcomes and shared-attachment lifecycle remain
+open.
+
+### Q7 — Initial team and document collection
+
+Start with the engineering team responsible for the Knowledge Platform and a
+controlled collection of technical/operations documents it maintains and is
+allowed to ingest. The document-owning role retains content/publication
+accountability. Capture/submission is delegated to an authorized program or
+operating role. The designated data-access role supplies/confirms source policy;
+platform operation alone does not confer that authority. This selects the pilot
+boundary and roles, not named-person assignments or already-provisioned grants.
+
+Make the document inventory and concrete identity/delegation bindings explicit
+for adoption. Numeric workload, concurrency and resource targets remain with
+[Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54).
+
 ## Next frontier — proposed, not confirmed
 
 The [decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) preserves the next-round recommendations.
-Await user answers before adopting these choices or proceeding into dependent details.
+Q6/Q7 have since been confirmed above. Q4/Q5 remain under clarification; await
+user answers before adopting their choices or proceeding into dependent details.
 
 | Question | Decision to resolve |
 |---|---|
 | Q4 | Captured-observation identity versus redelivery, a new source observation and method-only processing requests |
 | Q5 | Attributable policy evidence, registered delegation, supported semantics and behavior when authority cannot be established |
-| Q6 | Fixed capture packages: a main file plus declared required dependencies versus ordinary hyperlinks |
-| Q7 | The actual first team/document collection and accountable content, submission and policy roles |
 
 Subsequent branches include source-change ordering, metadata and policy changes,
 confirmed deletion versus withdrawal, custody release, and reviewed PDF, Markdown
