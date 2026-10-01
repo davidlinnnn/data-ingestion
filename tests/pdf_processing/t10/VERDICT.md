@@ -47,7 +47,8 @@ registrations, 370 registered artifacts and 45,581 orphan bytes. Its 1GiB test
 threshold is not exceeded. It is a non-atomic current-version prefix inventory;
 historical versions and physical disk capacity are excluded. The retained PVC
 declares 2GiB; that request does not establish a filesystem quota or free capacity.
-The adopted references checked after restart number 22 synthetic / 45 reviewed.
+Worker restart verification checked 22 synthetic adopted references. Store restart
+verification checked 19 synthetic and 45 reviewed adopted references.
 
 This is interaction verification, not the #45 sustained 825-second calibration
 window, a platform pressure test or a production capacity certification. All
