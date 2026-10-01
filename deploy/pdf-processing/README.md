@@ -1,5 +1,12 @@
 # Native PDF processing workers
 
+For the selected #45 group5/single-parser deployment, use the
+[T10 runbook](RUNBOOK.md), `release.py`, `profiles/selected-native-v1.json` and
+[integration handoff](HANDOFF.md). The renderer freezes explicit stage queues in
+one serial Activity process and starts both Deployments at zero replicas. The
+initial settings and `workers.yaml` below are retained historical examples, not
+the selected release configuration. See `tests/pdf_processing/t10/VERDICT.md`.
+
 The core retains v1 `parsed_ready`, v2 required picture OCR completion, and v3
 required source-evidence completion. All successful results keep canonical
 acceptance false. New rollout-managed work uses the [explicit release routing
