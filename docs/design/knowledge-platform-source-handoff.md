@@ -168,30 +168,46 @@ normal admission until corrected; problems discovered after admission produce an
 explicit failure rather than silently complete output. Detailed package/image
 schemas remain open.
 
-The [attachment-transport clarification](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953922681)
-adds the following **proposal, not an accepted API or scope change**. API requests
-should carry a finite attachment manifest and governed object references rather
-than require all bytes inline. Bind document-relative references to exact stored
-objects/versions, integrity information and attributable Source/policy context.
-For the internal pilot, prefer one registered S3-compatible source connection with
-scoped platform read authority. Reference that connection rather than pass personal
-or broad long-lived credentials in each job. A provider-issued, version-bound
-presigned GET URL is another candidate; do not require both mechanisms initially.
-Storage-read permission does not establish employee reader authorization.
+The initial [attachment-transport proposal](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953922681)
+preferred a registered source-storage connection. Following the user's concern
+about onboarding independent Source Owners, the
+[revised recommendation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5955412525)
+**supersedes that unaccepted default; Q9 remains unconfirmed**. The
+[cloud-practice evidence](../research/attachment-handoff-cloud-practices-2026-10-02.md)
+separates official AWS/GCP mechanics from this platform recommendation.
 
-Recommend platform input preparation for the finite, explicitly submitted objects:
-retrieve/verify and establish platform custody, or validate approved equivalent
-custody without another copy. Temporary access must last through retrieval or be
-renewable for the same bound version; otherwise preparation fails explicitly.
-The access URL is neither durable object identity nor a retention guarantee.
-Preparation may be asynchronous, but acknowledging its task must be distinct from
-accepting ready inputs for processing. Public endpoints/status and any HTTP `202`
-contract change remain admission design; Q3 is not silently weakened.
+Prefer platform-issued direct-upload authorization as the general handoff path.
+An authorized submitter requests a bounded upload session; the platform grants
+access to assigned object locations in platform-controlled storage. The provider
+transfers bytes directly to storage and submits the document/attachment manifest.
+The platform verifies completeness, exact stored versions, integrity and custody
+before processing admission. This avoids per-provider storage credentials and
+proxying all bytes through the application API. Source registration, delegated
+submission and trustworthy reader policy remain required; self-service onboarding
+must still establish those authorities.
 
-Limit capture to approved source locations and declared dependencies; this does
-not introduce recursive crawling, source synchronization or general live connectors.
-Large video objects illustrate transport needs, not a promise of video processing.
-Supported artifact types and size/cost limits remain explicit design work. Required
+Provider-issued, version-bound signed GET URLs are an optional bounded import path.
+They avoid storing broad long-lived provider credentials, but require permitted
+network reachability, bounded fetch validation/authorization and a clear expiration
+or same-version reissue outcome. A signed URL is neither durable artifact identity
+nor a retention/reader-policy guarantee. Persistent cross-account/federated access
+remains an opt-in integration for ongoing acquisition or approved source-side
+custody; it still needs trust/resource grants and does not become a prerequisite
+for every submission. Admission design selects the pilot's needed mechanisms;
+do not require multiple adapters merely for symmetry.
+
+Upload/import session creation is distinct from accepting ready processing inputs.
+Finalize only after the platform verifies required artifacts and binds exact
+object versions/generations or equivalent immutability with accountable custody.
+A caller's completion notification or an object-created event alone is insufficient.
+Do not assume an upload URL is one-use or that later writes cannot change its key.
+Public endpoints/status, finalization atomicity and any HTTP `202` changes remain
+admission design; the confirmed Q3 processing-admission guarantee is preserved.
+
+All supported paths converge on the same fixed Capture Package. This proposal does
+not select a cloud vendor or introduce recursive crawling/general live connectors.
+Video objects illustrate transport needs, not a promise of video processing.
+Supported types, size/cost limits and cleanup remain explicit design work. Required
 image and missing-dependency rules above still await the user's Q9 answer.
 
 Subsequent branches include change ordering and policy freshness, custody release,
