@@ -9,7 +9,7 @@ from pdf_processing.processing import Processing, encoded
 from pdf_processing.enrichment import Enrichment
 from pdf_processing.relationships import build, POLICY
 from pdf_processing.object_store import Store, digest
-from fixtures import document, policy, mutate, FAILURES, SOURCE
+from fixtures import document, policy, mutate, FAILURES, SOURCE, SOURCE_PDF
 
 
 class MemoryS3:
@@ -77,7 +77,7 @@ class Publication(unittest.IsolatedAsyncioTestCase):
                 content['pages'][n] = {'artifact': f'page-{n}.png', 'sha256': digest(data)}
             if case == 'wrong_document_digest': content['document_sha256'] = digest(encoded(doc))
             files['content-evidence.json'] = encoded(content)
-            source = __import__('pathlib').Path('/private/tmp/t09a-fixtures/08.pdf').read_bytes()
+            source = SOURCE_PDF.read_bytes()
             self.assertEqual(digest(source), SOURCE)
             files['source.pdf'] = source
             if case == 'missing_output': del files['relationships.json']

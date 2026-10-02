@@ -13,9 +13,9 @@ from q03_fixtures import profile, ROOT
 from delivery import REQUEST, serialized_document
 
 class Q03Compatibility(unittest.TestCase):
-    def test_actual_baseline_to_q03_dependency_impact(self):
+    def test_retained_baseline_to_q03_dependency_impact(self):
         baseline = json.loads((ROOT.parent/'q01_q02/evidence/runtime-20260916/summary.json').read_text())['cases'][0]['producer']
-        current = {p.name: digest(p.read_bytes()) for p in (ROOT.parents[2]/'src/pdf_processing').glob('*.py')}
+        current = json.loads((ROOT/'evidence/producer.json').read_text())['producer']
         prof = profile()
         prof['method'].update(format='PROTOTYPE-page-v1', option_types={})
         before = copy.deepcopy(prof)
@@ -24,6 +24,27 @@ class Q03Compatibility(unittest.TestCase):
             self.assertEqual(dependencies(stage, before, baseline), dependencies(stage, prof, current))
         for stage in ('selection', 'ocr', 'evidence', 'finalize'):
             self.assertNotEqual(dependencies(stage, before, baseline), dependencies(stage, prof, current))
+        changed = copy.deepcopy(prof)
+        changed['content_evidence']['relationships']['representation']['reviews'][2]['isolated_symbols'][0]['disposition'] = 'release_gate'
+        for stage in ('group', 'assembly', 'selection', 'ocr'):
+            self.assertEqual(dependencies(stage, prof, current), dependencies(stage, changed, current))
+        for stage in ('evidence', 'finalize'):
+            self.assertNotEqual(dependencies(stage, prof, current), dependencies(stage, changed, current))
+
+    def test_current_continuation_invalidates_group_and_assembly(self):
+        current = {p.name: digest(p.read_bytes()) for p in (ROOT.parents[2]/'src/pdf_processing').glob('*.py')}
+        prof = profile()
+        prof['method'].update(format='PROTOTYPE-page-v1', option_types={})
+        changed = dict(current, **{'continuation.py': 'changed-continuation'})
+        for stage in ('group', 'assembly'):
+            self.assertNotEqual(dependencies(stage, prof, current), dependencies(stage, prof, changed))
+        for stage in ('selection', 'ocr', 'evidence', 'finalize'):
+            self.assertEqual(dependencies(stage, prof, current), dependencies(stage, prof, changed))
+
+    def test_current_representation_change_reuses_parser_stages(self):
+        current = {p.name: digest(p.read_bytes()) for p in (ROOT.parents[2]/'src/pdf_processing').glob('*.py')}
+        prof = profile()
+        prof['method'].update(format='PROTOTYPE-page-v1', option_types={})
         changed = copy.deepcopy(prof)
         changed['content_evidence']['relationships']['representation']['reviews'][2]['isolated_symbols'][0]['disposition'] = 'release_gate'
         for stage in ('group', 'assembly', 'selection', 'ocr'):

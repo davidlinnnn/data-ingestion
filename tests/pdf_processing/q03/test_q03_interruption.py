@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from delivery import serialized_document
-from fixtures import SOURCE
+from fixtures import SOURCE, SOURCE_PDF
 from test_publication import MemoryS3, seed
 from q03_fixtures import profile
 from pdf_processing.processing import Processing, encoded
@@ -34,7 +34,7 @@ class InterruptedEvidence(unittest.IsolatedAsyncioTestCase):
         store = Store(client or ListingMemoryS3(), 'test', 'q03-interruption')
         prof = profile()
         prof['method']['packages']['pypdfium2'] = importlib.metadata.version('pypdfium2')
-        source = Path('/private/tmp/t09a-fixtures/08.pdf').read_bytes()
+        source = SOURCE_PDF.read_bytes()
         self.assertEqual(digest(source), SOURCE)
         key = store.prefix+'sources/source.pdf'
         store.client.put_object(Bucket=store.bucket, Key=key, Body=source)
