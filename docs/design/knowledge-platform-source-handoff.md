@@ -2,12 +2,13 @@
 
 [Design index](README.md) · [Confirmed overall logical baseline](knowledge-platform-logical-design.md)
 
-**Status:** Q1–Q7 confirmed on 2026-09-30; the complete source-handoff design
-remains open. This document assembles the implications of the
+**Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02.
+Q9 and the remaining detailed source-handoff design are open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
 [Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
-[Q5 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133) in
+[Q5 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133), and
+[Q8/Q10 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -117,17 +118,55 @@ Make the document inventory and concrete identity/delegation bindings explicit
 for adoption. Numeric workload, concurrency and resource targets remain with
 [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54).
 
+### Q8 — Explicit lifecycle changes from the controlled source
+
+The accountable source/data role or an appropriately delegated program explicitly
+submits captured content updates, platform-catalog display metadata changes,
+reader-policy changes, confirmed source deletion and withdrawal through a
+controlled interface. Each operation needs appropriate authority; submission
+permission does not imply authority over all lifecycle operations.
+
+Catalog-only display names/notes do not inherently re-run parsing/OCR. Policy
+changes affect eligibility and dependent serving without requiring content
+re-parsing. Confirmed deletion/withdrawal invokes urgent stop-disclosure handling
+for its declared scope without waiting for ordinary rebuilding. Fetch failure or
+omission from a batch does not establish source deletion. Ordering, acknowledgements,
+recovery, missed-change detection and policy freshness remain detailed work.
+
+### Q10 — Governed retention of original captured inputs
+
+Keep original Capture Packages for applicable reprocessing and evidence obligations;
+completion of the first parse is not by itself a cleanup trigger. Processing
+intermediates have a separate cleanup lifecycle. Accountable custody covers the
+processing/acceptance handoff and protects adopted dependencies. Retention/deletion
+follows explicit policy and applicable erasure obligations; this does not promise
+indefinite retention. Approved equivalent custody can avoid another byte copy.
+Exact durations, resource costs and cleanup/purge/reference-protection mechanisms
+remain with operating-envelope, persistence and governance design.
+
 ## Next frontier — proposed, not confirmed
 
-The [Q5 confirmation and next-round record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133) distinguishes the accepted
-trust rule from the following recommendations. Await user answers before adopting
-them or proceeding into dependent details.
+The [Q8/Q10 confirmation and Markdown-image clarification](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014) records the
+accepted decisions and the remaining Q9 proposal. Q9 is not yet confirmed.
 
 | Question | Decision to resolve |
 |---|---|
-| Q8 | Explicit controlled-source delivery of content, catalog metadata, policy, confirmed deletion and withdrawal changes, with appropriate operation authority |
-| Q9 | Required-package dependency failures, admission timing and whether to support partial source packages in the first slice |
-| Q10 | Retaining captured input for applicable reprocessing/evidence obligations after initial processing, distinct from intermediate cleanup |
+| Q9 | Which image references declare required capture dependencies, required-package failures and whether to allow partial source packages |
+
+For Q9, recommend treating image references used as actual Markdown document
+content as required dependencies by default. Authorized capture resolves and fixes
+needed bytes before normal durable processing admission, or validates already
+supplied bytes. Ordinary text hyperlinks remain references. Canonical processing
+consumes the fixed package and preserves image/document relationships, original
+source references and durable artifact/evidence bindings. Governed artifact custody
+can retain the bytes without placing them in the metadata DB or fetching the live
+URL again. OCR/image understanding follows the selected attributable profile; a
+required enrichment must complete before processing success.
+
+The missing-dependency rule is still a proposal: known required-image gaps prevent
+normal admission until corrected; problems discovered after admission produce an
+explicit failure rather than silently complete output. Detailed package/image
+schemas remain open.
 
 Subsequent branches include change ordering and policy freshness, custody release,
 concrete package validation, and reviewed PDF, Markdown and PPTX examples. Format
