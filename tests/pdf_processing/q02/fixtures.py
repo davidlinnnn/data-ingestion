@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 BASELINE = Path(os.environ.get('Q02_BASELINE', '/private/tmp/aima-p2-main-recheck-20260915/baseline-document.json'))
+SOURCE_PDF = Path(os.environ.get('Q02_SOURCE_PDF', '/private/tmp/t09a-fixtures/08.pdf'))
 SOURCE = 'b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980'
 
 
