@@ -1,0 +1,329 @@
+{
+  "base_commit": "cf29cae13b5b84a0f859ac35e2586427e7d1a24b",
+  "image": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+  "base_image_digest": "sha256:8ffaac39462e87d281274f92e4fa290aa905a054d40692646f1d3d42490f1ee0",
+  "image_transport": "verified cached classic Docker build and kind/containerd import; registry distribution not qualified",
+  "image_source_hashes": {
+    "bootstrap.py": "37fd10ba2638a06f1ffd72fd83fec757c9bfeb5ab53bc5c25d93f8822fc5ba5d",
+    "manage.py": "e1ecb1ea6a951707f82f5105e75a579923f321f73473f5fa771a5561c4d29578",
+    "pdf_processing/__init__.py": "0618cd3d1c2dcb31f3d55be51482527ae8b04da932147c6d3a247a2921352712",
+    "pdf_processing/compatibility.py": "f6a797649cf825683f11463ec846498bd1e3a2bba62bd5ee52cdcab26f1c0a6c",
+    "pdf_processing/continuation.py": "ab5f1bb51b86c1cd8966c645e6e96df839c86460ce265be079451530402935ed",
+    "pdf_processing/enrichment.py": "f95d0ac8ca62a76bca8f03c1ee0fcea05f55957eea7cbc289dfd49271f1cca4b",
+    "pdf_processing/evidence.py": "d9156c232112f5511880468d6767c1e34da8e105b3cc9eed6c9ce2233a26f2bc",
+    "pdf_processing/execution.py": "934d1a4062e3aadb810a44acfa45ff5436ec9fac6b53160ade808d611a63c4ff",
+    "pdf_processing/lifecycle_child.py": "8d7c63e3f02cc1ab759fba230c8c3527a1593a335a537231363b8bb6a3a8faf1",
+    "pdf_processing/object_store.py": "22d6d25d9e037d622aa7c681451d37543276287076f4bdef2f5fdcc50a2ce907",
+    "pdf_processing/ocr.py": "23b0fdc64b3764d437a16b84cfad68604db7e5fef50e390f4d5289097f574e65",
+    "pdf_processing/parse.py": "6b9f8f357ce48faac40ae4efbf68c9b11836e1a0efb2eb2b72cd349f93a02dbf",
+    "pdf_processing/preflight.py": "13f08bb6d335d9cc3f67ce7c762411eda69f8371136f2ffdf7a552cfcc7a1122",
+    "pdf_processing/processing.py": "f5bbf92b97c2b7a70dde895e4467f144d0fbfeeb5f5c68be8bd2f8d3fe5e6a25",
+    "pdf_processing/processing_workflow.py": "11b35c2d17e889447b1921d4bdece45ffe841b479d5d1c54f647b275ecb782c0",
+    "pdf_processing/relationship_method.py": "e37bf681fb7b4dedfdd7de05cf64d541120bf2b56a22032284c7eac63b34cf80",
+    "pdf_processing/relationships.py": "3d0db0a0aea2687e791380e365269fefb9ae4f0e60e9a53fec0c879a74378fc9",
+    "pdf_processing/rollout_workflow.py": "9e5af1af0659186f279d45e92c96ee46e84f7fd737394a1ed33edbb3ef07f8b6",
+    "pdf_processing/routed_activity.py": "bd69b51a52c2a48225149697091e34d6214225b794f8b82765737fc863b45944",
+    "pdf_processing/routing.py": "eeb6b8e6265e003b737c300a3a5f37461c6e0e24923282cda4a3319629ddd282",
+    "pdf_processing/supervision.py": "b332d722d475df7be5c1a8675e005eb13efbe94e355ef979b549d91e6d9e2790",
+    "pdf_processing/temporal.py": "5a3c5b2f5514ca7d793b6d69d0ed00c52b778dbe54e5af5f5b9a17c0d50beb12",
+    "pdf_processing/warm_child.py": "3e218a63ddffe8dfee8f5b1f7abf406ff88c387bb00ea91876b67a6f892c3e0e",
+    "profiles/selected-native-v1.json": "07e08585c51f1873dc87e29852b07329f0a1191c3cded625c9d04d89a6bb4f82",
+    "worker.py": "309d33e21ed408074306431ae195b32c0ce07a7bb2792573c1334116f9fc2221"
+  },
+  "producer_matches_accepted_43_44_45": true,
+  "accepted_producer_manifest": {
+    "path": "tests/pdf_processing/t09a_bounds/normal-topology-dh/first-window-evidence/runtime-source-manifest.json",
+    "sha256": "a0187d1cae70dc81309ff616b942c8493b3babf7bcd92bbf938b3dc1c74e3955"
+  },
+  "routes": {
+    "a": {
+      "binding": {
+        "limits": "8c026ff8e939871ce3ed12ebb3f6791d8e54dbc1223ac95053c35d570e0de548",
+        "models": "737c633d29fa855ee860d44c3b55e7400016d3b0685ae960d9c0be091ff135d6",
+        "producer": "12760b5a300c5f8d1b7989132240713fc2d6dac8e3e2ea18cda8f3aa0f895174",
+        "profile": "7d097ecae3a1489bd6d2d353cdca0c19174215cf3e8f2fa99f2c2b79deefd9f4",
+        "store": {
+          "bucket": "t09a",
+          "prefix": "t10/release-20261001-d/"
+        }
+      },
+      "contract": "pdf-explicit-routing-v1",
+      "id": "ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+      "images": {
+        "assembly": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "component_ocr": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "finalize": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "group": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "prepare": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "select": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "workflow": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924"
+      },
+      "prefix": "t10-core-a",
+      "queues": {
+        "assembly": "t10-core-a-assembly-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+        "component_ocr": "t10-core-a-component_ocr-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+        "finalize": "t10-core-a-finalize-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+        "group": "t10-core-a-group-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+        "prepare": "t10-core-a-prepare-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+        "select": "t10-core-a-select-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8",
+        "workflow": "t10-core-a-workflow-ea471c0a622d5b7cdaea07669d4eb01de750b36d436fd851a489e81d9dc002a8"
+      }
+    },
+    "b": {
+      "binding": {
+        "limits": "8c026ff8e939871ce3ed12ebb3f6791d8e54dbc1223ac95053c35d570e0de548",
+        "models": "737c633d29fa855ee860d44c3b55e7400016d3b0685ae960d9c0be091ff135d6",
+        "producer": "12760b5a300c5f8d1b7989132240713fc2d6dac8e3e2ea18cda8f3aa0f895174",
+        "profile": "02168ecd646eac55d04dde92eab04404bb4eda5f61665eafcb7658135864a54d",
+        "store": {
+          "bucket": "t09a",
+          "prefix": "t10/release-20261001-d/"
+        }
+      },
+      "contract": "pdf-explicit-routing-v1",
+      "id": "2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+      "images": {
+        "assembly": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "component_ocr": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "finalize": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "group": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "prepare": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "select": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924",
+        "workflow": "docker.io/library/pdf-t10-core@sha256:7f7ff771e4411544d43a9fd60c6b6c0e6b2280351373f7ed47f28fa849082924"
+      },
+      "prefix": "t10-core-b",
+      "queues": {
+        "assembly": "t10-core-b-assembly-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+        "component_ocr": "t10-core-b-component_ocr-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+        "finalize": "t10-core-b-finalize-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+        "group": "t10-core-b-group-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+        "prepare": "t10-core-b-prepare-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+        "select": "t10-core-b-select-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef",
+        "workflow": "t10-core-b-workflow-2a11603d348dc51604344fe13958a160dc8c550698f68324d4cef6383aef24ef"
+      }
+    }
+  },
+  "original_source_bootstrap": {
+    "retained_historical_reference": {
+      "b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980": {
+        "original_pages": {
+          "1": 99,
+          "10": 108,
+          "11": 109,
+          "12": 110,
+          "2": 100,
+          "3": 101,
+          "4": 102,
+          "5": 103,
+          "6": 104,
+          "7": 105,
+          "8": 106,
+          "9": 107
+        },
+        "regions": [
+          {
+            "bbox": {
+              "b": 441.7179832962793,
+              "coord_origin": "BOTTOMLEFT",
+              "l": 102.59889109000002,
+              "r": 506.4480413399997,
+              "t": 491.86177581015613
+            },
+            "id": "uniform-cost-symbols",
+            "kind": "representation",
+            "page": 6,
+            "reason": "S2 uniform-cost paragraph: source-font epsilon/dash representation unconfirmed; note associations source-backed"
+          }
+        ],
+        "scope": "T09a bounded source-reviewed regions; other content unreviewed",
+        "source_sha256": "b06c0b87e45b4fe37d3efa3797e6e978b9c884489ff7207fb220e958cfca0980",
+        "original_source": {
+          "artifact": {
+            "name": "original-08.pdf",
+            "key": "t09b/calibration-20260930-a12/sources/original-08.pdf",
+            "version_id": "eca7f5cb-d45d-40db-80b9-232284a2a49d",
+            "sha256": "0609d012bf123d210c3587d1c1610074f5079217a996299123a2f7872f28a8e9"
+          },
+          "source_revision": "Artificial Intelligence - A Modern Approach (3rd Edition).pdf"
+        }
+      }
+    },
+    "release_capture": {
+      "key": "t10/release-20261001-d/sources/b2dbd01a20e546a6a8e0c0a8545b7f1e/original-08.pdf",
+      "name": "original-08.pdf",
+      "sha256": "0609d012bf123d210c3587d1c1610074f5079217a996299123a2f7872f28a8e9",
+      "version_id": "f6f9799a-6245-4c2b-bbac-fc610f7d0d03"
+    },
+    "historical_bytes_deleted": false
+  },
+  "metrics": {
+    "d": {
+      "samples": 1024,
+      "maximum_gap_seconds": 0.26354241371154785,
+      "vm_minimum_available_bytes": 5818068992,
+      "worker_maximum_charged_bytes": 1751265280,
+      "maximum_worker_full_avg10": 0.0,
+      "maximum_parsers": 1,
+      "maximum_node_full_avg10": 0.36,
+      "vm_oom_delta": 0,
+      "observer_started": true,
+      "observer_ended": true
+    },
+    "e": {
+      "samples": 187,
+      "maximum_gap_seconds": 0.26160573959350586,
+      "vm_minimum_available_bytes": 5788786688,
+      "worker_maximum_charged_bytes": 1707421696,
+      "maximum_worker_full_avg10": 0.0,
+      "maximum_parsers": 1,
+      "maximum_node_full_avg10": 0.0,
+      "vm_oom_delta": 0,
+      "observer_started": true,
+      "observer_ended": true
+    },
+    "f": {
+      "samples": 198,
+      "maximum_gap_seconds": 0.263643741607666,
+      "vm_minimum_available_bytes": 5647552512,
+      "worker_maximum_charged_bytes": 1764216832,
+      "maximum_worker_full_avg10": 0.0,
+      "maximum_parsers": 1,
+      "maximum_node_full_avg10": 0.0,
+      "vm_oom_delta": 0,
+      "observer_started": true,
+      "observer_ended": true
+    },
+    "g": {
+      "samples": 104,
+      "maximum_gap_seconds": 0.26265907287597656,
+      "vm_minimum_available_bytes": 7245299712,
+      "worker_maximum_charged_bytes": 246280192,
+      "maximum_worker_full_avg10": 0.0,
+      "maximum_parsers": 0,
+      "maximum_node_full_avg10": 0.18,
+      "vm_oom_delta": 0,
+      "observer_started": true,
+      "observer_ended": true
+    },
+    "h": {
+      "samples": 60,
+      "maximum_gap_seconds": 0.25937438011169434,
+      "vm_minimum_available_bytes": 7562412032,
+      "worker_maximum_charged_bytes": 0,
+      "maximum_worker_full_avg10": 0,
+      "maximum_parsers": 0,
+      "maximum_node_full_avg10": 0.0,
+      "vm_oom_delta": 0,
+      "observer_started": true,
+      "observer_ended": true
+    }
+  },
+  "object_observers": {
+    "before_replacement": {
+      "samples": 7,
+      "max_memory_current": 1073414144,
+      "max_events_delta": 0,
+      "full_psi_delta_us": 682,
+      "identity": {
+        "pod_name": "objects-6bb8bb5d95-2dfl8",
+        "pod_uid": "b61dcfc5-3eef-45a3-bf4d-79135c8b456d",
+        "container_id": "57ca08aafd50444706d8feea636b6835c94950611ad723b7c2842e2cacea9664",
+        "memory_max": 1073741824,
+        "node": "internal-a2a-vs6-local-worker2"
+      }
+    },
+    "after_replacement": {
+      "samples": 50,
+      "max_memory_current": 196603904,
+      "max_events_delta": 0,
+      "full_psi_delta_us": 0,
+      "identity": {
+        "pod_name": "objects-6bb8bb5d95-6rqx8",
+        "pod_uid": "c18f5f09-8990-441c-b535-ba784fa42627",
+        "container_id": "afe820d9259ebf36d7a7b0ab7f7d1698398e81676ae3929c83ed1b195cc55467",
+        "memory_max": 1073741824,
+        "node": "internal-a2a-vs6-local-worker2"
+      }
+    }
+  },
+  "object_replacement": {
+    "old_uid": "b61dcfc5-3eef-45a3-bf4d-79135c8b456d",
+    "new_uid": "c18f5f09-8990-441c-b535-ba784fa42627",
+    "deployment_uid": "9e69720a-ff80-4aa5-9941-14925dfdf981",
+    "volumes": [
+      {
+        "name": "data",
+        "persistentVolumeClaim": {
+          "claimName": "object-data"
+        }
+      },
+      {
+        "name": "kube-api-access-k4nwd",
+        "projected": {
+          "defaultMode": 420,
+          "sources": [
+            {
+              "serviceAccountToken": {
+                "expirationSeconds": 3607,
+                "path": "token"
+              }
+            },
+            {
+              "configMap": {
+                "items": [
+                  {
+                    "key": "ca.crt",
+                    "path": "ca.crt"
+                  }
+                ],
+                "name": "kube-root-ca.crt"
+              }
+            },
+            {
+              "downwardAPI": {
+                "items": [
+                  {
+                    "fieldRef": {
+                      "apiVersion": "v1",
+                      "fieldPath": "metadata.namespace"
+                    },
+                    "path": "namespace"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "workers_quiescent": true
+  },
+  "object_replacement_bound": {
+    "seconds": 0.7691669999621809,
+    "bound_seconds": 120
+  },
+  "retained_pvc": {
+    "name": "object-data",
+    "namespace": "pdf-t09a-validation",
+    "uid": "ebd0ba41-443c-4971-859a-3b2ca8f5b1d4",
+    "creationTimestamp": "2026-09-13T13:47:53Z"
+  },
+  "final_cri_absence": [
+    {
+      "node": "internal-a2a-vs6-local-control-plane",
+      "owned_running_containers": []
+    },
+    {
+      "node": "internal-a2a-vs6-local-worker",
+      "owned_running_containers": []
+    },
+    {
+      "node": "internal-a2a-vs6-local-worker2",
+      "owned_running_containers": []
+    }
+  ],
+  "final_process_absence": {
+    "internal-a2a-vs6-local-worker": [],
+    "internal-a2a-vs6-local-worker2": []
+  }
+}
