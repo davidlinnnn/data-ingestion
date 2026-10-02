@@ -151,7 +151,7 @@ accepted decisions and the remaining Q9 proposal. Q9 is not yet confirmed.
 
 | Question | Decision to resolve |
 |---|---|
-| Q9 | Which image references declare required capture dependencies, required-package failures and whether to allow partial source packages |
+| Q9 | Required image dependencies, attachment-reference/capture handoff, required-package failures and whether to allow partial source packages |
 
 For Q9, recommend treating image references used as actual Markdown document
 content as required dependencies by default. Authorized capture resolves and fixes
@@ -167,6 +167,32 @@ The missing-dependency rule is still a proposal: known required-image gaps preve
 normal admission until corrected; problems discovered after admission produce an
 explicit failure rather than silently complete output. Detailed package/image
 schemas remain open.
+
+The [attachment-transport clarification](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953922681)
+adds the following **proposal, not an accepted API or scope change**. API requests
+should carry a finite attachment manifest and governed object references rather
+than require all bytes inline. Bind document-relative references to exact stored
+objects/versions, integrity information and attributable Source/policy context.
+For the internal pilot, prefer one registered S3-compatible source connection with
+scoped platform read authority. Reference that connection rather than pass personal
+or broad long-lived credentials in each job. A provider-issued, version-bound
+presigned GET URL is another candidate; do not require both mechanisms initially.
+Storage-read permission does not establish employee reader authorization.
+
+Recommend platform input preparation for the finite, explicitly submitted objects:
+retrieve/verify and establish platform custody, or validate approved equivalent
+custody without another copy. Temporary access must last through retrieval or be
+renewable for the same bound version; otherwise preparation fails explicitly.
+The access URL is neither durable object identity nor a retention guarantee.
+Preparation may be asynchronous, but acknowledging its task must be distinct from
+accepting ready inputs for processing. Public endpoints/status and any HTTP `202`
+contract change remain admission design; Q3 is not silently weakened.
+
+Limit capture to approved source locations and declared dependencies; this does
+not introduce recursive crawling, source synchronization or general live connectors.
+Large video objects illustrate transport needs, not a promise of video processing.
+Supported artifact types and size/cost limits remain explicit design work. Required
+image and missing-dependency rules above still await the user's Q9 answer.
 
 Subsequent branches include change ordering and policy freshness, custody release,
 concrete package validation, and reviewed PDF, Markdown and PPTX examples. Format
