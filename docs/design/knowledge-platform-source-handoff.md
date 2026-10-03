@@ -210,6 +210,45 @@ Video objects illustrate transport needs, not a promise of video processing.
 Supported types, size/cost limits and cleanup remain explicit design work. Required
 image and missing-dependency rules above still await the user's Q9 answer.
 
+The [final recommendation under the deployment premise](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966660481)
+incorporates the user's expectation that separate organizations may operate their
+own installations with heterogeneous sources and permissions. Possible Helm
+packaging is context, not a selected delivery contract. **This remains a proposal.**
+
+The reusable product boundary is the complete fixed Capture Package with
+attributable Source/Asset/revision identity and trusted reader-policy evidence.
+Acquisition transport, format interpretation and policy interpretation remain
+separate responsibilities. Canonical processing and projections consume governed
+inputs without acquiring source-specific credentials or refetching changing URLs.
+Prefer direct upload as the common entry; enable bounded signed-GET import where
+needed and permitted, and add connectors for demonstrated source integration needs.
+Already eligible artifacts in approved custody need no mandatory duplicate upload.
+
+Each deployment operator configures the installation's custody storage, platform
+identity/identity-provider integration, supported policy interpretation, network
+boundaries, secret references and resource/retention limits. Recommend managing
+Source registrations and delegated grants as governed application data, with
+self-service within verified authority, rather than editing Helm values or
+redeploying for each Source. Source Owner/policy authority retains content and
+audience accountability; a delegated provider/adapter performs capture or delivery;
+the platform verifies authority/readiness and enforces custody/current governance.
+These roles do not imply separate services or a generic plugin framework.
+
+Heterogeneous authorization cannot be assumed automatically interchangeable.
+Source integrations must preserve meaning in a supported policy contract; missing
+or unsupported required policy still rejects normal admission under Q5. Transport
+permission never substitutes for reader policy. Withdrawal/policy changes continue
+through the explicit lifecycle channel even after source credentials are revoked.
+
+Recommend one pilot-qualified custody backend and the direct-upload/finalization
+path for initial admission-scope review, retaining the fixed-reference processing
+seam. Add other acquisition mechanisms only for demonstrated needs. This is not a
+new implementation order or a change to the qualified PDF core. API/status and
+finalization atomicity, manifest/policy schemas, retention limits and deployment
+packaging remain detailed design; necessary implementation changes follow the map's
+versioned integration/migration checkpoints. Required Markdown dependencies and
+failure rules above remain part of Q9 awaiting explicit user confirmation.
+
 Subsequent branches include change ordering and policy freshness, custody release,
 concrete package validation, and reviewed PDF, Markdown and PPTX examples. Format
 design does not expand the PDF core's qualified support.
