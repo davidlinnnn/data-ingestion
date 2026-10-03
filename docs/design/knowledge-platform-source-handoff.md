@@ -246,6 +246,27 @@ withdrawal/deletion signal. Signal receipt does not mean all dependent copies ar
 purged; physical purge follows its separate custody obligations. Ordering, freshness,
 acknowledgements, missed-change recovery and enforcement validation remain open.
 
+## Next grilling round — Q11–Q13 proposed
+
+The [2026-10-03 proposed round](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968360294)
+records the evidence and scenarios for the next decisions. **These recommendations
+await the user's answers; Q1–Q10 remain the confirmed baseline.**
+
+| Question | Proposed direction |
+|---|---|
+| Q11 — Duplicate, delayed and conflicting changes | Identify each change and its affected scope. Establish applicability from trustworthy source ordering or an expected prior state; deduplicate redelivery and expose unresolved conflicts. Arrival/completion time or hashes alone cannot choose current state. Historical content must not restore older policy, and unrelated newer content must not suppress a relevant restriction. |
+| Q12 — Policy authority and continued validity | Each Source declares its policy authority, authoritative policy source and evidence/update/confirmation obligations. Explicitly delegated platform-managed publication policy and external authoritative ACLs are possible arrangements; neither bypasses controlling source authority. Untrustworthy current authorization remains fail-closed. |
+| Q13 — Lifecycle acknowledgements | Distinguish durable receipt, governance application and satisfaction of the declared enforcement boundary. Receipt alone does not establish downstream enforcement or physical purge; completion requires evidence against a declared condition. |
+
+No global source counter, numeric policy TTL, generic source polling, mandatory live
+connector, new public status service or cross-projection task aggregation is selected.
+Authorized-but-older content remains distinct from unverifiable current authorization.
+The Temporal-outage envelope and processing-request retention do not define policy
+freshness or governance-record lifetime. Exact ordering/precondition representations,
+validity/lapse/recovery rules, acknowledgement exposure and enforcement validation
+follow the user's answers with the existing admission, governance and operating-envelope
+owners. The existing processing admission `202` promise remains unchanged.
+
 ## Remaining source-handoff frontier
 
 Q1–Q10 are confirmed, not a complete implementation-ready specification. Remaining
