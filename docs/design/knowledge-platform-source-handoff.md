@@ -3,14 +3,15 @@
 [Design index](README.md) · [Confirmed overall logical baseline](knowledge-platform-logical-design.md)
 
 **Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02;
-Q9 confirmed on 2026-10-03. Q1–Q10 are confirmed; the remaining detailed
+Q9/Q11 confirmed on 2026-10-03. Q1–Q11 are confirmed; Q12/Q13 remain proposed. The detailed
 source-handoff design is open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
 [Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
 [Q5 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133), and
 [Q8/Q10 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014), and
-[Q9 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966721936) in
+[Q9 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966721936), and
+[Q11 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968626647) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -40,7 +41,8 @@ physical byte deduplication remains a separate storage choice. Corpus membership
 reuses the Asset identity and does not expand access.
 
 Q4 below distinguishes source-version identity from processing requests. Detailed
-metadata-only changes, observation ordering and reuse rules remain open.
+metadata-only changes and reuse mechanisms remain open; Q11 establishes ordering
+and conflict principles while their concrete representation remains detailed work.
 
 ### Q3 — Capture readiness and custody before admission
 
@@ -73,8 +75,9 @@ capture identity reusable on redelivery. Digests support integrity and possible
 reuse, not source-version identity by themselves.
 
 New source observations do not inherently require repeating all expensive work;
-reuse requires compatible inputs/methods. Exact identity representation, ordering,
-metadata-only changes, reuse rules and retained-identity lifetime remain open.
+reuse requires compatible inputs/methods. Q11 establishes change-applicability and
+conflict principles. Exact identity/order/precondition representation, metadata-only
+changes, reuse rules and retained-identity lifetime remain open.
 
 ### Q5 — Trusted reader policy before normal admission
 
@@ -132,8 +135,9 @@ Catalog-only display names/notes do not inherently re-run parsing/OCR. Policy
 changes affect eligibility and dependent serving without requiring content
 re-parsing. Confirmed deletion/withdrawal invokes urgent stop-disclosure handling
 for its declared scope without waiting for ordinary rebuilding. Fetch failure or
-omission from a batch does not establish source deletion. Ordering, acknowledgements,
-recovery, missed-change detection and policy freshness remain detailed work.
+omission from a batch does not establish source deletion. Q11 establishes ordering
+and conflict principles. Detailed ordering mechanisms, acknowledgements, recovery,
+missed-change detection and policy freshness remain open.
 
 ### Q9 — Complete capture handoff across delivery methods and deployments
 
@@ -211,6 +215,42 @@ indefinite retention. Approved equivalent custody can avoid another byte copy.
 Exact durations, resource costs and cleanup/purge/reference-protection mechanisms
 remain with operating-envelope, persistence and governance design.
 
+### Q11 — Duplicate, delayed and conflicting changes
+
+Identify each change and its affected scope. Within the agreed deduplication
+contract, redelivery must not apply the same change twice, and one change identity
+cannot be rebound to conflicting payloads. Establish applicability using trustworthy
+source-order evidence or an explicit expected prior platform state. Arrival/completion
+time, ordinary timestamps, names and hashes alone do not establish source order or
+authority. Source Revision identity does not imply a sortable sequence.
+
+An expected-state check prevents accidental overwrite but does not prove which source
+content is newer. If applicability cannot be established, expose a conflict for
+authoritative confirmation/resubmission. A delegated adapter may resolve supported
+cases automatically; routine human approval is not required. The authorized submitter
+can be a script, adapter or application acting within its Source-scoped grants; two
+competing submissions may be two runs of that same program. Capturing source inputs
+is distinct from observing the platform state used as an update precondition.
+
+Apply these rules by affected content, metadata and governance scope. A valid
+historical observation must not become the latest known source observation merely
+because it arrived later. Canonical Acceptance and eligible-version selection keep
+their separate rules. Late content/results cannot restore superseded reader policy
+or withdrawn access; unrelated newer content must not suppress an applicable
+restriction. Current governance and fail-closed obligations remain in force.
+
+For example, A captures S1 and transfers slowly; B captures a genuinely later S2 and
+hands it off first. Trustworthy source ordering prevents S1's later arrival from
+replacing S2 as the latest known source observation. Without such ordering evidence,
+A and B may both submit conditional updates expecting platform state P1: once B
+changes that state, A's precondition fails and requires reconciliation. S1/S2/P1 are
+illustrative labels, not an accepted schema or evidence of order by themselves.
+
+Temporal supplies durable execution/retries; domain applicability rules remain
+part of the contract. Exact identifiers, order/precondition fields, atomic application,
+deduplication windows and conflict responses remain detailed design. No global counter
+or numeric freshness bound is selected. Q12/Q13 remain unconfirmed.
+
 ## Markdown-image consistency check against merged research
 
 The [feedback disposition](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966742941)
@@ -243,18 +283,18 @@ and coordinates enforcement for canonical reads, evidence access and dependent
 publication/serving. Projection owners retain their publication/serving obligations.
 An expired URL, revoked storage credential or failed fetch is not itself a reliable
 withdrawal/deletion signal. Signal receipt does not mean all dependent copies are
-purged; physical purge follows its separate custody obligations. Ordering, freshness,
-acknowledgements, missed-change recovery and enforcement validation remain open.
+purged; physical purge follows its separate custody obligations. Q11 establishes
+ordering/conflict principles; detailed mechanisms, freshness, acknowledgements,
+missed-change recovery and enforcement validation remain open.
 
-## Next grilling round — Q11–Q13 proposed
+## Pending grilling decisions — Q12–Q13
 
 The [2026-10-03 proposed round](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968360294)
-records the evidence and scenarios for the next decisions. **These recommendations
-await the user's answers; Q1–Q10 remain the confirmed baseline.**
+records the evidence and scenarios. Q11 was subsequently confirmed above.
+**Q12/Q13 await the user's answers; Q1–Q11 are the confirmed baseline.**
 
 | Question | Proposed direction |
 |---|---|
-| Q11 — Duplicate, delayed and conflicting changes | Identify each change and its affected scope. Establish applicability from trustworthy source ordering or an expected prior state; deduplicate redelivery and expose unresolved conflicts. Arrival/completion time or hashes alone cannot choose current state. Historical content must not restore older policy, and unrelated newer content must not suppress a relevant restriction. |
 | Q12 — Policy authority and continued validity | Each Source declares its policy authority, authoritative policy source and evidence/update/confirmation obligations. Explicitly delegated platform-managed publication policy and external authoritative ACLs are possible arrangements; neither bypasses controlling source authority. Untrustworthy current authorization remains fail-closed. |
 | Q13 — Lifecycle acknowledgements | Distinguish durable receipt, governance application and satisfaction of the declared enforcement boundary. Receipt alone does not establish downstream enforcement or physical purge; completion requires evidence against a declared condition. |
 
@@ -269,8 +309,8 @@ owners. The existing processing admission `202` promise remains unchanged.
 
 ## Remaining source-handoff frontier
 
-Q1–Q10 are confirmed, not a complete implementation-ready specification. Remaining
-branches include source/metadata/policy change ordering and concurrency, policy
+Q1–Q11 are confirmed, not a complete implementation-ready specification. Remaining
+branches include concrete source/metadata/policy ordering and concurrency mechanisms, policy
 freshness and missed-change recovery, custody release, exact package validation,
 shared attachments, PDF/PPTX walkthroughs and remaining Markdown representation
 details. The example above checks consistency, not runtime format qualification. Detailed

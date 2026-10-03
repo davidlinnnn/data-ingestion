@@ -52,7 +52,7 @@ _Avoid_: ingestion batch, Source, Published View, access grant
 
 **Source Revision**:
 A captured observation of an Asset at a particular source version or observation
-point.
+point. Its identity alone does not establish its order relative to other observations.
 _Avoid_: current source state, processing request
 
 **Capture Package**:
