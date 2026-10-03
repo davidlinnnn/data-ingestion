@@ -14,9 +14,9 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
-confirmed Q1–Q8 and Q10 decisions; Q9 image-dependency handling and remaining
-lifecycle/custody details remain open. Storage selections,
-detailed APIs and the rest of source-handoff design remain open. This checkpoint
+confirmed Q1–Q10 decisions, including complete capture inputs and the deployment-neutral
+delivery direction. Source/policy ordering and freshness, remaining lifecycle/custody
+details, storage selections and detailed APIs remain open. This checkpoint
 records progress and does not constitute an implementation-ready spec.
 Decision details remain in the linked issues; the map remains their index.
 

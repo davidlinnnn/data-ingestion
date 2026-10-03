@@ -2,13 +2,15 @@
 
 [Design index](README.md) · [Confirmed overall logical baseline](knowledge-platform-logical-design.md)
 
-**Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02.
-Q9 and the remaining detailed source-handoff design are open. This document assembles the implications of the
+**Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02;
+Q9 confirmed on 2026-10-03. Q1–Q10 are confirmed; the remaining detailed
+source-handoff design is open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
 [Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
 [Q5 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133), and
-[Q8/Q10 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014) in
+[Q8/Q10 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014), and
+[Q9 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966721936) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -100,9 +102,9 @@ A Capture Package comprises the main document and explicitly declared dependenci
 required to interpret it. All included artifacts have fixed versions and integrity
 information under the Q3 custody guarantee. A self-contained PDF/PPTX may be one
 file; Markdown with required relative images includes those images. Ordinary
-hyperlinks remain references, without automatic recursive acquisition. Package
-representation, missing-dependency outcomes and shared-attachment lifecycle remain
-open.
+hyperlinks remain references, without automatic recursive acquisition. Q9 below
+resolves required-image and missing-dependency handling. Package representation
+and shared-attachment lifecycle remain open.
 
 ### Q7 — Initial team and document collection
 
@@ -133,6 +135,71 @@ for its declared scope without waiting for ordinary rebuilding. Fetch failure or
 omission from a batch does not establish source deletion. Ordering, acknowledgements,
 recovery, missed-change detection and policy freshness remain detailed work.
 
+### Q9 — Complete capture handoff across delivery methods and deployments
+
+The common product input boundary is a finite, complete, fixed Capture Package,
+with attributable Source/Asset/Source Revision identity and trustworthy policy
+evidence at handoff. Acquisition transport, format interpretation and policy
+interpretation have separate responsibilities. API requests need not embed file
+bytes, and existing eligible artifacts in approved custody need no mandatory
+second upload or copy.
+
+Image references used as actual Markdown document content are required capture
+dependencies by default. Preserve each image/document relationship, original
+source reference and exact durable artifact/evidence binding. Ordinary text links
+remain references without recursive crawling. Known missing required files prevent
+normal processing admission; required-input failures found afterward produce an
+explicit failure, not a silently complete result. The first slice does not accept
+partial source packages. Other independently admitted documents may still succeed.
+
+Capture readiness is distinct from semantic interpretation, processing completion,
+Canonical Acceptance and projection publication. OCR/image understanding follows
+the selected attributable profile; required enrichment must complete before
+processing success. Retained image bytes alone do not establish understanding and
+need not be stored as DB BLOBs. This does not expand qualified processing formats.
+
+Use platform-issued direct upload as the common entry. Providers transfer bytes
+directly to assigned storage locations and complete the manifest/finalization
+flow; provider/adapter retries the transfer. Bounded provider-issued signed-GET
+import is optional where sources benefit and network/security policy permits it;
+the platform fetches/retries, with same-version renewal or explicit failure when
+a grant expires. Persistent delegated source connections are optional integrations
+for demonstrated needs. Do not require all three mechanisms initially or extend
+the first slice to general live synchronization. The
+[cloud-practice evidence](../research/attachment-handoff-cloud-practices-2026-10-02.md)
+supports these mechanics and distinguishes them from detailed control choices.
+
+Issuing an upload/import task does not establish Q3 processing admission. The
+platform verifies completeness, exact retained versions, integrity and custody
+before that boundary. A caller completion notification or object-created event
+alone is insufficient. Neither reusable upload grants nor mutable object keys
+may change already finalized inputs. Temporary access is not durable identity,
+reader policy or a retention guarantee.
+
+Organizations may run independent installations. Deployment operators configure
+custody storage, platform identity/identity-provider integration, supported policy
+interpretation, network boundaries, secret references and resource/retention limits.
+Manage Source registrations and delegated grants as governed application data,
+with self-service within verified authority, rather than requiring Helm edits or
+redeployment for each Source. Possible Helm distribution remains deployment context,
+not a selected packaging implementation. Source Owner/policy authority retains
+content/audience accountability; a delegated provider/adapter handles delivery;
+the platform validates readiness and enforces custody/current governance. These
+roles do not require separate services or a generic plugin framework.
+
+Source integrations must preserve authorization meaning in a supported policy
+contract. Missing or unsupported required policy still rejects normal admission
+under Q5. Submission, transfer and employee reading permissions remain distinct.
+Policy/withdrawal changes need the explicit lifecycle channel after capture;
+revoking source credentials alone does not enforce downstream governance.
+
+Initial admission-scope planning prioritizes one pilot-qualified custody backend
+and direct-upload/finalization, retaining the fixed-reference processing seam.
+Exact APIs/status, finalization atomicity, manifest/policy schemas, numeric limits,
+retention mechanisms and deployment packaging remain with the detailed design
+owners. Necessary PDF-core changes follow versioned integration/migration rather
+than changing target contracts to match existing implementation.
+
 ### Q10 — Governed retention of original captured inputs
 
 Keep original Capture Packages for applicable reprocessing and evidence obligations;
@@ -144,114 +211,50 @@ indefinite retention. Approved equivalent custody can avoid another byte copy.
 Exact durations, resource costs and cleanup/purge/reference-protection mechanisms
 remain with operating-envelope, persistence and governance design.
 
-## Next frontier — proposed, not confirmed
+## Markdown-image consistency check against merged research
 
-The [Q8/Q10 confirmation and Markdown-image clarification](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014) records the
-accepted decisions and the remaining Q9 proposal. Q9 is not yet confirmed.
+The [feedback disposition](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966742941)
+incorporates the merged [Docling capability research](https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md)
+as corroborating evidence. No Q9/Q10 reversal is needed. Its Markdown case is
+illustrative, not measured format qualification; its PDF page-checkpoint capture
+and remote-inference base64 transport do not establish source-capture implementation
+or an ingestion-API upload requirement. It supplies no new basis to reorder delivery
+modes or retain every processing artifact forever.
 
-| Question | Decision to resolve |
+The following is a design consistency walkthrough, not an accepted wire schema or
+runtime test. Assume an authorized Source submission and trustworthy reader policy.
+`procedure.md` at fixed artifact version M1 contains
+`![Review flow](assets/flow.png)`; required image version I1 is explicitly bound in
+the same captured source observation. M1/I1 are illustrative identifiers.
+
+| Boundary | Required outcome |
 |---|---|
-| Q9 | Required image dependencies, attachment-reference/capture handoff, required-package failures and whether to allow partial source packages |
+| Fixed inputs and relationships | Each artifact has integrity/custody information. Preserve the Markdown image occurrence and original `assets/flow.png` target, bound to I1. Exact native line/block and attachment fields remain canonical/package design. |
+| Readiness | Known missing I1, integrity mismatch or unestablished custody prevents normal processing admission. A required-input problem found later produces explicit failure. |
+| Retry and source change | Retry uses M1/I1. A source-path replacement cannot silently change this package; a new captured observation follows the revision/update contract. |
+| Interpretation and acceptance | Capture establishes input readiness. Processing follows the selected profile and preserves distinct source/OCR/generated origins. Canonical Acceptance is separate. |
+| Q10 cleanup | First-parse completion alone cannot release M1/I1 or adopted evidence. Unadopted intermediates follow separate cleanup policy; adopted dependencies remain protected under applicable retention/erasure obligations. |
+| Withdrawal during processing | An authorized withdrawal must not be undone by a late successful result. Current governance prevents renewed eligibility/disclosure; exact enforcement boundaries and propagation validation remain detailed design. |
 
-For Q9, recommend treating image references used as actual Markdown document
-content as required dependencies by default. Authorized capture resolves and fixes
-needed bytes before normal durable processing admission, or validates already
-supplied bytes. Ordinary text hyperlinks remain references. Canonical processing
-consumes the fixed package and preserves image/document relationships, original
-source references and durable artifact/evidence bindings. Governed artifact custody
-can retain the bytes without placing them in the metadata DB or fetching the live
-URL again. OCR/image understanding follows the selected attributable profile; a
-required enrichment must complete before processing success.
+The Source Owner/designated policy authority or appropriately delegated program
+supplies an attributable lifecycle signal identifying affected Source/Asset/revision
+scope. The platform verifies authority/scope, records/applies the governance change
+and coordinates enforcement for canonical reads, evidence access and dependent
+publication/serving. Projection owners retain their publication/serving obligations.
+An expired URL, revoked storage credential or failed fetch is not itself a reliable
+withdrawal/deletion signal. Signal receipt does not mean all dependent copies are
+purged; physical purge follows its separate custody obligations. Ordering, freshness,
+acknowledgements, missed-change recovery and enforcement validation remain open.
 
-The missing-dependency rule is still a proposal: known required-image gaps prevent
-normal admission until corrected; problems discovered after admission produce an
-explicit failure rather than silently complete output. Detailed package/image
-schemas remain open.
+## Remaining source-handoff frontier
 
-The initial [attachment-transport proposal](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953922681)
-preferred a registered source-storage connection. Following the user's concern
-about onboarding independent Source Owners, the
-[revised recommendation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5955412525)
-**supersedes that unaccepted default; Q9 remains unconfirmed**. The
-[cloud-practice evidence](../research/attachment-handoff-cloud-practices-2026-10-02.md)
-separates official AWS/GCP mechanics from this platform recommendation.
-
-Prefer platform-issued direct-upload authorization as the general handoff path.
-An authorized submitter requests a bounded upload session; the platform grants
-access to assigned object locations in platform-controlled storage. The provider
-transfers bytes directly to storage and submits the document/attachment manifest.
-The platform verifies completeness, exact stored versions, integrity and custody
-before processing admission. This avoids per-provider storage credentials and
-proxying all bytes through the application API. Source registration, delegated
-submission and trustworthy reader policy remain required; self-service onboarding
-must still establish those authorities.
-
-Provider-issued, version-bound signed GET URLs are an optional bounded import path.
-They avoid storing broad long-lived provider credentials, but require permitted
-network reachability, bounded fetch validation/authorization and a clear expiration
-or same-version reissue outcome. A signed URL is neither durable artifact identity
-nor a retention/reader-policy guarantee. Persistent cross-account/federated access
-remains an opt-in integration for ongoing acquisition or approved source-side
-custody; it still needs trust/resource grants and does not become a prerequisite
-for every submission. Admission design selects the pilot's needed mechanisms;
-do not require multiple adapters merely for symmetry.
-
-Upload/import session creation is distinct from accepting ready processing inputs.
-Finalize only after the platform verifies required artifacts and binds exact
-object versions/generations or equivalent immutability with accountable custody.
-A caller's completion notification or an object-created event alone is insufficient.
-Do not assume an upload URL is one-use or that later writes cannot change its key.
-Public endpoints/status, finalization atomicity and any HTTP `202` changes remain
-admission design; the confirmed Q3 processing-admission guarantee is preserved.
-
-All supported paths converge on the same fixed Capture Package. This proposal does
-not select a cloud vendor or introduce recursive crawling/general live connectors.
-Video objects illustrate transport needs, not a promise of video processing.
-Supported types, size/cost limits and cleanup remain explicit design work. Required
-image and missing-dependency rules above still await the user's Q9 answer.
-
-The [final recommendation under the deployment premise](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966660481)
-incorporates the user's expectation that separate organizations may operate their
-own installations with heterogeneous sources and permissions. Possible Helm
-packaging is context, not a selected delivery contract. **This remains a proposal.**
-
-The reusable product boundary is the complete fixed Capture Package with
-attributable Source/Asset/revision identity and trusted reader-policy evidence.
-Acquisition transport, format interpretation and policy interpretation remain
-separate responsibilities. Canonical processing and projections consume governed
-inputs without acquiring source-specific credentials or refetching changing URLs.
-Prefer direct upload as the common entry; enable bounded signed-GET import where
-needed and permitted, and add connectors for demonstrated source integration needs.
-Already eligible artifacts in approved custody need no mandatory duplicate upload.
-
-Each deployment operator configures the installation's custody storage, platform
-identity/identity-provider integration, supported policy interpretation, network
-boundaries, secret references and resource/retention limits. Recommend managing
-Source registrations and delegated grants as governed application data, with
-self-service within verified authority, rather than editing Helm values or
-redeploying for each Source. Source Owner/policy authority retains content and
-audience accountability; a delegated provider/adapter performs capture or delivery;
-the platform verifies authority/readiness and enforces custody/current governance.
-These roles do not imply separate services or a generic plugin framework.
-
-Heterogeneous authorization cannot be assumed automatically interchangeable.
-Source integrations must preserve meaning in a supported policy contract; missing
-or unsupported required policy still rejects normal admission under Q5. Transport
-permission never substitutes for reader policy. Withdrawal/policy changes continue
-through the explicit lifecycle channel even after source credentials are revoked.
-
-Recommend one pilot-qualified custody backend and the direct-upload/finalization
-path for initial admission-scope review, retaining the fixed-reference processing
-seam. Add other acquisition mechanisms only for demonstrated needs. This is not a
-new implementation order or a change to the qualified PDF core. API/status and
-finalization atomicity, manifest/policy schemas, retention limits and deployment
-packaging remain detailed design; necessary implementation changes follow the map's
-versioned integration/migration checkpoints. Required Markdown dependencies and
-failure rules above remain part of Q9 awaiting explicit user confirmation.
-
-Subsequent branches include change ordering and policy freshness, custody release,
-concrete package validation, and reviewed PDF, Markdown and PPTX examples. Format
-design does not expand the PDF core's qualified support.
+Q1–Q10 are confirmed, not a complete implementation-ready specification. Remaining
+branches include source/metadata/policy change ordering and concurrency, policy
+freshness and missed-change recovery, custody release, exact package validation,
+shared attachments, PDF/PPTX walkthroughs and remaining Markdown representation
+details. The example above checks consistency, not runtime format qualification. Detailed
+transport/status/finalization, canonical representation and governance enforcement
+continue with the existing linked design owners. This ticket remains open.
 
 ## Integration and ownership
 

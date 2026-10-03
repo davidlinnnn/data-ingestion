@@ -1,6 +1,6 @@
 # Cloud practices for captured-source attachment handoff
 
-Date: 2026-10-02. Status: research evidence and **unconfirmed recommendation**, not a selected storage product or accepted API contract. Related discussion: [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
+Research dates: 2026-10-02 and 2026-10-03. **Decision update: the Q9 delivery direction was confirmed on 2026-10-03** ([record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966721936)). This is supporting evidence, not a selected storage product, detailed API contract or runtime security qualification. Related discussion: [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 
 Question: how can many independent Source Owners deliver document images or larger media without embedding bytes in the ingestion API or requiring Knowledge Platform operators to configure every owner's endpoint and long-lived token?
 
@@ -36,17 +36,17 @@ S3 GetObject can target a specific `versionId`; absent it, it normally returns t
 
 **Recommended invariant:** upload/import completion must verify all required artifacts, bind the exact retained artifact versions and integrity evidence, and freeze the Capture Package before normal processing admission. Signed grants are not inherently single-use; do not treat a successful upload to a mutable key as permanent input identity. Subsequent writes must not change what a finalized submission references. The exact finalization endpoint, state machine, integrity mechanism, and custody implementation remain design work.
 
-## Proposed direction for Knowledge Platform
+## Confirmed delivery direction; detailed mechanisms remain open
 
 Make **platform-issued direct upload** the general delivery default. Keep **provider-issued download grants** as a bounded optional import path when evidence justifies it. Use **federated source access** for recurring connectors with an actual need; do not build all three immediately.
 
 Retain governed Source registration, delegated submitter authority, and reader-policy accountability. These are separate from configuring a different storage endpoint and static token for each provider. An upload capability permits delivery; it does not grant employees permission to read the resulting knowledge.
 
-This revises the earlier pending recommendation that a preregistered source-storage connection should be the general default. It preserves the confirmed capture-before-processing boundary. API shape, supported import transports, quotas, video processing support, and cloud/storage selection are still open. The proposed delivery mechanism does not expand the first slice into general live connectors.
+The confirmed direction supersedes the earlier unaccepted recommendation that a preregistered source-storage connection should be the general default. It preserves the confirmed capture-before-processing boundary. API shape, supported import transports, quotas, video processing support, and cloud/storage selection are still open. The confirmed direction does not expand the first slice into general live connectors.
 
 ## 2026-10-03 comparison: responsibilities and security
 
-Status remains **unconfirmed**. Cloud facts below are cited; the responsibility split and Knowledge Platform safeguards are recommendations, not claims that these controls already exist.
+The delivery direction and handoff responsibilities are covered by the Q9 confirmation above. Cloud facts below are cited; detailed safeguards remain design recommendations, not claims that these controls already exist.
 
 | Method | Benefits | Costs and limits | Transfer, retries, grants, and custody |
 | --- | --- | --- | --- |
