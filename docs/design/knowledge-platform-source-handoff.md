@@ -3,8 +3,9 @@
 [Design index](README.md) · [Confirmed overall logical baseline](knowledge-platform-logical-design.md)
 
 **Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02;
-Q9/Q11 confirmed on 2026-10-03; Q12/Q13 confirmed on 2026-10-05.
-Q1–Q13 are confirmed. The detailed source-handoff design is open. This document assembles the implications of the
+Q9/Q11 confirmed on 2026-10-03; Q12–Q14 confirmed on 2026-10-05.
+Q1–Q14 are confirmed. The final source-facing review is pending; this ticket remains
+open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
 [Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
@@ -12,7 +13,8 @@ Q1–Q13 are confirmed. The detailed source-handoff design is open. This documen
 [Q8/Q10 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014), and
 [Q9 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966721936), and
 [Q11 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968626647), and
-[Q12/Q13 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520) in
+[Q12/Q13 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520), and
+[revised Q14 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5992838620) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -109,8 +111,9 @@ required to interpret it. All included artifacts have fixed versions and integri
 information under the Q3 custody guarantee. A self-contained PDF/PPTX may be one
 file; Markdown with required relative images includes those images. Ordinary
 hyperlinks remain references, without automatic recursive acquisition. Q9 below
-resolves required-image and missing-dependency handling. Package representation
-and shared-attachment lifecycle remain open.
+resolves required-image and missing-dependency handling. Q14 scopes attachment
+identity to the package and excludes initial global shared-attachment management.
+Concrete package representation remains with canonical design.
 
 ### Q7 — Initial team and document collection
 
@@ -328,6 +331,32 @@ processing-admission `202` promise is unchanged. Admission owns public exposure;
 governance owns enforcement scope/timing/validation; governance and persistence
 own detailed purge obligations and mechanisms.
 
+### Q14 — Package-scoped attachment identity
+
+Attachment identity belongs to its Capture Package/document-version scope. Preserve
+each package's attachment references, exact artifact versions and source relationships.
+Equal bytes, equal hashes or a reused source URL do not automatically merge identity,
+authority or lifecycle across documents. Redelivery/retry of the same fixed input
+preserves its identity under Q4/Q11. Exact ID fields and within-document occurrence
+representation remain canonical design.
+
+The first slice does not build a global shared-attachment catalog, cross-document
+attachment-update feature or automatic cross-document deduplication. Revisit these
+only for a concrete shared-management need or measured storage-cost case; they are
+not mandatory later implementation work. Logical identity and physical storage
+remain separate. Existing eligible artifacts in approved custody need no forced
+second upload/copy; any actual reuse still preserves Q3/Q9/Q10 custody obligations.
+
+Different IDs or copies do not create permission. A package still needs trustworthy
+authorization covering required contents, and applicable scoped restrictions or
+withdrawal still apply under Q5/Q12. Copying or relabeling cannot make unsupported
+or untrustworthy policy acceptable.
+
+For example, `document A / revision 1 / image 1` and `document B / revision 1 / image 1`
+are distinct logical attachment references even when their bytes are equal. These
+labels illustrate scope, not an ID format or wire schema. This accepted simplification
+supersedes the [earlier unconfirmed shared-attachment proposal](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991924147).
+
 ## Markdown-image consistency check against merged research
 
 The [feedback disposition](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966742941)
@@ -375,33 +404,65 @@ does not select a new service/database, one workflow, simultaneous publication o
 a universal knowledge-serving API. Domain facts retain their Canonical/projection
 owners; protected status remains subject to governance.
 
-## Proposed next round — Q14 (unconfirmed)
+## Source-facing handoff review — illustrative cases
 
-The [Q14 proposal](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991924147)
-asks how the first slice handles two documents sharing a required image when their
-audiences or source authorities differ. The recommendation is complete-package
-authorization coverage under supported attributable policy, rejection when required
-restrictions cannot be preserved, and explicit per-reference version/authority and
-withdrawal scope. Physical sharing must not merge logical rights or release another
-document's required retained input. Standalone attachment Assets, per-fragment
-masking and a generic policy-composition engine are not assumed. The user has not
-accepted this recommendation; it is not part of Q1–Q13.
+These cases assemble Q1–Q14 for the final shared-understanding review. They are not
+wire schemas, measured tests, a real pilot inventory or claims of runtime format
+qualification. Source `S`, Asset/revision labels and artifact versions below are
+illustrative. Actual identities/delegation and supported formats/profiles must be
+established by their adoption/processing owners.
 
-## Remaining source-handoff frontier
+For every case, the controlled Source has an accountable Source Owner and an
+authorized submitting program. The package needs an attributable supported policy
+or authorization-target binding covering its required contents. Before processing
+admission, validate fixed artifact versions, completeness, integrity information
+and custody for the agreed queue/suspension/retry period. Q10 retention and current
+governance continue afterward. Captured bytes do not prove semantic understanding,
+Canonical Acceptance or publication.
 
-Q1–Q13 are confirmed. Before the final source-facing review, complete illustrative
-PDF/PPTX handoff cases alongside the Markdown/image case, and resolve the policy,
-withdrawal and dependency boundaries for shared attachments. Assemble one reviewed
-handoff showing identity, fixed artifacts/relationships, integrity/custody, policy
-authority/validity, operation/scope/applicability and acknowledgement meanings.
-Illustrative cases are not runtime format qualification. This ticket remains open.
+| Example | Source identity and fixed package | Source-facing behavior to review |
+|---|---|---|
+| Paper PDF with embedded figures | `S / paper-A / pdf-r1`; `paper.pdf@F1` is the self-contained captured file | The embedded figures are already part of F1's fixed bytes. Capture does not need separate uploads of later extracted crops. Retry reads F1; renaming the catalog entry does not change the Asset. A genuine source update is another captured observation, not an overwrite of F1. Parsing, figure interpretation and canonical locators remain later boundaries. |
+| SOP Markdown with a required image | `S / sop-A / md-r1`; `procedure.md@M1` plus its package-scoped `assets/flow.png@I1` reference | Missing required I1 prevents normal admission; ordinary hyperlinks do not trigger recursive capture. A second SOP using equal image bytes has its own logical attachment reference under Q14. Preserve each reference's source relationship and authorization basis; no global image catalog is required. The earlier Markdown walkthrough covers processing/withdrawal races. |
+| Self-contained PPTX with an embedded diagram | `S / deck-A / pptx-r1`; `training.pptx@T1` contains the embedded diagram | Capture fixes T1 as one package artifact; it does not claim slide interpretation has succeeded. If a future case has a required external dependency, Q6/Q9 require its fixed package binding before normal admission. A revised deck gets a new source observation; method-only processing keeps T1. This example does not qualify the current PDF worker for PPTX. |
 
-Concrete APIs/status, ordering/deduplication mechanisms and finalization atomicity
-belong to admission; package/identity/locator representation belongs to canonical
-design; validity/lapse/recovery and enforcement validation belong to governance
-with operating targets from the envelope owner; custody release/reference protection
-and purge mechanisms belong to persistence with governance. These named downstream
-decisions do not all need to be resolved within the source-facing ticket.
+### Minimum information at the source boundary
+
+This is a semantic checklist, not a required JSON field set or a requirement to
+copy all policy data into each request. Valid governed references may carry the
+applicable information.
+
+| Information | What downstream owners may rely on |
+|---|---|
+| Identity and responsibility | Attributable Source, logical Asset and fixed Source Revision; a submitter with the relevant delegated authority. Filename, URL and hash alone do not establish logical identity or update order. |
+| Complete captured inputs | Fixed main artifact and declared necessary dependencies, package-scoped attachment relationships, original source references, integrity information and accountable retrievable custody. |
+| Policy authority and validity | Trusted policy authority/source and supported reader-policy or target binding; capture-time permission is not a permanent grant. Unsupported required policy is rejected. |
+| Change intent and applicability | Explicit operation, affected scope and trustworthy ordering evidence or expected prior state; conflicts are visible and late results cannot restore withdrawn access. |
+| Acknowledgement and responsibility | Durable receipt, governance application and evidence of the declared enforcement boundary have distinct meanings. Physical purge is separate. |
+| Honest limitations | Known unsupported/missing inputs or unverifiable policy are explicit. Capture readiness, processing completion, Canonical Acceptance and each projection's publication remain distinct. |
+
+### Lifecycle walkthrough
+
+| Trigger | Required source-facing meaning | Detailed owner |
+|---|---|---|
+| First complete submission | Validate source/submit authority, fixed package and trusted policy before durable processing admission. The processing `202` promises accepted durable intent, not Canonical Acceptance. | Admission; canonical acceptance separately |
+| Unchanged redelivery or execution retry | Preserve captured identities and versions. Apply request/change deduplication within the agreed contract; do not rebind the same identity to different content. | Admission command/request mechanics; canonical identity representation |
+| New captured source observation | Retain the Asset where logical identity is unchanged. Identify the new observation and establish applicability; late arrival alone cannot make it current. | Canonical lifecycle with admission preconditions |
+| Method-only reprocessing | Select the same retained Source Revision under a new deliberate processing request and fixed method/profile. Current custody and governance must still permit the work. | Admission and processing-profile integration |
+| Catalog-only metadata update | Apply the authorized catalog change without inherently rerunning parsing/OCR. | Canonical lifecycle and admission commands |
+| Policy or authorization-binding change | Authoritative-service policy changes follow the validity contract without resubmitting content. Platform-managed binding changes need appropriate authority and Q11 applicability. | Governance; canonical/admission binding representation |
+| Confirmed deletion or explicit withdrawal | Require attributable authority and scope; a fetch failure or missing batch item is insufficient. Apply urgent governance without waiting for ordinary rebuilds; a late result cannot restore access. Distinguish received/applied/enforced outcomes and separate purge. | Governance with admission status, projection enforcement and persistence |
+
+## Final review status
+
+Q1–Q14 and the unified lifecycle/status design requirement are confirmed. The cases,
+semantic checklist and owner handoff above are assembled for the user's final
+shared-understanding review. No additional source-facing principle is currently
+identified as unresolved. The ticket remains open until that review is confirmed.
+
+Detailed API/schema/TTL/storage choices below remain with existing downstream
+owners. Their assignment does not claim an implementation-ready specification or
+runtime qualification, and does not require resolving all of them inside this ticket.
 
 ## Integration and ownership
 
@@ -411,16 +472,12 @@ implementation migration or integration work, with validation at the map's exist
 follow-through checkpoints. Measured resource configurations inform the operating
 envelope within their qualified scope.
 
-[Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31)
-owns transport, public request/status semantics and admission persistence/atomicity.
-[Design canonical schema and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)
-owns the canonical representation and lifecycle contract. This source-boundary
-decision supplies their identity, capture and authorization prerequisites.
-
-[Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55)
-owns projection handoff/status contributions and independent publication semantics.
-[Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56)
-owns cross-boundary authorization validity, enforcement and completion evidence.
-[Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57)
-owns custody/reference protection and persistence mechanisms, using targets from
-[Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54).
+| Detailed decision owner | Follow-through responsibility |
+|---|---|
+| [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31) | Public transport/status, upload finalization and command persistence/atomicity, deduplication/preconditions/conflict exposure; unified lifecycle query exposure/correlation and implementation phasing. |
+| [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32) | Concrete identity/package/locator representation, canonical mapping/acceptance, version and lifecycle semantics. |
+| [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) | Governed reads, projection handoff/status contributions, independent publication and reconciliation. |
+| [Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56) | Concrete authorization applicability/validity, missed-change observation, lapse/recovery, cross-boundary enforcement and completion evidence. |
+| [Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57) | Custody adoption/release, dependency protection, retention/purge and persistence mechanisms. No global shared-image domain is required by Q14. |
+| [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) | Pilot inventory/adoption requirements and numeric workload, capacity, retention, freshness and recovery targets with the relevant owners. |
+| [Design canonical processing profiles and PDF-core integration](https://github.com/davidlinnnn/data-ingestion/issues/72) | Qualified format/profile selection and versioned processing integration; source capture examples do not expand supported processing capabilities. |

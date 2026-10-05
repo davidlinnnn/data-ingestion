@@ -57,7 +57,8 @@ _Avoid_: current source state, processing request
 
 **Capture Package**:
 The finite set of captured source artifacts comprising a main document and its
-explicitly declared dependencies required for interpretation.
+explicitly declared dependencies required for interpretation. Attachment identity
+is scoped to the package; equal bytes across packages do not merge that identity.
 _Avoid_: ingestion batch, arbitrary collection of hyperlinks
 
 **Canonicalization**:

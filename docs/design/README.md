@@ -14,10 +14,12 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
-confirmed Q1–Q13 decisions, including complete capture inputs, deployment-neutral
-delivery, change-ordering/conflict principles, authorization trust and governance
-acknowledgement meanings. Shared-attachment boundaries and the final source-facing
-case review remain open. The [logical design](knowledge-platform-logical-design.md)
+confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral
+delivery, change-ordering/conflict principles, authorization trust, governance
+acknowledgement meanings and package-scoped attachment identity. Initial global
+shared-attachment management and automatic cross-document deduplication are excluded.
+Illustrative PDF/Markdown/PPTX cases and the owner handoff are assembled; the final
+source-facing review remains pending. The [logical design](knowledge-platform-logical-design.md)
 also carries the accepted unified lifecycle/status-query requirement; implementation
 phasing is undecided. Concrete mechanisms, numeric freshness/retention targets,
 storage selections and detailed APIs remain with their named owners. This checkpoint
