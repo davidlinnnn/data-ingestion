@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/workspace/tests/pdf_processing/t09b/cold_window.py", line 92, in <module>
+    raise SystemExit(base.main())
+                     ^^^^^^^^^^^
+  File "/workspace/..2026_09_30_13_09_18.2943219588/tests/pdf_processing/q04/candidate/warm_pod_window_r.py", line 492, in main
+    asyncio.run(run_window(args))
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/tests/pdf_processing/t09b/cold_window.py", line 122, in run_window
+  File "/workspace/tests/pdf_processing/t09b/cold_window.py", line 67, in run_window
+    
+  File "/workspace/tests/pdf_processing/t09b/cold_window.py", line 38, in cold_trials
+    await collector.process_transition('cold_next_worker_start', host.start)
+  File "/workspace/..2026_09_30_13_09_18.2943219588/tests/pdf_processing/q04/sentinel/aima_attribution_telemetry_q.py", line 1110, in process_transition
+    raise RuntimeError("; ".join(errors))
+RuntimeError: process transition window exceeded: 1.009470s

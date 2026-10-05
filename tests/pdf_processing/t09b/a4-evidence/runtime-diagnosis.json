@@ -1,0 +1,77 @@
+{
+  "executed_commit": "de8b9e0",
+  "run_id": "t09b-calibration-20260928-a4",
+  "automatic_retry": false,
+  "primary_stop": {
+    "type": "ValueError",
+    "reason": "evidence transport extent changed",
+    "time": 1790610828.783444,
+    "monotonic": 679596.396769125
+  },
+  "causal_order": [
+    "incremental evidence snapshot read beyond its pre-read stat extent while a file grew",
+    "transport guard raised evidence transport extent changed",
+    "supervisor received SIGINT",
+    "in-flight fixture 08 finalize Activity was cancelled",
+    "Temporal execution completed with failed business result"
+  ],
+  "temporal": {
+    "cancel_event_time": "2026-09-28T15:53:49.136254833Z",
+    "completed_event_time": "2026-09-28T15:53:49.146718166Z",
+    "business": {
+      "status": "failed",
+      "processing_complete": false,
+      "registered_pages": 12,
+      "registered_components": 9,
+      "error": {
+        "category": "infrastructure",
+        "code": "activity_budget_exhausted"
+      }
+    }
+  },
+  "completed_before_stop": [
+    {
+      "fixture": "warm-0-06",
+      "status": "complete",
+      "processing_complete": true,
+      "registered_pages": 28,
+      "registered_components": 11
+    },
+    {
+      "fixture": "warm-1-07",
+      "status": "complete",
+      "processing_complete": true,
+      "registered_pages": 15,
+      "registered_components": 4
+    }
+  ],
+  "resources": {
+    "outer_samples": 161,
+    "maximum_node_full_psi_avg10": 0.0,
+    "minimum_node_available_bytes": 2896240640,
+    "vm_oom_values": [
+      0
+    ],
+    "object_max_memory_current": 988205056,
+    "object_max_events_delta": 0,
+    "maximum_object_full_avg10": 0.0
+  },
+  "cleanup": {
+    "runner_exit_code": 1,
+    "restoration": "verified_zero_replicas_and_no_owned_pods",
+    "restoration_errors": [],
+    "forensic_export_complete": true,
+    "terminal_stop_proven": true,
+    "pvc": "t09b-calibration-a4-evidence-20260928",
+    "pvc_uid": "7d5227e9-6219-446a-9e5f-be2227cadc69"
+  },
+  "uncertainty": [
+    "The failing envelope was not retained and the exception omitted the path, so the exact growing evidence file is unknown.",
+    "A4 was interrupted before fixtures 08/native/final-06 and qualification; it cannot establish the full baseline or acceptance.",
+    "A4 observed zero node full PSI avg10, so it does not measure behavior through a positive-PSI interval."
+  ],
+  "fix": {
+    "mechanism": "bound each read to the size observed before opening the file",
+    "regression": "append to storage.jsonl between stat and open; first snapshot must stop at the old extent and the next snapshot must transport the append"
+  }
+}

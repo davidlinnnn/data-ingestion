@@ -1,0 +1,134 @@
+{
+  "prefix": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f",
+  "operations": [
+    {
+      "key": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/16",
+      "bytes": 16,
+      "exact_readback": true
+    },
+    {
+      "key": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/4096",
+      "bytes": 4096,
+      "exact_readback": true
+    }
+  ],
+  "records": [
+    {
+      "time": "2026-09-28T13:14:17.812735416Z",
+      "path": "/t09a/t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/16",
+      "method": "PUT",
+      "status": 200,
+      "server_rx_bytes": 218,
+      "server_tx_bytes": 0,
+      "server_duration_raw": 4285042,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    },
+    {
+      "time": "2026-09-28T13:14:17.821550125Z",
+      "path": "/t09a/t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/16",
+      "method": "GET",
+      "status": 200,
+      "server_rx_bytes": 151,
+      "server_tx_bytes": 16,
+      "server_duration_raw": 462375,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    },
+    {
+      "time": "2026-09-28T13:14:17.825820208Z",
+      "path": "/t09a/t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/4096",
+      "method": "PUT",
+      "status": 200,
+      "server_rx_bytes": 4298,
+      "server_tx_bytes": 0,
+      "server_duration_raw": 3656167,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    },
+    {
+      "time": "2026-09-28T13:14:17.831480416Z",
+      "path": "/t09a/t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/4096",
+      "method": "GET",
+      "status": 200,
+      "server_rx_bytes": 151,
+      "server_tx_bytes": 4096,
+      "server_duration_raw": 315292,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    }
+  ],
+  "trace_exit": 124,
+  "ledger": {
+    "complete": true,
+    "started": 4,
+    "finished": 4,
+    "interrupted_calls": [],
+    "errors": [],
+    "events": [
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "17ab5c0bc0354293aa0f08c44e3b76f7",
+        "delivered_bytes": 0,
+        "finished": 670025.409943333,
+        "key": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/16",
+        "kind": "finish",
+        "operation": "put_object",
+        "outcome": "call_succeeded",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670025.391497625,
+        "submitted_bytes": 16,
+        "transport_bytes": null
+      },
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "1a8470204ef34b778d131485a98277ab",
+        "delivered_bytes": 16,
+        "finished": 670025.414559833,
+        "key": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/16",
+        "kind": "finish",
+        "operation": "get_object",
+        "outcome": "read_complete",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670025.410117958,
+        "transport_bytes": null
+      },
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "13ac152be70640a88785cd6f79a4bdba",
+        "delivered_bytes": 0,
+        "finished": 670025.421143333,
+        "key": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/4096",
+        "kind": "finish",
+        "operation": "put_object",
+        "outcome": "call_succeeded",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670025.414777166,
+        "submitted_bytes": 4096,
+        "transport_bytes": null
+      },
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "460f871ddd4949b69fe6c04050c844ac",
+        "delivered_bytes": 4096,
+        "finished": 670025.423434416,
+        "key": "t09b/boto-calibration-bfba7ab770804266b81cb769b8b8644f/4096",
+        "kind": "finish",
+        "operation": "get_object",
+        "outcome": "read_complete",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670025.421234166,
+        "transport_bytes": null
+      }
+    ]
+  },
+  "objects_retained": true
+}

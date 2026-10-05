@@ -1,0 +1,148 @@
+{
+  "prefix": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4",
+  "operations": [
+    {
+      "key": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/16",
+      "bytes": 16,
+      "exact_readback": true
+    },
+    {
+      "key": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/4096",
+      "bytes": 4096,
+      "exact_readback": true
+    }
+  ],
+  "records": [
+    {
+      "time": "2026-09-28T13:18:39.443952718Z",
+      "path": "/t09a/t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/16",
+      "call_id": "5e8608673b97450f93607be8da5d6ad4",
+      "method": "PUT",
+      "status": 200,
+      "server_rx_bytes": 233,
+      "server_tx_bytes": 0,
+      "server_duration_raw": 3965042,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    },
+    {
+      "time": "2026-09-28T13:18:39.453104218Z",
+      "path": "/t09a/t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/16",
+      "call_id": "c5023bdf043545c7a4f3cccb93a9c3ae",
+      "method": "GET",
+      "status": 200,
+      "server_rx_bytes": 166,
+      "server_tx_bytes": 16,
+      "server_duration_raw": 589584,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    },
+    {
+      "time": "2026-09-28T13:18:39.457543718Z",
+      "path": "/t09a/t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/4096",
+      "call_id": "fa12bb1a392741c6ab56f304a02f15e6",
+      "method": "PUT",
+      "status": 200,
+      "server_rx_bytes": 4313,
+      "server_tx_bytes": 0,
+      "server_duration_raw": 4372000,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    },
+    {
+      "time": "2026-09-28T13:18:39.465884843Z",
+      "path": "/t09a/t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/4096",
+      "call_id": "77e18d16e65548faac9bc2380d91823d",
+      "method": "GET",
+      "status": 200,
+      "server_rx_bytes": 166,
+      "server_tx_bytes": 4096,
+      "server_duration_raw": 645792,
+      "layer": "MinIO HTTP callStats; not payload-only or packet bytes"
+    }
+  ],
+  "trace_exit": 124,
+  "ledger": {
+    "complete": true,
+    "started": 4,
+    "finished": 4,
+    "interrupted_calls": [],
+    "errors": [],
+    "events": [
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "5e8608673b97450f93607be8da5d6ad4",
+        "delivered_bytes": 0,
+        "finished": 670287.040163541,
+        "key": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/16",
+        "kind": "finish",
+        "operation": "put_object",
+        "outcome": "call_succeeded",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670287.024949875,
+        "submitted_bytes": 16,
+        "transport_bytes": null
+      },
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "c5023bdf043545c7a4f3cccb93a9c3ae",
+        "delivered_bytes": 16,
+        "finished": 670287.04578175,
+        "key": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/16",
+        "kind": "finish",
+        "operation": "get_object",
+        "outcome": "read_complete",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670287.040713166,
+        "transport_bytes": null
+      },
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "fa12bb1a392741c6ab56f304a02f15e6",
+        "delivered_bytes": 0,
+        "finished": 670287.054018833,
+        "key": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/4096",
+        "kind": "finish",
+        "operation": "put_object",
+        "outcome": "call_succeeded",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670287.046049916,
+        "submitted_bytes": 4096,
+        "transport_bytes": null
+      },
+      {
+        "activity_id": "put-get",
+        "attempt": 1,
+        "call_id": "77e18d16e65548faac9bc2380d91823d",
+        "delivered_bytes": 4096,
+        "finished": 670287.058444458,
+        "key": "t09b/boto-calibration-2dfb3a20d9484b5ab8fce8fccca430c4/4096",
+        "kind": "finish",
+        "operation": "get_object",
+        "outcome": "read_complete",
+        "request_id": "boto-calibration",
+        "role": "workload",
+        "sdk_retries": 0,
+        "started": 670287.054281083,
+        "transport_bytes": null
+      }
+    ]
+  },
+  "objects_retained": true,
+  "traffic": {
+    "complete": true,
+    "client_calls": 4,
+    "server_attempts": 4,
+    "server_rx_bytes": 4878,
+    "server_tx_bytes": 4112,
+    "excluded_untagged_calls": 0,
+    "errors": [],
+    "layer": "server HTTP counters; not total wire traffic"
+  }
+}

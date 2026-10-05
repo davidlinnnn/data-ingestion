@@ -1,0 +1,149 @@
+{
+  "primary_error": null,
+  "persistent_channel_close_errors": {},
+  "persistent_channels_closed": true,
+  "workload_evidence": {
+    "status": "CONTROLLER_EXPORT_COMPLETE",
+    "supervisor": "START_CONFIRMED",
+    "controller_export_complete": true
+  },
+  "policy": {
+    "controller_export_complete": true,
+    "remove_owned_runtime": true,
+    "retain_evidence_pvc": true
+  },
+  "controller_export_complete": true,
+  "retained_for_evidence_recovery": false,
+  "terminal_stop_proven": false,
+  "terminal_cgroup_oom_proof": true,
+  "deployment_scaled_zero": true,
+  "pod_delete_uid_precondition_sent": true,
+  "pod_delete_grace_seconds": 60,
+  "old_runtime_absent": true,
+  "emptydirs_absent": true,
+  "owned_object_deletion": {
+    "deleted": [
+      {
+        "kind": "Deployment",
+        "name": "t09b-calibration-a7-activities",
+        "uid": "cdcfe3ef-4098-4051-9bf7-6dccdf25b0b9"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-harness-8e8df927d1a0056a",
+        "uid": "1c5776ce-e149-47bc-90b0-ec15b3a696e7"
+      },
+      {
+        "kind": "ConfigMap",
+        "name": "q04-pod-code-12760b5a300c5f8d",
+        "uid": "b7b73387-4dc6-4325-84ea-a42e78c1eeb6"
+      }
+    ],
+    "retained": [
+      {
+        "kind": "PersistentVolumeClaim",
+        "name": "t09b-calibration-a7-evidence-20260929",
+        "uid": "f35e0e00-b755-47b2-9417-05fcea6cb0fb"
+      }
+    ],
+    "errors": {}
+  },
+  "owned_objects_deleted_with_uid_preconditions": true,
+  "retained_evidence_claim": {
+    "pvc_name": "t09b-calibration-a7-evidence-20260929",
+    "pvc_uid": "f35e0e00-b755-47b2-9417-05fcea6cb0fb",
+    "phase": "Bound",
+    "retained": true,
+    "automatic_delete": false,
+    "recovery_identity": {
+      "pvc_name": "t09b-calibration-a7-evidence-20260929",
+      "pvc_uid": "f35e0e00-b755-47b2-9417-05fcea6cb0fb",
+      "pv_name": "pvc-f35e0e00-b755-47b2-9417-05fcea6cb0fb",
+      "pv_uid": "f377979c-b8ba-4151-b05d-e7ebac7fdfb0",
+      "namespace": "pdf-t09a-validation",
+      "node": "internal-a2a-vs6-local-worker",
+      "access_modes": [
+        "ReadWriteOnce"
+      ],
+      "storage_class": "standard",
+      "capacity": "1Gi",
+      "volume_backend": "rancher.io/local-path hostPath DirectoryOrCreate",
+      "host_path": "/var/local-path-provisioner/pvc-f35e0e00-b755-47b2-9417-05fcea6cb0fb_pdf-t09a-validation_t09b-calibration-a7-evidence-20260929",
+      "mount_path": "/q04-evidence",
+      "evidence_directory_name": "t09b-calibration-20260929-a7",
+      "evidence_directory": "/q04-evidence/t09b-calibration-20260929-a7",
+      "run_as_uid": 1000,
+      "run_as_gid": 1000,
+      "fs_group": 1000,
+      "automatic_delete": false,
+      "recovery_mode": "read-only helper Pod on the bound node",
+      "mount_root_permissions": {
+        "process_uid": 1000,
+        "process_gid": 1000,
+        "mount_uid": 0,
+        "mount_gid": 0,
+        "mode": "0o777",
+        "directory": true,
+        "symlink": false,
+        "writable": true,
+        "searchable": true
+      },
+      "directory_contract": {
+        "capacity": {
+          "evidence_free_bytes": 1073741824,
+          "evidence_used_bytes": 0,
+          "filesystem_free_bytes": 1781801570304,
+          "requested_bytes": 1073741824
+        },
+        "directory": {
+          "directory": true,
+          "gid": 1000,
+          "label": "application-owned-run-directory",
+          "mode": "0o700",
+          "path": "/q04-evidence/t09b-calibration-20260929-a7",
+          "symlink": false,
+          "uid": 1000,
+          "writable": true
+        },
+        "durable_probe": {
+          "atomic_rename": true,
+          "bytes": 26,
+          "directory_fsync_after_remove": true,
+          "directory_fsync_after_rename": true,
+          "file_fsync": true,
+          "probe_removed": true,
+          "readback_verified": true,
+          "sha256": "9e7da91e20900ed78b5bf470ba2f238b98b4462f983d352f865d8e91cc09c901"
+        },
+        "mount": {
+          "directory": true,
+          "gid": 0,
+          "label": "storage-backend-owned-mount-root",
+          "mode": "0o777",
+          "path": "/q04-evidence",
+          "symlink": false,
+          "uid": 0,
+          "writable": true
+        },
+        "process": {
+          "gid": 1000,
+          "uid": 1000
+        },
+        "schema_version": 1,
+        "status": "PASS"
+      }
+    }
+  },
+  "post_cleanup_vm_psi": {
+    "full_psi_avg10": 0.0,
+    "mode": "telemetry"
+  },
+  "post_cleanup_vm_oom_proof": true,
+  "final_identity_and_health": true,
+  "disposition": "CLEANED_WITH_WORKLOAD_EVIDENCE_RETAINED",
+  "evidence_state": {
+    "local_controller_evidence_persisted": true,
+    "pvc_retained": true,
+    "workload_evidence": "CONTROLLER_EXPORT_COMPLETE"
+  }
+}

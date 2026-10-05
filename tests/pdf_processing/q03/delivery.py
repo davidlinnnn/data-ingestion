@@ -8,7 +8,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 import tempfile
-from fixtures import document, SOURCE
+from fixtures import document, SOURCE, SOURCE_PDF
 from test_publication import MemoryS3, seed
 from q03_fixtures import profile
 from pdf_processing.compatibility import dependencies
@@ -39,10 +39,10 @@ def rendered_files():
     with tempfile.TemporaryDirectory(prefix='q03-render-') as tmp:
         root = Path(tmp)
         (root/'document.json').write_bytes(encoded(serialized_document()))
-        source = Path('/private/tmp/t09a-fixtures/08.pdf').read_bytes()
+        source = SOURCE_PDF.read_bytes()
         assert digest(source) == SOURCE
         execute({'out': str(root/'out'), 'parsed': str(root/'document.json'),
-            'pdf': '/private/tmp/t09a-fixtures/08.pdf', 'source': REQUEST,
+            'pdf': str(SOURCE_PDF), 'source': REQUEST,
             'parsed_result': 'parsed', 'assembly': 'assembly', 'review': {},
             'policy': 'typed-source-relationships-v2', 'relationships': profile()['content_evidence']['relationships'],
             'renderer_version': 'retained-test-runtime', 'max_render_pixels': 20_000_000})
