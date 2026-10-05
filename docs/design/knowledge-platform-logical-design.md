@@ -29,8 +29,9 @@ versioned implementation migration or integration work with affected validation.
 Measured PDF resource configurations inform the operating-envelope decision only
 within their qualified scope. Source-handoff Q1–Q3 were subsequently
 [confirmed on 2026-09-30](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124): delegated Source submission, stable logical Asset identity, and fixed captured inputs with accountable custody before durable admission.
-The [source-handoff design](knowledge-platform-source-handoff.md) records their
-scope and remaining questions; the full source-handoff ticket remains open.
+The [source-handoff design](knowledge-platform-source-handoff.md) subsequently
+resolved the source-facing decision on 2026-10-05 after Q1–Q14, the reviewed cases
+and independent spike. Detailed contract mechanisms remain with their named owners.
 
 **Confirmed amendment — 2026-10-05:** [source-handoff Q12/Q13](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520)
 clarify trusted authorization, distributed enforcement and governance acknowledgement

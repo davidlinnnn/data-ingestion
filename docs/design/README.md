@@ -18,8 +18,10 @@ confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neut
 delivery, change-ordering/conflict principles, authorization trust, governance
 acknowledgement meanings and package-scoped attachment identity. Initial global
 shared-attachment management and automatic cross-document deduplication are excluded.
-Illustrative PDF/Markdown/PPTX cases and the owner handoff are assembled; the final
-source-facing review remains pending. The [logical design](knowledge-platform-logical-design.md)
+The source-facing decision was resolved on 2026-10-05 after the illustrative
+PDF/Markdown/PPTX cases, owner handoff and independent spike. The incorporated
+clarification covers attachment-only changes; admission/canonical design own the
+old-capture/refreshed-precondition validation case. The [logical design](knowledge-platform-logical-design.md)
 also carries the accepted unified lifecycle/status-query requirement; implementation
 phasing is undecided. Concrete mechanisms, numeric freshness/retention targets,
 storage selections and detailed APIs remain with their named owners. This checkpoint

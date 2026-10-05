@@ -4,8 +4,10 @@
 
 **Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02;
 Q9/Q11 confirmed on 2026-10-03; Q12–Q14 confirmed on 2026-10-05.
-Q1–Q14 are confirmed. The final source-facing review is pending; this ticket remains
-open. This document assembles the implications of the
+Q1–Q14 and the final source-facing handoff are confirmed. The user accepted the
+independent spike disposition and source-facing resolution on 2026-10-05. Detailed
+contracts continue with the named downstream owners. This document assembles the
+implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
 [Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
@@ -73,8 +75,12 @@ Method-only reprocessing retains the Source Revision and uses a new request. An
 explicitly new source version/observation can have a new Source Revision even when
 bytes are equal; ordinary re-upload alone does not establish a new source version.
 An existing observation identity cannot be silently rebound to conflicting content.
-Use reliable native source-version identity where available, otherwise an explicit
-capture identity reusable on redelivery. Digests support integrity and possible
+Use reliable native source-version identity where it identifies the complete
+captured observation, including required dependencies; otherwise use an explicit
+capture identity reusable on redelivery. If the main file's native version is
+unchanged but a required dependency changes, record a distinguishable new Source
+Revision without rewriting the old observation. Retain the main file's native
+version as source evidence where applicable. Digests support integrity and possible
 reuse, not source-version identity by themselves.
 
 New source observations do not inherently require repeating all expensive work;
@@ -406,7 +412,7 @@ owners; protected status remains subject to governance.
 
 ## Source-facing handoff review — illustrative cases
 
-These cases assemble Q1–Q14 for the final shared-understanding review. They are not
+These reviewed cases assemble the confirmed Q1–Q14 handoff. They are not
 wire schemas, measured tests, a real pilot inventory or claims of runtime format
 qualification. Source `S`, Asset/revision labels and artifact versions below are
 illustrative. Actual identities/delegation and supported formats/profiles must be
@@ -424,6 +430,7 @@ Canonical Acceptance or publication.
 |---|---|---|
 | Paper PDF with embedded figures | `S / paper-A / pdf-r1`; `paper.pdf@F1` is the self-contained captured file | The embedded figures are already part of F1's fixed bytes. Capture does not need separate uploads of later extracted crops. Retry reads F1; renaming the catalog entry does not change the Asset. A genuine source update is another captured observation, not an overwrite of F1. Parsing, figure interpretation and canonical locators remain later boundaries. |
 | SOP Markdown with a required image | `S / sop-A / md-r1`; `procedure.md@M1` plus its package-scoped `assets/flow.png@I1` reference | Missing required I1 prevents normal admission; ordinary hyperlinks do not trigger recursive capture. A second SOP using equal image bytes has its own logical attachment reference under Q14. Preserve each reference's source relationship and authorization basis; no global image catalog is required. The earlier Markdown walkthrough covers processing/withdrawal races. |
+| Required-image-only update | Same Asset `sop-A`; main file remains `procedure.md@M1`, required image changes from I1 to I2 | M1/I1 and M1/I2 are distinguishable captured observations. The unchanged main-file native version alone cannot identify both packages as one Source Revision. Preserve the old observation; a new observation does not require a global image identity, another copy of eligible bytes, or unconditional full reprocessing. |
 | Self-contained PPTX with an embedded diagram | `S / deck-A / pptx-r1`; `training.pptx@T1` contains the embedded diagram | Capture fixes T1 as one package artifact; it does not claim slide interpretation has succeeded. If a future case has a required external dependency, Q6/Q9 require its fixed package binding before normal admission. A revised deck gets a new source observation; method-only processing keeps T1. This example does not qualify the current PDF worker for PPTX. |
 
 ### Minimum information at the source boundary
@@ -453,16 +460,49 @@ applicable information.
 | Policy or authorization-binding change | Authoritative-service policy changes follow the validity contract without resubmitting content. Platform-managed binding changes need appropriate authority and Q11 applicability. | Governance; canonical/admission binding representation |
 | Confirmed deletion or explicit withdrawal | Require attributable authority and scope; a fetch failure or missing batch item is insufficient. Apply urgent governance without waiting for ordinary rebuilds; a late result cannot restore access. Distinguish received/applied/enforced outcomes and separate purge. | Governance with admission status, projection enforcement and persistence |
 
-## Final review status
+## Independent spike disposition — 2026-10-05
 
-Q1–Q14 and the unified lifecycle/status design requirement are confirmed. The cases,
-semantic checklist and owner handoff above are assembled for the user's final
-shared-understanding review. No additional source-facing principle is currently
-identified as unresolved. The ticket remains open until that review is confirmed.
+Two independent read-only reviews examined the fixed design checkpoint
+`ff13f4d199507a469ad2438a83acf0c16eb3ad95`, the overall logical baseline and relevant
+downstream decision ownership. They found no architectural conflict, unowned
+essential source prerequisite or hard dependency cycle requiring a new decision.
+The user accepted the following bounded disposition and source-facing closure.
 
+| Finding | Incorporated disposition |
+|---|---|
+| A main file's native version may not identify its required dependencies | Q4 now explicitly covers the complete captured observation. The image-only update case above preserves M1/I1 and M1/I2 as distinguishable Source Revisions. Exact identifiers remain canonical design. |
+| Expected-state success can be misread as source newness | Q11 already prohibits this interpretation. Carry the validation case below to admission and canonical design; it adds no new source principle or manual-approval requirement. |
+
+### Downstream validation case — old capture with a refreshed precondition
+
+A captures S1. B captures a genuinely later S2 and advances platform state to P2.
+A then reads P2 and submits S1 with expected state P2. The platform-state comparison
+may pass, but it does not establish source newness or justify making S1 current.
+Refreshing a precondition alone cannot resolve source applicability. Require the
+existing authoritative applicability/confirmation rules; expose a conflict if that
+basis is missing. A delegated source program may perform supported reconciliation.
+
+[Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31)
+owns the request/precondition response and validation;
+[Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)
+owns current-selection/applicability semantics. Their detailed designs must show
+that merely rereading platform state and resubmitting cannot silently promote the
+old observation. This is a required validation scenario, not an executed test,
+selected concurrency mechanism or requirement to fetch live-latest at execution.
+
+## Source-facing resolution
+
+The user confirmed Q1–Q14, the assembled source-facing cases and owner handoff,
+and accepted the independent spike disposition on 2026-10-05. This resolves
+[Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53)
+at its source-facing decision boundary. No new source-facing question, service or
+decision ticket is required by this review.
+
+The separately confirmed unified lifecycle/status-query requirement remains with
+admission/status, projection and governance owners; implementation phasing is open.
 Detailed API/schema/TTL/storage choices below remain with existing downstream
-owners. Their assignment does not claim an implementation-ready specification or
-runtime qualification, and does not require resolving all of them inside this ticket.
+owners. Resolution does not claim an implementation-ready specification or runtime
+qualification. The wider Knowledge Platform map remains open.
 
 ## Integration and ownership
 
