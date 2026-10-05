@@ -32,6 +32,13 @@ within their qualified scope. Source-handoff Q1–Q3 were subsequently
 The [source-handoff design](knowledge-platform-source-handoff.md) records their
 scope and remaining questions; the full source-handoff ticket remains open.
 
+**Confirmed amendment — 2026-10-05:** [source-handoff Q12/Q13](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520)
+clarify trusted authorization, distributed enforcement and governance acknowledgement
+meanings. The [unified lifecycle/status-query decision](https://github.com/davidlinnnn/data-ingestion/issues/31#issuecomment-5991846818)
+adds a design requirement and supersedes the earlier cross-projection aggregation
+deferral. Implementation phasing remains open. These later decisions preserve the
+overall layer ownership and independent-publication baseline.
+
 ## Confirmed design inputs
 
 | Decision record | Confirmed constraint |
@@ -130,6 +137,14 @@ or gateway infrastructure can handle common routing and operational concerns whi
 projections retain API meaning and product behavior. No gateway product or topology
 is selected; ingress authentication alone is not complete data-level governance.
 
+Source-handoff Q12 separates source policy authority, authorization decisions and
+enforcement. Deployments may use GAM or a compatible trusted decision service;
+Canonical and projections enforce their applicable permissions. People, background
+workloads and user-delegated operations have distinct authority checks. A workload's
+broader background grants must not expand a user's access. Trusted decisions remain
+subject to scope/validity and applicable platform withdrawal. Provider protocols,
+policy freshness, cache/outage handling and enforcement proof remain detailed design.
+
 Projection operations may include native ranked retrieval; External Consumers own
 application-level orchestration, additional ranking and context assembly over the
 published interfaces. Canonical owners retain acceptance/exception facts and their
@@ -183,7 +198,24 @@ remain with the linked decision tickets.
 Admission retains request records under its existing terminal-plus-30-day rule and
 must preserve accepted work through a bounded 24-hour Temporal outage and one
 admission-storage-node failure. These are design requirements, not demonstrated
-whole-platform guarantees. Cross-projection status aggregation remains deferred.
+whole-platform guarantees.
+
+Unified lifecycle/status querying is now an explicit design requirement, replacing
+the earlier aggregation deferral. Admission/status owns client exposure and
+correlation; projection consumption/publication owns contribution and handoff meanings;
+governance owns protected status and enforcement-completion claims. Keep processing,
+Canonical Acceptance, materialization and publication distinct. For example, report
+Canonical accepted, Wiki published, and a failed new Retrieval build while an eligible
+authorized old version remains serving. Domain owners remain authoritative for their
+facts; one processing task need not map to one projection task. Query scope,
+observation/freshness/unknown-state semantics, reconciliation and implementation
+phasing remain detailed decisions. This does not select a new service/database or
+require one workflow, a publication barrier or a universal product-serving gateway.
+
+Q13 distinguishes durable receipt of a governance request, application of governance
+state and evidence that the declared enforcement boundary is satisfied. Physical
+purge is separate. Completion claims must reflect the actual achieved condition;
+Temporal execution alone does not establish all domain/enforcement facts.
 
 Keep storage responsibilities distinct: request/status records; Asset/Corpus and
 canonical metadata; source/evidence/processing payloads; projection-owned products.
@@ -295,11 +327,11 @@ compatibility and traffic migration require separately scoped adoption work.
 |---|---|---|
 | Outcomes and boundaries | Controlled Corpus, Wiki first, Retrieval reuse, upgrade rehearsal, governed consumption and distinct management roles; no required full legacy PROD replacement in phase one | [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53) source/authority; [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) pilot targets; legacy migration separately scoped |
 | Components and state ownership | Platform canonical ownership, projection product/API ownership, retained domain decisions/evidence, shared Temporal | [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31)/[Design canonical schema and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)/[Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) runtime contracts and [Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57) persistence |
-| Submission/API | Durable asynchronous admission, independent admitted-item outcomes | [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31) batch validation/atomicity, idempotency and dispatch |
+| Submission/API | Durable asynchronous admission, independent admitted-item outcomes; unified lifecycle/status query is a design requirement with implementation phasing open | [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31) batch validation/atomicity, idempotency and dispatch |
 | Identity/lifecycle | Shared Corpus, fixed inputs, version selection and rule-based acceptance | [Design canonical schema and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32) detailed schema/lifecycle and [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53) source identity |
 | Persistence/consistency | Separated custody roles, protected authoritative/unique data, conditional derivative rebuildability and coherent publication | [Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57) storage candidates/selection, transactions, retention and restore design; [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) recovery targets |
-| Coordination | Temporal workflows, recoverable change discovery, independent projection publication | [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) handoff/reconciliation and migration contracts |
-| Failure/governance | Layer-owned recovery, judgment exceptions, withdrawal separate from ordinary updates | [Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56) enforcement/authority and [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) recovery targets |
+| Coordination | Temporal workflows, recoverable change discovery, independent projection publication and correlated lifecycle/status observations | [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) handoff/reconciliation and migration contracts |
+| Failure/governance | Layer-owned recovery, judgment exceptions, trusted authorization with scoped validity, receipt/application/enforcement distinctions and separate physical purge | [Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56) enforcement/authority and [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) recovery targets |
 | Operations/evolution/adoption | Versioned compatibility, bounded budgets, managed PROD rebuild with human release decision | [Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) workload/targets; [Design canonical schema and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)/[Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) upgrade and migration protocols |
 
 The user confirmed the overall responsibility table, boundary meanings and handoff
@@ -322,6 +354,8 @@ Carry detailed decisions into the existing map children:
 - [Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57): physical persistence and custody after required semantics are clear.
 
 The independent [PDF processing core](https://github.com/davidlinnnn/data-ingestion/issues/33)
-continues its existing qualification. This logical baseline neither certifies its
-latest runtime status nor adds a blanket dependency on the design map. Overall
+completed its bounded qualification and was integrated on `dev`; the [map
+checkpoint](https://github.com/davidlinnnn/data-ingestion/issues/52#issuecomment-5950521498)
+records the evidence limits. This design does not extend that qualification or add
+a blanket dependency on the map. Overall
 closure records the user's review confirmation; the detailed map remains open.

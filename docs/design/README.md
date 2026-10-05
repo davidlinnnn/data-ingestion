@@ -14,10 +14,13 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
-confirmed Q1–Q11 decisions, including complete capture inputs, the deployment-neutral
-delivery direction and change-ordering/conflict principles. Q12/Q13 remain proposed.
-Concrete ordering mechanisms, policy freshness, remaining lifecycle/custody details,
-storage selections and detailed APIs remain open. This checkpoint
+confirmed Q1–Q13 decisions, including complete capture inputs, deployment-neutral
+delivery, change-ordering/conflict principles, authorization trust and governance
+acknowledgement meanings. Shared-attachment boundaries and the final source-facing
+case review remain open. The [logical design](knowledge-platform-logical-design.md)
+also carries the accepted unified lifecycle/status-query requirement; implementation
+phasing is undecided. Concrete mechanisms, numeric freshness/retention targets,
+storage selections and detailed APIs remain with their named owners. This checkpoint
 records progress and does not constitute an implementation-ready spec.
 Decision details remain in the linked issues; the map remains their index.
 

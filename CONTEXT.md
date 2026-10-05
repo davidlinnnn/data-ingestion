@@ -132,6 +132,15 @@ replacement.
 
 ## Governance
 
+**Source Policy Authority**:
+The party entitled to define or change source access policy, held by the Source
+Owner or an explicitly authorized delegate. Its authority is distinct from
+submission permission and platform operation.
+
+**Source Authorization Binding**:
+The attributable association between an Asset and the authoritative policy or
+authorization target governing its access. The binding is not itself an access grant.
+
 **Source Authorization Ceiling**:
 The maximum audience permitted by the applicable source authorization policy.
 Enterprise restrictions may narrow that audience.

@@ -3,15 +3,16 @@
 [Design index](README.md) · [Confirmed overall logical baseline](knowledge-platform-logical-design.md)
 
 **Status:** Q1–Q7 confirmed on 2026-09-30; Q8/Q10 confirmed on 2026-10-02;
-Q9/Q11 confirmed on 2026-10-03. Q1–Q11 are confirmed; Q12/Q13 remain proposed. The detailed
-source-handoff design is open. This document assembles the implications of the
+Q9/Q11 confirmed on 2026-10-03; Q12/Q13 confirmed on 2026-10-05.
+Q1–Q13 are confirmed. The detailed source-handoff design is open. This document assembles the implications of the
 [Q1–Q3 decision record](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124) and
 [Q6/Q7 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5911948945), and
 [Q4 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912631142), and
 [Q5 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5912982133), and
 [Q8/Q10 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5953381014), and
 [Q9 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966721936), and
-[Q11 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968626647) in
+[Q11 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968626647), and
+[Q12/Q13 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520) in
 [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53).
 Issue records remain authoritative. Question numbers here belong to this ticket,
 not the earlier overall-design interview.
@@ -84,8 +85,10 @@ changes, reuse rules and retained-identity lifetime remain open.
 Normal ingestion admission requires a trustworthy, explicit reader policy whose
 meaning the platform supports. Verify submitter identity and Source-scoped
 authority separately from the document's permitted audience. Reader policies may
-identify employee accounts or groups; exact directory mappings remain detailed
-work. Upload authority does not permit broadening the source-authorized audience.
+identify employee accounts or groups, or use a trusted authorization-target binding
+under Q12. This does not require copying an enterprise employee directory; exact
+identity/policy mappings remain detailed work. Upload authority does not permit
+broadening the source-authorized audience.
 
 Carry attributable policy evidence or reference an explicitly authorized registered
 Source default. Establish its responsible authority and applicability rather than
@@ -136,8 +139,11 @@ changes affect eligibility and dependent serving without requiring content
 re-parsing. Confirmed deletion/withdrawal invokes urgent stop-disclosure handling
 for its declared scope without waiting for ordinary rebuilding. Fetch failure or
 omission from a batch does not establish source deletion. Q11 establishes ordering
-and conflict principles. Detailed ordering mechanisms, acknowledgements, recovery,
-missed-change detection and policy freshness remain open.
+and conflict principles. Q12/Q13 below establish continued-authorization trust and
+acknowledgement meanings.
+Detailed ordering mechanisms, change recovery, freshness bounds and public exposure
+remain with the downstream owners. Changes inside an authoritative policy service
+follow Q12; they do not require resubmitting the captured content.
 
 ### Q9 — Complete capture handoff across delivery methods and deployments
 
@@ -194,8 +200,10 @@ roles do not require separate services or a generic plugin framework.
 Source integrations must preserve authorization meaning in a supported policy
 contract. Missing or unsupported required policy still rejects normal admission
 under Q5. Submission, transfer and employee reading permissions remain distinct.
-Policy/withdrawal changes need the explicit lifecycle channel after capture;
-revoking source credentials alone does not enforce downstream governance.
+Platform-managed authorization-binding changes and explicit withdrawal need the
+governed lifecycle channel after capture. Changes inside an authoritative policy
+service follow Q12's validity contract. Revoking source storage credentials alone
+does not enforce downstream governance.
 
 Initial admission-scope planning prioritizes one pilot-qualified custody backend
 and direct-upload/finalization, retaining the fixed-reference processing seam.
@@ -249,7 +257,76 @@ illustrative labels, not an accepted schema or evidence of order by themselves.
 Temporal supplies durable execution/retries; domain applicability rules remain
 part of the contract. Exact identifiers, order/precondition fields, atomic application,
 deduplication windows and conflict responses remain detailed design. No global counter
-or numeric freshness bound is selected. Q12/Q13 remain unconfirmed.
+or numeric freshness bound is selected. Q12/Q13 establish the trust and
+acknowledgement principles below.
+
+### Q12 — Trusted authority and continued authorization validity
+
+Each Source declares an accountable policy authority, authoritative policy source,
+and evidence/update/confirmation obligations. The Source Owner defines policy or
+explicitly delegates that responsibility. Policy ownership, management interface,
+decision evaluation and enforcement are separate responsibilities. The platform
+does not require a copy of every employee account. The source-authorized audience
+remains the ceiling; platform operation or upload authority cannot broaden it.
+
+An authorized actor must establish or change the attributable binding between an
+Asset and its authorization target. Space is one possible target, not a mandatory
+model; a relation such as membership and an action such as read are distinct.
+Corpus membership grants no additional access. Callers cannot supply an arbitrary
+permissive target or decision service as proof of authority.
+
+Separate authorization decisions from enforcement. Deployments may use GAM or a
+compatible authorization service through a trusted common decision contract.
+Compatibility includes decision meaning, applicability and validity, not just API
+shape. Source policy remains source-controlled regardless of the management UI's
+location. No concrete GAM capability, protocol, SDK or policy engine is qualified
+or selected here.
+
+People and workload identities both require authorization. Background processing
+and materialization use scoped work permissions. Operations on behalf of a user
+must preserve verified user authority and delegation; broader background grants
+must not widen that user's access. Authentication credentials do not establish
+permission, and read permission does not confer policy/lifecycle management rights.
+Checks belong at the applicable admission, management, read and artifact boundaries;
+this does not require per-employee checks inside every parser/OCR step or a remote
+GAM call for every workload check.
+
+The platform defines common governance obligations; Canonical and projection
+owners enforce them at their boundaries. Each projection retains its product API
+and may add restrictions without expanding the source-authorized audience. Content,
+existence, summaries, citations, attachments and protected status require applicable
+authorization. Mixed-source products require sufficient lineage and enforceable
+restrictions; detailed derivation rules belong to governance design.
+
+Use authorization decisions only within their applicable scope and validity.
+Distinguish a trusted denial from unavailable or unverifiable authorization. Without
+a trustworthy basis, stop the affected disclosure; unrelated authorized work need
+not stop. Re-establish trustworthy authorization before restoring access. An
+applicable platform withdrawal cannot be undone by a provider allow result or a
+late processing result. Fixed captured inputs are not permanent grants.
+
+Policy/membership changes inside the authoritative service need not resubmit or
+reparse content; observe them through the selected validity contract. Platform-managed
+document/target binding changes and explicit withdrawal follow the controlled
+lifecycle channel and Q11 applicability rules. Exact scopes/delegation proofs,
+provider trust, cache/freshness bounds, missed-change detection, outage/recovery and
+enforcement tests remain detailed design. No instantaneous global revocation or
+numeric validity guarantee is implied.
+
+### Q13 — Governance acknowledgement and completion meanings
+
+Distinguish durable receipt and responsibility for a request, application of its
+governance state, and evidence that the declared enforcement boundary is satisfied.
+Report incomplete portions explicitly. Receipt alone cannot mean every downstream
+interface has applied a restriction. Physical custody purge has a separate
+completion condition and evidence; stopping disclosure does not prove deletion.
+
+Temporal supplies durable execution/retry/recovery. Each domain owner supplies
+the relevant completion facts. This does not prescribe three endpoints/status
+enums, a synchronous global barrier, or a new status service. The existing
+processing-admission `202` promise is unchanged. Admission owns public exposure;
+governance owns enforcement scope/timing/validation; governance and persistence
+own detailed purge obligations and mechanisms.
 
 ## Markdown-image consistency check against merged research
 
@@ -284,38 +361,47 @@ publication/serving. Projection owners retain their publication/serving obligati
 An expired URL, revoked storage credential or failed fetch is not itself a reliable
 withdrawal/deletion signal. Signal receipt does not mean all dependent copies are
 purged; physical purge follows its separate custody obligations. Q11 establishes
-ordering/conflict principles; detailed mechanisms, freshness, acknowledgements,
-missed-change recovery and enforcement validation remain open.
+ordering/conflict principles; Q12/Q13 establish authorization trust and
+acknowledgement meanings. Detailed mechanisms, numeric freshness bounds, public
+exposure, missed-change recovery and enforcement validation remain open.
 
-## Pending grilling decisions — Q12–Q13
+## Unified lifecycle/status design requirement
 
-The [2026-10-03 proposed round](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5968360294)
-records the evidence and scenarios. Q11 was subsequently confirmed above.
-**Q12/Q13 await the user's answers; Q1–Q11 are the confirmed baseline.**
+The user also accepted the [unified lifecycle/status-query scope amendment](https://github.com/davidlinnnn/data-ingestion/issues/31#issuecomment-5991846818)
+on 2026-10-05. It supersedes the earlier deferral of cross-projection aggregation.
+The admission/status owner holds that decision; this source ticket supplies Q13's
+acknowledgement meanings. Implementation phasing remains undecided. A unified query
+does not select a new service/database, one workflow, simultaneous publication or
+a universal knowledge-serving API. Domain facts retain their Canonical/projection
+owners; protected status remains subject to governance.
 
-| Question | Proposed direction |
-|---|---|
-| Q12 — Policy authority and continued validity | Each Source declares its policy authority, authoritative policy source and evidence/update/confirmation obligations. Explicitly delegated platform-managed publication policy and external authoritative ACLs are possible arrangements; neither bypasses controlling source authority. Untrustworthy current authorization remains fail-closed. |
-| Q13 — Lifecycle acknowledgements | Distinguish durable receipt, governance application and satisfaction of the declared enforcement boundary. Receipt alone does not establish downstream enforcement or physical purge; completion requires evidence against a declared condition. |
+## Proposed next round — Q14 (unconfirmed)
 
-No global source counter, numeric policy TTL, generic source polling, mandatory live
-connector, new public status service or cross-projection task aggregation is selected.
-Authorized-but-older content remains distinct from unverifiable current authorization.
-The Temporal-outage envelope and processing-request retention do not define policy
-freshness or governance-record lifetime. Exact ordering/precondition representations,
-validity/lapse/recovery rules, acknowledgement exposure and enforcement validation
-follow the user's answers with the existing admission, governance and operating-envelope
-owners. The existing processing admission `202` promise remains unchanged.
+The [Q14 proposal](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991924147)
+asks how the first slice handles two documents sharing a required image when their
+audiences or source authorities differ. The recommendation is complete-package
+authorization coverage under supported attributable policy, rejection when required
+restrictions cannot be preserved, and explicit per-reference version/authority and
+withdrawal scope. Physical sharing must not merge logical rights or release another
+document's required retained input. Standalone attachment Assets, per-fragment
+masking and a generic policy-composition engine are not assumed. The user has not
+accepted this recommendation; it is not part of Q1–Q13.
 
 ## Remaining source-handoff frontier
 
-Q1–Q11 are confirmed, not a complete implementation-ready specification. Remaining
-branches include concrete source/metadata/policy ordering and concurrency mechanisms, policy
-freshness and missed-change recovery, custody release, exact package validation,
-shared attachments, PDF/PPTX walkthroughs and remaining Markdown representation
-details. The example above checks consistency, not runtime format qualification. Detailed
-transport/status/finalization, canonical representation and governance enforcement
-continue with the existing linked design owners. This ticket remains open.
+Q1–Q13 are confirmed. Before the final source-facing review, complete illustrative
+PDF/PPTX handoff cases alongside the Markdown/image case, and resolve the policy,
+withdrawal and dependency boundaries for shared attachments. Assemble one reviewed
+handoff showing identity, fixed artifacts/relationships, integrity/custody, policy
+authority/validity, operation/scope/applicability and acknowledgement meanings.
+Illustrative cases are not runtime format qualification. This ticket remains open.
+
+Concrete APIs/status, ordering/deduplication mechanisms and finalization atomicity
+belong to admission; package/identity/locator representation belongs to canonical
+design; validity/lapse/recovery and enforcement validation belong to governance
+with operating targets from the envelope owner; custody release/reference protection
+and purge mechanisms belong to persistence with governance. These named downstream
+decisions do not all need to be resolved within the source-facing ticket.
 
 ## Integration and ownership
 
@@ -330,3 +416,11 @@ owns transport, public request/status semantics and admission persistence/atomic
 [Design canonical schema and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)
 owns the canonical representation and lifecycle contract. This source-boundary
 decision supplies their identity, capture and authorization prerequisites.
+
+[Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55)
+owns projection handoff/status contributions and independent publication semantics.
+[Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56)
+owns cross-boundary authorization validity, enforcement and completion evidence.
+[Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57)
+owns custody/reference protection and persistence mechanisms, using targets from
+[Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54).

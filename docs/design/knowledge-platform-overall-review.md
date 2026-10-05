@@ -9,6 +9,13 @@ an implementation specification, physical deployment approval, or completion of
 the separate Architecture Direction Review. Decision authority remains the records in
 [Define the overall Knowledge Platform logical system design](https://github.com/davidlinnnn/data-ingestion/issues/58).
 
+**Subsequent confirmed handoff — 2026-10-05:** [source-handoff Q12/Q13](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520)
+clarify authorization trust and receipt/application/enforcement meanings. The
+[unified lifecycle/status-query scope amendment](https://github.com/davidlinnnn/data-ingestion/issues/31#issuecomment-5991846818)
+supersedes the earlier aggregation deferral, with implementation phasing still open.
+The [current logical design](knowledge-platform-logical-design.md) incorporates these
+decisions; the independent spike remains the historical reviewed snapshot.
+
 ## Review outcome
 
 The Q1–Q25 decisions fit a coherent logical design. No contradiction was found
