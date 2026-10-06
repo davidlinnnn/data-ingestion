@@ -1,0 +1,13 @@
+# Preserve source relationships in Canonical and product citations in projections
+
+Canonical preserves reusable document structure, source locations and explicit
+Source References with their resolution results; projections connect their own
+statements, chunks/hits and knowledge organization to the exact Canonical inputs
+and Source Evidence they used. This lets Wiki and Retrieval share source-side
+information while retaining responsibility for the products they generate.
+Logical component links do not require a graph database or a universal knowledge
+graph, and preserving an unresolved source reference does not establish its target.
+
+Confirmed on 2026-10-06 in the [Q4 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6015964591).
+The [canonical design checkpoint](../design/knowledge-platform-canonical-design.md#q4-canonical-relationships-and-projection-citations)
+records the boundary, its evidence limits and open Q5 precision contract.

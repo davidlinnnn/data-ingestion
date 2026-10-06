@@ -4,9 +4,8 @@
 
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
-The ticket remains in progress. Q1–Q3 establish the minimum contract, the initial
-complete-candidate acceptance boundary and explicitly permitted limitations;
-detailed representation, criteria and lifecycle rules remain open.
+The ticket remains in progress. Q1–Q4 establish the minimum contract, acceptance of complete
+candidates, permitted limitations and source/projection relationship boundaries. Detailed representation, criteria and lifecycle rules remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -71,6 +70,53 @@ Judgment exceptions continue through authorized human handling. Missing required
 source inputs, incomplete required work, insufficient necessary evidence or
 unsatisfied governance cannot be waived as an accepted limitation. This decision
 does not select a new status name or grading schema.
+
+## Q4: canonical relationships and projection citations
+
+Confirmed on 2026-10-06 in the [Q4 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6015964591),
+after clarifying document relationships, source locations and Docling's bounded
+capabilities. Canonical represents reusable document structure through content
+components and explicit relationships, retaining necessary format distinctions.
+The detailed component/relation inventory and fields still need three-format cases.
+
+| Boundary | Confirmed responsibility |
+|---|---|
+| Parsing and required Enrichment | Produce observations of document structure, source locations and detected relationships, with attributable methods and limitations. |
+| Canonical mapping and acceptance | Preserve, normalize and validate source-side structure and evidence. Retain Source References and their resolution results without treating an unresolved reference as a reliable target link. |
+| Projection | Organize its own product and connect its generated statements, chunks/hits or graph product to the exact Canonical inputs and Source Evidence it used. |
+
+A Source Reference is something the source actually says or encodes, such as an
+attachment path, hyperlink, figure reference or bibliographic citation. Keeping
+that reference and establishing its target are separate facts. Preserve unresolved
+references and their limitations; Q1–Q3 govern acceptance for required uses.
+
+An external URL remains source content even when its target is not captured.
+It does not imply recursive acquisition or an established cross-document knowledge
+relationship. Required attachments retain the confirmed Capture Package bindings.
+
+Logical component links do not select a graph database or a universal knowledge
+graph. Reusable derived understanding may later be adopted as Canonical Enrichment
+under its own input/evidence/acceptance contract; Q4 does not adopt all cross-document
+inference. Projection owners retain product-specific knowledge organization.
+
+The trace runs from a Wiki statement or Retrieval hit through its Canonical
+component/revision inputs to fixed sources and locations. Canonical owns the
+source-side relationships; each projection owns how its output uses those inputs.
+See [ADR-0002](../adr/0002-canonical-source-relationships-and-projection-citations.md)
+for the responsibility boundary.
+
+### Capability evidence and open precision contract
+
+Docling can represent parent/child relationships, reading order and provenance;
+bounded retained PDF outputs include detected caption links. The inspected
+Markdown backend reads explicit link targets. These observations do not establish
+general figure-reference, bibliography, diagram-arrow or exact platform artifact
+resolution. Docling object references alone do not establish semantic reference
+resolution. The Q4 issue record links the inspected evidence; integration and
+qualification gaps still need the reconciliation and processing handoff.
+
+Q5 remains unanswered: allowed locator precision, supported-content scope,
+partial/unmapped expression and resolver details are not adopted by Q4.
 
 ## Illustrative checks and evidence limits
 

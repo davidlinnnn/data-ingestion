@@ -88,6 +88,13 @@ _Avoid_: processing completion, projection publication, verification of source t
 Reusable derived understanding associated with canonical knowledge, such as OCR
 reconstruction or image interpretation, with attributable producers and evidence.
 
+**Source Reference**:
+An explicit reference present in captured source content, such as an attachment
+path, hyperlink, figure reference or bibliographic citation. Its original target
+expression and any established target association are distinct, so retaining a
+reference does not imply that its target has been resolved.
+_Avoid_: Source Evidence, inferred semantic relationship
+
 **Source Evidence**:
 The source observations and locations supporting a represented fact or derived
 interpretation.
