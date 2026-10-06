@@ -4,8 +4,10 @@
 
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
-The ticket remains in progress. Q1–Q4 establish the minimum contract, acceptance of complete
-candidates, permitted limitations and source/projection relationship boundaries. Detailed representation, criteria and lifecycle rules remain open.
+The ticket remains in progress. Q1–Q5 establish the minimum contract, acceptance
+of complete candidates, permitted limitations, source/projection relationship
+boundaries and use-dependent evidence precision. Detailed representation, criteria
+and lifecycle rules remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -105,7 +107,7 @@ source-side relationships; each projection owns how its output uses those inputs
 See [ADR-0002](../adr/0002-canonical-source-relationships-and-projection-citations.md)
 for the responsibility boundary.
 
-### Capability evidence and open precision contract
+### Capability evidence and precision follow-up
 
 Docling can represent parent/child relationships, reading order and provenance;
 bounded retained PDF outputs include detected caption links. The inspected
@@ -115,8 +117,30 @@ resolution. Docling object references alone do not establish semantic reference
 resolution. The Q4 issue record links the inspected evidence; integration and
 qualification gaps still need the reconciliation and processing handoff.
 
-Q5 remains unanswered: allowed locator precision, supported-content scope,
-partial/unmapped expression and resolver details are not adopted by Q4.
+Q4 did not decide evidence precision. Q5 below confirms its governing principle;
+concrete locator, partial/unmapped and resolver details remain open.
+
+## Q5: source-location precision follows the agreed use
+
+Confirmed on 2026-10-06 in the [Q5 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6016542202).
+Source Evidence is the original source observation and location supporting
+represented content, enabling inspection of its basis in a fixed source version.
+It is distinct from a Source Reference and does not establish source truth.
+
+Allow different source-appropriate location precision. Examples include PDF pages,
+regions or table cells; Markdown line ranges or blocks; and PPTX slides or shapes.
+These are design examples, not format qualification. Expose the actual fixed-source
+location and supported content, including partial correspondence or uncertainty,
+under the already confirmed Q1/Q3 requirements.
+
+Sufficiency follows the agreed reuse requirements and applicable acceptance rules.
+A page-level location may suffice for one use and fail a use requiring a specific
+table cell. Do not imply finer precision than the evidence provides or waive
+insufficient necessary evidence as an accepted limitation.
+
+Concrete locator types/fields, partial-mapping representation, evidence-validity
+checks and resolver contracts still need case-based design. Q6 treatment of
+unrepresented parser output remains unanswered.
 
 ## Illustrative checks and evidence limits
 

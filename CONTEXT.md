@@ -97,7 +97,8 @@ _Avoid_: Source Evidence, inferred semantic relationship
 
 **Source Evidence**:
 The source observations and locations supporting a represented fact or derived
-interpretation.
+interpretation. Actual location precision and support are explicit, and their
+sufficiency is judged against the agreed reuse requirements.
 
 **Evidence Lineage**:
 The traceable relationship from a published result through its knowledge inputs

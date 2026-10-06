@@ -10,4 +10,4 @@ graph, and preserving an unresolved source reference does not establish its targ
 
 Confirmed on 2026-10-06 in the [Q4 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6015964591).
 The [canonical design checkpoint](../design/knowledge-platform-canonical-design.md#q4-canonical-relationships-and-projection-citations)
-records the boundary, its evidence limits and open Q5 precision contract.
+records the boundary, its evidence limits and subsequent source-location decisions.
