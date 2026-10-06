@@ -13,6 +13,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
 - [Independent spike](../reviews/knowledge-platform-overall-spike-2026-09-28.md):
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
+- [Canonical representation and acceptance](knowledge-platform-canonical-design.md):
+  Q1 confirms the six-part minimum acceptance contract. Detailed representation,
+  acceptance criteria and lifecycle decisions remain in progress.
+
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral
 delivery, change-ordering/conflict principles, authorization trust, governance
