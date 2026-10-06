@@ -85,6 +85,16 @@ The qualified PDF core remains bounded integration evidence. This confirmation
 does not establish a passing Canonical Acceptance run or qualified Markdown/PPTX
 workers.
 
+## Historical ADR reconciliation before closure
+
+After the canonical design converges, complete the
+[ticket's historical ADR reconciliation checkpoint](https://github.com/davidlinnnn/data-ingestion/issues/32#historical-adr-reconciliation-checkpoint)
+before final shared-understanding confirmation, resolution, closure and map update.
+The agent continuing this ticket owns the work. Present the inventory of confirmed
+historical/current decisions and their existing-ADR, backfilled-ADR or
+no-separate-ADR dispositions in the final review. This remains outstanding;
+confirmed canonical rounds do not complete it automatically.
+
 ## Open decisions and handoff
 
 Continue the linked decision ticket for shared and format-specific representation,
