@@ -14,8 +14,8 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
 - [Canonical representation and acceptance](knowledge-platform-canonical-design.md):
-  Q1 confirms the six-part minimum acceptance contract. Detailed representation,
-  acceptance criteria and lifecycle decisions remain in progress.
+  Q1–Q3 confirm the minimum contract, complete-candidate acceptance and explicitly
+  permitted limitations. Detailed representation, criteria and lifecycle remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

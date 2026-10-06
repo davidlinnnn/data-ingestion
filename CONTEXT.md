@@ -77,10 +77,11 @@ A distinguishable version of canonical knowledge with traceable source inputs
 and processing origin.
 
 **Canonical Acceptance**:
-A traceable determination that a specific candidate canonical result meets the
-applicable, versioned representation, evidence, quality, and governance criteria
-for agreed reuse as Canonical Knowledge. Acceptance remains subject to current
-access and lifecycle controls.
+In the initial document scope, a traceable determination that a complete candidate
+from one Asset's Capture Package meets the applicable, versioned representation,
+evidence, quality, and governance criteria for agreed reuse as Canonical Knowledge.
+Explicitly permitted limitations may accompany acceptance, which remains subject
+to current access and lifecycle controls.
 _Avoid_: processing completion, projection publication, verification of source truth
 
 **Enrichment**:
