@@ -4,10 +4,10 @@
 
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
-The ticket remains in progress. Q1–Q5 establish the minimum contract, acceptance
-of complete candidates, permitted limitations, source/projection relationship
-boundaries and use-dependent evidence precision. Detailed representation, criteria
-and lifecycle rules remain open.
+The ticket remains in progress. Q1–Q6 establish the minimum acceptance contract,
+complete-candidate boundary, permitted limitations, source/projection
+responsibilities, evidence precision and parser-output disposition principles.
+Detailed representation, validation, version and lifecycle rules remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -139,8 +139,34 @@ table cell. Do not imply finer precision than the evidence provides or waive
 insufficient necessary evidence as an accepted limitation.
 
 Concrete locator types/fields, partial-mapping representation, evidence-validity
-checks and resolver contracts still need case-based design. Q6 treatment of
-unrepresented parser output remains unanswered.
+checks and resolver contracts still need case-based design. Q6 below records the
+confirmed treatment of output outside the common representation.
+
+## Q6: disposition of parser output outside the common representation
+
+Confirmed on 2026-10-06 in the [Q6 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6018564062).
+Map content into existing common structures wherever they suffice. For populated
+output not yet covered, assign an explicit disposition by content/field:
+
+| Disposition | Confirmed meaning |
+|---|---|
+| Incorporate into the representation, extending by format where needed | Understand the meaning and required use; reuse existing structures first, adding a clearly defined format-specific representation only where needed. |
+| Retain uninterpreted | Preserve necessary original output or fixed references and disclose that the content is not yet reliably understood. Retention does not establish semantic understanding. |
+| Omit under explicit rules | Record the permitted omission, its scope and rationale. Unknown impact cannot silently be treated as permission to omit. |
+
+Different parts of one document may have different dispositions; these are not
+three whole-document acceptance states. The complete candidate still must meet
+Q1–Q3's agreed reuse, necessary content, evidence and quality conditions. Keeping
+raw data cannot compensate for required meaning that remains uninterpreted.
+
+This does not require permanent retention of every parser intermediate. Protect
+data necessary for acceptance validation or reuse under existing custody
+obligations; physical mechanisms and retention periods remain with their owners.
+The illustrative PPTX chart/animation example does not establish parser capability
+or adopt a pilot requirement.
+
+Common types, extension schemas, per-field mapping/omission rules and concrete
+validation examples still need design and reconciliation.
 
 ## Illustrative checks and evidence limits
 
