@@ -9,6 +9,11 @@ determinable, without treating the last completed result as the winner.
 Catalog display information and present eligibility remain separate from fixed
 content; immutability does not grant permanent access or retention.
 
+The [Q15 decision](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6039615616) confirmed on 2026-10-07
+binds references to a location within an exact revision. Initially there is no
+guarantee of automatic cross-revision component matching; a reused local label
+must not redirect historical references to new content.
+
 Confirmed on 2026-10-07 in the [Q7/Q8 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035081526).
 See the [canonical design checkpoint](../design/knowledge-platform-canonical-design.md#q7-accepted-revision-contents-remain-fixed)
 for examples, the [Q9 invalidation principle](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035318528),

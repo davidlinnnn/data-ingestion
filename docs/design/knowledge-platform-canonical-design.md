@@ -420,6 +420,25 @@ fixtures, canonical representation and the mapping-validation plan still need
 design; execute a bounded contract check only where the revised scope requires it.
 Q14 confirms the cases and validation boundary, not completed validation.
 
+## Q15: references identify locations within an exact revision
+
+Confirmed on 2026-10-07 in the [Q15 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6039615616).
+References identify an exact Canonical Revision and a location/component within
+that revision. A simple index or node reference may suffice; this decision does
+not select an ID format or require a separate component identity system.
+
+Initially, there is no guarantee of automatically matching the same component
+across revisions. C1's `table-3` and C2's `table-3` do not establish identity by
+sharing a label. Insertions, splits, merges or reparsing must not redirect an old
+reference to new content. Q12 still permits artifact reuse with explicit
+compatibility evidence; reuse does not imply general cross-revision matching.
+Projection may initially reevaluate by document revision without a fine-grained
+incremental-update contract here.
+
+Historical references retain their original meaning, subject to current governance
+and retention. If their fixed dependencies are unavailable, report that limitation
+rather than substituting the current revision's content or evidence.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
