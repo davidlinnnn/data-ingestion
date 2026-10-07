@@ -10,9 +10,10 @@ immutability, rule-based selection and post-acceptance invalidation principles.
 Q10–Q11 establish new Canonical Revisions for adopted Enrichment and automatic
 reprocessing after platform method adoption within a declared scope. Q12–Q13
 confirm attachment-change reuse and historical acceptance versus source-target
-applicability. Q14 confirms three-format and shared-Corpus consumer cases, with
-conceptual/minimal executable validation here and full Wiki implementation owned
-by Projection. Detailed representation, validation, compatibility and lifecycle
+applicability. Revised Q14 confirms conceptual three-format/shared-Corpus consumer
+cases here, with executable checks limited to decision-critical Canonical unknowns;
+Wiki/Retrieval consumer implementation and effectiveness validation belong to
+Projection. Detailed representation, validation, compatibility and lifecycle
 mechanisms remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
@@ -381,17 +382,29 @@ document or a requirement for a universal canonical knowledge graph.
 
 ### Validation and implementation ownership
 
-This ticket may use conceptual cases and the smallest necessary executable probes
-to resolve representation, version, evidence and compatibility questions. Record
-what each probe actually establishes, including whether inputs are synthetic or
-real retained parser outputs. A synthetic example or passing contract check does
-not qualify parsing quality, end-to-end Wiki generation or production behavior.
+The [Q14 scope revision](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6038854471) was confirmed
+on 2026-10-07. Validate Wiki and Retrieval uses through conceptual walkthroughs of
+the shared cases. This ticket does not implement either consumer, including a
+reduced llm-wiki or RAG prototype.
+
+Use the smallest necessary executable check only for a decision-critical Canonical
+contract unknown that existing evidence cannot resolve, such as source-reference
+resolution or preservation of necessary mapped fields. Reuse sufficient existing
+evidence; an executable probe is not required for every conceptual consumer case.
+The mapping-validation plan, PDF reconciliation and necessary evidence/gap handoffs
+remain required.
+
+Keep conceptual, synthetic and actual parser/consumer execution evidence distinct.
+Conceptual walkthroughs do not prove generation quality, knowledge-link correctness,
+retrieval effectiveness or incremental-publication behavior. Record the scope and
+result of any contract probe; neither a synthetic fixture nor a passing contract
+check qualifies an entire parser or consumer.
 
 [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55)
-owns full llm-wiki composition/interlinking, update behavior, product-quality and
-publication design and its implementation handoff. Its complete implementation is
-not a prerequisite for this canonical decision. Use this shared case set for both
-owners without reversing the existing dependency. Concrete processing capability
+owns llm-wiki/Retrieval implementation and effectiveness validation, including
+composition/interlinking, retrieval, updates, product quality and publication.
+Consumer implementation is not a prerequisite for this canonical decision. Use
+this shared case set for both owners without reversing the existing dependency. Concrete processing capability
 gaps retain their processing owner and affected validation.
 
 The [inspected llm_wiki README at 48fd970e](https://github.com/nashsu/llm_wiki/blob/48fd970e206a02a6d2028d1dbfc41b7a0345bf0b/README.md#3-two-step-chain-of-thought-ingest)
@@ -403,8 +416,9 @@ Direct adoption of that implementation is not decided here.
 Current PDF evidence is bounded and does not establish all unit/note associations;
 Markdown/PPTX lack corresponding qualified workers. The shared case requirements
 feed the required reconciliation and owner-scoped integration work. Detailed
-fixtures, canonical representation and the minimum executable validation still need
-design; Q14 confirms their purpose and scope, not completed validation.
+fixtures, canonical representation and the mapping-validation plan still need
+design; execute a bounded contract check only where the revised scope requires it.
+Q14 confirms the cases and validation boundary, not completed validation.
 
 ## Illustrative checks and evidence limits
 
