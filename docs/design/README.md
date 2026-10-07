@@ -18,7 +18,9 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   parser-output disposition, accepted-revision immutability, rule-based selection
   and post-acceptance invalidation. Q10–Q11 establish new Canonical Revisions for
   adopted Enrichment and automatic reprocessing after scoped platform method adoption.
-  Detailed representation, validation, compatibility and lifecycle decisions remain open.
+  Q12–Q13 confirm attachment-change reuse and historical acceptance versus source-target
+  applicability. Detailed representation, validation, compatibility and lifecycle
+  decisions remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

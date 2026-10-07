@@ -8,9 +8,10 @@ The ticket remains in progress. Q1–Q9 establish acceptance, source/projection
 responsibilities, evidence precision, parser-output disposition, accepted-revision
 immutability, rule-based selection and post-acceptance invalidation principles.
 Q10–Q11 establish new Canonical Revisions for adopted Enrichment and automatic
-reprocessing after platform method adoption within a declared scope. Detailed
-representation, validation, applicability, compatibility and lifecycle mechanisms
-remain open.
+reprocessing after platform method adoption within a declared scope. Q12–Q13
+confirm attachment-change reuse and historical acceptance versus source-target
+applicability. Detailed representation, validation, compatibility and lifecycle
+mechanisms remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -281,6 +282,64 @@ authorize actual full-history reprocessing or a production operation in this ses
 See [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md) for the combined
 revision and selection boundary.
 
+## Q12: reuse after an attachment-only change needs compatibility evidence
+
+Confirmed on 2026-10-07 in the [Q12/Q13 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6036282074).
+The source handoff already distinguishes M1 plus required attachment I1 from M1
+plus I2 as separate Source Revisions. Reuse depends on an output's actual fixed
+inputs and method compatibility, not merely on unchanged main-document bytes.
+
+Main-only parsing can be reused where compatible. OCR, image interpretation and
+downstream derived understanding that depend on a changed attachment must be
+reprocessed or revalidated; an output without a sound compatibility basis cannot
+be carried forward unchanged. The new complete candidate must still pass
+[whole-candidate acceptance](../adr/0001-complete-candidate-canonical-acceptance.md).
+Retain the producing-input/method attribution of reused outputs and validate the
+new package/artifact/evidence associations. Relabeling an old result as supported
+by a new attachment does not establish that support.
+
+The initial implementation may use coarse safe recomputation, such as reusing
+main-only parsing while redoing all Enrichment that read the changed attachment.
+This does not require a fine-grained dependency graph, complex cache or a selected
+recomputation algorithm.
+
+| Reviewed design case | Expected result |
+|---|---|
+| The unchanged SOP says "follow the limit in the attachment"; I1 says 10, I2 says 100 | Main-only parsing may be reusable; the I1-derived "limit 10" cannot be silently carried into the new candidate. Recompute or validate affected understanding and its evidence. |
+| Only the image/reference changes while the old derived limit remains | Fail the necessary-content/evidence checks for the complete candidate; changing the reference alone cannot justify acceptance. |
+
+This records the basis for omitting recomputation while preserving whole-candidate
+consistency. These are confirmed design cases, not executed processing tests.
+
+## Q13: historical acceptance and requested-source applicability remain separate
+
+Confirmed in the same [Q12/Q13 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6036282074).
+An authorized, complete S1 input may produce a new accepted Canonical Revision if
+it meets its applicable acceptance criteria. Acceptance and fulfillment of the
+current requested source target are separately attributable facts.
+
+In the reviewed source-handoff case, A captured S1; B captured reliably newer S2
+and advanced platform state to P2. A then reads P2 and submits S1 with expected=P2.
+Passing the platform-state precondition does not establish that S1 contains S2's
+content. A new method or later completion similarly cannot promote S1 into a newer
+source observation.
+
+| Requested use / knowledge of source order | Expected result |
+|---|---|
+| Explicit S2 target | S1's accepted result does not fulfill the target; expose the unmet target rather than silently substituting S1. |
+| Latest eligible accepted-result selection | An otherwise eligible S1 result may be selected under existing rules, with the S2 readiness/freshness gap exposed. |
+| Historical or exact-version use | Preserve fixed lineage and apply current authorization/lifecycle rules; acceptance does not grant perpetual access. |
+| No reliable source-order/applicability basis | Preserve the applicability conflict. Completion time, retries and refreshed preconditions do not establish precedence; do not assume which observation is newer. |
+
+This extends the [acceptance/selection boundary](../adr/0003-immutable-accepted-canonical-revisions.md)
+to the required old-capture/refreshed-precondition validation scenario. It does not
+select a concurrency mechanism, require live-latest fetching during execution, or
+require a person to approve every historical reprocessing request.
+
+The attachment-only and refreshed-precondition design-case review is complete.
+Concrete identifiers, compatibility rules and runnable validation remain part of
+the outstanding contract and implementation handoff.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
@@ -308,10 +367,11 @@ confirmed canonical rounds do not complete it automatically.
 
 Continue the linked decision ticket for shared and format-specific representation,
 criteria and validation; detailed version and lifecycle rules; Source Evidence and
-artifact reuse/compatibility; attachment-only updates
-and old captures with refreshed preconditions. Research dispositions and the
-PDF core reconciliation matrix remain
-required before closure, with owned integration/migration and validation handoffs.
+concrete artifact reuse/compatibility contracts. Q12–Q13 complete the required
+attachment-only and old-capture/refreshed-precondition design-case review; executable
+validation remains outstanding. Research dispositions and the PDF core
+reconciliation matrix remain required before closure, with owned integration/migration
+and validation handoffs.
 
 This checkpoint does not resolve the ticket or update the map's closed-decision
 index. Later confirmed rounds extend it without treating illustrative cases as
