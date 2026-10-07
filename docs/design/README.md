@@ -16,9 +16,9 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
 - [Canonical representation and acceptance](knowledge-platform-canonical-design.md):
   Q1–Q9 confirm acceptance, source/projection responsibilities, evidence precision,
   parser-output disposition, accepted-revision immutability, rule-based selection
-  and post-acceptance invalidation. Q10 accepts that adopted new Enrichment produces
-  a new Canonical Revision; automatic reprocessing scope remains under discussion.
-  Detailed representation, validation and lifecycle decisions remain open.
+  and post-acceptance invalidation. Q10–Q11 establish new Canonical Revisions for
+  adopted Enrichment and automatic reprocessing after scoped platform method adoption.
+  Detailed representation, validation, compatibility and lifecycle decisions remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

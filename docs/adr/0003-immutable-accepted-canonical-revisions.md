@@ -12,4 +12,11 @@ content; immutability does not grant permanent access or retention.
 Confirmed on 2026-10-07 in the [Q7/Q8 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035081526).
 See the [canonical design checkpoint](../design/knowledge-platform-canonical-design.md#q7-accepted-revision-contents-remain-fixed)
 for examples, the [Q9 invalidation principle](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035318528),
-and remaining Enrichment, selection and lifecycle details.
+and remaining selection and lifecycle details.
+
+The [Q11 decision](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035858969) confirmed on 2026-10-07
+extends the rule to adopted Enrichment methods: automatically reprocess the declared
+affected scope using retained eligible inputs, without Source Owner re-upload or
+per-document approval. Acceptance and selection still gate replacement; ordinary
+compatible updates remain automatic and major breaking production migrations retain
+the existing authorized release decision.

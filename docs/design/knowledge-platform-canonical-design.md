@@ -7,9 +7,10 @@ This checkpoint follows
 The ticket remains in progress. Q1–Q9 establish acceptance, source/projection
 responsibilities, evidence precision, parser-output disposition, accepted-revision
 immutability, rule-based selection and post-acceptance invalidation principles.
-Detailed representation, validation, selection, lifecycle mechanisms and Enrichment
-version relationships remain open. Q10 confirms that adopting new Enrichment
-produces a new Canonical Revision; automatic reprocessing scope remains under discussion.
+Q10–Q11 establish new Canonical Revisions for adopted Enrichment and automatic
+reprocessing after platform method adoption within a declared scope. Detailed
+representation, validation, applicability, compatibility and lifecycle mechanisms
+remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -52,10 +53,11 @@ agreed reuse requirements. This boundary is recorded in
 [ADR-0001](../adr/0001-complete-candidate-canonical-acceptance.md).
 
 The same Source Revision may produce different candidates through different
-methods or deliberate reprocessing; there is no one-to-one restriction. Independent
-Enrichment acceptance and version relationships remain open. A complete candidate
-does not imply lossless representation: Q1 and Q3 govern necessary content and
-permitted limitations.
+methods or deliberate reprocessing; there is no one-to-one restriction. Q10–Q11
+establish adoption of updated Enrichment through new complete candidates and scoped
+automatic reprocessing; no separately selectable Enrichment contract has been
+adopted. A complete candidate does not imply lossless representation: Q1 and Q3
+govern necessary content and permitted limitations.
 
 ## Q3: acceptance with explicitly permitted limitations
 
@@ -243,13 +245,41 @@ Confirmed on 2026-10-07 in the [Q10 decision record](https://github.com/davidlin
 The user accepts that adopting new Enrichment produces a new Canonical Revision.
 Q2's complete-candidate acceptance and Q7's fixed accepted contents still apply.
 
-The user's follow-up asks whether the platform can update Canonical Revisions when
-Enrichment methods change without requiring the Source Owner to upload again.
-The confirmed source handoff already distinguishes method-only reprocessing from
-a new source observation. Automatic triggers, affected scope and rollout behavior
-remain under discussion; the question does not authorize automatic full-history
-reprocessing. Existing Q8 selection and major-breaking-production-release policies
-continue to apply.
+Q11 below resolves the follow-up about platform-initiated method updates without
+requiring the Source Owner to upload again.
+
+## Q11: automatic reprocessing after scoped platform method adoption
+
+Confirmed on 2026-10-07 in the [Q11 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035858969).
+Once the platform adopts a new Enrichment method, automatically reprocess affected
+documents within a predeclared applicable scope. Do not require Source Owners to
+re-upload or approve each document for a method update. An upstream model release
+alone does not trigger replacement of all existing results.
+
+Reprocessing requires retained, usable inputs and appropriate workload authority.
+Keep the fixed Source Revision and issue a new processing request for the new
+method. Reuse compatible artifacts, redo affected work and validate the complete
+candidate for acceptance. Select the accepted new Canonical Revision only when
+Q8's source, method, compatibility and current governance/lifecycle selection
+conditions pass.
+A failed update does not by itself invalidate an otherwise eligible old revision.
+
+For example, S1 with parser P1 and Enrichment E1 yields C1. A new method can produce
+E2 from the same S1 while reusing compatible P1, yielding a new accepted C2 without
+rewriting C1. A newer result does not turn S1 into a newer source observation.
+Wiki and Retrieval retain their own product quality and publication conditions.
+
+Routine compatible updates follow the automatic policy. Major breaking production
+migrations retain the [confirmed authorized release decision](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5844072563);
+judgment exceptions and current governance remain applicable. This lets the
+platform improve knowledge without shifting processing-method changes into repeated
+Source Owner uploads, while preserving controlled adoption and selection.
+
+Concrete scope representation, scheduling, batching, resource limits and rollout
+mechanisms remain with their existing owners. This design confirmation does not
+authorize actual full-history reprocessing or a production operation in this session.
+See [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md) for the combined
+revision and selection boundary.
 
 ## Illustrative checks and evidence limits
 
@@ -277,8 +307,8 @@ confirmed canonical rounds do not complete it automatically.
 ## Open decisions and handoff
 
 Continue the linked decision ticket for shared and format-specific representation,
-criteria and validation; version and lifecycle rules; Source Evidence and
-independent Enrichment acceptance/version relationships; attachment-only updates
+criteria and validation; detailed version and lifecycle rules; Source Evidence and
+artifact reuse/compatibility; attachment-only updates
 and old captures with refreshed preconditions. Research dispositions and the
 PDF core reconciliation matrix remain
 required before closure, with owned integration/migration and validation handoffs.
