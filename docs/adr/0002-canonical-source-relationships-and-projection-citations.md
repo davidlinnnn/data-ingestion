@@ -11,3 +11,10 @@ graph, and preserving an unresolved source reference does not establish its targ
 Confirmed on 2026-10-06 in the [Q4 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6015964591).
 The [canonical design checkpoint](../design/knowledge-platform-canonical-design.md#q4-canonical-relationships-and-projection-citations)
 records the boundary, its evidence limits and subsequent source-location decisions.
+
+The [Q14 clarification](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6038695041) on 2026-10-07
+uses shared-Corpus organization, interlinking, differences and incremental updates
+to validate this boundary. Canonical design may use conceptual and minimal executable
+checks of its inputs; complete llm-wiki composition and publication implementation
+remain with Projection, so canonical acceptance does not depend on building the
+entire Wiki product.

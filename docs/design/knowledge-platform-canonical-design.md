@@ -10,7 +10,9 @@ immutability, rule-based selection and post-acceptance invalidation principles.
 Q10–Q11 establish new Canonical Revisions for adopted Enrichment and automatic
 reprocessing after platform method adoption within a declared scope. Q12–Q13
 confirm attachment-change reuse and historical acceptance versus source-target
-applicability. Detailed representation, validation, compatibility and lifecycle
+applicability. Q14 confirms three-format and shared-Corpus consumer cases, with
+conceptual/minimal executable validation here and full Wiki implementation owned
+by Projection. Detailed representation, validation, compatibility and lifecycle
 mechanisms remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
@@ -339,6 +341,70 @@ require a person to approve every historical reprocessing request.
 The attachment-only and refreshed-precondition design-case review is complete.
 Concrete identifiers, compatibility rules and runnable validation remain part of
 the outstanding contract and implementation handoff.
+
+## Q14: shared Corpus cases and bounded canonical validation
+
+Confirmed on 2026-10-07 in the [Q14 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6038695041).
+The user clarified that Wiki builds an organized, interlinked knowledge base from
+a Corpus. Single-document summaries and procedure explanations alone are insufficient
+consumer cases. Retain the three-format fidelity cases as inputs to a shared
+multi-document knowledge-organization case.
+
+| Confirmed design case | Required meaning for reuse | Unacceptable loss for this use |
+|---|---|---|
+| PDF comparison table with notes | Values, units, headers/row-column correspondence and the target of qualifying notes | Misaligned values, lost units or omitted/misattached notes that erase a qualification |
+| SOP Markdown with conditions and required attachment warnings | Step order, negation/condition scope and exact attachment relationships | Reordered steps, lost prohibitions or omitted necessary attachment warnings |
+| PPTX branching flow diagram | Nodes, arrow direction, branch labels and necessary legend meaning | Text-only lists that lose branches, reversed direction or uncertain interpretation presented as certain |
+
+All three need exact source versions and sufficient Source Evidence under Q5.
+These are agreed design acceptance uses, not requirements that every document
+contain each structure or proof of existing worker capability.
+
+Use "document processing and recovery" as an illustrative shared Corpus: PDF
+methods/comparisons/limits, SOP operation/retry conditions, and PPTX component/data
+flows/failure branches. A Wiki topic may combine several sources; one source may
+support several linked pages. This illustrative topic does not select the
+first-adoption corpus.
+
+| Shared consumer case | Canonical input obligation / projection check |
+|---|---|
+| Cross-document organization and synthesis | Preserve reusable content, context and each source's conditions so the projection can form topic/entity/concept pages. |
+| Interlinked knowledge | Preserve source-side relationships and attributable inputs; distinguish source-explicit relationships from projection-derived page/concept links. |
+| Differences and contradictions | Keep distinct source statements, scope and supporting evidence available; the projection must not erase differences or merge solely by matching names. |
+| Incremental maintenance and traceability | Expose relevant revision/applicability/lifecycle facts and exact usable inputs; the projection can reevaluate affected products and retain the input lineage of each published version. |
+
+Retrieval reuses the same canonical input set as a second consumer check; Wiki
+specific organization must not be required to interpret the shared inputs.
+Canonical Acceptance remains per complete document candidate. Corpus-wide synthesis,
+page organization and interlinking do not become a prerequisite for accepting each
+document or a requirement for a universal canonical knowledge graph.
+
+### Validation and implementation ownership
+
+This ticket may use conceptual cases and the smallest necessary executable probes
+to resolve representation, version, evidence and compatibility questions. Record
+what each probe actually establishes, including whether inputs are synthetic or
+real retained parser outputs. A synthetic example or passing contract check does
+not qualify parsing quality, end-to-end Wiki generation or production behavior.
+
+[Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55)
+owns full llm-wiki composition/interlinking, update behavior, product-quality and
+publication design and its implementation handoff. Its complete implementation is
+not a prerequisite for this canonical decision. Use this shared case set for both
+owners without reversing the existing dependency. Concrete processing capability
+gaps retain their processing owner and affected validation.
+
+The [inspected llm_wiki README at 48fd970e](https://github.com/nashsu/llm_wiki/blob/48fd970e206a02a6d2028d1dbfc41b7a0345bf0b/README.md#3-two-step-chain-of-thought-ingest)
+is a use-pattern reference for concept/entity pages, links and incremental knowledge
+maintenance. This reading did not inspect ingest code or execute the product;
+documented features are not proof of claim-level or fixed-version evidence quality.
+Direct adoption of that implementation is not decided here.
+
+Current PDF evidence is bounded and does not establish all unit/note associations;
+Markdown/PPTX lack corresponding qualified workers. The shared case requirements
+feed the required reconciliation and owner-scoped integration work. Detailed
+fixtures, canonical representation and the minimum executable validation still need
+design; Q14 confirms their purpose and scope, not completed validation.
 
 ## Illustrative checks and evidence limits
 

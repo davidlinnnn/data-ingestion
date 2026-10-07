@@ -19,8 +19,9 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   and post-acceptance invalidation. Q10–Q11 establish new Canonical Revisions for
   adopted Enrichment and automatic reprocessing after scoped platform method adoption.
   Q12–Q13 confirm attachment-change reuse and historical acceptance versus source-target
-  applicability. Detailed representation, validation, compatibility and lifecycle
-  decisions remain open.
+  applicability. Q14 adds shared-Corpus knowledge organization and interlinking to
+  the three-format cases, with bounded validation here and full Wiki implementation
+  owned by Projection. Detailed representation and validation remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral
