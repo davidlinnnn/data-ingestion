@@ -8,7 +8,8 @@ The ticket remains in progress. Q1–Q9 establish acceptance, source/projection
 responsibilities, evidence precision, parser-output disposition, accepted-revision
 immutability, rule-based selection and post-acceptance invalidation principles.
 Detailed representation, validation, selection, lifecycle mechanisms and Enrichment
-version relationships remain open.
+version relationships remain open. Q10 confirms that adopting new Enrichment
+produces a new Canonical Revision; automatic reprocessing scope remains under discussion.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -236,9 +237,19 @@ acceptance was wrong. The user expects this case to be rare; this is a judgment,
 not a measured frequency. This round establishes the necessary handling principle,
 not a dedicated complex workflow or automatic defect-detection system.
 
-Q10 remains unresolved. The user asked whether whole-Canonical versioning of adopted
-parser results and Enrichment suffices instead of independently selectable Enrichment
-versions. Compare those alternatives without treating the discussion as confirmation.
+## Q10: adopting new Enrichment produces a new Canonical Revision
+
+Confirmed on 2026-10-07 in the [Q10 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035463278).
+The user accepts that adopting new Enrichment produces a new Canonical Revision.
+Q2's complete-candidate acceptance and Q7's fixed accepted contents still apply.
+
+The user's follow-up asks whether the platform can update Canonical Revisions when
+Enrichment methods change without requiring the Source Owner to upload again.
+The confirmed source handoff already distinguishes method-only reprocessing from
+a new source observation. Automatic triggers, affected scope and rollout behavior
+remain under discussion; the question does not authorize automatic full-history
+reprocessing. Existing Q8 selection and major-breaking-production-release policies
+continue to apply.
 
 ## Illustrative checks and evidence limits
 
