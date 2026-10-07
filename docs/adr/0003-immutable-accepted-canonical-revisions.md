@@ -11,4 +11,5 @@ content; immutability does not grant permanent access or retention.
 
 Confirmed on 2026-10-07 in the [Q7/Q8 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035081526).
 See the [canonical design checkpoint](../design/knowledge-platform-canonical-design.md#q7-accepted-revision-contents-remain-fixed)
-for examples and remaining invalidation, Enrichment and selection details.
+for examples, the [Q9 invalidation principle](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035318528),
+and remaining Enrichment, selection and lifecycle details.

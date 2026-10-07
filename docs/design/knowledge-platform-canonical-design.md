@@ -4,10 +4,11 @@
 
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
-The ticket remains in progress. Q1–Q8 establish acceptance, source/projection
+The ticket remains in progress. Q1–Q9 establish acceptance, source/projection
 responsibilities, evidence precision, parser-output disposition, accepted-revision
-immutability and rule-based selection principles. Detailed representation,
-validation, selection, invalidation and Enrichment lifecycle rules remain open.
+immutability, rule-based selection and post-acceptance invalidation principles.
+Detailed representation, validation, selection, lifecycle mechanisms and Enrichment
+version relationships remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -183,7 +184,8 @@ version behavior and does not adopt a manual editing feature.
 Catalog display metadata, current access and lifecycle eligibility are managed
 separately; changing those facts need not rebuild the content revision. Immutability
 does not promise indefinite custody or access, or prevent authorized lifecycle
-actions. Handling an accepted revision later found erroneous remains a follow-up.
+actions. Q9 below governs a later finding that the original acceptance conditions
+were not met.
 
 ## Q8: replacement follows declared selection rules
 
@@ -206,7 +208,37 @@ this decision does not prescribe a single global current pointer for all consume
 
 See [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md) for the
 immutability/selection boundary. Detailed source/method applicability, ordering,
-competing-candidate handling and invalidation/re-evaluation remain open.
+competing-candidate handling and lifecycle mechanisms remain open; Q9 below
+confirms the invalidation/re-evaluation principle.
+
+## Q9: later discovery of failed original acceptance conditions
+
+Confirmed on 2026-10-07 in the [Q9 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035318528).
+If an accepted revision is later found not to have met its original acceptance
+conditions, preserve the historical rules, evidence and acceptance determination.
+Record the current invalidation reason, evidence, affected scope and accountable
+decision; stop selecting the affected revision as a qualifying input.
+
+Hand off the impact to Projection and governance owners to stop affected products
+from serving as qualifying results, rather than waiting indefinitely for a corrected
+revision. A fallback must itself remain eligible. Publication granularity,
+enforcement, reconciliation and custody mechanisms remain with their existing owners;
+this principle does not imply instantaneous platform-wide shutdown or physical purge.
+
+Corrections to fixed content or evidence mappings produce a new candidate requiring
+acceptance under Q7. If the invalidation judgment itself was mistaken and the content
+is unchanged, record a new attributable re-evaluation without rewriting history;
+a judgment change alone need not create a new content revision.
+
+The illustrative case is an SOP warning required by the original rules but omitted
+during processing. Later stricter requirements do not establish that the original
+acceptance was wrong. The user expects this case to be rare; this is a judgment,
+not a measured frequency. This round establishes the necessary handling principle,
+not a dedicated complex workflow or automatic defect-detection system.
+
+Q10 remains unresolved. The user asked whether whole-Canonical versioning of adopted
+parser results and Enrichment suffices instead of independently selectable Enrichment
+versions. Compare those alternatives without treating the discussion as confirmation.
 
 ## Illustrative checks and evidence limits
 

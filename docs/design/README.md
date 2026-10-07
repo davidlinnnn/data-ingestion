@@ -14,9 +14,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   the reviewed historical snapshot, clarifications and subsequent confirmation.
 
 - [Canonical representation and acceptance](knowledge-platform-canonical-design.md):
-  Q1–Q8 confirm acceptance, source/projection responsibilities, evidence precision,
-  parser-output disposition, accepted-revision immutability and rule-based selection.
-  Detailed representation, validation and lifecycle decisions remain open.
+  Q1–Q9 confirm acceptance, source/projection responsibilities, evidence precision,
+  parser-output disposition, accepted-revision immutability, rule-based selection
+  and post-acceptance invalidation. Detailed representation, validation, Enrichment
+  version relationships and lifecycle mechanisms remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral
