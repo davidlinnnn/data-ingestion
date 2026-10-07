@@ -20,3 +20,10 @@ only for decision-critical Canonical unknowns lacking sufficient evidence. Consu
 implementations, including reduced Wiki/RAG prototypes, stay outside this ticket;
 Projection owns their implementation and effectiveness validation. This avoids
 mixing model/prompt/product choices into a Canonical contract decision.
+
+The [Q16 decision](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6039900827) on 2026-10-07
+preserves necessary structure while allowing source-grounded textual Enrichment
+for diagram meaning that meets applicable acceptance criteria. Initial Wiki/Retrieval
+uses do not require every flow diagram to become a structured, executable flow model;
+programmatic flow-graph operations are not guaranteed. This does not permit dropping
+available necessary structure or treating an unvalidated description as accepted.

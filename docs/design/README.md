@@ -24,7 +24,9 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   executable checks address only decision-critical Canonical unknowns. Wiki/Retrieval
   implementation and effectiveness validation belong to Projection. Q15 fixes
   references to locations within exact revisions without promising automatic
-  cross-revision component matching. Detailed representation and validation remain open.
+  cross-revision component matching. Q16 preserves necessary structure while allowing
+  validated, traceable textual Enrichment for diagram meaning; a structured flow model
+  is not universally required. Detailed fields and validation remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

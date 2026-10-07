@@ -439,6 +439,40 @@ Historical references retain their original meaning, subject to current governan
 and retention. If their fixed dependencies are unavailable, report that limitation
 rather than substituting the current revision's content or evidence.
 
+## Q16: minimum structure for the agreed consumer uses
+
+Confirmed on 2026-10-07 in the [Q16 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6039900827).
+Preserve necessary structure; source-grounded textual Enrichment may carry the
+necessary meaning of a visual diagram when it meets the applicable acceptance
+criteria. Initially, not every flow diagram must become a structured flow model,
+and programmatic flow-graph operations are not guaranteed.
+
+| Case | Confirmed minimum representation |
+|---|---|
+| PDF table | Cells, rows/columns and spans, with necessary header, unit and note associations; flattened text must not erase their correspondence. |
+| SOP Markdown | Heading/step order and nesting, attachment relationships, and complete condition/prohibition text attached to its relevant step/context; no executable procedure rules are required initially. |
+| PPTX flow diagram | Preserve reliably obtained nodes, directed connections and branch labels under Q6. For image-only meaning, attributable textual Enrichment may preserve the necessary sequence, conditions, branches and actions, with sufficient Source Evidence and validation. |
+
+For the illustrative flow, "after processing, check quality; publish only on pass;
+on failure, stop and notify the responsible person" preserves the required branches.
+"This diagram shows quality checking and publication" does not. Neither example
+is measured parser or Enrichment output.
+
+Generated interpretation remains distinct from source-authored text/native structure.
+Its source and producing method must be traceable. Already available necessary
+structure is not discarded merely because a textual description also exists;
+Q6 still governs its disposition. A generated description alone is not validation.
+Uncertain required direction or branch meaning cannot pass the relevant acceptance
+criterion merely by attaching a description or warning.
+
+The trade-off is a sufficient shared representation for reading, citation and
+knowledge organization without requiring a general executable workflow model.
+A concrete future need for execution or programmatic graph analysis would require
+a separate assessment. This does not assume every document needs human review.
+This ticket owns acceptance meaning; the processing owner selects methods/profiles,
+integration and affected validation. Existing PDF/Markdown/PPTX capability is not
+established by this decision.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
