@@ -4,10 +4,10 @@
 
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
-The ticket remains in progress. Q1–Q6 establish the minimum acceptance contract,
-complete-candidate boundary, permitted limitations, source/projection
-responsibilities, evidence precision and parser-output disposition principles.
-Detailed representation, validation, version and lifecycle rules remain open.
+The ticket remains in progress. Q1–Q8 establish acceptance, source/projection
+responsibilities, evidence precision, parser-output disposition, accepted-revision
+immutability and rule-based selection principles. Detailed representation,
+validation, selection, invalidation and Enrichment lifecycle rules remain open.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -167,6 +167,46 @@ or adopt a pilot requirement.
 
 Common types, extension schemas, per-field mapping/omission rules and concrete
 validation examples still need design and reconciliation.
+
+## Q7: accepted revision contents remain fixed
+
+Confirmed on 2026-10-07 in the [Q7/Q8 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035081526).
+Once accepted, a Canonical Revision's content, structure/relationships,
+source/evidence mappings and producing-method attribution remain fixed. Corrections
+or reprocessing that change these create a new candidate requiring acceptance;
+the same revision identity must not silently denote a different result.
+
+For example, correcting OCR from "10" to the source's "100" produces C2 rather than
+rewriting C1 already referenced by a Wiki or Retrieval product. This illustrates
+version behavior and does not adopt a manual editing feature.
+
+Catalog display metadata, current access and lifecycle eligibility are managed
+separately; changing those facts need not rebuild the content revision. Immutability
+does not promise indefinite custody or access, or prevent authorized lifecycle
+actions. Handling an accepted revision later found erroneous remains a follow-up.
+
+## Q8: replacement follows declared selection rules
+
+Confirmed in the same [Q7/Q8 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035081526).
+Acceptance and current selection remain distinct. Replace a default selected
+result according to predeclared source applicability, selected method,
+compatibility, and current governance/lifecycle conditions. Completion order
+alone does not establish precedence.
+
+Where those rules establish eligibility and replacement, selection may update
+automatically without per-result human approval. If applicability cannot be
+established reliably, expose conflict or not-ready meaning and retain an old
+selection only while it still qualifies. A problem with the replacement cannot
+restore an ineligible old result.
+
+For example, C1 uses selected method A while C2 uses evaluation method B. Passing
+C2's applicable acceptance criteria does not make it replace C1 under rules still
+selecting A. Existing exact-revision and source-target selection meanings remain;
+this decision does not prescribe a single global current pointer for all consumers.
+
+See [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md) for the
+immutability/selection boundary. Detailed source/method applicability, ordering,
+competing-candidate handling and invalidation/re-evaluation remain open.
 
 ## Illustrative checks and evidence limits
 

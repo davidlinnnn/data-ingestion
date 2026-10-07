@@ -74,7 +74,9 @@ _Avoid_: index, chunk store, universal knowledge graph
 
 **Canonical Revision**:
 A distinguishable version of canonical knowledge with traceable source inputs
-and processing origin.
+and processing origin. Once accepted, its content, structure/relationships,
+source/evidence mappings and producing-method attribution remain fixed; a changed
+result requires a new candidate and acceptance.
 
 **Canonical Acceptance**:
 In the initial document scope, a traceable determination that a complete candidate
