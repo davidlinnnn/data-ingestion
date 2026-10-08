@@ -563,6 +563,14 @@ historical/current decisions and their existing-ADR, backfilled-ADR or
 no-separate-ADR dispositions in the final review. This remains outstanding;
 confirmed canonical rounds do not complete it automatically.
 
+## Current contract review draft
+
+The [contract and three-format review draft](knowledge-platform-canonical-contract-draft.md)
+consolidates confirmed meanings into proposed fields and illustrative cases.
+It is not an adopted schema or executable validation. Q20's repeated-attachment
+occurrence representation awaits confirmation. The preliminary PDF evidence
+cross-check does not complete the required reconciliation or closure gates.
+
 ## Open decisions and handoff
 
 Continue the linked decision ticket for shared and format-specific representation,
