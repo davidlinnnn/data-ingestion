@@ -498,6 +498,30 @@ These are reviewed design cases, not executed validation. Reuse
 [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md); this clarification
 does not warrant a separate ADR or new domain term.
 
+## Q18: withdrawal before acceptance stops that acceptance
+
+Confirmed on 2026-10-08 in the [Q18 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6061678555).
+When a valid withdrawal is confirmed before Canonical Acceptance and its scope
+covers the candidate's Canonical result, stop that acceptance. A late successful
+processing/Enrichment result, even with passing content/quality checks, does not
+create a new "accepted but withdrawn" result. Withdrawal of only one Published View
+does not automatically expand to the Canonical candidate.
+
+Record actual processing completion and validation outcomes separately where
+permitted; they do not constitute Canonical Acceptance. Keep their records only
+under applicable retention/erasure policy. If corresponding authorization is later
+restored, explicitly reevaluate under the then-applicable acceptance and governance
+rules. Restoration alone does not turn an earlier late success into acceptance.
+Still-authorized, compatible candidates/artifacts may be reused; neither re-upload
+nor a full rerun is mandatory.
+
+This supplements the source-handoff rule that late success cannot undo withdrawal.
+It does not rewrite acceptance facts established before withdrawal or treat
+withdrawal as proof that original acceptance was wrong. Execution cancellation,
+enforcement propagation/completion evidence, physical retention/purge and numeric
+targets remain with the existing owners. No new status enumeration or cancellation
+mechanism is selected, and this clarification does not add a separate ADR.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,

@@ -29,7 +29,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   is not universally required. Q17 treats changed-content source support as an
   existing acceptance check: whole-document reprocessing is permitted, compatible
   artifact reuse remains optional, and no separate locator-migration mechanism is
-  required. Detailed fields and validation remain open.
+  required. Q18 stops acceptance when an effective withdrawal already covers the
+  candidate; late processing success cannot create a new accepted result, and later
+  authorization restoration requires reevaluation. Detailed fields and validation
+  remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral
