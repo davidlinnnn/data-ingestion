@@ -26,7 +26,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   references to locations within exact revisions without promising automatic
   cross-revision component matching. Q16 preserves necessary structure while allowing
   validated, traceable textual Enrichment for diagram meaning; a structured flow model
-  is not universally required. Detailed fields and validation remain open.
+  is not universally required. Q17 treats changed-content source support as an
+  existing acceptance check: whole-document reprocessing is permitted, compatible
+  artifact reuse remains optional, and no separate locator-migration mechanism is
+  required. Detailed fields and validation remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

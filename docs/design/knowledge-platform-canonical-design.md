@@ -473,6 +473,31 @@ This ticket owns acceptance meaning; the processing owner selects methods/profil
 integration and affected validation. Existing PDF/Markdown/PPTX capability is not
 established by this decision.
 
+## Q17: changed-content evidence is an acceptance check
+
+Confirmed on 2026-10-08 in the [Q17 clarification](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6061378937).
+Treat support for changed text/interpretation as a case of the existing acceptance
+rules, without introducing a separate old-locator reuse or migration mechanism.
+A changed accepted result becomes a complete new candidate requiring acceptance;
+the prior accepted Canonical Revision remains fixed.
+
+An initial implementation may rerun the whole document's parsing, OCR and required
+Enrichment, then build and validate the new candidate and its source mappings.
+Q12-compatible artifact reuse remains optional, not an implementation prerequisite.
+This does not mandate a full rerun for every change or require fine-grained update
+or cache infrastructure; the processing owner retains execution/reuse strategy.
+
+| Reviewed design case | Consequence under existing rules |
+|---|---|
+| Unchanged SOP main file with required attachment I1 replaced by I2 | The complete new Capture Package may be fully reprocessed into C2, with new source mappings and whole-candidate acceptance. C1 retains its original bindings. |
+| Fixed source image says `100`; a new OCR method corrects the earlier `10` result | A new candidate may point to the same exact source and region after validating that it supports `100`. No cross-revision component matching or special locator migration is required. |
+| An old source location remains accessible but does not support the new content | Accessibility alone is insufficient evidence. Missing necessary support prevents acceptance under Q1/Q3/Q5, even after a full rerun. |
+
+These are reviewed design cases, not executed validation. Reuse
+[ADR-0001](../adr/0001-complete-candidate-canonical-acceptance.md) and
+[ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md); this clarification
+does not warrant a separate ADR or new domain term.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
