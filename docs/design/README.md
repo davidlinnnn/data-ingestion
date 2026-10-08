@@ -31,8 +31,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   artifact reuse remains optional, and no separate locator-migration mechanism is
   required. Q18 stops acceptance when an effective withdrawal already covers the
   candidate; late processing success cannot create a new accepted result, and later
-  authorization restoration requires reevaluation. Detailed fields and validation
-  remain open.
+  authorization restoration requires reevaluation. Q19's multiple exchange-format
+  proposal is withdrawn: define one schema with version identification first, and
+  address future schema migration only for a concrete change. Detailed fields and
+  validation remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

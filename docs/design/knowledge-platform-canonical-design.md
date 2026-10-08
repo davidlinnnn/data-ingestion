@@ -522,6 +522,24 @@ enforcement propagation/completion evidence, physical retention/purge and numeri
 targets remain with the existing owners. No new status enumeration or cancellation
 mechanism is selected, and this clarification does not add a separate ADR.
 
+## Q19: multiple exchange-format proposal withdrawn
+
+The user explicitly withdrew the proposal on 2026-10-08; see the
+[Q19 withdrawal record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6062064816). Serving one
+Canonical Revision in multiple exchange formats was proposed, not adopted.
+
+First define one explicit Canonical schema with identifiable schema version;
+field names remain fixed within that version. Source-content, parsing and Enrichment
+updates follow the existing Canonical Revision/acceptance rules without automatically
+changing the schema. Provider output changes belong in the mapping integration
+rather than automatically changing the Canonical contract.
+
+Decide future schema compatibility and migration from an actual proposed change.
+Do not prebuild multiple read formats or a generic conversion framework for this
+ticket. The required PDF reconciliation, provider-to-canonical mapping and owned
+integration/migration gaps remain in scope. No separate ADR or new domain term is
+introduced; concrete first-version fields and the three-format examples remain open.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
