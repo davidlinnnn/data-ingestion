@@ -634,7 +634,11 @@ six information groups, exact-candidate validation/acceptance records and minima
 duplication principles. Q22 confirms the three-format question/answer baselines
 for necessary meaning and Source Evidence. Formal fields and full difficult/update
 case integration remain open; this is not an adopted wire schema or executable validation. The working PDF
-reconciliation and research dispositions await Q23 review; they do not complete
+reconciliation and research dispositions await Q23 review. Its capability table
+separates confirmed meaning requirements, proposed conditional requirements and
+unselected methods. The agreed plan keeps native dependencies and ticket goals;
+Processing combines confirmed canonical requirements with the pilot before
+selecting methods/profiles. Q23 proposals remain unconfirmed and do not complete
 the required integration/validation handoff or closure gates.
 
 ## Open decisions and handoff

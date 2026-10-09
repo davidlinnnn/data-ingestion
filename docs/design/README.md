@@ -38,7 +38,10 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
 
 - [Canonical contract review draft](knowledge-platform-canonical-contract-draft.md):
   proposed first-version fields, illustrative three-format cases, and a working
-  PDF reconciliation / research-disposition table awaiting Q23 review. Q20 confirms distinct in-document attachment occurrences
+  PDF reconciliation / capability and research-disposition tables awaiting Q23 review.
+  The capability table separates confirmed requirements, conditional proposals and
+  unselected methods; the agreed handoff plan keeps native dependencies and ticket goals.
+  Q20 confirms distinct in-document attachment occurrences
   sharing one fixed package artifact. Q21 confirms the six information groups,
   exact-candidate validation/acceptance records and minimal duplication principles.
   Q22 confirms the three-format question/answer baselines for necessary meaning
