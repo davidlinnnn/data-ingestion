@@ -2,10 +2,11 @@
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
-**2026-10-08 建立；2026-10-09 納入 Q20–Q22 確認。邏輯骨架已確認；正式 schema 與實作規格仍待完成。**
+**2026-10-08 建立；2026-10-09 納入 Q20–Q23 確認。邏輯骨架及能力界線已確認；正式 schema 與實作規格仍待完成。**
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
-沿用 Q1–Q18、Q19 撤回紀錄與 Q20–Q22 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
+沿用 Q1–Q18、Q19 撤回紀錄與 Q20–Q23 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
 以及最少重複原則已確認。Q22 確認三格式具體問答的必要意思與證據基準。
+Q23 確認能力界線、條件式需求及研究處置；實際方法／profile 仍待 Processing 選定。
 正式欄位名稱、編碼與完整困難／更新案例整合仍待 review；本文件不是 parser 執行結果或能力驗證。
 2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)提供既有原則澄清與簡化建議；
 其後的 [Q21 決策](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)採納上述邏輯範圍，未採納正式 schema。
@@ -15,6 +16,7 @@
 | 標示 | 意義 |
 |---|---|
 | 已確認 | checkpoint 中的必要語意與責任邊界；選欄位名稱時不重新開啟原則。 |
+| 已確認 Q23 | 能力需求／方法處置分開；公式、程式碼與 PDF 章節層級依實際用途成為必要要求。方法／profile 尚未選定。 |
 | 已確認 Q22 | 三格式具體問答的預期意思與來源證據，作為設計驗證基準。 |
 | 已確認 Q21 | 六組必要資訊、綁定確切候選的驗證／接受紀錄與最少重複原則。 |
 | 草稿表示 | 用第一版 schema 承載已確認語意的具體方式；正式名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
@@ -228,16 +230,18 @@ Wiki 與 Retrieval 使用同一組固定 Canonical 輸入，依下節需求取�
 
 ## 6. PDF core reconciliation 與整合處置草稿
 
-**2026-10-09 整理；待 Q23 review。** 本表對照已確認需求、固定 PDF 證據、
-最小整合差距及受影響驗證。草稿不宣稱 Canonical mapper 已通過，也不完成結案 gate。
+**2026-10-09 Q23 已確認能力界線與處置，見[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)。**
+本表對照已確認需求、固定 PDF 證據、最小整合差距及受影響驗證。
+P01–P10 作為後續整合交接；最終完整性 review、規格與驗證計畫仍須完成。
+不宣稱 Canonical mapper 已通過，也不完成結案 gate。
 PDF core 固定為 `fe1b283c49c83ad5aeee6808e77b4f25549eba03`；
 Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 Q22 的 P1 表格是虛構來源的預期內容；「2 次」不是 worker retry 設定。
 
-### 能力需求與方法處置（Q23 提案）
+### 能力需求與方法處置（Q23 已確認）
 
-**本輪尚未確認。** 以下分開記錄需求狀態與方法狀態。C01/C02 重述既有要求；
-C03–C05 是建議的條件式需求；C06–C08 說明尚未選定的用途或功能。
+以下分開記錄需求狀態與方法狀態。C01/C02 重述既有要求；
+C03–C05 是已確認的條件式需求；C06–C08 是已確認的用途／方法處置，並未選定新功能。
 「條件式」表示只有選定來源／用途需要該意思時才成為必要要求，並非現在啟用所有功能。
 方法延後不能豁免 Q1–Q3 已確認的必要內容、結構或來源支持。
 目前沒有證據可宣稱下列新方法已滿足接受條件。
@@ -246,12 +250,12 @@ C03–C05 是建議的條件式需求；C06–C08 說明尚未選定的用途或
 |---|---|---|---|
 | C01 原文、表格、caption、順序與來源證據 | **已確認**：保存用途所需的意思、結構、關係及實際支持範圍；沿用 Q1–Q6/Q16/Q22。 | 見 P02–P06；既有 PDF 證據有明確 fixture/profile 範圍，未證明三格式全面合格。 | 沿用合格輸出，補映射或必要方法的選擇交 Processing；Canonical 提供 Q22 與 P02–P06 的預期結果。 |
 | C02 圖／流程的必要意思 | **已確認**：Q16/Q22 允許有來源支持的文字 Enrichment 保存方向、條件、分支及動作；可靠 native 結構仍保留。 | 既有 PictureItem OCR 不等於流程理解；描述是[可用選項][docling-capabilities]，未因研究而採用或證明品質。 | **未選通用圖片描述功能**。Processing 按必要圖意選方法；先沿用 PPTX 通過／失敗分支案例，不要求描述每張圖片。 |
-| C03 公式 | **條件式需求提案**：來源／用途依賴公式時，保留必要符號、上下標、運算關係及定義。最小反例：把 x² 留成 x2 會改變意思，不能宣稱該用途合格。 | [研究][docling-capabilities]列公式重建候選；現有 core 未啟用該重建方法，也未證明本反例可通過。 | **方法未選**。有對應來源／用途時，Canonical 固定一個來源核對案例，Processing 選最小抽取／重建方法。無須公式求解或符號運算。 |
-| C04 程式碼／偽碼 | **條件式需求提案**：用途依賴程式片段時，保留影響解讀的符號、縮排／區塊、順序與上下文。最小反例：把原本只在 fail 分支執行的 stop 移出該分支。 | [研究][docling-capabilities]列 code reconstruction 候選；現有 core 未啟用或驗證其效果。 | **方法未選**。有對應來源／用途時固定一個區塊案例，Processing 選抽取方式；語言資訊須有依據。無須執行、編譯、AST 或正確性證明。 |
-| C05 PDF 章節層級 | **條件式需求提案**：用途依賴章節深度／作用範圍時，保留可靠的標題與父章節對應。最小反例：把「僅適用 A」的子節掛到 B。不確定時不得冒稱正確層級。 | 已有 heading item 不證明 depth 正確；[研究][docling-capabilities]中的新版階層恢復尚未採納，涉及套件與 checkpoint 變更。 | **方法未選**。以來源 outline 和一個錯掛反例確認需要，再由 Processing 評估；不要求每份 PDF 都有完美章節樹，也不由此直接採納升版。 |
+| C03 公式 | **已確認的條件式需求**：來源／用途依賴公式時，保留必要符號、上下標、運算關係及定義。最小反例：把 x² 留成 x2 會改變意思，不能宣稱該用途合格。 | [研究][docling-capabilities]列公式重建候選；現有 core 未啟用該重建方法，也未證明本反例可通過。 | **方法未選**。有對應來源／用途時，Canonical 固定一個來源核對案例，Processing 選最小抽取／重建方法。無須公式求解或符號運算。 |
+| C04 程式碼／偽碼 | **已確認的條件式需求**：用途依賴程式片段時，保留影響解讀的符號、縮排／區塊、順序與上下文。最小反例：把原本只在 fail 分支執行的 stop 移出該分支。 | [研究][docling-capabilities]列 code reconstruction 候選；現有 core 未啟用或驗證其效果。 | **方法未選**。有對應來源／用途時固定一個區塊案例，Processing 選抽取方式；語言資訊須有依據。無須執行、編譯、AST 或正確性證明。 |
+| C05 PDF 章節層級 | **已確認的條件式需求**：用途依賴章節深度／作用範圍時，保留可靠的標題與父章節對應。最小反例：把「僅適用 A」的子節掛到 B。不確定時不得冒稱正確層級。 | 已有 heading item 不證明 depth 正確；[研究][docling-capabilities]中的新版階層恢復尚未採納，涉及套件與 checkpoint 變更。 | **方法未選**。以來源 outline 和一個錯掛反例確認需要，再由 Processing 評估；不要求每份 PDF 都有完美章節樹，也不由此直接採納升版。 |
 | C06 掃描頁文字／page OCR | **掃描 workload 尚未選定**。已確認用途所需的文字／警告保存要求仍適用。 | P05 的 picture OCR 不等於 page OCR；目前沒有 scan-first 資格證據。[研究][docling-capabilities]。 | **延後方法選擇**。pilot 選到掃描來源且原生文字不足時，Processing 評估必要 OCR、涵蓋及失敗紀錄；來源有必要警告卻遺失的候選仍不得接受。 |
-| C07 圖表數值抽取 | **建議延後通用抽取功能**。必要圖意仍受 Q1–Q3 約束；尚未增加通用機器可查數值的用途。 | [研究][docling-capabilities]列 chart extraction 候選，未證明值、單位、軸及 series 可靠；已取得的 provider 有值欄位仍依 Q6 處置。 | 若具體用途需要精確數值查詢，先由 Canonical 確認值／單位／軸／series 的接受案例，Processing 再選方法。趨勢描述不能代替已要求的精確數值。 |
-| C08 依指定 schema 抽取事實 | **建議延後新增 reusable fact schema／功能**。不以有效 JSON、模型信心取代來源內容或事實支持。 | [研究][docling-capabilities]列 schema-driven extraction 候選，尚無本平台已確認的 fact schema、用途或資格證據。 | 具體通用用途成立時回 Canonical 決定接受契約，再交 Processing；consumer 專用抽取交 Projection。無須現在建立通用 fact extraction 框架。 |
+| C07 圖表數值抽取 | **已確認延後通用抽取功能**。必要圖意仍受 Q1–Q3 約束；尚未增加通用機器可查數值的用途。 | [研究][docling-capabilities]列 chart extraction 候選，未證明值、單位、軸及 series 可靠；已取得的 provider 有值欄位仍依 Q6 處置。 | 若具體用途需要精確數值查詢，先由 Canonical 確認值／單位／軸／series 的接受案例，Processing 再選方法。趨勢描述不能代替已要求的精確數值。 |
+| C08 依指定 schema 抽取事實 | **已確認延後新增 reusable fact schema／功能**。不以有效 JSON、模型信心取代來源內容或事實支持。 | [研究][docling-capabilities]列 schema-driven extraction 候選，尚無本平台已確認的 fact schema、用途或資格證據。 | 具體通用用途成立時回 Canonical 決定接受契約，再交 Processing；consumer 專用抽取交 Projection。無須現在建立通用 fact extraction 框架。 |
 
 上述反例是概念上的預期結果，並非已執行 fixture。只在決策所需事實無法由既有證據回答時，
 依 Q14 做最小 executable probe；不因表格列出能力就要求所有 optional models 全面驗證。
@@ -304,7 +308,8 @@ Docling 升版、WeKnora 產品採用或服務拓撲均未在此採納。
 
 WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
 「已涵蓋」指現有決策已有對應要求；研究中的 adopt candidate 不自動變成已採納功能。
-下列對照待同輪 review。延後方法／產品選擇，不延後必要內容要求。
+以下依既有原則及 Q23 確認整理研究對照。延後方法／產品選擇，不延後必要內容要求。
+最終 completeness review 與各 owner 的規格／驗證交接仍須完成。
 
 | 研究組別與來源 | 對照／建議處置 | 理由與最小承接 |
 |---|---|---|
@@ -313,7 +318,7 @@ WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
 | Completion、quality、acceptance；[Docling retained-output][research-retained]、[WeKnora matrix][weknora-matrix] | 已涵蓋；不採用錯誤等同：Q1–Q3/Q9/Q21，P05/P07。 | 有效 JSON、raw equality、模型信心、terminal counter 或引用存在，不代替必要意思／來源支持。 |
 | 不可變 revision、重處理、撤回與 custody；[Docling lifecycle][docling-lifecycle]、[WeKnora matrix][weknora-matrix] | 已涵蓋：Q7–Q13/Q15/Q18/Q21，P08–P10。 | 機制與期限交既有 owner；不把來源指令當政策授權，也不將此表當全部 CRUD 已完成。 |
 | Wiki／Retrieval 共用輸入與 exports/chunks；[Docling consumer cases][docling-consumers]、[WeKnora shared chunks][weknora-chunks] | 已涵蓋：Q4/Q14/Q16/Q19/Q22；不採用 chunk/export＝Canonical 的等同。 | Projection 擁有組織、chunking、引用與產品品質；較早研究的 adapter demo 建議不恢復為本票結案前提。 |
-| 描述、公式、程式碼、heading、page OCR、chart、schema extraction；[Docling capabilities][docling-capabilities] | 分項需求及方法狀態見本節 C02–C08；條件式需求及延後處置仍待 Q23 確認。 | 本票先決定必要意思／限制，Processing 結合已確認需求與 pilot 選最小方法。方法未選不豁免必要語意，也不表示所有 optional features 必做。 |
+| 描述、公式、程式碼、heading、page OCR、chart、schema extraction；[Docling capabilities][docling-capabilities] | Q23 已確認分項需求與處置，見本節 C02–C08；具體方法／profile 尚未選定。 | 本票先決定必要意思／限制，Processing 結合已確認需求與 pilot 選最小方法。方法未選不豁免必要語意，也不表示所有 optional features 必做。 |
 | Remote API、Activity pools、KServe、serve／升版／recovery；[Docling topology][docling-topology]、[WeKnora candidates][weknora-candidates] | 延後方案選擇，交 Processing／Admission／Governance／Custody 與 operating envelope。 | 不採納服務拓撲、queue、cache／conversion framework 或數字預設；所選方案仍需 owner 決策及 scoped evidence。 |
 | WeKnora 產品、editor/diff、元件重用、QA metrics；[採用路徑及處置][weknora-adoption] | 延後產品採用；不採用其 schema／status 作契約等價物。 | Projection 與 operating envelope 比較價值／成本；metrics 不證明表格保真或 Wiki 真實性。延後不是永久拒絕產品。 |
 
@@ -331,8 +336,9 @@ WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
 結案前仍需完整三格式／困難案例整合 review、接受與驗證計畫、
 權威事實交接與生命週期效果、完整 PDF reconciliation、
 研究 disposition，以及強制的歷史 ADR 盤點／補記。
-Q23 待 review：第 6 節 C01–C08 的能力需求／方法處置、P01–P10 的 PDF 整合差距、owner 交接與研究處置。
-本輪只確認補強此表與交接的工作計畫；尚未確認 C03–C05 條件式需求或 C06–C08 處置。
+**Q23 已於 2026-10-09 確認：** 第 6 節 C01–C08 的能力界線、條件式需求與研究處置，
+並以 P01–P10 對照表承接整合差距與最小驗證；見[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)。
+方法選擇、完整案例／驗證計畫及最終交接完整性仍待完成；此確認不採納所有 optional features。
 本草稿不構成結案或 map 已解決索引更新。
 
 [pdf-handoff]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/HANDOFF.md#L8

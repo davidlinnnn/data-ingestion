@@ -602,6 +602,30 @@ Wiki 可從同一固定 Canonical 輸入組織並連結上述主題；Retrieval 
 完整困難／更新案例整合、映射驗證計畫與各項結案 gate 仍須完成。
 沿用既有術語及 ADR，不新增領域名詞或架構取捨。
 
+## Q23：能力界線與研究處置
+
+2026-10-09 於 [Q23 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)確認。
+沿用必要原文、表格、來源證據與圖／流程意思要求。
+公式、程式碼／偽碼及 PDF 章節層級是已確認的條件式需求：
+只有實際來源／用途依賴時，才要求保存必要符號／上下標／關係、區塊／順序，
+或可靠父章節對應。不得以 x2 代替 x²、把條件內的 stop 移到條件外，
+或把「僅適用 A」的子節掛到 B；不要求公式求解、程式執行或每份文件的完美章節樹。
+
+掃描 workload／page OCR 待 pilot 與 Processing 選定；picture OCR 不是頁面 OCR 資格。
+延後通用圖表數值抽取及 schema-driven fact extraction，直至具體用途及接受案例成立；
+consumer 專用抽取交 Projection。必要文字、圖意、數值或來源支持仍不能因方法未選而豁免。
+詳見[能力及 reconciliation 表](knowledge-platform-canonical-contract-draft.md#6-pdf-core-reconciliation-與整合處置草稿)。
+
+以 P01–P10 記錄要求、現有證據限制、整合差距、owner 及最小受影響驗證。
+本票先定必要意思與接受界線；Processing 結合已確認要求與 pilot，
+再選最小能力組合、Docling 版本、模型／profile 及驗證證據。
+Projection 承接 Wiki／Retrieval 與 WeKnora 產品選擇；原生依賴及各票目標不變。
+未採納全面升版、所有 optional features、通用框架或新服務拓撲。
+
+本輪是設計要求與處置確認，不是方法能力或 runtime 驗收。
+正式契約、完整案例、驗證及生命週期交接、最終 reconciliation 完整性 review，
+以及歷史 ADR 盤點／補記 gate 仍須完成。沿用既有術語與 ADR，無新增獨立架構取捨。
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
@@ -633,13 +657,12 @@ Q20 confirms the repeated-attachment occurrence representation. Q21 confirms the
 six information groups, exact-candidate validation/acceptance records and minimal
 duplication principles. Q22 confirms the three-format question/answer baselines
 for necessary meaning and Source Evidence. Formal fields and full difficult/update
-case integration remain open; this is not an adopted wire schema or executable validation. The working PDF
-reconciliation and research dispositions await Q23 review. Its capability table
-separates confirmed meaning requirements, proposed conditional requirements and
-unselected methods. The agreed plan keeps native dependencies and ticket goals;
-Processing combines confirmed canonical requirements with the pilot before
-selecting methods/profiles. Q23 proposals remain unconfirmed and do not complete
-the required integration/validation handoff or closure gates.
+case integration remain open; this is not an adopted wire schema or executable validation.
+Q23 confirms capability boundaries, conditional requirements and research dispositions,
+using the PDF reconciliation to carry integration gaps and affected checks. Methods
+remain unselected. Native dependencies and ticket goals are unchanged; Processing
+combines confirmed canonical requirements with the pilot before selecting methods/profiles.
+Final completeness review, integration/validation handoffs and closure gates remain open.
 
 ## Open decisions and handoff
 
