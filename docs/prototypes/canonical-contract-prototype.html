@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canonical 候選：SOP 互動導覽</title>
+<style>
+:root{color-scheme:light;--ink:#223431;--muted:#65746f;--line:#dbe3de;--accent:#176b57;--tint:#e8f3ed;--paper:#fff;--bad:#963d28}
+*{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:1440px;margin:auto;padding:30px 26px}h1{font-size:28px;line-height:1.3;margin:5px 0 12px}h2{font-size:19px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}p{margin:7px 0}a{color:var(--accent)}button,input{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #72aa91;outline-offset:3px}
+button{border:1px solid var(--line);background:white;color:var(--ink);border-radius:7px;padding:8px 13px}button:hover{border-color:var(--accent)}button:disabled{cursor:default;opacity:.5}
+button[aria-pressed="true"]{background:var(--tint);border-color:var(--accent);color:var(--accent)}
+.eyebrow{font-size:12px;letter-spacing:.09em;color:var(--accent);font-weight:700}.muted{color:var(--muted);font-size:13px}.intro{max-width:980px}
+.guide{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:15px 18px;margin:22px 0 16px}.tabs{display:flex;gap:8px;flex-wrap:wrap}.guide-row{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-top:10px}.guide-row p{margin:0}#next{background:var(--accent);color:white;white-space:normal;min-width:170px}
+.facts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.fact{background:#eaf0e9;padding:6px 11px;border-radius:5px;font-size:13px}.fact strong{margin-left:7px}
+.columns{display:grid;grid-template-columns:1fr 1.25fr 1.05fr;gap:16px;align-items:start}.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:19px}
+.source-item{display:block;text-align:left;width:100%;padding:10px 11px;margin:6px 0}.source-item small{display:block;color:var(--muted);font-size:12px}.source-item.image{margin-left:18px;width:calc(100% - 18px)}
+.source-image{border:1px solid #cbdbd0;background:#f0f6ef;border-radius:7px;padding:16px;margin:14px 0 5px;text-align:center}.source-image strong{display:block;font-size:17px}
+.group{border-top:1px solid var(--line);padding:11px 0}.group:first-child{border-top:0;padding-top:0}.group p{margin:2px 0}.group ul{margin:4px 0;padding-left:20px;font-size:13px}.group small{color:var(--muted)}
+.focus{border-left:3px solid var(--accent);background:#f4f8f4;padding:12px 13px;margin-top:12px}.focus dl{margin:5px 0}.focus dt{font-size:12px;color:var(--muted);margin-top:8px}.focus dd{margin:0}
+.empty{color:var(--bad)}.verdict{border-radius:7px;padding:12px 14px;background:var(--tint);color:var(--accent);margin:10px 0}.verdict.bad{background:#fff0e9;color:var(--bad)}.verdict strong{display:block;font-size:17px}
+.checks{list-style:none;padding:0;margin:12px 0}.checks li{border-top:1px solid var(--line);padding:8px 0;display:grid;grid-template-columns:40px 1fr;gap:7px}.mark{font-size:12px;font-weight:650;color:var(--accent)}.mark.bad{color:var(--bad)}.checks small{display:block;color:var(--muted);line-height:1.45}
+.controls{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}.controls label{display:flex;gap:9px;align-items:start;margin:8px 0}.controls input{accent-color:var(--accent);margin-top:6px}.controls label small{display:block}.foot{margin-top:20px;font-size:13px;color:var(--muted)}
+@media(max-width:1000px){.columns{grid-template-columns:1fr 1fr}.acceptance{grid-column:1/-1}.checks{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}}
+@media(max-width:650px){main{padding:20px 14px}.columns{display:block}.panel{margin-bottom:14px}.checks{display:block}.guide-row{align-items:stretch;flex-direction:column}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<main>
+<header class="intro">
+<div class="eyebrow">PROTOTYPE · Q21 REVIEW</div>
+<h1>一份 SOP，如何成為可接受的 Canonical 候選？</h1>
+<p>點選步驟或圖片引用，查看來源如何連到內容、解讀與證據。再移除一項必要資訊，觀察接受檢查為什麼改變。</p>
+<p class="muted">所有資料、方法與判斷均為固定示例。此頁幫助 review 草稿；Q21 尚待確認，實際接受須依完整適用規則與驗證證據。</p>
+</header>
+
+<section class="guide" aria-label="情境導覽">
+<div class="tabs">
+<button type="button" data-scenario="complete" aria-pressed="true">1. 完整候選</button>
+<button type="button" data-scenario="warning" aria-pressed="false">2. 必要警告缺失</button>
+<button type="button" data-scenario="evidence" aria-pressed="false">3. 來源證據缺失</button>
+</div>
+<div class="guide-row"><div><p id="guide-text"></p><small id="guide-progress" class="muted"></small></div><button id="next" type="button"></button></div>
+</section>
+
+<section class="facts" aria-label="目前示意資料">
+<div class="fact">來源觀測<strong>S1：M1＋I1</strong></div>
+<div class="fact">候選<strong id="candidate-id"></strong></div>
+<div class="fact">Processing<strong id="processing-state"></strong></div>
+<div class="fact">實際接受紀錄<strong>此示例尚未建立</strong></div>
+</section>
+
+<div class="columns">
+<section class="panel" aria-labelledby="source-title">
+<h2 id="source-title">① 固定來源</h2>
+<p class="muted">M1 的六行原文。點選一項，就能查看它在候選中的對應。</p>
+<div id="source-list"></div>
+<button class="source-item source-image" type="button" data-component="artifact">
+<small>固定圖片 I1 · assets/check.png</small>
+<strong>不得略過品質檢查</strong>
+<small>示意圖上的必要文字</small>
+</button>
+<p class="muted">第 3、6 行指向同一 I1。各自的 alt、位置與所屬步驟不同。</p>
+</section>
+
+<section class="panel" aria-labelledby="candidate-title">
+<h2 id="candidate-title">② 完整候選</h2>
+<p class="muted">六組資訊是閱讀分組，可透過固定參照連接。</p>
+<div id="groups"></div>
+<div id="focus" class="focus" aria-live="polite"></div>
+</section>
+
+<section class="panel acceptance" aria-labelledby="acceptance-title">
+<h2 id="acceptance-title">③ 本例接受檢查</h2>
+<p class="muted">整份候選一起評估。Processing 完成，仍須通過必要內容與證據檢查。</p>
+<div id="result" aria-live="polite"></div>
+<div class="controls">
+<h3>自由操作</h3>
+<label><input id="processing" type="checkbox" checked><span>Processing 已完成<small class="muted">示意固定 profile 要求的工作已完成。</small></span></label>
+<label><input id="warning" type="checkbox" checked><span>候選保留必要警告<small class="muted">OCR 結果包含「不得略過品質檢查」。</small></span></label>
+<label><input id="evidence" type="checkbox" checked><span>警告有固定來源支持<small class="muted">結果連回實際 I1 輸入、方法與支持對應。</small></span></label>
+<label><input id="custody" type="checkbox" checked><span>必要證據的 custody 保護已成立<small class="muted">適用保留期間內，必要依賴受到保護。</small></span></label>
+<button id="reset" type="button">重設完整候選</button>
+</div>
+</section>
+</div>
+<footer class="foot">
+<p>候選內容／證據改變時，示意候選 ID 也改變。完成狀態與 custody 事實不嵌入固定內容。ID 編碼與欄位安排仍待 review。</p>
+<p>範圍：本例的必要意思、來源支持與接受前提。Wiki／Retrieval 可引用已接受 revision 的內容與證據；目前選用、授權與發布各自仍有適用條件。</p>
+<p><a href="https://github.com/davidlinnnn/data-ingestion/blob/2e1e1f263162033d71e3210d18f545ad15539d46/docs/design/knowledge-platform-canonical-contract-draft.md" target="_blank" rel="noopener">對照候選草稿</a> · <a href="https://github.com/davidlinnnn/data-ingestion/issues/32" target="_blank" rel="noopener">Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX</a></p>
+</footer>
+</main>
+<script>
+// PROTOTYPE: fixed SOP fixture, not a general validator or acceptance implementation.
+const components = [
+  {id:"heading",line:1,kind:"標題",text:"重試與發布"},
+  {id:"step-1",line:2,kind:"步驟 1",text:"僅暫時性處理錯誤且作業冪等時，可重試。"},
+  {id:"image-use-1",line:3,kind:"圖片引用",text:"![品質警告](assets/check.png)",parent:"step-1",alt:"品質警告",target:"I1"},
+  {id:"step-2",line:4,kind:"步驟 2",text:"完成處理後執行品質檢查。"},
+  {id:"step-3",line:5,kind:"步驟 3",text:"品質通過才發布；未通過則停止並通知負責人。"},
+  {id:"image-use-2",line:6,kind:"圖片引用",text:"![發布警告](assets/check.png)",parent:"step-3",alt:"發布警告",target:"I1"}
+];
+const model = {
+  initial:()=>({processing:true,warning:true,evidence:true,custody:true}),
+  candidate:f=>({ref:"S1-candidate-"+Number(f.warning)+Number(f.evidence),ocr:f.warning?"不得略過品質檢查":null,evidence:f.evidence?"I1／整張圖片；支持圖中文字，不單獨支持重試條件。":null}),
+  evaluate:f=>[
+    {title:"固定來源與方法歸屬",ok:true,why:"S1 捕獲 M1＋I1；示意 parser、mapping 與 OCR 方法固定。"},
+    {title:"必要內容與上下文",ok:f.warning,why:f.warning?"步驟條件、順序、兩個圖片引用與必要警告都保留。":"I1 仍有警告，但候選缺少該必要意思；附限制說明仍不足。"},
+    {title:"採用結果的來源支持",ok:f.evidence,why:f.evidence?"OCR 輸入為 I1；結果可連回固定來源與實際支持範圍。":"缺少固定支持對應，無法確認結果受到哪個來源支持。"},
+    {title:"必要工作完成",ok:f.processing,why:f.processing?"本例的必要 processing 工作已完成。":"工作尚未完成；可保存進度，但未具備接受前提。"},
+    {title:"必要依賴的 custody",ok:f.custody,why:f.custody?"必要來源／採用證據已受到適用的保留保護。":"可讀仍不夠；完成接受前須建立必要依賴的保護。"},
+    {title:"規則與判定綁定",ok:true,why:"示意檢查綁定畫面上的確切候選與規則 demo-rule-v1；實際接受須另有可歸責判定。"}
+  ]
+};
+// Thin presentation shell. The fixture and evaluation above have no DOM dependency.
+const scenarios = {
+  complete:{intro:"沿著兩個圖片出現位置，查看同一來源如何保留不同上下文。",steps:[
+    {label:"查看步驟 1 的圖片引用",component:"image-use-1",note:"第一個出現位置：品質警告，隸屬條件式重試步驟。"},
+    {label:"查看步驟 3 的圖片引用",component:"image-use-2",note:"第二個出現位置：發布警告，隸屬發布判定。兩者共同指向 I1。"},
+    {label:"查看採用的警告結果與證據",component:"artifact",note:"來源圖片、OCR 結果及其支持是不同角色；本例檢查通過。"}
+  ]},
+  warning:{intro:"保持 Processing complete，移除候選中的必要警告。觀察來源未變，候選仍不足。",steps:[
+    {label:"先查看來源圖片與 OCR 結果",component:"artifact",note:"I1 的必要警告目前保留在候選中。"},
+    {label:"移除候選的必要警告",component:"artifact",field:"warning",value:false,note:"來源 I1 沒有改變。候選缺少必要意思，即使 Processing complete 仍無法通過。"},
+    {label:"還原必要警告",component:"artifact",field:"warning",value:true,note:"必要意思恢復，示意候選 ID 隨內容改變。"}
+  ]},
+  evidence:{intro:"保留 OCR 文字，移除其來源支持對應。文字看起來正確仍不足。",steps:[
+    {label:"先查看完整的來源支持",component:"artifact",note:"OCR 文字來自 I1，有固定輸入、方法與支持範圍。"},
+    {label:"移除警告的來源支持",component:"artifact",field:"evidence",value:false,note:"文字仍在，但候選失去必要證據對應，無法通過本例檢查。"},
+    {label:"還原來源支持",component:"artifact",field:"evidence",value:true,note:"固定支持對應恢復；未新增另一份圖片或獨立接受單位。"}
+  ]}
+};
+const escapeHtml=v=>String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let facts=model.initial(),selected="image-use-1",scenario="complete",step=0,message="";
+const el=id=>document.getElementById(id);
+el("source-list").innerHTML=components.map(c=>'<button type="button" class="source-item '+(c.target?"image":"")+'" data-component="'+c.id+'"><small>M1 第 '+c.line+' 行 · '+c.kind+'</small>'+escapeHtml(c.text)+'</button>').join("");
+function group(title,body){return '<div class="group"><h3>'+title+'</h3>'+body+'</div>';}
+function render(){
+  const candidate=model.candidate(facts),checks=model.evaluate(facts),pass=checks.every(c=>c.ok);
+  el("candidate-id").textContent=candidate.ref;
+  el("processing-state").textContent=facts.processing?"已完成":"尚未完成";
+  el("groups").innerHTML=[
+    group("身分／來源","<p>SOP Asset → S1 → Capture Package M1＋I1</p><small>示意 schema v1 · "+candidate.ref+"</small>"),
+    group("處理歸屬","<p>固定 parser／mapping／OCR 方法</p><small>OCR 實際輸入：I1；完成事實："+(facts.processing?"complete":"pending")+"</small>"),
+    group("內容／關係","<p>標題、3 個有順序的步驟、2 個圖片出現位置</p><small>image-use-1 → 步驟 1；image-use-2 → 步驟 3；兩者皆 → I1</small>"),
+    group("採納的 Enrichment",candidate.ocr?'<p>OCR：「'+candidate.ocr+'」</p><small>採用結果歸屬整份候選，區別於 Markdown 原文。</small>':'<p class="empty">必要警告未保留</p><small>來源有必要警告；候選只留其餘內容。</small>'),
+    group("Source Evidence",candidate.evidence?"<p>M1：行位置；I1：固定整張圖片</p><small>"+candidate.evidence+"</small>":'<p class="empty">警告的來源支持缺失</p><small>M1 的步驟定位仍保留；缺少的是採用結果的 I1 支持對應。</small>'),
+    group("涵蓋／限制",'<p>必要範圍：條件、步驟、兩個引用位置與圖片警告。</p><small>'+(facts.warning&&facts.evidence?"本例必要意思與支持完整；圖片證據僅承諾整圖定位。":"本例存在必要缺漏；不能把它當成可選省略。")+"</small>")
+  ].join("");
+  document.querySelectorAll("[data-component]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.component===selected)));
+  let detail;
+  if(selected==="artifact"){
+    detail="<h3>查看：固定圖片 I1</h3><dl><dt>來源內容</dt><dd>圖上寫「不得略過品質檢查」。</dd><dt>候選採用的結果</dt><dd>"+escapeHtml(candidate.ocr||"缺失")+"</dd><dt>產生結果的方法／輸入</dt><dd>示意 OCR 方法 ocr-demo-v1；固定輸入 I1。</dd><dt>來源支持</dt><dd>"+escapeHtml(candidate.evidence||"缺失；尚無足夠來源支持對應。")+"</dd><dt>上下文的邊界</dt><dd>圖中文字可共用；若解讀「步驟 1 的警告」，還需該步驟與原引用位置。</dd></dl>";
+  }else{
+    const c=components.find(c=>c.id===selected);
+    detail="<h3>查看："+escapeHtml(c.kind)+"</h3><dl><dt>固定來源位置</dt><dd>M1 第 "+c.line+" 行 · "+c.id+"</dd><dt>保留的原始內容</dt><dd>"+escapeHtml(c.text)+"</dd>";
+    if(c.target)detail+="<dt>所屬上下文／固定目標</dt><dd>"+escapeHtml(components.find(p=>p.id===c.parent).text)+"<br>原路徑 assets/check.png → package artifact I1</dd><dt>原始 alt／採用結果</dt><dd>"+c.alt+"；OCR："+escapeHtml(candidate.ocr||"缺失")+"</dd><dt>支持範圍</dt><dd>M1 支持引用位置與步驟；"+escapeHtml(candidate.evidence||"I1 的警告支持對應缺失。")+"</dd>";
+    else detail+="<dt>來源與方法歸屬</dt><dd>M1 原文，經示意 parser／mapping 保留；M1 行位置提供支持。</dd><dt>用途</dt><dd>Wiki／Retrieval 能讀取完整文字與條件；使用時引用確切已接受 revision 及版本內位置。</dd>";
+    detail+="</dl>";
+  }
+  el("focus").innerHTML=detail;
+  el("result").innerHTML='<div class="verdict '+(pass?"":"bad")+'"><strong>'+(pass?"本例檢查通過":"本例不符合接受條件")+'</strong><span>'+(pass?"可進入實際適用的接受判定；此頁未建立接受紀錄。":"先補足以下未通過項目；整份候選仍未具備本例前提。")+'</span></div><ul class="checks">'+checks.map(c=>'<li><span class="mark '+(c.ok?"":"bad")+'">'+(c.ok?"通過":"不足")+'</span><div>'+c.title+'<small>'+c.why+'</small></div></li>').join("")+'</ul>';
+  ["processing","warning","evidence","custody"].forEach(k=>el(k).checked=facts[k]);
+  document.querySelectorAll("[data-scenario]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.scenario===scenario)));
+  const guide=scenario&&scenarios[scenario],next=guide&&guide.steps[step];
+  el("guide-text").textContent=message||(guide?guide.intro:"自由操作：切換接受前提，查看受影響的資料與判斷。");
+  el("guide-progress").textContent=guide?(next?"步驟 "+(step+1)+"／"+guide.steps.length:"此情境導覽完成；可切換情境或自由操作。"):"點選上方情境可重新開始導覽。";
+  el("next").textContent=next?next.label:"導覽完成";
+  el("next").disabled=!next;
+}
+function start(name){facts=model.initial();scenario=name;step=0;selected="image-use-1";message="";render();}
+document.querySelectorAll("[data-scenario]").forEach(b=>b.onclick=()=>start(b.dataset.scenario));
+document.querySelectorAll("[data-component]").forEach(b=>b.onclick=()=>{selected=b.dataset.component;render();});
+["processing","warning","evidence","custody"].forEach(k=>el(k).onchange=()=>{
+  facts={...facts,[k]:el(k).checked};scenario=null;message="";render();
+});
+el("next").onclick=()=>{
+  const action=scenarios[scenario].steps[step];
+  if(action.field)facts={...facts,[action.field]:action.value};
+  selected=action.component;message=action.note;step+=1;render();
+};
+el("reset").onclick=()=>start("complete");
+render();
+</script>
+</body>
+</html>
