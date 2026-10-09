@@ -2,7 +2,7 @@
 
 [Review 索引](README.md) · [Canonical 設計](../design/knowledge-platform-canonical-design.md)
 
-**盤點／補記日：2026-10-09；範圍截至 Canonical Q24。**
+**盤點／補記日：2026-10-09；範圍截至 Canonical Q25。**
 依 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32#historical-adr-reconciliation-checkpoint)
 的強制 checkpoint，盤點已確認 overall logical design、source handoff、跨票修訂與本票決策。
 三篇既有 ADR 保留原號；新 ADR 按本次建立順序接續，不按決策發生時間重排。
@@ -38,10 +38,13 @@
 | Enrichment／附件更新／舊捕獲；[Q10](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6035463278)、[Q12/Q13](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6036282074)，2026-10-07；changed support／撤回；[Q17](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6061378937)、[Q18](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6061678555)，2026-10-08 | 不另立；ADR-0001/0003 與具體案例 | 完整候選、不可變歷史與目前資格的運用；未採細粒度重算引擎、locator migration framework 或新撤回狀態機。 |
 | 單一 schema／最少表示／案例／條件式能力；[Q19 撤回](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6062064816)，2026-10-08；[Q21](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)、[Q22](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075543252)、[Q23](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)，2026-10-09 | 不另立 | 具體契約、驗證與按需處置；多 exchange-format 提案已撤回，模型／套件／拓撲未採納。不得為它們建立 accepted ADR。 |
 
+[Canonical Q25](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6076312345) 於 2026-10-09 確認版本內引用、三格式 locator 索引約定及必要未知結果區別。
+這是 ADR-0002/0003 與 Q5 證據規則的具體化，未引入新身分、儲存或解析框架；無需新增獨立 ADR。
+
 ## 保留未決與歷史界線
 
 - 本次新增 ADR-0004、0005、0006，並將已確認 Q24 補入既有 ADR-0003；沒有重新編號。
 - 原 overall／source tickets 已解決；本次不改它們的決策、不新增原生依賴。
 - 研究、spike 與設計案例不等於 runtime 資格證據；沒有因本次 ADR 補記新增功能或實作授權。
-- 盤點與必要補記已完成到 Q24。最終 review 應連同本表呈現；若後續確認新決策或發現原紀錄衝突，先補核對再關閉本票。
+- 盤點與必要補記已完成到 Q25。最終 review 應連同本表呈現；若後續確認新決策或發現原紀錄衝突，先補核對再關閉本票。
 - Canonical 正式契約／案例整體 review 及各結案條件仍獨立存在；本表不代表本票已解決或 map 可以先更新。

@@ -2,13 +2,14 @@
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
-**2026-10-08 建立；2026-10-09 納入 Q20–Q24 確認。邏輯骨架及能力界線已確認；正式 schema 與實作規格仍待完成。**
+**2026-10-08 建立；2026-10-09 納入 Q20–Q25 確認。邏輯骨架及能力界線已確認；正式 schema 與實作規格仍待完成。**
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
-沿用 Q1–Q18、Q19 撤回紀錄與 Q20–Q24 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
+沿用 Q1–Q18、Q19 撤回紀錄與 Q20–Q25 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
 以及最少重複原則已確認。Q22 確認三格式具體問答的必要意思與證據基準。
 Q23 確認能力界線、條件式需求及研究處置；實際方法／profile 仍待 Processing 選定。
 Q24 確認重送不新增版本、不同候選不強制去重，以及無明確取代依據時保留仍合格的目前版本。
-正式欄位名稱、編碼與完整困難／更新案例整合仍待 review；本文件不是 parser 執行結果或能力驗證。
+Q25 確認版本內引用、三格式來源定位的索引約定及必要 unknown／無內容區別。
+完整具體契約、案例與交接仍須整體 review；本文件不是 parser 執行結果或能力驗證。
 2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)提供既有原則澄清與簡化建議；
 其後的 [Q21 決策](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)採納上述邏輯範圍，未採納正式 schema。
 
@@ -69,14 +70,14 @@ Source Reference 保留原始引用字串及已建立的目標對應。
 | PPTX | 投影片順序、可取得的 native 文字／shape／表格／備註；可靠關係或足以保存必要圖意的文字 Enrichment | 固定 PPTX 與投影片；有支持才提供 shape／notes 位置。若解讀依賴 rendering，指明採用的固定 rendering 與原投影片對應。 |
 
 上述是邏輯要求，不表示每種 locator／worker 已實作。
-案例採人可讀、從 1 起算的位置；以下 Q25 提出一致的第一版參照與定位表示。
 
-### 第一版參照與定位表示（Q25 待 review）
+### 第一版參照與定位表示（Q25 已確認）
 
-這裡把已確認語意落成一份 schema 的具體表示候選；尚未採納為正式 wire schema。
-不新增 parser 能力或更細定位保證。第 2 節六組資訊及第 3 節判定紀錄仍是同一契約。
+2026-10-09 於 [Q25 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6076312345)確認以下引用／定位語意及索引約定。
+此確認不等於完整 wire schema 已完成，也不新增 parser 能力或更細定位保證。
+第 2 節六組資訊及第 3 節判定紀錄仍是同一契約。
 
-| 表示位置 | 第一版建議規則 | 具體例子／限制 |
+| 表示位置 | 第一版已確認規則 | 具體例子／限制 |
 |---|---|---|
 | 固定物件參照 | Asset、Source Revision、Capture Package、candidate、method、artifact 各用其不透明參照；固定來源／artifact 參照須解析到確切版本，不能解析到 live latest。 | I1 是 M1/I1 package 已綁定的固定 artifact；它不是 path、digest 或跨文件共享附件身分。實際 ID 字串分配由規格決定。 |
 | 文件內位置 | `component_ref`／`result_ref` 在候選內識別；consumer 引用時帶確切 `canonical_revision_ref` 與版本內參照。兩者共同決定目標。 | C1 的 step-3 不會因 C2 也有 step-3 而改指 C2；不要求跨版本 matching。候選內部關係可直接用 local ref，不必每條邊重複 revision。 |
@@ -243,6 +244,242 @@ Wiki 與 Retrieval 使用同一組固定 Canonical 輸入，依下節需求取�
 
 這是概念契約檢查。生成、連結品質、Retrieval 效果與實際更新／發布測試由 projection 負責。
 
+### 同一第一版表示的三份完整候選（待整體 review）
+
+以下是**手工建立的設計預期**，不是 parser 輸出或實際接受紀錄。
+`canonical-v1` 是供 review 的單一 schema 識別；欄位拼法可在規格中一致整理，
+不能改掉已確認意思。為使 fixture 範圍完整，P1 明定共三頁，前兩頁空白，
+第 3 頁為上文表格／註解；T1 共兩張，第 1 張僅標題「文件處理與復原」，
+第 2 張為上文流程及備註；S1 使用上文完整六行 M1 與必要 I1。
+這些補充只界定虛構 fixture，不推論實際文件中的未知頁面是空白。
+
+#### 最小結構與必要性
+
+| 結構 | 必要資訊／條件必要資訊 | 不得混同 |
+|---|---|---|
+| Candidate | 必有 `schema_version`、`candidate_ref`、固定 `capture_package_ref`、`processing_ref`、`mapping_ref` 及有類型內容；Asset／Source Revision 可由固定 package 唯一解析。 | 不以 request、digest 或完成時間代替候選／來源身分。 |
+| Component | 必有版本內 `ref`、`kind`、來源／方法歸屬及足夠 evidence；依 kind 提供文字、表格位置／spans／header refs、圖片／引用、slide／notes 等必要內容。適用時提供 `parent_ref`。 | 只有結構的 table／slide 不必虛構文字。程式碼／公式可保留足夠原文或重建文字，沒有 AST／求解要求。 |
+| Sequence／Association | 順序以 `item_refs` 與順序意思表示；適用時用 `scope_ref` 指定組件範圍，未填表示整份候選。必要關係有 `kind`、起點、終點及依據。表格列欄／span 在本候選從 1 起算；定位仍依 Q25。 | 不把 array 儲存／遍歷順序當來源閱讀順序。已由 parent／sequence 表達的關係不重複。 |
+| Source Reference | 保留 `raw_target`；已解出固定目標時才附 artifact／component 目標。未解出須保留其狀況。 | Source Reference 是來源中的引用；它不等於支持內容的 Source Evidence。 |
+| Enrichment | 採納結果必有 `ref`、`origin`、實際 `input_refs`、`target_refs`、`method_ref`、內容、evidence 及必要限制；各 ref 標出 artifact／component／前結果角色。 | 一個結果可針對多個位置；輸入、目標與支持證據不合併。不複製其文字到 components。 |
+| Evidence | 必有版本內 `ref`、固定 `source_artifact_ref`、Q25 locator 及支持限制；依賴採用 rendering／crop 時附固定參照及來源對應。 | 可定位不等於支持內容；沒有 pixel/cell 精度不能補造。 |
+| Mapping report | 必有固定映射方法、候選輸入、所需／已涵蓋範圍與有值 provider 欄位的 disposition；限制與必要未解讀／缺失須可核對。 | 以下已知空陣列表示案例中沒有該類關係／結果，不替代未嘗試或失敗紀錄。 |
+| Validation／Acceptance | 驗證綁候選、規則、必要檢查與佐證；接受另綁確切候選／revision、驗證與可歸責規則或授權判定及適用範圍。 | 判定重送依 Q24；目前選用／資格不嵌入固定候選。 |
+
+所有 local refs 必須在同一候選內唯一且可解析；固定外部 refs 須由以下聲明或相應固定紀錄解析。
+component 的 `origin: source` 表示來源內容，抽取／映射方法由其固定 processing／mapping 紀錄提供；
+OCR 重建與生成解讀各在採納結果中記錄。這裡的來源內容不等於來源事實已被平台證明為真。
+
+#### 固定外部紀錄聲明（同樣是設計預期）
+
+| 候選 | 固定 package | Processing／Mapping | 應受保護的必要資料 |
+|---|---|---|---|
+| K-P1 | PK-P1 → Asset A-P、Source Revision S-P1、完整 P1 | PC-P1 → request R-P1、profile P-P1、PDF parser P-1、必要工作完成證據；MP-P1 → mapper MAP-1、K-P1/P1、三頁涵蓋及前兩頁確認空白。 | P1、採用的固定處理／映射輸出與判定證據。 |
+| K-S1 | PK-S1 → Asset A-S、Source Revision S-S1、完整 M1/I1，兩次相同 path 都綁 I1 | PC-S1 → request R-S1、profile P-S1、Markdown parser MD-1、OCR-1 的 I1 警告結果與必要工作完成證據；MP-S1 → MAP-1、K-S1/M1/I1、六行與圖片必要意思涵蓋。 | M1/I1、採用 OCR 輸出與判定證據。 |
+| K-T1 | PK-T1 → Asset A-T、Source Revision S-T1、完整 T1 | PC-T1 → request R-T1、profile P-T1、PPTX parser PPT-1、renderer RENDER-1、FLOW-1 及必要工作完成證據；T1-render2 固定對應 T1 第 2 張；MP-T1 → MAP-1、K-T1/T1、兩張與備註／必要圖意涵蓋。 | T1、採用 T1-render2、FLOW-1 輸出與判定證據。 |
+
+P-1／MD-1／PPT-1／OCR-1／FLOW-1 等是固定方法紀錄的**示例標籤**，不是已採納套件或已驗證模型。
+PC-* 不包含 Canonical 接受授權；各方法的實際 code/model/configuration 身分由執行前固定紀錄提供。
+本例假設正常接受所需授權與 custody 證據可成立；實際執行缺任何必要證據仍不能接受。
+
+#### PDF 候選 K-P1
+
+```json
+{
+  "schema_version": "canonical-v1",
+  "candidate_ref": "K-P1",
+  "capture_package_ref": "PK-P1",
+  "processing_ref": "PC-P1",
+  "mapping_ref": "MP-P1",
+  "components": [
+    {"ref":"p-table","kind":"table","rows":3,"columns":2,"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-method","kind":"table_cell","parent_ref":"p-table","text":"方法","cell":{"row":1,"column":1,"row_span":1,"column_span":1,"header_refs":[]},"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-limit","kind":"table_cell","parent_ref":"p-table","text":"重試上限（次）","cell":{"row":1,"column":2,"row_span":1,"column_span":1,"header_refs":[]},"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-a","kind":"table_cell","parent_ref":"p-table","text":"A","cell":{"row":2,"column":1,"row_span":1,"column_span":1,"header_refs":["p-method"]},"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-a-limit","kind":"table_cell","parent_ref":"p-table","text":"2*","cell":{"row":2,"column":2,"row_span":1,"column_span":1,"header_refs":["p-limit","p-a"]},"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-b","kind":"table_cell","parent_ref":"p-table","text":"B","cell":{"row":3,"column":1,"row_span":1,"column_span":1,"header_refs":["p-method"]},"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-b-limit","kind":"table_cell","parent_ref":"p-table","text":"0","cell":{"row":3,"column":2,"row_span":1,"column_span":1,"header_refs":["p-limit","p-b"]},"origin":"source","evidence_refs":["ep3"]},
+    {"ref":"p-note","kind":"text","text":"*僅適用暫時性處理錯誤，且作業必須具備冪等性","origin":"source","evidence_refs":["ep3"]}
+  ],
+  "sequences": [
+    {"kind":"source_order","item_refs":["p-table","p-note"]}
+  ],
+  "associations": [
+    {"kind":"qualifies","from_ref":"p-note","to_ref":"p-a-limit","basis":"來源的 * 註記"}
+  ],
+  "enrichments": [],
+  "evidence": [
+    {"ref":"ep3","source_artifact_ref":"P1","locator":{"kind":"pdf","page":3},"support_limits":"頁級定位；本設計例以來源核對確認值、單位與註解關係。"}
+  ]
+}
+```
+
+#### SOP 候選 K-S1
+
+```json
+{
+  "schema_version": "canonical-v1",
+  "candidate_ref": "K-S1",
+  "capture_package_ref": "PK-S1",
+  "processing_ref": "PC-S1",
+  "mapping_ref": "MP-S1",
+  "components": [
+    {"ref":"s-heading","kind":"heading","text":"重試與發布","origin":"source","evidence_refs":["em1"]},
+    {"ref":"s-step1","kind":"list_item","text":"僅暫時性處理錯誤且作業冪等時，可重試。","origin":"source","evidence_refs":["em2"]},
+    {"ref":"s-image1","kind":"picture","parent_ref":"s-step1","alt":"品質警告","source_reference":{"raw_target":"assets/check.png","artifact_ref":"I1"},"origin":"source","evidence_refs":["em3"]},
+    {"ref":"s-step2","kind":"list_item","text":"完成處理後執行品質檢查。","origin":"source","evidence_refs":["em4"]},
+    {"ref":"s-step3","kind":"list_item","text":"品質通過才發布；未通過則停止並通知負責人。","origin":"source","evidence_refs":["em5"]},
+    {"ref":"s-image2","kind":"picture","parent_ref":"s-step3","alt":"發布警告","source_reference":{"raw_target":"assets/check.png","artifact_ref":"I1"},"origin":"source","evidence_refs":["em6"]}
+  ],
+  "sequences": [
+    {"kind":"source_order","item_refs":["s-heading","s-step1","s-step2","s-step3"]}
+  ],
+  "associations": [],
+  "enrichments": [
+    {"ref":"ocr-i1","origin":"reconstruction","input_refs":[{"artifact_ref":"I1"}],"target_refs":["s-image1","s-image2"],"method_ref":"OCR-1","text":"不得略過品質檢查","evidence_refs":["ei1"],"limitations":[]}
+  ],
+  "evidence": [
+    {"ref":"em1","source_artifact_ref":"M1","locator":{"kind":"markdown","line_start":1,"line_end":1},"support_limits":"原始檔行級定位。"},
+    {"ref":"em2","source_artifact_ref":"M1","locator":{"kind":"markdown","line_start":2,"line_end":2},"support_limits":"原始檔行級定位。"},
+    {"ref":"em3","source_artifact_ref":"M1","locator":{"kind":"markdown","line_start":3,"line_end":3},"support_limits":"原始檔行級定位。"},
+    {"ref":"em4","source_artifact_ref":"M1","locator":{"kind":"markdown","line_start":4,"line_end":4},"support_limits":"原始檔行級定位。"},
+    {"ref":"em5","source_artifact_ref":"M1","locator":{"kind":"markdown","line_start":5,"line_end":5},"support_limits":"原始檔行級定位。"},
+    {"ref":"em6","source_artifact_ref":"M1","locator":{"kind":"markdown","line_start":6,"line_end":6},"support_limits":"原始檔行級定位。"},
+    {"ref":"ei1","source_artifact_ref":"I1","locator":{"kind":"artifact"},"support_limits":"整張固定圖片；只支持圖片警告文字，不代表其在 Markdown 中的出現位置。"}
+  ]
+}
+```
+
+OCR-1 只讀 I1；它不把某次出現的步驟上下文冒充另一次出現的輸入。
+若方法實際讀取上下文，`input_refs` 必須加入對應組件並依真實依賴評估重用。
+
+#### PPTX 候選 K-T1
+
+```json
+{
+  "schema_version": "canonical-v1",
+  "candidate_ref": "K-T1",
+  "capture_package_ref": "PK-T1",
+  "processing_ref": "PC-T1",
+  "mapping_ref": "MP-T1",
+  "components": [
+    {"ref":"t-slide1","kind":"slide","origin":"source","evidence_refs":["et1"]},
+    {"ref":"t-title","kind":"heading","parent_ref":"t-slide1","text":"文件處理與復原","origin":"source","evidence_refs":["et1"]},
+    {"ref":"t-slide2","kind":"slide","origin":"source","evidence_refs":["et2"]},
+    {"ref":"t-diagram","kind":"picture","parent_ref":"t-slide2","artifact_ref":"T1-render2","origin":"source","evidence_refs":["et2"]},
+    {"ref":"t-notes","kind":"notes","parent_ref":"t-slide2","text":"此圖表示發布判定，不表示處理階段的重試政策。","origin":"source","evidence_refs":["et2"]}
+  ],
+  "sequences": [
+    {"kind":"slide_order","item_refs":["t-slide1","t-slide2"]}
+  ],
+  "associations": [],
+  "enrichments": [
+    {"ref":"flow-text1","origin":"interpretation","input_refs":[{"artifact_ref":"T1-render2"}],"target_refs":["t-diagram"],"method_ref":"FLOW-1","text":"處理完成後執行品質檢查。通過才發布；未通過則停止並通知負責人。","evidence_refs":["et2"],"limitations":["本例沒有宣稱已取得可靠 native connector；以來源支持的文字保存必要圖意。"]}
+  ],
+  "evidence": [
+    {"ref":"et1","source_artifact_ref":"T1","locator":{"kind":"pptx","slide":1},"support_limits":"投影片級定位。"},
+    {"ref":"et2","source_artifact_ref":"T1","locator":{"kind":"pptx","slide":2},"adopted_artifact_ref":"T1-render2","support_limits":"投影片級定位；採用 rendering 由固定處理紀錄對應到 T1 第 2 張。"}
+  ]
+}
+```
+
+#### 綁定確切候選的預期驗證與接受紀錄
+
+| 預期紀錄 | 候選與規則／佐證 | 允許產生的接受紀錄 |
+|---|---|---|
+| VAL-P1 | K-P1、RULES-1；V01/V05 及共同身分、參照、涵蓋、來源支持、必要工作、目前資格與 custody 檢查全部通過；來源預期為本節 P1。 | ACC-P1 → K-P1、Canonical C-P1、VAL-P1、RULES-1 的可歸責自動判定；適用於已確認的表格／共用 consumer 用途。 |
+| VAL-S1 | K-S1、RULES-1；V02/V05 及相同共同檢查全部通過；M1 的兩次引用與 I1 警告都可追溯。 | ACC-S1 → K-S1、Canonical C-S1、VAL-S1、同一可歸責規則及 SOP 用途；來源或 Enrichment 不能被獨立接受。 |
+| VAL-T1 | K-T1、RULES-1；V03/V05 及相同共同檢查全部通過；方向／分支／備註與採用 rendering 支持均成立。 | ACC-T1 → K-T1、Canonical C-T1、VAL-T1、同一可歸責規則及流程解讀用途。 |
+
+RULES-1 指本票確認的共同接受條件及各案例預期；正式紀錄必須綁固定規則版本，
+個別檢查結果與可追溯佐證，不以這張摘要表代替實際驗證。
+上表都是「條件滿足時應產生什麼」的設計預期，沒有宣稱已實際接受。
+任何必要檢查失敗或未評估，都不能生成通過結果；可允許限制須有已確認規則依據。
+同一 ACC-* 結果重送不新增 revision；重新評估保留新判定，依 Q9/Q24 處理。
+
+### 有值 provider 欄位的完整處置例（V04）
+
+固定 provider 為 **docling-core 2.96.0**；它輸出的 DoclingDocument schema 版本是 **1.10.0**。
+[固定 BaseMeta 定義](https://github.com/docling-project/docling-core/blob/0b55aca55b22f7109502d44db36f8246e238121c/docling_core/types/doc/common/meta.py)
+允許符合 `namespace__field_name` 的自訂欄位；
+[NodeItem.meta](https://github.com/docling-project/docling-core/blob/0b55aca55b22f7109502d44db36f8246e238121c/docling_core/types/doc/items/node.py)
+可承載它。以下是 **synthetic adapter metadata**，不是 parser 實測結果，也不是 Core 內建的 condition 語意：
+
+```json
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.10.0",
+  "name": "V04 synthetic",
+  "furniture": {"self_ref":"#/furniture","children":[],"content_layer":"furniture","name":"_root_","label":"unspecified"},
+  "body": {"self_ref":"#/body","children":[{"$ref":"#/texts/0"}],"content_layer":"body","name":"_root_","label":"unspecified"},
+  "groups": [],
+  "texts": [{"self_ref":"#/texts/0","parent":{"$ref":"#/body"},"children":[],"content_layer":"body","meta":{"fixture__condition":"僅適用暫時性處理錯誤，且作業必須具備冪等性"},"label":"text","prov":[],"orig":"方法 A 最多重試 2 次。","text":"方法 A 最多重試 2 次。"}],
+  "pictures": [],
+  "tables": [],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {}
+}
+```
+
+待處置欄位為 `/texts/0/meta/fixture__condition`，值非空。
+此 fixture 只檢查這一欄的處置；K-P1 其餘內容及接受條件仍須獨立滿足。
+本例假設 adapter 的欄位語意已知，該值源自 P1 的必要限制註解；
+實際來源支持由固定 P1 案例核對，不能由這個沒有 `prov` 的 JSON 自行證明。
+
+| 明確 disposition | 候選／映射報告的具體結果 | 接受效果 |
+|---|---|---|
+| 納入 | MP-P1 將該 pointer 對應 `p-note`，將完整條件連到 `p-a-limit`，保留 adapter／MAP-1 歸屬及 ep3 的來源支持。 | 這項檢查在條件、目標與來源支持皆正確時通過；其餘共同檢查仍須通過。 |
+| 保留未解讀 | 保留固定 provider artifact 與 pointer；MP-P1 記 `retained_uninterpreted`。若候選只有「方法 A 最多重試 2 次」而缺必要條件，則必要意思未映射。 | raw 可讀也不通過；不產生接受。 |
+| 依規則省略重複欄位 | 僅當相同必要條件已在 `p-note` 完整保留並驗證，MP-P1 可依固定重複欄位規則記 `omitted`、理由及對應 `p-note`。 | 省略的是重複 provider 欄位；不省略必要意思。若這欄是唯一條件載體，就不能用此規則通過。 |
+
+**本次已做：** 在既有環境確認 core 2.96.0，建立文件、`export_to_dict()`、
+`DoclingDocument.model_validate()` roundtrip，確認自訂欄位與值保留。
+以下為可重現的最小 schema 檢查；未安裝新套件、未執行 OCR／VLM：
+
+```python
+from importlib.metadata import version
+from docling_core.types.doc.document import BaseMeta, DoclingDocument, DocItemLabel
+
+assert version("docling-core") == "2.96.0"
+doc = DoclingDocument(name="V04 synthetic")
+item = doc.add_text(label=DocItemLabel.TEXT, text="方法 A 最多重試 2 次。")
+item.meta = BaseMeta.model_validate({
+    "fixture__condition": "僅適用暫時性處理錯誤，且作業必須具備冪等性"
+})
+restored = DoclingDocument.model_validate(doc.export_to_dict())
+assert restored.texts[0].meta.get_custom_part() == item.meta.get_custom_part()
+```
+
+**尚未做：** 三種 provider-to-Canonical 映射、來源支持及接受結果的執行驗證。
+`prov: []` 只足以做 schema／欄位處置例，不能證明 evidence 充分。
+這不是要求保存所有 provider JSON 或採納 namespaced provider attachment 作為 Canonical schema。
+
+### 同一 schema 的附件更新與方法更新（V06–V08）
+
+另設固定 SOP U1：文字「依附件限值設定」，接著引用 `limit.png`；
+圖片 IU1 為「10」，IU2 為「100」。這是**獨立的虛構更新案例**，
+不把前節 M1/I1 的「不得略過品質檢查」改寫成另一份固定來源。
+沿用同一 candidate／component／Enrichment／evidence／判定結構，
+最小內容為 `u-instruction` 及 `u-image`；後者保留原始 path 與固定 package artifact 綁定。
+
+| 欄位／固定事實 | 原候選 | 附件更新候選 | 僅更新方法的候選 |
+|---|---|---|---|
+| Asset／Source Revision／Package | A-U／S-U1／PK-U1 = U1 + IU1 | A-U／S-U2／PK-U2 = U1 + IU2 | A-U／S-U2／PK-U2 不變 |
+| request／profile／完成證據 | R-U1／P-U1／PC-U1 | R-U2／P-U2／PC-U2 | R-U3／P-U3／PC-U3 |
+| candidate／schema | K-U1／canonical-v1 | K-U2／canonical-v1 | K-U3／canonical-v1 |
+| 原文與引用 | `u-instruction` 保留指示；`u-image` 的 `limit.png` → IU1 | 指示仍 U1；`limit.png` → IU2 | 同 K-U2 的固定來源／引用 |
+| 採納 OCR 結果 | EU1：input IU1、target u-image、method OCR-1、text 10 | EU2：input IU2、target u-image、method OCR-1、text 100 | EU3：input IU2、target u-image、method OCR-2；必要意思仍由 IU2 支持 |
+| Evidence／mapping | eU1 → IU1；MP-U1 保留必要限值／歸屬 | eU2 → IU2；MP-U2 驗證新限值與新 package 綁定 | eU2 可在支持仍充分時沿用；MP-U3 記錄新方法及實際輸入，不能冒稱新來源 |
+| 驗證／預期接受 | VAL-U1 → K-U1；全部適用檢查通過才有 ACC-U1 → C-U1 | VAL-U2 → K-U2；通過才有 ACC-U2 → C-U2 | VAL-U3 → K-U3；通過才有 ACC-U3 → C-U3 |
+| 歷史／選用 | C-U1 的內容與引用固定 | C-U1 不改指 IU2；C-U2 是否選用另依目標／目前資格 | C-U3 不令 S-U2 變成更新來源；依已採納方法與既有選用規則判斷 |
+
+必要負例：把 EU1 的「10」帶到 K-U2，只將 evidence 改指 IU2，仍不通過；
+把同一接受結果 ACC-U2 重送，不新增 C-U4。整份重做可行，任何重用都保留真實 producing inputs／methods。
+來源可靠先後已知為 S-U1→S-U2 時，S-U1 搭配較新 platform-state 前置條件仍不滿足明確 S-U2 目標；
+歷史接受與目標就緒分開。固定引用 C-U1/u-image 只解析 IU1，受到目前治理與保留限制，
+不能為了可用性暗換 IU2 或恢復已撤回資料。
+
 ## 5. 帶入後續驗證的跨案例檢查
 
 | 案例 | 已確認規則要求的處理 |
@@ -261,11 +498,11 @@ Wiki 與 Retrieval 使用同一組固定 Canonical 輸入，依下節需求取�
 參照完整性、順序／包含關係、表格／表頭／註解對應、附件範圍、
 來源／方法歸屬與證據支持、必要涵蓋，以及確切候選／接受判定綁定。
 既有證據足夠就重用；只有影響本票決策且既有證據無法回答的未知，
-才做必要的 executable probe（Q14）。本草稿未執行 mapping 或 consumer runtime。
+才做必要的 executable probe（Q14）。本草稿未執行 mapping 或 consumer runtime；V04 只完成 provider schema roundtrip。
 
 ### 生命週期效果與權威事實交接
 
-以下整理已確認的整體設計、來源交接及 Q1–Q24，並非新增功能或狀態機。
+以下整理已確認的整體設計、來源交接及 Q1–Q25，並非新增功能或狀態機。
 Canonical 提供自己的候選、接受、失效與選用事實；公開查詢由 Admission 關聯，
 目前授權及跨介面執行由 Governance 承接，資料保護／刪除由 Custody 承接。
 
@@ -306,11 +543,11 @@ Processing 提供必要 producer 輸出；Canonical integration 負責 mapping�
 | V01 PDF 表格 | P1：A=2*、B=0、單位次；另產生註解掛 B／條件遺失的負例。 | 正例保留「暫時性錯誤且冪等」及 A 的範圍；負例不得通過對應接受檢查。只宣稱實際 page／region 精度。 | P02/P03/P04，Canonical／Processing。 |
 | V02 SOP／附件 | M1/I1；兩個圖片出現位置指向同一 I1；負例漏掉第二個引用或 OCR 警告。 | 保留不同位置／上下文及必要警告；字節相同不合併出現位置。必要內容遺失即失敗。 | P02/P05/P06，Canonical／Processing。 |
 | V03 PPTX／獨立 Enrichment | T1 投影片與備註；以固定輸入、方法另產生流程解讀，再納入完整候選；負例交換通過／失敗動作或漏備註。 | 保留方向、條件、動作及來源／生成區分；缺必要意思不得接受。獨立產生結果不等於獨立接受或提前交付。 | P02/P04/P05/P07，Canonical／Processing。 |
-| V04 Provider 未映射欄位 | 以所選 provider schema 的有效、非空欄位建立 fixture；對照原始輸出與映射 disposition。 | 有明確納入／未解讀保留／允許省略；未知必要意思不得以 raw 留存冒充合格。歷史 absent/empty 證據不能冒稱非空案例通過。 | P06，Canonical／Processing；必要 raw 保護交 Custody。 |
+| V04 Provider 未映射欄位 | 使用第 4 節已完成 schema roundtrip 的 core 2.96.0 synthetic metadata fixture；比較三種明確 disposition 與 p-note／p-a-limit 的預期映射。 | 有明確納入／未解讀保留／允許省略；未知必要意思不得以 raw 留存冒充合格。歷史 absent/empty 證據不能冒稱非空案例通過。 | P06，Canonical／Processing；必要 raw 保護交 Custody。 |
 | V05 必要工作／證據不足 | 有 complete manifest，但缺必要警告或 mapper 漏接已保存 crop／方法／支持關係。 | completion 不代替接受；分辨 producer 缺內容與 mapper 漏交接。錯誤候選不得接受。 | P05/P07/P09，Canonical／Processing／Custody。 |
-| V06 附件單獨更新 | M1/I1 的 C1；M1/I2 為新觀測，I1 說 10、I2 說 100；負例保留 I1 解讀只換 evidence ref。 | 新完整候選保存 I2 意思；負例失敗。整份重做可行；可選重用須固定相容依據與真實 producing inputs。 | Q12/Q17，P01/P04/P08。 |
-| V07 方法更新／歷史引用 | 同 S1，E1→E2；或把 OCR 10 修正成來源支持的 100；C1 的既有引用保留。 | 新候選／接受、C1 固定；舊 locator 仍支持新內容才可沿用。舊引用只解 C1；不支持時失敗，不可用時說明限制。 | Q7/Q10/Q11/Q15/Q17，P04/P08/P09。 |
-| V08 舊捕獲／新前置條件 | S1 與可靠較新 S2；S1 搭配 P2 前置條件。 | 前置條件成功不令 S1 滿足 S2 目標；歷史接受可獨立判斷，未知先後保留衝突。 | Q13，P01/P08/P10，Canonical／Admission。 |
+| V06 附件單獨更新 | 第 4 節獨立 U1/IU1→U1/IU2 案例；IU1 說 10、IU2 說 100；負例保留 EU1 解讀只換 evidence ref。 | 新完整候選保存 IU2 意思；負例失敗。整份重做可行；可選重用須固定相容依據與真實 producing inputs。 | Q12/Q17，P01/P04/P08。 |
+| V07 方法更新／歷史引用 | 第 4 節 S-U2 同來源、OCR-1→OCR-2 的 K-U3；另測 OCR 修正但舊 locator 不再支持的負例；C-U1 引用保留。 | 新候選／接受、C-U1 固定；舊 locator 仍支持新內容才可沿用。舊引用只解 C-U1；不支持時失敗，不可用時說明限制。 | Q7/Q10/Q11/Q15/Q17，P04/P08/P09。 |
+| V08 舊捕獲／新前置條件 | 第 4 節 S-U1 與可靠較新 S-U2；S-U1 搭配較新 platform-state 前置條件。 | 前置條件成功不令 S-U1 滿足 S-U2 目標；歷史接受可獨立判斷，未知先後保留衝突。 | Q13，P01/P08/P10，Canonical／Admission。 |
 | V09 撤回／失效／清理 | 接受前適用撤回；接受後發現原必要條件不符；Task 清理與採用 artifact 保護。 | 分別阻止新接受、保留歷史並停止合格選用、保護必要依賴。晚到成功不復權，收到通知不冒稱全平台 enforcement／purge 完成。 | Q9/Q18/Q21，P09/P10；各層保留自己的權威事實。 |
 | V10 重送／競爭候選 | K1→C1 的接受結果重送；同 S1/M1 的新 K2→C2；C1 合格／不合格兩種情況。 | 重送仍 C1；不同候選不要求合併；無明確取代依據保留合格 C1，不能用完成時間或已失格 C1 解決衝突。 | Q24，P01/P07/P10，Canonical／Admission／Custody。 |
 | V11 條件式能力 | 當實際用途觸發 C03–C05，固定 x²、fail 內 stop、A 子章節的正例與改義負例；C06–C08 僅在採納具體用途後加入對應案例。 | 保存必要意思；反例不得通過。未選用途／未執行標為未評估，不能列為已支援，也不要求現在啟用全部功能。 | Q23，Canonical 定預期，Processing 選方法／證據。 |
@@ -324,8 +561,8 @@ V01–V03 另做一次共用 Wiki／Retrieval 的概念檢查：同一固定輸�
 
 **2026-10-09 Q23 已確認能力界線與處置，見[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)。**
 本表對照已確認需求、固定 PDF 證據、最小整合差距及受影響驗證。
-P01–P10 作為後續整合交接；最終完整性 review、規格與驗證計畫仍須完成。
-不宣稱 Canonical mapper 已通過，也不完成結案 gate。
+P01–P10 作為後續整合交接，與第 5 節驗證計畫一併提交最終完整性 review；正式規格仍待設計收斂。
+不宣稱 Canonical mapper 已通過，也不先行完成結案 gate。
 PDF core 固定為 `fe1b283c49c83ad5aeee6808e77b4f25549eba03`；
 Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 Q22 的 P1 表格是虛構來源的預期內容；「2 次」不是 worker retry 設定。
@@ -414,29 +651,33 @@ WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
 | Remote API、Activity pools、KServe、serve／升版／recovery；[Docling topology][docling-topology]、[WeKnora candidates][weknora-candidates] | 延後方案選擇，交 Processing／Admission／Governance／Custody 與 operating envelope。 | 不採納服務拓撲、queue、cache／conversion framework 或數字預設；所選方案仍需 owner 決策及 scoped evidence。 |
 | WeKnora 產品、editor/diff、元件重用、QA metrics；[採用路徑及處置][weknora-adoption] | 延後產品採用；不採用其 schema／status 作契約等價物。 | Projection 與 operating envelope 比較價值／成本；metrics 不證明表格保真或 Wiki 真實性。延後不是永久拒絕產品。 |
 
-## 7. 下一輪待決與結案工作
+## 7. 最終整體 review 與結案工作
 
-**Q20 已於 2026-10-09 確認：** 同一必要附件的各出現位置保留自己的引用與上下文，
-共同指向 Capture Package 中的固定 artifact；不要求複製圖片或分別接受。
-[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955) 補足[來源交接](knowledge-platform-source-handoff.md)留給本票的文件內表示。
+Q20–Q25 均已於 2026-10-09 確認。Q24 已於 2026-10-09 確認重送／不同候選／目前選用規則；
+Q25 已確認版本內引用、三格式定位及必要未知結果區別。
+各輪確認只涵蓋其明列範圍；第 4 節完整候選與以下整合交接，現在一起提交最終 review。
 
-**Q21 已於 2026-10-09 確認：** 六組資訊、綁定確切候選的驗證／接受紀錄與最少重複原則，
-見 [Q21 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)。
-**Q22 已於 2026-10-09 確認：** 三格式具體問答的必要意思與來源證據基準，
-見 [Q22 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075543252)。
-正式欄位／編碼與完整困難／更新案例整合仍待 review；上述確認不代表實際 parser／mapper 或 consumer 通過驗收。
-結案前仍需完整三格式／困難案例整合 review、接受與驗證計畫、
-權威事實交接與生命週期效果、完整 PDF reconciliation、
-研究 disposition，以及強制的歷史 ADR 盤點／補記。
-**Q23 已於 2026-10-09 確認：** 第 6 節 C01–C08 的能力界線、條件式需求與研究處置，
-並以 P01–P10 對照表承接整合差距與最小驗證；見[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)。
-方法選擇、完整案例／驗證計畫及最終交接完整性仍待完成；此確認不採納所有 optional features。
-**Q24 已於 2026-10-09 確認：** 重送／不同候選／目前選用的最小規則，見[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6076049015)。
-第 5 節已整理生命週期效果與 V01–V11 驗證程序，仍待整體完整性 review；不是已執行成果。
-**Q25 待 review：** 第 2 節的具體版本內參照、來源定位及缺值／未知表示候選。
-[歷史 ADR 盤點／必要補記](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)已完成至 Q24；
-須在最終 review 呈現並核對後續新增決策。正式契約／完整案例 review 與最終共同確認尚未完成。
-本草稿不構成結案或 map 已解決索引更新。
+| 結案要求 | 本次可 review 的材料 | 剩餘動作／承接 |
+|---|---|---|
+| 第一版共同表示與接受契約 | 第 2–3 節六組資訊、必要／條件必要欄位、固定外部參照、確切候選判定；第 4 節三份同 schema 候選。 | 確認完整邏輯表示可作規格基礎。正式型別／欄位編碼及 API 在設計收斂後形成 buildable spec；不改已確認語意。 |
+| 三格式／困難／更新案例 | 第 4 節 PDF、SOP、PPTX 與共用 Wiki／Retrieval 問答；非空 provider 欄位處置；附件／方法更新及歷史引用。 | 確認這些正反例落實已確認用途。真實 source bytes、mapper 與處理方法的執行資格另由具體整合驗證。 |
+| 版本與生命週期效果 | 第 3、5 節區分接受、選用、目前資格、撤回、失效、清理與 purge。 | 將權威事實交接既有 Admission／Governance／Custody owner；機制與數字期限仍由其決策。 |
+| Processing／Projection／status 交接 | 第 5–6 節權責及必要輸入／輸出／判定證據。 | Processing 選方法，Projection 擁有產品與發布，Admission 關聯公開狀態；不把 completion 當接受／發布。 |
+| PDF core reconciliation | 第 6 節 P01–P10：固定 core 證據、涵蓋限制、具體差距、owner 與受影響驗證。 | 確認差距交接完整；既有相依 Processing 決策承接方法／profile 及整合，Canonical 保留表示與接受責任。 |
+| Docling／WeKnora 處置 | 第 6 節 C01–C08 及研究處置表。 | 必要意思不因方法延後而豁免；條件式需求等實際用途觸發，不全面啟用 optional features。 |
+| 可執行映射驗證計畫 | 第 5 節 V01–V11：固定輸入、最小變化、步驟、預期結果與 owner。 | 後續實作固定真實 fixtures／方法／規則，執行並保存結果。本次不是 V01–V11 已通過的宣告。 |
+| 領域文件與歷史 ADR | [CONTEXT.md](../../CONTEXT.md)、[決策 checkpoint](knowledge-platform-canonical-design.md)、[截至 Q25 的 ADR 盤點](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)。 | ADR-0001–0003 保留，0004–0006 補記歷史取捨；其餘有不另立理由。盤點已完成，隨本次 review 呈現。 |
+
+**本次實際檢查：** 文件連結／表格與三份 JSON 候選的參照唯一性、參照解析、
+表格位置、locator 範圍及已確認案例值。另以既有 docling-core 2.96.0 執行 V04 自訂 metadata schema roundtrip。
+獨立只讀 review 未發現中等或重大不一致。這些檢查不證明真實 parser、mapper、來源語意品質或 consumer 效果。
+
+**最終確認範圍：** 是否以此共同表示、接受／生命週期規則、完整案例、驗證計畫及 owner 交接，
+作為本票的設計結論。這項確認不選套件／模型、儲存方案，也不核准未執行的 runtime 結果。
+若仍有會改變表示或接受結果的缺口，先指出該具體情境；不再為可在規格中一致整理的欄位拼法新增設計輪次。
+
+最終共同確認仍待使用者回覆。之後才記錄 resolution、核對結案條件、關閉本票及更新 map 的已解決索引。
+本票關閉不代表整個 map 已完成，也不越過 Processing、Projection、Governance 或 Custody 的未決工作。
 
 [pdf-handoff]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/HANDOFF.md#L8
 [pdf-attribution]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/tests/pdf_processing/q04/consumer.py#L236

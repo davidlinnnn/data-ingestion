@@ -643,6 +643,25 @@ Projection 承接 Wiki／Retrieval 與 WeKnora 產品選擇；原生依賴及各
 Canonical／persistence 實作身分與原子結果，Admission 保留 request／result 關聯。
 沿用 [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md)，不新增獨立 ADR。
 
+## Q25：具體引用與來源定位
+
+2026-10-09 於 [Q25 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6076312345)確認。
+文件內引用由確切 Canonical Revision 與版本內位置共同識別；local ref 重複使用不改寫歷史目標。
+來源／artifact 參照仍綁固定版本，不解析為 live latest。
+
+PDF 實體頁碼、Markdown 原始行號與 PPTX 投影片位置皆從 1 起算。
+Markdown 行範圍含起訖行；附件內容另指向固定附件。
+PDF bbox 只在可靠取得時提供，明示原點、單位與所屬原頁／rendering，保留必要原來源對應；
+PPTX shape／notes 位置限於該固定檔內可靠取得的對應，不承諾跨改版穩定。
+
+未嘗試、失敗、未知、允許省略與確認無內容，依必要性在結果／mapping disposition 中區別；
+空 OCR 字串本身不能交代是哪一種情況。整頁或整份 artifact 的支持可以表示，
+但仍須符合用途所需精度；不補造更細位置。
+
+Q25 採納上述語意及索引約定，不選 ID 分配、資料庫、API 或跨版本匹配／轉換框架，
+也不提供 parser／resolver 能力證明。處理輸入、解讀目標與支持證據仍分開。
+沿用既有術語及 ADR-0002/0003；本輪不新增獨立 ADR。
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
@@ -663,7 +682,7 @@ After the canonical design converges, complete the
 before final shared-understanding confirmation, resolution, closure and map update.
 The agent continuing this ticket owns the work. The
 [2026-10-09 inventory](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)
-completes reconciliation through Q24: existing ADRs 0001–0003 remain, historical
+completes reconciliation through Q25: existing ADRs 0001–0003 remain, historical
 ADRs 0004–0006 are backfilled with original confirmation dates and retrospective
 recording dates, and other groups have explicit no-separate-ADR reasons. Present
 this inventory in the final review and recheck any later decisions before closure;
@@ -676,8 +695,10 @@ consolidates confirmed meanings into a logical contract and illustrative cases.
 Q20 confirms the repeated-attachment occurrence representation. Q21 confirms the
 six information groups, exact-candidate validation/acceptance records and minimal
 duplication principles. Q22 confirms the three-format question/answer baselines
-for necessary meaning and Source Evidence. Formal fields and full difficult/update
-case integration remain open; this is not an adopted wire schema or executable validation.
+for necessary meaning and Source Evidence. The draft now includes three complete
+same-schema candidates, a populated provider-field example and an attachment/method
+update path. They await final whole-contract review; they are not an adopted wire
+schema or passed mapping validation.
 Q23 confirms capability boundaries, conditional requirements and research dispositions,
 using the PDF reconciliation to carry integration gaps and affected checks. Methods
 remain unselected. Native dependencies and ticket goals are unchanged; Processing
@@ -685,19 +706,20 @@ combines confirmed canonical requirements with the pilot before selecting method
 Q24 confirms acceptance-result redelivery, distinct reprocessing candidates and
 selection without completion-order precedence. The draft now assembles lifecycle
 handoffs and mapping-validation cases from confirmed rules; these are not runtime
-results. Q25 in the draft proposes concrete revision-scoped references and
-source-appropriate locator conventions; those details still await human review.
+results. Q25 confirms revision-scoped references, source-appropriate locator
+conventions and necessary distinctions among absent, failed, unknown and no-content
+outcomes. A complete wire schema is not adopted by that locator confirmation.
 Final completeness review, formal contract review and closure gates remain open.
 
 ## Open decisions and handoff
 
-Continue the linked decision ticket for shared and format-specific representation,
-criteria and validation; detailed version and lifecycle rules; Source Evidence and
-concrete artifact reuse/compatibility contracts. Q12–Q13 complete the required
-attachment-only and old-capture/refreshed-precondition design-case review; executable
-validation remains outstanding. Research dispositions and the PDF core
-reconciliation matrix remain required before closure, with owned integration/migration
-and validation handoffs.
+The current frontier is final review of the assembled contract, complete examples,
+validation plan, owner handoffs and historical ADR inventory. Q12–Q13 already confirm
+attachment-only and old-capture/refreshed-precondition principles; Q23–Q25 resolve
+capability, competing-result and locator choices. Do not reopen those as unspecified.
+Actual mapping validation and method qualification remain with the implementation
+handoff. A buildable specification follows settled design; no production schema,
+API, storage or processing method is adopted merely by these illustrative examples.
 
 This checkpoint does not resolve the ticket or update the map's closed-decision
 index. Later confirmed rounds extend it without treating illustrative cases as

@@ -33,8 +33,8 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   candidate; late processing success cannot create a new accepted result, and later
   authorization restoration requires reevaluation. Q19's multiple exchange-format
   proposal is withdrawn: define one schema with version identification first, and
-  address future schema migration only for a concrete change. Detailed fields and
-  validation remain open.
+  address future schema migration only for a concrete change. The concrete representation and validation plan are assembled in the review draft;
+  final review remains open.
 
 - [Canonical contract review draft](knowledge-platform-canonical-contract-draft.md):
   proposed first-version fields, illustrative three-format cases, and a working
@@ -48,12 +48,15 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   Q22 confirms the three-format question/answer baselines for necessary meaning
   and Source Evidence. Q24 confirms redelivery, distinct reprocessing candidates and
   rule-based selection. The draft assembles lifecycle handoffs and V01–V11 mapping
-  validation procedures; they are not runtime results. Q25 proposes concrete
-  reference and locator conventions for review. Formal contract and final
-  completeness review remain open.
+  validation procedures; they are not runtime results. Q25 confirms revision-scoped
+  references, source-appropriate locator/index conventions and necessary unknown/no-content
+  distinctions. Three complete same-schema candidates, a populated provider-field
+  disposition example and attachment/method updates now support final whole-contract
+  review. The provider schema roundtrip passed; mapping and consumer runtime remain unrun.
+  Formal contract and final completeness review remain open.
 
 [Historical ADR reconciliation](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)
-records the inventory through Canonical Q24 and retrospective ADRs 0004–0006;
+records the inventory through Canonical Q25 and retrospective ADRs 0004–0006;
 original decision dates and later recording dates remain distinct.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
