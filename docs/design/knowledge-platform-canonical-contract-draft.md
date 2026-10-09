@@ -2,18 +2,20 @@
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
-**2026-10-08 建立；2026-10-09 納入 Q20 確認。整份草稿尚未採納為 schema 或實作規格。**
+**2026-10-08 建立；2026-10-09 納入 Q20／Q21 確認。邏輯骨架已確認；正式 schema 與實作規格仍待完成。**
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
-沿用 Q1–Q18、Q19 撤回紀錄與 Q20 確認。除明確確認的重複附件表示外，下列欄位名稱、具體表示方式與案例仍待 review；
-它們不是 parser 執行結果、已接受資料或能力驗證。
-2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)已補入既有原則澄清與去重建議；Q21 仍待人類 review。
+沿用 Q1–Q18、Q19 撤回紀錄與 Q20／Q21 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
+以及最少重複原則已確認。正式欄位名稱、編碼與完整案例仍待 review；它們不是 parser 執行結果或能力驗證。
+2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)提供既有原則澄清與簡化建議；
+其後的 [Q21 決策](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)採納上述邏輯範圍，未採納正式 schema。
 
 ## 1. 本輪如何閱讀
 
 | 標示 | 意義 |
 |---|---|
 | 已確認 | checkpoint 中的必要語意與責任邊界；選欄位名稱時不重新開啟原則。 |
-| 草稿表示 | 用第一版 schema 承載已確認語意的具體方式；名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
+| 已確認 Q21 | 六組必要資訊、綁定確切候選的驗證／接受紀錄與最少重複原則。 |
+| 草稿表示 | 用第一版 schema 承載已確認語意的具體方式；正式名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
 | 已確認 Q20 | 同一附件的每個出現位置保留自己的引用、來源位置與上下文，指向同一固定 package artifact。[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955)。 |
 | 證據缺口 | 現有輸出不足以證明必要語意或品質；交代受影響的映射／processing 驗證，不假設已實作。 |
 
@@ -21,9 +23,9 @@
 一份完整候選是接受單位。以下資料群組不代表不同服務、檔案或資料表，
 也不建立可獨立接受／選用的 Enrichment 產品。
 
-## 2. 第一版候選的邏輯欄位草稿
+## 2. 第一版候選的邏輯契約與示意欄位
 
-Q1 的六項最低契約可以落到以下群組。Capture Package 與 processing manifest
+Q21 確認以下六組資訊承載 Q1 的最低契約。Capture Package 與 processing manifest
 已持有的資訊可用固定版本參照連接，不要求重複複製所有 manifest 或原始檔。
 
 | 群組／示意欄位 | 必須表達的意義 |
@@ -37,9 +39,9 @@ Q1 的六項最低契約可以落到以下群組。Capture Package 與 processin
 
 同一事實只需一個權威表示，分組不要求獨立清單。圖片出現組件可直接承載 Source Reference；
 包含／順序已表達的關係，不必再複製到 associations。
-本草稿建議內容／結果指向證據即可，不要求證據端另存反向清單；支持範圍與限制仍須明確。
+Q21 採用內容／結果指向證據的最少表示，不要求證據端另存反向清單；支持範圍與限制仍須明確。
 限制在所屬結果／映射保留一次，整份涵蓋報告引用即可；Enrichment 文字不必另複製成組件文字。
-這些欄位安排仍待 review。處理輸入、結果目標與支持證據的角色不同，不能為去重而混同。
+上述為已確認的邏輯表示原則；正式欄位與編碼仍待 review。處理輸入、結果目標與支持證據的角色不同，不能為去重而混同。
 
 每個組件至少需要版本內參照、類型、內容、適用的上下文／包含關係、來源／方法歸屬及證據參照。
 依來源需要表示標題／文字、步驟、程式碼／公式、表格、圖片、投影片及備註；組件不獨立接受。
@@ -68,7 +70,7 @@ Source Reference 保留原始引用字串及已建立的目標對應。
 
 以下意義在組合成讀取／狀態回應時仍須區分；本文件不指定 API 或實體存放方式。
 
-| 事實 | 欄位內容草稿 | 已確認限制 |
+| 事實 | Q21 確認的必要資訊 | 已確認限制 |
 |---|---|---|
 | 驗證 | 確切候選、規則版本、必要檢查、結果、允許限制與佐證 | schema 有效、processing 完成、artifact 可讀，不能單獨證明必要意思完整。 |
 | 接受 | 確切受評估候選／Canonical Revision 綁定、驗證參照、可歸責的自動規則或授權人員判定、適用範圍與判定依據 | 整份候選接受。必要輸入、工作、證據或治理不足不能豁免；完成接受前，必要來源與採用證據的 custody 保護已成立。重新評估保留歷史判定。 |
@@ -234,9 +236,9 @@ Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 共同指向 Capture Package 中的固定 artifact；不要求複製圖片或分別接受。
 [決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955) 補足[來源交接](knowledge-platform-source-handoff.md)留給本票的文件內表示。
 
-下一輪 review 完整 SOP 候選如何組合身分／來源、處理歸屬、內容／關係、
-採納的 Enrichment、Source Evidence 及涵蓋／限制，再連到其驗證與接受紀錄。
-Q20 不等於所有示意欄位或整份契約已通過 review。
+**Q21 已於 2026-10-09 確認：** 六組資訊、綁定確切候選的驗證／接受紀錄與最少重複原則，
+見 [Q21 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)。
+正式欄位／編碼與完整三格式案例仍待 review；此確認不代表實際 parser／mapper 或 consumer 通過驗收。
 結案前仍需完整三格式／困難案例 review、接受與驗證計畫、
 權威事實交接與生命週期效果、完整 PDF reconciliation、
 研究 disposition，以及強制的歷史 ADR 盤點／補記。

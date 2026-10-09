@@ -3,7 +3,10 @@
 [Review 索引](README.md) · [候選草稿](../design/knowledge-platform-canonical-contract-draft.md) · [已確認決策](../design/knowledge-platform-canonical-design.md)
 
 **日期：2026-10-09。結論：六組資訊的邏輯骨架可保留；未找到需要重開已確認決策的矛盾。**
-本次是人類 review 前的文件／情境 spike，不代表 Q21 已確認、schema 已採納或候選已通過接受。
+本次是人類 review 前的文件／情境 spike；以下發現與待確認狀態保留原始審查時點。
+
+**後續處置（2026-10-09）：** 使用者於 [Q21](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)確認六組資訊、
+確切候選的驗證／接受紀錄與最少重複原則。正式欄位與完整案例 review 仍待完成；此後續確認不構成 runtime 驗收。
 
 ## 範圍與證據
 

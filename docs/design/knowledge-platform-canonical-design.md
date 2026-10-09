@@ -555,9 +555,36 @@ identity/deduplication, cross-version matching, a new attachment service or a
 particular OCR execution/reuse strategy. The complete candidate remains the unit
 of acceptance.
 
-Only this representation choice is confirmed. The remaining proposed contract
-fields and examples still require review. Update the existing Source Reference
-term without a separate ADR.
+Q20 confirms this occurrence representation choice; Q21 below subsequently confirms
+the logical contract skeleton. Formal fields and full example review remain open.
+Update the existing Source Reference term without a separate ADR.
+
+## Q21：第一版 Canonical 邏輯契約
+
+2026-10-09 於 [Q21 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)確認。
+完整候選以六組資訊承載已確認的最低契約：身分與來源、處理歸屬、內容與關係、
+採納的 Enrichment、Source Evidence、涵蓋與限制。
+使用固定版本參照連接既有 Capture Package／manifest 資訊即可。
+
+驗證／接受紀錄須綁定確切受評估候選，保留規則版本、必要檢查、結果與佐證、
+可歸責的自動規則或授權人員判定，以及適用範圍。
+Processing Completion、Canonical Acceptance、目前選用與目前資格仍是不同事實。
+
+同一事實只需一個權威表示，六組資訊不要求獨立服務、檔案或資料表。
+來源引用可直接附於圖片出現組件；包含／順序已表達的關係無須重複列出。
+內容／結果指向證據即可，不要求證據端另存反向清單；支持範圍與限制仍須明確。
+限制在所屬結果／映射保存一次供整份報告引用；Enrichment 文字不必重複複製。
+此簡化不合併 Q20 的不同附件出現位置，也不混同處理輸入、結果目標與支持證據。
+
+接受單位、格式所需結構、證據支持、custody 與失效處理沿用既有決策。
+必要來源與採用證據的 custody 保護須先於完成接受。
+接受後發現原條件未滿足，依 Q9 處理，不等修正版完成。
+
+本輪採納邏輯骨架與最少重複原則；[契約文件](knowledge-platform-canonical-contract-draft.md)
+中的正式欄位名稱、ID／索引／座標編碼、API、儲存方式與實際方法能力仍未採納。
+[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)
+是文件／情境與固定程式核對，不是 runtime 驗收。完整案例、生命週期交接、
+驗證計畫及結案 gate 仍須完成。沿用既有術語與 ADR；本輪沒有需另立 ADR 的新架構取捨。
 
 ## Illustrative checks and evidence limits
 
@@ -585,10 +612,12 @@ confirmed canonical rounds do not complete it automatically.
 ## Current contract review draft
 
 The [contract and three-format review draft](knowledge-platform-canonical-contract-draft.md)
-consolidates confirmed meanings into proposed fields and illustrative cases.
-It is not an adopted schema or executable validation. Q20 confirms only the
-repeated-attachment occurrence representation; the other draft shapes remain open. The preliminary PDF evidence
-cross-check does not complete the required reconciliation or closure gates.
+consolidates confirmed meanings into a logical contract and illustrative cases.
+Q20 confirms the repeated-attachment occurrence representation. Q21 confirms the
+six information groups, exact-candidate validation/acceptance records and minimal
+duplication principles. Formal fields and the full case review remain open;
+this is not an adopted wire schema or executable validation. The preliminary PDF
+evidence cross-check does not complete the required reconciliation or closure gates.
 
 ## Open decisions and handoff
 
