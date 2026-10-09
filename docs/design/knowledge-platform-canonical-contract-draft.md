@@ -6,6 +6,7 @@
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
 沿用 Q1–Q18、Q19 撤回紀錄與 Q20 確認。除明確確認的重複附件表示外，下列欄位名稱、具體表示方式與案例仍待 review；
 它們不是 parser 執行結果、已接受資料或能力驗證。
+2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)已補入既有原則澄清與去重建議；Q21 仍待人類 review。
 
 ## 1. 本輪如何閱讀
 
@@ -31,8 +32,14 @@ Q1 的六項最低契約可以落到以下群組。Capture Package 與 processin
 | 處理歸屬：`request_ref`、`profile_ref`、`method_refs`、`completion_ref` | 指向固定 parser、映射與採納的 Enrichment 方法及輸入，保留必要工作完成證據。Temporal 執行結束不自動代表 processing 完成或 Canonical Acceptance。 |
 | 內容：`components`、`sequences`、`associations`、`source_references` | 有類型的內容、包含關係、有依據的順序、必要關係，以及來源原始引用與解析目標。 |
 | Enrichment：`result_ref`、`target_refs`、`input_refs`、`method_ref`、`content`、`evidence_refs`、`limitations` | 區分 OCR 重建、生成解讀與來源原文。輸入可涵蓋多個組件、artifact 或先前結果。採納結果屬於整份候選，可被引用不等於獨立接受或選用。 |
-| Source Evidence：`evidence_ref`、`source_artifact_ref`、`locator`、`supported_refs`、`support_limits` | 固定來源、實際定位精度與支持範圍。若需要採用的 rendering／crop，連同其固定參照與原來源對應。定位可開啟或模型信心分數，都不等於內容獲得支持。 |
+| Source Evidence：`evidence_ref`、`source_artifact_ref`、`locator`、`support_limits` | 固定來源、實際定位精度與支持範圍。若需要採用的 rendering／crop，連同其固定參照與原來源對應。定位可開啟或模型信心分數，都不等於內容獲得支持。 |
 | 涵蓋與限制：`mapping_report_ref`、`covered_scope`、`limitations`、`dispositions` | 交代必要來源內容與實際有值的 provider 輸出如何處置。允許省略須有範圍、規則與理由；保留 raw output 不代表理解必要意思。 |
+
+同一事實只需一個權威表示，分組不要求獨立清單。圖片出現組件可直接承載 Source Reference；
+包含／順序已表達的關係，不必再複製到 associations。
+本草稿建議內容／結果指向證據即可，不要求證據端另存反向清單；支持範圍與限制仍須明確。
+限制在所屬結果／映射保留一次，整份涵蓋報告引用即可；Enrichment 文字不必另複製成組件文字。
+這些欄位安排仍待 review。處理輸入、結果目標與支持證據的角色不同，不能為去重而混同。
 
 每個組件至少需要版本內參照、類型、內容、適用的上下文／包含關係、來源／方法歸屬及證據參照。
 依來源需要表示標題／文字、步驟、程式碼／公式、表格、圖片、投影片及備註；組件不獨立接受。
@@ -64,7 +71,7 @@ Source Reference 保留原始引用字串及已建立的目標對應。
 | 事實 | 欄位內容草稿 | 已確認限制 |
 |---|---|---|
 | 驗證 | 確切候選、規則版本、必要檢查、結果、允許限制與佐證 | schema 有效、processing 完成、artifact 可讀，不能單獨證明必要意思完整。 |
-| 接受 | 確切受評估候選／Canonical Revision 綁定、驗證參照、可歸責的自動規則或授權人員判定、適用範圍與判定依據 | 整份候選接受。必要輸入、工作、證據或治理不足不能豁免；重新評估保留歷史判定。 |
+| 接受 | 確切受評估候選／Canonical Revision 綁定、驗證參照、可歸責的自動規則或授權人員判定、適用範圍與判定依據 | 整份候選接受。必要輸入、工作、證據或治理不足不能豁免；完成接受前，必要來源與採用證據的 custody 保護已成立。重新評估保留歷史判定。 |
 | 目前選用 | 選用範圍／目標、確切 revision、適用性／相容性依據、衝突或未就緒資訊 | 已接受不等於目前選用；完成時間不代表來源先後；不預設所有 consumer 共用一個全域 current。 |
 | 目前資格 | 適用生命週期／治理事實、範圍及其觀測／判定參照 | 歷史接受不授予目前存取權；固定內容中不嵌入永久授權或可變 current 旗標。 |
 
@@ -189,6 +196,9 @@ I1 換 I2 依 Q12 形成新的來源觀測／候選；可以整份重做，
 | 更新後查歷史引用 | 讀取 C1 自身固定內容／證據，受目前治理與 custody 限制；不可用時交代限制，不以 C2 代替；依 Q7/Q15。 |
 | 目標已是 S2，舊 S1 搭配新前置條件送入 | 並行檢查成功不代表 S1 滿足 S2；歷史接受與目標就緒分開；依 Q13。 |
 | 接受前有效撤回 | 允許時保留處理／驗證事實，停止接受，晚到成果不能恢復資格；依 Q18。 |
+| 接受後發現原條件未滿足 | 保留歷史接受，記錄失效理由／證據／範圍與可歸責判定；停止合格選用並交接 Projection／治理，不等新 revision 完成。後來規則變嚴不等於原接受錯誤；依 Q9。 |
+| OCR complete，但必要警告缺失 | completion 不證明必要意思已保存；缺少必要內容仍不得接受。PDF core 的具體允許狀態見[spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md#保留兩個-pdf-映射負例)。 |
+| 映射只帶 OCR 文字／完成 manifest，漏接必要證據 | 檢查實際採用的輸入、方法、結果與必要支撐 artifact 的固定對應；core 已保存不等於候選已正確綁定。缺少必要支持不得接受。 |
 | Task／checkpoint 清理 | request record 或未採用中間產物刪除，不等於已接受資料撤回／刪除。採用的依賴遵守 custody／抹除規則，實體機制與期限由既有 owner 決定。 |
 
 後續可執行映射驗證計畫須把採納規則對應到來源核對的預期內容與反例：
