@@ -94,7 +94,9 @@ reconstruction or image interpretation, with attributable producers and evidence
 An explicit reference present in captured source content, such as an attachment
 path, hyperlink, figure reference or bibliographic citation. Its original target
 expression and any established target association are distinct, so retaining a
-reference does not imply that its target has been resolved.
+reference does not imply that its target has been resolved. Repeated attachment
+references retain distinct revision-scoped locations and context even when they
+resolve to the same fixed artifact in a Capture Package.
 _Avoid_: Source Evidence, inferred semantic relationship
 
 **Source Evidence**:

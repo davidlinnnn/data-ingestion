@@ -38,8 +38,8 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
 
 - [Canonical contract review draft](knowledge-platform-canonical-contract-draft.md):
   proposed first-version fields, illustrative three-format cases and a preliminary
-  PDF evidence cross-check. The draft is not adopted; Q20 asks how repeated
-  attachment occurrences retain their own context while sharing one fixed artifact.
+  PDF evidence cross-check. Q20 confirms distinct in-document attachment occurrences
+  sharing one fixed package artifact; the remaining draft shapes are not adopted.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

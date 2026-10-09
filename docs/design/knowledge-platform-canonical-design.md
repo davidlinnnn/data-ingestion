@@ -540,6 +540,25 @@ ticket. The required PDF reconciliation, provider-to-canonical mapping and owned
 integration/migration gaps remain in scope. No separate ADR or new domain term is
 introduced; concrete first-version fields and the three-format examples remain open.
 
+## Q20: repeated attachment occurrences retain their own context
+
+Confirmed on 2026-10-09 in the [Q20 decision record](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955).
+Each occurrence of a repeated attachment retains its own revision-scoped reference,
+source location, original reference text and enclosing step/context. Multiple
+occurrences may resolve to the same fixed artifact in the Capture Package.
+
+In the SOP example, the quality warning at step 1 and publication warning at step 3
+are separately addressable occurrences A/B, both targeting I1. I1 supports what
+the image says; occurrence B additionally identifies its use at the publication
+step. This does not require duplicated image bytes, cross-document attachment
+identity/deduplication, cross-version matching, a new attachment service or a
+particular OCR execution/reuse strategy. The complete candidate remains the unit
+of acceptance.
+
+Only this representation choice is confirmed. The remaining proposed contract
+fields and examples still require review. Update the existing Source Reference
+term without a separate ADR.
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
@@ -567,8 +586,8 @@ confirmed canonical rounds do not complete it automatically.
 
 The [contract and three-format review draft](knowledge-platform-canonical-contract-draft.md)
 consolidates confirmed meanings into proposed fields and illustrative cases.
-It is not an adopted schema or executable validation. Q20's repeated-attachment
-occurrence representation awaits confirmation. The preliminary PDF evidence
+It is not an adopted schema or executable validation. Q20 confirms only the
+repeated-attachment occurrence representation; the other draft shapes remain open. The preliminary PDF evidence
 cross-check does not complete the required reconciliation or closure gates.
 
 ## Open decisions and handoff

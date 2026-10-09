@@ -2,9 +2,9 @@
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
-**2026-10-08 review 草稿。尚未採納為 schema 或實作規格。**
+**2026-10-08 建立；2026-10-09 納入 Q20 確認。整份草稿尚未採納為 schema 或實作規格。**
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
-沿用 Q1–Q18 與 Q19 撤回紀錄。下列欄位名稱、具體表示方式與案例仍待 review；
+沿用 Q1–Q18、Q19 撤回紀錄與 Q20 確認。除明確確認的重複附件表示外，下列欄位名稱、具體表示方式與案例仍待 review；
 它們不是 parser 執行結果、已接受資料或能力驗證。
 
 ## 1. 本輪如何閱讀
@@ -13,7 +13,7 @@
 |---|---|
 | 已確認 | checkpoint 中的必要語意與責任邊界；選欄位名稱時不重新開啟原則。 |
 | 草稿表示 | 用第一版 schema 承載已確認語意的具體方式；名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
-| 待決 Q20 | 同一附件在文件中出現兩次，各位置如何保留自己的引用與上下文。 |
+| 已確認 Q20 | 同一附件的每個出現位置保留自己的引用、來源位置與上下文，指向同一固定 package artifact。[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955)。 |
 | 證據缺口 | 現有輸出不足以證明必要語意或品質；交代受影響的映射／processing 驗證，不假設已實作。 |
 
 目前只定義一種 Canonical schema，保留 schema 版本識別。Q19 的多格式提案仍已撤回。
@@ -44,7 +44,7 @@ caption、註解等關係保留實際目標與依據；目標不確定就明示�
 
 Source Reference 保留原始引用字串及已建立的目標對應。
 未解析的外部 URL 仍是來源內容，不自動成為已捕獲依賴。
-必要附件指向固定 Capture Package 內的 artifact；重複出現位置由 Q20 確認。
+必要附件指向固定 Capture Package 內的 artifact；Q20 已確認每個重複出現位置各自保留引用與上下文。
 
 ### 格式內容與來源定位
 
@@ -119,7 +119,7 @@ A/B 數值互換、單位遺失或註解漏掉／掛錯，都無法滿足本案�
 圖中文字為「不得略過品質檢查」，本案例將它視為必要內容。
 M1/I1 的固定身分、完整性與 custody 沿用來源交接契約；路徑或臨時 URL 不是其身分。
 
-**候選組件草稿；其中 Q20 的重複引用表示仍待確認：**
+**候選組件草稿；Q20 已確認重複引用各自保留位置與上下文，示意欄位／ID 尚非正式編碼：**
 
 | 版本內參照 | 類型／內容 | 上下文與來源 |
 |---|---|---|
@@ -220,13 +220,13 @@ Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 
 ## 7. 下一輪待決與結案工作
 
-**Q20 建議：** 同一必要附件在文件內每個出現位置，都有可在該 revision 內定位的引用及上下文；
-這些位置仍指向同一 Capture Package 內的固定 artifact。
-下一輪確認 SOP 的兩個 `image-use` 是否採這個表示。
-[來源交接](knowledge-platform-source-handoff.md) 已將文件內出現位置的表示留給本票。
-這不要求分別保存兩份圖片或分別接受。
+**Q20 已於 2026-10-09 確認：** 同一必要附件的各出現位置保留自己的引用與上下文，
+共同指向 Capture Package 中的固定 artifact；不要求複製圖片或分別接受。
+[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955) 補足[來源交接](knowledge-platform-source-handoff.md)留給本票的文件內表示。
 
-確認後再納入採納的表示，並根據案例差異完成第一版欄位契約。
+下一輪 review 完整 SOP 候選如何組合身分／來源、處理歸屬、內容／關係、
+採納的 Enrichment、Source Evidence 及涵蓋／限制，再連到其驗證與接受紀錄。
+Q20 不等於所有示意欄位或整份契約已通過 review。
 結案前仍需完整三格式／困難案例 review、接受與驗證計畫、
 權威事實交接與生命週期效果、完整 PDF reconciliation、
 研究 disposition，以及強制的歷史 ADR 盤點／補記。
