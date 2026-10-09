@@ -626,6 +626,23 @@ Projection 承接 Wiki／Retrieval 與 WeKnora 產品選擇；原生依賴及各
 正式契約、完整案例、驗證及生命週期交接、最終 reconciliation 完整性 review，
 以及歷史 ADR 盤點／補記 gate 仍須完成。沿用既有術語與 ADR，無新增獨立架構取捨。
 
+## Q24：重送、重新處理與結果選用
+
+2026-10-09 於 [Q24 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6076049015)確認。
+同一候選的同一次接受結果重送，仍對應同一 Canonical Revision，不因重送增加版本。
+重新評估保留新的判定紀錄；只有判定變更時，沿用 Q9 的規則，不必新增內容版本。
+
+新處理請求形成另一個候選，可在通過適用接受檢查後成為不同 Canonical Revision；
+即使內容相同，也不強制跨執行比對或合併。request、candidate、revision、digest 不合併為同一概念。
+
+同一來源／方法有多份合格結果時，依 Q8 已宣告的選用規則。
+沒有明確取代依據，就保留目前仍合格的版本；仍無法決定時明示衝突，不依完成時間決勝。
+舊版本若失去資格，不得以保留規則恢復；目前治理也適用於重送回覆。
+
+這是最小行為契約，未採納全文件去重、自動品質排名、排程框架或一律人工核准。
+Canonical／persistence 實作身分與原子結果，Admission 保留 request／result 關聯。
+沿用 [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md)，不新增獨立 ADR。
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
@@ -644,10 +661,13 @@ workers.
 After the canonical design converges, complete the
 [ticket's historical ADR reconciliation checkpoint](https://github.com/davidlinnnn/data-ingestion/issues/32#historical-adr-reconciliation-checkpoint)
 before final shared-understanding confirmation, resolution, closure and map update.
-The agent continuing this ticket owns the work. Present the inventory of confirmed
-historical/current decisions and their existing-ADR, backfilled-ADR or
-no-separate-ADR dispositions in the final review. This remains outstanding;
-confirmed canonical rounds do not complete it automatically.
+The agent continuing this ticket owns the work. The
+[2026-10-09 inventory](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)
+completes reconciliation through Q24: existing ADRs 0001–0003 remain, historical
+ADRs 0004–0006 are backfilled with original confirmation dates and retrospective
+recording dates, and other groups have explicit no-separate-ADR reasons. Present
+this inventory in the final review and recheck any later decisions before closure;
+it does not itself resolve the Canonical contract or the map.
 
 ## Current contract review draft
 
@@ -662,7 +682,12 @@ Q23 confirms capability boundaries, conditional requirements and research dispos
 using the PDF reconciliation to carry integration gaps and affected checks. Methods
 remain unselected. Native dependencies and ticket goals are unchanged; Processing
 combines confirmed canonical requirements with the pilot before selecting methods/profiles.
-Final completeness review, integration/validation handoffs and closure gates remain open.
+Q24 confirms acceptance-result redelivery, distinct reprocessing candidates and
+selection without completion-order precedence. The draft now assembles lifecycle
+handoffs and mapping-validation cases from confirmed rules; these are not runtime
+results. Q25 in the draft proposes concrete revision-scoped references and
+source-appropriate locator conventions; those details still await human review.
+Final completeness review, formal contract review and closure gates remain open.
 
 ## Open decisions and handoff
 

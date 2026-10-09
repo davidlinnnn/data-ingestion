@@ -25,3 +25,11 @@ affected scope using retained eligible inputs, without Source Owner re-upload or
 per-document approval. Acceptance and selection still gate replacement; ordinary
 compatible updates remain automatic and major breaking production migrations retain
 the existing authorized release decision.
+
+The [Q24 decision](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6076049015) confirmed on 2026-10-09
+keeps redelivery of the same candidate's same acceptance result on the same revision.
+Distinct reprocessing candidates may be accepted as distinct revisions without
+mandatory cross-run content comparison or merging. Without a clear replacement
+basis, retain an existing selection only while it remains eligible; otherwise
+expose unresolved selection instead of choosing by completion order. This avoids
+both duplicate versions from redelivery and an unnecessary global deduplication mechanism.

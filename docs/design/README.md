@@ -46,8 +46,15 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   sharing one fixed package artifact. Q21 confirms the six information groups,
   exact-candidate validation/acceptance records and minimal duplication principles.
   Q22 confirms the three-format question/answer baselines for necessary meaning
-  and Source Evidence. Formal fields, encoding and full difficult/update case
-  integration remain open.
+  and Source Evidence. Q24 confirms redelivery, distinct reprocessing candidates and
+  rule-based selection. The draft assembles lifecycle handoffs and V01–V11 mapping
+  validation procedures; they are not runtime results. Q25 proposes concrete
+  reference and locator conventions for review. Formal contract and final
+  completeness review remain open.
+
+[Historical ADR reconciliation](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)
+records the inventory through Canonical Q24 and retrospective ADRs 0004–0006;
+original decision dates and later recording dates remain distinct.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral
