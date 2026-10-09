@@ -586,6 +586,22 @@ Processing Completion、Canonical Acceptance、目前選用與目前資格仍是
 是文件／情境與固定程式核對，不是 runtime 驗收。完整案例、生命週期交接、
 驗證計畫及結案 gate 仍須完成。沿用既有術語與 ADR；本輪沒有需另立 ADR 的新架構取捨。
 
+## Q22：三格式具體驗證基準
+
+2026-10-09 於 [Q22 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075543252)確認。
+採用[三格式具體問答](knowledge-platform-canonical-contract-draft.md#q22-已確認的具體問答基準)
+作為設計驗證基準：PDF A 的 2 次重試須連同暫時性錯誤／冪等條件與正確表格對應；
+SOP 品質失敗須停止並通知，保留必要圖片警告及發布步驟中的引用位置；
+PPTX 的停止是品質未通過時的發布分支，不能誤讀成禁止所有處理重試。
+
+Wiki 可從同一固定 Canonical 輸入組織並連結上述主題；Retrieval 也須能取得相同必要意思與證據。
+比對必要意思與來源支持，允許不同回答措辭，不採固定答案字串比對。
+必要條件遺失、註解錯配或分支混淆不能通過對應檢查；其餘接受條件仍適用。
+
+這是虛構設計案例的預期結果確認，不是實際 parser／mapper 或 consumer 驗收，也未選定 pilot。
+完整困難／更新案例整合、映射驗證計畫與各項結案 gate 仍須完成。
+沿用既有術語及 ADR，不新增領域名詞或架構取捨。
+
 ## Illustrative checks and evidence limits
 
 The discussion used PDF formula symbols, an SOP Markdown warning in an attachment,
@@ -615,9 +631,11 @@ The [contract and three-format review draft](knowledge-platform-canonical-contra
 consolidates confirmed meanings into a logical contract and illustrative cases.
 Q20 confirms the repeated-attachment occurrence representation. Q21 confirms the
 six information groups, exact-candidate validation/acceptance records and minimal
-duplication principles. Formal fields and the full case review remain open;
-this is not an adopted wire schema or executable validation. The preliminary PDF
-evidence cross-check does not complete the required reconciliation or closure gates.
+duplication principles. Q22 confirms the three-format question/answer baselines
+for necessary meaning and Source Evidence. Formal fields and full difficult/update
+case integration remain open; this is not an adopted wire schema or executable validation. The working PDF
+reconciliation and research dispositions await Q23 review; they do not complete
+the required integration/validation handoff or closure gates.
 
 ## Open decisions and handoff
 

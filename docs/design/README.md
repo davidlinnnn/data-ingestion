@@ -37,11 +37,13 @@ logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporatio
   validation remain open.
 
 - [Canonical contract review draft](knowledge-platform-canonical-contract-draft.md):
-  proposed first-version fields, illustrative three-format cases and a preliminary
-  PDF evidence cross-check. Q20 confirms distinct in-document attachment occurrences
+  proposed first-version fields, illustrative three-format cases, and a working
+  PDF reconciliation / research-disposition table awaiting Q23 review. Q20 confirms distinct in-document attachment occurrences
   sharing one fixed package artifact. Q21 confirms the six information groups,
   exact-candidate validation/acceptance records and minimal duplication principles.
-  Formal fields, encoding and the full case review remain open.
+  Q22 confirms the three-format question/answer baselines for necessary meaning
+  and Source Evidence. Formal fields, encoding and full difficult/update case
+  integration remain open.
 
 [Captured-source handoff](knowledge-platform-source-handoff.md) records the
 confirmed Q1–Q14 decisions, including complete capture inputs, deployment-neutral

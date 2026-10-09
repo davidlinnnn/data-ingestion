@@ -2,10 +2,11 @@
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
-**2026-10-08 建立；2026-10-09 納入 Q20／Q21 確認。邏輯骨架已確認；正式 schema 與實作規格仍待完成。**
+**2026-10-08 建立；2026-10-09 納入 Q20–Q22 確認。邏輯骨架已確認；正式 schema 與實作規格仍待完成。**
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
-沿用 Q1–Q18、Q19 撤回紀錄與 Q20／Q21 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
-以及最少重複原則已確認。正式欄位名稱、編碼與完整案例仍待 review；它們不是 parser 執行結果或能力驗證。
+沿用 Q1–Q18、Q19 撤回紀錄與 Q20–Q22 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
+以及最少重複原則已確認。Q22 確認三格式具體問答的必要意思與證據基準。
+正式欄位名稱、編碼與完整困難／更新案例整合仍待 review；本文件不是 parser 執行結果或能力驗證。
 2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)提供既有原則澄清與簡化建議；
 其後的 [Q21 決策](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)採納上述邏輯範圍，未採納正式 schema。
 
@@ -14,6 +15,7 @@
 | 標示 | 意義 |
 |---|---|
 | 已確認 | checkpoint 中的必要語意與責任邊界；選欄位名稱時不重新開啟原則。 |
+| 已確認 Q22 | 三格式具體問答的預期意思與來源證據，作為設計驗證基準。 |
 | 已確認 Q21 | 六組必要資訊、綁定確切候選的驗證／接受紀錄與最少重複原則。 |
 | 草稿表示 | 用第一版 schema 承載已確認語意的具體方式；正式名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
 | 已確認 Q20 | 同一附件的每個出現位置保留自己的引用、來源位置與上下文，指向同一固定 package artifact。[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955)。 |
@@ -173,6 +175,21 @@ I1 換 I2 依 Q12 形成新的來源觀測／候選；可以整份重做，
 必要箭頭未解出或備註遺失，就無法滿足本案例；只保留投影片圖像不等於理解分支。
 不要求通用流程圖模型或可執行流程。
 
+### Q22 已確認的具體問答基準
+
+2026-10-09 於 [Q22 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075543252)確認。
+下列預期結果用於驗證候選保留的必要意思與來源證據；允許不同回答措辭。
+
+| 固定設計來源 | 具體問題 | 預期意思與必要來源支持 |
+|---|---|---|
+| PDF P1 | 方法 A 最多可重試幾次？ | 最多 2 次，且僅適用暫時性錯誤、作業具備冪等性的情況。數值須連到正確表頭、單位及限制註解。 |
+| SOP M1／I1 | 發布前品質檢查失敗，應怎麼做？警告在哪？ | 停止並通知負責人。保留 I1 的「不得略過品質檢查」及 M1 第 6 行、發布步驟中的圖片引用位置。 |
+| PPTX T1 | 圖中的「停止」是否表示所有處理錯誤都禁止重試？ | 不是；它是品質檢查未通過時的發布分支。保留方向、條件與區分發布判定／重試政策的講者備註。 |
+
+漏掉必要條件、掛錯註解或混淆分支，不能通過對應檢查。通過這些案例仍須滿足其他接受條件。
+Wiki 與 Retrieval 使用同一組固定 Canonical 輸入，依下節需求取得上述意思及證據。
+這是設計基準，尚非方法能力或 consumer 執行驗收。
+
 ### Wiki 與 Retrieval 概念檢查
 
 假設三份候選已通過適用接受檢查，兩種 consumer 都使用固定輸入
@@ -209,26 +226,61 @@ I1 換 I2 依 Q12 形成新的來源觀測／候選；可以整份重做，
 既有證據足夠就重用；只有影響本票決策且既有證據無法回答的未知，
 才做必要的 executable probe（Q14）。本草稿未執行 mapping 或 consumer runtime。
 
-## 6. 初步 PDF 證據對照
+## 6. PDF core reconciliation 與整合處置草稿
 
-**這是初步證據清單，不是已完成 review 的結案 reconciliation matrix。**
-PDF core 固定為 `fe1b283c49c83ad5aeee6808e77b4f25549eba03`，
+**2026-10-09 整理；待 Q23 review。** 本表對照已確認需求、固定 PDF 證據、
+最小整合差距及受影響驗證。草稿不宣稱 Canonical mapper 已通過，也不完成結案 gate。
+PDF core 固定為 `fe1b283c49c83ad5aeee6808e77b4f25549eba03`；
 Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
-草稿欄位名稱不因列在這裡就變成採納要求。
+Q22 的 P1 表格是虛構來源的預期內容；「2 次」不是 worker retry 設定。
 
-| 已確認需求 | 現有證據與限制 | 映射／整合缺口與受影響檢查 |
+| 已確認需求 | 固定輸出與證據限制 | 缺口／建議處置與承接 | 最小受影響驗證；尚未執行 |
+|---|---|---|---|
+| P01 固定來源與候選身分；Q1/Q2/Q21 | request 有 source revision、artifact version/digest、profile；Workflow ID 是執行身分。[Handoff][pdf-handoff]。 | Canonical 綁定 Asset、完整 Capture Package、候選及接受 revision；Admission 保留 request／前置條件關聯；Processing 整合既有 request binding。 | 相同 PDF bytes、不同來源觀測／package 不因 digest 相同而合併；接受紀錄綁對候選。 |
+| P02 Typed content、包含／順序／引用；Q4/Q15/Q16/Q20 | Docling graph 有 typed collections、parent/children/captions；Q04 核對引用完整性。遍歷不是閱讀順序；額外關係方法限指定區域的 local-function-block，保留 unknown。[Graph][pdf-graph]、[限制][pdf-limits]、[關係方法][pdf-relations]。 | Canonical 映射版本內參照、有依據的順序與關係，保留 unresolved／coverage；必要關係未能可靠取得時交 Processing。 | 映射後包含／caption 仍指向原目標；必要順序不能由 collection 遍歷假造。 |
+| P03 表格值、表頭、單位、註解；Q14/Q16/Q22 | 有 cell offset/span 與來源核對；188／60 cells 是限定 fixture 證據。note associations 限 parser links，未證明 P1 語意。[Cells][pdf-cells]、[限制][pdf-limits]、[研究][research-retained]。 | Canonical 保留並驗證 P1 的值與作用範圍；現有輸出不足時，Processing 評估最小補足方法。 | P1 的 A＝最多 2 次，且暫時性錯誤／冪等條件都在；註解改掛 B 或遺失任一條件即不通過。 |
+| P04 實際定位精度與支持範圍；Q5/Q15/Q17 | 有固定 source/page、原頁對應、TOPLEFT points、renderer、region/crop recipe；部分符號僅保留整頁 context。recipe 不表示已保存獨立 crop。[Locators][pdf-locators]。 | Canonical 映射實際精度、支持範圍、採用 rendering/crop 與原來源對應；Processing 補必要定位／語意證據，Custody 保護採用依賴。 | P1 表格／註解回到固定原 PDF 第 3 頁；僅有頁級支持時，不宣稱已驗證 cell 精度。 |
+| P05 OCR 與原文／生成解讀的歸屬；Q1/Q5/Q10/Q21 | 選取已輸出的 PictureItems，排除 page render；有 source/method/outcome 與保存的 crop。complete 可包含 no_text_detected；無 PictureItem 可 not_applicable。[Selection/finalize][pdf-enrichment]、[OCR 核對][pdf-ocr]。 | Canonical 綁實際輸入、目標、方法、結果及證據；Processing 驗證必要偵測／OCR 能力；Custody 保護採用 crop。 | 來源有必要警告而候選缺失時，即使 OCR complete、bytes／method 正確，仍不得接受。 |
+| P06 Provider 有值欄位的明確處置；Q6/Q21 | 既有枚舉未覆蓋 field_regions/field_items 與所有 metadata。研究發現 comparator 盲點；所查歷史輸出 absent/empty，未證明實際 populated 欄位已遺失。[研究][research-retained]。 | Canonical 盤點實際欄位並納入、保留未解讀或依規則省略；Processing 保全被採納欄位的 adapter 輸出；必要 raw 依賴交 Custody。 | 對採納的未覆蓋欄位加一份有效且非空的 provider fixture，驗證明確 disposition；raw equality 不代替必要語意檢查。 |
+| P07 Processing Completion 與接受；Q1–Q3/Q21 | finalization 核對必要工作及歸屬；manifest 明列 canonical_accepted=false、quality_accepted=false。Temporal 正常結束仍可能 processing failed。[Handoff][pdf-handoff]、[finalize][pdf-enrichment]。 | Canonical 提供 exact-candidate／規則／檢查／判定事實；Processing 維持 required-work barrier；Admission 分開呈現結果。 | complete manifest 進入候選驗證，但 P1 註解缺失時不得產生接受；不能以執行完成代填。 |
+| P08 方法更新與相容重用；Q7/Q8/Q10–Q13/Q17 | core 分 stage 相容依賴，可重用相容 page-group／assembly；新 request 仍有固定 plan 及 request-bound 結果。不保證跨 request Enrichment payload 重用。[相容依賴][pdf-compat]、[重用範圍][pdf-reuse]。 | Canonical 新結果形成完整新候選並重新接受；Processing 定方法/profile及重用範圍；Admission 保留新 request；Governance 提供目前適用權限。整份重做可行。 | 同一 source 更新 OCR 方法產生新候選／方法歸屬，C1 不變；舊 request 不被暗換 profile。相容 parse 重用是可選路徑。 |
+| P09 採用依賴與 custody；Q1/Q21 | export 逐檔經 checked Store 讀取，提供 version/hash/operation inventory；不是平台採用或 retention policy。[Export][pdf-export]、[保留交接][pdf-retention]。 | Canonical 指明接受所需依賴，接受前確認保護成立；Custody 定採用／釋放／保留／purge；Admission 的 request TTL 不支配資料 TTL。 | Task/checkpoint 清理後，C1 必要來源及採用證據仍有適用保護；保護未成立時不能完成接受。 |
+| P10 目前資格、失效與 status；Q8/Q9/Q13/Q18/Q21 | core 有 progress/error/time/reuse/final ref；未提供平台接受、選用、資格與各 Projection 發布的統一查詢。[狀態][pdf-status]。 | Canonical 供驗證／接受／失效／selection 權威事實；Admission 公開查詢與關聯；Governance 處理適用政策／enforcement；Custody 處理保留／purge。 | 接受前有效撤回後才完成 processing，可記錄真實完成／驗證；不得產生新接受或恢復資格。另保留 Q9 原條件失效及 Q13 舊來源案例。 |
+
+### 最小交接與完成條件
+
+以下是既有責任的具體交接草稿，未建立新服務或反向依賴。
+每個 owner 後續在自己的規格與實作票引用上表列號，保留對應的受影響驗證。
+若實測無法滿足必要意思，須回本票討論用途／限制，不能自行降低已確認要求。
+
+| 責任 | 本表交接／完成條件 | 既有決策票 |
 |---|---|---|
-| 固定輸入與方法歸屬 | request 有 `request_id`、`source_revision`、`profile`、artifact version／digest；Q04 核對 profile／producer。[Handoff][pdf-handoff]、[歸屬核對][pdf-attribution]。 | 綁定平台 Asset、完整 Capture Package、候選與接受身分；不能把 Workflow ID 當 Canonical Revision。 |
-| Typed content 與關係 | Docling collections、`self_ref`／parent／children／captions；Q04 檢查重複／懸空參照與包含關係。[Graph checks][pdf-graph]。 | 定義正常化語意及映射涵蓋；遍歷順序不證明閱讀順序；清單外有值欄位須明確處置。 |
-| 表格保真 | 有 cell 位置／span 與限定來源文字檢查。Wiki 188 cells、YOLO 60 cells 是 fixture 證據，非一般能力保證。[Cell checks][pdf-cells]、[retained-output research][research-retained]。 | 驗證案例需要的表頭／單位／註解對應。既有 note associations 限 parser links，其餘未確認。[限制][pdf-limits]。 |
-| 定位與 OCR 歸屬 | 有原頁／region／crop 對應及 OCR input／method／outcome。crop 核對不證明文字正確；recipe 不承諾 crop 已保存。[Locators][pdf-locators]、[OCR checks][pdf-ocr]。 | 映射 locator／採用 artifact 參照；對必要內容補來源語意核對，辨識 custody 依賴。 |
-| Processing 完成與接受 | Handoff 明列 `canonical_accepted=false`、`quality_accepted=false`。[Handoff][pdf-handoff]。 | Canonical 另建候選／規則／驗證／接受事實；必要工作、品質、來源支持及目前治理各自有相應檢查。 |
+| Canonical | P01–P10 的映射、接受與權威事實；連同三格式／跨案例的來源核對預期結果。 | [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32) |
+| Processing | P02–P08 的實際輸出差距、方法／profile、完成及重用整合；為所選方法保留固定輸入與品質證據。 | [Design canonical processing profiles and PDF-core integration](https://github.com/davidlinnnn/data-ingestion/issues/72) |
+| Admission | P01/P07/P08/P10 的 request 關聯、前置條件與可區別的公開狀態；不複製接受判定權。 | [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31) |
+| Governance／Custody | P04/P05/P09/P10 的目前資格、採用依賴、清理／purge 與完成證據；數值期限留給 operating envelope。 | [Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56)；[Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57) |
+| Projection | 使用同一固定輸入做 Q22 問答與跨來源組織；自行驗證產品、引用與發布行為。 | [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) |
 
-[Design canonical processing profiles and PDF-core integration](https://github.com/davidlinnnn/data-ingestion/issues/72)
-負責受影響方法／profile／執行整合及能力驗證；本票負責 Canonical 映射／接受語意。
-[Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57)
-負責實體 custody、artifact 採用及保留機制。
-完整矩陣、其他 owner 交接與 Docling／WeKnora disposition 仍待完成。
+這裡列的是待實作的受影響驗證，不是已執行結果或已完成的 runnable mapping-validation plan。
+該計畫仍須固定 fixture／method、測試步驟、輸出證據與通過／失敗條件。
+未變的 PDF 資格證據只在原 fixture/profile/runtime 範圍內沿用。
+
+### Docling／WeKnora 研究處置草稿
+
+WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
+「已涵蓋」指現有決策已有對應要求；研究中的 adopt candidate 不自動變成已採納功能。
+下列對照待同輪 review。延後方法／產品選擇，不延後必要內容要求。
+
+| 研究組別與來源 | 對照／建議處置 | 理由與最小承接 |
+|---|---|---|
+| 正常化內容與未映射欄位；[Docling deliverables][docling-contract] | 已涵蓋：Q1/Q4/Q6/Q16/Q21，落到 P02/P03/P06。 | 不因研究推薦就採用 namespaced provider attachment 或永久保留所有 raw JSON；正式表示另行 review。 |
+| 跨格式 locator、來源／生成歸屬、修改後支持；[WeKnora candidates][weknora-candidates] | 已涵蓋：Q5/Q7/Q15/Q17/Q20；P04/P05。 | 借用反例；不照搬可變 chunk 或一律清 locator。新內容以實際來源支持判定，歷史引用保持原義。 |
+| Completion、quality、acceptance；[Docling retained-output][research-retained]、[WeKnora matrix][weknora-matrix] | 已涵蓋；不採用錯誤等同：Q1–Q3/Q9/Q21，P05/P07。 | 有效 JSON、raw equality、模型信心、terminal counter 或引用存在，不代替必要意思／來源支持。 |
+| 不可變 revision、重處理、撤回與 custody；[Docling lifecycle][docling-lifecycle]、[WeKnora matrix][weknora-matrix] | 已涵蓋：Q7–Q13/Q15/Q18/Q21，P08–P10。 | 機制與期限交既有 owner；不把來源指令當政策授權，也不將此表當全部 CRUD 已完成。 |
+| Wiki／Retrieval 共用輸入與 exports/chunks；[Docling consumer cases][docling-consumers]、[WeKnora shared chunks][weknora-chunks] | 已涵蓋：Q4/Q14/Q16/Q19/Q22；不採用 chunk/export＝Canonical 的等同。 | Projection 擁有組織、chunking、引用與產品品質；較早研究的 adapter demo 建議不恢復為本票結案前提。 |
+| 描述、公式、heading、page OCR、chart、schema extraction；[Docling capabilities][docling-capabilities] | 延後具體模型／方法採用，交 Processing。 | 依已確認用途及 pilot 選最小方法；不是所有 optional features 都必做。若需放寬必要語意，回本票確認。 |
+| Remote API、Activity pools、KServe、serve／升版／recovery；[Docling topology][docling-topology]、[WeKnora candidates][weknora-candidates] | 延後方案選擇，交 Processing／Admission／Governance／Custody 與 operating envelope。 | 不採納服務拓撲、queue、cache／conversion framework 或數字預設；所選方案仍需 owner 決策及 scoped evidence。 |
+| WeKnora 產品、editor/diff、元件重用、QA metrics；[採用路徑及處置][weknora-adoption] | 延後產品採用；不採用其 schema／status 作契約等價物。 | Projection 與 operating envelope 比較價值／成本；metrics 不證明表格保真或 Wiki 真實性。延後不是永久拒絕產品。 |
 
 ## 7. 下一輪待決與結案工作
 
@@ -238,10 +290,13 @@ Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 
 **Q21 已於 2026-10-09 確認：** 六組資訊、綁定確切候選的驗證／接受紀錄與最少重複原則，
 見 [Q21 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)。
-正式欄位／編碼與完整三格式案例仍待 review；此確認不代表實際 parser／mapper 或 consumer 通過驗收。
-結案前仍需完整三格式／困難案例 review、接受與驗證計畫、
+**Q22 已於 2026-10-09 確認：** 三格式具體問答的必要意思與來源證據基準，
+見 [Q22 決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075543252)。
+正式欄位／編碼與完整困難／更新案例整合仍待 review；上述確認不代表實際 parser／mapper 或 consumer 通過驗收。
+結案前仍需完整三格式／困難案例整合 review、接受與驗證計畫、
 權威事實交接與生命週期效果、完整 PDF reconciliation、
 研究 disposition，以及強制的歷史 ADR 盤點／補記。
+Q23 待 review：第 6 節的 PDF 整合處置、owner 交接與研究處置。
 本草稿不構成結案或 map 已解決索引更新。
 
 [pdf-handoff]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/HANDOFF.md#L8
@@ -252,3 +307,19 @@ Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 [pdf-limits]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/src/pdf_processing/evidence.py#L215
 [pdf-ocr]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/tests/pdf_processing/q04/consumer.py#L273
 [research-retained]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md#L250
+[pdf-relations]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/src/pdf_processing/relationships.py#L128
+[pdf-enrichment]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/src/pdf_processing/enrichment.py#L14
+[pdf-compat]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/src/pdf_processing/compatibility.py#L54
+[pdf-reuse]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/src/pdf_processing/README.md#L164
+[pdf-export]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/manage.py#L34
+[pdf-retention]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/RUNBOOK.md#L149
+[pdf-status]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/RUNBOOK.md#L111
+[docling-contract]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md#L137
+[docling-lifecycle]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md#L220
+[docling-consumers]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md#L155
+[docling-capabilities]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md#L82
+[docling-topology]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md#L186
+[weknora-candidates]: https://github.com/davidlinnnn/data-ingestion/blob/d7dd71374f63e9d55a3f7ee297696fa2c0765dde/docs/research/weknora-knowledge-platform-fit-2026-10-05.md#L157
+[weknora-matrix]: https://github.com/davidlinnnn/data-ingestion/blob/d7dd71374f63e9d55a3f7ee297696fa2c0765dde/docs/research/weknora-knowledge-platform-fit-2026-10-05.md#L93
+[weknora-chunks]: https://github.com/davidlinnnn/data-ingestion/blob/d7dd71374f63e9d55a3f7ee297696fa2c0765dde/docs/research/weknora-knowledge-platform-fit-2026-10-05.md#L73
+[weknora-adoption]: https://github.com/davidlinnnn/data-ingestion/blob/d7dd71374f63e9d55a3f7ee297696fa2c0765dde/docs/research/weknora-knowledge-platform-fit-2026-10-05.md#L128
