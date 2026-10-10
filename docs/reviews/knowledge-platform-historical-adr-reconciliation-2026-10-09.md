@@ -46,5 +46,6 @@
 - 本次新增 ADR-0004、0005、0006，並將已確認 Q24 補入既有 ADR-0003；沒有重新編號。
 - 原 overall／source tickets 已解決；本次不改它們的決策、不新增原生依賴。
 - 研究、spike 與設計案例不等於 runtime 資格證據；沒有因本次 ADR 補記新增功能或實作授權。
-- 盤點與必要補記已完成到 Q25。最終 review 應連同本表呈現；若後續確認新決策或發現原紀錄衝突，先補核對再關閉本票。
-- Canonical 正式契約／案例整體 review 及各結案條件仍獨立存在；本表不代表本票已解決或 map 可以先更新。
+- 盤點與必要補記已完成到 Q25，已於 2026-10-10 的[最終共同確認](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145)呈現並獲確認。
+- 最終契約整合未新增獨立架構取捨，無須為結案另立 ADR。原歷史日期、Q19 撤回及各 owner 的未決實作選擇保持原義。
+- 本次完成 Canonical 設計票的 ADR checkpoint；不代表整個 map 或實作驗證已完成。

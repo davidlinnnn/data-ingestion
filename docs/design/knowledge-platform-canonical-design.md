@@ -4,7 +4,9 @@
 
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
-The ticket remains in progress. Q1–Q9 establish acceptance, source/projection
+The user confirmed the complete logical contract, cases, validation plan and owner
+handoffs on 2026-10-10; see the [resolution](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145).
+Q1–Q9 establish acceptance, source/projection
 responsibilities, evidence precision, parser-output disposition, accepted-revision
 immutability, rule-based selection and post-acceptance invalidation principles.
 Q10–Q11 establish new Canonical Revisions for adopted Enrichment and automatic
@@ -13,8 +15,9 @@ confirm attachment-change reuse and historical acceptance versus source-target
 applicability. Revised Q14 confirms conceptual three-format/shared-Corpus consumer
 cases here, with executable checks limited to decision-critical Canonical unknowns;
 Wiki/Retrieval consumer implementation and effectiveness validation belong to
-Projection. Detailed representation, validation, compatibility and lifecycle
-mechanisms remain open.
+Projection. The round records below preserve their original discussion scope;
+subsequent confirmations and the final resolution govern the current contract.
+Concrete execution, API and storage mechanisms remain with their named owners.
 The [confirmed logical design](knowledge-platform-logical-design.md) and
 [resolved source handoff](knowledge-platform-source-handoff.md) continue to govern.
 
@@ -614,7 +617,7 @@ Wiki 可從同一固定 Canonical 輸入組織並連結上述主題；Retrieval 
 掃描 workload／page OCR 待 pilot 與 Processing 選定；picture OCR 不是頁面 OCR 資格。
 延後通用圖表數值抽取及 schema-driven fact extraction，直至具體用途及接受案例成立；
 consumer 專用抽取交 Projection。必要文字、圖意、數值或來源支持仍不能因方法未選而豁免。
-詳見[能力及 reconciliation 表](knowledge-platform-canonical-contract-draft.md#6-pdf-core-reconciliation-與整合處置草稿)。
+詳見[能力及 reconciliation 表](knowledge-platform-canonical-contract-draft.md#6-pdf-core-reconciliation-與整合處置)。
 
 以 P01–P10 記錄要求、現有證據限制、整合差距、owner 及最小受影響驗證。
 本票先定必要意思與接受界線；Processing 結合已確認要求與 pilot，
@@ -675,52 +678,40 @@ The qualified PDF core remains bounded integration evidence. This confirmation
 does not establish a passing Canonical Acceptance run or qualified Markdown/PPTX
 workers.
 
-## Historical ADR reconciliation before closure
+## Historical ADR reconciliation
 
-After the canonical design converges, complete the
-[ticket's historical ADR reconciliation checkpoint](https://github.com/davidlinnnn/data-ingestion/issues/32#historical-adr-reconciliation-checkpoint)
-before final shared-understanding confirmation, resolution, closure and map update.
-The agent continuing this ticket owns the work. The
-[2026-10-09 inventory](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)
-completes reconciliation through Q25: existing ADRs 0001–0003 remain, historical
-ADRs 0004–0006 are backfilled with original confirmation dates and retrospective
-recording dates, and other groups have explicit no-separate-ADR reasons. Present
-this inventory in the final review and recheck any later decisions before closure;
-it does not itself resolve the Canonical contract or the map.
+The [2026-10-09 inventory](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)
+completes reconciliation through Q25. Existing ADRs 0001–0003 remain; historical
+ADRs 0004–0006 preserve original confirmation dates and later recording dates.
+Other groups have explicit no-separate-ADR reasons. The user confirmed the final
+review, including this inventory, on 2026-10-10. Final assembly adds no independent
+architectural trade-off requiring another ADR.
 
-## Current contract review draft
+## Confirmed complete contract and handoff
 
-The [contract and three-format review draft](knowledge-platform-canonical-contract-draft.md)
-consolidates confirmed meanings into a logical contract and illustrative cases.
-Q20 confirms the repeated-attachment occurrence representation. Q21 confirms the
-six information groups, exact-candidate validation/acceptance records and minimal
-duplication principles. Q22 confirms the three-format question/answer baselines
-for necessary meaning and Source Evidence. The draft now includes three complete
-same-schema candidates, a populated provider-field example and an attachment/method
-update path. They await final whole-contract review; they are not an adopted wire
-schema or passed mapping validation.
-Q23 confirms capability boundaries, conditional requirements and research dispositions,
-using the PDF reconciliation to carry integration gaps and affected checks. Methods
-remain unselected. Native dependencies and ticket goals are unchanged; Processing
-combines confirmed canonical requirements with the pilot before selecting methods/profiles.
-Q24 confirms acceptance-result redelivery, distinct reprocessing candidates and
-selection without completion-order precedence. The draft now assembles lifecycle
-handoffs and mapping-validation cases from confirmed rules; these are not runtime
-results. Q25 confirms revision-scoped references, source-appropriate locator
-conventions and necessary distinctions among absent, failed, unknown and no-content
-outcomes. A complete wire schema is not adopted by that locator confirmation.
-Final completeness review, formal contract review and closure gates remain open.
+The [contract and three-format cases](knowledge-platform-canonical-contract-draft.md)
+assemble the confirmed first-version logical structure, required/conditional
+information, three complete same-schema candidates, populated provider-field
+dispositions and attachment/method updates. Fixed external records and revision-local
+references connect content, Enrichment, Source Evidence and exact-candidate
+validation/acceptance.
 
-## Open decisions and handoff
+The user confirmed this assembled contract, lifecycle effects, C01–C08 capability
+boundaries, P01–P10 reconciliation, V01–V11 mapping-validation plan and owner handoffs
+on 2026-10-10 in the [resolution](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145).
+The reference/document checks and synthetic provider schema roundtrip are bounded
+evidence; they do not qualify real mapping, source fidelity, acceptance runtime
+or consumer effects.
 
-The current frontier is final review of the assembled contract, complete examples,
-validation plan, owner handoffs and historical ADR inventory. Q12–Q13 already confirm
-attachment-only and old-capture/refreshed-precondition principles; Q23–Q25 resolve
-capability, competing-result and locator choices. Do not reopen those as unspecified.
-Actual mapping validation and method qualification remain with the implementation
-handoff. A buildable specification follows settled design; no production schema,
-API, storage or processing method is adopted merely by these illustrative examples.
+Processing combines applicable requirements with the selected pilot before
+choosing methods/profiles and integrated qualification. Projection owns Wiki and
+Retrieval products. Admission owns public status correlation; Governance and
+Custody own enforcement, protection, storage and cleanup mechanisms. Native
+dependencies remain in force. Buildable specifications and dependency-linked
+implementation tickets follow the map's settled design inputs; illustrative field
+spelling does not select an API, database, parser or model.
 
-This checkpoint does not resolve the ticket or update the map's closed-decision
-index. Later confirmed rounds extend it without treating illustrative cases as
-adopted requirements.
+This resolution completes the Canonical decision only. The map's remaining
+decisions and final cross-boundary review remain open. A demonstrated feasibility
+conflict returns to explicit review; implementation must not silently lower
+necessary meaning or acceptance conditions.

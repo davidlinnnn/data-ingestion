@@ -1,15 +1,16 @@
-# Canonical 契約與三格式案例草稿
+# Canonical 契約與三格式案例
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
-**2026-10-08 建立；2026-10-09 納入 Q20–Q25 確認。邏輯骨架及能力界線已確認；正式 schema 與實作規格仍待完成。**
+**2026-10-10 最終共同確認完成。** [Resolution](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145) 採納本文件的邏輯契約、完整案例、驗證計畫及 owner 交接。
+檔名保留原 draft 路徑，以維持既有連結；正式 wire encoding 與實作規格依後續設計輸入落實。
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。
 沿用 Q1–Q18、Q19 撤回紀錄與 Q20–Q25 確認。重複附件表示、六組資訊與確切候選的驗證／接受紀錄，
 以及最少重複原則已確認。Q22 確認三格式具體問答的必要意思與證據基準。
 Q23 確認能力界線、條件式需求及研究處置；實際方法／profile 仍待 Processing 選定。
 Q24 確認重送不新增版本、不同候選不強制去重，以及無明確取代依據時保留仍合格的目前版本。
 Q25 確認版本內引用、三格式來源定位的索引約定及必要 unknown／無內容區別。
-完整具體契約、案例與交接仍須整體 review；本文件不是 parser 執行結果或能力驗證。
+完整具體契約、案例與交接已通過使用者整體確認；本文件不是 parser 執行結果或能力驗證。
 2026-10-09 的[候選 spike](../reviews/knowledge-platform-canonical-spike-2026-10-09.md)提供既有原則澄清與簡化建議；
 其後的 [Q21 決策](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075416972)採納上述邏輯範圍，未採納正式 schema。
 
@@ -21,7 +22,7 @@ Q25 確認版本內引用、三格式來源定位的索引約定及必要 unknow
 | 已確認 Q23 | 能力需求／方法處置分開；公式、程式碼與 PDF 章節層級依實際用途成為必要要求。方法／profile 尚未選定。 |
 | 已確認 Q22 | 三格式具體問答的預期意思與來源證據，作為設計驗證基準。 |
 | 已確認 Q21 | 六組必要資訊、綁定確切候選的驗證／接受紀錄與最少重複原則。 |
-| 草稿表示 | 用第一版 schema 承載已確認語意的具體方式；正式名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
+| 已確認的邏輯表示 | 用同一第一版 schema 承載已確認語意與必要／條件必要結構；正式名稱與 ID 是示意，尚非 wire syntax 或資料表欄位。 |
 | 已確認 Q20 | 同一附件的每個出現位置保留自己的引用、來源位置與上下文，指向同一固定 package artifact。[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6074671955)。 |
 | 證據缺口 | 現有輸出不足以證明必要語意或品質；交代受影響的映射／processing 驗證，不假設已實作。 |
 
@@ -47,7 +48,7 @@ Q21 確認以下六組資訊承載 Q1 的最低契約。Capture Package 與 proc
 包含／順序已表達的關係，不必再複製到 associations。
 Q21 採用內容／結果指向證據的最少表示，不要求證據端另存反向清單；支持範圍與限制仍須明確。
 限制在所屬結果／映射保留一次，整份涵蓋報告引用即可；Enrichment 文字不必另複製成組件文字。
-上述為已確認的邏輯表示原則；正式欄位與編碼仍待 review。處理輸入、結果目標與支持證據的角色不同，不能為去重而混同。
+上述為已確認的邏輯表示原則；正式欄位拼法與編碼於 buildable spec 一致落實。處理輸入、結果目標與支持證據的角色不同，不能為去重而混同。
 
 每個組件至少需要版本內參照、類型、內容、適用的上下文／包含關係、來源／方法歸屬及證據參照。
 依來源需要表示標題／文字、步驟、程式碼／公式、表格、圖片、投影片及備註；組件不獨立接受。
@@ -63,7 +64,7 @@ Source Reference 保留原始引用字串及已建立的目標對應。
 
 ### 格式內容與來源定位
 
-| 案例 | 內容表示草稿 | 來源定位 |
+| 案例 | 已確認的內容表示 | 來源定位 |
 |---|---|---|
 | PDF 表格 | 列欄、儲存格文字與位置／跨列跨欄、表頭對應、單位及註解的作用範圍 | 固定原始 PDF 與實體頁面；有依據才提供 region／cell 精度。bbox 須說明座標原點與單位。crop recipe 不等於已保存 crop。 |
 | SOP Markdown | 標題、完整文字、有順序及巢狀的步驟、條件／禁止事項、原始連結與附件綁定 | 固定 Markdown 與行／區塊位置；圖片另有固定 artifact 與定位，不強迫套用 PDF 頁碼。 |
@@ -139,7 +140,7 @@ K1 已對應 C1，原接受結果重送仍回到 C1；S1/M1 的新請求形成 K
 註解為「*僅適用暫時性處理錯誤，且作業必須具備冪等性」。
 它限制 A 的重試值，不代表所有失敗都可重試。
 
-候選內容草稿：
+候選內容：
 
 - `pdf-table`：兩欄表格、表頭／單位、列欄配對，以及 A 數值上的註記。
 - `pdf-note`：完整限制文字，對應到 A 的重試值。
@@ -168,7 +169,7 @@ A/B 數值互換、單位遺失或註解漏掉／掛錯，都無法滿足本案�
 圖中文字為「不得略過品質檢查」，本案例將它視為必要內容。
 M1/I1 的固定身分、完整性與 custody 沿用來源交接契約；路徑或臨時 URL 不是其身分。
 
-**候選組件草稿；Q20 已確認重複引用各自保留位置與上下文，示意欄位／ID 尚非正式編碼：**
+**候選組件；Q20 已確認重複引用各自保留位置與上下文，示意欄位／ID 尚非正式編碼：**
 
 | 版本內參照 | 類型／內容 | 上下文與來源 |
 |---|---|---|
@@ -244,7 +245,7 @@ Wiki 與 Retrieval 使用同一組固定 Canonical 輸入，依下節需求取�
 
 這是概念契約檢查。生成、連結品質、Retrieval 效果與實際更新／發布測試由 projection 負責。
 
-### 同一第一版表示的三份完整候選（待整體 review）
+### 同一第一版表示的三份完整候選（2026-10-10 已確認）
 
 以下是**手工建立的設計預期**，不是 parser 輸出或實際接受紀錄。
 `canonical-v1` 是供 review 的單一 schema 識別；欄位拼法可在規格中一致整理，
@@ -498,7 +499,7 @@ assert restored.texts[0].meta.get_custom_part() == item.meta.get_custom_part()
 參照完整性、順序／包含關係、表格／表頭／註解對應、附件範圍、
 來源／方法歸屬與證據支持、必要涵蓋，以及確切候選／接受判定綁定。
 既有證據足夠就重用；只有影響本票決策且既有證據無法回答的未知，
-才做必要的 executable probe（Q14）。本草稿未執行 mapping 或 consumer runtime；V04 只完成 provider schema roundtrip。
+才做必要的 executable probe（Q14）。本文件未執行 mapping 或 consumer runtime；V04 只完成 provider schema roundtrip。
 
 ### 生命週期效果與權威事實交接
 
@@ -516,7 +517,7 @@ Canonical 提供自己的候選、接受、失效與選用事實；公開查詢�
 | 已確認且適用的來源刪除／撤回 | 依權威範圍停止相關資格；接受前已涵蓋的撤回阻止新接受，晚到成果不恢復資格。歷史接受不改寫。 | 來源交接提供可信意圖與適用性；Governance 執行停止披露。讀取失敗不擅自推論已刪除。 |
 | Task／checkpoint 清理 | 不代表 Canonical 刪除，也不移除仍受保護的必要來源／證據。不同候選共享 artifact 時仍須尊重其保護義務。 | Admission／Processing 清理執行紀錄；Custody 判斷採用／釋放及保留；期限交 operating envelope。 |
 | 明確 custody purge | 不再承諾被抹除範圍可重建／可讀；保留的引用不能恢復已失去的內容或權限。哪些決策紀錄可合法保留亦須遵守 purge 範圍。 | Governance／Custody 定範圍、相依副本與完成證據。收到請求、停止披露、完成實體 purge 是不同事實。 |
-| Corpus 普通移除成員 | 不改寫／刪除共享 Canonical Revision，不默認撤回其他 Corpus 的使用；依既有目前資格限制。 | Corpus／Projection 處理成員及產品更新。Corpus 刪除、membership-only 補處理的未決產品／命令契約留給原 owner。 |
+| Corpus 普通移除成員 | 不改寫／刪除共享 Canonical Revision，不默認撤回其他 Corpus 的使用；依既有目前資格限制。 | Corpus／Projection 處理成員及產品更新。Corpus 刪除與 membership-only 補處理的命令／排程由 Admission 明定，產品輸入與發布效果由 Projection 明定；Governance／Custody 承接治理與清理。若新選擇影響本票必要語意，回本決策 review。 |
 
 上述交接均引用第 6 節的既有決策票。無須每層複製一份全域狀態，
 也不能用同一個 `done` 同時表示接受、選用、發布或治理完成。
@@ -557,12 +558,12 @@ V01–V03 另做一次共用 Wiki／Retrieval 的概念檢查：同一固定輸�
 本票不新增 consumer prototype。若真實來源／方法暴露影響本票決策的未知，先依 Q14
 補最小必要證據；其餘方法比較與實作驗收由既有依賴票承接。
 
-## 6. PDF core reconciliation 與整合處置草稿
+## 6. PDF core reconciliation 與整合處置
 
 **2026-10-09 Q23 已確認能力界線與處置，見[決策紀錄](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6075950574)。**
 本表對照已確認需求、固定 PDF 證據、最小整合差距及受影響驗證。
-P01–P10 作為後續整合交接，與第 5 節驗證計畫一併提交最終完整性 review；正式規格仍待設計收斂。
-不宣稱 Canonical mapper 已通過，也不先行完成結案 gate。
+P01–P10 與第 5 節驗證計畫已於 2026-10-10 通過最終完整性確認，作為後續整合交接。
+本票 reconciliation 結案條件已完成；不宣稱 Canonical mapper 已通過。
 PDF core 固定為 `fe1b283c49c83ad5aeee6808e77b4f25549eba03`；
 Docling research 固定為 `47b363781448cc72d6cb12df2b76927c101c2e23`。
 Q22 的 P1 表格是虛構來源的預期內容；「2 次」不是 worker retry 設定。
@@ -617,7 +618,7 @@ Docling 升版、WeKnora 產品採用或服務拓撲均未在此採納。
 
 ### 最小交接與完成條件
 
-以下是既有責任的具體交接草稿，未建立新服務或反向依賴。
+以下是已確認的既有責任具體交接，未建立新服務或反向依賴。
 每個 owner 後續在自己的規格與實作票引用上表列號，保留對應的受影響驗證。
 若實測無法滿足必要意思，須回本票討論用途／限制，不能自行降低已確認要求。
 
@@ -629,11 +630,11 @@ Docling 升版、WeKnora 產品採用或服務拓撲均未在此採納。
 | Governance／Custody | P04/P05/P09/P10 的目前資格、採用依賴、清理／purge 與完成證據；數值期限留給 operating envelope。 | [Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56)；[Select canonical persistence and artifact ownership](https://github.com/davidlinnnn/data-ingestion/issues/57) |
 | Projection | 使用同一固定輸入做 Q22 問答與跨來源組織；自行驗證產品、引用與發布行為。 | [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55) |
 
-這裡列的是待實作的受影響驗證，不是已執行結果或已完成的 runnable mapping-validation plan。
+這裡列的是待實作的受影響驗證；具體映射驗證計畫見第 5 節 V01–V11，兩者都不是已執行結果。
 該計畫仍須固定 fixture／method、測試步驟、輸出證據與通過／失敗條件。
 未變的 PDF 資格證據只在原 fixture/profile/runtime 範圍內沿用。
 
-### Docling／WeKnora 研究處置草稿
+### Docling／WeKnora 研究處置
 
 WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
 「已涵蓋」指現有決策已有對應要求；研究中的 adopt candidate 不自動變成已採納功能。
@@ -655,29 +656,30 @@ WeKnora research 固定為 `d7dd71374f63e9d55a3f7ee297696fa2c0765dde`。
 
 Q20–Q25 均已於 2026-10-09 確認。Q24 已於 2026-10-09 確認重送／不同候選／目前選用規則；
 Q25 已確認版本內引用、三格式定位及必要未知結果區別。
-各輪確認只涵蓋其明列範圍；第 4 節完整候選與以下整合交接，現在一起提交最終 review。
+各輪確認只涵蓋其明列範圍；第 4 節完整候選與以下整合交接，已於 2026-10-10 獲使用者最終確認。
+詳見 [resolution](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145)。
 
-| 結案要求 | 本次可 review 的材料 | 剩餘動作／承接 |
+| 已完成的設計結案要求 | 已確認材料 | 後續承接 |
 |---|---|---|
-| 第一版共同表示與接受契約 | 第 2–3 節六組資訊、必要／條件必要欄位、固定外部參照、確切候選判定；第 4 節三份同 schema 候選。 | 確認完整邏輯表示可作規格基礎。正式型別／欄位編碼及 API 在設計收斂後形成 buildable spec；不改已確認語意。 |
-| 三格式／困難／更新案例 | 第 4 節 PDF、SOP、PPTX 與共用 Wiki／Retrieval 問答；非空 provider 欄位處置；附件／方法更新及歷史引用。 | 確認這些正反例落實已確認用途。真實 source bytes、mapper 與處理方法的執行資格另由具體整合驗證。 |
+| 第一版共同表示與接受契約 | 第 2–3 節六組資訊、必要／條件必要欄位、固定外部參照、確切候選判定；第 4 節三份同 schema 候選。 | 完整邏輯表示已確認可作規格基礎。正式型別／欄位編碼及 API 隨所依賴設計收斂後形成 buildable spec；不改已確認語意。 |
+| 三格式／困難／更新案例 | 第 4 節 PDF、SOP、PPTX 與共用 Wiki／Retrieval 問答；非空 provider 欄位處置；附件／方法更新及歷史引用。 | 正反例已確認落實本票用途。真實 source bytes、mapper 與處理方法的執行資格另由具體整合驗證。 |
 | 版本與生命週期效果 | 第 3、5 節區分接受、選用、目前資格、撤回、失效、清理與 purge。 | 將權威事實交接既有 Admission／Governance／Custody owner；機制與數字期限仍由其決策。 |
 | Processing／Projection／status 交接 | 第 5–6 節權責及必要輸入／輸出／判定證據。 | Processing 選方法，Projection 擁有產品與發布，Admission 關聯公開狀態；不把 completion 當接受／發布。 |
-| PDF core reconciliation | 第 6 節 P01–P10：固定 core 證據、涵蓋限制、具體差距、owner 與受影響驗證。 | 確認差距交接完整；既有相依 Processing 決策承接方法／profile 及整合，Canonical 保留表示與接受責任。 |
+| PDF core reconciliation | 第 6 節 P01–P10：固定 core 證據、涵蓋限制、具體差距、owner 與受影響驗證。 | 差距交接已確認完整；既有相依 Processing 決策承接方法／profile 及整合，Canonical 保留表示與接受責任。 |
 | Docling／WeKnora 處置 | 第 6 節 C01–C08 及研究處置表。 | 必要意思不因方法延後而豁免；條件式需求等實際用途觸發，不全面啟用 optional features。 |
 | 可執行映射驗證計畫 | 第 5 節 V01–V11：固定輸入、最小變化、步驟、預期結果與 owner。 | 後續實作固定真實 fixtures／方法／規則，執行並保存結果。本次不是 V01–V11 已通過的宣告。 |
-| 領域文件與歷史 ADR | [CONTEXT.md](../../CONTEXT.md)、[決策 checkpoint](knowledge-platform-canonical-design.md)、[截至 Q25 的 ADR 盤點](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)。 | ADR-0001–0003 保留，0004–0006 補記歷史取捨；其餘有不另立理由。盤點已完成，隨本次 review 呈現。 |
+| 領域文件與歷史 ADR | [CONTEXT.md](../../CONTEXT.md)、[決策 checkpoint](knowledge-platform-canonical-design.md)、[截至 Q25 的 ADR 盤點](../reviews/knowledge-platform-historical-adr-reconciliation-2026-10-09.md)。 | ADR-0001–0003 保留，0004–0006 補記歷史取捨；其餘有不另立理由。盤點已完成，最終 review 已呈現並確認。 |
 
 **本次實際檢查：** 文件連結／表格與三份 JSON 候選的參照唯一性、參照解析、
 表格位置、locator 範圍及已確認案例值。另以既有 docling-core 2.96.0 執行 V04 自訂 metadata schema roundtrip。
 獨立只讀 review 未發現中等或重大不一致。這些檢查不證明真實 parser、mapper、來源語意品質或 consumer 效果。
 
-**最終確認範圍：** 是否以此共同表示、接受／生命週期規則、完整案例、驗證計畫及 owner 交接，
-作為本票的設計結論。這項確認不選套件／模型、儲存方案，也不核准未執行的 runtime 結果。
-若仍有會改變表示或接受結果的缺口，先指出該具體情境；不再為可在規格中一致整理的欄位拼法新增設計輪次。
+**最終確認範圍：** 使用者採納共同表示、接受／生命週期規則、完整案例、驗證計畫及 owner 交接，
+作為本票設計結論。此確認不選套件／模型、儲存方案，也不核准未執行的 runtime 結果。
+正式編碼與 buildable spec 隨所依賴設計輸入收斂；必要整合與執行驗證須進入具體 implementation tickets。
 
-最終共同確認仍待使用者回覆。之後才記錄 resolution、核對結案條件、關閉本票及更新 map 的已解決索引。
-本票關閉不代表整個 map 已完成，也不越過 Processing、Projection、Governance 或 Custody 的未決工作。
+2026-10-10 的 [resolution](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145)記錄最終共同理解、結案證據及後續責任。
+本票結案不代表整個 map 已完成，也不越過 Processing、Projection、Governance 或 Custody 的未決工作。
 
 [pdf-handoff]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/HANDOFF.md#L8
 [pdf-attribution]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/tests/pdf_processing/q04/consumer.py#L236
