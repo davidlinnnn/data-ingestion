@@ -123,17 +123,43 @@ Concrete package representation remains with canonical design.
 
 ### Q7 — Initial team and document collection
 
-Start with the engineering team responsible for the Knowledge Platform and a
-controlled collection of technical/operations documents it maintains and is
-allowed to ingest. The document-owning role retains content/publication
-accountability. Capture/submission is delegated to an authorized program or
-operating role. The designated data-access role supplies/confirms source policy;
-platform operation alone does not confer that authority. This selects the pilot
-boundary and roles, not named-person assignments or already-provisioned grants.
+**Adoption-scope correction — 2026-10-10:** the user clarified that the first
+adopter is a research team working with LLM / AI agent research papers; see the
+[correction record](https://github.com/davidlinnnn/data-ingestion/issues/54#issuecomment-6097475921).
+This supersedes the engineering-team / technical-operations-document direction
+originally confirmed on 2026-09-30. The original decision record remains historical.
 
-Make the document inventory and concrete identity/delegation bindings explicit
-for adoption. Numeric workload, concurrency and resource targets remain with
-[Set the first-adoption workload and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54).
+Start with a controlled collection of those papers that the team is authorized
+to ingest. Source Owner accountability, delegated capture/submission and designated
+source-policy authority retain their confirmed meanings. Using or collecting
+papers does not itself make the research team their Source Owner or policy authority;
+platform operation alone does not confer that authority either. Named-person
+assignments and actual access/delegation grants remain to be established.
+
+The user subsequently [confirmed the research task](https://github.com/davidlinnnn/data-ingestion/issues/54#issuecomment-6098053959):
+topic-based literature synthesis and method comparison, with Wiki supporting
+cross-paper understanding and Retrieval supporting source lookup, verification
+and comparison for research reading, discussion and topic selection.
+
+On 2026-10-11, the user [confirmed the adoption phase and research topic](https://github.com/davidlinnnn/data-ingestion/issues/54#issuecomment-6103968793):
+AI agent self-evolution, including evolution in skills or memory. These are paper
+research subjects, not requirements to implement agent self-evolution in the platform.
+The first phase may use a script or controlled API client in place of a production
+upstream application, validating submission through Canonical and Wiki/Retrieval,
+including updates, withdrawal and the agreed breaking-upgrade rebuild/publication
+rehearsal. Production-application integration follows in a separate delivery phase;
+its scenarios remain part of the current design and use the same target contracts.
+
+The user then [confirmed the representative comparison question and initial collection](https://github.com/davidlinnnn/data-ingestion/issues/54#issuecomment-6104011374):
+compare self-evolution triggers, skill/memory changes and effectiveness evidence
+across an initial target of 20 representative papers, primarily PDFs with text layers.
+See the [first-adoption record](knowledge-platform-first-adoption.md) for the confirmed
+scope and target/unknown/evidence table. The actual inventory, source authorization,
+document characteristics and identity/delegation bindings remain unverified or open;
+20 papers is not a capacity or qualification claim. [Set the first-adoption workload
+and operating envelope](https://github.com/davidlinnnn/data-ingestion/issues/54) was
+subsequently confirmed on 2026-10-11, including operating targets, independent manual-upload
+pilot scope, phased production task buffering, and validation/missing-input handoffs.
 
 ### Q8 — Explicit lifecycle changes from the controlled source
 

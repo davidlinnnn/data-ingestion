@@ -77,6 +77,21 @@ storage selections and detailed APIs remain with their named owners. This checkp
 records progress and does not constitute an implementation-ready spec.
 Decision details remain in the linked issues; the map remains their index.
 
+[First-adoption workload and operating envelope](knowledge-platform-first-adoption.md)
+was confirmed on 2026-10-11 after Q1–Q22 and final validation/handoff review. It selects
+a research-team paper pilot about AI agent self-evolution: manual controlled submission,
+20 initial text-layer PDFs, two weeks and up to 50 active papers. The document preserves
+the chosen arrival, freshness, concurrency, recovery and retention targets; background
+ingestion is decoupled from online retrieval/fetch. The independent pilot has no existing
+production data/traffic takeover or migration obligation. Pilot processing outages may
+pause new admissions while protecting accepted work; production must support bounded,
+durable task buffering when safe admission remains possible. V01–V08 define the approved
+validation scenarios and observations. Required inventory, source-policy bindings, named
+roles, resources/costs and runtime evidence remain explicit gated handoffs to the existing
+design owners. Targets may be revised and revalidated for production; confirmed data and
+governance contracts retain their authority. This is design confirmation, not measured
+platform capability or implementation readiness.
+
 ## Earlier direction and candidate history
 
 The [HLD](../../HLD.md) and [Architecture Baseline](../../ARCHITECTURE-BASELINE.md)
