@@ -1,0 +1,258 @@
+{
+  "scope": "Synthetic fixture roundtrip only; no PDF parsing, model inference, production mapping or DB writes.",
+  "packages": {
+    "docling": "2.102.0",
+    "docling-core": "2.96.0",
+    "pydantic": "2.13.5",
+    "Pillow": "12.3.0"
+  },
+  "cases": [
+    {
+      "case": "Known schema, embedded images",
+      "observation": "PASS",
+      "semantic_tree_equal": true,
+      "unicode_orig_inline_formula_caption_refs_merged_cells_annotations_precision_preserved": true,
+      "document_schema": "1.10.0"
+    },
+    {
+      "case": "Unknown top-level field",
+      "observation": "SILENT_DROP_ON_TYPED_ROUNDTRIP",
+      "raw_bytes_preserved": true,
+      "typed_roundtrip_preserved": false,
+      "sha256": "0ef640190f9f3d97afd1b17b55505c76320b172ba28fcf5a1d0f0e086b3240a6"
+    },
+    {
+      "case": "Unknown item field",
+      "observation": "REJECTED",
+      "validation_errors": [
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "TitleItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "SectionHeaderItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "SectionHeaderItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "ListItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "ListItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "CodeItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "CodeItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "FormulaItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "FormulaItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "FieldHeadingItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "FieldHeadingItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "FieldValueItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "FieldValueItem",
+            "future_provider_extension"
+          ]
+        },
+        {
+          "type": "literal_error",
+          "loc": [
+            "texts",
+            0,
+            "TextItem",
+            "label"
+          ]
+        },
+        {
+          "type": "extra_forbidden",
+          "loc": [
+            "texts",
+            0,
+            "TextItem",
+            "future_provider_extension"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "Schema versions",
+      "observation": "OLDER_NORMALIZED_NEWER_REJECTED",
+      "original_old_version": "1.9.0",
+      "normalized_version": "1.10.0",
+      "rejected_future_version": "1.11.0"
+    },
+    {
+      "case": "Source bbox outside page",
+      "observation": "NORMALIZED_ON_LOAD",
+      "before": -4.25,
+      "after": 0,
+      "note": "A typed reload can change source observations even without inference."
+    },
+    {
+      "case": "Dangling body reference",
+      "observation": "REJECTED",
+      "exception": "IndexError"
+    },
+    {
+      "case": "REFERENCED default with absolute output path",
+      "observation": "ABSOLUTE_PATH_BREAKS_AFTER_MOVE",
+      "json_load_succeeded": true,
+      "after_move": {
+        "readable": false,
+        "error": "FileNotFoundError"
+      }
+    },
+    {
+      "case": "Referenced bundle relocation",
+      "observation": "LOAD_OK_IMAGES_DEPEND_ON_RESOLUTION",
+      "original_and_relative_uris": {
+        "picture": "images/image_000000_9f40614de19aa1471825f2f1920f9b1e181074dd11ea0f2d8e0811fd3248f3fc.png",
+        "page": "images/page_000001_6a7f489bdebb4c86a0ac1dc91859214009e2557addabb82ead4b91af5a86c58b.png"
+      },
+      "wrong_cwd": {
+        "picture": {
+          "readable": false,
+          "error": "FileNotFoundError"
+        },
+        "page": {
+          "readable": false,
+          "error": "FileNotFoundError"
+        }
+      },
+      "correct_bundle_root": {
+        "picture": {
+          "readable": true,
+          "size": [
+            12,
+            8
+          ]
+        },
+        "page": {
+          "readable": true,
+          "size": [
+            100,
+            100
+          ]
+        }
+      },
+      "missing_picture_after_successful_json_load": {
+        "readable": false,
+        "error": "FileNotFoundError"
+      },
+      "note": "Changing process CWD demonstrates the defect; it is not a concurrent-worker design recommendation."
+    },
+    {
+      "case": "EMBEDDED mode with existing external page image",
+      "observation": "NOT_SELF_CONTAINED",
+      "page_uri_kind": "external path",
+      "after_original_removed": {
+        "readable": false,
+        "error": "FileNotFoundError"
+      }
+    },
+    {
+      "case": "Document JSON versus processing envelope",
+      "observation": "SEPARATE_ARTIFACTS_NEEDED",
+      "absent_from_document_json": [
+        "assembled",
+        "confidence",
+        "document",
+        "errors",
+        "input",
+        "status",
+        "timestamp",
+        "timings"
+      ],
+      "note": "Retain the existing result/checkpoint/enrichment references; this does not select Q38 status policy."
+    }
+  ],
+  "recommendation": "Retain emitted provider bytes and dependency references before typed adaptation; map required semantics explicitly; preserve deferred content with a disposition."
+}

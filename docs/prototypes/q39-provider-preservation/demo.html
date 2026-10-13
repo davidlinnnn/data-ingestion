@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q39 · 保存與映射 Spike</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#182c36;background:#f4f6f6;line-height:1.65}*{box-sizing:border-box}body{max-width:1060px;margin:auto;padding:36px 24px 70px}h1{font-size:30px;line-height:1.3;margin:8px 0 16px}h2{font-size:20px;margin:0 0 14px}p{margin:10px 0}small,.muted{color:#536973}.label{font-size:12px;letter-spacing:1.5px;color:#286a72;font-weight:700}.panel{background:white;border:1px solid #d4e0e2;border-radius:12px;padding:24px;margin-top:22px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{padding:16px;background:#f4f8f8;border-radius:8px}.card h3{margin:0 0 8px;font-size:16px}dl{margin:0}dt{font-size:13px;color:#526c75;margin-top:10px}dd{margin:0;font-weight:600}.status{border-left:4px solid #25747c;padding:12px 16px;background:#edf6f5;margin:18px 0 0}.actions,.tabs,.steps{display:flex;flex-wrap:wrap;gap:8px}button{font:inherit;font-size:14px;padding:8px 12px;border:1px solid #b6cdd0;border-radius:6px;color:#16454d;background:white;cursor:pointer}button:hover{background:#edf5f5}button:focus-visible{outline:3px solid #338e98;outline-offset:2px}button[aria-selected=true],button.primary{background:#216a73;color:white;border-color:#216a73}.tabs{margin-bottom:16px}.steps button.done{background:#e3f0ed}li{margin:7px 0}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #dce6e7;vertical-align:top}th{color:#47616c}#changed{min-height:1.5em;color:#3d6670}.footer{font-size:13px;margin-top:20px}.note{font-size:14px;color:#526973}@media(max-width:760px){.grid{grid-template-columns:1fr}body{padding:24px 14px}.panel{padding:17px}h1{font-size:25px}}
+</style>
+<div class="label">THROWAWAY PROTOTYPE · Q39 · DOCLING 2.102.0 / CORE 2.96.0</div>
+<h1>JSON 存下來，交付就完整了嗎？</h1>
+<p>這個 spike 檢查：如何保留 Docling 的原始處理結果，又讓 Canonical 明確交代哪些內容已映射、哪些只保留未解讀。以下按鈕是規則示範；下方實測表來自 Python fixture 的真正回讀結果。</p>
+<p class="note">不跑 PDF 模型、不連資料庫、不修改正式 pipeline。示範中的「Q39 就緒」只表示保存與映射條件齊備，不代表內容品質、Canonical Acceptance 或 publication 通過。Q38 尚未確認。</p>
+<section class="panel" aria-labelledby="state-title"><h2 id="state-title">目前保存與映射狀態</h2>
+<div class="grid"><div class="card"><h3>原始處理結果</h3><dl><dt>producer 輸出 bytes</dt><dd id="raw"></dd><dt>未知頂層欄位</dt><dd id="unknown"></dd></dl></div>
+<div class="card"><h3>相關依賴</h3><dl><dt>頁面與圖片檔案</dt><dd id="images"></dd><dt>已產生診斷的固定參照</dt><dd id="diagnostics"></dd></dl></div>
+<div class="card"><h3>Canonical 處置</h3><dl><dt>必含公式／表格</dt><dd id="mapped"></dd><dt>延後欄位的處置</dt><dd id="deferred"></dd></dl></div></div>
+<div id="status" class="status" role="status" aria-live="polite"></div><p id="changed" aria-live="polite"></p>
+</section>
+<section class="panel"><h2>自由操作</h2><div class="actions" id="actions"></div><p class="note">「typed 回讀取代原始檔」模擬已實測的頂層未知欄位遺失。只有尚存原始 producer bytes，才能可靠重做 mapping。</p></section>
+<section class="panel"><h2>導覽案例</h2><div class="tabs" id="tabs" role="tablist" aria-label="導覽案例"></div><p id="scenario"></p><div class="steps" id="steps"></div></section>
+<section class="panel"><h2>真正回讀的 10 組觀察</h2><p class="note">合成 fixture：繁體中文、orig、行內公式、合併表格儲存格、caption 關聯、生成描述、bbox 與圖片。沒有測試模型辨識品質。</p>
+<table><thead><tr><th>案例</th><th>已觀察到的結果</th></tr></thead><tbody>
+<tr><td>已知 schema + embedded 影像</td><td>語意樹回讀相等；上述結構與精度保留。</td></tr>
+<tr><td>未知頂層欄位</td><td>原始 bytes 可保留；typed model 回讀再輸出後欄位消失。</td></tr>
+<tr><td>未知 item 欄位</td><td>驗證拒絕；不是默默保留。</td></tr>
+<tr><td>schema 版本</td><td>較舊版本標記被正規化；較新 minor 版本拒絕。</td></tr>
+<tr><td>超出頁界的 bbox</td><td>回讀時 l = −4.25 被修整為 0。</td></tr>
+<tr><td>無效的 body 參照</td><td>回讀拒絕。</td></tr>
+<tr><td>絕對路徑的 referenced 圖片</td><td>整包搬移後 JSON 可讀，圖片失效。</td></tr>
+<tr><td>相對路徑的 referenced 圖片</td><td>需要正確解析根目錄；刪圖後 JSON 仍可讀。</td></tr>
+<tr><td>EMBEDDED + 原有外部頁面圖</td><td>頁面圖不會自動全部內嵌，來源刪除後失效。</td></tr>
+<tr><td>document.json 的範圍</td><td>沒有整個 conversion 的 status/errors/confidence/timings。</td></tr>
+</tbody></table></section>
+<p class="footer">建議：原始輸出不可被 mapper 覆寫；來源與影像／診斷依賴使用固定參照；必含語意明確映射，延後欄位明示保留但未解讀。原始 PDF、producer 結果與 Canonical 表示是不同角色。</p>
+<script>
+// Pure, bounded Q39 decision model; this is not the production Canonical contract.
+const fresh=()=>({raw:false,unknown:false,images:false,diagnostics:false,mapped:false,deferred:false});
+function reduce(state,action){
+ const s={...state};
+ if(action==='reset')return fresh();
+ if(action==='save'){s.raw=true;s.unknown=true;}
+ if(action==='dependencies'){s.images=true;s.diagnostics=true;}
+ if(action==='map')s.mapped=true;
+ if(action==='defer')s.deferred=true;
+ if(action==='cleanup')s.images=false;
+ if(action==='roundtrip'){s.raw=false;s.unknown=false;}
+ return s;
+}
+function assess(s){const missing=[];if(!s.raw||!s.unknown)missing.push('未改寫的原始輸出');if(!s.images)missing.push('可取用的圖片');if(!s.diagnostics)missing.push('診斷參照');if(!s.mapped)missing.push('必含內容映射');if(!s.deferred)missing.push('延後欄位的明確處置');return missing;}
+const labels={save:'保存 producer 原始輸出',dependencies:'保留圖片與診斷依賴',map:'完成必含內容映射',defer:'標示延後欄位原樣保留',cleanup:'清掉尚被引用的圖片',roundtrip:'以 typed 回讀結果取代原始檔',reset:'全部重置'};
+const scenarios=[
+ {title:'完整承接',text:'原始輸出、依賴與映射各有自己的責任。補齊後才能說 Q39 保存與映射齊備。',steps:['save','dependencies','map','defer']},
+ {title:'只存 JSON',text:'原始 JSON 存好了，仍不能假設圖檔能讀，也不能把未映射的必含公式當完成。',steps:['save','defer','dependencies','map']},
+ {title:'回讀造成遺失',text:'保留原始 bytes 很重要。用 typed model 的再輸出覆蓋原始檔，可能失去未知欄位。',steps:['save','dependencies','map','defer','roundtrip']},
+ {title:'清理依賴',text:'被 Canonical 引用的圖片不能仍當作可任意清掉的暫存。清理後，保存承諾就不成立。',steps:['save','dependencies','map','defer','cleanup']}
+];
+let state=fresh(),selected=0,last='尚未執行操作。',done=[];
+function act(action){state=reduce(state,action);last=labels[action];render();}
+function render(){
+ document.getElementById('raw').textContent=state.raw?'已保留，未被改寫':'未保留或已被替換';
+ document.getElementById('unknown').textContent=state.unknown?'原樣保留':'缺失';
+ document.getElementById('images').textContent=state.images?'可取用，依賴已保留':'尚未保留或已失效';
+ document.getElementById('diagnostics').textContent=state.diagnostics?'可回到原始診斷':'尚未承接';
+ document.getElementById('mapped').textContent=state.mapped?'已明確映射':'仍只有 provider 內容';
+ document.getElementById('deferred').textContent=state.deferred?'標示原樣保留、未解讀':'尚未交代';
+ const missing=assess(state);document.getElementById('status').textContent=missing.length?'Q39 尚未齊備：'+missing.join('、'):'Q39 保存與映射齊備；內容品質與 Canonical Acceptance 另行驗證。';
+ document.getElementById('changed').textContent='最近操作：'+last;
+ document.querySelectorAll('[role=tab]').forEach((b,i)=>b.setAttribute('aria-selected',String(i===selected)));
+ document.querySelectorAll('#steps button').forEach((b,i)=>b.classList.toggle('done',done.includes(i)));
+}
+for(const [action,label] of Object.entries(labels)){const b=document.createElement('button');b.textContent=label;b.onclick=()=>act(action);document.getElementById('actions').append(b);}
+function select(i){selected=i;state=fresh();done=[];last='已重置到案例起點';document.getElementById('scenario').textContent=scenarios[i].text;const steps=document.getElementById('steps');steps.replaceChildren();scenarios[i].steps.forEach((action,n)=>{const b=document.createElement('button');b.textContent=(n+1)+'. '+labels[action];b.onclick=()=>{done.push(n);act(action);};steps.append(b);});render();}
+scenarios.forEach((s,i)=>{const b=document.createElement('button');b.textContent=s.title;b.setAttribute('role','tab');b.onclick=()=>select(i);document.getElementById('tabs').append(b);});select(0);
+</script>
+</html>

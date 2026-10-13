@@ -1,0 +1,261 @@
+# 第一版 PDF core delivery：Docling 功能與 Canonical Processing 輸出逐項確認
+
+Part of #52. 延續 #70 的調查，重新檢視 #72 的第一版範圍；影響既有實作／驗證票 #80、#81、#82、#83。
+
+**狀態：逐項決策進行中；F01–F09、F11–F14、F18、F20 已確認必含；F17 已確認基礎 metadata 保留及明確 title 辨識必含、其餘內容 metadata 抽取延後；F10 可選且偏好啟用；F15、F16 延後；其餘功能待確認，尚未形成新的 Processing Profile。** 2026-10-13 使用者要求重新決定第一個 PDF core delivery，並明確選擇：「先完整列功能，再逐項決定納入哪些」。本票先完整盤點，不預選章節層級、公式／程式碼重建或圖片描述為第一版必含，也不以舊版本未開啟某功能作為排除理由。
+
+## 要完成的決定
+
+定義第一個 pilot run 使用的 **PDF Processing Profile 與交付給 Canonical 的結果契約**：包含哪些功能、每項輸出什麼、哪些情況算完成、哪些缺漏阻止 Canonical Acceptance，以及如何驗證。此處的 final 指本次第一版決定，不承諾一次定義未來所有格式或所有 Docling 功能。
+
+建議先決定可消費的輸出與用途，再選模型、版本和執行方式。官方具備功能、profile 啟用、adapter 完整保留、pilot 通過品質驗證，是四件不同的事。DoclingDocument 是處理器結果；Canonical Knowledge 仍由 #32 的表示、證據與 acceptance 契約約束。
+
+## #70 到底 survey 了什麼
+
+是，#70 是 **Research Docling feature coverage, PDF output fidelity and external inference for Canonical Processing**，2026-10-03 已完成。其[已發布報告][old-report]不只看 model catalog，涵蓋原生文字／layout／order、表格、page 與 picture OCR、圖片 artifact／caption／classification／description、chart、code／formula、heading depth、VLM conversion、schema extraction、Docling graph／metadata／confidence、export／chunking、其他格式，以及各 stage 的遠端推論、模型駐留、Temporal recovery、custody 和 quality 邊界。
+
+但它是版本化 source audit 與有界輸出檢查，**沒有宣稱跑過全部功能，也沒有直接選定第一版功能**。當時建議保留已驗證 native baseline，把新增 enrichment 留給需求決策；後續 #72 又接受了「機制比較＋可靠正文結果，table observations 未解讀」的限制。這兩種結論都可重新討論；已完成的歷史實驗結果不會因新 target 而變成通過或失效。
+
+比較依據固定為 #70 使用的 [Docling 2.102.0／Core 2.96.0 profile][profile]；當時另查過 2.132.0。今天的 Usage 是滾動文件，不能把其中每個選項視為 pinned release 已提供或已整合。比較使用已發布 baseline，未將本地較舊的 checkout 當作最新 implementation。
+
+## A. PDF／Canonical 輸出功能完整決策表
+
+2026-10-13 使用者確認：「F01 必含；F02 必含」。後續明確指定：「formula 跟 code 應該都要成為 docling 核心功能」，因此 **F13 公式、F14 程式碼／演算法同樣列為核心必含**。使用者另確認 **F13 採既有 PDF 流程＋公式區域 VLM 重建**：由既有流程辨識公式區域並裁圖，交由 VLM 重建 LaTeX，再交付公式結果；此決定本身未採用整頁 VLM conversion；行內公式相關路徑後續另作候選比較。這是已確認的交付／方法方向，尚未選定具體模型、package version、本地或遠端 engine，也未授權在決策完成前啟動實作或模型執行。F13 的獨立／行內公式範圍、來源／重建結果分開保留及品質規則已依 Q30/Q31 確認；具體偵測方法、來源本身不清楚時的處置、失敗狀態表示與驗收案例仍待補齊。文件區段覆蓋已依下述 Q3 確認為全文。F14 核心必含的重建輸出深度與品質契約已依 Q32/Q33 確認，包含程式碼區塊、演算法／偽碼與行內短程式片段；具體模型／方法及驗收案例仍待選定，不能由 F13 的選擇推定 F14 也已選定重建方法。
+
+2026-10-13 在釐清行內公式限制後，使用者同意將兩條路徑列為技術驗證候選，以相同公式案例比較後再決定：(1) 保留標準 PDF 流程，以自訂 enrichment／後處理將段落區域交給 VLM，再解析、對齊並回填文字與行內公式；(2) 使用官方逐頁 VLM 轉換。第一條有官方裁圖、VLM 推論與 inline representation 組件可接，但不是已提供的 paragraph-inline enrichment 開關，也尚未完成原型或實測；不預設它比逐頁 VLM 更省資源或更可靠。官方 VlmPipeline 以頁面為單位處理所選 PDF 頁面，不是把整份 PDF 放進同一個模型上下文。若最後採逐頁 VLM 取代主要轉換流程，其他已選功能及既有證據的適用性仍須重新核對。此處僅確認候選比較安排，尚未選定模型或新處理路徑；**Q30 公式覆蓋範圍與 Q31 保存／品質規則已於後續回答確認如下**；方法選擇仍待候選比較，不由交付需求直接推定模型已可達標。[官方 enrichment 擴充範例](https://docling-project.github.io/docling/_generated/examples/develop_formula_understanding/)、[Granite-Docling 模型能力](https://huggingface.co/ibm-granite/granite-docling-258M)、[VlmPipeline 實作](https://github.com/docling-project/docling/blob/main/docling/pipeline/vlm_pipeline.py)。
+
+2026-10-13 使用者確認：「Q30 兩者必含；Q31 同意」。
+
+- **Q30 公式覆蓋範圍**：第一版同時必含獨立成行公式（包括多行公式及矩陣）與段落中的行內公式，兩者皆以 LaTeX 保留數學結構，正文與附錄同樣適用。此為驗收目標；方法經候選比較後選定。若候選方法達不到，須明確討論調整，不得自行把行內公式降為可選。
+- **Q31 保存與品質**：來源與重建分開保存，保留來源影像、可取得的原文、頁面／位置及重建 LaTeX；位置精度據實標示。重建忠於原稿，不自行修正作者公式。允許不改變數學結構與意義的排版／LaTeX 寫法差異。驗收案例中，原稿清楚但重建錯了符號、上下標、分子分母等而改變數學意義，或漏掉必要公式，須阻止 Canonical Acceptance；僅保留原圖不能視為重建成功。
+
+上述決定未選定新模型或執行路徑，也未宣稱行內公式的品質、來源對齊與成本已驗證。來源本身不清楚時的處置及具體 source-reviewed 驗收案例仍待確定；沒有將 F05 或 F12 的容錯比例套用到公式。
+
+2026-10-13 使用者於 Q32/Q33 回覆「皆同意採用」，確認：
+
+- **Q32 程式碼與偽碼重建深度**：涵蓋程式碼區塊、演算法／偽碼，以及行內短程式片段；交付可閱讀文字，保留換行、縮排、註解與符號。有依據時標示程式語言，無法確定則標示未知。原始影像／可取得原文、來源位置與重建結果分開保存。既有 Q3 全文含附錄範圍持續適用；具體模型與處理路徑另選。
+- **Q33 程式碼品質界線**：驗收案例中，原稿清楚的變數、運算子、字串、條件、迴圈及區塊層級須忠實保留。允許不改變意思的空白／排版差異；漏行、符號誤讀或縮排錯誤造成邏輯改變，須阻止 Canonical Acceptance，例如不得把 `<=` 讀成 `<`，或把迴圈內步驟移到迴圈外。交付目標是忠實還原作者內容，不自行修補程式，也不要求原稿偽碼變成可執行程式。
+
+這是已確認的輸出及驗收要求，尚未執行程式碼重建驗證。行內片段與複雜偽碼的覆蓋、縮排保真、來源對齊，以及原稿不清楚時的處置仍需具體案例與方法驗證；不因輸出看似可執行就宣稱演算法本身正確。
+
+2026-10-13 使用者於 Q34/Q35 確認：
+
+- **Q34／F15 表單欄位與鍵值抽取延後**：使用者明確指出，論文、SOP 與公司內部文件目前暫無此需求，不採用先前「可選」建議。既有非空 provider field 結果的保存及 mapping 處置，仍留待 F20 確認。
+- **Q35／F16 指定 schema 的資訊抽取延後**：目前沒有此需求，本次不新增研究問題、貢獻、限制等指定欄位的抽取任務。已選的 F05 表格可解讀資料與 F12 圖表資料抽取，仍依各自契約交付。
+
+2026-10-13 使用者於 Q36 回覆「OK，接受」，確認 F17 範圍：
+
+- **基礎保留必含**：保留文件／來源識別，以及上游或檔案明確提供的 metadata；欄位允許缺省並保留取得來源。文件可以沒有作者等資料，不為填滿 schema 而推測；已提供的作者／日期／語言等仍保存。
+- **明確 title 辨識必含**：已有解析結果中若有明確文件主標題，須抽取並附來源；無法可靠辨識則留空，不生成一個標題。上游提供、檔案內 metadata 與頁面內容辨識的值須保留各自來源；檔名可以作顯示替代，但不得冒充已辨識的正式標題。可重用 F01/F02 的解析結果，尚未選定模型或要求另跑全文 LLM。
+- **其他廣泛內容 metadata 抽取延後**：本次不另外從內容抽取作者、日期、語言、結構化 references 等欄位；F01 已確認的原文／bibliography 全文保留持續適用。
+
+此為 metadata 的交付範圍，具體 title 辨識方法、衝突／不確定性處置及驗收案例仍待確認。文件身分沿用 [#53 已確認的 Source／Asset 規則](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5909819124)：可信來源穩定 ID 可用來辨認 Asset，缺少時由平台於明確建立時配置身分，後續更新沿用；不能用 title、檔名或 hash 自動推定同一文件。此決定不預定 #31 的 public ingest API 欄位，也不將 Asset、Source Revision 與 processing request 混為同一 ID。尚未修改 profile 或執行 title 抽取驗證。
+
+2026-10-13 使用者在釐清 digest 的用途、儲存成本與避免 overdesign 的方案後回覆「OK, 接受」，確認 Q37／F18：
+
+- **來源追溯必含**：每項結果能追查確切的 Source Revision 與原始 artifact，依實際能力記錄頁碼、區域、座標基準與相關元件參照，以及 producer、適用的模型版本與設定；區分來源原文及模型重建／解讀。只有段落位置時不能冒充精確到行內公式的位置，其他位置精度亦據實記錄。
+- **完整性資訊沿用既有機制**：來源 digest 用於核對實際讀到的內容是否符合本次處理登記的來源，並支援處理／恢復的一致性。既有 core 已使用來源 SHA-256，直接沿用；Canonical 可以藉固定 artifact／manifest 參照取得，不要求每個段落、表格或公式重複保存原 PDF digest，不另建 checksum 服務或 DB 表。此處不宣稱既有 checkpoint／attribution 全無重複，也未要求移除既有驗證。
+- **用途界線**：版本參照指定要讀哪一版，digest 核對讀到的內容；digest 不取代 Asset／Source Revision 的身分與版本管理，也不提供加密、授權或作者身分驗證。Q37 的決定不新增安全或版本管理子系統。
+
+事實核對：既有 [PDF core 來源輸入](https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/HANDOFF.md#L8) 已包含固定物件版本與 SHA-256。Docling 的完整 `document_hash` 與 Core 的 64-bit `origin.binary_hash` 不能混用；CSP checksum 也需確認算法及全檔／multipart 語意，未因此選定替代現有驗證的方法。此輪僅確認交付契約，未修改 pipeline／DB 或執行容量與效能驗證；Q38／F19 的完成、錯誤及不確定性規則仍待確認。
+
+2026-10-13 使用者明確回覆「Q39 OK 接受建議」，確認 F20 必含，並要求 spike 與進一步說明：
+
+- 保存完整 Docling JSON、schema／處理版本及可解析的影像參照，作為 provider artifact。Canonical 使用結構化內容與固定參照，不將完整 JSON 複製到每個內容項目。
+- 每類非空 provider 輸出必須明確處置：已轉入 Canonical，或原樣保留但尚未轉換／解讀；不能靜默遺失。Docling 已產生的表單欄位可原樣保留，不代表已啟用延後的 F15。
+- 已選為必含的公式、表格等仍須完成對應交付及品質要求，僅保存 provider JSON 不能視為功能完成。
+- 本輪另授權有界技術 spike，查驗序列化／回讀、影像參照、未映射欄位與 Canonical 邊界；這不等於授權在其他決策尚未完成前部署新 profile 或啟動完整模型 pilot。Q38／F19 仍待確認。
+
+Q39 有界 spike（2026-10-13）：以既有 Docling 2.102.0／Core 2.96.0 runtime 執行 10 組合成資料保存／回讀案例，未跑模型或改 production。已知 schema 的 Unicode／orig／inline formula／caption refs／合併儲存格／annotation／精度及內嵌影像可語意等值回讀；故意加入的未知頂層欄位會在 typed reload 後消失，未知 item 欄位則拒絕。另重現舊 schema 標記與越界 bbox 的正規化、無效 body ref 拒絕，以及絕對／相對影像路徑、外部 page image 在搬移或缺檔後失效但 JSON 仍可載入的限制。
+
+- 建議將首次序列化的 provider 輸出保留為固定 artifact，mapper 不覆寫；與原始 PDF、Canonical 及後續模型解讀分清來源。
+- 完整交付需連到實際影像、已產生的 conversion／group 診斷，以及獨立 OCR／enrichment 結果；不能只把 document.json 當成整個 ConversionResult。沿用既有 result／manifest refs，不新增通用 persistence framework。
+- 固定 fe1b283 程式查核發現：manage.export_result 尚未遞迴攜出 parsed-result.page_groups 的診斷；assembly 也不能當完整 group errors／confidence 聚合。這是可見覆蓋限制，未宣稱現有非空錯誤資料已發生遺失。
+- 被 Canonical 採用的 artifacts 須承接 custody，避免隨 checkpoint／暫存清理消失；不等於永久保存所有內部 tensor、cache 或臨時檔。
+- 此 spike 只支持有界序列化／參照方案；完整 mapper、fresh/restored 新功能覆蓋、真實 corpus 品質與成本仍待驗證。Q38／F19 不因本次檢查而視為已接受。
+
+原型分支：`codex/spike-q39-provider-preservation`；證據位置：`docs/prototypes/q39-provider-preservation/`（spike.py、observations.json、synthetic-document.json、demo.html、README.txt）。分支提供研究證據，未合併正式實作；#81 需在最終 delivery 契約確認後承接 mapping／完整 export 驗收，#57 承接 artifact custody。
+
+目前已確認 F01–F09、F11–F14、F18、F20 必含、F17 基礎 metadata 保留及明確 title 辨識必含而其餘內容 metadata 抽取延後、F10 可選且偏好啟用、F15/F16 延後、上述 F13 的 VLM 重建方向，以及下列全文／品質、表格、OCR、圖表資料抽取、公式與程式碼範圍／品質決定；其餘契約細節仍待確認。**F19、F21、F22 尚未選定。**
+
+2026-10-13 使用者於 Q25 確認 **F12 統計圖資料抽取必含**：將圖中的系列、座標軸、單位與數值交付為可供下游比較的結構化資料，並保留來源關聯。這與 F11 的自然語言圖意描述分開。支援圖型、明列數字／讀圖估值、估值容差及資料關聯／關鍵比較規則已依下述 Q26–Q29 確認；具體來源核對資料點、關鍵比較案例與失敗處置仍待補齊，不直接套用 F05 複雜表格的 5% 容錯。尚未選定模型／版本或執行驗證。
+
+2026-10-13 使用者於 Q26/Q27 回覆「都建議採用」，確認：
+
+- **Q26 圖表資料抽取圖型**：第一版必含長條圖、折線圖與圓餅圖。其他圖型的結構化資料抽取列為可選；原圖及 F11 圖片描述仍保留，不因該圖型的數值抽取可選就省略其他必含輸出。
+- **Q27 精確數字與估值**：原圖明列數字時，須正確抄錄並對應系列／單位；原圖未標數字時，允許依圖估值，但必須標示為約值並保留來源。估值容差已另於 Q28 確認；不能把讀圖估值冒充作者的原始精確數據。
+
+以上為已確認的輸出及品質要求；估值誤差門檻依後續 Q28，沒有把 F05 的 5% 錯誤資料點比例套用為圖表數值誤差。尚未宣稱現有模型能達標。
+
+2026-10-13 使用者於 Q28/Q29 回覆「都接受建議」，確認：
+
+- **Q28 讀圖估值容差**：長條／折線圖的每個估值對應位置，與來源核對位置相差不得超過該數值軸繪圖長度的 2%。例如線性座標軸為 0–100，容差為 ±2；對數軸依對數刻度計算。圓餅圖的每個扇區占比容差為 ±2 個百分點，例如 30% 可接受 28%–32%。原圖已印出的數字仍須依 Q27 正確抄錄，不適用估值容差。這是每個估值的偏差上限，不是容許一定比例的資料點出錯。
+- **Q29 關聯與關鍵比較**：驗收案例中的系列、單位、實驗條件不得誤配，也不得漏掉或新增應擷取的資料點。事先列定的關鍵比較必須正確；即使各估值都在容差內，若造成模型優劣反轉或混比不同設定，仍不通過驗收。
+
+上述為 pilot 驗收目標，尚未經模型實測；若達不到，需明確討論調整，不得自行放寬。具體來源核對的參考位置／占比、驗收資料點清單與關鍵比較案例仍待建立。
+
+Docling 功能事實：內建 chart extraction 屬圖片 enrichment，會先執行 picture classification，並在啟用 chart extraction 時自動啟用 classifier；[官方 Vision Models][vision] 與既有 pinned source audit [舊報告][old-report] 均記載這項依賴。F10 分類結果的可選交付地位，不代表選用此方法時能省略其內部分類步驟；方法選定與 required-work barrier 需如實處理這項依賴。
+
+2026-10-13 使用者於 Q24 回覆「OK」，確認 **F11 圖片／圖解內容理解必含**：交付自然語言描述，包含架構、流程及元件關係，連回原圖、原文 caption 與 producer，明確區分模型解讀與來源原文。具體適用圖型、描述完整性／幻覺等品質界線、失敗處置、模型與執行方法仍待確認。F12 統計圖資料抽取已於 Q25 另行確認必含，與 F11 的自然語言描述分開定義輸出及驗收。
+
+2026-10-13 使用者於 Q23 確認 **F10 圖片分類列為可選**，並表示「我應該會開起來」。記錄為預期啟用的偏好，留待 Processing Profile 設計時落實具體設定；目前未修改 profile。功能的必要程度與開關分開：F10 不列為核心必含承諾，仍須交代可選結果的缺漏／失敗；分類不能靜默跳過其他 required work。F11 圖片內容理解、F12 統計圖資料抽取已分別於 Q24/Q25 另行確認必含。若採 Docling 內建 chart enrichment，其啟用會自動啟用圖片分類作為內部依賴；這不改寫 F10 分類結果本身的可選交付決定。
+
+2026-10-13 使用者於 Q19/Q20 確認：「F08 必含；F09 必含」。
+
+- **F08 圖片內文字 OCR 必含**：對每個已辨識的圖片區域執行 OCR，交付圖內標籤、圖例、註記等文字，以及位置、信心分數與來源歸屬；無文字與處理失敗須有不同結果。圖內文字 OCR 不等於圖解含義／圖片描述，F11 已另於 Q24 確認必含。圖片漏偵測的覆蓋驗收與 OCR 品質 cases 待補齊，不以未產生圖片 item 宣告來源無圖。
+- **F09 頁面 OCR 必含**：支援掃描 PDF，以及原生文字頁與掃描頁混合的 PDF；支援目標為清晰的印刷掃描頁，交付文字與位置；語言、旋轉與品質範圍依下述 Q21/Q22。OCR engine／配置、具體品質驗收及超出支援範圍時的完成／失敗處置仍待確認。這是新增輸入支援與 required work，既有 native PDF 品質／資源／recovery 證據不能直接代用；尚未啟用 OCR、選定新模型或執行驗證。
+
+2026-10-13 使用者於 Q21/Q22 確認：「Q21 A；Q22 同意」。
+
+- **Q21 OCR 語言**：F08 圖片 OCR 與 F09 頁面 OCR 均必須支援英文、繁體中文及中英混排。簡體中文未列入本次必含承諾；不能據此宣稱實際引擎不支援。
+- **Q22 掃描品質範圍**：必含清晰印刷掃描頁，以及旋轉 90／180／270 度後仍清晰的頁面；須校正方向後辨識。本次先不承諾可靠辨識嚴重模糊、低解析、紙張彎曲及手寫內容。處理結果須明確反映這些品質限制，不能當作可靠文字交付；具體判定方法及完成／失敗處置仍待決定，尚未宣稱能自動識別全部品質問題。
+
+上述範圍仍需對應的語言、混排與旋轉掃描驗收案例。原有 20 篇／551 頁 corpus 尚未證實涵蓋這些情況，須保留原 corpus 並補足所需案例；尚未執行新的 OCR 驗證。
+
+2026-10-13 使用者於 Q17/Q18 確認：「F06 必含；F07 必含」。
+
+- **F06 可檢視來源影像必含**：全部頁面影像、圖片區域影像及表格區域影像，涵蓋全文與附錄。須能從處理結果穩定取用，並對應正確來源頁面與位置；裁圖獨立保存或由同版頁面影像生成的方式，留到設計階段決定。尚未宣稱裁圖完整性、存取／custody 與來源關聯已驗證。
+- **F07 原文圖說／表說及關聯必含**：保留原稿 caption 全文，連到其說明的圖片或表格，補齊 F04 的表格端引用關係與圖片端關係。這是來源原文；模型生成圖片描述屬 F11，已另於 Q24 確認必含。關聯不確定／失敗的具體處置與驗收 cases 待補齊。
+
+2026-10-13 使用者於 Q9 確認 **F05 表格可解讀性／實驗結果比較必含**，並明定：「必含，但有些複雜表格容許些微錯誤」。Core 交付可供比較的表格資料、model／method／metric／value／unit／conditions／header／note 關聯與來源證據，下游負責比較及形成結論。使用者於 Q10 明確選擇 **B：也容許少量實際誤讀**，包含少量數值抄錯、列欄對錯；不要求每個錯誤都能自動標出，透過來源核對量測容錯程度。不能將此選擇縮回僅允許格式差異或已標示 unknown 的局部缺損。使用者於 Q11 選擇 **A：關鍵比較案例必須正確，其餘允許有限誤讀**。關鍵比較案例須在驗收前明列；如果表格誤讀使這些案例得到錯誤結論（例如模型數值誤配而顛倒優劣，或漏掉條件註記而混比不同設定），即使總錯誤量少，仍判驗收不通過。其他複雜表格內容保留 Q10 B 的少量實際誤讀容忍；不將此決定擴為所有可能比較皆須零錯誤。使用者於 Q12 回覆「OK」，確認 **每張複雜表格的資料點錯誤率不得超過 5%**，各表分別驗收，不以跨表平均掩蓋個別表格失敗。一筆資料點包含數值及其模型／方法、指標、單位與條件對應；數值錯、關聯錯或漏抓均算該筆錯誤，同一筆不重複計數，憑空新增的資料亦計錯。分母依來源表格應有的資料點計算，不依成功輸出數計算。例：100 筆最多 5 筆錯誤、20 筆最多 1 筆、少於 20 筆須全部正確。Q11 的事先列定關鍵比較案例仍須正確，不受 5% 比例豁免。此為已選 pilot 驗收目標，未宣稱模型已達成；若後續達不到目標，需明確討論調整，不得自行放寬。使用者於 Q13/Q14 回覆「皆接受建議」，確認以下分類與一般表格品質規則：
+
+- **Q13 複雜表格**：原稿符合至少一項即可列入：(1) 多層表頭，或合併儲存格影響數值的列／欄歸屬；(2) 同一張表包含多組子表、實驗條件或不同欄位結構；(3) 單一儲存格含多個需要分別對應的數值；(4) 跨頁續表，需要接續表頭、資料或註記。在驗收前依原稿固定分類，不因模型做錯而事後改列複雜。
+- **Q14 一般表格**：其餘一般表格，驗收樣本中的資料點須全部正確；數值、關聯、缺漏與多生資料逐筆核對。5% 容錯僅適用依 Q13 分類的複雜表格。
+
+使用者於 Q15/Q16 回覆「都確認」，接受以下規則：
+
+- **Q15 跨頁續表**：必須交付為同一張邏輯表格，串起各頁片段、接續表頭與註記，保留每筆資料的原始頁面位置；按整張邏輯表格計算錯誤率，不因換頁遺失欄位歸屬或重複計入表頭。
+- **Q16 來源歧義**：經來源核對確認原稿本身確有歧義、無法確定數值歸屬或條件時，保留原始內容與來源，明示未知，該部分不供比較。來源歧義資料點另列數量與位置，不算模型錯誤，也不計入正確筆數或錯誤率分母；來源總量仍完整報告。模型判不出來本身不構成來源歧義證據；原稿清楚但模型漏抓／誤配仍計錯。關鍵比較案例若因此無法正確回答，仍不通過驗收。這是 Q12 分母規則的明確來源歧義例外，不得用來排除模型處理不好的資料。
+
+具體 source-reviewed 驗收表格、來源歧義清單與關鍵比較案例仍待確定；上述方向尚未經新的模型／pilot 驗證。這是 F05 複雜表格的特定容錯要求；Q4 已確認的 F01/F02 文字與閱讀順序品質界線維持原決定，兩者於 mapping／acceptance 的適用邊界需明列。依最終確認的容錯契約，#82 Stage B 的既有失敗案例與獨立案例驗證須成為本次 delivery 必須通過的驗收；後續同步修改 #81 原先全部 table observations 保持 uninterpreted 的規格，並明列取代 #72 的相關限制，保留歷史品質證據。目前未宣稱現有輸出已達成 F05。
+
+2026-10-13 使用者於 Q8 確認 **F04 表格內容與結構必含**，涵蓋全文與附錄中的表格。交付表格區域與來源位置、儲存格文字、列／欄位置、合併儲存格與跨列／跨欄範圍、表頭，以及表說／註記的引用關係。F05 已另於 Q9 確認必含；品質、容錯分類、關鍵比較、跨頁續表與來源歧義依 Q10–Q16 決定，具體驗收 cases 仍待補齊。現有 table output 尚未因此取得品質通過判定。
+
+2026-10-13 使用者於 Q6 確認 **F03 章節層級必含**：交付章節 depth／父子層級，供章節導航與內容脈絡使用，附錄也適用。於 Q7 回覆「允許」，確認採用下列未知層級處置與驗收界線：
+
+- 經來源核對，原稿本身確實無法確定層級：保留標題、順序與來源位置，明示未知關係；可帶著這項明確限制通過驗收。
+- 原稿層級清楚，但處理結果漏掉、判錯或掛錯父章節：阻止 Canonical Acceptance，須修正。
+- 尚未釐清是來源模糊還是處理錯誤：先不通過驗收，待來源核對。
+
+F03 必含要求交付有依據的章節結構與上述明確不確定性處置；不能僅憑模型判不出來，就認定來源本身模糊，也不得補造正確層級。具體 package version、整合方法與 source-reviewed 驗收 cases 仍待確定。
+
+2026-10-13 使用者確認：「Q3 全文；Q4 同意」。
+
+- **Q3 全文覆蓋**：正文、註腳、參考文獻與附錄全部納入。F01/F02 保留這些區域的文字、閱讀順序與結構；F13/F14 不因公式或程式碼位於附錄而跳過。下游可按用途選用內容，core 不先省略附錄或參考文獻。這項決定不自動啟用尚待確認的 F09 掃描 OCR，也不替代各功能的詳細輸出與驗收契約。
+- **Q4 F01/F02 品質界線**：可接受不改變意思與內容歸屬的空白、換行、字型差異；正確合併排版造成的斷行及跨欄／跨頁延續；頁首頁尾與正文分開保留。漏掉必要內容、重複內容、串錯段落，改變否定／條件／數值／單位／對象，或頁首頁尾混入正文、清單從屬錯誤造成誤讀，均阻止完整候選的 Canonical Acceptance，不能只加 warning 放行。必要處理未完成與處理完成但品質不合格分開記錄；Processing Completion、Canonical Acceptance 與 publication 仍分離。本次未設定任意通過率，也未宣稱自動偵測所有錯誤或 pilot 已通過。
+
+可選：`必含`（適用時屬 required work）、`可選`（結果與缺漏可辨識，不構成必含承諾）、`延後`。若選必含，還要固定適用文件／區域與品質要求；空集合不代表來源真的沒有該內容。
+
+「現況」指既有已發布 selected profile／#70 與 #72 的證據，不等於完整 pilot 已通過。特別把「留住原始內容」與「模型產生解讀」拆開，讓兩者可分別決定。
+
+| ID | 功能與可交付輸出 | 既有現況／限制 | 本次決定 |
+|---|---|---|---|
+| F01 | 原生文字：段落、標題、清單、註腳、bibliography 等已辨識內容，保留原文／`orig`、標籤與 Unicode 文字 | 已有 native extraction；語意、遺漏和條件／否定仍需來源檢查。[表示][document] | **必含；全文覆蓋，採 Q4 品質界線**（2026-10-13 使用者確認；細部輸出／驗收 cases 待補齊） |
+| F02 | Layout、閱讀順序與結構：body／furniture、群組、parent/child、順序與跨欄延續 | 已有 selected order／continuation；官方新 separator 選項是另一個方法變更，不能視為等價。[Advanced][advanced] | **必含；全文覆蓋，採 Q4 品質界線**（2026-10-13 使用者確認；細部輸出／驗收 cases 待補齊） |
+| F03 | PDF 章節層級：heading depth、可用於章節導航的層次 | 舊 profile 沒有 heading recovery；現行功能可用書籤、編號、字型樣式，需記錄依據與未知層級。stage 本身不需新模型；style 依賴 parsed pages。[Heading][headings] | **必含；全文含附錄；依 Q7 允許經來源核對確認的未知層級**（2026-10-13 使用者確認；判錯或原因未明不通過；選版／驗收 cases 待確定） |
+| F04 | 表格觀察與結構：表格區域、儲存格文字、列／欄位置、合併 spans、已辨識 headers、caption／footnote refs | TableFormer 已開啟；目前仍有錯誤關聯。保留結構不等於可據以比較結果。[Model catalog][catalog]、[#77](https://github.com/davidlinnnn/data-ingestion/issues/77) | **必含；全文含附錄的表格內容、結構與來源關聯**（2026-10-13 使用者於 Q8 確認；跨頁依 Q15 串為同一邏輯表；品質／歧義依 Q9–Q16；驗收 cases 待補齊） |
+| F05 | 表格可解讀性與用途：model／metric／value／conditions／note 對應，是否支援實驗結果比較 | 這是品質／用途承諾，不是 Docling 單一開關。#72 目前不承諾一般 table-dependent analysis；若本次納入，#82 的相應驗證須成為 delivery gate。跨頁表格不能假定已可靠合併。 | **必含；複雜表格允許少量實際數值／列欄誤讀（Q10 B）**（不要求逐錯自動標出；Q11 A：事先列定的關鍵比較案例必須正確；Q12–Q14：依原稿預先分類，每張複雜表格資料點錯誤率 ≤5%，一般表格驗收資料點全對，含漏抓／多生；Q15 按跨頁邏輯表計量，Q16 來源歧義另列且排除分母，#82 Stage B 納入本次驗收） |
+| F06 | 原始圖與檢視 evidence：page images、picture crops，以及需要時的 table crops | page／picture 已保留；table crop 可由 page image＋region 取得，不等於已有獨立持久化 table artifact。image refs 要可解析並交接 custody。[Advanced][advanced]、[舊報告][old-report] | **必含：全部頁面、圖片區域與表格區域影像可穩定取用並對應來源**（Q17；裁圖保存／生成方式及驗收待定） |
+| F07 | 原文圖說／表說與關聯：caption 文字、它指向的 picture／table | 有辨識／關聯輸出時保留；不得把生成描述當成原文 caption。[表示][document]、[舊報告][old-report] | **必含：原文 caption 全文與正確圖／表關聯**（Q18；與 Q24 已確認的 F11 生成描述分開保留，失敗處置／驗收待補齊） |
+| F08 | 圖片內文字 OCR：component text、boxes、scores、crop 與來源歸屬、無文字／失敗等結果 | 既有 core 在 Docling 後以獨立 RapidOCR 處理每個 emitted PictureItem，屬必需階段；不是 figure understanding，也不能證明所有來源圖片都被偵測。[profile][profile] | **必含：每個已辨識圖片區域 OCR，含文字／位置／分數／來源及無文字／失敗結果**（Q19；Q21：英文／繁體中文／中英混排；覆蓋與品質驗收待定） |
+| F09 | 頁面／掃描 OCR：掃描 PDF 或混合頁的文字、位置、OCR engine／語言／來源標記 | 現有 native profile 的 page OCR 關閉。不同 OCR engine、全文強制 OCR 和語言支援要另選與測試。[Advanced][advanced]、[catalog][catalog] | **必含：掃描及原生文字／掃描頁混合 PDF；英文／繁體中文／中英混排；清晰印刷掃描頁含旋轉 90／180／270 度後仍清晰的頁面**（Q20–Q22；校正方向後辨識；嚴重模糊／低解析／紙張彎曲／手寫不承諾可靠辨識，須明示品質限制；方法與驗收待定） |
+| F10 | 圖片分類：chart／diagram／photo 等類別與 score | 官方有、目前未開啟。可作分類資訊或 enrichment 路由，但分類錯誤不能靜默造成內容遺漏。[Enrichment][enrichments] | **可選；使用者偏好在本次 profile 啟用**（Q23；「應該會開起來」為設定方向，尚未實際啟用；不列為核心必含，缺漏／失敗仍須明示） |
+| F11 | 圖片／圖解描述：自然語言 description，連回 crop、原文 caption 與 producer | 官方有、目前未開啟；local／remote 是執行選擇。屬模型解讀，不能標成來源原文或已驗證事實。[Enrichment][enrichments] | **必含：圖片／圖解內容理解與自然語言描述，包含架構、流程及元件關係，明確標為模型解讀**（Q24；連回原圖／caption／producer；具體適用圖型、品質／失敗處置及方法待定） |
+| F12 | Chart 資料抽取：series／axis／unit／value 等 tabular chart data；可用版本另有 summary／code 選項 | 官方 chart enrichment、現有 profile 關閉；啟用內建 chart extraction 會自動啟用 picture classification。圖表描述不等於數值抽取；需查選定版本與數值／單位 oracle。chart-to-code 不是來源程式碼。[Vision][vision]、[舊報告][old-report] | **必含：將統計圖轉成可供下游比較的結構化資料，含系列／座標軸／單位／數值與來源關聯**（Q25–Q29：長條／折線／圓餅圖必含，其他圖型抽取可選；明列數字須正確抄錄；估值標示約值與來源，長條／折線每點位置差 ≤ 數值軸繪圖長度 2%，圓餅每扇區占比 ±2 個百分點；驗收案例不得誤配系列／單位／條件或漏抓／多生，事先列定關鍵比較須正確；具體案例／失敗處置及模型／版本待定） |
+| F13 | 公式：保留辨識到的公式區域／原文，以及是否再重建 LaTeX | 原始 observation 與 formula enrichment 分別決定；enrichment 未開啟，字元輸出可合法但數學意思錯誤。[Enrichment][enrichments] | **必含：獨立公式（含多行／矩陣）與段落內公式均重建 LaTeX，全文含附錄；依 Q31 分開保存來源／重建、忠於原稿，必要公式漏抓或數學語意錯誤阻止 Canonical Acceptance**（Q30/Q31；既有 PDF＋公式區域 VLM 為已選起點；行內公式候選比較後再選方法，模型／engine 及具體驗收案例待定） |
+| F14 | 程式碼／演算法：保留區域與原始內容，以及是否重建縮排、語言、code text | 既有 native／source relationships 有界；code enrichment 未開啟。重建文字不保證可執行或演算法正確。[Enrichment][enrichments]、[舊報告][old-report] | **必含：程式碼區塊、演算法／偽碼及行內短程式片段皆須重建；保留換行／縮排／註解／符號，語言有據則標示、否則未知；來源與重建分開保存**（Q32/Q33；全文含附錄；原稿清楚時須忠實保留內容及區塊邏輯，漏行／符號誤讀／縮排錯誤造成邏輯改變阻止 Canonical Acceptance；不自行修補或要求偽碼可執行；模型／方法及具體案例待定） |
+| F15 | 表單／key-value／field collections：已產生的字段、值與 region 關聯 | Core schema 能表示不等於 selected PDF pipeline 會產生。#70 發現 `field_regions`／`field_items` 的比較覆蓋缺口；沒有證明現有非空輸出已丟失。[舊報告][old-report] | **延後**（Q34；使用者確認目前論文、SOP 與公司內部文件暫無表單／鍵值抽取需求；既有非空 provider field 結果的保留／mapping 處置仍由 F20 另確認） |
+| F16 | Schema-driven information extraction：指定 schema 的 reusable facts | 獨立 DocumentExtractor 功能，不是一般 conversion 自動產物；需指定 schema、原始回應、來源精度與驗證。與 F15 不同。[官方範例][extraction] | **延後**（Q35；使用者確認目前沒有指定 schema 資訊抽取需求） |
+| F17 | 文件 metadata：來源／文件標識與已有 metadata；是否另外抽取 title／authors／references／language 等 | 容器存在不代表通用自動抽取已可靠。已給定／來源直接取得的 metadata 與模型推論值分開；新增自動抽取另需確認選定版本能力。[舊報告][old-report] | **必含：文件／來源識別、上游或檔案已有 metadata 的保留，以及從已解析內容辨識明確文件主標題；其餘廣泛內容 metadata 抽取延後**（Q36；欄位允許缺省、保留取得來源；無法可靠辨識 title 則留空，不生成標題、不把檔名冒充正式標題；作者／日期／語言／結構化 references 等額外內容抽取延後；方法與具體驗收待定） |
+| F18 | Source Evidence／lineage：Source Revision、原始檔 digest、page／bbox／coordinate origin、component refs、producer／model／configuration | 既有 processing attribution 可重用；完整 Canonical mapping／custody 仍待整合。不存在的細粒度位置不得補造。[表示][document]、#81 | **必含：結果可追溯到確切來源版本／artifact、據實的頁面／區域／元件位置及 producer／適用模型與設定；來源原文與重建／解讀分開**（Q37；沿用既有完整性資訊與 SHA-256，Canonical 可藉固定參照連回，不要求逐內容項目複製原 PDF digest；不另建 checksum 服務或 DB 表；mapping／custody 及實際追溯驗收仍待整合） |
+| F19 | 覆蓋、錯誤與不確定性：missing／unsupported／not attempted／failed／no text，confidence、conversion diagnostics | confidence 不是 Canonical Acceptance；官方目前仍標記 `table_score` 未實作，不能直接拿來當表格品質門檻。[Confidence][confidence] | 待確認 |
+| F20 | 完整 provider 結果與 Canonical mapping：Docling JSON、schema/version、所有非空 collections／extensions 的處置 | JSON 是 provider artifact；mapping 需處置所有非空內容，包含特定模型的 inline formatting／links／rich cells／explicit metadata，不能推成通用理解能力。另檢查 JSON 再匯入的 local image refs。[Vision][vision]、[Advanced][advanced]、#81 | **必含：完整 provider 結果、schema／處理版本與可解析影像參照保存為 artifact；Canonical 使用結構化內容及固定參照**（Q39；每類非空輸出明示已映射，或原樣保留但尚未轉換／解讀；既有表單輸出可保留而不啟用 F15；必含公式／表格等不能只保存 JSON 就算交付；不逐項複製完整 JSON；已授權有界保存／回讀 spike，尚非實作或 pilot 驗收通過） |
+| F21 | 可閱讀／交換輸出：Markdown、HTML、text、DocTags 等需要的格式 | 目前已有 JSON／Markdown；其他格式逐項選用途。flattening 不得抹掉 source／derived／uninterpreted 區別。格式支援依 selected release。[Formats][formats] | 待確認 |
+| F22 | Chunking／tokenization／Retrieval-ready fragments | Docling 生態已有能力，但在平台中屬 Materialization／Projection 選擇；若 pilot 需要，也要與 Canonical representation 分開。[舊報告][old-report]、#55 | 待確認 |
+
+## B. 同樣讀過，但須另作處理方法／運行範圍決定
+
+以下不是額外的文件語意輸出。選了 F01–F22，也不代表必須同時採用這些工具。
+
+| 範疇 | 官方 Usage 涵蓋內容 | 對本次決定的意義 |
+|---|---|---|
+| PDF pipeline | Standard pipeline；NativePdfPipeline；整頁 VLM conversion | 官方 NativePdfPipeline 只用原生 cell／bitmap，沒有 layout／OCR／table models；它與本 repo 名為 selected-native-v1、實際使用 layout＋TableFormer 的方法不同。VLM 是替代方法，不是免費疊加的 enrichment。[Advanced][advanced]、[Vision][vision] |
+| Models／engines／硬體 | layout、OCR、TableFormer／其他 table method、classifier、code/formula、description、VLM；CPU／CUDA／MPS／XPU、Transformers／MLX／API／vLLM 等組合 | 按選定輸出挑一個可交付方法；不同 preset 的 DocTags／Markdown／region 支援不等價。型錄有 WIP，不能當已可用。[catalog][catalog]、[GPU][gpu] |
+| 執行控制 | input limits／page range、batch／threads／accelerator、timeouts、partial results／errors、progress、模型預下載與 offline、plugins、remote opt-in | 需要固定實際 configuration。page progress 完成可能仍在 assembly／enrichment，不可替代 required-work completion。[Advanced][advanced] |
+| 遠端推論與服務 | stage API、自架／私有 endpoint、docling-serve sync／async、polling／WebSocket、source／target、auth／deployment、managed service | 先區分 offload 單一 stage 與 whole-document service；Docling 能遠端不代表所有 stage 同一 protocol，或無本地前處理。REST 文檔標記同步自 serve v1.21.0，不能覆寫 #70 對 v1.36.0 的 versioned audit。[API][api]、[REST][rest]、[Deploy][deployment]、[Managed][managed] |
+| MCP／Agent skills／Jobkit | Agent tool access／工作流程指引；job 執行與來源／輸出 connector | 屬於整合工具；不把它們算成新增 PDF feature，也不因讀到 Jobkit 就替換既有 Temporal。[MCP][mcp]、[Skills][skills]、[Jobkit][jobkit] |
+| 非 PDF input | Office／Markdown／HTML／CSV／images／XML 等文件族；audio transcription、diarization／timestamps、video audio＋frames 等 | 全部列入 survey 廣度；PDF-first pilot 是否擴充格式另決定，不能從 upstream 格式列表推成 worker 已支援。[Formats][formats]、[Audio/video][av] |
+
+## C. 與先前結論相比，這次補齊／重開什麼
+
+1. **把 Usage 的閱讀範圍變成逐頁可核對清單**，不再只用一組 enrichment 名稱代表完整廣度。補清 NativePdfPipeline、JSON reimport 的 image refs、progress 語意、Agent skills／Jobkit／managed service，以及 audio/video 範圍。
+2. **避免錯誤合併能力**：page OCR ≠ picture OCR；caption ≠ generated description；heading detection ≠ hierarchy；table extraction ≠ table-dependent analysis；native code/formula observation ≠ VLM reconstruction；schema extraction ≠ 保留 form fields。
+3. **新增文件發現不都等於新 release 功能**。本次不宣稱這些能力都是 #70 以後新增；#70 已涵蓋多數 PDF 核心能力。moving docs、tagged source 和實際測試各自標示。
+4. **重開功能選擇**：#70 的 retain／defer 建議與 #72 的 restricted-use 結論不作為這次自動排除條件。F05/F11/F12/F13/F14 若被選成必含，要明確改寫 #72 與 #80–#83 的相關範圍；F03 亦需新增 hierarchy 的輸出／驗證約定。
+5. **保留歷史品質證據**：既有表格／公式／圖像失敗案例仍是新方法需面對的 regression cases；沒有因官方存在某功能就推翻實測限制。沒有重跑新模型、遠端 endpoint 或完整 pilot。
+
+## D. 逐項確認方式與結案條件
+
+先逐項填 F01–F22 的 `必含／可選／延後`；F13 已確認獨立／行內公式皆須 LaTeX 重建；F14 已確認程式碼／偽碼／行內片段的文字與結構重建要求。F04/F05 分開決定「保留表格」與「允許哪些表格用途」。再為每個選定項目補齊：
+
+| 要決定的欄位 | 例子／原則 |
+|---|---|
+| 適用範圍 | 全文、所有 emitted PictureItem、特定可執行規則選出的區域；語言與 scan/mixed/native。規則須版本化，不假設存在萬能品質 detector。 |
+| 輸出契約 | typed field／關聯／artifact，source 或 derived，evidence precision，以及 producer／model／config。 |
+| 完成與失敗 | required stage 缺失／失敗不能 empty success；optional 不可用需明示。Processing Completion、完整候選的 Canonical Acceptance、publication 分開。 |
+| 品質與驗收 | 固定 source-reviewed cases、可容忍的錯誤與不可丟失的必要意思；表格看 cell／header／span／note 關聯，公式看符號語意，圖片描述看幻覺／遺漏。此票未自行發明通過率。 |
+| Pilot 與資源 | 現行 20 papers／551 pages、64-page DGM，以及 ordinary-update／initial-batch targets 是起點；新增模型若不符合原 CPU／RAM／latency，列出具體 trade-off 由使用者決定，不能默默刪功能或放寬預算。 |
+| 影響驗證 | 新增功能 fresh vs restored 的保留、required-work barrier、method change／reuse／retry、同 runtime 的品質／資源與完整 consumer handoff。重用未受影響的既有證據。 |
+
+- [ ] 使用者逐項確認 F01–F22，並記錄第一版支援用途及排除項目。
+- [ ] 產出一份第一版 delivery matrix：feature → output/evidence → applicable/required → failure → acceptance cases。
+- [ ] 選定需要的 package／model／engine／configuration identities；未知可行性列為明確驗證工作，不能寫成已交付。
+- [ ] 明列取代 #72 哪些 scope 決定，哪些仍保留；同步 #54／#55 的相關需求。
+- [ ] 更新既有 #80（core）、#81（mapping）、#82（table gate）、#83（pilot validation），不另開一批重複實作票。
+- [ ] 確認實作與資格驗證工作可依此執行，才關閉本決策票；本票關閉本身不代表 pilot 已通過。
+
+目前已記錄 F01–F09、F11–F14 必含決定、Q39 F20 完整 provider artifact 保留與明確 Canonical mapping 處置必含、Q37 F18 來源追溯必含及沿用既有 digest／固定參照的最小承接、Q23 F10 可選且偏好啟用、Q34/Q35 F15/F16 延後、Q36 F17 基礎 metadata 保留與明確 title 辨識必含而其餘廣泛內容 metadata 抽取延後、F13 的既有 PDF 流程＋公式區域 VLM 重建方向及行內公式候選比較安排、Q3 全文覆蓋、Q4 F01/F02 品質界線、Q7 F03 未知層級處置及 Q9–Q16 F04/F05 表格分類與品質門檻、關鍵比較必須正確、跨頁邏輯表及來源歧義處置，以及 Q21/Q22 OCR 語言、旋轉與掃描品質範圍、Q26–Q29 圖表抽取圖型、精確值／估值容差、資料關聯及關鍵比較規則，以及 Q30/Q31 公式範圍、來源保存與數學語意品質要求、Q32/Q33 程式碼／偽碼／行內片段重建深度及邏輯保真要求，其餘決策仍在進行。尚未修改 #72 的歷史結論、#80–#83 的有效規格或 production profile。
+
+## 已完整閱讀的官方 Usage 範圍
+
+2026-10-13 依網站實際 Usage navigation：**15/15 頁正文已讀，沒有讀取受阻頁**。範圍是 Usage 與 API server 子頁；沒有宣稱遍讀所有 Examples／Integrations／Reference 外連。另補查與輸出契約直接相關的表示、confidence 與 extraction 頁，並比較 #70 報告。
+
+1. [Advanced options][advanced]
+2. [Supported formats][formats]
+3. [Audio & video][av]
+4. [Enrichment features][enrichments]
+5. [PDF heading levels][headings]
+6. [Vision models][vision]
+7. [Model catalog][catalog]
+8. [GPU support][gpu]
+9. [MCP server][mcp]
+10. [Agent skills][skills]
+11. [Jobkit][jobkit]
+12. [API server][api]
+13. [API server — Deployment][deployment]
+14. [API server — REST API][rest]
+15. [API server — Managed service][managed]
+
+[old-report]: https://github.com/davidlinnnn/data-ingestion/blob/47b363781448cc72d6cb12df2b76927c101c2e23/docs/research/docling-capabilities-vs-pdf-core-2026-10-02.md
+[profile]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/profiles/selected-native-v1.json
+[advanced]: https://docling-project.github.io/docling/usage/advanced_options/
+[formats]: https://docling-project.github.io/docling/usage/supported_formats/
+[av]: https://docling-project.github.io/docling/usage/processing_audio_media/
+[enrichments]: https://docling-project.github.io/docling/usage/enrichments/
+[headings]: https://docling-project.github.io/docling/usage/heading_levels/
+[vision]: https://docling-project.github.io/docling/usage/vision_models/
+[catalog]: https://docling-project.github.io/docling/usage/model_catalog/
+[gpu]: https://docling-project.github.io/docling/usage/gpu/
+[mcp]: https://docling-project.github.io/docling/usage/mcp/
+[skills]: https://docling-project.github.io/docling/usage/agent_skills/
+[jobkit]: https://docling-project.github.io/docling/usage/jobkit/
+[api]: https://docling-project.github.io/docling/usage/api_server/
+[deployment]: https://docling-project.github.io/docling/usage/api_server/deployment/
+[rest]: https://docling-project.github.io/docling/usage/api_server/rest_api/
+[managed]: https://docling-project.github.io/docling/usage/api_server/managed/
+[document]: https://docling-project.github.io/docling/concepts/docling_document/
+[confidence]: https://docling-project.github.io/docling/concepts/confidence_scores/
+[extraction]: https://docling-project.github.io/docling/_generated/examples/extraction/
+
+
+
