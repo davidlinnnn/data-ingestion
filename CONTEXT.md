@@ -56,6 +56,13 @@ particular source version or observation point. Its identity alone does not esta
 its order relative to other observations.
 _Avoid_: current source state, processing request
 
+**Batch**:
+A group of document submissions tracked together through aggregate progress and
+per-item outcomes. Each item retains its own source identity, governance
+relationships and result. Grouping does not determine Corpus membership or grant
+access.
+_Avoid_: Corpus, Resource, parser execution group
+
 **Capture Package**:
 The finite set of captured source artifacts comprising a main document and its
 explicitly declared dependencies required for interpretation. Attachment identity

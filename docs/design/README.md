@@ -92,6 +92,12 @@ design owners. Targets may be revised and revalidated for production; confirmed 
 governance contracts retain their authority. This is design confirmation, not measured
 platform capability or implementation readiness.
 
+[Knowledge Platform admission design notes](knowledge-platform-admission.md)
+record the reaffirmed direct-upload direction and Valet Key principle for future
+architecture documentation. Read these when designing upload authorization,
+finalization or admission AA; storage and grant mechanisms remain open in the
+admission decision.
+
 ## Earlier direction and candidate history
 
 The [HLD](../../HLD.md) and [Architecture Baseline](../../ARCHITECTURE-BASELINE.md)
