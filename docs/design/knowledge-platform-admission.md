@@ -179,9 +179,12 @@ Each item is checked in order:
   R's maintainer removes them, and reads follow current policy.
 - Multiple audiences in v1: for a union, the Source creates one Resource whose
   readers cover both audiences; for an intersection, a Resource representing the
-  intersection; for appearing in several knowledge scopes, Corpus membership
-  rather than binding. Uploading the same document twice is discouraged; if used,
-  the copies are distinct Assets managed independently.
+  intersection. Appearing in several knowledge scopes is not supported in v1,
+  because a projection's knowledge scope corresponds to one Resource
+  ([ADR-0007](../adr/0007-derived-product-readers-within-input-intersection.md);
+  revised on 2026-10-20 from the earlier Corpus-membership suggestion). Uploading
+  the same document twice is discouraged; if used, the copies are distinct Assets
+  managed independently.
 
 ### Authorization availability and error visibility (Q3.6, Q3.7, Q3.7a)
 
@@ -284,8 +287,10 @@ platform-verified digest as the artifact's integrity information.
 - If every artifact digest of an Asset's package equals the currently admitted
   version, the item result is `unchanged`: no new Source Revision and no
   reprocessing, counted as success in Batch aggregates. A changed attachment
-  creates a new Source Revision; equal bytes in another Asset are not merged;
-  method-only reprocessing is outside submission.
+  creates a new Source Revision; equal bytes in another Asset are not merged.
+  Intentional reprocessing is not a resubmission; it uses the explicit reprocess
+  command with a new request ID (corrected in round 3; see accepted constraints 5
+  and 6 of #31).
 
 ### Version ordering (Q6b, Q6c)
 
@@ -338,10 +343,44 @@ platform-verified digest as the artifact's integrity information.
   #55; #31 owns only the correlation from requests to downstream processing and
   publication outcomes. NATS is not part of #31.
 
-### Still open
+Round 3 below covers status, readiness and knowledge profiles.
 
-- Status definitions and the unified status query, including correlation IDs
-  across request, processing, Canonical Acceptance and projection publication.
+## Admission decisions in progress on 2026-10-20 (round 3)
+
+### Confirmed
+
+- **Item status (Q8.1):** `rejected`, `expired`, `unchanged`, `queued`,
+  `processing`, `succeeded` and `failed`. `succeeded` means processing completed,
+  not Canonical Acceptance. Sessions are `open`, `finalized` or `expired`; Batches
+  report counts per status. Terminal states are retained for 30 days.
+- **Knowledge profile (Q8.2a):** a Source selects which projection pipelines run
+  for its documents (for example Retrieval and LLM-wiki, not the knowledge graph)
+  and its canonical processing profile. Selected pipelines consume all accepted
+  canonical data of that Source; grouping (corpus or bundle) is pipeline-internal.
+  The profile is resolved and recorded at admission; a later profile change
+  affects new admissions, and existing documents adopt it through reprocessing.
+  Required tracks for readiness are the selected pipelines; other pipelines that
+  process the document are shown but do not affect readiness. The catalog of
+  selectable pipelines belongs to #55 and the pipeline owners.
+- **Derived product readers:** recorded as
+  [ADR-0007](../adr/0007-derived-product-readers-within-input-intersection.md).
+  Precomputed products are materialized within one Resource in v1; cross-Resource
+  synthesis has no short-term requirement and will be evaluated, with a migration
+  design, if it arises.
+- **Corpus:** whether the platform keeps a Corpus entity distinct from Resource
+  moves to #55, with the preliminary recommendation that a Resource serves as the
+  Corpus in v1 while Materialization Input Snapshots remain.
+
+### Under discussion
+
+- Independent tracks per pipeline plus a derived context-readiness state
+  (`withdrawn`, `blocked`, `unknown`, `not_ready`, `ready_stale`, `ready`).
+- The status reporting contract (registered pipelines, owner-defined stages with
+  English labels, standardized serving facts, sequence, staleness) and an
+  AIP-193-style error block for incident reporting.
+- Query entry points (`request_id`, `asset_id`, platform `asset_key`,
+  `resource_id`), correlation IDs, visibility for Sources and end users, phasing,
+  the reprocess command, and glossary entries.
 - Exact routes and field names.
 
 ## Principle for later architecture documentation
