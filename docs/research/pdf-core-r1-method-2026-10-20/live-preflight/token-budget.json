@@ -1,0 +1,1816 @@
+{
+  "model": "gpt-6.1-sol",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "job_count": 43,
+  "tokenizer": {
+    "library_version": "0.14.0",
+    "encoding_used_for_proxy": "o200k_base",
+    "installed_model_mapping": null,
+    "official_model_mapping_verified": false,
+    "reason": "Retained tiktoken has no gpt-6.1-sol mapping; official sources fetched do not specify its encoding."
+  },
+  "image_rule_verified": false,
+  "image_rule_reason": "Official vision sizing/multiplier tables and calculator text omit gpt-6.1-sol; do not substitute Astra or GPT-5 rules.",
+  "totals": {
+    "text_tokens_o200k_base_PROXY": 189438,
+    "input_tokens_estimate": null,
+    "official_image_tokens_estimate": null,
+    "completion_cap": 475136,
+    "request_bytes": 39739703,
+    "input_capacity_ceiling_NOT_estimate": 39646000,
+    "cost_estimate_USD": null,
+    "output_only_ceiling_at_short_context_USD": "4.75136",
+    "capacity_cost_ceiling_USD_including_cache_write": "205.35704"
+  },
+  "pricing_basis": {
+    "input_per_million_USD": 2,
+    "output_per_million_USD": 10,
+    "cache_write_per_million_USD": 2.5,
+    "long_input_threshold": 272000,
+    "long_input_multiplier": 2,
+    "long_output_multiplier": 1.5,
+    "tier": "Standard; no fast, regional premium, tools or cache savings assumed",
+    "capacity_ceiling_explanation": "At most 922000 input/job, all charged as long-context cache writes ($5/M), output at $15/M; finite API-capacity bound, not a practical estimate or approved budget."
+  },
+  "largest_five_by_text_PROXY": [
+    {
+      "job_id": "ce6064e5aa72a2a83d006e5d308cc245fcde553a3c208d9d095ca6cc87713df2",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/seal/document.json",
+      "physical_pages": [
+        2,
+        3,
+        4
+      ],
+      "request_sha256": "efbdcff8c922a898696bb2844e44b9f702524fe4b43b60fca36a0b9cd10d1019",
+      "request_bytes": 2021455,
+      "text_UTF8_bytes": 47456,
+      "text_tokens_o200k_base_PROXY": 16869,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ],
+        [
+          1224,
+          1584
+        ],
+        [
+          1224,
+          1584
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 807,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c613789b3a89756465d018b5709b75ae670d6c9ce2dd221a13fa38e9e09693d3",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        10,
+        11,
+        12
+      ],
+      "request_sha256": "2e5607085fa1dbfde6f13f63e2e47ba61a58bc8dc13098d10d13fa96f86f42ef",
+      "request_bytes": 2771681,
+      "text_UTF8_bytes": 43470,
+      "text_tokens_o200k_base_PROXY": 15728,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 795,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "d3e2dd02ca917ff0fd5fe0c51b7d1c8931b98e5efc298be36d1ad739a6e7b66e",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC13-p09-09/document.json",
+      "physical_pages": [
+        9
+      ],
+      "request_sha256": "4e80213185ea534440802a269af0426c1f0ebe0d8fc944d63f40b3690bec372d",
+      "request_bytes": 1005825,
+      "text_UTF8_bytes": 37976,
+      "text_tokens_o200k_base_PROXY": 14721,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 833,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "b14b461006b8458a873d4430eaef812e8add796e429f09b9ed00da3a2db64683",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC06-p08-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "a7082007acff5aad55ecd20cb6bb55692658051c580096bb911d8f4c37a76d63",
+      "request_bytes": 1014983,
+      "text_UTF8_bytes": 34548,
+      "text_tokens_o200k_base_PROXY": 13374,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 789,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "ecaf1dce6d1a4a80256918cb0ce36f0917a9098e13ebfce6f86fd2f72e6bd2cf",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC04-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "168353c77da5376000baf880522b01287a499e77cf8370d1609c56d3341a22ae",
+      "request_bytes": 1247217,
+      "text_UTF8_bytes": 29834,
+      "text_tokens_o200k_base_PROXY": 11564,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 687,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    }
+  ],
+  "jobs": [
+    {
+      "job_id": "667311d9197361ae1592ddf84b6d3f4eea3d8eafd89b8f180c52600325263b59",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/wikiskill/document.json",
+      "physical_pages": [
+        20,
+        21,
+        22
+      ],
+      "request_sha256": "e829bbb5da422435c03144b25ef17ae9272c93150d9bc5c990a7f0219dd1d9d5",
+      "request_bytes": 1742409,
+      "text_UTF8_bytes": 22110,
+      "text_tokens_o200k_base_PROXY": 6981,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 353,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "011f5efe02475c8c9a3ab6d1b6681d69a41eff5b0085ad33f37aff61f35a6a46",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/dgm/document.json",
+      "physical_pages": [
+        51
+      ],
+      "request_sha256": "6ff1a2f4e736d612a4ce10bb8a43092e0fbe063493826eb75a22759b9b15927e",
+      "request_bytes": 458410,
+      "text_UTF8_bytes": 9409,
+      "text_tokens_o200k_base_PROXY": 2839,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 240,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "ce6064e5aa72a2a83d006e5d308cc245fcde553a3c208d9d095ca6cc87713df2",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/seal/document.json",
+      "physical_pages": [
+        2,
+        3,
+        4
+      ],
+      "request_sha256": "efbdcff8c922a898696bb2844e44b9f702524fe4b43b60fca36a0b9cd10d1019",
+      "request_bytes": 2021455,
+      "text_UTF8_bytes": 47456,
+      "text_tokens_o200k_base_PROXY": 16869,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ],
+        [
+          1224,
+          1584
+        ],
+        [
+          1224,
+          1584
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 807,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "f44871c045c3f1d63969ddf331588ff6b4f26c3034eeab669f136c4242c4d9d3",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/controls/document.json",
+      "physical_pages": [
+        1
+      ],
+      "request_sha256": "611cc8e351973dcb487bcf929bf673703aba9b5230e462358c56c7b22ef9eba8",
+      "request_bytes": 164816,
+      "text_UTF8_bytes": 8893,
+      "text_tokens_o200k_base_PROXY": 3278,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 300,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "31cbb27295655cd002f0d62ea945d9410d711ff3fedd88d3267369876b4f1525",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/nccu/document.json",
+      "physical_pages": [
+        3
+      ],
+      "request_sha256": "97128f21fc07d1f291f428f68d6bc453b596d3a2e78fe5e304585e07636c64aa",
+      "request_bytes": 560431,
+      "text_UTF8_bytes": 21394,
+      "text_tokens_o200k_base_PROXY": 8398,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 532,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "d86ea4e52fbf1db4fe6f4731d012c3b6fd65623171af19a7014dc21420e684f7",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        1
+      ],
+      "request_sha256": "9b7250ee2d6950c166140534ab349d8b7d42ce12bbcd060a08013fd945d22f74",
+      "request_bytes": 759319,
+      "text_UTF8_bytes": 14326,
+      "text_tokens_o200k_base_PROXY": 5082,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 374,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "256265218126502fc35815603120d9e2262353e752b05e69d7f4f5b0e07c3418",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        4,
+        5
+      ],
+      "request_sha256": "90627a1e37b89e089be74c6f57005b0dcefba59c0a6aab09de260c2da989da42",
+      "request_bytes": 1804788,
+      "text_UTF8_bytes": 29615,
+      "text_tokens_o200k_base_PROXY": 10549,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 586,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c613789b3a89756465d018b5709b75ae670d6c9ce2dd221a13fa38e9e09693d3",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        10,
+        11,
+        12
+      ],
+      "request_sha256": "2e5607085fa1dbfde6f13f63e2e47ba61a58bc8dc13098d10d13fa96f86f42ef",
+      "request_bytes": 2771681,
+      "text_UTF8_bytes": 43470,
+      "text_tokens_o200k_base_PROXY": 15728,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ],
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 795,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "b14b461006b8458a873d4430eaef812e8add796e429f09b9ed00da3a2db64683",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC06-p08-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "a7082007acff5aad55ecd20cb6bb55692658051c580096bb911d8f4c37a76d63",
+      "request_bytes": 1014983,
+      "text_UTF8_bytes": 34548,
+      "text_tokens_o200k_base_PROXY": 13374,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 789,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "ecaf1dce6d1a4a80256918cb0ce36f0917a9098e13ebfce6f86fd2f72e6bd2cf",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC04-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "168353c77da5376000baf880522b01287a499e77cf8370d1609c56d3341a22ae",
+      "request_bytes": 1247217,
+      "text_UTF8_bytes": 29834,
+      "text_tokens_o200k_base_PROXY": 11564,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 687,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "a137d8063da6629e603a716931c34fa8434e5ac6a0d8c45f168e28181106e913",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC12-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "f1f284f4c03332a3adba1e79349a8bd2d074a07ac2150c205fe7881526c0f295",
+      "request_bytes": 1072565,
+      "text_UTF8_bytes": 21380,
+      "text_tokens_o200k_base_PROXY": 7609,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 483,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "d3e2dd02ca917ff0fd5fe0c51b7d1c8931b98e5efc298be36d1ad739a6e7b66e",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC13-p09-09/document.json",
+      "physical_pages": [
+        9
+      ],
+      "request_sha256": "4e80213185ea534440802a269af0426c1f0ebe0d8fc944d63f40b3690bec372d",
+      "request_bytes": 1005825,
+      "text_UTF8_bytes": 37976,
+      "text_tokens_o200k_base_PROXY": 14721,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 833,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "d8fada336a70ceb13916257e11aa94d02340c86c6a3c271c6bcf636186dc8f51",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "e1b316d9bab783f5a54db15d9841c46c993f5b01aeb5497754e6561cc4fda247",
+      "request_bytes": 218589,
+      "text_UTF8_bytes": 14988,
+      "text_tokens_o200k_base_PROXY": 5818,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 426,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "ae363f989206ed21d440bc16854e3ace536c93ef182d5da5426c3d4e6bbbb7a6",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        7
+      ],
+      "request_sha256": "888d857b03abda02a7efc8a9452dc58a32a0cd385a4cafe2433f9948fd1f5c7c",
+      "request_bytes": 271821,
+      "text_UTF8_bytes": 6658,
+      "text_tokens_o200k_base_PROXY": 2369,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 259,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "067eed127d01e12bd74f2316feb4cadbb740ac9f552c24db63490d936537ec88",
+      "task": "source_reconstruction",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "55f043cc4ef3035adf53d79c46857d88bc6faebf923277ba5c38f326574dc58c",
+      "request_bytes": 288580,
+      "text_UTF8_bytes": 6557,
+      "text_tokens_o200k_base_PROXY": 2335,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ]
+      ],
+      "image_count": 1,
+      "completion_cap": 16384,
+      "minimal_MOCK_response_tokens_PROXY": 254,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.85576",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "fbacc7c0403b532579d3680de931edbcdcd77e8fd1f6d5bfb523058635d7220a",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/controls/document.json",
+      "physical_pages": [
+        1
+      ],
+      "request_sha256": "5d432bb7de65bb05a430ba9803ede1b8b376c56f19bc36990ee3160f4eaa1ea5",
+      "request_bytes": 183934,
+      "text_UTF8_bytes": 7444,
+      "text_tokens_o200k_base_PROXY": 2743,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          330,
+          96
+        ],
+        [
+          249,
+          70
+        ],
+        [
+          358,
+          105
+        ]
+      ],
+      "image_count": 4,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 526,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "a8c792d6318fc2243909b48fc780bd1e51983ff380f17ea20c2ede8e03e626fb",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/controls/document.json",
+      "physical_pages": [
+        1
+      ],
+      "request_sha256": "16d26735d9039bff1959ddffb226d53636cefa4f38af4b1f911044722be6e151",
+      "request_bytes": 183521,
+      "text_UTF8_bytes": 7079,
+      "text_tokens_o200k_base_PROXY": 2651,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          330,
+          96
+        ],
+        [
+          249,
+          70
+        ],
+        [
+          358,
+          105
+        ]
+      ],
+      "image_count": 4,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 360,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "38b769d00f4e2c89557dbed5de3ed6cfe70be1f71b7198ce8496bc253b9be236",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/seal/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "c29f2e11b234a7184d0a9e13751d85b9c567034161e9fd4ff9c09a5a88e74529",
+      "request_bytes": 713317,
+      "text_UTF8_bytes": 5111,
+      "text_tokens_o200k_base_PROXY": 1782,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ],
+        [
+          776,
+          170
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 281,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "425dd054aa4550e026627c09e8f6ce3a2ac589e725ed9872c3013ed31d365938",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/seal/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "6dfb1c1f9a7cd63b7e5cd52ddd9d152f67a21f25019289c7e3d6da472a1543c3",
+      "request_bytes": 712904,
+      "text_UTF8_bytes": 4746,
+      "text_tokens_o200k_base_PROXY": 1687,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ],
+        [
+          776,
+          170
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 222,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "e191ec4eb3d6d87bdb08329d098e945e3604d9a683ffb8833ae9a823e02795a2",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/nccu/document.json",
+      "physical_pages": [
+        3
+      ],
+      "request_sha256": "c2264800a1c107f624d9e10de6e2f455deaf2b05ac9fa6ace700000bfdfc1a5c",
+      "request_bytes": 932704,
+      "text_UTF8_bytes": 5204,
+      "text_tokens_o200k_base_PROXY": 1778,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          894,
+          653
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 270,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "fe1bffaa5332b0eb922fc3ac724baf0bb8ae3530396a771ad1462736a353314c",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-native-round-2026-10-17/S0/nccu/document.json",
+      "physical_pages": [
+        3
+      ],
+      "request_sha256": "55260d68902e9ff8929bce44803888ecde07847b591f6595e023494d2e53d4a8",
+      "request_bytes": 932291,
+      "text_UTF8_bytes": 4839,
+      "text_tokens_o200k_base_PROXY": 1682,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          894,
+          653
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 210,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "99a8083926ac026e469b102beec45baa3339cd85e0576f44c419dbfdd11d814c",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        1
+      ],
+      "request_sha256": "6edb6c2df0a3482c04129bbdb3d590ddc3325c21b2586a839177c60528846058",
+      "request_bytes": 850307,
+      "text_UTF8_bytes": 6277,
+      "text_tokens_o200k_base_PROXY": 2194,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          254,
+          40
+        ],
+        [
+          869,
+          401
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 382,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "327c7b5fad80361db245928aa386dfa25546cd73b8a668122c3ad4b9503c7dcc",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        1
+      ],
+      "request_sha256": "b8d25d082ff0628823eb94a413a4f08990045faf99e7d75df573f5241ff8b0f3",
+      "request_bytes": 849894,
+      "text_UTF8_bytes": 5912,
+      "text_tokens_o200k_base_PROXY": 2103,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          254,
+          40
+        ],
+        [
+          869,
+          401
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 272,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "4011614dc7f36b80eb8101569073b4bdea6c1229eeaa8d6f7b99cfde338d26df",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        4
+      ],
+      "request_sha256": "e90607c419548a9b194c575cb74023432165e065ebfefa715622f7be2b7dcdb1",
+      "request_bytes": 1028168,
+      "text_UTF8_bytes": 5232,
+      "text_tokens_o200k_base_PROXY": 1797,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          945,
+          436
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 280,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "8f6f45b26120b2a0f42fd6cdf22c3a8ac68897d03f4cfd89c33b31dee6111cd0",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        4
+      ],
+      "request_sha256": "8a6fc09018e9bc27412f97540451a262c14dde6e4737f13a2595c680d12da980",
+      "request_bytes": 1027755,
+      "text_UTF8_bytes": 4867,
+      "text_tokens_o200k_base_PROXY": 1710,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          945,
+          436
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 229,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "53b7979eb4e4ecee60beb20e807d92c1fb1a824e3b5a441be7129789ce26fa16",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        11
+      ],
+      "request_sha256": "f745e4a6da78d5647facc4c655162bc5e665f7f50471dee7342c3d90f447abac",
+      "request_bytes": 889150,
+      "text_UTF8_bytes": 11638,
+      "text_tokens_o200k_base_PROXY": 4374,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          23,
+          19
+        ],
+        [
+          21,
+          19
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          18,
+          19
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          22,
+          19
+        ],
+        [
+          22,
+          18
+        ]
+      ],
+      "image_count": 8,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 1010,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c413a1bce1701682294985304704821fb38a72b19c8b8115cd335b4d481efd43",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        11
+      ],
+      "request_sha256": "f6834e8abc18810a566f4407ca85dcee858e71287ca2f9888ce9b096e5f628f9",
+      "request_bytes": 888737,
+      "text_UTF8_bytes": 11273,
+      "text_tokens_o200k_base_PROXY": 4279,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          23,
+          19
+        ],
+        [
+          21,
+          19
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          18,
+          19
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          22,
+          19
+        ],
+        [
+          22,
+          18
+        ]
+      ],
+      "image_count": 8,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 621,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c34aaebe4f1f1a9bae89ad8dbaf8a88566e408e5f9d160cf599188ede28ce7bb",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        12
+      ],
+      "request_sha256": "aa1f0e7f7d6e0f473556415ea6a14bb9f7146388580a2a946cb3622a46065d69",
+      "request_bytes": 1505447,
+      "text_UTF8_bytes": 5169,
+      "text_tokens_o200k_base_PROXY": 1759,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          944,
+          611
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 275,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "b888604477243e2b9e90793687841860bbe37b28b5e9867d094788bbbf22e5d6",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+      "physical_pages": [
+        12
+      ],
+      "request_sha256": "d4e2abe7f6ae53ba733ab22d35346fc8316e82ee1e17382761594dab2adb149c",
+      "request_bytes": 1505034,
+      "text_UTF8_bytes": 4804,
+      "text_tokens_o200k_base_PROXY": 1665,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          944,
+          611
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 217,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "d20185a7f666dea6b8d69d61f2deadb79d8bc4598beb8b8b2a6e0be29bc48a09",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC06-p08-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "023f879f0ea0e9681dc1a4bc8f7000e608427b7d3e2adb2440a7521c119eac29",
+      "request_bytes": 1104808,
+      "text_UTF8_bytes": 7346,
+      "text_tokens_o200k_base_PROXY": 2639,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          425,
+          241
+        ],
+        [
+          421,
+          164
+        ],
+        [
+          434,
+          160
+        ]
+      ],
+      "image_count": 4,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 520,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c4505ccb7270c66939079cd4f9f888fa732b7e5cc6f74924df704c5dcdcaf80c",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC06-p08-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "80257622dffefdf18c7ec35dfdba52f7687ee5385ca1e316dfd865c7f38abfb2",
+      "request_bytes": 1104395,
+      "text_UTF8_bytes": 6981,
+      "text_tokens_o200k_base_PROXY": 2543,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          425,
+          241
+        ],
+        [
+          421,
+          164
+        ],
+        [
+          434,
+          160
+        ]
+      ],
+      "image_count": 4,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 350,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "7a4fbe531bddc235b80c01a4215b90f98946053a6d6e58d2dd85636d5ef5ff73",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC04-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "d7b9c0f2a78c5b441280755ec58400b138dd107f67fbeb41506b6b00baf32f3b",
+      "request_bytes": 1486814,
+      "text_UTF8_bytes": 5094,
+      "text_tokens_o200k_base_PROXY": 1756,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ],
+        [
+          927,
+          457
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 276,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "a7951478ce04df2a4e3b3e53bbac3845dee6007b3bbbbafd146464aa91e1802b",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC04-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "d81cee69d8ad2a9c6b3a08121fb357e03fc275be02d33007c3ae68697b8c92e9",
+      "request_bytes": 1486401,
+      "text_UTF8_bytes": 4729,
+      "text_tokens_o200k_base_PROXY": 1661,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1224,
+          1584
+        ],
+        [
+          927,
+          457
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 217,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "f7333207a1387c31317cacb960c55bffc15cf503aa5295bb9bc6169626a3e6ce",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC12-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "bd7f0c7767cd6af278bfc78a7bfe8e7a32de46555e88d9a26f9729209337bd23",
+      "request_bytes": 1260423,
+      "text_UTF8_bytes": 5213,
+      "text_tokens_o200k_base_PROXY": 1767,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          821,
+          285
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 269,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "315b6b6dc80c8e811d226060e11176786cedb2df35b374cf499287a884c05f47",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC12-p02-02/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "c664b2533d769eb7841a770ef3e2b74301439f7b0e57029c08ea6fcd6701f3e7",
+      "request_bytes": 1260010,
+      "text_UTF8_bytes": 4848,
+      "text_tokens_o200k_base_PROXY": 1676,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          821,
+          285
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 214,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "63435a6f992e21765dcf88ce4fce3f8f7dc3f222af1d403f5042d6a74b071427",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC13-p09-09/document.json",
+      "physical_pages": [
+        9
+      ],
+      "request_sha256": "e9b8482f817c3dbc7a3397ec784550d1dd86a87dddbd457a5ad6a5a7e9b2f416",
+      "request_bytes": 1085003,
+      "text_UTF8_bytes": 6299,
+      "text_tokens_o200k_base_PROXY": 2254,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          567,
+          223
+        ],
+        [
+          466,
+          247
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 401,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "ab9b845f915c3119b8faf3d450c6fe73d38bb7f9508e77c3fb72912ec9aca2d5",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC13-p09-09/document.json",
+      "physical_pages": [
+        9
+      ],
+      "request_sha256": "9d2069b065ec28775ac35eea87a52e0b9f25b289b8d4ac1d2830d85673e73613",
+      "request_bytes": 1084590,
+      "text_UTF8_bytes": 5934,
+      "text_tokens_o200k_base_PROXY": 2163,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          567,
+          223
+        ],
+        [
+          466,
+          247
+        ]
+      ],
+      "image_count": 3,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 291,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "a0954c50397c861a9ed28c16931c87a80b8534878b92152d2dd74bdcf53baad8",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "1f583512c4ea5655c7e5e7d639fb92e2ca6726b8998bf11ac00052af56dd1d2a",
+      "request_bytes": 285642,
+      "text_UTF8_bytes": 8440,
+      "text_tokens_o200k_base_PROXY": 3164,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          381,
+          355
+        ],
+        [
+          389,
+          401
+        ],
+        [
+          390,
+          445
+        ],
+        [
+          317,
+          371
+        ]
+      ],
+      "image_count": 5,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 651,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "632c35acad104107ea825693679b6d913b2a9588f36d98a7a315c6a1f6a20579",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        2
+      ],
+      "request_sha256": "76d8ad6688999106edff3c4730ef022075ddedf27cc015ecfcc0232479f25372",
+      "request_bytes": 285229,
+      "text_UTF8_bytes": 8075,
+      "text_tokens_o200k_base_PROXY": 3073,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          381,
+          355
+        ],
+        [
+          389,
+          401
+        ],
+        [
+          390,
+          445
+        ],
+        [
+          317,
+          371
+        ]
+      ],
+      "image_count": 5,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 431,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "7560d2809b0cccd084ac668aae618641e1ef1343d3bbdb3e07b38e3f6d69d1e9",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        7
+      ],
+      "request_sha256": "15add600f0edeb431aa8bf395e927d888adeef5643bfaf8ae17f2817e7505162",
+      "request_bytes": 416816,
+      "text_UTF8_bytes": 5190,
+      "text_tokens_o200k_base_PROXY": 1805,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1002,
+          330
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 272,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "6e25d2e9438afb07a7095452b311904da0bd9d4a44b9a07e785768072e897259",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        7
+      ],
+      "request_sha256": "2a81355dd7c973afa2edb1beca0a07d7f260aa6bb57216276da9a63937a9c0d1",
+      "request_bytes": 416403,
+      "text_UTF8_bytes": 4825,
+      "text_tokens_o200k_base_PROXY": 1711,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1002,
+          330
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 214,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c26042cc2726e90f10f63161ce055892c3e5bbe2a3705857e6fc6509fec16b57",
+      "task": "description_with_context_OCR",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "758a51a3de34ca369b128968b8869af121ce4e8edde440d8c505ebcd7a3d7eed",
+      "request_bytes": 428765,
+      "text_UTF8_bytes": 5183,
+      "text_tokens_o200k_base_PROXY": 1797,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1002,
+          332
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 271,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    },
+    {
+      "job_id": "c6a079a5cd5f735fd0708a5252df31ec0c27cc5b7d2800335c161c54d0e8fbcb",
+      "task": "chart_assessment",
+      "baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC05-p02-08/document.json",
+      "physical_pages": [
+        8
+      ],
+      "request_sha256": "fe865bde53acb8ef9171d665a46e8435f22d52df9bc0725744e88812f300b0a2",
+      "request_bytes": 428352,
+      "text_UTF8_bytes": 4818,
+      "text_tokens_o200k_base_PROXY": 1711,
+      "model_text_tokens_confirmed": null,
+      "chat_framing_tokens_confirmed": null,
+      "image_tokens_official_estimate": null,
+      "input_tokens_estimate": null,
+      "input_reservation_live_verified": false,
+      "endpoint_capacity_input_ceiling_NOT_estimate": 922000,
+      "image_dimensions": [
+        [
+          1191,
+          1684
+        ],
+        [
+          1002,
+          332
+        ]
+      ],
+      "image_count": 2,
+      "completion_cap": 8192,
+      "minimal_MOCK_response_tokens_PROXY": 221,
+      "cost_estimate_USD": null,
+      "capacity_cost_ceiling_USD_including_cache_write": "4.73288",
+      "needs_split": "UNDETERMINED_IMAGE_AND_TOKENIZER_RULES",
+      "input_byte_ceiling_pass": true
+    }
+  ],
+  "new_inference_calls": 0,
+  "live_ready": false
+}

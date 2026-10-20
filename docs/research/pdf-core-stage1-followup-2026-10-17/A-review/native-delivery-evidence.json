@@ -1,0 +1,107 @@
+{
+  "created_at": "2026-10-17T11:17:09.270238+00:00",
+  "input_records": [
+    {
+      "source": "wikiskill",
+      "path": "docs/research/pdf-core-native-round-2026-10-17/S0/wikiskill/document.json",
+      "sha256": "ec38158049f41ca71c3e10761f0b4f1e206664c1296fc4a29f0205e40a74c7aa",
+      "serialized_markdown_path": "docs/research/pdf-core-stage1-followup-2026-10-17/A-review/wikiskill-cached-native.md",
+      "serialized_markdown_sha256": "46f27be266d58345094995bb7f4504ee27f4ab93d40dcaa87c414d0e7f48ed6a"
+    },
+    {
+      "source": "seal",
+      "path": "docs/research/pdf-core-native-round-2026-10-17/S0/seal/document.json",
+      "sha256": "eb68f353dfdf5c9d79cc4a35dd872dffa0a865a4e689f13776fe2b235ec14560",
+      "serialized_markdown_path": "docs/research/pdf-core-stage1-followup-2026-10-17/A-review/seal-cached-native.md",
+      "serialized_markdown_sha256": "5ad46093ebf6bfb8afcb1a2326fd5c689c3117be9be078b3e7c3ae7e0448bf93"
+    },
+    {
+      "source": "dgm",
+      "path": "docs/research/pdf-core-native-round-2026-10-17/S0/dgm/document.json",
+      "sha256": "c9deb3900efccf9aef7512fdd46e5acb57d77182193c94da9db42624db920e1c",
+      "serialized_markdown_path": "docs/research/pdf-core-stage1-followup-2026-10-17/A-review/dgm-cached-native.md",
+      "serialized_markdown_sha256": "7e156c6771ee650f7c0f1d3c32c85202e50413b4949bd67075d4d9bb255360b9"
+    },
+    {
+      "source": "controls",
+      "path": "docs/research/pdf-core-native-round-2026-10-17/S0/controls/document.json",
+      "sha256": "35f04c979ef206f13ba3df7dc4380eec987e03145c621f5364cca18de447519f",
+      "serialized_markdown_path": "docs/research/pdf-core-stage1-followup-2026-10-17/A-review/controls-cached-native.md",
+      "serialized_markdown_sha256": "540891b7c6780c2413c190477645277cb158c5a2b65d6f99dd82c2271af25051"
+    }
+  ],
+  "manual_source_meaning_decisions": {
+    "source": "wikiskill",
+    "serialized_table6": "Table 6 | Benchmark statistics, data splits, interaction modes, and available environment tools.\n\n|                                  | Benchmark Interaction Train Val Test Environment Tools   |\n|----------------------------------|----------------------------------------------------------|\n|                                  | LiveMath Single-Step 35 18 124 None (Direct Reasoning)   |\n| SealQA Multi-Step 16 10 85       | web_search ,  read_file                                  |\n| SpreadSheet Multi-Step 80 40 280 | bash                                                     |\n| OfficeQA Multi-Step 50 24 172    | glob ,  grep ,  read                                     |\n|                                  | ALFWorld Multi-Step 39 18 134 Admissible Actions         |",
+    "table6_groups": [
+      {
+        "census_id": "E008",
+        "preserved_identifiers": [
+          "web_search",
+          "read_file"
+        ],
+        "same_row": "SealQA",
+        "meaning_verdict": "preserved; nonstandard grid layout is readable and retains row association"
+      },
+      {
+        "census_id": "E009",
+        "preserved_identifiers": [
+          "bash"
+        ],
+        "same_row": "SpreadSheet",
+        "meaning_verdict": "preserved"
+      },
+      {
+        "census_id": "E010",
+        "preserved_identifiers": [
+          "glob",
+          "grep",
+          "read"
+        ],
+        "same_row": "OfficeQA",
+        "meaning_verdict": "preserved"
+      }
+    ],
+    "table7_groups": [
+      {
+        "census_id": "E017",
+        "meaning_verdict": "required math reconstruction unresolved",
+        "reason": "Fractions are flattened without division scope; Trace2Skill and EvoSkill additionally share a displaced formula row. A parent table being serialized does not establish necessary formula meaning."
+      },
+      {
+        "census_id": "E018",
+        "meaning_verdict": "required math reconstruction unresolved",
+        "reason": "Fractions are flattened without division scope; Trace2Skill and EvoSkill additionally share a displaced formula row. A parent table being serialized does not establish necessary formula meaning."
+      },
+      {
+        "census_id": "E019",
+        "meaning_verdict": "required math reconstruction unresolved",
+        "reason": "Fractions are flattened without division scope; Trace2Skill and EvoSkill additionally share a displaced formula row. A parent table being serialized does not establish necessary formula meaning."
+      },
+      {
+        "census_id": "E020",
+        "meaning_verdict": "required math reconstruction unresolved",
+        "reason": "Fractions are flattened without division scope; Trace2Skill and EvoSkill additionally share a displaced formula row. A parent table being serialized does not establish necessary formula meaning."
+      }
+    ],
+    "caption_formula_group": {
+      "census_id": "E021",
+      "native_caption_ref": "#/texts/21",
+      "text": "Table 7 | Comparison of optimizer API call complexity per evolution iteration across selfimproving agent frameworks. 𝑁train = |Dtrain| denotes the number of training tasks, 𝐵 denotes the batch size, 𝑇ReAct denotes the number of interactive ReAct reasoning turns used by the Skill Proposer agent in WikiSkill, 𝐾opt denotes the number of reflection and merging calls per step in SkillOpt, and 𝑐 denotes the reduction-tree branching factor in Trace2Skill. WikiSkill uses 𝐵 = 𝑁train across all datasets. In full-batch mode, WikiSkill's optimizer call count is independent of training set size 𝑁train, requiring 1 + 𝑇ReAct optimizer calls per iteration.",
+      "caption_occurrences_in_document_markdown": 1,
+      "meaning_verdict": "preserved with minor flat subscript style; all variable definitions and full-batch condition survive. No extra A inference needed solely because standalone replacement slot is unsupported."
+    },
+    "images_not_formula_reconstruction": {
+      "census_id": "E026",
+      "meaning_verdict": "source image preservation is not text reconstruction of its 17 math occurrences; image supplement needs completeness/ownership evidence"
+    },
+    "mixed_groups": {
+      "census_ids": [
+        "E031",
+        "E032"
+      ],
+      "meaning_verdict": "unresolved mixed source owner and required reading-order relationship; classifying the owner does not deliver legal content"
+    }
+  },
+  "limits": "Exposed DEV source judgement. Serialization and literal assertions prove preservation only, not model quality, future VLM routing or reconstruction."
+}

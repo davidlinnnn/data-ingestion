@@ -1,0 +1,49 @@
+other output formats, as explored in §C. With sufficient compute, a cold-start setup, where the model
+discovers the most effective format without guidance from prompting, may also be viable.
+Test-Time Training. Test-Time Training (TTT) temporarily adapts model weights based on the
+input the model receives [30, 31, 32, 33]. Akyürek et al. [33] show that combining TTT with ICL
+enables gradient-updates to outperform standard ICL in the few-shot setting. SEAL can be viewed
+as incorporating a round of TTT in its inner-loop optimization, leveraging TTT’s efficiency relative
+to full-scale training to perform multiple updates and reward the generated data that yields the
+greatest performance gain. Although our method is trained using single-example TTT episodes, we
+demonstrate in the knowledge incorporation setting that it generalizes to the continued pretraining
+setting—where placing data directly in context is no longer feasible.
+Reinforcement Learning for LLMs. Reinforcement learning has played a central role in improving
+LLM behavior, originally through RLHF [34]. More recently, RL with verifiable rewards has been
+applied to boost reasoning performance by optimizing the model directly for task success [35, 36, 37].
+SEAL applies RL not to optimize final answers or trace revisions, but to optimize the generation of
+self-edit data that is then used for weight updates.
+Meta-Learning and Self-Modifying Systems. SEAL embodies meta-learning principles [38, 39,
+40] by learning an adaptation strategy—how to generate effective self-edits—via its outer optimization
+loop. The goal is to learn how to learn efficiently from task contexts. Meta-learning has similarly been
+applied in reinforcement learning [41, 42, 43, 44, 45], where models are trained with a meta-objective
+to rapidly adapt to new tasks. A natural extension of this line of work is self-referential networks,
+where models modify their own parameters Schmidhuber [46], Irie et al. [47]. In the domain of
+large language models, recent work has applied meta-learning principles to improve LLM adaptation
+[48, 49]. Notably, Hu et al. [49] trained a smaller model to output token-specific weights during
+finetuning on a corpus, addressing a knowledge incorporation task similar to ours. However, SEAL
+offers greater generality across domains by leveraging the model’s existing generative capabilities to
+parametrize updates.
+Self-Improvement. Several recent works fall under the umbrella of self-improvement or self￾training. Methods such as RLAIF [50, 51] and self-rewarding language models [52, 53] use the
+model itself to provide reward signals, leveraging the observation that judging outputs is often easier
+than generating them [54]. Other recent works improve performance on mathematical tasks by
+using majority-vote or model confidence as reinforcement learning rewards, enabling performance
+improvement without access to ground-truth labels [55, 56, 57, 58, 59]. However, all of these methods
+are fundamentally limited by the model’s current evaluation abilities and self-consistency. In contrast,
+we view self-improvement through interaction with external data as a more powerful and scalable
+path. SEAL learns how to best utilize this external data for self-improvement.
+3 Methods
+We propose Self-Adapting LLMs (SEAL), a framework that enables language models to improve
+themselves by generating their own synthetic data and optimization parameters (“self-edits”) in re￾sponse to new data. The model is trained to produce these self-edits directly through token generation
+with the data provided in the model’s context. Self-edit generation is learned via reinforcement
+learning (RL) where the model is rewarded for generating self-edits (SE) that, when applied, improve
+the model’s performance at the target task. SEAL can therefore be interpreted as an algorithm with
+two nested loops: an outer RL loop, which optimizes the self-edit generation, and an inner update
+loop, which uses the generated self-edit to update the model via gradient descent. Our method can be
+seen as an instance of meta-learning where we meta-learn how to generate effective self-edits.
+3.1 General Framework
+Let θ denote the parameters of the language model LMθ. SEAL operates on individual task instances
+(C, τ ) where C is a context containing information relevant to the task, and τ defines the downstream
+evaluation used to assess the model’s adaptation. For example, in knowledge incorporation, C is the
+passage intended to be integrated into the model’s internal knowledge, and τ is a set of questions and
+3

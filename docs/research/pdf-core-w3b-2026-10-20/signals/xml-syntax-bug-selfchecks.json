@@ -1,0 +1,140 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "name": "stray",
+      "result": {
+        "status": "KNOWN",
+        "pass": false,
+        "reason": "misplaced raw TeX alignment tab outside supported alignment environment",
+        "syntax_error": "MISPLACED_ALIGNMENT_TAB",
+        "raw_tex_syntax": {
+          "status": "KNOWN",
+          "pass": false,
+          "reason": "misplaced raw TeX alignment tab outside supported alignment environment",
+          "scope": "Supported subset guards, not an actual TeX compiler."
+        },
+        "mathml_serialization": {
+          "status": "NOT_ATTEMPTED_OR_UNKNOWN",
+          "pass": null,
+          "named_entities": "Known HTML5 names -> equal Unicode; XML builtins retained; unknown names UNKNOWN.",
+          "bare_ampersand": "Equivalent XML escape only; never deleting glyphs or overriding raw TeX syntax failure."
+        },
+        "actual_render": {
+          "status": "UNKNOWN",
+          "pass": null,
+          "reason": "Not yet Chrome-rendered; raw syntax failure need not render."
+        }
+      }
+    },
+    {
+      "name": "escaped",
+      "result": {
+        "status": "READY_FOR_ACTUAL_RENDER",
+        "pass": null,
+        "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mi>a</mi><mi>&#x00026;</mi><mi>b</mi></mrow></math>",
+        "visible_text": "a&b",
+        "reason": "conversion/syntax preflight only, not actual render success",
+        "raw_tex_syntax": {
+          "status": "KNOWN",
+          "pass": true,
+          "reason": "conversion/syntax preflight only, not actual render success",
+          "scope": "Supported subset guards, not an actual TeX compiler."
+        },
+        "mathml_serialization": {
+          "status": "KNOWN",
+          "pass": true,
+          "named_entities": "Known HTML5 names -> equal Unicode; XML builtins retained; unknown names UNKNOWN.",
+          "bare_ampersand": "Equivalent XML escape only; never deleting glyphs or overriding raw TeX syntax failure."
+        },
+        "actual_render": {
+          "status": "UNKNOWN",
+          "pass": null,
+          "reason": "Not yet Chrome-rendered; raw syntax failure need not render."
+        }
+      }
+    },
+    {
+      "name": "aligned",
+      "result": {
+        "status": "READY_FOR_ACTUAL_RENDER",
+        "pass": null,
+        "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"inline\"><mrow><mrow><mi>a</mi><mi>&</mi><mo>&#x0003D;</mo><mi>b</mi><mspace linebreak=\"newline\" /><mi>c</mi><mi>&</mi><mo>&#x0003D;</mo><mi>d</mi></mrow></mrow></math>",
+        "visible_text": "a&=b c&=d",
+        "reason": "conversion/syntax preflight only, not actual render success",
+        "raw_tex_syntax": {
+          "status": "KNOWN",
+          "pass": true,
+          "reason": "conversion/syntax preflight only, not actual render success",
+          "scope": "Supported subset guards, not an actual TeX compiler."
+        },
+        "mathml_serialization": {
+          "status": "KNOWN",
+          "pass": true,
+          "named_entities": "Known HTML5 names -> equal Unicode; XML builtins retained; unknown names UNKNOWN.",
+          "bare_ampersand": "Equivalent XML escape only; never deleting glyphs or overriding raw TeX syntax failure."
+        },
+        "actual_render": {
+          "status": "UNKNOWN",
+          "pass": null,
+          "reason": "Not yet Chrome-rendered; raw syntax failure need not render."
+        }
+      }
+    },
+    {
+      "name": "brace",
+      "result": {
+        "status": "KNOWN",
+        "pass": false,
+        "reason": "unmatched opening TeX brace",
+        "syntax_error": "UNBALANCED_BRACES",
+        "raw_tex_syntax": {
+          "status": "KNOWN",
+          "pass": false,
+          "reason": "unmatched opening TeX brace",
+          "scope": "Supported subset guards, not an actual TeX compiler."
+        },
+        "mathml_serialization": {
+          "status": "NOT_ATTEMPTED_OR_UNKNOWN",
+          "pass": null,
+          "named_entities": "Known HTML5 names -> equal Unicode; XML builtins retained; unknown names UNKNOWN.",
+          "bare_ampersand": "Equivalent XML escape only; never deleting glyphs or overriding raw TeX syntax failure."
+        },
+        "actual_render": {
+          "status": "UNKNOWN",
+          "pass": null,
+          "reason": "Not yet Chrome-rendered; raw syntax failure need not render."
+        }
+      }
+    },
+    {
+      "name": "unknown",
+      "result": {
+        "status": "UNKNOWN",
+        "pass": null,
+        "reason": "unsupported commands or environments",
+        "unsupported_commands": [
+          "\\madeup"
+        ],
+        "unsupported_environments": [],
+        "raw_tex_syntax": {
+          "status": "UNKNOWN",
+          "pass": null,
+          "reason": "unsupported commands or environments",
+          "scope": "Supported subset guards, not an actual TeX compiler."
+        },
+        "mathml_serialization": {
+          "status": "NOT_ATTEMPTED_OR_UNKNOWN",
+          "pass": null,
+          "named_entities": "Known HTML5 names -> equal Unicode; XML builtins retained; unknown names UNKNOWN.",
+          "bare_ampersand": "Equivalent XML escape only; never deleting glyphs or overriding raw TeX syntax failure."
+        },
+        "actual_render": {
+          "status": "UNKNOWN",
+          "pass": null,
+          "reason": "Not yet Chrome-rendered; raw syntax failure need not render."
+        }
+      }
+    }
+  ]
+}

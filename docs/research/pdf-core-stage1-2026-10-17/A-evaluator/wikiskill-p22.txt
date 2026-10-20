@@ -1,0 +1,76 @@
+WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution
+out the agent on training tasks and reflects on full execution traces, including both successes and
+failures, to generate candidate patches. These patches are hierarchically aggregated and selected
+to update a single monolithic skill document, which is accepted or rejected based on validation
+performance.
+D.2. Optimizer API Call Complexity
+In this section, we analyze optimizer API call complexity, denoted by C, across self-improving agent
+frameworks. We define one evolution iteration as rolling out the agent on the full training split Dtrain
+once (𝑁train = |Dtrain| training task instances), processed in minibatches of size 𝐵 (𝐵 ≤ 𝑁train). Table 7
+summarizes the per-iteration optimizer API call complexity for WikiSkill and prior methods.
+Framework Per-Iteration Formula Complexity
+Trace2Skill 𝑁train +
+
+1 +
+1
+𝑐−1
+
+𝑁train
+𝐵
++ 1 O
+
+𝑁train +
+𝑁train
+𝐵
+
+EvoSkill 2𝑁train
+𝐵 O
+
+𝑁train
+𝐵
+
+SkillOpt 𝐾opt·𝑁train
+𝐵 O
+
+𝑁train
+𝐵
+
+WikiSkill (1 + 𝑇ReAct)
+𝑁train
+𝐵 O
+
+𝑁train
+𝐵
+
+Table 7 | Comparison of optimizer API call complexity per evolution iteration across self￾improving agent frameworks. 𝑁train = |Dtrain| denotes the number of training tasks, 𝐵 denotes the
+batch size, 𝑇ReAct denotes the number of interactive ReAct reasoning turns used by the Skill Proposer
+agent in WikiSkill, 𝐾opt denotes the number of reflection and merging calls per step in SkillOpt, and 𝑐
+denotes the reduction-tree branching factor in Trace2Skill. WikiSkill uses 𝐵 = 𝑁train across all datasets.
+In full-batch mode, WikiSkill’s optimizer call count is independent of training set size 𝑁train, requiring
+1 + 𝑇ReAct optimizer calls per iteration.
+WikiSkill For each batch of size 𝐵, the Wiki Maintainer requires one LLM call to analyze sampled
+traces Tsample,𝑘 and consolidate pattern pages into the intermediate wiki 𝑊′
+𝑘
+. The Skill Proposer then
+runs as an autonomous multi-turn ReAct agent, executing interactive tool calls over 𝑇ReAct reasoning
+turns (roughly 10 ≤ 𝑇ReAct ≤ 20 across our experiment runs), where each ReAct turn requires 1 LLM
+call. When processing training data in batches of size 𝐵, completing one full iteration over 𝑁train tasks
+requires 𝑁train
+𝐵
+steps:
+CWikiSkill = (1 + 𝑇ReAct)
+𝑁train
+𝐵
+(5)
+In our experiments, we set the batch size to the full training size (𝐵 = 𝑁train) across all datasets.
+In this full-batch setting ( 𝑁train
+𝐵
+= 1), CWikiSkill = 1 + 𝑇ReAct. Because 𝑇ReAct does not depend on 𝑁train,
+WikiSkill’s optimizer API call complexity is O (1) with respect to training set size. Specifically, each
+iteration requires 1 + 𝑇ReAct optimizer LLM calls, regardless of the number of training instances.
+While this constant call complexity may incur higher inference cost on some datasets, the additional
+computation is accompanied by consistent performance gains over prior skill-evolution methods
+across our evaluation.
+EvoSkill EvoSkill partitions training tasks into minibatches of size 𝐵. For each minibatch, EvoSkill
+uses one Proposer LLM call for error diagnosis and one Generator LLM call for skill updates. Processing
+22

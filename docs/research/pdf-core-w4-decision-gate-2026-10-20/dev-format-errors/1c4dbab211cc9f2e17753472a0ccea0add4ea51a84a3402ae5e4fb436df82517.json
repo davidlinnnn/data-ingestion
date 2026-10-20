@@ -1,0 +1,23 @@
+{
+  "id": "W3:F-nips_attention:formula:00002",
+  "category": "formula",
+  "split": "dev",
+  "image_input_sizes": [
+    [
+      396,
+      63
+    ]
+  ],
+  "official_fit_long_side": 512,
+  "available_before": 23600250880,
+  "state": "FAILED",
+  "error_type": "OSError",
+  "error": "[Errno 63] File name too long: 'Reconstructed content (data):\\nM u t i { H e a d } ( Q , K , V ) & = \\\\text {Concat} ( \\\\text {head} _ { 1 } , \\\\dots , \\\\text {head} _ { h } ) W ^ { O } \\\\\\\\ & \\\\text {where head} _ { i } = \\\\text {Attention} ( Q W _ { i } ^ { Q } , K W _ { i } ^ { K } , V W _ { i } ^ { V } )'",
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/david/work/data-ingestion/docs/research/pdf-core-w4-decision-gate-2026-10-20/infer.py\", line 38, in <module>\n    result=model.ask(state=state,questions={'fidelity':questions[r['category']]},batch_rows=1)['fidelity'];torch.mps.synchronize()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/private/tmp/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 124, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/david/work/data-ingestion/docs/research/pdf-core-w4-decision-gate-2026-10-20/models/vjev/vjev_infer.py\", line 127, in ask\n    elif isinstance(x, (str, Path)) and Path(x).is_file():\n                                        ^^^^^^^^^^^^^^^^^\n  File \"/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py\", line 892, in is_file\n    return S_ISREG(self.stat().st_mode)\n                   ^^^^^^^^^^^\n  File \"/Users/david/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py\", line 840, in stat\n    return os.stat(self, follow_symlinks=follow_symlinks)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nOSError: [Errno 63] File name too long: 'Reconstructed content (data):\\nM u t i { H e a d } ( Q , K , V ) & = \\\\text {Concat} ( \\\\text {head} _ { 1 } , \\\\dots , \\\\text {head} _ { h } ) W ^ { O } \\\\\\\\ & \\\\text {where head} _ { i } = \\\\text {Attention} ( Q W _ { i } ^ { Q } , K W _ { i } ^ { K } , V W _ { i } ^ { V } )'\n",
+  "seconds": 0.0013227500021457672,
+  "RSS_bytes": 395034624,
+  "mps_allocated": 9082746368,
+  "mps_driver": 9447342080,
+  "available_after": 23600807936,
+  "device": "mps"
+}

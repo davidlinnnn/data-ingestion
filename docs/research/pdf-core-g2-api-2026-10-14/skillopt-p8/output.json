@@ -1,0 +1,553 @@
+{
+  "caption": "Hyperparameter analysis for the text optimizer. Each panel changes one scalar or scheduling factor from the default setting unless noted. Panel (a) fixes the split to 4:1:5 train/selection/test; the 1-example, 20%, 40%, and 80% rows use subsets of the training partition, and the 100% row reuses the completed 4:1:5 split-ratio run. Panel (b) sweeps the reflection mini-batchsize Bₘ; panel (c) sweeps the rollout batchsize B.",
+  "conditions": [
+    "Each panel changes one scalar or scheduling factor from the default setting unless noted.",
+    "Panel (a) fixes the split to 4:1:5 train/selection/test; the 1-example, 20%, 40%, and 80% rows use subsets of the training partition, and the 100% row reuses the completed 4:1:5 split-ratio run.",
+    "Panel (b) sweeps the reflection mini-batchsize Bₘ; panel (c) sweeps the rollout batchsize B."
+  ],
+  "panels": [
+    {
+      "panel_label": "(a)",
+      "title": "Training set size",
+      "columns": [
+        "SearchQA",
+        "Spreadsheet",
+        "LiveMath"
+      ],
+      "rows": [
+        {
+          "setting": "1 example",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "81.0"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "47.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "59.1"
+            }
+          ]
+        },
+        {
+          "setting": "20% train",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "84.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "69.0"
+            },
+            {
+              "column": "LiveMath",
+              "value": "65.9"
+            }
+          ]
+        },
+        {
+          "setting": "40% train",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "73.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "64.8"
+            }
+          ]
+        },
+        {
+          "setting": "80% train",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.6"
+            },
+            {
+              "column": "LiveMath",
+              "value": "67.0"
+            }
+          ]
+        },
+        {
+          "setting": "100% train",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "84.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "78.0"
+            },
+            {
+              "column": "LiveMath",
+              "value": "70.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "panel_label": "(b)",
+      "title": "Mini-batchsize",
+      "columns": [
+        "SearchQA",
+        "Spreadsheet",
+        "LiveMath"
+      ],
+      "rows": [
+        {
+          "setting": "1",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "85.9"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "75.4"
+            },
+            {
+              "column": "LiveMath",
+              "value": "60.5"
+            }
+          ]
+        },
+        {
+          "setting": "2",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.3"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.1"
+            },
+            {
+              "column": "LiveMath",
+              "value": "54.8"
+            }
+          ]
+        },
+        {
+          "setting": "4",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.9"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "75.4"
+            },
+            {
+              "column": "LiveMath",
+              "value": "64.5"
+            }
+          ]
+        },
+        {
+          "setting": "8",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "61.3"
+            }
+          ]
+        },
+        {
+          "setting": "16",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.0"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.9"
+            },
+            {
+              "column": "LiveMath",
+              "value": "61.3"
+            }
+          ]
+        },
+        {
+          "setting": "32",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.9"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "58.9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "panel_label": "(c)",
+      "title": "Batchsize",
+      "columns": [
+        "SearchQA",
+        "Spreadsheet",
+        "LiveMath"
+      ],
+      "rows": [
+        {
+          "setting": "8",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "85.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "76.8"
+            },
+            {
+              "column": "LiveMath",
+              "value": "58.1"
+            }
+          ]
+        },
+        {
+          "setting": "24",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.4"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.1"
+            },
+            {
+              "column": "LiveMath",
+              "value": "62.9"
+            }
+          ]
+        },
+        {
+          "setting": "40",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "61.3"
+            }
+          ]
+        },
+        {
+          "setting": "56",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.5"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "76.8"
+            },
+            {
+              "column": "LiveMath",
+              "value": "56.5"
+            }
+          ]
+        },
+        {
+          "setting": "full epoch",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.2"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "75.0"
+            },
+            {
+              "column": "LiveMath",
+              "value": "53.2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "panel_label": "(d)",
+      "title": "Learning rate",
+      "columns": [
+        "SearchQA",
+        "Spreadsheet",
+        "LiveMath"
+      ],
+      "rows": [
+        {
+          "setting": "lr=1",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "85.5"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "62.1"
+            }
+          ]
+        },
+        {
+          "setting": "lr=2",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.7"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "60.5"
+            }
+          ]
+        },
+        {
+          "setting": "lr=4",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.5"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "78.2"
+            },
+            {
+              "column": "LiveMath",
+              "value": "56.5"
+            }
+          ]
+        },
+        {
+          "setting": "lr=8",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.0"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "73.6"
+            },
+            {
+              "column": "LiveMath",
+              "value": "66.9"
+            }
+          ]
+        },
+        {
+          "setting": "lr=16",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.8"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "78.2"
+            },
+            {
+              "column": "LiveMath",
+              "value": "65.3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "panel_label": "(e)",
+      "title": "Learning-rate scheduler",
+      "columns": [
+        "SearchQA",
+        "Spreadsheet",
+        "LiveMath"
+      ],
+      "rows": [
+        {
+          "setting": "constant",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.3"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "80.7"
+            },
+            {
+              "column": "LiveMath",
+              "value": "62.1"
+            }
+          ]
+        },
+        {
+          "setting": "cosine",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "61.3"
+            }
+          ]
+        },
+        {
+          "setting": "linear",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.2"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "72.9"
+            },
+            {
+              "column": "LiveMath",
+              "value": "62.9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "panel_label": "(f)",
+      "title": "Slow-update samples",
+      "columns": [
+        "SearchQA",
+        "Spreadsheet",
+        "LiveMath"
+      ],
+      "rows": [
+        {
+          "setting": "5",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.8"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "76.4"
+            },
+            {
+              "column": "LiveMath",
+              "value": "64.5"
+            }
+          ]
+        },
+        {
+          "setting": "10",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.4"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "74.3"
+            },
+            {
+              "column": "LiveMath",
+              "value": "65.3"
+            }
+          ]
+        },
+        {
+          "setting": "20",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "87.1"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "77.5"
+            },
+            {
+              "column": "LiveMath",
+              "value": "61.3"
+            }
+          ]
+        },
+        {
+          "setting": "40",
+          "values": [
+            {
+              "column": "SearchQA",
+              "value": "86.9"
+            },
+            {
+              "column": "Spreadsheet",
+              "value": "75.4"
+            },
+            {
+              "column": "LiveMath",
+              "value": "54.8"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "uncertainties": []
+}

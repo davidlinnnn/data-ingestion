@@ -1,0 +1,49 @@
+• We present Alita, a generalist agent that achieves scalable agentic reasoning with a radically simple design.
+• We empirically demonstrate that Alita, despite using no complex predefined tools and workflows for specific
+tasks, outperforms many systems with significantly more handcrafted complexity on the GAIA benchmark.
+We achieve 75.15% pass@1 and 87.27% pass@3, surpassing OpenAI’s Deep Research with 67.36% pass@1
+and ranking top among all general-purpose agents.
+2 Related Works
+2.1 Generalist Agent
+The concept of a Generalist Agent aims to construct an AI agent system capable of collaboratively completing a variety
+of complex tasks in a real-world environment. OWL [8] introduces a method that decomposes complex tasks into
+subtasks and dynamically allocates them to worker nodes with specialized toolkits. Omne [11] proposes a multi￾agent collaborative development framework, where each agent possesses an independent system structure, enabling
+autonomous learning and the storage of a comprehensive world model to build an independent understanding of the
+environment. OpenAI Deep Research2
+employs reinforcement learning for training on real-world tasks, aiming to
+provide precise and reliable research reports for knowledge-intensive tasks. A-World [12] offers a highly configurable,
+modular, and scalable simulation environment, allowing developers to flexibly define and integrate different types of AI
+agents. The Magentic-One [13] framework merges the Magentic and Autogen systems, distinguishing between the
+micro-level LLM-driven function generation and the macro-level multi-agent orchestration, resulting in a clearer and
+more efficient construction of agent systems. Alita, also a Generalist Agent, allows for the minimal use of predefined
+tools and workflows for direct problem-solving, yet still achieves impressive performance across diverse tasks.
+2.2 Auto Generating Agent
+Auto-generating agents aim to enhance the versatility of agents by enabling them to autonomously generate tools,
+agents, or workflows tailored to specific tasks. AutoAgents [14], for instance, generate multiple agents, each playing a
+distinct role, to handle the corresponding subtasks. OpenHands [15] offers an event-driven architecture that allows
+agents to interact with the environment like human developers, thereby enabling the creation of custom workflows.
+AFlow [16] redefines workflow optimization as a search problem, where each workflow consists of several nodes
+invoking large LLMs, and the optimal workflow is identified and executed through a search process. AutoAgent [17], as
+an autonomous agent operating system, permits agents to manage system-level operations and file data autonomously.
+In Alita, agents are empowered to automatically generate diverse, specialized, and highly accurate MCPs to aid in the
+completion of specific tasks, while also providing resources for future executions.
+2.3 Tool Creation
+Tool Creation enables agents to autonomously create tools to assist in task execution, either on their own or with external
+support. CRAFT [18] utilizes GPT-4 to generate a set of code snippets that function as tools, which are then retrieved
+and used in the system. TroVE [19] maintains a collection of high-level functions, which are automatically generated,
+extended, and periodically pruned to optimize program generation. CREATOR [20] decouples the abstraction of tool
+creation from the actual execution, allowing LLMs to address tasks at different levels of granularity. AutoAgent [17]
+enables agents to autonomously create new tools based on task requirements, incorporating information gathered
+through web searches and integrating these tools into their workflow. OpenHands [15] allows agents to create code
+scripts in a human-like manner during interaction with the environment to assist in task completion. In comparison,
+Alita enables MCP creation, which provides additional benefits, including better reusability and easy environment
+management over tool creation.
+2.4 MCP
+The Model Context Protocol (MCP) is a standard proposed by Anthropic, designed to unify the connection between AI
+systems and external data sources and services. RAG-MCP [21] enhances the efficiency and accuracy of agents by
+retrieving the most relevant tools from a large collection, based on the task description, within the database composed
+of MCP descriptions. After tool generation, Alita wraps the generated valid tools into MCPs for subsequent use,
+facilitating reuse by itself and other agents.
+2
+https://openai.com/index/introducing-deep-research/
+3

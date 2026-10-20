@@ -1,0 +1,219 @@
+{
+  "selection_sha256": "7d0d71cc21d52f4a3759bdb2d25b5854c20d929a0a426725914b6e507f9eca1d",
+  "scope": "20 conditional case checks; TP means a Q4 defect was found, not necessarily the automatic category was exact. Raw-candidate FP includes E04 already excluded by the margin eligibility fix.",
+  "flagged": {
+    "n": 10,
+    "TP": 5,
+    "FP": 5,
+    "UNKNOWN": 0
+  },
+  "unflagged": {
+    "n": 10,
+    "TN": 10,
+    "FN": 0,
+    "UNKNOWN": 0
+  },
+  "limitations": "非全體FP/FN率；沒有標正確案例的anchor以外全文無錯結論。E08是錯序混入而非文字全漏；E09的anchor尾端編號有oracle邊界誤差。",
+  "cases": [
+    {
+      "sample_id": "E01",
+      "stratum": "flagged",
+      "job_id": "F-cvpr_resnet",
+      "page": 1,
+      "result": "TP",
+      "reason": "原圖先左欄摘要、Introduction再右欄；輸出先右欄When deeper networks，再Abstract。另texts/43把p1左欄have also直接接p2左欄are comparably good，原本應接p1右欄greatly benefited。確認錯序與跨頁錯接。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E01.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E02",
+      "stratum": "flagged",
+      "job_id": "F-cvpr_yolo",
+      "page": 1,
+      "result": "TP",
+      "reason": "原圖先左欄摘要與Introduction；輸出先右欄methods to first generate，再Abstract。左欄More recent approaches like R-CNN use region proposal被接上p2 making predictions，應接p1右欄methods to first generate。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E02.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E03",
+      "stratum": "flagged",
+      "job_id": "F-ieee_tacotron2",
+      "page": 2,
+      "result": "FP",
+      "reason": "原頁decoder段落自左欄底自然續至右欄post-net layer...；texts/27保留正確順序與內容。來源anchor分段與rank-gap告警把合法continuation誤稱混段。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E03.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E04",
+      "stratum": "flagged",
+      "job_id": "F-acl_bert",
+      "page": 10,
+      "result": "FP",
+      "reason": "頁圖References中的arXiv preprint arXiv:1808.04444是完整書目，非頁邊stamp。凍結樣本保存raw告警；analysis-v2已將eligible_pdf_margin=false，主家具數不計它。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E04.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E05",
+      "stratum": "flagged",
+      "job_id": "F-iclr_adam",
+      "page": 1,
+      "result": "FP",
+      "reason": "備援anchor把頁首Published as...、標題及第一作者串成一句。頁首正確被分到furniture，不能將此anchor缺失稱正文漏句。另見Jimmy Lei Ba作者跨頁接入Algorithm1，獨立記為實際錯序／混段，非作者消失。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E05.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E06",
+      "stratum": "flagged",
+      "job_id": "F-cvpr_yolo",
+      "page": 8,
+      "result": "FP",
+      "reason": "原圖Figure5(b)的subcaption存在；texts/243是picture child，未混入正文段落。以body layer+text label忽略ancestor造成原告警；analysis-v3修正正文分類。其label仍text而非caption，另保留角色差異。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E06.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E07",
+      "stratum": "flagged",
+      "job_id": "P-05-2602.08234v2",
+      "page": 22,
+      "result": "TP",
+      "reason": "原頁Task條件只出現一次，Markdown表格兩欄各重複一次相同Task。原native table colspan2的匯出展開造成重複；並非兩個來源實例。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E07.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E08",
+      "stratum": "flagged",
+      "job_id": "P-07-2504.15228v2",
+      "page": 4,
+      "result": "TP",
+      "reason": "原頁sub-agent calls...naturally discarded...為連續正文。texts/67句中插入圖中文字LLM Context Window，接著圖中清單與caption，再由texts/85續句。詞仍在但正文被圖內容打斷，確認錯序／混入；不能解讀成整句文字全漏。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E08.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E09",
+      "stratum": "flagged",
+      "job_id": "P-07-2504.15228v2",
+      "page": 12,
+      "result": "TP",
+      "reason": "原頁附錄含完整有從屬編號的prompt清單；JSON保留picture children，但Markdown只輸出image placeholder，找不到fully end-to-end等內容。確認文字出口漏必要附錄內容。來源anchor尾端2.是抽句邊界誤差，另記；不據它宣稱數字2本身被漏。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E09.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "E10",
+      "stratum": "flagged",
+      "job_id": "F-acl_bert",
+      "page": 12,
+      "result": "FP",
+      "reason": "原頁Appendix for BERT...是置中加粗標題，Docling section_header角色正確；LaTeX prose抽取誤收標題造成role mismatch。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/E10.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C01",
+      "stratum": "unflagged",
+      "job_id": "F-acl_sbert",
+      "page": 2,
+      "result": "TN",
+      "reason": "跨欄BERT句保留；Semantic Textual Semilarity原PDF即如此，非新錯字；前後順序正確。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C01.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C02",
+      "stratum": "unflagged",
+      "job_id": "F-ieee_crnn",
+      "page": 2,
+      "result": "TN",
+      "reason": "整句compression敘述與原頁一致，前後CNN段落順序正確。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C02.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C03",
+      "stratum": "unflagged",
+      "job_id": "F-acm_lightgcn",
+      "page": 2,
+      "result": "TN",
+      "reason": "原頁第三項contribution及其後In-depth analyses仍同一list item，無從屬錯置。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C03.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C04",
+      "stratum": "unflagged",
+      "job_id": "F-cvpr_resnet",
+      "page": 2,
+      "result": "TN",
+      "reason": "152-layer及while still having lower complexity條件與對象保留；本句與同段3.57%敘述順序正確。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C04.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C05",
+      "stratum": "unflagged",
+      "job_id": "F-icml_efficientnet",
+      "page": 2,
+      "result": "TN",
+      "reason": "跨欄5 out of 8與up to 21x保留；同段8.4x、6.1x、76.3%→83.0%及+6.7%亦一致。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C05.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C06",
+      "stratum": "unflagged",
+      "job_id": "F-nips_attention",
+      "page": 2,
+      "result": "TN",
+      "reason": "ConvS2S線性、ByteNet對數的對應對象保留，前後Transformer句順序正確；另於同頁其他段記F13。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C06.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C07",
+      "stratum": "unflagged",
+      "job_id": "F-lncs_unet",
+      "page": 2,
+      "result": "TN",
+      "reason": "large/small patches的localization/context條件保留，前後順序正常。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C07.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C08",
+      "stratum": "unflagged",
+      "job_id": "F-arxiv_gradientdescent",
+      "page": 2,
+      "result": "TN",
+      "reason": "convex global minimum／non-convex local minimum對應完整，無條件對調。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C08.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C09",
+      "stratum": "unflagged",
+      "job_id": "P-02-2603.02766v1",
+      "page": 2,
+      "result": "TN",
+      "reason": "remains frozen及only skill repository and metadata的限制完整，未漏only。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C09.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    },
+    {
+      "sample_id": "C10",
+      "stratum": "unflagged",
+      "job_id": "P-04-2605.23904v2",
+      "page": 2,
+      "result": "TN",
+      "reason": "batch noise、learning rate、held-out gate與slow/meta momentum各對象及條件完整，順序正常。",
+      "page_image": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/audit/C10.png",
+      "reviewed": "Original full-page PNG + source anchor/LaTeX location + native item/Markdown + nearby sentence order"
+    }
+  ]
+}

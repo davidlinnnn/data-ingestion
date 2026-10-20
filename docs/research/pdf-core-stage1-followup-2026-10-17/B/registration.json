@@ -1,0 +1,61 @@
+{
+  "branch": "B-offline-followup",
+  "started_at": "2026-10-17T06:28:00.523174+00:00",
+  "deadline": "2026-10-17T07:58:00.523174+00:00",
+  "hard_limit_minutes": 90,
+  "scope": "Synthetic protocol plus pinned Core controls; historical cached source compatibility; no accuracy assessment",
+  "status": "offline_ready; six_call_live_completed_partial_delivery",
+  "supersedes_gate_only": "docs/research/pdf-core-stage1-2026-10-17/B/results.json",
+  "previous_artifacts_read_only": true,
+  "original_method_hashes": {
+    "docs/research/pdf-core-stage1-2026-10-17/B/protocol.py": "7261bc85e64c9b1815d9db0204f0ca724db0108337eac7fc0d27f375b489594b",
+    "docs/research/pdf-core-stage1-2026-10-17/B/controls.py": "2c8aae8f212242631bc4aa3d226aa18c30495108ca6233ae946617779a0eccc2",
+    "docs/research/pdf-core-stage1-2026-10-17/B/mock_sources.py": "e512eea3bf12c148f9a124c8c099bf95943577b84bb2e189d48a6be11d8c3b15",
+    "docs/research/pdf-core-stage1-2026-10-17/B/prepare.py": "a76eca473f997789ff41e9412f25936d756000b249b4ec4c234a9d2c5efc22c8"
+  },
+  "runtime": {
+    "docling-slim": "2.132.0",
+    "docling-core": "2.99.0",
+    "docling-parse": "7.22.3",
+    "pydantic": "2.14.1",
+    "markdown-it-py": "4.2.0"
+  },
+  "method_hashes": {
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-stage1-followup-2026-10-17/B/controls.py": "adcef0edc78ac9e00e53c365d6387a63d1c70a424b6dfeb5ac0dc6d699efe56f",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-stage1-followup-2026-10-17/B/protocol.py": "73ebe98cee394c4bfe03c21789bb82d515b0be42673c24458b2473983f2311f3",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-direct-cell-2026-10-17/adapter.py": "bb5eaccae5cf3f94e4e35b12367699471a2d72ac22279d54aa2cf9f77716273b",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-direct-cell-2026-10-17/gate.py": "f2fe3b8207a61c318e95a2b10bc3b43c3757f4a66aa1ce903fc5e7ef3f4917b6",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-caption-ownership-2026-10-17/policy.py": "d3735e86202d1bc6aaadc7bf337c134346738c351f06d53cae7ca7c590ee0647",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-table-delivery-2026-10-17/mapper.py": "baf2ff1f5dc1522da566fd58db9915182aeb91d87e7ad5adc7b294d02c7e8333"
+  },
+  "schema_policy": "Strict extra=forbid at every level; diagnostics separate from required table content; no field relocation. Empty string=known blank, literal dash=printed missing mark, null=covered only, {unknown:true}=unresolved and blocks delivery.",
+  "production_or_sdk_modified": false,
+  "finished_at": "2026-10-17T06:34:45.096261+00:00",
+  "elapsed_seconds": 404.573087,
+  "scope_fix": "section rowspan cannot extend beyond rowgroup",
+  "mechanical_controls": 26,
+  "negative_controls": 31,
+  "runner_tests": 22,
+  "next_stage_registration": "live-registration.json",
+  "live_gate": "single-page B only",
+  "original_frozen_artifacts_checked": 142,
+  "original_frozen_mismatches": [],
+  "api_requests": 0,
+  "model_loads": 0,
+  "holdout_reads": 0,
+  "remaining_external_requirement": "credential configured in execution environment; currently absent",
+  "live_result": {
+    "completed_at": "2026-10-17T06:45:00.209376+00:00",
+    "api_requests": 6,
+    "retries": 0,
+    "schema_valid_targets": 4,
+    "whole_pages_delivered": 2,
+    "whole_pages_total": 4,
+    "primary_typed_and_rendered_correct_delivered": 90,
+    "primary_numeric_denominator": 470,
+    "critical_delivered": 11,
+    "critical_denominator": 23,
+    "decision": "retain compact candidate; do not qualify full B or Stage3",
+    "results": "../B-results.md"
+  }
+}

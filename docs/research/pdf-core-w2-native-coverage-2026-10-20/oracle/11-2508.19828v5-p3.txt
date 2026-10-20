@@ -1,0 +1,80 @@
+memory-aware, reasoning-capable LLM agents.
+2 Related Work
+2.1 Memory Augmented LLM-based Agents
+LLMs have emerged as powerful general-purpose
+reasoners, capable of engaging in multi-turn dia￾logues, decomposing tasks into actionable steps,
+and leveraging prior context to guide decision mak￾ing (Brown et al., 2020; Chowdhery et al., 2022;
+OpenAI et al., 2024). However, their reliance on
+fixed-length context windows limits their ability
+to retain information over extended interactions.
+To overcome this, recent work augments LLM
+agents with external memory modules, enabling
+long-horizon reasoning and persistent knowledge
+accumulation through selective storage, retrieval,
+and updating of information. Several approaches
+illustrate this trend. LoCoMo (Maharana et al.,
+2024) introduces a benchmark to evaluate agents’
+ability to retrieve and reason over temporally dis￾tant conversational history. ReadAgent (Lee et al.,
+2024) proposes a human-inspired reading agent
+that uses gist-based memory for reasoning over
+very long contexts. MemoryBank (Zhong et al.,
+2024) proposes a compositional memory controller
+for lifelong agent memory. MemGPT (Packer et al.,
+2023) introduces working and long-term buffers
+with scheduling policies. For a broader perspective,
+we refer readers to the recent survey on memory
+systems in AI agents (Du et al., 2025). While most
+existing approaches rely on static memory designs,
+our work instead develops a learnable memory sys￾tem trained with reinforcement learning.
+2.2 LLM and Reinforcement Learning
+The intersection of LLM and RL has received in￾creasing attention as researchers seek to move be￾yond static supervised fine-tuning and enable mod￾els to learn from dynamic, interactive feedback.
+Reinforcement Learning from Human Feedback
+(RLHF) (Ouyang et al., 2022) is a foundational
+method used to align LLM outputs with human
+preferences. Recent works extend RL to more
+structured decision-making tasks for LLMs. For in￾stance, Toolformer (Schick et al., 2023) and ReAct￾style agents (Yao et al., 2023) frame tool use as
+an RL problem, where the LLM learns when to
+query external tools or APIs. Search-R1 (Jin et al.,
+2025) trains LLMs to issue web search queries
+using RL to maximize final answer correctness.
+Similarly, the Trial and Error approach (Song et al.,
+2024) optimizes agents to select better reasoning
+paths. These approaches demonstrate that RL can
+improve complex behavior sequences in LLMs.
+However, memory management and utilization in
+LLMs remain underexplored in the RL setting. Ex￾isting memory-augmented LLM systems (Chhikara
+et al., 2025; Packer et al., 2023) typically rely on
+heuristics to control memory operations, lacking
+adaptability and long-term optimization. Our work,
+Memory-R1, is among the first to frame memory
+operation selection, and the utilization of relevant
+memories as an RL problem.
+3 Method
+We present Memory-R1, a reinforcement learn￾ing framework for multi-session dialogue tasks,
+where each dialogue contains multiple sessions
+(separate interactions occurring at different times)
+and each session consists of several turns (a back￾and-forth exchange between two users). Answer￾ing a question always requires synthesizing infor￾mation spread across sessions, posing a strong
+challenge for long-horizon memory management
+and reasoning. Figure 2 illustrates the overall
+pipeline. At each dialogue turn, the LLM extracts
+and summarizes information worth remembering,
+then retrieves related entries from the memory bank
+as part of the Retrieval-Augmented Generation
+(RAG) framework. The Memory Manager decides
+whether to ADD, UPDATE, DELETE, or NOOP, thereby
+maintaining and evolving the memory state. For
+question answering, the Answer Agent applies a
+memory distillation policy over retrieved memo￾ries to filter noise and reason over the most relevant
+content. Both agents are fine-tuned with PPO or
+GRPO, enabling outcome-driven learning of mem￾ory operations and selective utilization. Further
+implementation details, such as model hyperparam￾eters, optimization schedule, and training setup, are
+provided in Appendix D.
+3.1 RL Fine-tuning for Memory Manager
+Task Formulation The Memory Manager main￾tains the memory bank by selecting one of ADD,
+UPDATE, DELETE, NOOP for each new piece of infor￾mation extracted from a dialogue, outputting both
+the operation and updated content m′
+. Training
+uses (i) a partially constructed memory bank and
+(ii) a new dialogue turn with information relevant
+to downstream QA. The goal is to learn which op￾eration produces a memory state that enables the
+3

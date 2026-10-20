@@ -1,0 +1,259 @@
+{
+  "$defs": {
+    "Grid": {
+      "additionalProperties": false,
+      "properties": {
+        "grid": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/Unknown"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "title": "Grid",
+          "type": "array"
+        },
+        "spans": {
+          "items": {
+            "$ref": "#/$defs/Span"
+          },
+          "title": "Spans",
+          "type": "array"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/Role"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "row_groups": {
+          "items": {
+            "$ref": "#/$defs/RowGroup"
+          },
+          "title": "Row Groups",
+          "type": "array"
+        }
+      },
+      "required": [
+        "grid",
+        "spans",
+        "roles",
+        "row_groups"
+      ],
+      "title": "Grid",
+      "type": "object"
+    },
+    "Panel": {
+      "additionalProperties": false,
+      "properties": {
+        "panel_label": {
+          "title": "Panel Label",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/Grid"
+        }
+      },
+      "required": [
+        "panel_label",
+        "title",
+        "data"
+      ],
+      "title": "Panel",
+      "type": "object"
+    },
+    "Role": {
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "minimum": 0,
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "minimum": 0,
+          "title": "Col",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "column",
+            "row",
+            "corner",
+            "section"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "kind"
+      ],
+      "title": "Role",
+      "type": "object"
+    },
+    "RowGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "minimum": 1,
+          "title": "End",
+          "type": "integer"
+        },
+        "label_row": {
+          "minimum": 0,
+          "title": "Label Row",
+          "type": "integer"
+        },
+        "label_col": {
+          "minimum": 0,
+          "title": "Label Col",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "label_row",
+        "label_col"
+      ],
+      "title": "RowGroup",
+      "type": "object"
+    },
+    "Span": {
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "minimum": 0,
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "minimum": 0,
+          "title": "Col",
+          "type": "integer"
+        },
+        "rows": {
+          "minimum": 1,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "minimum": 1,
+          "title": "Cols",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "rows",
+        "cols"
+      ],
+      "title": "Span",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "target_key": {
+          "title": "Target Key",
+          "type": "string"
+        },
+        "caption": {
+          "const": "",
+          "title": "Caption",
+          "type": "string"
+        },
+        "conditions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Conditions",
+          "type": "array"
+        },
+        "panels": {
+          "items": {
+            "$ref": "#/$defs/Panel"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Panels",
+          "type": "array"
+        },
+        "diagnostics": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Diagnostics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "target_key",
+        "caption",
+        "conditions",
+        "panels",
+        "diagnostics"
+      ],
+      "title": "Target",
+      "type": "object"
+    },
+    "Unknown": {
+      "additionalProperties": false,
+      "properties": {
+        "unknown": {
+          "const": true,
+          "title": "Unknown",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unknown"
+      ],
+      "title": "Unknown",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "targets": {
+      "items": {
+        "$ref": "#/$defs/Target"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Targets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "targets"
+  ],
+  "title": "Response",
+  "type": "object"
+}

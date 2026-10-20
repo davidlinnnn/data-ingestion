@@ -1,0 +1,464 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-15T22:24:51.828426+00:00",
+  "purpose": "Source-only bounded added validation for dots.ocr; not holdout and not a claim about pretraining independence.",
+  "role": "validation",
+  "selection_frozen_before_pdf_content": true,
+  "selection_method": "Metadata-only ordered queue, accept first two work groups passing exact work-ID/title and filename reference screen. LoRA rejected for existing references. Do not replace selected papers/pages for content coverage or model performance.",
+  "ordered_queue": [
+    "1901.08565",
+    "2106.09685",
+    "0704.0001"
+  ],
+  "selection_checks": [
+    {
+      "work_group": "arxiv:1901.08565",
+      "title": "Learning Neurosymbolic Generative Models via Program Synthesis",
+      "metadata_url": "https://arxiv.org/abs/1901.08565",
+      "text_reference_matches": [],
+      "filename_matches": [],
+      "metadata_blocklist_overlap": false,
+      "accepted": true
+    },
+    {
+      "work_group": "arxiv:2106.09685",
+      "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+      "metadata_url": "https://arxiv.org/abs/2106.09685",
+      "text_reference_matches": [
+        "./docs/research/pdf-core-g2-context-candidate-2026-10-15/legacy-replay/seal/baseline.md",
+        "./docs/research/pdf-core-g2-context-candidate-2026-10-15/legacy-replay/seal/working.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/inputs/baselines/seal/document.json",
+        "./docs/research/pdf-core-g2-inline-api-2026-10-15/reinsertion/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-api-2026-10-15/reinsertion/seal/candidate.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/attempts/before-guard-refinement/token-aware/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/attempts/before-guard-refinement/token-aware/seal/candidate.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/attempts/before-guard-refinement/component/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/attempts/before-guard-refinement/component/seal/candidate.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/attempts/serializer-count-failure/component/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/attempts/serializer-count-failure/component/seal/candidate.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/token-aware/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/token-aware/seal/candidate.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/component/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-2026-10-15/reinsertion/component/seal/candidate.md",
+        "./docs/research/pdf-core-g2-context-api-2026-10-15/integration/seal/baseline.md",
+        "./docs/research/pdf-core-g2-context-api-2026-10-15/integration/seal/working.md",
+        "./docs/research/pdf-core-g2-inline-boundary-2026-10-15/reinsertion/seal/baseline.md",
+        "./docs/research/pdf-core-g2-inline-boundary-2026-10-15/reinsertion/seal/working.md",
+        "./docs/research/paper-pdf-functional-2026-10-11/remaining-group5/17-2506.10943v1/merged/checkpoints/page-0015.json",
+        "./docs/research/paper-pdf-functional-2026-10-11/remaining-group5/17-2506.10943v1/native/document.json",
+        "./docs/research/paper-pdf-functional-2026-10-11/remaining-group5/17-2506.10943v1/native/document.md",
+        "./docs/research/paper-pdf-functional-2026-10-11/remaining-group5/17-2506.10943v1/group-011/checkpoints/page-0015.json"
+      ],
+      "filename_matches": [],
+      "metadata_blocklist_overlap": false,
+      "accepted": false
+    },
+    {
+      "work_group": "arxiv:0704.0001",
+      "title": "Calculation of prompt diphoton production cross sections at Tevatron and LHC energies",
+      "metadata_url": "https://arxiv.org/abs/0704.0001",
+      "text_reference_matches": [],
+      "filename_matches": [],
+      "metadata_blocklist_overlap": false,
+      "accepted": true
+    }
+  ],
+  "reference_scan": {
+    "includes_hidden_ignored": true,
+    "follows_symlinks": false,
+    "search_returns_paths_only": true,
+    "exclusions": [
+      ".git/**",
+      "*.pdf",
+      "*.png",
+      "*.jpg",
+      "*.jpeg",
+      "*.zip",
+      "*.gz",
+      "docs/fixtures/pdf-core-g2-holdout-2026-10-15/**",
+      "docs/research/pdf-core-g2-dots-2026-10-16/**"
+    ],
+    "limitation": "Exact identities/title aliases only; does not prove absence of differently named copies or shared templates."
+  },
+  "page_selection": {
+    "rule": "Physical page 1 plus argmin SHA256(ASCII lowercase document_sha256 + colon + ASCII decimal 1-based page number) among pages 2..N; no reselection.",
+    "selected_page_count_per_document": 2,
+    "fixed_before_pdf_content": true
+  },
+  "forbidden_reads": [
+    "Six holdout PDF contents",
+    "New baseline/challenger model outputs"
+  ],
+  "model_calls": 0,
+  "documents": [
+    {
+      "id": "validation-01",
+      "role": "validation",
+      "work_group": "arxiv:1901.08565",
+      "title": "Learning Neurosymbolic Generative Models via Program Synthesis",
+      "version": "v1",
+      "metadata_url": "https://arxiv.org/abs/1901.08565",
+      "requested_url": "https://arxiv.org/pdf/1901.08565v1",
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/1901.08565v1.pdf",
+      "acquisition_status": "acquired",
+      "initial_acquisition_error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+      "resolved_url": "https://arxiv.org/pdf/1901.08565v1",
+      "sha256": "ba060436331579fb145b0077be93e9d016e72ed64d5944ef2af058c198018451",
+      "size_bytes": 2654474,
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Sun, 22 Jan 2023 23:45:20 GMT",
+      "http_etag": "\"sha256:c59273d22145004d265e51771d3fc0568156922559d578ab6e5aee6a26e8e1ed\"",
+      "acquired_at_utc": "2026-10-15T22:25:12.232930+00:00",
+      "page_count": 13,
+      "selected_pages": [
+        1,
+        11
+      ],
+      "page_ranking": [
+        {
+          "page": 11,
+          "selection_sha256": "001a65d579a76cbd7f969fca137e6a5018a71a29d04a6c5713f0215762b826fb"
+        },
+        {
+          "page": 13,
+          "selection_sha256": "55ed217eca18825731782844a8ec9405556aaddd33de5d913040179585d6af11"
+        },
+        {
+          "page": 7,
+          "selection_sha256": "674f3f5fac425ce33c68fe43d985a046ea813696b7098ec8de4afd1840421bee"
+        },
+        {
+          "page": 2,
+          "selection_sha256": "77b08a940ff68b794618ed139d5ef1fa5b343e1756e102cebd9303ae09607f80"
+        },
+        {
+          "page": 5,
+          "selection_sha256": "82032d4bbada6c27a29c6133aa35c8461f7765b654adefa9186e2404cded776c"
+        },
+        {
+          "page": 4,
+          "selection_sha256": "8fa11fe8342e64d4175e6ebbb873d390e029a6247fe8170f02759d09276ae5da"
+        },
+        {
+          "page": 12,
+          "selection_sha256": "9cdde5d727cdc9bd54935060cdbe087a7d3609b1e02ea0c3873a607fb76ecf86"
+        },
+        {
+          "page": 3,
+          "selection_sha256": "af9afbc055fb86e2b227f524b5a227fa681c3ad0fd47b3dd6efa24ad8202c189"
+        },
+        {
+          "page": 8,
+          "selection_sha256": "b1cb8e3c6d65c4543b277077004fd7a0ad23b2b319bc7a57b73a3ddebf7c2e02"
+        },
+        {
+          "page": 10,
+          "selection_sha256": "c0a07c31a69571d31a49047cd1b4ef40f62d86c7124bd5f1bf3d79c39059b932"
+        },
+        {
+          "page": 9,
+          "selection_sha256": "e6050bd58d145eb62e87ec730f6bb340db5efdf9834a021ed013167f01cc0606"
+        },
+        {
+          "page": 6,
+          "selection_sha256": "e985906f3c7657c001af3825a1f9d4a76140efdfcb706864fd9ba6830d2d3672"
+        }
+      ],
+      "context_pages": [
+        2
+      ]
+    },
+    {
+      "id": "validation-02",
+      "role": "validation",
+      "work_group": "arxiv:0704.0001",
+      "title": "Calculation of prompt diphoton production cross sections at Tevatron and LHC energies",
+      "version": "v1",
+      "metadata_url": "https://arxiv.org/abs/0704.0001",
+      "requested_url": "https://arxiv.org/pdf/0704.0001v1",
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/0704.0001v1.pdf",
+      "acquisition_status": "acquired",
+      "initial_acquisition_error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+      "resolved_url": "https://arxiv.org/pdf/0704.0001v1",
+      "sha256": "387726add6d106da7920ef836cef6c6edacd9accc5e517f8f2e1797c784a7c17",
+      "size_bytes": 1353913,
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Tue, 17 Jan 2023 19:40:32 GMT",
+      "http_etag": "\"sha256:e36d23583d788eecdc1c214164dc82f8a37b520f0e7f4d2f34f0d3ed85541f93\"",
+      "acquired_at_utc": "2026-10-15T22:25:18.524049+00:00",
+      "page_count": 47,
+      "selected_pages": [
+        1,
+        12
+      ],
+      "page_ranking": [
+        {
+          "page": 12,
+          "selection_sha256": "037a51f3c45e25724732e23ad0edc4992734e9a27b806b7b67b6d5a16536115d"
+        },
+        {
+          "page": 28,
+          "selection_sha256": "0a308f07ee76742ca46bf689947d79b0017cb8e6bb139e22c6a3b00471b51644"
+        },
+        {
+          "page": 35,
+          "selection_sha256": "0f6df7b73dfab28a002333cb2d70fbffc4e49f9c893084eb842803d1e6c334fb"
+        },
+        {
+          "page": 19,
+          "selection_sha256": "165fc0d0e5153039521c39aeceab8c65b69c45b4fb4c0dba6260ba53193031c6"
+        },
+        {
+          "page": 24,
+          "selection_sha256": "17ef64bdb12794ded8592558331704a362fa96ae68a2ee6f4d24e256f73f703b"
+        },
+        {
+          "page": 43,
+          "selection_sha256": "2d65275d105f685ca01d5a5ff8296363b4bcd98dc2329f44a18689a4a285c205"
+        },
+        {
+          "page": 15,
+          "selection_sha256": "3316c4a33f772f76eae5d073f063b0862c8f044c54c140741c8ed3a59c70a3fd"
+        },
+        {
+          "page": 8,
+          "selection_sha256": "33d5e0bec0c0b73716f0d5303844b7f17c30785fefec3dd981c0012d33490fcb"
+        },
+        {
+          "page": 21,
+          "selection_sha256": "38bf09b7f3ca90b9fa2dcf957c1183f8eddc0ab6cf005d958016af2036475291"
+        },
+        {
+          "page": 18,
+          "selection_sha256": "3b4b5aac01e12bf55878d0144b19ceccfb75edc27b58096476d872d81c8fc32b"
+        },
+        {
+          "page": 39,
+          "selection_sha256": "3bd5a0aca030441f22f7c696fe3c9d56a14056638d38fd08fc667b608f91a97b"
+        },
+        {
+          "page": 36,
+          "selection_sha256": "47e857da71ef527953837c631e9f114092138ba0d13116eb90119db5aabc97bb"
+        },
+        {
+          "page": 31,
+          "selection_sha256": "52f06ae97495b7091b71c4d3af8c03b914795e7ee6596f79bcc278458aa7a193"
+        },
+        {
+          "page": 37,
+          "selection_sha256": "5a68fa680d75ca87d68fe7be3308fd6f3ef4ad8674d43a6361d23d5240971dd2"
+        },
+        {
+          "page": 2,
+          "selection_sha256": "5eb7ea7445bf8333082e3175f73703c485a1c7f50d93856a3147c1fc99bd99be"
+        },
+        {
+          "page": 17,
+          "selection_sha256": "6b23801230b0e9e711ba6ce3d73ee908f3080af441dd3d3302d4b7289fca8829"
+        },
+        {
+          "page": 23,
+          "selection_sha256": "6ce6c0ccac2a3f0372104b1b0a7358a6239b0e1ec10e39b56e10ee9b4dcb1ac3"
+        },
+        {
+          "page": 40,
+          "selection_sha256": "6d73a5a6a9f65263bac461001db3dc0d9e8f583ba386cc1ab5d69f295bbbb0d1"
+        },
+        {
+          "page": 33,
+          "selection_sha256": "7d519dabde50020fa722694155059658af8fa90d48b40fbfccd79f480f6bc245"
+        },
+        {
+          "page": 41,
+          "selection_sha256": "862eb6009eab4cb4836b2682ed9e060665b55932eb8ee131d6020b50c1fbdd14"
+        },
+        {
+          "page": 46,
+          "selection_sha256": "8f537fe564cdd04bdc496ad47b71adbd006db2bb924ee357391e4005a6d1a697"
+        },
+        {
+          "page": 13,
+          "selection_sha256": "90f26bd383d84ada03f084b9b901c6183833594577738944c9c7f8ad7bdf5ab5"
+        },
+        {
+          "page": 42,
+          "selection_sha256": "945d60e66cff701907215f833640cbceefaac76417e66e5674867cab1394bacc"
+        },
+        {
+          "page": 20,
+          "selection_sha256": "95158bec7473e06088ce2d20d11d94746b3381bcbe0808063c02d3f073b04125"
+        },
+        {
+          "page": 6,
+          "selection_sha256": "96e9282c2800c3e9a2c5a2955f871d8af505f16fd344ba86c3382dd531dfaf2a"
+        },
+        {
+          "page": 22,
+          "selection_sha256": "989c13e37d9f2b1c795a47407df361fc24cb6a99954d28c7fc3077ff0ee483b9"
+        },
+        {
+          "page": 5,
+          "selection_sha256": "9a5893dfbbd17e53dd34ba49aac289e85175c35f845db706ef9145dd629e35bd"
+        },
+        {
+          "page": 3,
+          "selection_sha256": "9cea5a753871e8319e5965dc463855bfaaabed8af6e35307edd9164b6755f097"
+        },
+        {
+          "page": 27,
+          "selection_sha256": "a5d90299aa4fe936ec1d0dcd3bab16a38a3a54c9d5eefec98043043140655e82"
+        },
+        {
+          "page": 44,
+          "selection_sha256": "a91a3c33389f37ddc34332f6ecf2d6f0ac43e2246d26bb14339d539cb9fbae4c"
+        },
+        {
+          "page": 34,
+          "selection_sha256": "aef11689f71c74a502d9f393db916bba49da940c04560b98b94f91a75312ac7d"
+        },
+        {
+          "page": 30,
+          "selection_sha256": "af8d33a7cc6e369c79e95bdfa1d616c3b10594f7034984823057b26e6e241068"
+        },
+        {
+          "page": 47,
+          "selection_sha256": "b39f012da56e1064b280537de1a48a09f992ac9973ebd868fc05dc857dff900b"
+        },
+        {
+          "page": 38,
+          "selection_sha256": "b45615b5e4b520ba05e11b6cff44c4dae4fdd45be992094a4a98098cc3677dd7"
+        },
+        {
+          "page": 7,
+          "selection_sha256": "b69a56783cdb4c2d6b32059cd2ff58195d6269c1292689cfe0102f3c334d91ac"
+        },
+        {
+          "page": 32,
+          "selection_sha256": "cc753ed9b5e06929e180ad1214a32c07f6958427865c44d71b7aee0f5b4d35d8"
+        },
+        {
+          "page": 16,
+          "selection_sha256": "d230d5f832bb5270f44595aab75aa4f8d1b80f7ac5f7791088fff2d721affd82"
+        },
+        {
+          "page": 25,
+          "selection_sha256": "d3c52a9bf8704a981fa7883e1ee38434e4634684ef75fcbdc2ef2c14c089953a"
+        },
+        {
+          "page": 9,
+          "selection_sha256": "d5c6f8e0fc716c83a9313fda574d1acb253ae39cd3a313f3b1728ebb80ac0ef9"
+        },
+        {
+          "page": 4,
+          "selection_sha256": "d6c662ee164423d1e2e731f699509f8a4feff50514690bd9b1d809fc98758100"
+        },
+        {
+          "page": 29,
+          "selection_sha256": "e591fcd60e0fa51424e76f355f73c8256b87640b49631e6d84fed345ed558726"
+        },
+        {
+          "page": 10,
+          "selection_sha256": "eb2cdb2017bdf7fe582d4bdb7e4bcf9f47a96a3618675666521a726bd5161094"
+        },
+        {
+          "page": 26,
+          "selection_sha256": "ece57f80174bdb13aafd280e663193b6e31de34a714dac4546d78c86b6725327"
+        },
+        {
+          "page": 45,
+          "selection_sha256": "f3ddb16b6c93b7fe555d18d4b5af45562b8761c59cf80f486c40de639a01c31f"
+        },
+        {
+          "page": 14,
+          "selection_sha256": "f8adc9b75199f5eeca6045af5ff1698f062af2f507ce9933ba977dfb1c8d2c17"
+        },
+        {
+          "page": 11,
+          "selection_sha256": "f8c803fe9954c5ea4cfa35dacac2735ce0940f116b4221f1329927091289ad23"
+        }
+      ],
+      "context_pages": [
+        11,
+        13
+      ]
+    }
+  ],
+  "pages_frozen_at_utc": "2026-10-15T22:25:26.092741+00:00",
+  "source_contract": {
+    "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/source-contract.json",
+    "sha256": "05b13af813b38388800b0bc12751b103afff8335c4ff5060cc49483a12bd20af"
+  },
+  "metadata_reference_hashes": [
+    {
+      "path": "docs/research/pdf-core-g2-eval-freeze-2026-10-15.md",
+      "sha256": "d0dac14afd5103357e5515b350eb3b3c200aa60e43574762821668363ef925f3"
+    },
+    {
+      "path": "docs/research/pdf-core-g2-eval-freeze-2026-10-15/exposure-audit.json",
+      "sha256": "d2305dde17916583504a8f3e64cf0ae3f4b977671f595443cdeb042b379fcf02"
+    },
+    {
+      "path": "docs/research/pdf-core-g2-eval-freeze-2026-10-15/holdout-custody.json",
+      "sha256": "bab607c1ca785fa21a0e6e682185ef2c5deb4aa5a64e148911add965b4e8f932"
+    }
+  ],
+  "render_method": {
+    "tool": "Poppler pdftoppm",
+    "arguments": [
+      "-r",
+      "130",
+      "-singlefile",
+      "-png"
+    ],
+    "original_pdfs_unchanged": true,
+    "visual_review": "All four selected pages and three context-only pages inspected by source-only curator."
+  },
+  "renders": [
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-01-context-p002.png",
+      "sha256": "39d86664f19bcd649b8b2f0495c4306dce6cb7e7138021ad2b845accfba1a00f",
+      "size_bytes": 576635,
+      "context_only": true
+    },
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-01-p001.png",
+      "sha256": "20c82d9ac470bf9d05d56cf0e365a28d6914761f44ea2e2bd4ec74d2c0cdfc82",
+      "size_bytes": 462456,
+      "context_only": false
+    },
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-01-p011.png",
+      "sha256": "b6a6fbc3b5dfce33a47968342a8ca5c61b7d966c96284883dae53bf66f676e7c",
+      "size_bytes": 361553,
+      "context_only": false
+    },
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-02-context-p011.png",
+      "sha256": "3b0dd3f10c8ec255b5ff55328770e30de7a9b98a1ec7a12ba546f654889d152a",
+      "size_bytes": 231838,
+      "context_only": true
+    },
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-02-context-p013.png",
+      "sha256": "f5aee737e5b254263184f35e4a38adbc1d7a49e097f10470eec3cec0e59570a3",
+      "size_bytes": 179799,
+      "context_only": true
+    },
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-02-p001.png",
+      "sha256": "37e41bc6206d6513a9030122ab550f67434d620cb0b2187a5f03a92256baeaff",
+      "size_bytes": 148660,
+      "context_only": false
+    },
+    {
+      "path": "docs/research/pdf-core-g2-dots-2026-10-16/validation/renders/validation-02-p012.png",
+      "sha256": "2a430f074bf58e7dc6a5190795b3a3b2b0e302dd88770f0cb40dbf8ade289481",
+      "size_bytes": 196701,
+      "context_only": false
+    }
+  ],
+  "status": "source_contract_complete_before_inference",
+  "frozen_at_utc": "2026-10-15T22:30:11.950852+00:00"
+}

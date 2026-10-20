@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "freeze_date": "2026-10-15",
+  "created_at_utc": "2026-10-15T13:13:12.742823+00:00",
+  "status": "custody_only_acquired",
+  "purpose": "Custody only for a future Docling G2 inline formula/code/context evaluation; no evaluation or source annotation performed.",
+  "experiment_unseen_definition": "No pre-existing work ID, exact title alias, or work-ID filename reference found in the repository search scope before acquisition. This is an operational experiment-exposure boundary, not a claim about model pretraining or semantic independence.",
+  "selection": {
+    "method": "Metadata-only staged ordered queue. Reject any work family with a repository identity/title reference or uncertain source-content exposure; accept the first six remaining work groups. Official arxiv abs metadata determined the exact available versions and titles. No PDF content or candidate output was consulted.",
+    "ordered_queue": [
+      "arxiv:1706.03762",
+      "arxiv:1810.04805",
+      "arxiv:1605.08695",
+      "arxiv:1412.6980",
+      "arxiv:1502.03167",
+      "arxiv:1312.5602",
+      "arxiv:1603.02754",
+      "rfc:8439",
+      "rfc:9000",
+      "gnu:make-manual",
+      "rfc:8949",
+      "rfc:8785",
+      "arxiv:0908.3871",
+      "arxiv:1202.5147",
+      "arxiv:1402.1120",
+      "arxiv:1206.5533"
+    ],
+    "queue_note": "Initial suggested arxiv works were screened first. XGBoost identity was corrected from 1605.08695 to 1603.02754; Playing Atari identity/version was corrected from a proposed NMT v3 alias to 1312.5602v1. Technical document candidates were then prioritized at coordinator request ahead of the four scientific replacements. Queue construction used availability/metadata only, never extraction results.",
+    "pre_fetch_search": {
+      "status": "passed_all_six",
+      "search_terms": "Each unversioned arxiv work ID plus exact official title (1402.1120 title prefix through HPC systems).",
+      "command_prefix": "rtk proxy rg --hidden --no-ignore -l -i -F",
+      "text_search_exclusions": [
+        ".git/**",
+        "*.pdf",
+        "*.png",
+        "*.jpg",
+        "*.jpeg",
+        "*.zip",
+        "*.gz",
+        "docs/fixtures/pdf-core-g2-holdout-2026-10-15/**",
+        "docs/research/pdf-core-g2-eval-freeze-2026-10-15/**"
+      ],
+      "additional_filename_check": "rtk proxy rg --files --hidden --no-ignore --glob !.git/** .; no matching work-ID filenames outside the two new freeze directories.",
+      "includes_ignored_and_hidden_metadata": true,
+      "follows_symlinks": false,
+      "note": "rg default binary detection applies; existing PDFs were not parsed/extracted. References in installed source/SBOM files were treated conservatively as exclusions. This scan is not a proof of absence of differently named copies or undisclosed prior use."
+    },
+    "rejected": [
+      {
+        "work_group": "arxiv:1706.03762",
+        "title": "Attention Is All You Need",
+        "reason": "Existing exact work-ID/title references; conservative family exclusion.",
+        "matching_text_files": 353,
+        "sample_paths": [
+          "docs/research/paper-pdf-dgm-durable-q10-2026-10-11/runtime/E/export/assembly/document.json"
+        ]
+      },
+      {
+        "work_group": "arxiv:1810.04805",
+        "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+        "reason": "Existing exact work-ID/title references; conservative family exclusion.",
+        "matching_text_files": 50,
+        "sample_paths": [
+          "docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/native-baseline/document.json"
+        ]
+      },
+      {
+        "work_group": "arxiv:1605.08695",
+        "title": "TensorFlow: A system for large-scale machine learning",
+        "reason": "Corrected official metadata identifies TensorFlow v2, not XGBoost v3; actual title has existing references.",
+        "matching_text_files": 49,
+        "sample_paths": [
+          "docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/native-baseline/document.json"
+        ]
+      },
+      {
+        "work_group": "arxiv:1412.6980",
+        "title": "Adam: A Method for Stochastic Optimization",
+        "reason": "Existing exact work-ID/title references; conservative family exclusion.",
+        "matching_text_files": 56,
+        "sample_paths": [
+          "docs/prototypes/pdf-checkpoint-prototype/PROTOTYPE-wipe-me/native-baseline/document.json"
+        ]
+      },
+      {
+        "work_group": "arxiv:1502.03167",
+        "title": "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift",
+        "reason": "Existing installed-source reference; conservative family exclusion.",
+        "matching_text_files": 1,
+        "sample_paths": [
+          "docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/torch/nn/modules/batchnorm.py"
+        ]
+      },
+      {
+        "work_group": "rfc:8439",
+        "title": "ChaCha20 and Poly1305 for IETF Protocols",
+        "reason": "Existing installed SBOM reference. Intended RFC Editor info page also unexpectedly embedded full text; excluded in all cases.",
+        "matching_text_files": 1,
+        "sample_paths": [
+          "docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/hf_xet-1.6.0.dist-info/sboms/hf_xet.cyclonedx.json"
+        ]
+      },
+      {
+        "work_group": "rfc:9000",
+        "title": "QUIC: A UDP-Based Multiplexed and Secure Transport",
+        "reason": "Zero repository references, but intended RFC Editor info page is a full-text route. Only title/line count returned; ambiguous source-page exposure conservatively excluded.",
+        "matching_text_files": 0,
+        "sample_paths": []
+      },
+      {
+        "work_group": "gnu:make-manual",
+        "title": "GNU make",
+        "reason": "Existing installed-source/SBOM title or manual-family references; GNU landing-page fetch also failed.",
+        "matching_text_files": 3,
+        "sample_paths": [
+          "docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/pygments/lexers/make.py"
+        ]
+      },
+      {
+        "work_group": "rfc:8949",
+        "title": "Concise Binary Object Representation (CBOR)",
+        "reason": "Zero repository references, but intended Datatracker metadata route embedded full text and returned a body/contents snippet; conservatively excluded.",
+        "matching_text_files": 0,
+        "sample_paths": []
+      },
+      {
+        "work_group": "rfc:8785",
+        "title": "JSON Canonicalization Scheme (JCS)",
+        "reason": "Zero repository references, but intended Datatracker metadata route embedded full text. Only title/line count returned; ambiguous source-page exposure conservatively excluded.",
+        "matching_text_files": 0,
+        "sample_paths": []
+      }
+    ]
+  },
+  "custody_policy": {
+    "allowed_operations": [
+      "public PDF byte download",
+      "PDF magic prefix check",
+      "byte length check",
+      "SHA-256 hashing"
+    ],
+    "prohibited_operations": [
+      "PDF rendering or preview",
+      "PDF text extraction or PDF parser inspection",
+      "Docling or other inference/model calls",
+      "candidate/baseline processing",
+      "ground-truth labels",
+      "feature/page/span annotation"
+    ],
+    "pdf_content_inspected": false,
+    "labels_created": false,
+    "model_calls": 0
+  },
+  "coverage": {
+    "document_type": "Six scientific papers only, per public metadata.",
+    "formula_code_context_feature_presence": "unknown_until_independent_source_only_annotation",
+    "feature_counts": null,
+    "missing_strata": [
+      "official programming/technical manuals",
+      "SOP documents",
+      "Traditional Chinese documents"
+    ],
+    "generalization_limit": "Six work groups are a bounded custody pool; no representative-corpus or broad document-strata coverage claim."
+  },
+  "documents": [
+    {
+      "id": "holdout-01",
+      "split": "holdout",
+      "work_group": "arxiv:1312.5602",
+      "canonical_work_id": "1312.5602",
+      "source_version": "v1",
+      "exact_identity": "arxiv:1312.5602v1",
+      "title": "Playing Atari with Deep Reinforcement Learning",
+      "metadata_subject": "cs.LG",
+      "metadata_source_url": "https://arxiv.org/abs/1312.5602",
+      "canonical_group_url": "https://doi.org/10.48550/arXiv.1312.5602",
+      "requested_url": "https://arxiv.org/pdf/1312.5602v1",
+      "path": "docs/fixtures/pdf-core-g2-holdout-2026-10-15/1312.5602v1.pdf",
+      "acquisition_status": "acquired",
+      "sha256": "8db04120cace173151c77e0faa6f3eaa4207009da66b9417597dc70bfee56d9c",
+      "size_bytes": 483443,
+      "pdf_magic_valid": true,
+      "text_reference_matches_before_fetch": 0,
+      "filename_reference_matches_before_fetch": 0,
+      "feature_coverage": "unknown_unannotated",
+      "acquisition_attempts": [
+        {
+          "at_utc": "2026-10-15T13:13:23.216839+00:00",
+          "status": "failed",
+          "reason": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
+        },
+        {
+          "at_utc": "2026-10-15T13:13:46.520716+00:00",
+          "status": "success",
+          "network_context": "approved_public_read"
+        }
+      ],
+      "resolved_url": "https://arxiv.org/pdf/1312.5602v1",
+      "observed_at_utc": "2026-10-15T13:13:46.520716+00:00",
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Fri, 20 Jan 2023 07:03:01 GMT",
+      "http_etag": "CPmhjZ/K1fwCEAE=",
+      "redirects": []
+    },
+    {
+      "id": "holdout-02",
+      "split": "holdout",
+      "work_group": "arxiv:1603.02754",
+      "canonical_work_id": "1603.02754",
+      "source_version": "v3",
+      "exact_identity": "arxiv:1603.02754v3",
+      "title": "XGBoost: A Scalable Tree Boosting System",
+      "metadata_subject": "cs.LG",
+      "metadata_source_url": "https://arxiv.org/abs/1603.02754",
+      "canonical_group_url": "https://doi.org/10.48550/arXiv.1603.02754",
+      "requested_url": "https://arxiv.org/pdf/1603.02754v3",
+      "path": "docs/fixtures/pdf-core-g2-holdout-2026-10-15/1603.02754v3.pdf",
+      "acquisition_status": "acquired",
+      "sha256": "52bc282c922a239134ee4d6f4367c58bf920a9bdd53acbb3b2aa3342e2bb7214",
+      "size_bytes": 944793,
+      "pdf_magic_valid": true,
+      "text_reference_matches_before_fetch": 0,
+      "filename_reference_matches_before_fetch": 0,
+      "feature_coverage": "unknown_unannotated",
+      "resolved_url": "https://arxiv.org/pdf/1603.02754v3",
+      "observed_at_utc": "2026-10-15T13:13:46.955055+00:00",
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Sat, 21 Jan 2023 01:36:54 GMT",
+      "http_etag": "COWRvpvD1/wCEAE=",
+      "redirects": [],
+      "acquisition_attempts": [
+        {
+          "at_utc": "2026-10-15T13:13:46.955055+00:00",
+          "status": "success",
+          "network_context": "approved_public_read"
+        }
+      ]
+    },
+    {
+      "id": "holdout-03",
+      "split": "holdout",
+      "work_group": "arxiv:0908.3871",
+      "canonical_work_id": "0908.3871",
+      "source_version": "v1",
+      "exact_identity": "arxiv:0908.3871v1",
+      "title": "Critical parameters for the one-dimensional systems with long-range correlated disorder",
+      "metadata_subject": "cond-mat.dis-nn",
+      "metadata_source_url": "https://arxiv.org/abs/0908.3871",
+      "canonical_group_url": "https://doi.org/10.48550/arXiv.0908.3871",
+      "requested_url": "https://arxiv.org/pdf/0908.3871v1",
+      "path": "docs/fixtures/pdf-core-g2-holdout-2026-10-15/0908.3871v1.pdf",
+      "acquisition_status": "acquired",
+      "sha256": "73656ff82dcccc9c768423f4ce428dc250ac7bac44b373cb2cb4f8dddae1b551",
+      "size_bytes": 317307,
+      "pdf_magic_valid": true,
+      "text_reference_matches_before_fetch": 0,
+      "filename_reference_matches_before_fetch": 0,
+      "feature_coverage": "unknown_unannotated",
+      "resolved_url": "https://arxiv.org/pdf/0908.3871v1",
+      "observed_at_utc": "2026-10-15T13:13:47.495429+00:00",
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Wed, 18 Jan 2023 12:57:27 GMT",
+      "http_etag": "CIz97N2V0fwCEAE=",
+      "redirects": [],
+      "acquisition_attempts": [
+        {
+          "at_utc": "2026-10-15T13:13:47.495429+00:00",
+          "status": "success",
+          "network_context": "approved_public_read"
+        }
+      ]
+    },
+    {
+      "id": "holdout-04",
+      "split": "holdout",
+      "work_group": "arxiv:1202.5147",
+      "canonical_work_id": "1202.5147",
+      "source_version": "v2",
+      "exact_identity": "arxiv:1202.5147v2",
+      "title": "Tensor functors between categories of quasi-coherent sheaves",
+      "metadata_subject": "math.AG; math.CT",
+      "metadata_source_url": "https://arxiv.org/abs/1202.5147",
+      "canonical_group_url": "https://doi.org/10.48550/arXiv.1202.5147",
+      "requested_url": "https://arxiv.org/pdf/1202.5147v2",
+      "path": "docs/fixtures/pdf-core-g2-holdout-2026-10-15/1202.5147v2.pdf",
+      "acquisition_status": "acquired",
+      "sha256": "1c934e778fdce47fdca105981bb40b400c0a7888533f2166d2f21302d5647f23",
+      "size_bytes": 269409,
+      "pdf_magic_valid": true,
+      "text_reference_matches_before_fetch": 0,
+      "filename_reference_matches_before_fetch": 0,
+      "feature_coverage": "unknown_unannotated",
+      "resolved_url": "https://arxiv.org/pdf/1202.5147v2",
+      "observed_at_utc": "2026-10-15T13:13:48.031954+00:00",
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Thu, 19 Jan 2023 11:30:34 GMT",
+      "http_etag": "CNPy7JbE0/wCEAE=",
+      "redirects": [],
+      "acquisition_attempts": [
+        {
+          "at_utc": "2026-10-15T13:13:48.031954+00:00",
+          "status": "success",
+          "network_context": "approved_public_read"
+        }
+      ]
+    },
+    {
+      "id": "holdout-05",
+      "split": "holdout",
+      "work_group": "arxiv:1402.1120",
+      "canonical_work_id": "1402.1120",
+      "source_version": "v2",
+      "exact_identity": "arxiv:1402.1120v2",
+      "title": "Performance analysis of electronic structure codes on HPC systems: A case study of SIESTA",
+      "metadata_subject": "physics.comp-ph",
+      "metadata_source_url": "https://arxiv.org/abs/1402.1120",
+      "canonical_group_url": "https://doi.org/10.48550/arXiv.1402.1120",
+      "requested_url": "https://arxiv.org/pdf/1402.1120v2",
+      "path": "docs/fixtures/pdf-core-g2-holdout-2026-10-15/1402.1120v2.pdf",
+      "acquisition_status": "acquired",
+      "sha256": "d7bc9f1d7baf15412880e1e1e91a2e7aef85a29cc7678c6c4df07d03fe7f55a7",
+      "size_bytes": 597387,
+      "pdf_magic_valid": true,
+      "text_reference_matches_before_fetch": 0,
+      "filename_reference_matches_before_fetch": 0,
+      "feature_coverage": "unknown_unannotated",
+      "resolved_url": "https://arxiv.org/pdf/1402.1120v2",
+      "observed_at_utc": "2026-10-15T13:13:48.655247+00:00",
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Fri, 20 Jan 2023 07:54:38 GMT",
+      "http_etag": "CNuEhOTV1fwCEAE=",
+      "redirects": [],
+      "acquisition_attempts": [
+        {
+          "at_utc": "2026-10-15T13:13:48.655247+00:00",
+          "status": "success",
+          "network_context": "approved_public_read"
+        }
+      ]
+    },
+    {
+      "id": "holdout-06",
+      "split": "holdout",
+      "work_group": "arxiv:1206.5533",
+      "canonical_work_id": "1206.5533",
+      "source_version": "v2",
+      "exact_identity": "arxiv:1206.5533v2",
+      "title": "Practical recommendations for gradient-based training of deep architectures",
+      "metadata_subject": "cs.LG",
+      "metadata_source_url": "https://arxiv.org/abs/1206.5533",
+      "canonical_group_url": "https://doi.org/10.48550/arXiv.1206.5533",
+      "requested_url": "https://arxiv.org/pdf/1206.5533v2",
+      "path": "docs/fixtures/pdf-core-g2-holdout-2026-10-15/1206.5533v2.pdf",
+      "acquisition_status": "acquired",
+      "sha256": "13b45892fd59e675fb1b9611b4926357f7eee3893d2cc763ceddb4b2e2a5a46a",
+      "size_bytes": 500953,
+      "pdf_magic_valid": true,
+      "text_reference_matches_before_fetch": 0,
+      "filename_reference_matches_before_fetch": 0,
+      "feature_coverage": "unknown_unannotated",
+      "resolved_url": "https://arxiv.org/pdf/1206.5533v2",
+      "observed_at_utc": "2026-10-15T13:13:49.081201+00:00",
+      "http_status": 200,
+      "http_content_type": "application/pdf",
+      "http_last_modified": "Sat, 30 Nov 2024 01:08:37 GMT",
+      "http_etag": "CM+7x6TvgooDEAE=",
+      "redirects": [],
+      "acquisition_attempts": [
+        {
+          "at_utc": "2026-10-15T13:13:49.081201+00:00",
+          "status": "success",
+          "network_context": "approved_public_read"
+        }
+      ]
+    }
+  ],
+  "acquired_document_count": 6,
+  "total_size_bytes": 3113292,
+  "frozen_at_utc": "2026-10-15T13:14:41.635094+00:00",
+  "final_byte_verification": "All six local files rehashed after download; PDF magic, recorded size, full SHA-256 and distinct work groups matched. No PDF parser used."
+}

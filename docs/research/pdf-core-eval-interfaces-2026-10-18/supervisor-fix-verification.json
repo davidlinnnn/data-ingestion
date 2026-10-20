@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-18",
+  "status": "CPU supervisor exit-race regression fixed in v2",
+  "current_entry": "C/cpu_baseline_v2.py",
+  "historical_entry_unchanged": "C/cpu_baseline.py",
+  "root_causes": [
+    "process exit between enumeration and memory_info",
+    "process exit between poll and killpg"
+  ],
+  "original_regression": {
+    "tests": 5,
+    "failures": 4
+  },
+  "fixed_regression": {
+    "tests": 8,
+    "failures": 0,
+    "real_worker_exit_codes": [
+      0,
+      7
+    ]
+  },
+  "frozen_source_artifacts_unchanged": 159,
+  "original_CPU_error_record_preserved": true,
+  "model_API_calls": 0,
+  "PDF_conversion_pages": 0,
+  "full_PDF_supervisor_rerun": false,
+  "artifact_sha256": {
+    "C/cpu_baseline_v2.py": "7a54df318e1fc16854f98826e8486ed32a0c16a88a695edcee7f2ea0ad8cf08b",
+    "C/test_cpu_supervisor_v2.py": "2d742a4accae99ea7af53284f1af0be5d2fbd06d6dfc2d2789a56f1ab1176686",
+    "supervisor-fix.md": "6d7817df5b7b616974e3b788b7a5b12efb2a2afe0cd7f042d70c0cac5614b935"
+  }
+}

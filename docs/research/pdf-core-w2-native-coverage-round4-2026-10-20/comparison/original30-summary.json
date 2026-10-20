@@ -1,0 +1,90 @@
+{
+  "variant": "V4",
+  "scope": "original30 only; recovery6 delegated separately",
+  "owned_jobs": 30,
+  "global_changed_rows": 135,
+  "owned_changed_rows": 91,
+  "owned_adjudicated_rows": 91,
+  "owned_pending_rows": 0,
+  "identity_coverage_complete": true,
+  "baseline_registered_groups": 13,
+  "baseline_status_counts": {
+    "PERSISTING_BLOCKING": 10,
+    "PARTIAL_IMPROVEMENT": 1,
+    "CONFIRMED_FIXED": 2
+  },
+  "new_confirmed_blocking_source_groups": [
+    {
+      "source_rootcause_group": "v4-memgen-p25-column-order-prompt-suppression",
+      "job_id": "P-13-2601.01885v3",
+      "family": "ACL/EMNLP",
+      "failure_type": "reading_order_and_picture_delivery_omission",
+      "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+      "row_verdicts": [
+        "CONFIRMED_NEW_BLOCKING"
+      ],
+      "changed_rows": 6,
+      "affected_pages": [
+        25
+      ],
+      "source_reason": "原p25先左欄評分prompt及C.3baselineconfigs，再右欄RAGvariants續C.3，之後C.4implementation。",
+      "baseline_reason": "baseline按左欄→右欄，評分prompt文字可在MD讀到且C.3先C.4。",
+      "variant_reason": "V4RAGtext653/C.4heading654提前到左欄prompt/C.3前；text656評分prompt入picture5，MD變imageplaceholder。MD呈C.4後C.3且Trainingconfiguration接在C.3，baseline/implementation對象錯屬，必要prompt英文亦漏交付。"
+    },
+    {
+      "source_rootcause_group": "v4-seal-p18-json-keys-orphaned",
+      "job_id": "P-17-2506.10943v1",
+      "family": "NeurIPS/ICLR",
+      "failure_type": "paragraph_merge_changes_json_object_membership",
+      "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+      "row_verdicts": [
+        "CONFIRMED_NEW_BLOCKING"
+      ],
+      "changed_rows": 1,
+      "affected_pages": [
+        18
+      ],
+      "source_reason": "p18Exampleoutput的data_generationJSON物件應包含四個augmentation keys，正文於Exampleoutput結束。",
+      "baseline_reason": "baselinecode450將四key全放data_generation物件內，正文449不含JSONkey。",
+      "variant_reason": "V4text437在Exampleoutput後偷接use_basic/use_chain/use_repeat三key，code438的data_generation只剩use_size。三個key離開原JSON物件，必要清單從屬/對象改錯；非無害paragraphmerge。"
+    },
+    {
+      "source_rootcause_group": "v4-skillrl-p24-result-skills-omitted",
+      "job_id": "P-05-2602.08234v2",
+      "family": "NeurIPS/ICLR",
+      "failure_type": "table_cell_mapping_omission",
+      "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+      "row_verdicts": [
+        "CONFIRMED_NEW_BLOCKING"
+      ],
+      "changed_rows": 3,
+      "affected_pages": [
+        24
+      ],
+      "source_reason": "p24Case3底列Result:SUCCESS(Optimal3Steps)及KeySkills[exa001]/[loo001](SpatialPriors)在原圖清楚完整。",
+      "baseline_reason": "baseline表格14及MD雖重複但保留完整成功結果和技能對象。",
+      "variant_reason": "V4table14最後一列只餘Step3Result:tion.Key碎片；SpatialPriors/完整Result必要結果及技能說明在所有native text/cells及MD均消失。removedduplicate/role是因漏內容，非修復。"
+    }
+  ],
+  "full_repairs": [
+    "sica-p12-prompt-export-suppression",
+    "sica-p13-initialrequest-problem-order"
+  ],
+  "partial_improvements": [
+    "skillrl-colspan-markdown-duplicates"
+  ],
+  "row_verdict_counts": {
+    "ORACLE_FALSE_POSITIVE": 17,
+    "METADATA_ONLY": 23,
+    "PARTIAL_IMPROVEMENT": 1,
+    "CONFIRMED_NEW_BLOCKING": 10,
+    "CONFIRMED_FIXED": 40
+  },
+  "owned_candidate_alert_job_pages": 21,
+  "new_blocking_affected_job_pages": 3,
+  "heading_adjudication_file": "adjudication/original30-heading-adjudication.json",
+  "heading_title_delivery_regressions": 1,
+  "new_semantic_counts_are_source_groups_not_alert_rows": true,
+  "mathematics_limit": "Symbol-sensitive Adam fallback anchors checked against source pages and active English do not establish full display-math/algorithm mathematical equivalence. Formula-only recovery is not counted as complete registered Q4 source-group repair.",
+  "scope_limit": "All changed frozen-v3 candidate identities and 13 known original30 baseline events reviewed; no whole-document word-for-word equivalence claim."
+}

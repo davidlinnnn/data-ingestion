@@ -1,0 +1,446 @@
+[
+  {
+    "source_rootcause_group": "adam-algorithm2-prose-scope",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "NON_BLOCKING_ORACLE_OR_METADATA",
+    "row_verdicts": [
+      "METADATA_ONLY",
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      9
+    ],
+    "source_reason": "p9Require至while及梯度計算在Algorithm2框，D1排除algorithmprose分母。",
+    "baseline_reason": "各英文require/init步驟原本在active text，t←t+1原為空formula，複合anchor不宜當漏prose。",
+    "variant_reason": "V4code321及MD包含完整算法文字與t←t+1；removedmissing/addedrole是code歸類及數學token恢復，不是舊author/Definition阻擋修復。"
+  },
+  {
+    "source_rootcause_group": "adam-caption-textlayer-order",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      7
+    ],
+    "source_reason": "p7Figure3caption完整單一float，非正文句讀序。",
+    "baseline_reason": "bodyfallback把caption當正文排序，LISoutside非改義。",
+    "variant_reason": "V4caption157完整且MD獨立；LIS警報消失不算修復必要正文。"
+  },
+  {
+    "source_rootcause_group": "adam-footer5-composite",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      5
+    ],
+    "source_reason": "p5下方正文during跨p6續training，頁碼5屬家具。",
+    "baseline_reason": "fallbackanchor含soft-hyphen及頁碼5，不是單一正文句。",
+    "variant_reason": "V4正文suggested/50%dropout等仍在，頁碼分開；role警報消失非semanticfix。"
+  },
+  {
+    "source_rootcause_group": "adam-footer6-composite",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      6
+    ],
+    "source_reason": "p6The input image...and跨p7接dropout；6是頁碼。",
+    "baseline_reason": "fallback把頁碼6混入句子。",
+    "variant_reason": "V4text99完整正文，100頁碼furniture，MD排頁碼正確；新增role警報是oracle跨區複合。"
+  },
+  {
+    "source_rootcause_group": "adam-heading-plus-body-oracle-boundary",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      2
+    ],
+    "source_reason": "2.1標題與下一段分開，正文An important property...完整。",
+    "baseline_reason": "fallback把標題與正文合anchor，baselinerole警報是範圍組合。",
+    "variant_reason": "V4heading20與body22、MD均完整連續；source curly apostrophe與V4ASCII apostrophe在目前normalize仍不同導致missing，並非漏句。"
+  },
+  {
+    "source_rootcause_group": "adam-symbol-sensitive-fallback-p12",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      12
+    ],
+    "source_reason": "原頁相應數學混合句；必要英文、否定/條件與數值需另核，不以normalized字串相等代替語義。",
+    "baseline_reason": "PDFium fallback把norm-bars讀k、sum讀P、sqrt讀q、epsilon讀控制碼或hat讀b；baseline字串能匹配不表示數學正確。",
+    "variant_reason": "V4必要英文仍完整於active text及MD，差異在epsilon/norm/sum/sqrt/hat等符號抽法；不是英文漏句、重複或錯序。未宣稱公式全文等價。"
+  },
+  {
+    "source_rootcause_group": "adam-symbol-sensitive-fallback-p2",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      2
+    ],
+    "source_reason": "原頁相應數學混合句；必要英文、否定/條件與數值需另核，不以normalized字串相等代替語義。",
+    "baseline_reason": "PDFium fallback把norm-bars讀k、sum讀P、sqrt讀q、epsilon讀控制碼或hat讀b；baseline字串能匹配不表示數學正確。",
+    "variant_reason": "V4必要英文仍完整於active text及MD，差異在epsilon/norm/sum/sqrt/hat等符號抽法；不是英文漏句、重複或錯序。未宣稱公式全文等價。"
+  },
+  {
+    "source_rootcause_group": "adam-symbol-sensitive-fallback-p4",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      4
+    ],
+    "source_reason": "原頁相應數學混合句；必要英文、否定/條件與數值需另核，不以normalized字串相等代替語義。",
+    "baseline_reason": "PDFium fallback把norm-bars讀k、sum讀P、sqrt讀q、epsilon讀控制碼或hat讀b；baseline字串能匹配不表示數學正確。",
+    "variant_reason": "V4必要英文仍完整於active text及MD，差異在epsilon/norm/sum/sqrt/hat等符號抽法；不是英文漏句、重複或錯序。未宣稱公式全文等價。"
+  },
+  {
+    "source_rootcause_group": "adam-symbol-sensitive-fallback-p5",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      5
+    ],
+    "source_reason": "原頁相應數學混合句；必要英文、否定/條件與數值需另核，不以normalized字串相等代替語義。",
+    "baseline_reason": "PDFium fallback把norm-bars讀k、sum讀P、sqrt讀q、epsilon讀控制碼或hat讀b；baseline字串能匹配不表示數學正確。",
+    "variant_reason": "V4必要英文仍完整於active text及MD，差異在epsilon/norm/sum/sqrt/hat等符號抽法；不是英文漏句、重複或錯序。未宣稱公式全文等價。"
+  },
+  {
+    "source_rootcause_group": "adam-symbol-sensitive-fallback-p9",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_symbol",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      9
+    ],
+    "source_reason": "原頁相應數學混合句；必要英文、否定/條件與數值需另核，不以normalized字串相等代替語義。",
+    "baseline_reason": "PDFium fallback把norm-bars讀k、sum讀P、sqrt讀q、epsilon讀控制碼或hat讀b；baseline字串能匹配不表示數學正確。",
+    "variant_reason": "V4必要英文仍完整於active text及MD，差異在epsilon/norm/sum/sqrt/hat等符號抽法；不是英文漏句、重複或錯序。未宣稱公式全文等價。"
+  },
+  {
+    "source_rootcause_group": "agentevolver-p22-table4-caption-label",
+    "job_id": "P-19-2511.10395v1",
+    "family": "Pilot-other/unknown",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      22
+    ],
+    "source_reason": "原p22Table4caption獨立。",
+    "baseline_reason": "baseline完整獨立captionlabeltext。",
+    "variant_reason": "V4caption847/table3 child，MD完整表號及avg4/best4/percent結論，非真Q4fix。"
+  },
+  {
+    "source_rootcause_group": "alita-p9-table4-caption-label",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      9
+    ],
+    "source_reason": "原p9Table4caption獨立。",
+    "baseline_reason": "baseline整caption獨立但labeltext。",
+    "variant_reason": "V4caption190保留smaller-model完整結論及原表號，MD獨立；僅label修正，不是Q4fix。"
+  },
+  {
+    "source_rootcause_group": "matrix-prose-labelled-caption-p11",
+    "job_id": "F-arxiv_matrixcalculus",
+    "family": "general arXiv",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      11
+    ],
+    "source_reason": "原頁該段是正文說明，方程式前後保持原次序。",
+    "baseline_reason": "baseline此正文可在MD讀到。",
+    "variant_reason": "V4該完整正文被標caption但rootbody獨立段、MD文字完整且保持相鄰方程說明位置；僅label誤差，未證成改義。"
+  },
+  {
+    "source_rootcause_group": "matrix-prose-labelled-caption-p8",
+    "job_id": "F-arxiv_matrixcalculus",
+    "family": "general arXiv",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      8
+    ],
+    "source_reason": "原頁該段是正文說明，方程式前後保持原次序。",
+    "baseline_reason": "baseline此正文可在MD讀到。",
+    "variant_reason": "V4該完整正文被標caption但rootbody獨立段、MD文字完整且保持相鄰方程說明位置；僅label誤差，未證成改義。"
+  },
+  {
+    "source_rootcause_group": "memgen-p5-runin-heading",
+    "job_id": "P-13-2601.01885v3",
+    "family": "ACL/EMNLP",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      5
+    ],
+    "source_reason": "p5Generalizability run-in標題接正文。",
+    "baseline_reason": "baseline標題與正文分兩item但MD連續完整。",
+    "variant_reason": "V4合併run-in標題及正文，文字完整、否定not與requiresonly條件未變；role警報消失僅metadata。"
+  },
+  {
+    "source_rootcause_group": "selfmem-p15-table4-6-caption-label",
+    "job_id": "P-14-2607.03726v1",
+    "family": "ACL/EMNLP",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 4,
+    "affected_pages": [
+      15
+    ],
+    "source_reason": "原p15Table4與Table6各為獨立caption。",
+    "baseline_reason": "baselinelabelcaption但文字本來完整。",
+    "variant_reason": "V4改text397/402，但每段保留各自表號及完整caption，不接正文/其他prompt條件，僅label退步。"
+  },
+  {
+    "source_rootcause_group": "selfmem-p16-table8-caption-label",
+    "job_id": "P-14-2607.03726v1",
+    "family": "ACL/EMNLP",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 6,
+    "affected_pages": [
+      16
+    ],
+    "source_reason": "原Table8caption獨立、含TheydoNOTexposeheldout...。",
+    "baseline_reason": "baseline完整獨立textcaption。",
+    "variant_reason": "V4改caption407，MD保留完整否定與對象，非baseline語義修復。"
+  },
+  {
+    "source_rootcause_group": "sica-p12-prompt-export-suppression",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "picture_delivery_omission",
+    "semantic_verdict": "CONFIRMED_FIXED",
+    "row_verdicts": [
+      "CONFIRMED_FIXED"
+    ],
+    "changed_rows": 36,
+    "affected_pages": [
+      12
+    ],
+    "source_reason": "原p12兩框必要prompt、否定與1–6步/NOTE清單需全文交付。",
+    "baseline_reason": "baselinepicturechildren雖native有字，MD只images，必要prompt不可用。",
+    "variant_reason": "V4上框236、下框239/240/241在body且MD完整，explicitlyNOT、intentionallynot、NOTEs/avoidpytest等均恢復。新增coderole候選不影響真正交付修復。"
+  },
+  {
+    "source_rootcause_group": "sica-p12-valid-prompt-paragraph",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_paragraph_boundary",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "row_verdicts": [
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      12
+    ],
+    "source_reason": "p12上框同一完整prompt含多個LaTeX句子/段落。",
+    "baseline_reason": "原nativepicturechildren使MD整框漏。",
+    "variant_reason": "V4合成一個完整prompttext236且MD可用，所有句同一來源框、按原順序，不是兩欄或遠距內容混段。"
+  },
+  {
+    "source_rootcause_group": "sica-p13-initialrequest-problem-order",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "object_order_and_picture_delivery",
+    "semantic_verdict": "CONFIRMED_FIXED",
+    "row_verdicts": [
+      "CONFIRMED_FIXED"
+    ],
+    "changed_rows": 4,
+    "affected_pages": [
+      13
+    ],
+    "source_reason": "原p13下框Initialrequest引言/payload後才Problem引言/payload。",
+    "baseline_reason": "baseline將兩引言排到合併payload前，對象順序錯。",
+    "variant_reason": "V4code258順序完全依原框，MD完整且兩種payload正確相隨；新增role=code警報不代表未修。"
+  },
+  {
+    "source_rootcause_group": "sica-p14-judgement-code-role",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "metadata_role",
+    "semantic_verdict": "METADATA_ONLY",
+    "row_verdicts": [
+      "METADATA_ONLY"
+    ],
+    "changed_rows": 4,
+    "affected_pages": [
+      14
+    ],
+    "source_reason": "原p14下框是XML格式judgement範例。",
+    "baseline_reason": "baseline可讀文字/欄位完整。",
+    "variant_reason": "V4改成code270，MD包含makingprogress/islooping/notification/forcecancel及原結尾tag；僅code角色不屬bodyprose，不是內容新漏。"
+  },
+  {
+    "source_rootcause_group": "skillrl-colspan-markdown-duplicates",
+    "job_id": "P-05-2602.08234v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "duplication",
+    "semantic_verdict": "PARTIAL_IMPROVEMENT",
+    "row_verdicts": [
+      "PARTIAL_IMPROVEMENT"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      23
+    ],
+    "source_reason": "p23Electronics Task原文單份，需保留speaker/waterproof/black/$30條件。",
+    "baseline_reason": "baseline整Task句在MD重複。",
+    "variant_reason": "V4將Task內容收在單一headercell，主要對象/條件與$30保留且不重複；p22/p23其他Task/skills重複仍在，p24另新增必要內容漏失，整個baselinegroup未修完。"
+  },
+  {
+    "source_rootcause_group": "skillrl-p23-task-prefix-reflow",
+    "job_id": "P-05-2602.08234v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "oracle_boundary_or_role",
+    "semantic_verdict": "NON_BLOCKING_ORACLE_OR_METADATA",
+    "row_verdicts": [
+      "METADATA_ONLY",
+      "ORACLE_FALSE_POSITIVE"
+    ],
+    "changed_rows": 2,
+    "affected_pages": [
+      23
+    ],
+    "source_reason": "p23單一Task:Ineedaportablebluetoothspeaker...$30。",
+    "baseline_reason": "baseline完整句重複。",
+    "variant_reason": "V4headercell保留needaportablebluetoothspeaker/waterproof/black/$30，Task:I前綴與鄰列邊界改配使整anchor不匹配；主要需求與條件未改義，此missing不等於實際必要句漏失。"
+  },
+  {
+    "source_rootcause_group": "v4-memgen-p25-column-order-prompt-suppression",
+    "job_id": "P-13-2601.01885v3",
+    "family": "ACL/EMNLP",
+    "failure_type": "reading_order_and_picture_delivery_omission",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "row_verdicts": [
+      "CONFIRMED_NEW_BLOCKING"
+    ],
+    "changed_rows": 6,
+    "affected_pages": [
+      25
+    ],
+    "source_reason": "原p25先左欄評分prompt及C.3baselineconfigs，再右欄RAGvariants續C.3，之後C.4implementation。",
+    "baseline_reason": "baseline按左欄→右欄，評分prompt文字可在MD讀到且C.3先C.4。",
+    "variant_reason": "V4RAGtext653/C.4heading654提前到左欄prompt/C.3前；text656評分prompt入picture5，MD變imageplaceholder。MD呈C.4後C.3且Trainingconfiguration接在C.3，baseline/implementation對象錯屬，必要prompt英文亦漏交付。"
+  },
+  {
+    "source_rootcause_group": "v4-seal-p18-json-keys-orphaned",
+    "job_id": "P-17-2506.10943v1",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "paragraph_merge_changes_json_object_membership",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "row_verdicts": [
+      "CONFIRMED_NEW_BLOCKING"
+    ],
+    "changed_rows": 1,
+    "affected_pages": [
+      18
+    ],
+    "source_reason": "p18Exampleoutput的data_generationJSON物件應包含四個augmentation keys，正文於Exampleoutput結束。",
+    "baseline_reason": "baselinecode450將四key全放data_generation物件內，正文449不含JSONkey。",
+    "variant_reason": "V4text437在Exampleoutput後偷接use_basic/use_chain/use_repeat三key，code438的data_generation只剩use_size。三個key離開原JSON物件，必要清單從屬/對象改錯；非無害paragraphmerge。"
+  },
+  {
+    "source_rootcause_group": "v4-skillrl-p24-result-skills-omitted",
+    "job_id": "P-05-2602.08234v2",
+    "family": "NeurIPS/ICLR",
+    "failure_type": "table_cell_mapping_omission",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "row_verdicts": [
+      "CONFIRMED_NEW_BLOCKING"
+    ],
+    "changed_rows": 3,
+    "affected_pages": [
+      24
+    ],
+    "source_reason": "p24Case3底列Result:SUCCESS(Optimal3Steps)及KeySkills[exa001]/[loo001](SpatialPriors)在原圖清楚完整。",
+    "baseline_reason": "baseline表格14及MD雖重複但保留完整成功結果和技能對象。",
+    "variant_reason": "V4table14最後一列只餘Step3Result:tion.Key碎片；SpatialPriors/完整Result必要結果及技能說明在所有native text/cells及MD均消失。removedduplicate/role是因漏內容，非修復。"
+  }
+]

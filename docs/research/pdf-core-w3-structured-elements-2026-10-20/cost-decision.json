@@ -1,0 +1,40 @@
+{
+  "pilot_jobs": [
+    "F-ieee_crnn",
+    "P-07-2504.15228v2"
+  ],
+  "pilot_success": true,
+  "pilot_wall_seconds": 429.1700176661834,
+  "pilot_enrichment_batches": [
+    {
+      "items": 5,
+      "orig_characters": 7861,
+      "wall_seconds": 362.7349373330362,
+      "cpu_seconds": 1382.32522
+    },
+    {
+      "items": 1,
+      "orig_characters": 122,
+      "wall_seconds": 37.58833479206078,
+      "cpu_seconds": 144.53037099999983
+    }
+  ],
+  "CRNN_no_native_formula_or_code": true,
+  "method": "Two observed SICA batches: nonnegative intercept + orig-char slope; aggregate by native item batch5 per document, add reused historical baseline conversion wall. Cost extrapolation, not quality score.",
+  "wall_fit": {
+    "batch_intercept_seconds": 32.46262274786915,
+    "seconds_per_orig_char": 0.0420140331491117
+  },
+  "full_estimate_wall_seconds": 14998.115189974991,
+  "full_estimate_cpu_seconds": 57493.24590695114,
+  "full_native_items": 553,
+  "full_native_batches": 129,
+  "sampled_estimate_wall_seconds": 6143.254078369046,
+  "sampled_estimate_cpu_seconds": 23676.131474205962,
+  "sampled_native_items": 211,
+  "sampled_native_batches": 54,
+  "sampled_gold_formula_units": 232,
+  "sampled_gold_code_algorithm_units": 99,
+  "decision": "PREREGISTERED_STRATIFIED_SAMPLE",
+  "uncertainty": "Only two papers; one has zero eligible items. Generation length, padding and image complexity vary; orig chars are a cost proxy. Monitor actual cost and enforce 3h task deadline; no generation/numeric changes."
+}

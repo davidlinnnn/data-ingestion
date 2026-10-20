@@ -1,0 +1,258 @@
+# 逐表 Q13 裁決（252 個來源候選）
+
+RAW 與 MAPPED 的語義裁決相同；UNKNOWN 不代表通過。範圍、完整分母與逐點證據見 E0-results-v2.json。關鍵比較未評。
+
+|來源 ID|family|頁|類型|偵測|RAW／MAPPED|
+|---|---|---|---|---|---|
+|F-acl_bert:table-000|ACL/EMNLP|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-001|ACL/EMNLP|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-002|ACL/EMNLP|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-003|ACL/EMNLP|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-004|ACL/EMNLP|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-005|ACL/EMNLP|9|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-006|ACL/EMNLP|9|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_bert:table-007|ACL/EMNLP|16|complex|UNKNOWN|OUT_OF_SCOPE／OUT_OF_SCOPE|
+|F-acl_sbert:table-000|ACL/EMNLP|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-acl_sbert:table-001|ACL/EMNLP|5|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_sbert:table-002|ACL/EMNLP|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_sbert:table-003|ACL/EMNLP|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_sbert:table-004|ACL/EMNLP|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_sbert:table-005|ACL/EMNLP|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acl_sbert:table-006|ACL/EMNLP|8|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-ieee_tacotron2:table-000|IEEE conference|3|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-ieee_tacotron2:table-001|IEEE conference|4|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-ieee_tacotron2:table-002|IEEE conference|4|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-ieee_tacotron2:table-003|IEEE conference|4|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-ieee_crnn:table-000|IEEE conference|3|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_lightgcn:table-000|ACM sigconf|2|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_lightgcn:table-001|ACM sigconf|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_lightgcn:table-002|ACM sigconf|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_lightgcn:table-003|ACM sigconf|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_lightgcn:table-004|ACM sigconf|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_lightgcn:table-005|ACM sigconf|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_ngcf:table-000|ACM sigconf|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_ngcf:table-001|ACM sigconf|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_ngcf:table-002|ACM sigconf|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-acm_ngcf:table-003|ACM sigconf|9|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-000|CVPR/AAAI|5|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-001|CVPR/AAAI|5|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-002|CVPR/AAAI|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-003|CVPR/AAAI|6|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-004|CVPR/AAAI|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-005|CVPR/AAAI|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-006|CVPR/AAAI|8|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-007|CVPR/AAAI|11|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-008|CVPR/AAAI|11|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-009|CVPR/AAAI|11|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-010|CVPR/AAAI|12|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_resnet:table-011|CVPR/AAAI|12|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_yolo:table-000|CVPR/AAAI|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_yolo:table-001|CVPR/AAAI|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_yolo:table-002|CVPR/AAAI|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-cvpr_yolo:table-003|CVPR/AAAI|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-cvpr_yolo:table-004|CVPR/AAAI|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_imagetransformer:table-000|ICML|1|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_imagetransformer:table-001|ICML|3|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_imagetransformer:table-002|ICML|6|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_imagetransformer:table-003|ICML|6|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_imagetransformer:table-004|ICML|7|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_imagetransformer:table-005|ICML|8|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-000|ICML|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-001|ICML|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-002|ICML|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-003|ICML|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-004|ICML|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-005|ICML|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-006|ICML|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-007|ICML|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-008|ICML|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-icml_efficientnet:table-009|ICML|9|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-nips_attention:table-000|NeurIPS/ICLR|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-nips_attention:table-001|NeurIPS/ICLR|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-nips_attention:table-002|NeurIPS/ICLR|9|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-nips_attention:table-003|NeurIPS/ICLR|10|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_unet:table-000|Springer LNCS|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_unet:table-001|Springer LNCS|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-000|Springer LNCS|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-001|Springer LNCS|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-002|Springer LNCS|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-003|Springer LNCS|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-004|Springer LNCS|9|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-005|Springer LNCS|9|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-006|Springer LNCS|9|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-007|Springer LNCS|10|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-008|Springer LNCS|12|complex|DETECTED|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-009|Springer LNCS|13|complex|UNKNOWN|OUT_OF_SCOPE／OUT_OF_SCOPE|
+|F-lncs_deeplab:table-010|Springer LNCS|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-011|Springer LNCS|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-lncs_deeplab:table-012|Springer LNCS|14|complex|UNKNOWN|OUT_OF_SCOPE／OUT_OF_SCOPE|
+|F-arxiv_matrixcalculus:table-000|general arXiv|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-arxiv_matrixcalculus:table-001|general arXiv|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-arxiv_matrixcalculus:table-002|general arXiv|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-arxiv_matrixcalculus:table-003|general arXiv|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|F-arxiv_matrixcalculus:table-004|general arXiv|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-000|Pilot-other/unknown|8|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-001|Pilot-other/unknown|10|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-002|Pilot-other/unknown|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-003|Pilot-other/unknown|13|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-004|Pilot-other/unknown|20|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-005|Pilot-other/unknown|20|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-01-2608.27454v1:table-006|Pilot-other/unknown|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-02-2603.02766v1:table-000|NeurIPS/ICLR|6|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-000|Pilot-other/unknown|4|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-001|Pilot-other/unknown|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-002|Pilot-other/unknown|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-003|Pilot-other/unknown|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-004|Pilot-other/unknown|8|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-005|Pilot-other/unknown|13|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-006|Pilot-other/unknown|14|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-007|Pilot-other/unknown|15|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-008|Pilot-other/unknown|17|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-009|Pilot-other/unknown|19|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-03-2603.25158v5:table-010|Pilot-other/unknown|21|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-04-2605.23904v2:table-000|general arXiv (article; template uncertain)|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-04-2605.23904v2:table-001|general arXiv (article; template uncertain)|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-04-2605.23904v2:table-002|general arXiv (article; template uncertain)|8|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-04-2605.23904v2:table-003|general arXiv (article; template uncertain)|9|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-04-2605.23904v2:table-004|general arXiv (article; template uncertain)|14|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-04-2605.23904v2:table-005|general arXiv (article; template uncertain)|14|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-000|NeurIPS/ICLR|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-001|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-002|NeurIPS/ICLR|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-003|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-004|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-005|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-006|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-007|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-008|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-009|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-010|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-011|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-012|NeurIPS/ICLR|20|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-013|NeurIPS/ICLR|20|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-014|NeurIPS/ICLR|21|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-015|NeurIPS/ICLR|21|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-016|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-017|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-018|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-019|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-020|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-021|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-022|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-023|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-024|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-05-2602.08234v2:table-025|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-000|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-001|NeurIPS/ICLR|7|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-002|NeurIPS/ICLR|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-003|NeurIPS/ICLR|15|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-004|NeurIPS/ICLR|17|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-005|NeurIPS/ICLR|18|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-006|NeurIPS/ICLR|19|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-007|NeurIPS/ICLR|19|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-008|NeurIPS/ICLR|20|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-009|NeurIPS/ICLR|23|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-010|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-011|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-012|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-013|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-014|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-06-2606.14239v2:table-015|NeurIPS/ICLR|27|complex|DETECTED|FAIL／FAIL|
+|P-06-2606.14239v2:table-016|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-08-2505.20286v1:table-000|general arXiv (article; template uncertain)|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-08-2505.20286v1:table-001|general arXiv (article; template uncertain)|8|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-08-2505.20286v1:table-002|general arXiv (article; template uncertain)|8|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-08-2505.20286v1:table-003|general arXiv (article; template uncertain)|9|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-000|NeurIPS/ICLR|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-001|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-002|NeurIPS/ICLR|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-003|NeurIPS/ICLR|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-004|NeurIPS/ICLR|16|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-005|NeurIPS/ICLR|17|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-006|NeurIPS/ICLR|17|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-09-2502.12110v11:table-007|NeurIPS/ICLR|18|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-10-2509.25140v2:table-000|Pilot-other/unknown|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-10-2509.25140v2:table-001|Pilot-other/unknown|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-10-2509.25140v2:table-002|Pilot-other/unknown|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-10-2509.25140v2:table-003|Pilot-other/unknown|11|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-10-2509.25140v2:table-004|Pilot-other/unknown|27|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-10-2509.25140v2:table-005|Pilot-other/unknown|28|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-11-2508.19828v5:table-000|ACL/EMNLP|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-11-2508.19828v5:table-001|ACL/EMNLP|8|ordinary|DETECTED|FAIL／FAIL|
+|P-11-2508.19828v5:table-002|ACL/EMNLP|18|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-11-2508.19828v5:table-003|ACL/EMNLP|18|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-11-2508.19828v5:table-004|ACL/EMNLP|18|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-000|Pilot-other/unknown|12|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-001|Pilot-other/unknown|13|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-002|Pilot-other/unknown|15|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-003|Pilot-other/unknown|15|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-004|Pilot-other/unknown|16|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-005|Pilot-other/unknown|18|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-12-2508.16153v2:table-006|Pilot-other/unknown|27|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-13-2601.01885v3:table-000|ACL/EMNLP|4|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-13-2601.01885v3:table-001|ACL/EMNLP|8|complex|DETECTED|FAIL／FAIL|
+|P-13-2601.01885v3:table-002|ACL/EMNLP|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-13-2601.01885v3:table-003|ACL/EMNLP|9|ordinary|DETECTED|FAIL／FAIL|
+|P-13-2601.01885v3:table-004|ACL/EMNLP|9|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-13-2601.01885v3:table-005|ACL/EMNLP|26|ordinary|DETECTED|FAIL／FAIL|
+|P-13-2601.01885v3:table-006|ACL/EMNLP|27|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-13-2601.01885v3:table-007|ACL/EMNLP|27|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-14-2607.03726v1:table-000|ACL/EMNLP|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-14-2607.03726v1:table-001|ACL/EMNLP|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-14-2607.03726v1:table-002|ACL/EMNLP|12|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-14-2607.03726v1:table-003|ACL/EMNLP|16|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-000|Pilot-other/unknown|5|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-001|Pilot-other/unknown|6|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-002|Pilot-other/unknown|7|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-003|Pilot-other/unknown|8|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-004|Pilot-other/unknown|15|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-005|Pilot-other/unknown|16|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-006|Pilot-other/unknown|16|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-007|Pilot-other/unknown|17|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-008|Pilot-other/unknown|18|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-009|Pilot-other/unknown|18|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-010|Pilot-other/unknown|19|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-011|Pilot-other/unknown|21|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-012|Pilot-other/unknown|23|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-013|Pilot-other/unknown|24|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-014|Pilot-other/unknown|24|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-015|Pilot-other/unknown|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-016|Pilot-other/unknown|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-15-2610.05923v1:table-017|Pilot-other/unknown|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-16-2505.22954v1:table-000|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-000|NeurIPS/ICLR|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-001|NeurIPS/ICLR|8|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-002|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-003|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-004|NeurIPS/ICLR|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-005|NeurIPS/ICLR|19|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-006|NeurIPS/ICLR|20|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-007|NeurIPS/ICLR|21|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-17-2506.10943v1:table-008|NeurIPS/ICLR|21|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-000|ICML|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-001|ICML|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-002|ICML|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-003|ICML|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-004|ICML|7|ordinary|DETECTED|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-005|ICML|16|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-006|ICML|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-18-2511.16043v1:table-007|ICML|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-000|Pilot-other/unknown|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-001|Pilot-other/unknown|19|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-002|Pilot-other/unknown|20|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-003|Pilot-other/unknown|21|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-004|Pilot-other/unknown|22|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-005|Pilot-other/unknown|24|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-006|Pilot-other/unknown|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-19-2511.10395v1:table-007|Pilot-other/unknown|26|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-000|general arXiv (article; template uncertain)|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-001|general arXiv (article; template uncertain)|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-002|general arXiv (article; template uncertain)|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-003|general arXiv (article; template uncertain)|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-004|general arXiv (article; template uncertain)|9|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-005|general arXiv (article; template uncertain)|UNKNOWN|complex|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-006|general arXiv (article; template uncertain)|12|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-007|general arXiv (article; template uncertain)|21|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-008|general arXiv (article; template uncertain)|22|complex|DETECTED|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-009|general arXiv (article; template uncertain)|UNKNOWN|ordinary|UNKNOWN|UNKNOWN／UNKNOWN|
+|P-20-2505.03335v1:table-010|general arXiv (article; template uncertain)|32|complex|DETECTED|UNKNOWN／UNKNOWN|

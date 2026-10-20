@@ -1,0 +1,2282 @@
+{
+  "case": "G1-T05",
+  "evaluation_after_all_four_fixed_requests": true,
+  "method": "Source crop visually reviewed; every saved canonical and actual rendered Markdown value bound by group/category/header/component against frozen oracle.",
+  "source_visual_review": "docs/research/evidence/pdf-core-g1-2026-10-14/tables/01-2608.27454v1-p13-table4-216dpi.png",
+  "typed": {
+    "numeric_denominator": 80,
+    "correct_expected_bindings": 80,
+    "numeric_errors_including_extras": 0,
+    "error_rate": 0.0,
+    "observed_numeric_measurements": 80,
+    "errors": [],
+    "extras": [],
+    "duplicate_extra_outputs": 0,
+    "critical_comparisons": [
+      {
+        "left": "G1-T05.r01.c01",
+        "operator": ">",
+        "right": "G1-T05.r01.c02",
+        "reason": "Qwen-3.5-4B Skills Create: Proposed 3.1 > Accepted 1.6; do not collapse to ratio.",
+        "passed": true,
+        "observed_left": "3.1",
+        "observed_right": "1.6"
+      },
+      {
+        "left": "G1-T05.r01.c03",
+        "operator": ">",
+        "right": "G1-T05.r01.c04",
+        "reason": "Same row Skills Edit: Proposed 4.9 > Accepted 1.3; separate from Create.",
+        "passed": true,
+        "observed_left": "4.9",
+        "observed_right": "1.3"
+      },
+      {
+        "left": "G1-T05.r05.c03",
+        "operator": ">",
+        "right": "G1-T05.r01.c03",
+        "reason": "Gemini-3.5-Flash proposed edits 5.7 > Qwen-3.5-4B 4.9.",
+        "passed": true,
+        "observed_left": "5.7",
+        "observed_right": "4.9"
+      },
+      {
+        "left": "G1-T05.r01.c04",
+        "operator": ">",
+        "right": "G1-T05.r05.c04",
+        "reason": "Accepted edits reverse that ordering: Qwen-3.5-4B 1.3 > Gemini-3.5-Flash 1.1.",
+        "passed": true,
+        "observed_left": "1.3",
+        "observed_right": "1.1"
+      },
+      {
+        "left": "G1-T05.r08.c05",
+        "operator": ">",
+        "right": "G1-T05.r06.c05",
+        "reason": "Benchmark group Skills Avg. Length: SpreadSheet 142.5 > LiveMath 84.6 markdown lines.",
+        "passed": true,
+        "observed_left": "142.5",
+        "observed_right": "84.6"
+      },
+      {
+        "left": "G1-T05.r01.c05",
+        "operator": ">",
+        "right": "G1-T05.r01.c08",
+        "reason": "Qwen-3.5-4B Skills length 126.2 > Wiki Patterns length 48.2; retain header scope.",
+        "passed": true,
+        "observed_left": "126.2",
+        "observed_right": "48.2"
+      },
+      {
+        "left": "G1-T05.r09.c02",
+        "operator": ">",
+        "right": "G1-T05.r07.c02",
+        "reason": "All-model benchmark average accepted creations: OfficeQA 1.8 > SealQA 0.9.",
+        "passed": true,
+        "observed_left": "1.8",
+        "observed_right": "0.9"
+      }
+    ],
+    "critical_comparisons_passed": 7,
+    "paired_physical_cells": [
+      {
+        "source_cell_id": "G1-T05.r01.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r01.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r02.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r02.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r03.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r03.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r04.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r04.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r05.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r05.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r06.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r06.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r07.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r07.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r08.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r08.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r09.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r09.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r10.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r10.Skills.Edit",
+        "passed": true
+      }
+    ],
+    "paired_physical_cells_passed": 20,
+    "observations": [
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Create/Proposed",
+        "value": "3.1",
+        "physical_cell": [
+          3,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "3.1 / 1.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.6",
+        "physical_cell": [
+          3,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "3.1 / 1.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Edit/Proposed",
+        "value": "4.9",
+        "physical_cell": [
+          3,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "4.9 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.3",
+        "physical_cell": [
+          3,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "4.9 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Avg. Length",
+        "value": "126.2",
+        "physical_cell": [
+          3,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "126.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Wiki Patterns/Create",
+        "value": "8.8",
+        "physical_cell": [
+          3,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "8.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Wiki Patterns/Edit",
+        "value": "18.4",
+        "physical_cell": [
+          3,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "18.4"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "48.2",
+        "physical_cell": [
+          3,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "48.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Create/Proposed",
+        "value": "4.6",
+        "physical_cell": [
+          4,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.6 / 1.4"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.4",
+        "physical_cell": [
+          4,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.6 / 1.4"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.4",
+        "physical_cell": [
+          4,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.4 / 0.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.7",
+        "physical_cell": [
+          4,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.4 / 0.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Avg. Length",
+        "value": "128.6",
+        "physical_cell": [
+          4,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "128.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Wiki Patterns/Create",
+        "value": "7.3",
+        "physical_cell": [
+          4,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "7.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Wiki Patterns/Edit",
+        "value": "10.9",
+        "physical_cell": [
+          4,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "10.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "26.6",
+        "physical_cell": [
+          4,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "26.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Create/Proposed",
+        "value": "4.4",
+        "physical_cell": [
+          5,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.4 / 1.5"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.5",
+        "physical_cell": [
+          5,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.4 / 1.5"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.6",
+        "physical_cell": [
+          5,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.6 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.8",
+        "physical_cell": [
+          5,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.6 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Avg. Length",
+        "value": "118.9",
+        "physical_cell": [
+          5,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "118.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Wiki Patterns/Create",
+        "value": "6.5",
+        "physical_cell": [
+          5,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "6.5"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Wiki Patterns/Edit",
+        "value": "17.9",
+        "physical_cell": [
+          5,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "17.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "47.7",
+        "physical_cell": [
+          5,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "47.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Create/Proposed",
+        "value": "4.8",
+        "physical_cell": [
+          6,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.8 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.3",
+        "physical_cell": [
+          6,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.8 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.2",
+        "physical_cell": [
+          6,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.2 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.8",
+        "physical_cell": [
+          6,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.2 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Avg. Length",
+        "value": "45.1",
+        "physical_cell": [
+          6,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "45.1"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Wiki Patterns/Create",
+        "value": "6.3",
+        "physical_cell": [
+          6,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "6.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Wiki Patterns/Edit",
+        "value": "13.7",
+        "physical_cell": [
+          6,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "13.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "23.7",
+        "physical_cell": [
+          6,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "23.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Create/Proposed",
+        "value": "2.3",
+        "physical_cell": [
+          7,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "2.3 / 1.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Create/Accepted",
+        "value": "1.2",
+        "physical_cell": [
+          7,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "2.3 / 1.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Edit/Proposed",
+        "value": "5.7",
+        "physical_cell": [
+          7,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "5.7 / 1.1"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.1",
+        "physical_cell": [
+          7,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "5.7 / 1.1"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Avg. Length",
+        "value": "81.2",
+        "physical_cell": [
+          7,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "81.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Wiki Patterns/Create",
+        "value": "8.9",
+        "physical_cell": [
+          7,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "8.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Wiki Patterns/Edit",
+        "value": "7.0",
+        "physical_cell": [
+          7,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "7.0"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "18.1",
+        "physical_cell": [
+          7,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "18.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Create/Proposed",
+        "value": "1.9",
+        "physical_cell": [
+          9,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "1.9 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Create/Accepted",
+        "value": "1.1",
+        "physical_cell": [
+          9,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "1.9 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Edit/Proposed",
+        "value": "6.1",
+        "physical_cell": [
+          9,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "6.1 / 1.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.9",
+        "physical_cell": [
+          9,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "6.1 / 1.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Avg. Length",
+        "value": "84.6",
+        "physical_cell": [
+          9,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "84.6"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Wiki Patterns/Create",
+        "value": "4.4",
+        "physical_cell": [
+          9,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "4.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Wiki Patterns/Edit",
+        "value": "12.1",
+        "physical_cell": [
+          9,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "12.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "31.7",
+        "physical_cell": [
+          9,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "31.7"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Create/Proposed",
+        "value": "4.9",
+        "physical_cell": [
+          10,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.9 / 0.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Create/Accepted",
+        "value": "0.9",
+        "physical_cell": [
+          10,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.9 / 0.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.1",
+        "physical_cell": [
+          10,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.1 / 0.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.4",
+        "physical_cell": [
+          10,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.1 / 0.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Avg. Length",
+        "value": "98.5",
+        "physical_cell": [
+          10,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "98.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Wiki Patterns/Create",
+        "value": "9.4",
+        "physical_cell": [
+          10,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "9.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Wiki Patterns/Edit",
+        "value": "15.9",
+        "physical_cell": [
+          10,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "15.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "26.9",
+        "physical_cell": [
+          10,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "26.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Create/Proposed",
+        "value": "4.5",
+        "physical_cell": [
+          11,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.5 / 1.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Create/Accepted",
+        "value": "1.4",
+        "physical_cell": [
+          11,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.5 / 1.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.5",
+        "physical_cell": [
+          11,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.5 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.1",
+        "physical_cell": [
+          11,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.5 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Avg. Length",
+        "value": "142.5",
+        "physical_cell": [
+          11,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "142.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Wiki Patterns/Create",
+        "value": "9.8",
+        "physical_cell": [
+          11,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "9.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Wiki Patterns/Edit",
+        "value": "11.3",
+        "physical_cell": [
+          11,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "11.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "38.5",
+        "physical_cell": [
+          11,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "38.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Create/Proposed",
+        "value": "4.7",
+        "physical_cell": [
+          12,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.7 / 1.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Create/Accepted",
+        "value": "1.8",
+        "physical_cell": [
+          12,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.7 / 1.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.3",
+        "physical_cell": [
+          12,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.3 / 0.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.3",
+        "physical_cell": [
+          12,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.3 / 0.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Avg. Length",
+        "value": "102.9",
+        "physical_cell": [
+          12,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "102.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Wiki Patterns/Create",
+        "value": "8.3",
+        "physical_cell": [
+          12,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "8.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Wiki Patterns/Edit",
+        "value": "14.9",
+        "physical_cell": [
+          12,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "14.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "31.4",
+        "physical_cell": [
+          12,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "31.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Create/Proposed",
+        "value": "3.9",
+        "physical_cell": [
+          13,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "3.9 / 1.6"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Create/Accepted",
+        "value": "1.6",
+        "physical_cell": [
+          13,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "3.9 / 1.6"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Edit/Proposed",
+        "value": "4.1",
+        "physical_cell": [
+          13,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "4.1 / 0.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.8",
+        "physical_cell": [
+          13,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "4.1 / 0.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Avg. Length",
+        "value": "93.5",
+        "physical_cell": [
+          13,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "93.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Wiki Patterns/Create",
+        "value": "5.8",
+        "physical_cell": [
+          13,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "5.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Wiki Patterns/Edit",
+        "value": "14.3",
+        "physical_cell": [
+          13,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "14.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "40.6",
+        "physical_cell": [
+          13,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "40.6"
+      }
+    ],
+    "numeric_and_critical_threshold_passed": true
+  },
+  "markdown": {
+    "numeric_denominator": 80,
+    "correct_expected_bindings": 80,
+    "numeric_errors_including_extras": 0,
+    "error_rate": 0.0,
+    "observed_numeric_measurements": 80,
+    "errors": [],
+    "extras": [],
+    "duplicate_extra_outputs": 0,
+    "critical_comparisons": [
+      {
+        "left": "G1-T05.r01.c01",
+        "operator": ">",
+        "right": "G1-T05.r01.c02",
+        "reason": "Qwen-3.5-4B Skills Create: Proposed 3.1 > Accepted 1.6; do not collapse to ratio.",
+        "passed": true,
+        "observed_left": "3.1",
+        "observed_right": "1.6"
+      },
+      {
+        "left": "G1-T05.r01.c03",
+        "operator": ">",
+        "right": "G1-T05.r01.c04",
+        "reason": "Same row Skills Edit: Proposed 4.9 > Accepted 1.3; separate from Create.",
+        "passed": true,
+        "observed_left": "4.9",
+        "observed_right": "1.3"
+      },
+      {
+        "left": "G1-T05.r05.c03",
+        "operator": ">",
+        "right": "G1-T05.r01.c03",
+        "reason": "Gemini-3.5-Flash proposed edits 5.7 > Qwen-3.5-4B 4.9.",
+        "passed": true,
+        "observed_left": "5.7",
+        "observed_right": "4.9"
+      },
+      {
+        "left": "G1-T05.r01.c04",
+        "operator": ">",
+        "right": "G1-T05.r05.c04",
+        "reason": "Accepted edits reverse that ordering: Qwen-3.5-4B 1.3 > Gemini-3.5-Flash 1.1.",
+        "passed": true,
+        "observed_left": "1.3",
+        "observed_right": "1.1"
+      },
+      {
+        "left": "G1-T05.r08.c05",
+        "operator": ">",
+        "right": "G1-T05.r06.c05",
+        "reason": "Benchmark group Skills Avg. Length: SpreadSheet 142.5 > LiveMath 84.6 markdown lines.",
+        "passed": true,
+        "observed_left": "142.5",
+        "observed_right": "84.6"
+      },
+      {
+        "left": "G1-T05.r01.c05",
+        "operator": ">",
+        "right": "G1-T05.r01.c08",
+        "reason": "Qwen-3.5-4B Skills length 126.2 > Wiki Patterns length 48.2; retain header scope.",
+        "passed": true,
+        "observed_left": "126.2",
+        "observed_right": "48.2"
+      },
+      {
+        "left": "G1-T05.r09.c02",
+        "operator": ">",
+        "right": "G1-T05.r07.c02",
+        "reason": "All-model benchmark average accepted creations: OfficeQA 1.8 > SealQA 0.9.",
+        "passed": true,
+        "observed_left": "1.8",
+        "observed_right": "0.9"
+      }
+    ],
+    "critical_comparisons_passed": 7,
+    "paired_physical_cells": [
+      {
+        "source_cell_id": "G1-T05.r01.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r01.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r02.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r02.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r03.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r03.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r04.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r04.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r05.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r05.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r06.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r06.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r07.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r07.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r08.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r08.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r09.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r09.Skills.Edit",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r10.Skills.Create",
+        "passed": true
+      },
+      {
+        "source_cell_id": "G1-T05.r10.Skills.Edit",
+        "passed": true
+      }
+    ],
+    "paired_physical_cells_passed": 20,
+    "observations": [
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Create/Proposed",
+        "value": "3.1",
+        "physical_cell": [
+          1,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "3.1 / 1.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.6",
+        "physical_cell": [
+          1,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "3.1 / 1.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Edit/Proposed",
+        "value": "4.9",
+        "physical_cell": [
+          1,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "4.9 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.3",
+        "physical_cell": [
+          1,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "4.9 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Skills/Avg. Length",
+        "value": "126.2",
+        "physical_cell": [
+          1,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "126.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Wiki Patterns/Create",
+        "value": "8.8",
+        "physical_cell": [
+          1,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "8.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Wiki Patterns/Edit",
+        "value": "18.4",
+        "physical_cell": [
+          1,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "18.4"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-4B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "48.2",
+        "physical_cell": [
+          1,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "48.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Create/Proposed",
+        "value": "4.6",
+        "physical_cell": [
+          2,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.6 / 1.4"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.4",
+        "physical_cell": [
+          2,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.6 / 1.4"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.4",
+        "physical_cell": [
+          2,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.4 / 0.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.7",
+        "physical_cell": [
+          2,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.4 / 0.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Skills/Avg. Length",
+        "value": "128.6",
+        "physical_cell": [
+          2,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "128.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Wiki Patterns/Create",
+        "value": "7.3",
+        "physical_cell": [
+          2,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "7.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Wiki Patterns/Edit",
+        "value": "10.9",
+        "physical_cell": [
+          2,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "10.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.5-9B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "26.6",
+        "physical_cell": [
+          2,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "26.6"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Create/Proposed",
+        "value": "4.4",
+        "physical_cell": [
+          3,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.4 / 1.5"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.5",
+        "physical_cell": [
+          3,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.4 / 1.5"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.6",
+        "physical_cell": [
+          3,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.6 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.8",
+        "physical_cell": [
+          3,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.6 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Skills/Avg. Length",
+        "value": "118.9",
+        "physical_cell": [
+          3,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "118.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Wiki Patterns/Create",
+        "value": "6.5",
+        "physical_cell": [
+          3,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "6.5"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Wiki Patterns/Edit",
+        "value": "17.9",
+        "physical_cell": [
+          3,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "17.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Qwen-3.6-27B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "47.7",
+        "physical_cell": [
+          3,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "47.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Create/Proposed",
+        "value": "4.8",
+        "physical_cell": [
+          4,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.8 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Create/Accepted",
+        "value": "1.3",
+        "physical_cell": [
+          4,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.8 / 1.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.2",
+        "physical_cell": [
+          4,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.2 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.8",
+        "physical_cell": [
+          4,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.2 / 0.8"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Skills/Avg. Length",
+        "value": "45.1",
+        "physical_cell": [
+          4,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "45.1"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Wiki Patterns/Create",
+        "value": "6.3",
+        "physical_cell": [
+          4,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "6.3"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Wiki Patterns/Edit",
+        "value": "13.7",
+        "physical_cell": [
+          4,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "13.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemma-4-31B",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "23.7",
+        "physical_cell": [
+          4,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "23.7"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Create/Proposed",
+        "value": "2.3",
+        "physical_cell": [
+          5,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "2.3 / 1.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Create/Accepted",
+        "value": "1.2",
+        "physical_cell": [
+          5,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "2.3 / 1.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Edit/Proposed",
+        "value": "5.7",
+        "physical_cell": [
+          5,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "5.7 / 1.1"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.1",
+        "physical_cell": [
+          5,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "5.7 / 1.1"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Skills/Avg. Length",
+        "value": "81.2",
+        "physical_cell": [
+          5,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "81.2"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Wiki Patterns/Create",
+        "value": "8.9",
+        "physical_cell": [
+          5,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "8.9"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Wiki Patterns/Edit",
+        "value": "7.0",
+        "physical_cell": [
+          5,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "7.0"
+      },
+      {
+        "group": "By Model (All-Dataset Average)",
+        "category": "Gemini-3.5-Flash",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "18.1",
+        "physical_cell": [
+          5,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "18.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Create/Proposed",
+        "value": "1.9",
+        "physical_cell": [
+          7,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "1.9 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Create/Accepted",
+        "value": "1.1",
+        "physical_cell": [
+          7,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "1.9 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Edit/Proposed",
+        "value": "6.1",
+        "physical_cell": [
+          7,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "6.1 / 1.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.9",
+        "physical_cell": [
+          7,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "6.1 / 1.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Skills/Avg. Length",
+        "value": "84.6",
+        "physical_cell": [
+          7,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "84.6"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Wiki Patterns/Create",
+        "value": "4.4",
+        "physical_cell": [
+          7,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "4.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Wiki Patterns/Edit",
+        "value": "12.1",
+        "physical_cell": [
+          7,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "12.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "LiveMath",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "31.7",
+        "physical_cell": [
+          7,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "31.7"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Create/Proposed",
+        "value": "4.9",
+        "physical_cell": [
+          8,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.9 / 0.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Create/Accepted",
+        "value": "0.9",
+        "physical_cell": [
+          8,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.9 / 0.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.1",
+        "physical_cell": [
+          8,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.1 / 0.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.4",
+        "physical_cell": [
+          8,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.1 / 0.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Skills/Avg. Length",
+        "value": "98.5",
+        "physical_cell": [
+          8,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "98.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Wiki Patterns/Create",
+        "value": "9.4",
+        "physical_cell": [
+          8,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "9.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Wiki Patterns/Edit",
+        "value": "15.9",
+        "physical_cell": [
+          8,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "15.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SealQA",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "26.9",
+        "physical_cell": [
+          8,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "26.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Create/Proposed",
+        "value": "4.5",
+        "physical_cell": [
+          9,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.5 / 1.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Create/Accepted",
+        "value": "1.4",
+        "physical_cell": [
+          9,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.5 / 1.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.5",
+        "physical_cell": [
+          9,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.5 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Edit/Accepted",
+        "value": "1.1",
+        "physical_cell": [
+          9,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.5 / 1.1"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Skills/Avg. Length",
+        "value": "142.5",
+        "physical_cell": [
+          9,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "142.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Wiki Patterns/Create",
+        "value": "9.8",
+        "physical_cell": [
+          9,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "9.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Wiki Patterns/Edit",
+        "value": "11.3",
+        "physical_cell": [
+          9,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "11.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "SpreadSheet",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "38.5",
+        "physical_cell": [
+          9,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "38.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Create/Proposed",
+        "value": "4.7",
+        "physical_cell": [
+          10,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "4.7 / 1.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Create/Accepted",
+        "value": "1.8",
+        "physical_cell": [
+          10,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "4.7 / 1.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Edit/Proposed",
+        "value": "3.3",
+        "physical_cell": [
+          10,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "3.3 / 0.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.3",
+        "physical_cell": [
+          10,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "3.3 / 0.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Skills/Avg. Length",
+        "value": "102.9",
+        "physical_cell": [
+          10,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "102.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Wiki Patterns/Create",
+        "value": "8.3",
+        "physical_cell": [
+          10,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "8.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Wiki Patterns/Edit",
+        "value": "14.9",
+        "physical_cell": [
+          10,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "14.9"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "OfficeQA",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "31.4",
+        "physical_cell": [
+          10,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "31.4"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Create/Proposed",
+        "value": "3.9",
+        "physical_cell": [
+          11,
+          1
+        ],
+        "component_index": 0,
+        "raw_cell": "3.9 / 1.6"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Create/Accepted",
+        "value": "1.6",
+        "physical_cell": [
+          11,
+          1
+        ],
+        "component_index": 1,
+        "raw_cell": "3.9 / 1.6"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Edit/Proposed",
+        "value": "4.1",
+        "physical_cell": [
+          11,
+          2
+        ],
+        "component_index": 0,
+        "raw_cell": "4.1 / 0.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Edit/Accepted",
+        "value": "0.8",
+        "physical_cell": [
+          11,
+          2
+        ],
+        "component_index": 1,
+        "raw_cell": "4.1 / 0.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Skills/Avg. Length",
+        "value": "93.5",
+        "physical_cell": [
+          11,
+          3
+        ],
+        "component_index": 0,
+        "raw_cell": "93.5"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Wiki Patterns/Create",
+        "value": "5.8",
+        "physical_cell": [
+          11,
+          4
+        ],
+        "component_index": 0,
+        "raw_cell": "5.8"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Wiki Patterns/Edit",
+        "value": "14.3",
+        "physical_cell": [
+          11,
+          5
+        ],
+        "component_index": 0,
+        "raw_cell": "14.3"
+      },
+      {
+        "group": "By Benchmark (All-Model Average)",
+        "category": "ALFWorld",
+        "column": "Wiki Patterns/Avg. Length",
+        "value": "40.6",
+        "physical_cell": [
+          11,
+          6
+        ],
+        "component_index": 0,
+        "raw_cell": "40.6"
+      }
+    ],
+    "numeric_and_critical_threshold_passed": true
+  },
+  "structural_checks": {
+    "literal_left_header_category": true,
+    "hierarchical_headers_preserved": true,
+    "parent_spans_preserved": true,
+    "two_groups_have_correct_typed_role": true,
+    "group_names_and_order_preserved": true,
+    "all_ten_categories_are_row_headers": true,
+    "all_twenty_pairs_typed_and_rendered": true,
+    "caption_retains_units_and_wiki_scope": true
+  },
+  "source_shape_note": "Two typed header rows combine the source's wrapped Create/Edit role labels; semantic header paths and spans survive.",
+  "caption_occurrences_in_main_markdown": 2,
+  "delivery_issue": "Complete Table4 caption is duplicated or missing; numeric/structural pass does not constitute complete delivery pass.",
+  "content_pass": true,
+  "complete_delivery_pass": false,
+  "evaluator_self_checks": [
+    "single_numeric_change_detected",
+    "wrong_header_binding_detected"
+  ],
+  "limitations": [
+    "Exposed DEV case, not unseen generalization evidence.",
+    "Producer, frozen configuration and raw outputs unchanged; no extra model/API request."
+  ],
+  "sha256": {
+    "docs/fixtures/pdf-core-g1-2026-10-14/cases.json": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+    "docs/research/evidence/pdf-core-g1-2026-10-14/tables/01-2608.27454v1-p13-table4-216dpi.png": "e9095424d38d08820bbbb274e1b75073af54b5a6190c134e512aada16735a75a",
+    "docs/fixtures/agent-self-evolution-pilot-2026-10-11/01-2608.27454v1.pdf": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+    "docs/research/pdf-core-direct-cell-2026-10-17/wikiskill-p13/document.json": "b21e6b4b5116e4501dd20a335bad5f62864d798012949211aeb4f2c5fdb30e0c",
+    "docs/research/pdf-core-direct-cell-2026-10-17/wikiskill-p13/document.md": "86234586444483ca0f76e6149f3574644442ab0b7b1f03e5bf0004d679b9fda1",
+    "docs/research/pdf-core-direct-cell-2026-10-17/wikiskill-p13/output.json": "233d502cdff7ad58705aebd01aeb459646755fd6bb270fd79b7d00b4417c9dfa",
+    "docs/research/pdf-core-direct-cell-2026-10-17/evaluate-t05.py": "2390e2741c4e10e47c1864ee4739f36f688592bf59d7cf8179bdc6d46e0c12aa"
+  }
+}

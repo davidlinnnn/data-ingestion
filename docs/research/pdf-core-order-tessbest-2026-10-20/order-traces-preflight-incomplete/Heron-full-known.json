@@ -1,0 +1,1488 @@
+{
+  "input_result": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-official-options-2026-10-19/full/known/result.json",
+  "input_sha256": "d33f26cac17d82c2ba1ac1c806f05c17a684044551a88abd9650a51f97be17fd",
+  "new_model_inferences": 0,
+  "native_replay_equal": {
+    "texts": true,
+    "groups": true,
+    "body": true,
+    "furniture": true,
+    "tables": true,
+    "pictures": true
+  },
+  "markdown_equal": true,
+  "stages": {
+    "assembled": [
+      {
+        "id": "#/1/14",
+        "text": "3",
+        "label": "page_header",
+        "bbox": {
+          "l": 557.8125,
+          "t": 26.346776326497395,
+          "r": 565.78125,
+          "b": 35.92742156982422,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/3",
+        "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+        "label": "text",
+        "bbox": {
+          "l": 46.21875,
+          "t": 43.51210021972656,
+          "r": 302.4140625,
+          "b": 112.97178141276042,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/7",
+        "text": "· In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+        "label": "text",
+        "bbox": {
+          "l": 309.1875,
+          "t": 43.91129048665365,
+          "r": 565.3828125,
+          "b": 123.75001017252605,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/2",
+        "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+        "label": "text",
+        "bbox": {
+          "l": 46.21875,
+          "t": 112.5725809733073,
+          "r": 302.015625,
+          "b": 228.3387247721354,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/11",
+        "text": "· Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+        "label": "text",
+        "bbox": {
+          "l": 309.5859375,
+          "t": 125.34678141276042,
+          "r": 565.78125,
+          "b": 217.16129557291666,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/9",
+        "text": "· Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+        "label": "text",
+        "bbox": {
+          "l": 309.984375,
+          "t": 219.55645751953125,
+          "r": 565.3828125,
+          "b": 310.97178141276044,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/10",
+        "text": "2 OVERVIEW",
+        "label": "section_header",
+        "bbox": {
+          "l": 45.8203125,
+          "t": 248.69759114583334,
+          "r": 119.1328125,
+          "b": 260.67340087890625,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/5",
+        "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+        "label": "text",
+        "bbox": {
+          "l": 45.8203125,
+          "t": 268.25807698567706,
+          "r": 301.21875,
+          "b": 291.4112955729167,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/0",
+        "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+        "label": "text",
+        "bbox": {
+          "l": 45.8203125,
+          "t": 298.1975911458333,
+          "r": 302.015625,
+          "b": 529.3306477864584,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/4",
+        "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+        "label": "text",
+        "bbox": {
+          "l": 309.984375,
+          "t": 319.3548583984375,
+          "r": 565.78125,
+          "b": 399.991943359375,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/8",
+        "text": "· Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+        "label": "text",
+        "bbox": {
+          "l": 309.1875,
+          "t": 401.1895345052083,
+          "r": 565.3828125,
+          "b": 563.2621256510416,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/1",
+        "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as \"the abilities that are not present in small models but arise in large models\", which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+        "label": "text",
+        "bbox": {
+          "l": 45.8203125,
+          "t": 536.9153645833334,
+          "r": 302.015625,
+          "b": 709.366943359375,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/6",
+        "text": "· Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+        "label": "text",
+        "bbox": {
+          "l": 309.984375,
+          "t": 564.459716796875,
+          "r": 565.3828125,
+          "b": 702.9798990885416,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/12",
+        "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+        "label": "footnote",
+        "bbox": {
+          "l": 46.6171875,
+          "t": 718.5484212239584,
+          "r": 301.21875,
+          "b": 747.2903645833334,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/13",
+        "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+        "label": "footnote",
+        "bbox": {
+          "l": 309.984375,
+          "t": 718.1492513020834,
+          "r": 565.3828125,
+          "b": 746.8911946614584,
+          "coord_origin": "TOPLEFT"
+        }
+      }
+    ],
+    "predictor_output": [
+      {
+        "id": "#/1/14",
+        "text": "3",
+        "label": "page_header",
+        "cid": 0,
+        "bbox": {
+          "l": 557.8125,
+          "t": 765.6532236735026,
+          "r": 565.78125,
+          "b": 756.0725784301758
+        }
+      },
+      {
+        "id": "#/1/3",
+        "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+        "label": "text",
+        "cid": 1,
+        "bbox": {
+          "l": 46.21875,
+          "t": 748.4878997802734,
+          "r": 302.4140625,
+          "b": 679.0282185872396
+        }
+      },
+      {
+        "id": "#/1/7",
+        "text": "· In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+        "label": "text",
+        "cid": 2,
+        "bbox": {
+          "l": 309.1875,
+          "t": 748.0887095133463,
+          "r": 565.3828125,
+          "b": 668.249989827474
+        }
+      },
+      {
+        "id": "#/1/2",
+        "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+        "label": "text",
+        "cid": 3,
+        "bbox": {
+          "l": 46.21875,
+          "t": 679.4274190266927,
+          "r": 302.015625,
+          "b": 563.6612752278646
+        }
+      },
+      {
+        "id": "#/1/10",
+        "text": "2 OVERVIEW",
+        "label": "section_header",
+        "cid": 6,
+        "bbox": {
+          "l": 45.8203125,
+          "t": 543.3024088541666,
+          "r": 119.1328125,
+          "b": 531.3265991210938
+        }
+      },
+      {
+        "id": "#/1/5",
+        "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+        "label": "text",
+        "cid": 7,
+        "bbox": {
+          "l": 45.8203125,
+          "t": 523.741923014323,
+          "r": 301.21875,
+          "b": 500.5887044270833
+        }
+      },
+      {
+        "id": "#/1/0",
+        "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+        "label": "text",
+        "cid": 8,
+        "bbox": {
+          "l": 45.8203125,
+          "t": 493.8024088541667,
+          "r": 302.015625,
+          "b": 262.66935221354163
+        }
+      },
+      {
+        "id": "#/1/1",
+        "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as \"the abilities that are not present in small models but arise in large models\", which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+        "label": "text",
+        "cid": 11,
+        "bbox": {
+          "l": 45.8203125,
+          "t": 255.08463541666663,
+          "r": 302.015625,
+          "b": 82.633056640625
+        }
+      },
+      {
+        "id": "#/1/11",
+        "text": "· Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+        "label": "text",
+        "cid": 4,
+        "bbox": {
+          "l": 309.5859375,
+          "t": 666.6532185872396,
+          "r": 565.78125,
+          "b": 574.8387044270834
+        }
+      },
+      {
+        "id": "#/1/9",
+        "text": "· Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+        "label": "text",
+        "cid": 5,
+        "bbox": {
+          "l": 309.984375,
+          "t": 572.4435424804688,
+          "r": 565.3828125,
+          "b": 481.02821858723956
+        }
+      },
+      {
+        "id": "#/1/4",
+        "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+        "label": "text",
+        "cid": 9,
+        "bbox": {
+          "l": 309.984375,
+          "t": 472.6451416015625,
+          "r": 565.78125,
+          "b": 392.008056640625
+        }
+      },
+      {
+        "id": "#/1/8",
+        "text": "· Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+        "label": "text",
+        "cid": 10,
+        "bbox": {
+          "l": 309.1875,
+          "t": 390.8104654947917,
+          "r": 565.3828125,
+          "b": 228.73787434895837
+        }
+      },
+      {
+        "id": "#/1/6",
+        "text": "· Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+        "label": "text",
+        "cid": 12,
+        "bbox": {
+          "l": 309.984375,
+          "t": 227.540283203125,
+          "r": 565.3828125,
+          "b": 89.02010091145837
+        }
+      },
+      {
+        "id": "#/1/12",
+        "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+        "label": "footnote",
+        "cid": 13,
+        "bbox": {
+          "l": 46.6171875,
+          "t": 73.45157877604163,
+          "r": 301.21875,
+          "b": 44.70963541666663
+        }
+      },
+      {
+        "id": "#/1/13",
+        "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+        "label": "footnote",
+        "cid": 14,
+        "bbox": {
+          "l": 309.984375,
+          "t": 73.85074869791663,
+          "r": 565.3828125,
+          "b": 45.10880533854163
+        }
+      }
+    ],
+    "final_body": [
+      {
+        "text": "3",
+        "id": "#/texts/0",
+        "label": "page_header",
+        "content_layer": "furniture",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 557.8125,
+              "t": 765.6532236735026,
+              "r": 565.78125,
+              "b": 756.0725784301758,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+        "id": "#/texts/1",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 46.21875,
+              "t": 748.4878997802734,
+              "r": 302.4140625,
+              "b": 679.0282185872396,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              339
+            ]
+          }
+        ]
+      },
+      {
+        "text": "· In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+        "id": "#/texts/2",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.1875,
+              "t": 748.0887095133463,
+              "r": 565.3828125,
+              "b": 668.249989827474,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              381
+            ]
+          }
+        ]
+      },
+      {
+        "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+        "id": "#/texts/3",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 46.21875,
+              "t": 679.4274190266927,
+              "r": 302.015625,
+              "b": 563.6612752278646,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              573
+            ]
+          }
+        ]
+      },
+      {
+        "text": "2 OVERVIEW",
+        "id": "#/texts/4",
+        "label": "section_header",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 45.8203125,
+              "t": 543.3024088541666,
+              "r": 119.1328125,
+              "b": 531.3265991210938,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              10
+            ]
+          }
+        ]
+      },
+      {
+        "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+        "id": "#/texts/5",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 45.8203125,
+              "t": 523.741923014323,
+              "r": 301.21875,
+              "b": 500.5887044270833,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              102
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+        "id": "#/texts/6",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 45.8203125,
+              "t": 493.8024088541667,
+              "r": 302.015625,
+              "b": 262.66935221354163,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1163
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as \"the abilities that are not present in small models but arise in large models\", which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+        "id": "#/texts/7",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 45.8203125,
+              "t": 255.08463541666663,
+              "r": 302.015625,
+              "b": 82.633056640625,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              842
+            ]
+          }
+        ]
+      },
+      {
+        "text": "· Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+        "id": "#/texts/8",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.5859375,
+              "t": 666.6532185872396,
+              "r": 565.78125,
+              "b": 574.8387044270834,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              454
+            ]
+          }
+        ]
+      },
+      {
+        "text": "· Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+        "id": "#/texts/9",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.984375,
+              "t": 572.4435424804688,
+              "r": 565.3828125,
+              "b": 481.02821858723956,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              451
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+        "id": "#/texts/10",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.984375,
+              "t": 472.6451416015625,
+              "r": 565.78125,
+              "b": 392.008056640625,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              348
+            ]
+          }
+        ]
+      },
+      {
+        "text": "· Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+        "id": "#/texts/11",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.1875,
+              "t": 390.8104654947917,
+              "r": 565.3828125,
+              "b": 228.73787434895837,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              805
+            ]
+          }
+        ]
+      },
+      {
+        "text": "· Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+        "id": "#/texts/12",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.984375,
+              "t": 227.540283203125,
+              "r": 565.3828125,
+              "b": 89.02010091145837,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              695
+            ]
+          }
+        ]
+      },
+      {
+        "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+        "id": "#/texts/13",
+        "label": "footnote",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 46.6171875,
+              "t": 73.45157877604163,
+              "r": 301.21875,
+              "b": 44.70963541666663,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              184
+            ]
+          }
+        ]
+      },
+      {
+        "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+        "id": "#/texts/14",
+        "label": "footnote",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 309.984375,
+              "t": 73.85074869791663,
+              "r": 565.3828125,
+              "b": 45.10880533854163,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              141
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scores": {
+    "assembled": {
+      "observed_anchor_order": [
+        "P01",
+        "P06",
+        "P02",
+        "P07",
+        "P08",
+        "H01",
+        "P03",
+        "P04",
+        "P09",
+        "P10",
+        "P05",
+        "P11"
+      ],
+      "unlocated_units": [],
+      "inversion_candidates": [
+        [
+          "P02",
+          "P06"
+        ],
+        [
+          "H01",
+          "P06"
+        ],
+        [
+          "H01",
+          "P07"
+        ],
+        [
+          "H01",
+          "P08"
+        ],
+        [
+          "P03",
+          "P06"
+        ],
+        [
+          "P03",
+          "P07"
+        ],
+        [
+          "P03",
+          "P08"
+        ],
+        [
+          "P04",
+          "P06"
+        ],
+        [
+          "P04",
+          "P07"
+        ],
+        [
+          "P04",
+          "P08"
+        ],
+        [
+          "P05",
+          "P06"
+        ],
+        [
+          "P05",
+          "P07"
+        ],
+        [
+          "P05",
+          "P08"
+        ],
+        [
+          "P05",
+          "P09"
+        ],
+        [
+          "P05",
+          "P10"
+        ]
+      ],
+      "mixed_elements": [],
+      "element_source_hits": [
+        {
+          "index": 0,
+          "text": "3",
+          "source_hits": {
+            "PAGE": {
+              "unique_anchor_count": 1,
+              "example": "3"
+            }
+          },
+          "source_ids": [
+            "PAGE"
+          ]
+        },
+        {
+          "index": 1,
+          "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+          "source_hits": {
+            "P01": {
+              "unique_anchor_count": 253,
+              "example": "2363839434854the"
+            }
+          },
+          "source_ids": [
+            "P01"
+          ]
+        },
+        {
+          "index": 2,
+          "text": "· In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+          "source_hits": {
+            "P06": {
+              "unique_anchor_count": 295,
+              "example": "355assumingthatt"
+            }
+          },
+          "source_ids": [
+            "P06"
+          ]
+        },
+        {
+          "index": 3,
+          "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+          "source_hits": {
+            "P02": {
+              "unique_anchor_count": 456,
+              "example": "2introducestheba"
+            }
+          },
+          "source_ids": [
+            "P02"
+          ]
+        },
+        {
+          "index": 4,
+          "text": "· Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+          "source_hits": {
+            "P07": {
+              "unique_anchor_count": 353,
+              "example": "162withthisabili"
+            }
+          },
+          "source_ids": [
+            "P07"
+          ]
+        },
+        {
+          "index": 5,
+          "text": "· Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+          "source_hits": {
+            "P08": {
+              "unique_anchor_count": 347,
+              "example": "33llmscansolvesu"
+            }
+          },
+          "source_ids": [
+            "P08"
+          ]
+        },
+        {
+          "index": 6,
+          "text": "2 OVERVIEW",
+          "source_hits": {
+            "H01": {
+              "unique_anchor_count": 1,
+              "example": "2overview"
+            }
+          },
+          "source_ids": [
+            "H01"
+          ]
+        },
+        {
+          "index": 7,
+          "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+          "source_hits": {
+            "P03": {
+              "unique_anchor_count": 70,
+              "example": "abilitiesandtech"
+            }
+          },
+          "source_ids": [
+            "P03"
+          ]
+        },
+        {
+          "index": 8,
+          "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+          "source_hits": {
+            "P04": {
+              "unique_anchor_count": 899,
+              "example": "0howeversomeabil"
+            }
+          },
+          "source_ids": [
+            "P04"
+          ]
+        },
+        {
+          "index": 9,
+          "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+          "source_hits": {
+            "P09": {
+              "unique_anchor_count": 261,
+              "example": "ablelearnersinth"
+            }
+          },
+          "source_ids": [
+            "P09"
+          ]
+        },
+        {
+          "index": 10,
+          "text": "· Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+          "source_hits": {
+            "P10": {
+              "unique_anchor_count": 619,
+              "example": "0basdiscussedbef"
+            }
+          },
+          "source_ids": [
+            "P10"
+          ]
+        },
+        {
+          "index": 11,
+          "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as \"the abilities that are not present in small models but arise in large models\", which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+          "source_hits": {
+            "P05": {
+              "unique_anchor_count": 656,
+              "example": "158inprincipleem"
+            }
+          },
+          "source_ids": [
+            "P05"
+          ]
+        },
+        {
+          "index": 12,
+          "text": "· Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+          "source_hits": {
+            "P11": {
+              "unique_anchor_count": 550,
+              "example": "446proposestodev"
+            }
+          },
+          "source_ids": [
+            "P11"
+          ]
+        },
+        {
+          "index": 13,
+          "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+          "source_hits": {
+            "F05": {
+              "unique_anchor_count": 132,
+              "example": "5inexistingliter"
+            }
+          },
+          "source_ids": [
+            "F05"
+          ]
+        },
+        {
+          "index": 14,
+          "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+          "source_hits": {
+            "F06": {
+              "unique_anchor_count": 99,
+              "example": "0italsoshowsthat"
+            }
+          },
+          "source_ids": [
+            "F06"
+          ]
+        }
+      ]
+    },
+    "predictor_output": {
+      "observed_anchor_order": [
+        "P01",
+        "P06",
+        "P02",
+        "H01",
+        "P03",
+        "P04",
+        "P05",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P11"
+      ],
+      "unlocated_units": [],
+      "inversion_candidates": [
+        [
+          "P02",
+          "P06"
+        ],
+        [
+          "H01",
+          "P06"
+        ],
+        [
+          "P03",
+          "P06"
+        ],
+        [
+          "P04",
+          "P06"
+        ],
+        [
+          "P05",
+          "P06"
+        ]
+      ],
+      "mixed_elements": [],
+      "element_source_hits": [
+        {
+          "index": 0,
+          "text": "3",
+          "source_hits": {
+            "PAGE": {
+              "unique_anchor_count": 1,
+              "example": "3"
+            }
+          },
+          "source_ids": [
+            "PAGE"
+          ]
+        },
+        {
+          "index": 1,
+          "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+          "source_hits": {
+            "P01": {
+              "unique_anchor_count": 253,
+              "example": "2363839434854the"
+            }
+          },
+          "source_ids": [
+            "P01"
+          ]
+        },
+        {
+          "index": 2,
+          "text": "· In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+          "source_hits": {
+            "P06": {
+              "unique_anchor_count": 295,
+              "example": "355assumingthatt"
+            }
+          },
+          "source_ids": [
+            "P06"
+          ]
+        },
+        {
+          "index": 3,
+          "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+          "source_hits": {
+            "P02": {
+              "unique_anchor_count": 456,
+              "example": "2introducestheba"
+            }
+          },
+          "source_ids": [
+            "P02"
+          ]
+        },
+        {
+          "index": 4,
+          "text": "2 OVERVIEW",
+          "source_hits": {
+            "H01": {
+              "unique_anchor_count": 1,
+              "example": "2overview"
+            }
+          },
+          "source_ids": [
+            "H01"
+          ]
+        },
+        {
+          "index": 5,
+          "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+          "source_hits": {
+            "P03": {
+              "unique_anchor_count": 70,
+              "example": "abilitiesandtech"
+            }
+          },
+          "source_ids": [
+            "P03"
+          ]
+        },
+        {
+          "index": 6,
+          "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+          "source_hits": {
+            "P04": {
+              "unique_anchor_count": 899,
+              "example": "0howeversomeabil"
+            }
+          },
+          "source_ids": [
+            "P04"
+          ]
+        },
+        {
+          "index": 7,
+          "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as \"the abilities that are not present in small models but arise in large models\", which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+          "source_hits": {
+            "P05": {
+              "unique_anchor_count": 656,
+              "example": "158inprincipleem"
+            }
+          },
+          "source_ids": [
+            "P05"
+          ]
+        },
+        {
+          "index": 8,
+          "text": "· Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+          "source_hits": {
+            "P07": {
+              "unique_anchor_count": 353,
+              "example": "162withthisabili"
+            }
+          },
+          "source_ids": [
+            "P07"
+          ]
+        },
+        {
+          "index": 9,
+          "text": "· Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+          "source_hits": {
+            "P08": {
+              "unique_anchor_count": 347,
+              "example": "33llmscansolvesu"
+            }
+          },
+          "source_ids": [
+            "P08"
+          ]
+        },
+        {
+          "index": 10,
+          "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+          "source_hits": {
+            "P09": {
+              "unique_anchor_count": 261,
+              "example": "ablelearnersinth"
+            }
+          },
+          "source_ids": [
+            "P09"
+          ]
+        },
+        {
+          "index": 11,
+          "text": "· Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+          "source_hits": {
+            "P10": {
+              "unique_anchor_count": 619,
+              "example": "0basdiscussedbef"
+            }
+          },
+          "source_ids": [
+            "P10"
+          ]
+        },
+        {
+          "index": 12,
+          "text": "· Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+          "source_hits": {
+            "P11": {
+              "unique_anchor_count": 550,
+              "example": "446proposestodev"
+            }
+          },
+          "source_ids": [
+            "P11"
+          ]
+        },
+        {
+          "index": 13,
+          "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+          "source_hits": {
+            "F05": {
+              "unique_anchor_count": 132,
+              "example": "5inexistingliter"
+            }
+          },
+          "source_ids": [
+            "F05"
+          ]
+        },
+        {
+          "index": 14,
+          "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+          "source_hits": {
+            "F06": {
+              "unique_anchor_count": 99,
+              "example": "0italsoshowsthat"
+            }
+          },
+          "source_ids": [
+            "F06"
+          ]
+        }
+      ]
+    },
+    "final_body": {
+      "observed_anchor_order": [
+        "P01",
+        "P06",
+        "P02",
+        "H01",
+        "P03",
+        "P04",
+        "P05",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P11"
+      ],
+      "unlocated_units": [],
+      "inversion_candidates": [
+        [
+          "P02",
+          "P06"
+        ],
+        [
+          "H01",
+          "P06"
+        ],
+        [
+          "P03",
+          "P06"
+        ],
+        [
+          "P04",
+          "P06"
+        ],
+        [
+          "P05",
+          "P06"
+        ]
+      ],
+      "mixed_elements": [],
+      "element_source_hits": [
+        {
+          "index": 0,
+          "text": "3",
+          "source_hits": {
+            "PAGE": {
+              "unique_anchor_count": 1,
+              "example": "3"
+            }
+          },
+          "source_ids": [
+            "PAGE"
+          ]
+        },
+        {
+          "index": 1,
+          "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+          "source_hits": {
+            "P01": {
+              "unique_anchor_count": 253,
+              "example": "2363839434854the"
+            }
+          },
+          "source_ids": [
+            "P01"
+          ]
+        },
+        {
+          "index": 2,
+          "text": "· In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+          "source_hits": {
+            "P06": {
+              "unique_anchor_count": 295,
+              "example": "355assumingthatt"
+            }
+          },
+          "source_ids": [
+            "P06"
+          ]
+        },
+        {
+          "index": 3,
+          "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+          "source_hits": {
+            "P02": {
+              "unique_anchor_count": 456,
+              "example": "2introducestheba"
+            }
+          },
+          "source_ids": [
+            "P02"
+          ]
+        },
+        {
+          "index": 4,
+          "text": "2 OVERVIEW",
+          "source_hits": {
+            "H01": {
+              "unique_anchor_count": 1,
+              "example": "2overview"
+            }
+          },
+          "source_ids": [
+            "H01"
+          ]
+        },
+        {
+          "index": 5,
+          "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+          "source_hits": {
+            "P03": {
+              "unique_anchor_count": 70,
+              "example": "abilitiesandtech"
+            }
+          },
+          "source_ids": [
+            "P03"
+          ]
+        },
+        {
+          "index": 6,
+          "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+          "source_hits": {
+            "P04": {
+              "unique_anchor_count": 899,
+              "example": "0howeversomeabil"
+            }
+          },
+          "source_ids": [
+            "P04"
+          ]
+        },
+        {
+          "index": 7,
+          "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as \"the abilities that are not present in small models but arise in large models\", which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+          "source_hits": {
+            "P05": {
+              "unique_anchor_count": 656,
+              "example": "158inprincipleem"
+            }
+          },
+          "source_ids": [
+            "P05"
+          ]
+        },
+        {
+          "index": 8,
+          "text": "· Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+          "source_hits": {
+            "P07": {
+              "unique_anchor_count": 353,
+              "example": "162withthisabili"
+            }
+          },
+          "source_ids": [
+            "P07"
+          ]
+        },
+        {
+          "index": 9,
+          "text": "· Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+          "source_hits": {
+            "P08": {
+              "unique_anchor_count": 347,
+              "example": "33llmscansolvesu"
+            }
+          },
+          "source_ids": [
+            "P08"
+          ]
+        },
+        {
+          "index": 10,
+          "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+          "source_hits": {
+            "P09": {
+              "unique_anchor_count": 261,
+              "example": "ablelearnersinth"
+            }
+          },
+          "source_ids": [
+            "P09"
+          ]
+        },
+        {
+          "index": 11,
+          "text": "· Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+          "source_hits": {
+            "P10": {
+              "unique_anchor_count": 619,
+              "example": "0basdiscussedbef"
+            }
+          },
+          "source_ids": [
+            "P10"
+          ]
+        },
+        {
+          "index": 12,
+          "text": "· Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+          "source_hits": {
+            "P11": {
+              "unique_anchor_count": 550,
+              "example": "446proposestodev"
+            }
+          },
+          "source_ids": [
+            "P11"
+          ]
+        },
+        {
+          "index": 13,
+          "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+          "source_hits": {
+            "F05": {
+              "unique_anchor_count": 132,
+              "example": "5inexistingliter"
+            }
+          },
+          "source_ids": [
+            "F05"
+          ]
+        },
+        {
+          "index": 14,
+          "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+          "source_hits": {
+            "F06": {
+              "unique_anchor_count": 99,
+              "example": "0italsoshowsthat"
+            }
+          },
+          "source_ids": [
+            "F06"
+          ]
+        }
+      ]
+    }
+  },
+  "native_relation_mappings": {
+    "predictor_output_cids": [
+      0,
+      1,
+      2,
+      3,
+      6,
+      7,
+      8,
+      11,
+      4,
+      5,
+      9,
+      10,
+      12,
+      13,
+      14
+    ],
+    "predict_to_captions": {},
+    "predict_to_footnotes": {},
+    "predict_merges": {}
+  },
+  "limitations": "PyPdfium raster fixtures supply no vector separators. Assembled input array order is a predictor input, not an accepted reading sequence. Observer wraps only this local predictor instance; no SDK file or inference/output changed."
+}

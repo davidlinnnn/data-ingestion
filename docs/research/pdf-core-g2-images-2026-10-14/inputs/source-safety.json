@@ -1,0 +1,66 @@
+{
+  "format": "g2-source-public-safety-v1",
+  "public_source_checks": [
+    {
+      "source_id": "SRC01",
+      "requested_url": "https://arxiv.org/pdf/2608.27454v1",
+      "method": "Unauthenticated read-only HTTPS GET with default certificate verification; raw bytes hashed in memory, no remote upload",
+      "pinned_sha256": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+      "checked_at": "2026-10-14T15:17:50.703709+00:00",
+      "http_status": 200,
+      "resolved_url": "https://arxiv.org/pdf/2608.27454v1",
+      "content_type": "application/pdf",
+      "bytes": 1177706,
+      "download_sha256": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+      "pinned_sha256_matches": true,
+      "status": "verified"
+    },
+    {
+      "source_id": "SRC03",
+      "requested_url": "https://posman.nccu.edu.tw/files/archive/424_1f69c9f2.pdf",
+      "method": "Unauthenticated read-only HTTPS GET with default certificate verification; raw bytes hashed in memory, no remote upload",
+      "pinned_sha256": "3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e",
+      "checked_at": "2026-10-14T15:17:50.704059+00:00",
+      "http_status": 200,
+      "resolved_url": "https://posman.nccu.edu.tw/files/archive/424_1f69c9f2.pdf",
+      "content_type": "application/pdf",
+      "bytes": 996382,
+      "download_sha256": "3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e",
+      "pinned_sha256_matches": true,
+      "status": "verified"
+    }
+  ],
+  "controlled_source": {
+    "source_id": "SRC05",
+    "source_pdf_path": "docs/fixtures/pdf-core-g1-controls-2026-10-14/controls.pdf",
+    "pinned_sha256": "8ddae37b0461b3749402e44b4a40b0e65b3d6b9ad78cf2f03ed20d1950faba90",
+    "scope": "Only original synthetic page2 chart regions C03-C06 are used. No source-derived page3-8 image is included in these four control inputs.",
+    "review": "Generator uses original toy category/series labels and fixed numbers; no personal/company data, secrets or credentials appear in these chart crops.",
+    "generator_path": "docs/fixtures/pdf-core-g1-controls-2026-10-14/generate.py",
+    "truth_path": "docs/fixtures/pdf-core-g1-controls-2026-10-14/truth.json"
+  },
+  "remote_api_permission_note": "This is source/publicness evidence only. It creates no independent authorization for any API credential use or model inference.",
+  "safety_scope": "Unauthenticated public GETs attempted and exact bytes compared only when retrieval succeeded. All local source PDF hashes match the frozen registry. Selected crop visual review checks visible contents; no credential material was read.",
+  "initial_sandbox_attempt": [
+    {
+      "source_id": "SRC01",
+      "requested_url": "https://arxiv.org/pdf/2608.27454v1",
+      "method": "Unauthenticated read-only HTTPS GET with default certificate verification; raw bytes hashed in memory, no remote upload",
+      "checked_at": "2026-10-14T15:17:25.654461+00:00",
+      "pinned_sha256": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+      "status": "not_verified",
+      "error_type": "URLError",
+      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "source_id": "SRC03",
+      "requested_url": "https://posman.nccu.edu.tw/files/archive/424_1f69c9f2.pdf",
+      "method": "Unauthenticated read-only HTTPS GET with default certificate verification; raw bytes hashed in memory, no remote upload",
+      "checked_at": "2026-10-14T15:17:25.654667+00:00",
+      "pinned_sha256": "3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e",
+      "status": "not_verified",
+      "error_type": "URLError",
+      "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    }
+  ]
+}

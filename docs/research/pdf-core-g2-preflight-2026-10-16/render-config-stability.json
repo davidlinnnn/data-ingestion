@@ -1,0 +1,361 @@
+{
+  "model_calls": 0,
+  "independent_process_hash_seeds": [
+    0,
+    1
+  ],
+  "same_config_hash": true,
+  "sequence_order_preserved": true,
+  "set_value_changes_detected": true,
+  "prior_pre_pipeline_setup_error": "Initial canonical encoder rejected schema AnyUrl; fixed explicit URL text handling before any new pipeline run. Unknown config objects still rejected.",
+  "records": [
+    {
+      "hash_seed": "0",
+      "options_sha256": "58bc18ad4adf953ebb62b8980594f454f227c9fe71c571584709694fd9537a92",
+      "options": {
+        "accelerator_options": {
+          "cuda_use_flash_attention2": false,
+          "device": "auto",
+          "num_threads": 4
+        },
+        "allow_external_plugins": false,
+        "artifacts_path": null,
+        "chart_extraction_options": {
+          "chart2code": false,
+          "chart2csv": true,
+          "chart2summary": false,
+          "engine_options": {
+            "compile_model": false,
+            "device": null,
+            "engine_type": "transformers",
+            "llm_int8_threshold": 6.0,
+            "load_in_8bit": true,
+            "quantized": false,
+            "torch_dtype": null,
+            "trust_remote_code": true,
+            "use_kv_cache": true
+          },
+          "model_spec": {
+            "api_overrides": {
+              "api_lmstudio": {
+                "params": {
+                  "model": "granite-vision-4.1-4b"
+                }
+              },
+              "api_ollama": {
+                "params": {
+                  "model": "granite-vision-4.1-4b"
+                }
+              },
+              "api_openai": {
+                "params": {
+                  "model": "granite-vision-4.1-4b"
+                }
+              }
+            },
+            "default_repo_id": "ibm-granite/granite-vision-4.1-4b",
+            "engine_overrides": {
+              "transformers": {
+                "extra_config": {
+                  "transformers_model_type": "automodel-imagetexttotext"
+                },
+                "min_engine_version": null,
+                "repo_id": null,
+                "revision": null,
+                "torch_dtype": "bfloat16"
+              }
+            },
+            "extra_generation_config": {},
+            "max_new_tokens": 4096,
+            "name": "Granite-Vision-4.1-4B",
+            "prompt": "<chart2csv>",
+            "response_format": "plaintext",
+            "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+            "stop_strings": [],
+            "supported_engines": [
+              "api_lmstudio",
+              "api_ollama",
+              "api_openai",
+              "transformers"
+            ],
+            "temperature": 0.0,
+            "trust_remote_code": true
+          },
+          "output_format": "granite_vision_charts",
+          "use_natural_language_prompts": false
+        },
+        "do_chart_extraction": false,
+        "do_picture_classification": false,
+        "do_picture_description": false,
+        "document_timeout": null,
+        "enable_remote_services": true,
+        "force_backend_text": false,
+        "generate_page_images": true,
+        "generate_picture_images": false,
+        "images_scale": 2.0,
+        "picture_classification_options": {
+          "engine_options": {
+            "engine_type": "transformers",
+            "top_k": null
+          },
+          "model_spec": {
+            "engine_overrides": {},
+            "name": "document_figure_classifier_v2",
+            "repo_id": "docling-project/DocumentFigureClassifier-v2.5",
+            "revision": "main"
+          }
+        },
+        "picture_description_options": {
+          "batch_size": 8,
+          "classification_allow": null,
+          "classification_deny": null,
+          "classification_min_confidence": 0.0,
+          "picture_area_threshold": 0.05,
+          "scale": 2.0
+        },
+        "vlm_options": {
+          "batch_size": 1,
+          "engine_options": {
+            "concurrency": 1,
+            "engine_type": "api",
+            "headers": {},
+            "params": {},
+            "timeout": 60.0,
+            "url": "http://render-preflight.invalid/never-called"
+          },
+          "force_backend_text": false,
+          "max_size": null,
+          "model_spec": {
+            "api_overrides": {
+              "api_lmstudio": {
+                "params": {
+                  "max_tokens": 24000,
+                  "model": "dots.ocr"
+                }
+              },
+              "api_ollama": {
+                "params": {
+                  "max_tokens": 24000,
+                  "model": "dots.ocr"
+                }
+              },
+              "api_openai": {
+                "params": {
+                  "max_tokens": 24000,
+                  "model": "rednote-hilab/dots.ocr"
+                }
+              }
+            },
+            "default_repo_id": "rednote-hilab/dots.ocr",
+            "engine_overrides": {
+              "transformers": {
+                "extra_config": {
+                  "transformers_model_type": "automodel-causallm",
+                  "transformers_prompt_style": "chat"
+                },
+                "min_engine_version": null,
+                "repo_id": null,
+                "revision": null,
+                "torch_dtype": "bfloat16"
+              },
+              "vllm": {
+                "extra_config": {
+                  "enforce_eager": true
+                },
+                "min_engine_version": null,
+                "repo_id": null,
+                "revision": null,
+                "torch_dtype": null
+              }
+            },
+            "extra_generation_config": {},
+            "max_new_tokens": 24000,
+            "name": "dots.ocr-3B",
+            "prompt": "Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.\n\n1. Bbox format: [x1, y1, x2, y2]\n\n2. Layout Categories: The possible categories are ['Caption', 'Footnote', 'Formula', 'List-item', 'Page-footer', 'Page-header', 'Picture', 'Section-header', 'Table', 'Text', 'Title'].\n\n3. Text Extraction & Formatting Rules:\n    - Picture: For the 'Picture' category, the text field should be omitted.\n    - Formula: Format its text as LaTeX.\n    - Table: Format its text as HTML.\n    - All Others (Text, Title, etc.): Format their text as Markdown.\n\n4. Constraints:\n    - The output text must be the original text from the image, with no translation.\n    - All layout elements must be sorted according to human reading order.\n\n5. Final Output: The entire output must be a single JSON object.",
+            "response_format": "dots_json",
+            "revision": "c0111ce6bc07803dbc267932ffef0ae3a51dc951",
+            "stop_strings": [],
+            "supported_engines": null,
+            "temperature": 0.0,
+            "trust_remote_code": true
+          },
+          "scale": 2.0
+        }
+      }
+    },
+    {
+      "hash_seed": "1",
+      "options_sha256": "58bc18ad4adf953ebb62b8980594f454f227c9fe71c571584709694fd9537a92",
+      "options": {
+        "accelerator_options": {
+          "cuda_use_flash_attention2": false,
+          "device": "auto",
+          "num_threads": 4
+        },
+        "allow_external_plugins": false,
+        "artifacts_path": null,
+        "chart_extraction_options": {
+          "chart2code": false,
+          "chart2csv": true,
+          "chart2summary": false,
+          "engine_options": {
+            "compile_model": false,
+            "device": null,
+            "engine_type": "transformers",
+            "llm_int8_threshold": 6.0,
+            "load_in_8bit": true,
+            "quantized": false,
+            "torch_dtype": null,
+            "trust_remote_code": true,
+            "use_kv_cache": true
+          },
+          "model_spec": {
+            "api_overrides": {
+              "api_lmstudio": {
+                "params": {
+                  "model": "granite-vision-4.1-4b"
+                }
+              },
+              "api_ollama": {
+                "params": {
+                  "model": "granite-vision-4.1-4b"
+                }
+              },
+              "api_openai": {
+                "params": {
+                  "model": "granite-vision-4.1-4b"
+                }
+              }
+            },
+            "default_repo_id": "ibm-granite/granite-vision-4.1-4b",
+            "engine_overrides": {
+              "transformers": {
+                "extra_config": {
+                  "transformers_model_type": "automodel-imagetexttotext"
+                },
+                "min_engine_version": null,
+                "repo_id": null,
+                "revision": null,
+                "torch_dtype": "bfloat16"
+              }
+            },
+            "extra_generation_config": {},
+            "max_new_tokens": 4096,
+            "name": "Granite-Vision-4.1-4B",
+            "prompt": "<chart2csv>",
+            "response_format": "plaintext",
+            "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+            "stop_strings": [],
+            "supported_engines": [
+              "api_lmstudio",
+              "api_ollama",
+              "api_openai",
+              "transformers"
+            ],
+            "temperature": 0.0,
+            "trust_remote_code": true
+          },
+          "output_format": "granite_vision_charts",
+          "use_natural_language_prompts": false
+        },
+        "do_chart_extraction": false,
+        "do_picture_classification": false,
+        "do_picture_description": false,
+        "document_timeout": null,
+        "enable_remote_services": true,
+        "force_backend_text": false,
+        "generate_page_images": true,
+        "generate_picture_images": false,
+        "images_scale": 2.0,
+        "picture_classification_options": {
+          "engine_options": {
+            "engine_type": "transformers",
+            "top_k": null
+          },
+          "model_spec": {
+            "engine_overrides": {},
+            "name": "document_figure_classifier_v2",
+            "repo_id": "docling-project/DocumentFigureClassifier-v2.5",
+            "revision": "main"
+          }
+        },
+        "picture_description_options": {
+          "batch_size": 8,
+          "classification_allow": null,
+          "classification_deny": null,
+          "classification_min_confidence": 0.0,
+          "picture_area_threshold": 0.05,
+          "scale": 2.0
+        },
+        "vlm_options": {
+          "batch_size": 1,
+          "engine_options": {
+            "concurrency": 1,
+            "engine_type": "api",
+            "headers": {},
+            "params": {},
+            "timeout": 60.0,
+            "url": "http://render-preflight.invalid/never-called"
+          },
+          "force_backend_text": false,
+          "max_size": null,
+          "model_spec": {
+            "api_overrides": {
+              "api_lmstudio": {
+                "params": {
+                  "max_tokens": 24000,
+                  "model": "dots.ocr"
+                }
+              },
+              "api_ollama": {
+                "params": {
+                  "max_tokens": 24000,
+                  "model": "dots.ocr"
+                }
+              },
+              "api_openai": {
+                "params": {
+                  "max_tokens": 24000,
+                  "model": "rednote-hilab/dots.ocr"
+                }
+              }
+            },
+            "default_repo_id": "rednote-hilab/dots.ocr",
+            "engine_overrides": {
+              "transformers": {
+                "extra_config": {
+                  "transformers_model_type": "automodel-causallm",
+                  "transformers_prompt_style": "chat"
+                },
+                "min_engine_version": null,
+                "repo_id": null,
+                "revision": null,
+                "torch_dtype": "bfloat16"
+              },
+              "vllm": {
+                "extra_config": {
+                  "enforce_eager": true
+                },
+                "min_engine_version": null,
+                "repo_id": null,
+                "revision": null,
+                "torch_dtype": null
+              }
+            },
+            "extra_generation_config": {},
+            "max_new_tokens": 24000,
+            "name": "dots.ocr-3B",
+            "prompt": "Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.\n\n1. Bbox format: [x1, y1, x2, y2]\n\n2. Layout Categories: The possible categories are ['Caption', 'Footnote', 'Formula', 'List-item', 'Page-footer', 'Page-header', 'Picture', 'Section-header', 'Table', 'Text', 'Title'].\n\n3. Text Extraction & Formatting Rules:\n    - Picture: For the 'Picture' category, the text field should be omitted.\n    - Formula: Format its text as LaTeX.\n    - Table: Format its text as HTML.\n    - All Others (Text, Title, etc.): Format their text as Markdown.\n\n4. Constraints:\n    - The output text must be the original text from the image, with no translation.\n    - All layout elements must be sorted according to human reading order.\n\n5. Final Output: The entire output must be a single JSON object.",
+            "response_format": "dots_json",
+            "revision": "c0111ce6bc07803dbc267932ffef0ae3a51dc951",
+            "stop_strings": [],
+            "supported_engines": null,
+            "temperature": 0.0,
+            "trust_remote_code": true
+          },
+          "scale": 2.0
+        }
+      }
+    }
+  ]
+}

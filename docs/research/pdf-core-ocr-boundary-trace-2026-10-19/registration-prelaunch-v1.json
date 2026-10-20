@@ -1,0 +1,654 @@
+{
+  "date": "2026-10-19 Asia/Taipei",
+  "source": {
+    "id": "scan",
+    "first": 1,
+    "last": 1,
+    "source": {
+      "path": "docs/prototypes/pdf-checkpoint-prototype/fixtures/scan-pages-3-5.pdf",
+      "sha256": "7856cfe6127948d506ca5fad750e915134be362b5e1436c70b378f42a6fda2a0"
+    }
+  },
+  "effective_options": {
+    "document_timeout": null,
+    "accelerator_options": {
+      "num_threads": 4,
+      "device": "cpu",
+      "cuda_use_flash_attention2": false
+    },
+    "enable_remote_services": false,
+    "allow_external_plugins": false,
+    "artifacts_path": "/private/tmp/pdf-core-native-20261017/artifacts",
+    "do_picture_classification": false,
+    "picture_classification_options": {
+      "engine_options": {
+        "engine_type": "transformers",
+        "top_k": null,
+        "torch_dtype": null,
+        "compile_model": false
+      },
+      "model_spec": {
+        "name": "document_figure_classifier_v2",
+        "repo_id": "docling-project/DocumentFigureClassifier-v2.5",
+        "revision": "main",
+        "engine_overrides": {}
+      }
+    },
+    "do_picture_description": false,
+    "picture_description_options": {
+      "batch_size": 8,
+      "scale": 2.0,
+      "picture_area_threshold": 0.05,
+      "classification_allow": null,
+      "classification_deny": null,
+      "classification_min_confidence": 0.0,
+      "engine_options": {
+        "engine_type": "auto_inline",
+        "prefer_vllm": false
+      },
+      "model_spec": {
+        "name": "SmolVLM-256M-Instruct",
+        "default_repo_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+        "revision": "main",
+        "prompt": "Describe this image in a few sentences.",
+        "response_format": "plaintext",
+        "supported_engines": null,
+        "engine_overrides": {
+          "mlx": {
+            "repo_id": "moot20/SmolVLM-256M-Instruct-MLX",
+            "revision": null,
+            "torch_dtype": null,
+            "min_engine_version": null,
+            "extra_config": {}
+          },
+          "transformers": {
+            "repo_id": null,
+            "revision": null,
+            "torch_dtype": "bfloat16",
+            "min_engine_version": null,
+            "extra_config": {
+              "transformers_model_type": "automodel-imagetexttotext"
+            }
+          }
+        },
+        "api_overrides": {
+          "api_lmstudio": {
+            "params": {
+              "model": "smolvlm-256m-instruct"
+            }
+          }
+        },
+        "trust_remote_code": false,
+        "stop_strings": [],
+        "temperature": 0.0,
+        "max_new_tokens": 4096,
+        "extra_generation_config": {}
+      },
+      "prompt": "Describe this image in a few sentences.",
+      "generation_config": {
+        "max_new_tokens": 200,
+        "do_sample": false
+      }
+    },
+    "do_chart_extraction": false,
+    "chart_extraction_options": {
+      "engine_options": {
+        "engine_type": "transformers",
+        "device": null,
+        "load_in_8bit": true,
+        "llm_int8_threshold": 6.0,
+        "quantized": false,
+        "torch_dtype": null,
+        "trust_remote_code": true,
+        "use_kv_cache": true,
+        "compile_model": false
+      },
+      "model_spec": {
+        "name": "Granite-Vision-4.1-4B",
+        "default_repo_id": "ibm-granite/granite-vision-4.1-4b",
+        "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+        "prompt": "<chart2csv>",
+        "response_format": "plaintext",
+        "supported_engines": [
+          "api_lmstudio",
+          "api_ollama",
+          "api_openai",
+          "transformers"
+        ],
+        "engine_overrides": {
+          "transformers": {
+            "repo_id": null,
+            "revision": null,
+            "torch_dtype": "bfloat16",
+            "min_engine_version": null,
+            "extra_config": {
+              "transformers_model_type": "automodel-imagetexttotext"
+            }
+          }
+        },
+        "api_overrides": {
+          "api_lmstudio": {
+            "params": {
+              "model": "granite-vision-4.1-4b"
+            }
+          },
+          "api_ollama": {
+            "params": {
+              "model": "granite-vision-4.1-4b"
+            }
+          },
+          "api_openai": {
+            "params": {
+              "model": "granite-vision-4.1-4b"
+            }
+          }
+        },
+        "trust_remote_code": true,
+        "stop_strings": [],
+        "temperature": 0.0,
+        "max_new_tokens": 4096,
+        "extra_generation_config": {}
+      },
+      "chart2csv": true,
+      "chart2summary": false,
+      "chart2code": false,
+      "output_format": "granite_vision_charts",
+      "use_natural_language_prompts": false
+    },
+    "images_scale": 2.0,
+    "generate_page_images": true,
+    "generate_picture_images": true,
+    "do_table_structure": true,
+    "do_ocr": true,
+    "do_code_enrichment": false,
+    "do_formula_enrichment": false,
+    "force_backend_text": false,
+    "table_structure_options": {
+      "do_cell_matching": true,
+      "mode": "accurate"
+    },
+    "ocr_options": {
+      "mode": "default",
+      "lang": [
+        "ch"
+      ],
+      "scale": 3.0,
+      "backend": "onnxruntime",
+      "text_score": 0.5,
+      "use_det": true,
+      "use_cls": true,
+      "use_rec": true,
+      "print_verbose": false,
+      "det_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx",
+      "cls_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx",
+      "rec_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx",
+      "rec_keys_path": null,
+      "rec_font_path": null,
+      "font_path": null,
+      "rapidocr_params": {
+        "EngineConfig.onnxruntime.intra_op_num_threads": 4,
+        "EngineConfig.onnxruntime.inter_op_num_threads": 1
+      },
+      "force_full_page_ocr": false
+    },
+    "layout_options": {
+      "keep_empty_clusters": false,
+      "skip_cell_assignment": false,
+      "create_orphan_clusters": true,
+      "engine_options": {
+        "engine_type": "transformers",
+        "score_threshold": 0.3,
+        "torch_dtype": "float32",
+        "compile_model": false
+      },
+      "model_spec": {
+        "name": "layout_heron",
+        "repo_id": "docling-project/docling-layout-heron",
+        "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+        "engine_overrides": {
+          "onnxruntime": {
+            "repo_id": "docling-project/docling-layout-heron-onnx",
+            "revision": null,
+            "torch_dtype": null,
+            "min_engine_version": null,
+            "extra_config": {
+              "model_filename": "model.onnx"
+            }
+          }
+        }
+      }
+    },
+    "code_formula_options": {
+      "engine_options": {
+        "engine_type": "auto_inline",
+        "prefer_vllm": false
+      },
+      "model_spec": {
+        "name": "CodeFormulaV2",
+        "default_repo_id": "docling-project/CodeFormulaV2",
+        "revision": "main",
+        "prompt": "",
+        "response_format": "plaintext",
+        "supported_engines": null,
+        "engine_overrides": {
+          "transformers": {
+            "repo_id": null,
+            "revision": null,
+            "torch_dtype": null,
+            "min_engine_version": null,
+            "extra_config": {
+              "transformers_model_type": "automodel-imagetexttotext",
+              "extra_generation_config": {
+                "skip_special_tokens": false
+              },
+              "torch_dtype": "bfloat16"
+            }
+          }
+        },
+        "api_overrides": {},
+        "trust_remote_code": false,
+        "stop_strings": [
+          "</doctag>",
+          "<end_of_utterance>"
+        ],
+        "temperature": 0.0,
+        "max_new_tokens": 4096,
+        "extra_generation_config": {}
+      },
+      "scale": 2.0,
+      "max_size": null,
+      "extract_code": true,
+      "extract_formulas": true
+    },
+    "generate_table_images": false,
+    "generate_parsed_pages": true,
+    "use_reading_order_separators": true,
+    "heading_hierarchy_options": {
+      "enabled": false,
+      "use_bookmarks": true,
+      "use_numbering": true,
+      "use_style": true,
+      "use_font_style": true,
+      "style_size_tolerance": 0.05,
+      "numbering_schemes": null,
+      "max_level": 6,
+      "bookmark_match_threshold": 0.8
+    },
+    "ocr_batch_size": 1,
+    "layout_batch_size": 1,
+    "table_batch_size": 1,
+    "batch_polling_interval_seconds": 0.5,
+    "queue_max_size": 100,
+    "stage_shutdown_timeout_seconds": 15.0
+  },
+  "hashes": {
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/README.md": "175700839bc7808eac6af1d0c23e4f483606ab2276fe01122f4093e61a1a65b6",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/config.json": "fdea30805ce2f5666b147fca941dcdd27ad468e27d6ed21902207d3da056a97d",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/model.safetensors": "00333a43451945aaf89db8ca9c0a17e75d1537c17db60fdb91aa95f4c7929e0c",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/preprocessor_config.json": "cd38cd59999e7a95d68e487fbe5132df3d4e5c32a0836add57e6126ba0c4eaf1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx": "090f04abcd9d9a7498bc4ebf677e4cb9bdce1fe4197ddb7e529f1ef44e1ff94f",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx": "6f327246b50388f3c176ae304bd95767ea6dc0c9ae92153ef8cbe210b3c14884",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx": "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c",
+    "/private/tmp/pdf-core-native-20261017/artifacts/docling-project--docling-models/model_artifacts/tableformer/accurate/tableformer_accurate.safetensors": "2a7d6c924b3cd12fb99a09280ca9c33a89c5d60b93253617d2e088c1a40374d9",
+    "/private/tmp/pdf-core-native-20261017/artifacts/docling-project--docling-models/model_artifacts/tableformer/accurate/tm_config.json": "984e122ceb8ccf84d84c9d2882f6f2302a44b4f1e577babd6289892c36f3cffd",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/pipeline/standard_pdf_pipeline.py": "595185558770730dd59b0dc766d15f42eec4d531dd36f50d8a151c5446762846",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/datamodel/pipeline_options.py": "befb3a4cf311fc9b3c551a97f15f1fe7b15f3f11c9e0338afd4f6a8f04821120",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/ocr/rapid_ocr_model.py": "27520d5527f0dc448320906ad1d77dc114ac89ad5eca546c0a0e281fc6f80e25",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/layout/layout_model.py": "5d11b9f3b00eeb8e2334ef96845a22a28ead37470a2354ac09602e396012d057",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/table_structure/table_structure_model.py": "184a68adba5b7230713e1d58fdfba38f7e5bf6e4b7a2a50866efe9bf9942cf86",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/document.py": "36396b6045cd903ee7785729955a911d6f98220562895c48428a974567c91947",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py": "4fc56f5bb7dc8da0a3162968d7f7d217b90fff0d37554d23fbd46decf8b09310",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py": "901247aa864647bac32864d98f9bf642aca3096c3f98c159511fd8eaccf393d1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/fixtures/scan-pages-3-5.pdf": "7856cfe6127948d506ca5fad750e915134be362b5e1436c70b378f42a6fda2a0",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/run.py": "90bd44c4a1551d3b13d2b115218e5aab92f70d3e13c1fc5963321543f59c83e5",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/S0/effective-options.json": "37da040815f8759de6b371a66a1f36b091694190c761acee7552c47aaed7658d",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/S0/scan/result.json": "abd8eb7cc331e2e059ec672fb5f9169fd38edd10dcaddf8267ba5090d74a2bed",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/S1/scan/result.json": "13cbb062f73f1b50c14a924b549cb51620b70f9345e0406af2017b0595de8605",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/run.py": "26a65484b57528045cc7e0e479dec9d6af3154eb0d53683c437c3fd11b12a92e",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/check.py": "238ddbb09f3020ebd8b97c4347b624bc96d47eae7dcc39cbb7d26fe1b3c07c15",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/test_capture.py": "6244fee0664d7b1c8e2e483366623b599c7cd143b5d182096ceb2ed14aa288a3",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-eval-interfaces-2026-10-18/C/cpu_baseline_v2.py": "7a54df318e1fc16854f98826e8486ed32a0c16a88a695edcee7f2ea0ad8cf08b",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-eval-interfaces-2026-10-18/C/cpu_baseline.py": "89e572ac2986d5c18233c08830c998c3394e3070daa2a95dc4140e7713f7f44c",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/base_ocr_model.py": "1563b9b30e2e4ee670ac58e865bd32a53462efce0a1b610602bb1b4dbc8c1a32",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/layout/layout_object_detection_model.py": "e724cb26c44c9f8fbe7bf42f3562889f7dbc432882146b04ef436fbf22bfa07e",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/layout/layout_postprocessing_model.py": "59318ee44c5ea4873677a052607488df0794b4b3caf3c31f675341377486eff9",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/page_assemble/page_assemble_model.py": "464799876dd35a1fb841a996accddc14c9afdb0fa58b3e5ca08dbc119a130400"
+  },
+  "runtime": [
+    {
+      "name": "accelerate",
+      "version": "1.15.0"
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5"
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1"
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2"
+    },
+    {
+      "name": "click",
+      "version": "8.5.0"
+    },
+    {
+      "name": "colorlog",
+      "version": "6.12.0"
+    },
+    {
+      "name": "defusedxml",
+      "version": "0.7.1"
+    },
+    {
+      "name": "doclang",
+      "version": "0.7.3"
+    },
+    {
+      "name": "docling-core",
+      "version": "2.99.0"
+    },
+    {
+      "name": "docling-ibm-models",
+      "version": "4.0.3"
+    },
+    {
+      "name": "docling-parse",
+      "version": "7.22.3"
+    },
+    {
+      "name": "docling-slim",
+      "version": "2.132.0"
+    },
+    {
+      "name": "filelock",
+      "version": "4.2.0"
+    },
+    {
+      "name": "filetype",
+      "version": "1.2.0"
+    },
+    {
+      "name": "flatbuffers",
+      "version": "25.12.19"
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.9.0"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0"
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.7.0"
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9"
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1"
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "1.33.0"
+    },
+    {
+      "name": "idna",
+      "version": "3.20"
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6"
+    },
+    {
+      "name": "jsonref",
+      "version": "1.1.0"
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0"
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1"
+    },
+    {
+      "name": "langcodes",
+      "version": "3.5.1"
+    },
+    {
+      "name": "latex2mathml",
+      "version": "3.81.1"
+    },
+    {
+      "name": "lxml",
+      "version": "6.1.3"
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0"
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.4"
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2"
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0"
+    },
+    {
+      "name": "networkx",
+      "version": "3.7"
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.4"
+    },
+    {
+      "name": "omegaconf",
+      "version": "2.4.0"
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.24.3"
+    },
+    {
+      "name": "opencv-python",
+      "version": "5.0.0.93"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3"
+    },
+    {
+      "name": "pandas",
+      "version": "3.0.6"
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.7.0"
+    },
+    {
+      "name": "protobuf",
+      "version": "7.36.2"
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2"
+    },
+    {
+      "name": "pyclipper",
+      "version": "1.4.0"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.14.1"
+    },
+    {
+      "name": "pydantic-settings",
+      "version": "2.16.0"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.50.1"
+    },
+    {
+      "name": "Pygments",
+      "version": "2.21.0"
+    },
+    {
+      "name": "pypdfium2",
+      "version": "5.14.0"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0"
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.4"
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3"
+    },
+    {
+      "name": "rapidocr",
+      "version": "3.9.2"
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0"
+    },
+    {
+      "name": "regex",
+      "version": "2026.9.29"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2"
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0"
+    },
+    {
+      "name": "rpds-py",
+      "version": "2026.9.1"
+    },
+    {
+      "name": "rtree",
+      "version": "1.4.1"
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0"
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1"
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0"
+    },
+    {
+      "name": "shapely",
+      "version": "2.2.0"
+    },
+    {
+      "name": "shellingham",
+      "version": "1.5.4"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0"
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0"
+    },
+    {
+      "name": "tabulate",
+      "version": "0.10.0"
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.23.3"
+    },
+    {
+      "name": "torch",
+      "version": "2.14.1"
+    },
+    {
+      "name": "torchvision",
+      "version": "0.29.1"
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1"
+    },
+    {
+      "name": "transformers",
+      "version": "5.20.0"
+    },
+    {
+      "name": "typer",
+      "version": "0.26.8"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0"
+    }
+  ],
+  "whole_worker_seconds": 180,
+  "max_tree_rss_bytes": 12884901888,
+  "min_available_bytes": 8589934592,
+  "prelaunch_available_bytes": 10737418240,
+  "conversions": 1,
+  "pages": 1,
+  "retries": 0,
+  "API_calls": 0,
+  "method": "unchanged S0; temporary pass-through observers; no output repair",
+  "hypotheses": [
+    "raw layout already spans columns",
+    "rect dilation/connectivity merges columns",
+    "OCR returns mixed lines within its actual crop",
+    "later cell/cluster processing joins separate raw lines"
+  ]
+}

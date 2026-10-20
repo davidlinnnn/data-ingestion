@@ -1,0 +1,98 @@
+{
+  "format": "g2-context-role-interpretation-annotations-v1",
+  "frozen_contract_and_raw_assessment_unchanged": true,
+  "not_after_fact_score_tuning": true,
+  "not_prompt_tuning": true,
+  "sourcegradable_jobs_still": 23,
+  "strict_full_target_source_pass_still": 18,
+  "complete_visible_content_and_math_meaning_pass_still": 21,
+  "no_automatic_minor_acceptance_inferred": true,
+  "g1_oracle_ref": {
+    "path": "docs/fixtures/pdf-core-g1-2026-10-14/cases.json",
+    "sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+    "case_id": "G1-E13",
+    "json_pointer": "/cases[id=G1-E13]/details/expected"
+  },
+  "jobs": [
+    {
+      "source": "seal",
+      "job_id": "ordinary_paragraph--texts-28",
+      "raw_status": "minor",
+      "full_target_source_pass": false,
+      "complete_visible_content_and_math_meaning_pass": true,
+      "interpretive_math_role_annotation": true,
+      "material_meaning_error": false,
+      "note": "Standalone SE is an acronym/self-edit identifier visibly preserved in text. New frozen contract classified it as required math; this is an additional representation interpretation and not a mathematical meaning error. No older bounded label is regressed by this annotation.",
+      "selected_scope_effect": "none; retained among all23 prepared reviewed targets"
+    },
+    {
+      "source": "seal",
+      "job_id": "ordinary_paragraph--texts-30",
+      "raw_status": "minor",
+      "full_target_source_pass": false,
+      "complete_visible_content_and_math_meaning_pass": true,
+      "interpretive_math_role_annotation": true,
+      "material_meaning_error": false,
+      "prior_F13_label_unchanged": true,
+      "prior_bounded_content_math_pass": true,
+      "prior_closed_math_span_denominator": 11,
+      "prior_ordered_inline_math_spans": [
+        "\\theta",
+        "\\mathrm{LM}_{\\theta}",
+        "(C,\\tau)",
+        "C",
+        "\\tau",
+        "C",
+        "\\tau",
+        "C",
+        "\\tau",
+        "C",
+        "\\theta' \\leftarrow \\operatorname{SFT}(\\theta,\\mathrm{SE})"
+      ],
+      "new_output_math_spans": [
+        "\\theta",
+        "\\mathrm{LM}_{\\theta}",
+        "(C,\\tau)",
+        "C",
+        "\\tau",
+        "C",
+        "\\tau",
+        "C",
+        "\\tau",
+        "C",
+        "\\theta' \\leftarrow \\mathrm{SFT}(\\theta,\\mathrm{SE})"
+      ],
+      "all_prior_11_math_spans_pass_in_order": true,
+      "new_reviewer_contract_math_span_count": 12,
+      "additional_new_contract_span": "Standalone SE after generates a self-edit",
+      "prior_reference_paragraph_with_inline_latex": "Let $\\theta$ denote the parameters of the language model $\\mathrm{LM}_{\\theta}$. SEAL operates on individual task instances $(C,\\tau)$ where $C$ is a context containing information relevant to the task, and $\\tau$ defines the downstream evaluation used to assess the model’s adaptation. For example, in knowledge incorporation, $C$ is the passage intended to be integrated into the model’s internal knowledge, and $\\tau$ is a set of questions and associated answers about the passage. In few-shot learning, $C$ includes few-shot demonstrations of a novel task, and $\\tau$ is the query input and ground-truth output. Given $C$, the model generates a self-edit SE—the form of which varies by domain (see §3.2)—and updates its parameters via supervised finetuning: $\\theta' \\leftarrow \\operatorname{SFT}(\\theta,\\mathrm{SE})$.",
+      "note": "G1-E13 leaves standalone self-edit SE as prose; only SE inside the final SFT expression is math. The new output meets all11 prior ordered math spans, full bounded paragraph wording/page join and critical prime/subscript/update. Reviewer source-only contract added a 12th required math span before output inspection; its raw minor result remains an additional interpretation, not a new F13 regression under the old11-span rubric. This annotation assesses bounded content/math, not a fresh reinsertion/provenance qualification.",
+      "selected_scope_effect": "none; retained among all23 prepared reviewed targets"
+    },
+    {
+      "source": "controls",
+      "job_id": "code_item--texts-14",
+      "raw_status": "minor",
+      "full_target_source_pass": false,
+      "complete_visible_content_and_math_meaning_pass": true,
+      "native_request_role_compliance": true,
+      "source_segment_roles_pass": true,
+      "source_block_role_pass": false,
+      "source_native_structural_mismatch_predeclared": true,
+      "material_meaning_error": false,
+      "note": "Output text Inline code: and inline-code items[i] <= limit are exactly separated. Source paragraph role differs from requested/returned native code block. Keep this structural/source-role dimension distinct from both semantic content and native request compliance; do not silently promote a strict pass.",
+      "selected_scope_effect": "none; retained among all23 prepared reviewed targets"
+    }
+  ],
+  "denominator_rule": "No row removed or accepted after the fact. Prepared reviewer denominator23 and whole-run prepared denominator36 unchanged. Selected logical scope41 includes5 unprepared required opportunities; extra native formula members not double-counted.",
+  "reporting_note_errata": [
+    {
+      "source": "seal",
+      "job_id": "ordinary_paragraph--texts-53",
+      "field": "whole_target_review",
+      "raw_phrase": "Complete five-sentence teacher-student paragraph",
+      "correction": "Complete three-sentence teacher-student paragraph",
+      "score_effect": "none; whole output text was reviewed and exact/allowed-normalization comparison passed"
+    }
+  ]
+}

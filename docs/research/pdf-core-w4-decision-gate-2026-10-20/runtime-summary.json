@@ -1,0 +1,32 @@
+{
+  "hardware": "Apple M5 Pro,48GiB unified memory",
+  "python": "3.12.13",
+  "platform": "macOS-26.4-arm64-arm-64bit",
+  "dependencies": {
+    "torch": "2.14.0",
+    "transformers": "5.20.0",
+    "huggingface-hub": "2.2.0",
+    "psutil": "7.2.2",
+    "pillow": "12.3.0",
+    "safetensors": "0.8.0"
+  },
+  "device": "MPS",
+  "dtype": "float16",
+  "all_parameters_MPS": true,
+  "CPU_fallback": false,
+  "CPU_threads": 2,
+  "load_seconds": 3.316869999980554,
+  "test_including_load_seconds": 191.85264725005254,
+  "test_model_ask_sum_seconds": 186.55614871205762,
+  "test_model_ask_median_seconds": 0.8580549999605864,
+  "test_model_ask_p95_seconds": 2.16488966695033,
+  "test_model_ask_max_seconds": 4.338986916001886,
+  "test_peak_RSS_bytes": 17039228928,
+  "test_peak_MPS_allocated_bytes": 9082746368,
+  "test_peak_MPS_driver_bytes": 10546364416,
+  "test_min_host_available_bytes": 17635901440,
+  "do_not_sum_RSS_and_MPS": "Unified-memory allocations overlap; report separately.",
+  "timing_scope": "Synchronized model.ask includes image open/resize, tokenization, image processor and forward; model loading excluded per judgement. Parent elapsed includes load and between-job cleanup.",
+  "optimized_CUDA_kernels": "Not installed; reference PyTorch gated delta/causal conv operations run on MPS, not CPU fallback. CUDA speed not measured.",
+  "downloaded_model_payload_bytes": 9098703205
+}

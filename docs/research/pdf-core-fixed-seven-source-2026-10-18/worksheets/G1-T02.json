@@ -1,0 +1,5788 @@
+{
+  "case_id": "G1-T02",
+  "job": "skillopt-p8-table0",
+  "in_seven_call_round": true,
+  "oracle": "docs/fixtures/pdf-core-g1-2026-10-14/cases.json",
+  "oracle_sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+  "case_json_pointer": "/cases/53",
+  "denominator": {
+    "logical_table_count": 1,
+    "data_rows": 28,
+    "all_expected_data_slots": 84,
+    "numeric_data_points": 84,
+    "explicit_missing_markers": 0,
+    "source_ambiguous_exclusions": 0,
+    "numeric_error_denominator": 84,
+    "coverage": "all rows and all data columns of the complete logical table"
+  },
+  "acceptance_reference": {
+    "numeric_error_rate_max": 0.05,
+    "critical_comparisons_must_all_hold": true,
+    "header_condition_note_binding_required": true,
+    "missing_or_extra_numeric_value_is_error": true,
+    "wrong_row_column_condition_binding_is_error": true,
+    "same_datapoint_counted_once_for_multiple_faults": true,
+    "extra_outputs_do_not_enlarge_denominator": true,
+    "source_missing_markers_checked_separately_and_must_be_preserved": true,
+    "source_ambiguous_exclusions_require_source_evidence": true
+  },
+  "required_semantics": {
+    "caption": {
+      "text": "Table 2 Hyperparameter analysis for the text optimizer. Each panel changes one scalar or scheduling factor from the default setting unless noted. Panel (a) fixes the split to 4:1:5 train/selection/test; the 1-example, 20%, 40%, and 80% rows use subsets of the training partition, and the 100% row reuses the completed 4:1:5 split-ratio run. Panel (b) sweeps the reflection mini-batchsize B_m; panel (c) sweeps the rollout batchsize B.",
+      "source": {
+        "page": 8,
+        "bbox_top_left_points": [
+          67.722,
+          196.074,
+          528.623,
+          244.75
+        ],
+        "bbox_kind": "tight_source_text_bbox"
+      }
+    },
+    "headers": [
+      {
+        "key": "Setting",
+        "raw_text": "Setting",
+        "role": "row_dimension",
+        "repeated_in_panels": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f"
+        ]
+      },
+      {
+        "key": "SearchQA",
+        "raw_text": "SearchQA",
+        "role": "benchmark_score",
+        "repeated_in_panels": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f"
+        ]
+      },
+      {
+        "key": "Spreadsheet",
+        "raw_text": "Spreadsheet",
+        "role": "benchmark_score",
+        "repeated_in_panels": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f"
+        ]
+      },
+      {
+        "key": "LiveMath",
+        "raw_text": "LiveMath",
+        "role": "benchmark_score",
+        "repeated_in_panels": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f"
+        ]
+      }
+    ],
+    "conditions": [
+      "Every panel varies one scalar or scheduling factor unless noted.",
+      "Panel (a) uses 4:1:5 train/selection/test; subset rows refer to the training partition; the 100% row reuses the completed split-ratio run.",
+      "Panel (b) varies reflection mini-batchsize B_m; panel (c) varies rollout batchsize B."
+    ],
+    "unit": "No explicit % sign or score unit in table/caption; preserve printed scores and raw benchmark labels.",
+    "rows": [
+      {
+        "row_id": "G1-T02.a.r01",
+        "context": {
+          "panel": "a",
+          "condition_dimension": "Training set size",
+          "setting": "1 example"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            85.647,
+            206.435,
+            92.763
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            85.647,
+            106.164,
+            92.763
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.a.r02",
+        "context": {
+          "panel": "a",
+          "condition_dimension": "Training set size",
+          "setting": "20% train"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            92.861,
+            206.432,
+            99.977
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            92.861,
+            105.121,
+            99.977
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.a.r03",
+        "context": {
+          "panel": "a",
+          "condition_dimension": "Training set size",
+          "setting": "40% train"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            100.074,
+            206.43,
+            107.191
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            100.074,
+            105.121,
+            107.191
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.a.r04",
+        "context": {
+          "panel": "a",
+          "condition_dimension": "Training set size",
+          "setting": "80% train"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            107.287,
+            206.43,
+            114.404
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            107.287,
+            105.121,
+            114.404
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.a.r05",
+        "context": {
+          "panel": "a",
+          "condition_dimension": "Training set size",
+          "setting": "100% train"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            114.501,
+            206.04,
+            121.617
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            114.501,
+            108.902,
+            121.617
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.b.r01",
+        "context": {
+          "panel": "b",
+          "condition_dimension": "Mini-batchsize",
+          "setting": "1"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            83.575,
+            353.417,
+            90.692
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            83.575,
+            237.255,
+            90.692
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.b.r02",
+        "context": {
+          "panel": "b",
+          "condition_dimension": "Mini-batchsize",
+          "setting": "2"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            90.038,
+            353.417,
+            97.155
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            90.038,
+            237.255,
+            97.155
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.b.r03",
+        "context": {
+          "panel": "b",
+          "condition_dimension": "Mini-batchsize",
+          "setting": "4"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            96.623,
+            353.017,
+            103.74
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            96.623,
+            237.255,
+            103.74
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.b.r04",
+        "context": {
+          "panel": "b",
+          "condition_dimension": "Mini-batchsize",
+          "setting": "8"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            103.208,
+            353.416,
+            110.325
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            103.208,
+            237.255,
+            110.325
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.b.r05",
+        "context": {
+          "panel": "b",
+          "condition_dimension": "Mini-batchsize",
+          "setting": "16"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            109.794,
+            353.418,
+            116.91
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            109.794,
+            241.036,
+            116.91
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.b.r06",
+        "context": {
+          "panel": "b",
+          "condition_dimension": "Mini-batchsize",
+          "setting": "32"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            116.256,
+            353.412,
+            123.373
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            116.256,
+            241.036,
+            123.373
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.c.r01",
+        "context": {
+          "panel": "c",
+          "condition_dimension": "Batchsize",
+          "setting": "8"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            86.71,
+            512.226,
+            93.827
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            86.71,
+            386.129,
+            93.827
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.c.r02",
+        "context": {
+          "panel": "c",
+          "condition_dimension": "Batchsize",
+          "setting": "24"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            93.295,
+            511.828,
+            100.412
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            93.295,
+            389.91,
+            100.412
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.c.r03",
+        "context": {
+          "panel": "c",
+          "condition_dimension": "Batchsize",
+          "setting": "40"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            99.881,
+            512.227,
+            106.997
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            99.881,
+            389.91,
+            106.997
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.c.r04",
+        "context": {
+          "panel": "c",
+          "condition_dimension": "Batchsize",
+          "setting": "56"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            106.343,
+            512.228,
+            113.46
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            106.343,
+            389.91,
+            113.46
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.c.r05",
+        "context": {
+          "panel": "c",
+          "condition_dimension": "Batchsize",
+          "setting": "full epoch"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            113.121,
+            512.226,
+            120.238
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            113.121,
+            414.696,
+            120.238
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.d.r01",
+        "context": {
+          "panel": "d",
+          "condition_dimension": "Learning rate",
+          "setting": "lr=1"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            150.523,
+            199.572,
+            157.64
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            150.523,
+            94.341,
+            157.64
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.d.r02",
+        "context": {
+          "panel": "d",
+          "condition_dimension": "Learning rate",
+          "setting": "lr=2"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            157.302,
+            199.572,
+            164.419
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            157.302,
+            94.341,
+            164.419
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.d.r03",
+        "context": {
+          "panel": "d",
+          "condition_dimension": "Learning rate",
+          "setting": "lr=4"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            164.08,
+            199.571,
+            171.197
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            164.08,
+            94.341,
+            171.197
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.d.r04",
+        "context": {
+          "panel": "d",
+          "condition_dimension": "Learning rate",
+          "setting": "lr=8"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            170.859,
+            199.178,
+            177.975
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            170.859,
+            94.341,
+            177.975
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.d.r05",
+        "context": {
+          "panel": "d",
+          "condition_dimension": "Learning rate",
+          "setting": "lr=16"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            177.637,
+            199.573,
+            184.753
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            177.637,
+            98.122,
+            184.753
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.e.r01",
+        "context": {
+          "panel": "e",
+          "condition_dimension": "Learning-rate scheduler",
+          "setting": "constant"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            157.364,
+            356.2,
+            164.48
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            157.364,
+            258.664,
+            164.48
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.e.r02",
+        "context": {
+          "panel": "e",
+          "condition_dimension": "Learning-rate scheduler",
+          "setting": "cosine"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            163.826,
+            356.198,
+            170.942
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            163.826,
+            250.475,
+            170.942
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.e.r03",
+        "context": {
+          "panel": "e",
+          "condition_dimension": "Learning-rate scheduler",
+          "setting": "linear"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            170.604,
+            355.804,
+            177.721
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            170.604,
+            249.179,
+            177.721
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.f.r01",
+        "context": {
+          "panel": "f",
+          "condition_dimension": "Slow-update samples",
+          "setting": "5"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            154.105,
+            507.261,
+            161.222
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            154.105,
+            391.098,
+            161.222
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.f.r02",
+        "context": {
+          "panel": "f",
+          "condition_dimension": "Slow-update samples",
+          "setting": "10"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            160.692,
+            506.863,
+            167.808
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            160.692,
+            394.879,
+            167.808
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.f.r03",
+        "context": {
+          "panel": "f",
+          "condition_dimension": "Slow-update samples",
+          "setting": "20"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            167.277,
+            507.26,
+            174.393
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            167.277,
+            394.879,
+            174.393
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T02.f.r04",
+        "context": {
+          "panel": "f",
+          "condition_dimension": "Slow-update samples",
+          "setting": "40"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            173.739,
+            507.256,
+            180.855
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            173.739,
+            394.879,
+            180.855
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      }
+    ],
+    "panels": [
+      {
+        "panel_id": "a",
+        "title": "(a) Training set size",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            70,
+            60,
+            217,
+            125
+          ]
+        },
+        "headers_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            72.77,
+            73.978,
+            214.663,
+            81.094
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "data_rows": 5,
+        "numeric_data_points": 15,
+        "cell_spans": "all 1 × 1 inside panel"
+      },
+      {
+        "panel_id": "b",
+        "title": "(b) Mini-batchsize",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230,
+            59,
+            364,
+            126
+          ]
+        },
+        "headers_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            233.474,
+            72.223,
+            361.639,
+            79.339
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "data_rows": 6,
+        "numeric_data_points": 18,
+        "cell_spans": "all 1 × 1 inside panel"
+      },
+      {
+        "panel_id": "c",
+        "title": "(c) Batchsize",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            380,
+            62,
+            523,
+            124
+          ]
+        },
+        "headers_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            382.348,
+            75.357,
+            520.455,
+            82.474
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "data_rows": 5,
+        "numeric_data_points": 15,
+        "cell_spans": "all 1 × 1 inside panel"
+      },
+      {
+        "panel_id": "d",
+        "title": "(d) Learning rate",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            77,
+            127,
+            211,
+            188
+          ]
+        },
+        "headers_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            79.632,
+            138.854,
+            207.797,
+            145.97
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "data_rows": 5,
+        "numeric_data_points": 15,
+        "cell_spans": "all 1 × 1 inside panel"
+      },
+      {
+        "panel_id": "e",
+        "title": "(e) Learning-rate scheduler",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            228,
+            133,
+            367,
+            182
+          ]
+        },
+        "headers_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            230.69,
+            145.887,
+            364.427,
+            153.004
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "data_rows": 3,
+        "numeric_data_points": 9,
+        "cell_spans": "all 1 × 1 inside panel"
+      },
+      {
+        "panel_id": "f",
+        "title": "(f) Slow-update samples",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            385,
+            130,
+            518,
+            184
+          ]
+        },
+        "headers_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            387.317,
+            142.753,
+            515.482,
+            149.87
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "data_rows": 4,
+        "numeric_data_points": 12,
+        "cell_spans": "all 1 × 1 inside panel"
+      }
+    ]
+  },
+  "points": [
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/0",
+      "expected": {
+        "id": "G1-T02.a.r01.c01",
+        "row_id": "G1-T02.a.r01",
+        "column_key": "SearchQA",
+        "raw_value": "81.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            120.02,
+            85.647,
+            133.463,
+            92.763
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "81.0"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "1 example"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "a-r1-c1",
+        "header_path": [
+          {
+            "id": "h-a-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "1 example"
+        },
+        "group": null,
+        "typed_text": "81.0",
+        "rendered_markdown_text": "81.0",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "81.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/1",
+      "expected": {
+        "id": "G1-T02.a.r01.c02",
+        "row_id": "G1-T02.a.r01",
+        "column_key": "Spreadsheet",
+        "raw_value": "47.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            156.798,
+            85.647,
+            170.241,
+            92.763
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "47.5"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "1 example"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "a-r1-c2",
+        "header_path": [
+          {
+            "id": "h-a-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "1 example"
+        },
+        "group": null,
+        "typed_text": "47.5",
+        "rendered_markdown_text": "47.5",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "47.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/2",
+      "expected": {
+        "id": "G1-T02.a.r01.c03",
+        "row_id": "G1-T02.a.r01",
+        "column_key": "LiveMath",
+        "raw_value": "59.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            192.992,
+            85.647,
+            206.435,
+            92.763
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "59.1"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "1 example"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "a-r1-c3",
+        "header_path": [
+          {
+            "id": "h-a-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "1 example"
+        },
+        "group": null,
+        "typed_text": "59.1",
+        "rendered_markdown_text": "59.1",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "59.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/3",
+      "expected": {
+        "id": "G1-T02.a.r02.c01",
+        "row_id": "G1-T02.a.r02",
+        "column_key": "SearchQA",
+        "raw_value": "84.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            120.023,
+            92.861,
+            133.466,
+            99.977
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "84.1"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "20% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "a-r2-c1",
+        "header_path": [
+          {
+            "id": "h-a-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "20% train"
+        },
+        "group": null,
+        "typed_text": "84.1",
+        "rendered_markdown_text": "84.1",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "84.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/4",
+      "expected": {
+        "id": "G1-T02.a.r02.c02",
+        "row_id": "G1-T02.a.r02",
+        "column_key": "Spreadsheet",
+        "raw_value": "69.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            156.794,
+            92.861,
+            170.237,
+            99.977
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "69.0"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "20% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "a-r2-c2",
+        "header_path": [
+          {
+            "id": "h-a-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "20% train"
+        },
+        "group": null,
+        "typed_text": "69.0",
+        "rendered_markdown_text": "69.0",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "69.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/5",
+      "expected": {
+        "id": "G1-T02.a.r02.c03",
+        "row_id": "G1-T02.a.r02",
+        "column_key": "LiveMath",
+        "raw_value": "65.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            192.989,
+            92.861,
+            206.432,
+            99.977
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "65.9"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "20% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "a-r2-c3",
+        "header_path": [
+          {
+            "id": "h-a-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "20% train"
+        },
+        "group": null,
+        "typed_text": "65.9",
+        "rendered_markdown_text": "65.9",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "65.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/6",
+      "expected": {
+        "id": "G1-T02.a.r03.c01",
+        "row_id": "G1-T02.a.r03",
+        "column_key": "SearchQA",
+        "raw_value": "86.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            120.415,
+            100.074,
+            133.066,
+            107.191
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.1"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "40% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          3,
+          1
+        ],
+        "provider_cell_id": "a-r3-c1",
+        "header_path": [
+          {
+            "id": "h-a-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40% train"
+        },
+        "group": null,
+        "typed_text": "86.1",
+        "rendered_markdown_text": "86.1",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/7",
+      "expected": {
+        "id": "G1-T02.a.r03.c02",
+        "row_id": "G1-T02.a.r03",
+        "column_key": "Spreadsheet",
+        "raw_value": "73.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            156.793,
+            100.074,
+            170.236,
+            107.191
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "73.5"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "40% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          3,
+          2
+        ],
+        "provider_cell_id": "a-r3-c2",
+        "header_path": [
+          {
+            "id": "h-a-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40% train"
+        },
+        "group": null,
+        "typed_text": "73.5",
+        "rendered_markdown_text": "73.5",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "73.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/8",
+      "expected": {
+        "id": "G1-T02.a.r03.c03",
+        "row_id": "G1-T02.a.r03",
+        "column_key": "LiveMath",
+        "raw_value": "64.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            192.994,
+            100.074,
+            206.43,
+            107.191
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "64.8"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "40% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          3,
+          3
+        ],
+        "provider_cell_id": "a-r3-c3",
+        "header_path": [
+          {
+            "id": "h-a-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40% train"
+        },
+        "group": null,
+        "typed_text": "64.8",
+        "rendered_markdown_text": "64.8",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "64.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/9",
+      "expected": {
+        "id": "G1-T02.a.r04.c01",
+        "row_id": "G1-T02.a.r04",
+        "column_key": "SearchQA",
+        "raw_value": "86.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            120.415,
+            107.287,
+            133.066,
+            114.404
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.1"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "80% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          4,
+          1
+        ],
+        "provider_cell_id": "a-r4-c1",
+        "header_path": [
+          {
+            "id": "h-a-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "80% train"
+        },
+        "group": null,
+        "typed_text": "86.1",
+        "rendered_markdown_text": "86.1",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/10",
+      "expected": {
+        "id": "G1-T02.a.r04.c02",
+        "row_id": "G1-T02.a.r04",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.6",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            156.793,
+            107.287,
+            170.236,
+            114.404
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.6"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "80% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          4,
+          2
+        ],
+        "provider_cell_id": "a-r4-c2",
+        "header_path": [
+          {
+            "id": "h-a-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "80% train"
+        },
+        "group": null,
+        "typed_text": "77.6",
+        "rendered_markdown_text": "77.6",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.6",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/11",
+      "expected": {
+        "id": "G1-T02.a.r04.c03",
+        "row_id": "G1-T02.a.r04",
+        "column_key": "LiveMath",
+        "raw_value": "67.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            192.994,
+            107.287,
+            206.43,
+            114.404
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "67.0"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "80% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          4,
+          3
+        ],
+        "provider_cell_id": "a-r4-c3",
+        "header_path": [
+          {
+            "id": "h-a-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "80% train"
+        },
+        "group": null,
+        "typed_text": "67.0",
+        "rendered_markdown_text": "67.0",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "67.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/12",
+      "expected": {
+        "id": "G1-T02.a.r05.c01",
+        "row_id": "G1-T02.a.r05",
+        "column_key": "SearchQA",
+        "raw_value": "84.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            120.018,
+            114.501,
+            133.461,
+            121.617
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "84.1"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "100% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          5,
+          1
+        ],
+        "provider_cell_id": "a-r5-c1",
+        "header_path": [
+          {
+            "id": "h-a-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "100% train"
+        },
+        "group": null,
+        "typed_text": "84.1",
+        "rendered_markdown_text": "84.1",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "84.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/13",
+      "expected": {
+        "id": "G1-T02.a.r05.c02",
+        "row_id": "G1-T02.a.r05",
+        "column_key": "Spreadsheet",
+        "raw_value": "78.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            157.188,
+            114.501,
+            169.839,
+            121.617
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "78.0"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "100% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          5,
+          2
+        ],
+        "provider_cell_id": "a-r5-c2",
+        "header_path": [
+          {
+            "id": "h-a-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "100% train"
+        },
+        "group": null,
+        "typed_text": "78.0",
+        "rendered_markdown_text": "78.0",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "78.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/14",
+      "expected": {
+        "id": "G1-T02.a.r05.c03",
+        "row_id": "G1-T02.a.r05",
+        "column_key": "LiveMath",
+        "raw_value": "70.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            193.388,
+            114.501,
+            206.04,
+            121.617
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "70.5"
+      },
+      "expected_row_context": {
+        "panel": "a",
+        "condition_dimension": "Training set size",
+        "setting": "100% train"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          5,
+          3
+        ],
+        "provider_cell_id": "a-r5-c3",
+        "header_path": [
+          {
+            "id": "h-a-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "100% train"
+        },
+        "group": null,
+        "typed_text": "70.5",
+        "rendered_markdown_text": "70.5",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "70.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/15",
+      "expected": {
+        "id": "G1-T02.b.r01.c01",
+        "row_id": "G1-T02.b.r01",
+        "column_key": "SearchQA",
+        "raw_value": "85.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            267.002,
+            83.575,
+            280.445,
+            90.692
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "85.9"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "1"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "b-r1-c1",
+        "header_path": [
+          {
+            "id": "h-b-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "1"
+        },
+        "group": null,
+        "typed_text": "85.9",
+        "rendered_markdown_text": "85.9",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "85.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/16",
+      "expected": {
+        "id": "G1-T02.b.r01.c02",
+        "row_id": "G1-T02.b.r01",
+        "column_key": "Spreadsheet",
+        "raw_value": "75.4",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            303.773,
+            83.575,
+            317.216,
+            90.692
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "75.4"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "1"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "b-r1-c2",
+        "header_path": [
+          {
+            "id": "h-b-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "1"
+        },
+        "group": null,
+        "typed_text": "75.4",
+        "rendered_markdown_text": "75.4",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "75.4",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/17",
+      "expected": {
+        "id": "G1-T02.b.r01.c03",
+        "row_id": "G1-T02.b.r01",
+        "column_key": "LiveMath",
+        "raw_value": "60.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            339.974,
+            83.575,
+            353.417,
+            90.692
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "60.5"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "1"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "b-r1-c3",
+        "header_path": [
+          {
+            "id": "h-b-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "1"
+        },
+        "group": null,
+        "typed_text": "60.5",
+        "rendered_markdown_text": "60.5",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "60.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/18",
+      "expected": {
+        "id": "G1-T02.b.r02.c01",
+        "row_id": "G1-T02.b.r02",
+        "column_key": "SearchQA",
+        "raw_value": "86.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            267.002,
+            90.038,
+            280.445,
+            97.155
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.3"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "2"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "b-r2-c1",
+        "header_path": [
+          {
+            "id": "h-b-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "2"
+        },
+        "group": null,
+        "typed_text": "86.3",
+        "rendered_markdown_text": "86.3",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/19",
+      "expected": {
+        "id": "G1-T02.b.r02.c02",
+        "row_id": "G1-T02.b.r02",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            303.773,
+            90.038,
+            317.216,
+            97.155
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.1"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "2"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "b-r2-c2",
+        "header_path": [
+          {
+            "id": "h-b-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "2"
+        },
+        "group": null,
+        "typed_text": "77.1",
+        "rendered_markdown_text": "77.1",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/20",
+      "expected": {
+        "id": "G1-T02.b.r02.c03",
+        "row_id": "G1-T02.b.r02",
+        "column_key": "LiveMath",
+        "raw_value": "54.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            339.974,
+            90.038,
+            353.417,
+            97.155
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "54.8"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "2"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "b-r2-c3",
+        "header_path": [
+          {
+            "id": "h-b-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "2"
+        },
+        "group": null,
+        "typed_text": "54.8",
+        "rendered_markdown_text": "54.8",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "54.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/21",
+      "expected": {
+        "id": "G1-T02.b.r03.c01",
+        "row_id": "G1-T02.b.r03",
+        "column_key": "SearchQA",
+        "raw_value": "86.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            267.002,
+            96.623,
+            280.445,
+            103.74
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.9"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "4"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          3,
+          1
+        ],
+        "provider_cell_id": "b-r3-c1",
+        "header_path": [
+          {
+            "id": "h-b-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "4"
+        },
+        "group": null,
+        "typed_text": "86.9",
+        "rendered_markdown_text": "86.9",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/22",
+      "expected": {
+        "id": "G1-T02.b.r03.c02",
+        "row_id": "G1-T02.b.r03",
+        "column_key": "Spreadsheet",
+        "raw_value": "75.4",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            303.773,
+            96.623,
+            317.216,
+            103.74
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "75.4"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "4"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          3,
+          2
+        ],
+        "provider_cell_id": "b-r3-c2",
+        "header_path": [
+          {
+            "id": "h-b-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "4"
+        },
+        "group": null,
+        "typed_text": "75.4",
+        "rendered_markdown_text": "75.4",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "75.4",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/23",
+      "expected": {
+        "id": "G1-T02.b.r03.c03",
+        "row_id": "G1-T02.b.r03",
+        "column_key": "LiveMath",
+        "raw_value": "64.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            340.366,
+            96.623,
+            353.017,
+            103.74
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "64.5"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "4"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          3,
+          3
+        ],
+        "provider_cell_id": "b-r3-c3",
+        "header_path": [
+          {
+            "id": "h-b-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "4"
+        },
+        "group": null,
+        "typed_text": "64.5",
+        "rendered_markdown_text": "64.5",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "64.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/24",
+      "expected": {
+        "id": "G1-T02.b.r04.c01",
+        "row_id": "G1-T02.b.r04",
+        "column_key": "SearchQA",
+        "raw_value": "87.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            267.4,
+            103.208,
+            280.052,
+            110.325
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.1"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          4,
+          1
+        ],
+        "provider_cell_id": "b-r4-c1",
+        "header_path": [
+          {
+            "id": "h-b-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "8"
+        },
+        "group": null,
+        "typed_text": "87.1",
+        "rendered_markdown_text": "87.1",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/25",
+      "expected": {
+        "id": "G1-T02.b.r04.c02",
+        "row_id": "G1-T02.b.r04",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            303.778,
+            103.208,
+            317.221,
+            110.325
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          4,
+          2
+        ],
+        "provider_cell_id": "b-r4-c2",
+        "header_path": [
+          {
+            "id": "h-b-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "8"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/26",
+      "expected": {
+        "id": "G1-T02.b.r04.c03",
+        "row_id": "G1-T02.b.r04",
+        "column_key": "LiveMath",
+        "raw_value": "61.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            339.973,
+            103.208,
+            353.416,
+            110.325
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "61.3"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          4,
+          3
+        ],
+        "provider_cell_id": "b-r4-c3",
+        "header_path": [
+          {
+            "id": "h-b-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "8"
+        },
+        "group": null,
+        "typed_text": "61.3",
+        "rendered_markdown_text": "61.3",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "61.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/27",
+      "expected": {
+        "id": "G1-T02.b.r05.c01",
+        "row_id": "G1-T02.b.r05",
+        "column_key": "SearchQA",
+        "raw_value": "87.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            267.004,
+            109.794,
+            280.447,
+            116.91
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.0"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "16"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          5,
+          1
+        ],
+        "provider_cell_id": "b-r5-c1",
+        "header_path": [
+          {
+            "id": "h-b-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "16"
+        },
+        "group": null,
+        "typed_text": "87.0",
+        "rendered_markdown_text": "87.0",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/28",
+      "expected": {
+        "id": "G1-T02.b.r05.c02",
+        "row_id": "G1-T02.b.r05",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            304.173,
+            109.794,
+            316.825,
+            116.91
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.9"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "16"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          5,
+          2
+        ],
+        "provider_cell_id": "b-r5-c2",
+        "header_path": [
+          {
+            "id": "h-b-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "16"
+        },
+        "group": null,
+        "typed_text": "77.9",
+        "rendered_markdown_text": "77.9",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/29",
+      "expected": {
+        "id": "G1-T02.b.r05.c03",
+        "row_id": "G1-T02.b.r05",
+        "column_key": "LiveMath",
+        "raw_value": "61.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            339.975,
+            109.794,
+            353.418,
+            116.91
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "61.3"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "16"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          5,
+          3
+        ],
+        "provider_cell_id": "b-r5-c3",
+        "header_path": [
+          {
+            "id": "h-b-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "16"
+        },
+        "group": null,
+        "typed_text": "61.3",
+        "rendered_markdown_text": "61.3",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "61.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/30",
+      "expected": {
+        "id": "G1-T02.b.r06.c01",
+        "row_id": "G1-T02.b.r06",
+        "column_key": "SearchQA",
+        "raw_value": "86.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            267.004,
+            116.256,
+            280.447,
+            123.373
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.9"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "32"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          6,
+          1
+        ],
+        "provider_cell_id": "b-r6-c1",
+        "header_path": [
+          {
+            "id": "h-b-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "32"
+        },
+        "group": null,
+        "typed_text": "86.9",
+        "rendered_markdown_text": "86.9",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/31",
+      "expected": {
+        "id": "G1-T02.b.r06.c02",
+        "row_id": "G1-T02.b.r06",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            303.775,
+            116.256,
+            317.218,
+            123.373
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "32"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          6,
+          2
+        ],
+        "provider_cell_id": "b-r6-c2",
+        "header_path": [
+          {
+            "id": "h-b-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "32"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/32",
+      "expected": {
+        "id": "G1-T02.b.r06.c03",
+        "row_id": "G1-T02.b.r06",
+        "column_key": "LiveMath",
+        "raw_value": "58.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            339.969,
+            116.256,
+            353.412,
+            123.373
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "58.9"
+      },
+      "expected_row_context": {
+        "panel": "b",
+        "condition_dimension": "Mini-batchsize",
+        "setting": "32"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/1",
+        "normalized_anchor": [
+          6,
+          3
+        ],
+        "provider_cell_id": "b-r6-c3",
+        "header_path": [
+          {
+            "id": "h-b-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "32"
+        },
+        "group": null,
+        "typed_text": "58.9",
+        "rendered_markdown_text": "58.9",
+        "rendered_table_index": 1,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "58.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/33",
+      "expected": {
+        "id": "G1-T02.c.r01.c01",
+        "row_id": "G1-T02.c.r01",
+        "column_key": "SearchQA",
+        "raw_value": "85.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            425.81,
+            86.71,
+            439.254,
+            93.827
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "85.1"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "c-r1-c1",
+        "header_path": [
+          {
+            "id": "h-c-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "8"
+        },
+        "group": null,
+        "typed_text": "85.1",
+        "rendered_markdown_text": "85.1",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "85.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/34",
+      "expected": {
+        "id": "G1-T02.c.r01.c02",
+        "row_id": "G1-T02.c.r01",
+        "column_key": "Spreadsheet",
+        "raw_value": "76.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            462.589,
+            86.71,
+            476.032,
+            93.827
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "76.8"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "c-r1-c2",
+        "header_path": [
+          {
+            "id": "h-c-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "8"
+        },
+        "group": null,
+        "typed_text": "76.8",
+        "rendered_markdown_text": "76.8",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "76.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/35",
+      "expected": {
+        "id": "G1-T02.c.r01.c03",
+        "row_id": "G1-T02.c.r01",
+        "column_key": "LiveMath",
+        "raw_value": "58.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            498.783,
+            86.71,
+            512.226,
+            93.827
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "58.1"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "c-r1-c3",
+        "header_path": [
+          {
+            "id": "h-c-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "8"
+        },
+        "group": null,
+        "typed_text": "58.1",
+        "rendered_markdown_text": "58.1",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "58.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/36",
+      "expected": {
+        "id": "G1-T02.c.r02.c01",
+        "row_id": "G1-T02.c.r02",
+        "column_key": "SearchQA",
+        "raw_value": "86.4",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            425.813,
+            93.295,
+            439.256,
+            100.412
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.4"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "24"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "c-r2-c1",
+        "header_path": [
+          {
+            "id": "h-c-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "24"
+        },
+        "group": null,
+        "typed_text": "86.4",
+        "rendered_markdown_text": "86.4",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.4",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/37",
+      "expected": {
+        "id": "G1-T02.c.r02.c02",
+        "row_id": "G1-T02.c.r02",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            462.591,
+            93.295,
+            476.027,
+            100.412
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.1"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "24"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "c-r2-c2",
+        "header_path": [
+          {
+            "id": "h-c-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "24"
+        },
+        "group": null,
+        "typed_text": "77.1",
+        "rendered_markdown_text": "77.1",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/38",
+      "expected": {
+        "id": "G1-T02.c.r02.c03",
+        "row_id": "G1-T02.c.r02",
+        "column_key": "LiveMath",
+        "raw_value": "62.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            499.177,
+            93.295,
+            511.828,
+            100.412
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "62.9"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "24"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "c-r2-c3",
+        "header_path": [
+          {
+            "id": "h-c-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "24"
+        },
+        "group": null,
+        "typed_text": "62.9",
+        "rendered_markdown_text": "62.9",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "62.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/39",
+      "expected": {
+        "id": "G1-T02.c.r03.c01",
+        "row_id": "G1-T02.c.r03",
+        "column_key": "SearchQA",
+        "raw_value": "87.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            425.813,
+            99.881,
+            439.256,
+            106.997
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.1"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "40"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          3,
+          1
+        ],
+        "provider_cell_id": "c-r3-c1",
+        "header_path": [
+          {
+            "id": "h-c-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40"
+        },
+        "group": null,
+        "typed_text": "87.1",
+        "rendered_markdown_text": "87.1",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/40",
+      "expected": {
+        "id": "G1-T02.c.r03.c02",
+        "row_id": "G1-T02.c.r03",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            462.982,
+            99.881,
+            475.634,
+            106.997
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "40"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          3,
+          2
+        ],
+        "provider_cell_id": "c-r3-c2",
+        "header_path": [
+          {
+            "id": "h-c-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/41",
+      "expected": {
+        "id": "G1-T02.c.r03.c03",
+        "row_id": "G1-T02.c.r03",
+        "column_key": "LiveMath",
+        "raw_value": "61.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            498.784,
+            99.881,
+            512.227,
+            106.997
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "61.3"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "40"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          3,
+          3
+        ],
+        "provider_cell_id": "c-r3-c3",
+        "header_path": [
+          {
+            "id": "h-c-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40"
+        },
+        "group": null,
+        "typed_text": "61.3",
+        "rendered_markdown_text": "61.3",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "61.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/42",
+      "expected": {
+        "id": "G1-T02.c.r04.c01",
+        "row_id": "G1-T02.c.r04",
+        "column_key": "SearchQA",
+        "raw_value": "86.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            425.813,
+            106.343,
+            439.256,
+            113.46
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.5"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "56"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          4,
+          1
+        ],
+        "provider_cell_id": "c-r4-c1",
+        "header_path": [
+          {
+            "id": "h-c-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "56"
+        },
+        "group": null,
+        "typed_text": "86.5",
+        "rendered_markdown_text": "86.5",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/43",
+      "expected": {
+        "id": "G1-T02.c.r04.c02",
+        "row_id": "G1-T02.c.r04",
+        "column_key": "Spreadsheet",
+        "raw_value": "76.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            462.591,
+            106.343,
+            476.027,
+            113.46
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "76.8"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "56"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          4,
+          2
+        ],
+        "provider_cell_id": "c-r4-c2",
+        "header_path": [
+          {
+            "id": "h-c-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "56"
+        },
+        "group": null,
+        "typed_text": "76.8",
+        "rendered_markdown_text": "76.8",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "76.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/44",
+      "expected": {
+        "id": "G1-T02.c.r04.c03",
+        "row_id": "G1-T02.c.r04",
+        "column_key": "LiveMath",
+        "raw_value": "56.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            498.785,
+            106.343,
+            512.228,
+            113.46
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "56.5"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "56"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          4,
+          3
+        ],
+        "provider_cell_id": "c-r4-c3",
+        "header_path": [
+          {
+            "id": "h-c-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "56"
+        },
+        "group": null,
+        "typed_text": "56.5",
+        "rendered_markdown_text": "56.5",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "56.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/45",
+      "expected": {
+        "id": "G1-T02.c.r05.c01",
+        "row_id": "G1-T02.c.r05",
+        "column_key": "SearchQA",
+        "raw_value": "87.2",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            426.21,
+            113.121,
+            438.862,
+            120.238
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.2"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "full epoch"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          5,
+          1
+        ],
+        "provider_cell_id": "c-r5-c1",
+        "header_path": [
+          {
+            "id": "h-c-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "full epoch"
+        },
+        "group": null,
+        "typed_text": "87.2",
+        "rendered_markdown_text": "87.2",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.2",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/46",
+      "expected": {
+        "id": "G1-T02.c.r05.c02",
+        "row_id": "G1-T02.c.r05",
+        "column_key": "Spreadsheet",
+        "raw_value": "75.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            462.589,
+            113.121,
+            476.032,
+            120.238
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "75.0"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "full epoch"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          5,
+          2
+        ],
+        "provider_cell_id": "c-r5-c2",
+        "header_path": [
+          {
+            "id": "h-c-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "full epoch"
+        },
+        "group": null,
+        "typed_text": "75.0",
+        "rendered_markdown_text": "75.0",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "75.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/47",
+      "expected": {
+        "id": "G1-T02.c.r05.c03",
+        "row_id": "G1-T02.c.r05",
+        "column_key": "LiveMath",
+        "raw_value": "53.2",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            498.783,
+            113.121,
+            512.226,
+            120.238
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "53.2"
+      },
+      "expected_row_context": {
+        "panel": "c",
+        "condition_dimension": "Batchsize",
+        "setting": "full epoch"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/2",
+        "normalized_anchor": [
+          5,
+          3
+        ],
+        "provider_cell_id": "c-r5-c3",
+        "header_path": [
+          {
+            "id": "h-c-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "full epoch"
+        },
+        "group": null,
+        "typed_text": "53.2",
+        "rendered_markdown_text": "53.2",
+        "rendered_table_index": 2,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "53.2",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/48",
+      "expected": {
+        "id": "G1-T02.d.r01.c01",
+        "row_id": "G1-T02.d.r01",
+        "column_key": "SearchQA",
+        "raw_value": "85.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            113.157,
+            150.523,
+            126.6,
+            157.64
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "85.5"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=1"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "d-r1-c1",
+        "header_path": [
+          {
+            "id": "h-d-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=1"
+        },
+        "group": null,
+        "typed_text": "85.5",
+        "rendered_markdown_text": "85.5",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "85.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/49",
+      "expected": {
+        "id": "G1-T02.d.r01.c02",
+        "row_id": "G1-T02.d.r01",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            149.935,
+            150.523,
+            163.378,
+            157.64
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=1"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "d-r1-c2",
+        "header_path": [
+          {
+            "id": "h-d-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=1"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/50",
+      "expected": {
+        "id": "G1-T02.d.r01.c03",
+        "row_id": "G1-T02.d.r01",
+        "column_key": "LiveMath",
+        "raw_value": "62.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            186.129,
+            150.523,
+            199.572,
+            157.64
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "62.1"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=1"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "d-r1-c3",
+        "header_path": [
+          {
+            "id": "h-d-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=1"
+        },
+        "group": null,
+        "typed_text": "62.1",
+        "rendered_markdown_text": "62.1",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "62.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/51",
+      "expected": {
+        "id": "G1-T02.d.r02.c01",
+        "row_id": "G1-T02.d.r02",
+        "column_key": "SearchQA",
+        "raw_value": "86.7",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            113.157,
+            157.302,
+            126.6,
+            164.419
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.7"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=2"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "d-r2-c1",
+        "header_path": [
+          {
+            "id": "h-d-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=2"
+        },
+        "group": null,
+        "typed_text": "86.7",
+        "rendered_markdown_text": "86.7",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.7",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/52",
+      "expected": {
+        "id": "G1-T02.d.r02.c02",
+        "row_id": "G1-T02.d.r02",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            149.935,
+            157.302,
+            163.378,
+            164.419
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=2"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "d-r2-c2",
+        "header_path": [
+          {
+            "id": "h-d-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=2"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/53",
+      "expected": {
+        "id": "G1-T02.d.r02.c03",
+        "row_id": "G1-T02.d.r02",
+        "column_key": "LiveMath",
+        "raw_value": "60.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            186.129,
+            157.302,
+            199.572,
+            164.419
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "60.5"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=2"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "d-r2-c3",
+        "header_path": [
+          {
+            "id": "h-d-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=2"
+        },
+        "group": null,
+        "typed_text": "60.5",
+        "rendered_markdown_text": "60.5",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "60.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/54",
+      "expected": {
+        "id": "G1-T02.d.r03.c01",
+        "row_id": "G1-T02.d.r03",
+        "column_key": "SearchQA",
+        "raw_value": "86.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            113.157,
+            164.08,
+            126.6,
+            171.197
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.5"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=4"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          3,
+          1
+        ],
+        "provider_cell_id": "d-r3-c1",
+        "header_path": [
+          {
+            "id": "h-d-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=4"
+        },
+        "group": null,
+        "typed_text": "86.5",
+        "rendered_markdown_text": "86.5",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/55",
+      "expected": {
+        "id": "G1-T02.d.r03.c02",
+        "row_id": "G1-T02.d.r03",
+        "column_key": "Spreadsheet",
+        "raw_value": "78.2",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            150.326,
+            164.08,
+            162.978,
+            171.197
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "78.2"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=4"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          3,
+          2
+        ],
+        "provider_cell_id": "d-r3-c2",
+        "header_path": [
+          {
+            "id": "h-d-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=4"
+        },
+        "group": null,
+        "typed_text": "78.2",
+        "rendered_markdown_text": "78.2",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "78.2",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/56",
+      "expected": {
+        "id": "G1-T02.d.r03.c03",
+        "row_id": "G1-T02.d.r03",
+        "column_key": "LiveMath",
+        "raw_value": "56.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            186.128,
+            164.08,
+            199.571,
+            171.197
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "56.5"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=4"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          3,
+          3
+        ],
+        "provider_cell_id": "d-r3-c3",
+        "header_path": [
+          {
+            "id": "h-d-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=4"
+        },
+        "group": null,
+        "typed_text": "56.5",
+        "rendered_markdown_text": "56.5",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "56.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/57",
+      "expected": {
+        "id": "G1-T02.d.r04.c01",
+        "row_id": "G1-T02.d.r04",
+        "column_key": "SearchQA",
+        "raw_value": "87.0",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            113.555,
+            170.859,
+            126.207,
+            177.975
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.0"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          4,
+          1
+        ],
+        "provider_cell_id": "d-r4-c1",
+        "header_path": [
+          {
+            "id": "h-d-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=8"
+        },
+        "group": null,
+        "typed_text": "87.0",
+        "rendered_markdown_text": "87.0",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.0",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/58",
+      "expected": {
+        "id": "G1-T02.d.r04.c02",
+        "row_id": "G1-T02.d.r04",
+        "column_key": "Spreadsheet",
+        "raw_value": "73.6",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            149.933,
+            170.859,
+            163.376,
+            177.975
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "73.6"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          4,
+          2
+        ],
+        "provider_cell_id": "d-r4-c2",
+        "header_path": [
+          {
+            "id": "h-d-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=8"
+        },
+        "group": null,
+        "typed_text": "73.6",
+        "rendered_markdown_text": "73.6",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "73.6",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/59",
+      "expected": {
+        "id": "G1-T02.d.r04.c03",
+        "row_id": "G1-T02.d.r04",
+        "column_key": "LiveMath",
+        "raw_value": "66.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            186.526,
+            170.859,
+            199.178,
+            177.975
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "66.9"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=8"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          4,
+          3
+        ],
+        "provider_cell_id": "d-r4-c3",
+        "header_path": [
+          {
+            "id": "h-d-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=8"
+        },
+        "group": null,
+        "typed_text": "66.9",
+        "rendered_markdown_text": "66.9",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "66.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/60",
+      "expected": {
+        "id": "G1-T02.d.r05.c01",
+        "row_id": "G1-T02.d.r05",
+        "column_key": "SearchQA",
+        "raw_value": "86.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            113.159,
+            177.637,
+            126.602,
+            184.753
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.8"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=16"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          5,
+          1
+        ],
+        "provider_cell_id": "d-r5-c1",
+        "header_path": [
+          {
+            "id": "h-d-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=16"
+        },
+        "group": null,
+        "typed_text": "86.8",
+        "rendered_markdown_text": "86.8",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/61",
+      "expected": {
+        "id": "G1-T02.d.r05.c02",
+        "row_id": "G1-T02.d.r05",
+        "column_key": "Spreadsheet",
+        "raw_value": "78.2",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            150.328,
+            177.637,
+            162.98,
+            184.753
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "78.2"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=16"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          5,
+          2
+        ],
+        "provider_cell_id": "d-r5-c2",
+        "header_path": [
+          {
+            "id": "h-d-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=16"
+        },
+        "group": null,
+        "typed_text": "78.2",
+        "rendered_markdown_text": "78.2",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "78.2",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/62",
+      "expected": {
+        "id": "G1-T02.d.r05.c03",
+        "row_id": "G1-T02.d.r05",
+        "column_key": "LiveMath",
+        "raw_value": "65.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            186.13,
+            177.637,
+            199.573,
+            184.753
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "65.3"
+      },
+      "expected_row_context": {
+        "panel": "d",
+        "condition_dimension": "Learning rate",
+        "setting": "lr=16"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/3",
+        "normalized_anchor": [
+          5,
+          3
+        ],
+        "provider_cell_id": "d-r5-c3",
+        "header_path": [
+          {
+            "id": "h-d-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "lr=16"
+        },
+        "group": null,
+        "typed_text": "65.3",
+        "rendered_markdown_text": "65.3",
+        "rendered_table_index": 3,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "65.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/63",
+      "expected": {
+        "id": "G1-T02.e.r01.c01",
+        "row_id": "G1-T02.e.r01",
+        "column_key": "SearchQA",
+        "raw_value": "87.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            270.186,
+            157.364,
+            282.83,
+            164.48
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.3"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "constant"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "e-r1-c1",
+        "header_path": [
+          {
+            "id": "h-e-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "constant"
+        },
+        "group": null,
+        "typed_text": "87.3",
+        "rendered_markdown_text": "87.3",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/64",
+      "expected": {
+        "id": "G1-T02.e.r01.c02",
+        "row_id": "G1-T02.e.r01",
+        "column_key": "Spreadsheet",
+        "raw_value": "80.7",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            306.955,
+            157.364,
+            319.607,
+            164.48
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "80.7"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "constant"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "e-r1-c2",
+        "header_path": [
+          {
+            "id": "h-e-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "constant"
+        },
+        "group": null,
+        "typed_text": "80.7",
+        "rendered_markdown_text": "80.7",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "80.7",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/65",
+      "expected": {
+        "id": "G1-T02.e.r01.c03",
+        "row_id": "G1-T02.e.r01",
+        "column_key": "LiveMath",
+        "raw_value": "62.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            342.757,
+            157.364,
+            356.2,
+            164.48
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "62.1"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "constant"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "e-r1-c3",
+        "header_path": [
+          {
+            "id": "h-e-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "constant"
+        },
+        "group": null,
+        "typed_text": "62.1",
+        "rendered_markdown_text": "62.1",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "62.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/66",
+      "expected": {
+        "id": "G1-T02.e.r02.c01",
+        "row_id": "G1-T02.e.r02",
+        "column_key": "SearchQA",
+        "raw_value": "87.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            269.789,
+            163.826,
+            283.232,
+            170.942
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.1"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "cosine"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "e-r2-c1",
+        "header_path": [
+          {
+            "id": "h-e-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "cosine"
+        },
+        "group": null,
+        "typed_text": "87.1",
+        "rendered_markdown_text": "87.1",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/67",
+      "expected": {
+        "id": "G1-T02.e.r02.c02",
+        "row_id": "G1-T02.e.r02",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            306.56,
+            163.826,
+            320.003,
+            170.942
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "cosine"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "e-r2-c2",
+        "header_path": [
+          {
+            "id": "h-e-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "cosine"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/68",
+      "expected": {
+        "id": "G1-T02.e.r02.c03",
+        "row_id": "G1-T02.e.r02",
+        "column_key": "LiveMath",
+        "raw_value": "61.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            342.755,
+            163.826,
+            356.198,
+            170.942
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "61.3"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "cosine"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "e-r2-c3",
+        "header_path": [
+          {
+            "id": "h-e-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "cosine"
+        },
+        "group": null,
+        "typed_text": "61.3",
+        "rendered_markdown_text": "61.3",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "61.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/69",
+      "expected": {
+        "id": "G1-T02.e.r03.c01",
+        "row_id": "G1-T02.e.r03",
+        "column_key": "SearchQA",
+        "raw_value": "87.2",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            269.788,
+            170.604,
+            283.232,
+            177.721
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.2"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "linear"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          3,
+          1
+        ],
+        "provider_cell_id": "e-r3-c1",
+        "header_path": [
+          {
+            "id": "h-e-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "linear"
+        },
+        "group": null,
+        "typed_text": "87.2",
+        "rendered_markdown_text": "87.2",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.2",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/70",
+      "expected": {
+        "id": "G1-T02.e.r03.c02",
+        "row_id": "G1-T02.e.r03",
+        "column_key": "Spreadsheet",
+        "raw_value": "72.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            306.559,
+            170.604,
+            320.003,
+            177.721
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "72.9"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "linear"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          3,
+          2
+        ],
+        "provider_cell_id": "e-r3-c2",
+        "header_path": [
+          {
+            "id": "h-e-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "linear"
+        },
+        "group": null,
+        "typed_text": "72.9",
+        "rendered_markdown_text": "72.9",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "72.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/71",
+      "expected": {
+        "id": "G1-T02.e.r03.c03",
+        "row_id": "G1-T02.e.r03",
+        "column_key": "LiveMath",
+        "raw_value": "62.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            343.152,
+            170.604,
+            355.804,
+            177.721
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "62.9"
+      },
+      "expected_row_context": {
+        "panel": "e",
+        "condition_dimension": "Learning-rate scheduler",
+        "setting": "linear"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/4",
+        "normalized_anchor": [
+          3,
+          3
+        ],
+        "provider_cell_id": "e-r3-c3",
+        "header_path": [
+          {
+            "id": "h-e-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "linear"
+        },
+        "group": null,
+        "typed_text": "62.9",
+        "rendered_markdown_text": "62.9",
+        "rendered_table_index": 4,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "62.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/72",
+      "expected": {
+        "id": "G1-T02.f.r01.c01",
+        "row_id": "G1-T02.f.r01",
+        "column_key": "SearchQA",
+        "raw_value": "86.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            420.845,
+            154.105,
+            434.288,
+            161.222
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.8"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "5"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "f-r1-c1",
+        "header_path": [
+          {
+            "id": "h-f-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "5"
+        },
+        "group": null,
+        "typed_text": "86.8",
+        "rendered_markdown_text": "86.8",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/73",
+      "expected": {
+        "id": "G1-T02.f.r01.c02",
+        "row_id": "G1-T02.f.r01",
+        "column_key": "Spreadsheet",
+        "raw_value": "76.4",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            457.616,
+            154.105,
+            471.059,
+            161.222
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "76.4"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "5"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "f-r1-c2",
+        "header_path": [
+          {
+            "id": "h-f-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "5"
+        },
+        "group": null,
+        "typed_text": "76.4",
+        "rendered_markdown_text": "76.4",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "76.4",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/74",
+      "expected": {
+        "id": "G1-T02.f.r01.c03",
+        "row_id": "G1-T02.f.r01",
+        "column_key": "LiveMath",
+        "raw_value": "64.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            493.817,
+            154.105,
+            507.261,
+            161.222
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "64.5"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "5"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "f-r1-c3",
+        "header_path": [
+          {
+            "id": "h-f-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "5"
+        },
+        "group": null,
+        "typed_text": "64.5",
+        "rendered_markdown_text": "64.5",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "64.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/75",
+      "expected": {
+        "id": "G1-T02.f.r02.c01",
+        "row_id": "G1-T02.f.r02",
+        "column_key": "SearchQA",
+        "raw_value": "86.4",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            420.847,
+            160.692,
+            434.29,
+            167.808
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.4"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "10"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "f-r2-c1",
+        "header_path": [
+          {
+            "id": "h-f-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "10"
+        },
+        "group": null,
+        "typed_text": "86.4",
+        "rendered_markdown_text": "86.4",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.4",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/76",
+      "expected": {
+        "id": "G1-T02.f.r02.c02",
+        "row_id": "G1-T02.f.r02",
+        "column_key": "Spreadsheet",
+        "raw_value": "74.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            457.618,
+            160.692,
+            471.061,
+            167.808
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "74.3"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "10"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "f-r2-c2",
+        "header_path": [
+          {
+            "id": "h-f-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "10"
+        },
+        "group": null,
+        "typed_text": "74.3",
+        "rendered_markdown_text": "74.3",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "74.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/77",
+      "expected": {
+        "id": "G1-T02.f.r02.c03",
+        "row_id": "G1-T02.f.r02",
+        "column_key": "LiveMath",
+        "raw_value": "65.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            494.211,
+            160.692,
+            506.863,
+            167.808
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "65.3"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "10"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "f-r2-c3",
+        "header_path": [
+          {
+            "id": "h-f-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "10"
+        },
+        "group": null,
+        "typed_text": "65.3",
+        "rendered_markdown_text": "65.3",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "65.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/78",
+      "expected": {
+        "id": "G1-T02.f.r03.c01",
+        "row_id": "G1-T02.f.r03",
+        "column_key": "SearchQA",
+        "raw_value": "87.1",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            421.238,
+            167.277,
+            433.89,
+            174.393
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "87.1"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "20"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          3,
+          1
+        ],
+        "provider_cell_id": "f-r3-c1",
+        "header_path": [
+          {
+            "id": "h-f-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "20"
+        },
+        "group": null,
+        "typed_text": "87.1",
+        "rendered_markdown_text": "87.1",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "87.1",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/79",
+      "expected": {
+        "id": "G1-T02.f.r03.c02",
+        "row_id": "G1-T02.f.r03",
+        "column_key": "Spreadsheet",
+        "raw_value": "77.5",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            458.015,
+            167.277,
+            470.667,
+            174.393
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "77.5"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "20"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          3,
+          2
+        ],
+        "provider_cell_id": "f-r3-c2",
+        "header_path": [
+          {
+            "id": "h-f-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "20"
+        },
+        "group": null,
+        "typed_text": "77.5",
+        "rendered_markdown_text": "77.5",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "77.5",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/80",
+      "expected": {
+        "id": "G1-T02.f.r03.c03",
+        "row_id": "G1-T02.f.r03",
+        "column_key": "LiveMath",
+        "raw_value": "61.3",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            493.817,
+            167.277,
+            507.26,
+            174.393
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "61.3"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "20"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          3,
+          3
+        ],
+        "provider_cell_id": "f-r3-c3",
+        "header_path": [
+          {
+            "id": "h-f-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "20"
+        },
+        "group": null,
+        "typed_text": "61.3",
+        "rendered_markdown_text": "61.3",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "61.3",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/81",
+      "expected": {
+        "id": "G1-T02.f.r04.c01",
+        "row_id": "G1-T02.f.r04",
+        "column_key": "SearchQA",
+        "raw_value": "86.9",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            420.847,
+            173.739,
+            434.29,
+            180.855
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "86.9"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "40"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          4,
+          1
+        ],
+        "provider_cell_id": "f-r4-c1",
+        "header_path": [
+          {
+            "id": "h-f-searchqa",
+            "text": "SearchQA"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40"
+        },
+        "group": null,
+        "typed_text": "86.9",
+        "rendered_markdown_text": "86.9",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "86.9",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/82",
+      "expected": {
+        "id": "G1-T02.f.r04.c02",
+        "row_id": "G1-T02.f.r04",
+        "column_key": "Spreadsheet",
+        "raw_value": "75.4",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            457.618,
+            173.739,
+            471.061,
+            180.855
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "75.4"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "40"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          4,
+          2
+        ],
+        "provider_cell_id": "f-r4-c2",
+        "header_path": [
+          {
+            "id": "h-f-spreadsheet",
+            "text": "Spreadsheet"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40"
+        },
+        "group": null,
+        "typed_text": "75.4",
+        "rendered_markdown_text": "75.4",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "75.4",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/expected_datapoints/83",
+      "expected": {
+        "id": "G1-T02.f.r04.c03",
+        "row_id": "G1-T02.f.r04",
+        "column_key": "LiveMath",
+        "raw_value": "54.8",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            493.812,
+            173.739,
+            507.256,
+            180.855
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "54.8"
+      },
+      "expected_row_context": {
+        "panel": "f",
+        "condition_dimension": "Slow-update samples",
+        "setting": "40"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/5",
+        "normalized_anchor": [
+          4,
+          3
+        ],
+        "provider_cell_id": "f-r4-c3",
+        "header_path": [
+          {
+            "id": "h-f-livemath",
+            "text": "LiveMath"
+          }
+        ],
+        "row_dimensions": {
+          "Setting": "40"
+        },
+        "group": null,
+        "typed_text": "54.8",
+        "rendered_markdown_text": "54.8",
+        "rendered_table_index": 5,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "54.8",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    }
+  ],
+  "comparisons": [
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/0",
+      "expected": {
+        "left": "G1-T02.a.r05.c03",
+        "operator": ">",
+        "right": "G1-T02.a.r01.c03",
+        "reason": "Training size, LiveMath: 100% 70.5 > 1 example 59.1."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/1",
+      "expected": {
+        "left": "G1-T02.a.r03.c01",
+        "operator": "=",
+        "right": "G1-T02.a.r04.c01",
+        "reason": "SearchQA 86.1 tie at 40% and 80%."
+      },
+      "observed_relation": "=",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/2",
+      "expected": {
+        "left": "G1-T02.b.r04.c01",
+        "operator": ">",
+        "right": "G1-T02.b.r05.c01",
+        "reason": "Mini-batch 8 SearchQA 87.1 > mini-batch 16 87.0."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/3",
+      "expected": {
+        "left": "G1-T02.c.r05.c01",
+        "operator": ">",
+        "right": "G1-T02.c.r03.c01",
+        "reason": "Rollout full epoch SearchQA 87.2 > batch 40 87.1."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/4",
+      "expected": {
+        "left": "G1-T02.d.r03.c02",
+        "operator": "=",
+        "right": "G1-T02.d.r05.c02",
+        "reason": "Spreadsheet 78.2 tie at lr=4 and lr=16."
+      },
+      "observed_relation": "=",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/5",
+      "expected": {
+        "left": "G1-T02.d.r04.c03",
+        "operator": ">",
+        "right": "G1-T02.d.r03.c03",
+        "reason": "LiveMath lr=8 66.9 > lr=4 56.5."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/6",
+      "expected": {
+        "left": "G1-T02.e.r01.c02",
+        "operator": ">",
+        "right": "G1-T02.e.r02.c02",
+        "reason": "Scheduler constant Spreadsheet 80.7 > cosine 77.5."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/53/details/critical_comparisons/7",
+      "expected": {
+        "left": "G1-T02.f.r02.c03",
+        "operator": ">",
+        "right": "G1-T02.f.r03.c03",
+        "reason": "Slow-update 10 LiveMath 65.3 > 20 61.3."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    }
+  ],
+  "manual_structure_review": {
+    "header_condition_binding": true,
+    "row_dimension_binding": true,
+    "group_membership": true,
+    "caption_ownership": true,
+    "paired_cell_identity_and_role_order": true,
+    "non_target_preservation": true,
+    "notes": "Scoped headers, source row contexts, both aggregation sections/pair roles when applicable, source captions and non-target preservation reviewed."
+  },
+  "unmatched_extras": [],
+  "overall_status": "pass",
+  "registered_source_crop": {
+    "image": "/Users/david/work/data-ingestion/docs/research/pdf-core-table-crops-2026-10-17/skillopt-p8/table0/input.png",
+    "image_sha256": "560f14eeb1d092a69ad30075ec15b407544109125431718eeb23607edcb77c9e",
+    "source_path": "/Users/david/work/data-ingestion/docs/fixtures/agent-self-evolution-pilot-2026-10-11/04-2605.23904v2.pdf",
+    "source_sha256": "87f7f0f323b1671e9202b3ebb1596e909e507c71ecd1b360b0075a5ee1727fe3",
+    "physical_page": 8,
+    "target_key": "p8:#/tables/0"
+  },
+  "paired_source_cell_review": []
+}

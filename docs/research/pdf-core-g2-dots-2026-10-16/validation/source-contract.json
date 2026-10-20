@@ -1,0 +1,717 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-15T22:29:19.223444+00:00",
+  "status": "source_only_reviewed_frozen_before_inference",
+  "role": "validation",
+  "curator": "Independent source-only agent; did not inspect current experiment model outputs or sealed holdout PDF contents.",
+  "authority": "Original selected PDF page renders. Native extraction is navigation-only and is not gold.",
+  "page_selection_manifest": "manifest.json",
+  "coordinate_system": "Normalized [left,top,right,bottom] relative to full physical page; boxes locate source for evaluation only and MUST NOT be fed to inference/cropping/prompting.",
+  "source_unit_policy": {
+    "positive_denominator": "Every relevant paragraph fragment and independent code block on the four fixed selected pages. Inline math/code is mandatory nested content in its paragraph and is never an additional denominator.",
+    "paragraph_code_boundary": "V01-P001-P01 and V01-P001-P02 are paragraph fragments before/after a displayed code block, linked explicitly; code block is one independent unit, never also counted as inline code.",
+    "continuations": "Adjacent-page renders preserve the starts/ends of boundary fragments. Only selected-page spans are scored; unrelated context-page units and context-only formula occurrences are not added to the denominator.",
+    "negatives": "All ordinary body-text paragraphs on the four selected pages (plus the explanatory page-1 footnote) are fixed negatives; furniture, headings, affiliation/correspondence metadata are excluded.",
+    "prose_standard": "Use the existing ordinary-text glyph tolerance, but preserve words, meaning, reading order, paragraph membership, mathematics and code. No new CER threshold.",
+    "math_standard": "Equivalent LaTeX may pass if symbols, indices, bounds, dependencies and meanings are faithful to the source.",
+    "duplicates_missing": "Duplicates fail their mapped source unit. Refusal, technical failure, missing/unattempted output remain distinct outcomes and stay in the fixed denominator. Unsupported additions are counted separately.",
+    "source_only_boundary": "No unit originates from model-emitted items. No model processing occurred during curation."
+  },
+  "positive_units": [
+    {
+      "id": "V01-P001-P01",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "paragraph_with_inline_math",
+      "location": "右欄下半，解釋 sketch 與 perceptual components，止於介紹下方程式。",
+      "source_boxes_normalized": [
+        [
+          0.502,
+          0.526,
+          0.887,
+          0.66
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "s\\in\\mathcal{S}",
+        "c\\in\\mathcal{C}"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false,
+      "boundary": {
+        "continues_through_code": "V01-P001-C01",
+        "continued_by": "V01-P001-P02"
+      }
+    },
+    {
+      "id": "V01-P001-C01",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "standalone_code",
+      "location": "右欄三行程式，第三行最後一個參數是原稿內嵌的窗戶小圖。",
+      "source_boxes_normalized": [
+        [
+          0.588,
+          0.68,
+          0.8,
+          0.719
+        ]
+      ],
+      "required_inline_math_in_reading_order": [],
+      "required_inline_code": [],
+      "source_ambiguity": false,
+      "code_structure": {
+        "language": "illustrative pseudocode; not asserted executable Python",
+        "lines": [
+          {
+            "indent_level": 0,
+            "text": "for i = 1..3"
+          },
+          {
+            "indent_level": 1,
+            "text": "for j = 1..4"
+          },
+          {
+            "indent_level": 2,
+            "segments": [
+              "draw(i*2, j*3, ",
+              {
+                "type": "embedded_source_image",
+                "meaning": "原稿的窗戶影像參數；不能偽造為文字 literal"
+              },
+              " )"
+            ]
+          }
+        ],
+        "fidelity_requirements": [
+          "Preserve loop bounds, nesting, multiplication and call argument order.",
+          "Preserve the inline image argument with source mapping, or explicitly refuse; an invented textual literal is not faithful.",
+          "Do not add colons or rewrite the pseudocode into a different language."
+        ]
+      },
+      "context_units": [
+        "V01-P001-P01",
+        "V01-P001-P02"
+      ]
+    },
+    {
+      "id": "V01-P001-P02",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "paragraph_with_inline_math_and_code",
+      "location": "右欄程式之後，解釋原始影像、sketch 黑字、影像參數與 draw 函式。",
+      "source_boxes_normalized": [
+        [
+          0.502,
+          0.744,
+          0.887,
+          0.832
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "x^*"
+      ],
+      "required_inline_code": [
+        "draw"
+      ],
+      "source_ambiguity": false,
+      "boundary": {
+        "continued_from": "V01-P001-P01",
+        "intervening_unit": "V01-P001-C01"
+      }
+    },
+    {
+      "id": "V01-P011-P01",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "paragraph_with_inline_math",
+      "location": "A.1 第一段，網格大小、隨機程式及條件抽樣。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.135,
+          0.887,
+          0.255
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "9\\times9",
+        "16\\times16",
+        "P=((s_1,c_1),\\ldots,(s_k,c_k))",
+        "k=12",
+        "c",
+        "P",
+        "(s_h,c_h)",
+        "(s_1,c_1),\\ldots,(s_{h-1},c_{h-1})",
+        "c_h",
+        "c_h",
+        "\\{0,1,\\ldots,4\\}",
+        "\\{\\mathrm{red},\\mathrm{blue},\\mathrm{orange},\\mathrm{green},\\mathrm{yellow}\\}",
+        "s_h",
+        "c_h",
+        "s_h"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-P02",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "paragraph_with_inline_math",
+      "location": "A.1 第二段，依序執行並以同標籤同顏色的 MNIST 子圖加入噪聲。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.266,
+          0.887,
+          0.322
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "P",
+        "(s_h,c_h)",
+        "(s_h,c_h)",
+        "(i,j)",
+        "c_h",
+        "c_h^{(i,j)}",
+        "c_h",
+        "c_h^{(i,j)}",
+        "c_h",
+        "c_h^{(i,j)}"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-P03",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "paragraph_with_inline_math",
+      "location": "A.2 PS-GM 第一階段 architecture 段落。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.364,
+          0.887,
+          0.439
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "P=(s,c)",
+        "p_{\\phi}(s,c\\mid z)",
+        "q_{\\tilde{\\phi}}(z\\mid s,c)"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-P04",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "paragraph_with_inline_math",
+      "location": "A.2 第二階段 VED、CNN 及 CycleGAN 段落。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.446,
+          0.887,
+          0.51
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "x_{\\mathrm{struct}}",
+        "x",
+        "q_{\\theta}(w\\mid x_{\\mathrm{struct}})",
+        "p_{\\theta}(x\\mid w)"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-P05",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "paragraph_with_inline_math",
+      "location": "A.2 baseline architecture 段落，原始訓練影像與 structure rendering 的差異。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.523,
+          0.887,
+          0.601
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "x",
+        "x_{\\mathrm{struct}}"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V02-P012-P01",
+      "document_id": "validation-02",
+      "physical_page": 12,
+      "kind": "paragraph_with_inline_math",
+      "location": "頁首跨頁段落的後半，談 resummation scheme 與高階修正。",
+      "source_boxes_normalized": [
+        [
+          0.118,
+          0.089,
+          0.885,
+          0.213
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "W",
+        "\\alpha_s"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false,
+      "boundary": {
+        "starts_on_context_page": 11,
+        "context_box_normalized": [
+          0.118,
+          0.856,
+          0.885,
+          0.905
+        ],
+        "continues_into_selected_page": true,
+        "scored_text": "Only the selected-page fragment. The page-11 paragraph beginning is context, not an additional scoring unit.",
+        "context_only_math": [
+          "\\Sigma_a(\\theta_*)h_a^2(Q,\\theta_*)",
+          "\\mathcal{B}_a(C_1,C_2,\\bar{\\mu})",
+          "\\mathcal{C}_{a/a_1}(x,b;C_1/C_2,\\mu)"
+        ]
+      }
+    },
+    {
+      "id": "V02-P012-P02",
+      "document_id": "validation-02",
+      "physical_page": 12,
+      "kind": "paragraph_with_inline_math",
+      "location": "第二段，比較 CSS 與 CFG 的 B、C 函式及 virtual correction。",
+      "source_boxes_normalized": [
+        [
+          0.118,
+          0.221,
+          0.885,
+          0.424
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "\\mathcal{B}",
+        "\\mathcal{C}",
+        "2\\to2",
+        "\\mathcal{B}",
+        "\\mathcal{C}",
+        "h_a",
+        "\\gamma\\gamma"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V02-P012-P03",
+      "document_id": "validation-02",
+      "physical_page": 12,
+      "kind": "paragraph_with_inline_math",
+      "location": "第三段，gg+gq_S scattering channel 與 spin-flip correction。",
+      "source_boxes_normalized": [
+        [
+          0.118,
+          0.434,
+          0.885,
+          0.61
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "gg+gq_S",
+        "k_T",
+        "\\Sigma'_g(\\theta_*,\\varphi_*)\\propto\\cos 2\\varphi_*",
+        "Q_T",
+        "\\varphi_*",
+        "gg+gq_S",
+        "\\gamma\\gamma"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false
+    },
+    {
+      "id": "V02-P012-P04",
+      "document_id": "validation-02",
+      "physical_page": 12,
+      "kind": "paragraph_with_inline_math",
+      "location": "末段，積分範圍、實驗 acceptance 與 kinematic cutoff；延續到下一頁。",
+      "source_boxes_normalized": [
+        [
+          0.118,
+          0.619,
+          0.885,
+          0.897
+        ]
+      ],
+      "required_inline_math_in_reading_order": [
+        "Q_T",
+        "Q",
+        "Q_T",
+        "Q",
+        "\\gamma\\gamma",
+        "Q_T",
+        "d\\sigma/dQ"
+      ],
+      "required_inline_code": [],
+      "source_ambiguity": false,
+      "literal_requirements": [
+        "The integration lower bound is 0."
+      ],
+      "boundary": {
+        "ends_on_context_page": 13,
+        "context_box_normalized": [
+          0.118,
+          0.088,
+          0.885,
+          0.137
+        ],
+        "scored_text": "Only the selected-page fragment, ending mid-sentence. Page-13 continuation is retained to identify the same paragraph and must not be mistaken for a new selected-page unit.",
+        "context_only_math": [
+          "Q_T",
+          "\\gamma\\gamma"
+        ]
+      }
+    }
+  ],
+  "negative_units": [
+    {
+      "id": "V01-P001-N01",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "左欄 Abstract；for-loop 在此只是普通敘述。",
+      "source_boxes_normalized": [
+        [
+          0.123,
+          0.243,
+          0.448,
+          0.53
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P001-N02",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "Introduction 第一段：介紹 VAE、GAN 與應用。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.595,
+          0.448,
+          0.733
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P001-N03",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "Introduction 第二段：建築窗戶 image completion，從左欄底延續到右欄頂。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.74,
+          0.448,
+          0.843
+        ],
+        [
+          0.502,
+          0.221,
+          0.887,
+          0.28
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false,
+      "boundary": {
+        "same_paragraph_across_columns": true
+      }
+    },
+    {
+      "id": "V01-P001-N04",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "右欄介紹 program synthesis 與既有方法限制的完整段落。",
+      "source_boxes_normalized": [
+        [
+          0.502,
+          0.289,
+          0.887,
+          0.513
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P001-N05",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "右欄最末一行，開始提出方法名稱；段落延續至第2頁左欄。",
+      "source_boxes_normalized": [
+        [
+          0.502,
+          0.841,
+          0.887,
+          0.861
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false,
+      "boundary": {
+        "ends_on_context_page": 2,
+        "context_box_normalized": [
+          0.09,
+          0.278,
+          0.487,
+          0.384
+        ],
+        "scored_text": "Only the selected-page fragment."
+      }
+    },
+    {
+      "id": "V01-P001-N06",
+      "document_id": "validation-01",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "右欄註腳1：基線表現與資料集大小的普通文字。",
+      "source_boxes_normalized": [
+        [
+          0.502,
+          0.869,
+          0.887,
+          0.907
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-N01",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "ordinary_text_negative",
+      "location": "A.3 PS-GM architecture 段落。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.638,
+          0.887,
+          0.715
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-N02",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "ordinary_text_negative",
+      "location": "A.3 baseline architecture 段落。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.731,
+          0.887,
+          0.791
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V01-P011-N03",
+      "document_id": "validation-01",
+      "physical_page": 11,
+      "kind": "ordinary_text_negative",
+      "location": "B. Additional Results 的普通文字段落。",
+      "source_boxes_normalized": [
+        [
+          0.09,
+          0.835,
+          0.887,
+          0.867
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false
+    },
+    {
+      "id": "V02-P001-N01",
+      "document_id": "validation-02",
+      "physical_page": 1,
+      "kind": "ordinary_text_negative",
+      "location": "首頁完整 Abstract，含專有實驗名稱 DØ；沒有數學公式或程式。",
+      "source_boxes_normalized": [
+        [
+          0.118,
+          0.335,
+          0.887,
+          0.628
+        ]
+      ],
+      "expected_formula": false,
+      "expected_code": false,
+      "source_ambiguity": false,
+      "notes": [
+        "DØ is a proper detector name, not a formula.",
+        "Author affiliation superscripts, note symbols, PACS codes, arXiv IDs, dates and email addresses are document furniture/metadata, not formula positives."
+      ]
+    }
+  ],
+  "unscored_furniture": [
+    "Running titles and page numbers",
+    "Paper title/authors/affiliations/correspondence details",
+    "arXiv stamp, dates and PACS/keyword metadata",
+    "Section headings and bibliography reference numerals by themselves"
+  ],
+  "page_coverage": [
+    {
+      "document_id": "validation-01",
+      "page": 1,
+      "reviewed_full_page": true,
+      "positive_ids": [
+        "V01-P001-P01",
+        "V01-P001-C01",
+        "V01-P001-P02"
+      ],
+      "negative_ids": [
+        "V01-P001-N01",
+        "V01-P001-N02",
+        "V01-P001-N03",
+        "V01-P001-N04",
+        "V01-P001-N05",
+        "V01-P001-N06"
+      ]
+    },
+    {
+      "document_id": "validation-01",
+      "page": 11,
+      "reviewed_full_page": true,
+      "positive_ids": [
+        "V01-P011-P01",
+        "V01-P011-P02",
+        "V01-P011-P03",
+        "V01-P011-P04",
+        "V01-P011-P05"
+      ],
+      "negative_ids": [
+        "V01-P011-N01",
+        "V01-P011-N02",
+        "V01-P011-N03"
+      ]
+    },
+    {
+      "document_id": "validation-02",
+      "page": 1,
+      "reviewed_full_page": true,
+      "positive_ids": [],
+      "negative_ids": [
+        "V02-P001-N01"
+      ]
+    },
+    {
+      "document_id": "validation-02",
+      "page": 12,
+      "reviewed_full_page": true,
+      "positive_ids": [
+        "V02-P012-P01",
+        "V02-P012-P02",
+        "V02-P012-P03",
+        "V02-P012-P04"
+      ],
+      "negative_ids": []
+    }
+  ],
+  "coverage_limits": {
+    "standalone_display_formula": {
+      "units": 0,
+      "status": "unverified; no such source unit on the fixed selected pages"
+    },
+    "inline_math": {
+      "paragraph_units": 11,
+      "occurrences": 60
+    },
+    "standalone_code": {
+      "units": 1,
+      "subtypes": [
+        "pseudocode with embedded source-image parameter"
+      ],
+      "not_covered": [
+        "ordinary executable text-only code block"
+      ]
+    },
+    "inline_code": {
+      "paragraph_units": 1,
+      "occurrences": 1,
+      "subtypes": [
+        "single function identifier draw"
+      ],
+      "not_covered": [
+        "long inline expression/command"
+      ]
+    },
+    "ordinary_text_negatives": 10,
+    "not_covered": [
+      "Traditional Chinese",
+      "SOP",
+      "technical manual",
+      "scanned original",
+      "rotated text",
+      "full-document detector recall",
+      "production generalization"
+    ]
+  },
+  "counts": {
+    "documents": 2,
+    "selected_pages": 4,
+    "context_only_pages": 3,
+    "required_positive_source_units": 12,
+    "negative_source_units": 10,
+    "source_ambiguity_units": 0
+  },
+  "native_text_limitations": [
+    {
+      "document_id": "validation-01",
+      "page": 1,
+      "observation": "Native text omits the displayed code image; the block was inventoried from original-page render."
+    },
+    {
+      "document_id": "validation-02",
+      "pages": [
+        1,
+        12
+      ],
+      "observation": "Native text maps much of the prose to font-glyph escape names. The visible original pages are legible and were reviewed; this is not source ambiguity."
+    }
+  ],
+  "model_calls": 0
+}

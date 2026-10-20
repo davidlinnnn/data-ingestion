@@ -1,0 +1,1825 @@
+{
+  "input_result": "/Users/david/work/data-ingestion/docs/research/pdf-core-order-tessbest-2026-10-20/TB/acl-p2/result.json",
+  "input_sha256": "d223076368b5f4e5368ceee5f24243877877b5866a3e1004de75fe1ad3e887fe",
+  "new_model_inferences": 0,
+  "native_replay_equal": {
+    "texts": true,
+    "groups": true,
+    "body": true,
+    "furniture": true,
+    "tables": true,
+    "pictures_except_later_image_attachment": true
+  },
+  "markdown_equal": true,
+  "stages": {
+    "assembled": [
+      {
+        "id": "#/1/4",
+        "text": "",
+        "label": "picture",
+        "bbox": {
+          "l": 71.98231884613632,
+          "t": 70.94459677835695,
+          "r": 525.1342266649008,
+          "b": 267.6343475052304,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/11",
+        "text": "Figure 1: Knowledge distillation with low-frequency teacher model.",
+        "label": "caption",
+        "bbox": {
+          "l": 161.66666666666669,
+          "t": 280.0,
+          "r": 433.0,
+          "b": 289.66666666666663,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/8",
+        "text": "performance of high-frequency words of the student model. Our main contributions are as follows:",
+        "label": "text",
+        "bbox": {
+          "l": 71.0,
+          "t": 313.3333333333333,
+          "r": 290.33333333333337,
+          "b": 335.3333333333333,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/3",
+        "text": "* We propose to improve the performance of low-frequency word translation through knowledge distillation, transferring the translation knowledge of low-frequency words effectively from the low-frequency teacher model to the student model.",
+        "label": "list_item",
+        "bbox": {
+          "l": 84.0,
+          "t": 352.0,
+          "r": 290.33333333333337,
+          "b": 427.6666666666667,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/1",
+        "text": "To further ensure the performance of highfrequency word translation on very large datasets, we introduce a dual-teacher knowledge distillation framework. It utilizes two teacher models to simultaneously guide the learning of both high-frequency and lowfrequency words.",
+        "label": "list_item",
+        "bbox": {
+          "l": 92.33333333333333,
+          "t": 443.33333333333337,
+          "r": 290.33333333333337,
+          "b": 535.0,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/2",
+        "text": "Our single-teacher distillation method already achieves +0.64 BLEU improvements over the state-of-the-art method on the WMT 16 English—German translation task on the low-frequency test set without hamper the performance on the high-frequency test set. While our dual-teacher framework leads to +0.87, +1.24, +0.47, 十 0.87 and +0.86 BLEU improvements on the IWSLT 14 German—English, WMT 16 English—German, WMT 15 English— Czech, WMT 14 English—French and WMT 18 Chinese—English tasks respectively compared to the baseline, while maintaining the performance on the high-frequency test set even on very large datasets.",
+        "label": "list_item",
+        "bbox": {
+          "l": 92.33333333333333,
+          "t": 549.0,
+          "r": 290.33333333333337,
+          "b": 762.0,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/12",
+        "text": "2 Our Method",
+        "label": "section_header",
+        "bbox": {
+          "l": 306.33333333333337,
+          "t": 312.6666666666667,
+          "r": 387.6666666666667,
+          "b": 321.3333333333333,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/10",
+        "text": "2.1 Low-frequency Word Translation based on Knowledge Distillation",
+        "label": "section_header",
+        "bbox": {
+          "l": 306.33333333333337,
+          "t": 335.0,
+          "r": 516.0,
+          "b": 358.3333333333333,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/5",
+        "text": "We fine-tune the NMT model on the low-frequency part of the training set to obtain the low-frequency teacher model, and use the prediction probability of the teacher model to supervise the training of the student model together with the original translation loss, as shown in Figure 1.",
+        "label": "text",
+        "bbox": {
+          "l": 305.66666666666663,
+          "t": 366.3333333333333,
+          "r": 524.3333333333333,
+          "b": 444.66666666666663,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/6",
+        "text": "For the input sentence X = (zy, 29,...,2,) and the corresponding target translation Y* = (y1,Y2, ---» Ym) in a training instance. The Transformer encoder takes the the sum of the corresponding word vectors of X and position encodings as input, and transforms it into a sequence of contextual representations.",
+        "label": "text",
+        "bbox": {
+          "l": 305.66666666666663,
+          "t": 446.33333333333337,
+          "r": 525.6666666666667,
+          "b": 539.6666666666666,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/7",
+        "text": "The output of the encoder is fed into the decoder for the computation of cross-attention layers. The output of the last decoder layer Hye. = [Hacc], [Hdee,2)s ..., [Haeem)] is to predict the probability of each token with the softmax function.",
+        "label": "text",
+        "bbox": {
+          "l": 306.33333333333337,
+          "t": 543.0,
+          "r": 525.6666666666667,
+          "b": 618.6666666666667,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/0",
+        "text": "However, the probabilities of many tokens are close to zero after softmax, especially with the large vocabulary size of the machine translation task. It can be difficult for the student model to learn from the probability distribution which is almost fullfilled very small probabilities. To address this issue, we employ a temperature hyper-parameter T to smooth the probability distribution following Hinton et al. (2015), as shown in Equation 1.",
+        "label": "text",
+        "bbox": {
+          "l": 305.66666666666663,
+          "t": 624.6666666666667,
+          "r": 525.6666666666667,
+          "b": 743.0,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/9",
+        "text": "Out = Softmaz( 3?) (1)",
+        "label": "formula",
+        "bbox": {
+          "l": 361.6666666666667,
+          "t": 754.6666666666667,
+          "r": 524.6666666666667,
+          "b": 780.0,
+          "coord_origin": "TOPLEFT"
+        }
+      },
+      {
+        "id": "#/1/13",
+        "text": "S&AA 5544.0",
+        "label": "page_footer",
+        "bbox": {
+          "l": 288.0,
+          "t": 784.0,
+          "r": 309.3333333333333,
+          "b": 791.6666666666666,
+          "coord_origin": "TOPLEFT"
+        }
+      }
+    ],
+    "predictor_output": [
+      {
+        "id": "#/1/4",
+        "text": "",
+        "label": "picture",
+        "cid": 0,
+        "bbox": {
+          "l": 71.98231884613632,
+          "t": 770.9454178700805,
+          "r": 525.1342266649008,
+          "b": 574.2556671432071
+        }
+      },
+      {
+        "id": "#/1/11",
+        "text": "Figure 1: Knowledge distillation with low-frequency teacher model.",
+        "label": "caption",
+        "cid": 1,
+        "bbox": {
+          "l": 161.66666666666669,
+          "t": 561.8900146484375,
+          "r": 433.0,
+          "b": 552.2233479817709
+        }
+      },
+      {
+        "id": "#/1/8",
+        "text": "performance of high-frequency words of the student model. Our main contributions are as follows:",
+        "label": "text",
+        "cid": 2,
+        "bbox": {
+          "l": 71.0,
+          "t": 528.5566813151042,
+          "r": 290.33333333333337,
+          "b": 506.5566813151042
+        }
+      },
+      {
+        "id": "#/1/3",
+        "text": "* We propose to improve the performance of low-frequency word translation through knowledge distillation, transferring the translation knowledge of low-frequency words effectively from the low-frequency teacher model to the student model.",
+        "label": "list_item",
+        "cid": 3,
+        "bbox": {
+          "l": 84.0,
+          "t": 489.8900146484375,
+          "r": 290.33333333333337,
+          "b": 414.2233479817708
+        }
+      },
+      {
+        "id": "#/1/1",
+        "text": "To further ensure the performance of highfrequency word translation on very large datasets, we introduce a dual-teacher knowledge distillation framework. It utilizes two teacher models to simultaneously guide the learning of both high-frequency and lowfrequency words.",
+        "label": "list_item",
+        "cid": 4,
+        "bbox": {
+          "l": 92.33333333333333,
+          "t": 398.55668131510413,
+          "r": 290.33333333333337,
+          "b": 306.8900146484375
+        }
+      },
+      {
+        "id": "#/1/2",
+        "text": "Our single-teacher distillation method already achieves +0.64 BLEU improvements over the state-of-the-art method on the WMT 16 English—German translation task on the low-frequency test set without hamper the performance on the high-frequency test set. While our dual-teacher framework leads to +0.87, +1.24, +0.47, 十 0.87 and +0.86 BLEU improvements on the IWSLT 14 German—English, WMT 16 English—German, WMT 15 English— Czech, WMT 14 English—French and WMT 18 Chinese—English tasks respectively compared to the baseline, while maintaining the performance on the high-frequency test set even on very large datasets.",
+        "label": "list_item",
+        "cid": 5,
+        "bbox": {
+          "l": 92.33333333333333,
+          "t": 292.8900146484375,
+          "r": 290.33333333333337,
+          "b": 79.8900146484375
+        }
+      },
+      {
+        "id": "#/1/12",
+        "text": "2 Our Method",
+        "label": "section_header",
+        "cid": 6,
+        "bbox": {
+          "l": 306.33333333333337,
+          "t": 529.2233479817708,
+          "r": 387.6666666666667,
+          "b": 520.5566813151042
+        }
+      },
+      {
+        "id": "#/1/10",
+        "text": "2.1 Low-frequency Word Translation based on Knowledge Distillation",
+        "label": "section_header",
+        "cid": 7,
+        "bbox": {
+          "l": 306.33333333333337,
+          "t": 506.8900146484375,
+          "r": 516.0,
+          "b": 483.5566813151042
+        }
+      },
+      {
+        "id": "#/1/5",
+        "text": "We fine-tune the NMT model on the low-frequency part of the training set to obtain the low-frequency teacher model, and use the prediction probability of the teacher model to supervise the training of the student model together with the original translation loss, as shown in Figure 1.",
+        "label": "text",
+        "cid": 8,
+        "bbox": {
+          "l": 305.66666666666663,
+          "t": 475.5566813151042,
+          "r": 524.3333333333333,
+          "b": 397.22334798177087
+        }
+      },
+      {
+        "id": "#/1/6",
+        "text": "For the input sentence X = (zy, 29,...,2,) and the corresponding target translation Y* = (y1,Y2, ---» Ym) in a training instance. The Transformer encoder takes the the sum of the corresponding word vectors of X and position encodings as input, and transforms it into a sequence of contextual representations.",
+        "label": "text",
+        "cid": 9,
+        "bbox": {
+          "l": 305.66666666666663,
+          "t": 395.55668131510413,
+          "r": 525.6666666666667,
+          "b": 302.22334798177087
+        }
+      },
+      {
+        "id": "#/1/7",
+        "text": "The output of the encoder is fed into the decoder for the computation of cross-attention layers. The output of the last decoder layer Hye. = [Hacc], [Hdee,2)s ..., [Haeem)] is to predict the probability of each token with the softmax function.",
+        "label": "text",
+        "cid": 10,
+        "bbox": {
+          "l": 306.33333333333337,
+          "t": 298.8900146484375,
+          "r": 525.6666666666667,
+          "b": 223.22334798177076
+        }
+      },
+      {
+        "id": "#/1/0",
+        "text": "However, the probabilities of many tokens are close to zero after softmax, especially with the large vocabulary size of the machine translation task. It can be difficult for the student model to learn from the probability distribution which is almost fullfilled very small probabilities. To address this issue, we employ a temperature hyper-parameter T to smooth the probability distribution following Hinton et al. (2015), as shown in Equation 1.",
+        "label": "text",
+        "cid": 11,
+        "bbox": {
+          "l": 305.66666666666663,
+          "t": 217.22334798177076,
+          "r": 525.6666666666667,
+          "b": 98.8900146484375
+        }
+      },
+      {
+        "id": "#/1/9",
+        "text": "Out = Softmaz( 3?) (1)",
+        "label": "formula",
+        "cid": 12,
+        "bbox": {
+          "l": 361.6666666666667,
+          "t": 87.22334798177076,
+          "r": 524.6666666666667,
+          "b": 61.8900146484375
+        }
+      },
+      {
+        "id": "#/1/13",
+        "text": "S&AA 5544.0",
+        "label": "page_footer",
+        "cid": 13,
+        "bbox": {
+          "l": 288.0,
+          "t": 57.8900146484375,
+          "r": 309.3333333333333,
+          "b": 50.22334798177087
+        }
+      }
+    ],
+    "final_body": [
+      {
+        "text": "Figure 1: Knowledge distillation with low-frequency teacher model.",
+        "id": "#/texts/0",
+        "label": "caption",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 161.66666666666669,
+              "t": 561.8900146484375,
+              "r": 433.0,
+              "b": 552.2233479817709,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              66
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Teacher",
+        "id": "#/texts/1",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 77.33333333333333,
+              "t": 728.5566813151041,
+              "r": 103.0,
+              "b": 722.5566813151041,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              7
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Model",
+        "id": "#/texts/2",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 105.33333333333334,
+              "t": 728.5566813151041,
+              "r": 125.66666666666666,
+              "b": 722.5566813151041,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "text": "(v",
+        "id": "#/texts/3",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 286.33333333333337,
+              "t": 694.5566813151042,
+              "r": 295.66666666666663,
+              "b": 681.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              2
+            ]
+          }
+        ]
+      },
+      {
+        "text": "+",
+        "id": "#/texts/4",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 298.33333333333337,
+              "t": 688.8900146484375,
+              "r": 301.33333333333337,
+              "b": 685.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Distillation",
+        "id": "#/texts/5",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 304.0,
+              "t": 690.8900146484375,
+              "r": 364.6666666666667,
+              "b": 684.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              12
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Loss",
+        "id": "#/texts/6",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 336.0,
+              "t": 695.2233479817708,
+              "r": 347.0,
+              "b": 682.2233479817708,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              4
+            ]
+          }
+        ]
+      },
+      {
+        "text": "(Dist)",
+        "id": "#/texts/7",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 350.0,
+              "t": 695.2233479817708,
+              "r": 365.3333333333333,
+              "b": 682.2233479817708,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              6
+            ]
+          }
+        ]
+      },
+      {
+        "text": "上",
+        "id": "#/texts/8",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 368.6666666666667,
+              "t": 694.2233479817708,
+              "r": 375.0,
+              "b": 681.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "|",
+        "id": "#/texts/9",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 382.0,
+              "t": 694.5566813151042,
+              "r": 384.6666666666667,
+              "b": 681.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "a",
+        "id": "#/texts/10",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 387.6666666666667,
+              "t": 689.8900146484375,
+              "r": 391.6666666666667,
+              "b": 685.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "+",
+        "id": "#/texts/11",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 395.6666666666667,
+              "t": 689.5566813151042,
+              "r": 398.6666666666667,
+              "b": 686.2233479817708,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Translation",
+        "id": "#/texts/12",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 399.6666666666667,
+              "t": 690.8900146484375,
+              "r": 461.6666666666667,
+              "b": 684.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              11
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Loss",
+        "id": "#/texts/13",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 433.6666666666667,
+              "t": 695.5566813151042,
+              "r": 445.3333333333333,
+              "b": 680.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              4
+            ]
+          }
+        ]
+      },
+      {
+        "text": "(NLL)",
+        "id": "#/texts/14",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 448.6666666666667,
+              "t": 695.5566813151042,
+              "r": 461.3333333333333,
+              "b": 680.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "text": "|",
+        "id": "#/texts/15",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 465.0,
+              "t": 693.8900146484375,
+              "r": 465.6666666666667,
+              "b": 682.2233479817708,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "=",
+        "id": "#/texts/16",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 469.3333333333333,
+              "t": 688.8900146484375,
+              "r": 473.3333333333333,
+              "b": 687.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "|",
+        "id": "#/texts/17",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 479.6666666666667,
+              "t": 694.2233479817708,
+              "r": 480.3333333333333,
+              "b": 681.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Total",
+        "id": "#/texts/18",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 487.6666666666667,
+              "t": 690.8900146484375,
+              "r": 501.6666666666667,
+              "b": 685.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Loss",
+        "id": "#/texts/19",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 503.6666666666667,
+              "t": 690.5566813151042,
+              "r": 515.6666666666667,
+              "b": 685.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              4
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Swell",
+        "id": "#/texts/20",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 219.33333333333334,
+              "t": 681.5566813151042,
+              "r": 426.0,
+              "b": 596.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Student",
+        "id": "#/texts/21",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 77.66666666666667,
+              "t": 604.8900146484375,
+              "r": 103.33333333333334,
+              "b": 598.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              7
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Model",
+        "id": "#/texts/22",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 105.33333333333334,
+              "t": 604.8900146484375,
+              "r": 126.0,
+              "b": 598.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "text": "performance of high-frequency words of the student model. Our main contributions are as follows:",
+        "id": "#/texts/23",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 71.0,
+              "t": 528.5566813151042,
+              "r": 290.33333333333337,
+              "b": 506.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              96
+            ]
+          }
+        ]
+      },
+      {
+        "text": "We propose to improve the performance of low-frequency word translation through knowledge distillation, transferring the translation knowledge of low-frequency words effectively from the low-frequency teacher model to the student model.",
+        "id": "#/texts/24",
+        "label": "list_item",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 84.0,
+              "t": 489.8900146484375,
+              "r": 290.33333333333337,
+              "b": 414.2233479817708,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              238
+            ]
+          }
+        ]
+      },
+      {
+        "text": "To further ensure the performance of highfrequency word translation on very large datasets, we introduce a dual-teacher knowledge distillation framework. It utilizes two teacher models to simultaneously guide the learning of both high-frequency and lowfrequency words.",
+        "id": "#/texts/25",
+        "label": "list_item",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 92.33333333333333,
+              "t": 398.55668131510413,
+              "r": 290.33333333333337,
+              "b": 306.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              268
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Our single-teacher distillation method already achieves +0.64 BLEU improvements over the state-of-the-art method on the WMT 16 English—German translation task on the low-frequency test set without hamper the performance on the high-frequency test set. While our dual-teacher framework leads to +0.87, +1.24, +0.47, 十 0.87 and +0.86 BLEU improvements on the IWSLT 14 German—English, WMT 16 English—German, WMT 15 English— Czech, WMT 14 English—French and WMT 18 Chinese—English tasks respectively compared to the baseline, while maintaining the performance on the high-frequency test set even on very large datasets.",
+        "id": "#/texts/26",
+        "label": "list_item",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 92.33333333333333,
+              "t": 292.8900146484375,
+              "r": 290.33333333333337,
+              "b": 79.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              615
+            ]
+          }
+        ]
+      },
+      {
+        "text": "2 Our Method",
+        "id": "#/texts/27",
+        "label": "section_header",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 306.33333333333337,
+              "t": 529.2233479817708,
+              "r": 387.6666666666667,
+              "b": 520.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              12
+            ]
+          }
+        ]
+      },
+      {
+        "text": "2.1 Low-frequency Word Translation based on Knowledge Distillation",
+        "id": "#/texts/28",
+        "label": "section_header",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 306.33333333333337,
+              "t": 506.8900146484375,
+              "r": 516.0,
+              "b": 483.5566813151042,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              66
+            ]
+          }
+        ]
+      },
+      {
+        "text": "We fine-tune the NMT model on the low-frequency part of the training set to obtain the low-frequency teacher model, and use the prediction probability of the teacher model to supervise the training of the student model together with the original translation loss, as shown in Figure 1.",
+        "id": "#/texts/29",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 305.66666666666663,
+              "t": 475.5566813151042,
+              "r": 524.3333333333333,
+              "b": 397.22334798177087,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              285
+            ]
+          }
+        ]
+      },
+      {
+        "text": "For the input sentence X = (zy, 29,...,2,) and the corresponding target translation Y* = (y1,Y2, ---» Ym) in a training instance. The Transformer encoder takes the the sum of the corresponding word vectors of X and position encodings as input, and transforms it into a sequence of contextual representations.",
+        "id": "#/texts/30",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 305.66666666666663,
+              "t": 395.55668131510413,
+              "r": 525.6666666666667,
+              "b": 302.22334798177087,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              308
+            ]
+          }
+        ]
+      },
+      {
+        "text": "The output of the encoder is fed into the decoder for the computation of cross-attention layers. The output of the last decoder layer Hye. = [Hacc], [Hdee,2)s ..., [Haeem)] is to predict the probability of each token with the softmax function.",
+        "id": "#/texts/31",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 306.33333333333337,
+              "t": 298.8900146484375,
+              "r": 525.6666666666667,
+              "b": 223.22334798177076,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              243
+            ]
+          }
+        ]
+      },
+      {
+        "text": "However, the probabilities of many tokens are close to zero after softmax, especially with the large vocabulary size of the machine translation task. It can be difficult for the student model to learn from the probability distribution which is almost fullfilled very small probabilities. To address this issue, we employ a temperature hyper-parameter T to smooth the probability distribution following Hinton et al. (2015), as shown in Equation 1.",
+        "id": "#/texts/32",
+        "label": "text",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 305.66666666666663,
+              "t": 217.22334798177076,
+              "r": 525.6666666666667,
+              "b": 98.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              447
+            ]
+          }
+        ]
+      },
+      {
+        "text": "",
+        "id": "#/texts/33",
+        "label": "formula",
+        "content_layer": "body",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 361.6666666666667,
+              "t": 87.22334798177076,
+              "r": 524.6666666666667,
+              "b": 61.8900146484375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              22
+            ]
+          }
+        ]
+      },
+      {
+        "text": "S&AA 5544.0",
+        "id": "#/texts/34",
+        "label": "page_footer",
+        "content_layer": "furniture",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 288.0,
+              "t": 57.8900146484375,
+              "r": 309.3333333333333,
+              "b": 50.22334798177087,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              11
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scores": {
+    "assembled": {
+      "observed_anchor_order": [
+        "acl-p2-U02",
+        "acl-p2-U03",
+        "acl-p2-U04",
+        "acl-p2-U05",
+        "acl-p2-U06",
+        "acl-p2-U07",
+        "acl-p2-U08",
+        "acl-p2-U09",
+        "acl-p2-U10",
+        "acl-p2-U11",
+        "acl-p2-U12"
+      ],
+      "unlocated_units": [],
+      "inversion_candidates": [],
+      "mixed_elements": [],
+      "element_source_hits": [
+        {
+          "index": 0,
+          "text": "",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 1,
+          "text": "Figure 1: Knowledge distillation with low-frequency teacher model.",
+          "source_hits": {
+            "acl-p2-U02": {
+              "unique_anchor_count": 26,
+              "example": "1knowledgedistil"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U02"
+          ]
+        },
+        {
+          "index": 2,
+          "text": "performance of high-frequency words of the student model. Our main contributions are as follows:",
+          "source_hits": {
+            "acl-p2-U03": {
+              "unique_anchor_count": 48,
+              "example": "aincontributions"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U03"
+          ]
+        },
+        {
+          "index": 3,
+          "text": "* We propose to improve the performance of low-frequency word translation through knowledge distillation, transferring the translation knowledge of low-frequency words effectively from the low-frequency teacher model to the student model.",
+          "source_hits": {
+            "acl-p2-U04": {
+              "unique_anchor_count": 150,
+              "example": "achermodeltothes"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U04"
+          ]
+        },
+        {
+          "index": 4,
+          "text": "To further ensure the performance of highfrequency word translation on very large datasets, we introduce a dual-teacher knowledge distillation framework. It utilizes two teacher models to simultaneously guide the learning of both high-frequency and lowfrequency words.",
+          "source_hits": {
+            "acl-p2-U05": {
+              "unique_anchor_count": 174,
+              "example": "acherknowledgedi"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U05"
+          ]
+        },
+        {
+          "index": 5,
+          "text": "Our single-teacher distillation method already achieves +0.64 BLEU improvements over the state-of-the-art method on the WMT 16 English—German translation task on the low-frequency test set without hamper the performance on the high-frequency test set. While our dual-teacher framework leads to +0.87, +1.24, +0.47, 十 0.87 and +0.86 BLEU improvements on the IWSLT 14 German—English, WMT 16 English—German, WMT 15 English— Czech, WMT 14 English—French and WMT 18 Chinese—English tasks respectively compared to the baseline, while maintaining the performance on the high-frequency test set even on very large datasets.",
+          "source_hits": {
+            "acl-p2-U06": {
+              "unique_anchor_count": 423,
+              "example": "064bleuimproveme"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U06"
+          ]
+        },
+        {
+          "index": 6,
+          "text": "2 Our Method",
+          "source_hits": {
+            "acl-p2-U07": {
+              "unique_anchor_count": 1,
+              "example": "2ourmethod"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U07"
+          ]
+        },
+        {
+          "index": 7,
+          "text": "2.1 Low-frequency Word Translation based on Knowledge Distillation",
+          "source_hits": {
+            "acl-p2-U08": {
+              "unique_anchor_count": 24,
+              "example": "1lowfrequencywor"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U08"
+          ]
+        },
+        {
+          "index": 8,
+          "text": "We fine-tune the NMT model on the low-frequency part of the training set to obtain the low-frequency teacher model, and use the prediction probability of the teacher model to supervise the training of the student model together with the original translation loss, as shown in Figure 1.",
+          "source_hits": {
+            "acl-p2-U09": {
+              "unique_anchor_count": 199,
+              "example": "abilityoftheteac"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U09"
+          ]
+        },
+        {
+          "index": 9,
+          "text": "For the input sentence X = (zy, 29,...,2,) and the corresponding target translation Y* = (y1,Y2, ---» Ym) in a training instance. The Transformer encoder takes the the sum of the corresponding word vectors of X and position encodings as input, and transforms it into a sequence of contextual representations.",
+          "source_hits": {
+            "acl-p2-U10": {
+              "unique_anchor_count": 200,
+              "example": "1y2yminatraining"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U10"
+          ]
+        },
+        {
+          "index": 10,
+          "text": "The output of the encoder is fed into the decoder for the computation of cross-attention layers. The output of the last decoder layer Hye. = [Hacc], [Hdee,2)s ..., [Haeem)] is to predict the probability of each token with the softmax function.",
+          "source_hits": {
+            "acl-p2-U11": {
+              "unique_anchor_count": 139,
+              "example": "abilityofeachtok"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U11"
+          ]
+        },
+        {
+          "index": 11,
+          "text": "However, the probabilities of many tokens are close to zero after softmax, especially with the large vocabulary size of the machine translation task. It can be difficult for the student model to learn from the probability distribution which is almost fullfilled very small probabilities. To address this issue, we employ a temperature hyper-parameter T to smooth the probability distribution following Hinton et al. (2015), as shown in Equation 1.",
+          "source_hits": {
+            "acl-p2-U12": {
+              "unique_anchor_count": 340,
+              "example": "015asshowninequa"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U12"
+          ]
+        },
+        {
+          "index": 12,
+          "text": "Out = Softmaz( 3?) (1)",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 13,
+          "text": "S&AA 5544.0",
+          "source_hits": {},
+          "source_ids": []
+        }
+      ]
+    },
+    "predictor_output": {
+      "observed_anchor_order": [
+        "acl-p2-U02",
+        "acl-p2-U03",
+        "acl-p2-U04",
+        "acl-p2-U05",
+        "acl-p2-U06",
+        "acl-p2-U07",
+        "acl-p2-U08",
+        "acl-p2-U09",
+        "acl-p2-U10",
+        "acl-p2-U11",
+        "acl-p2-U12"
+      ],
+      "unlocated_units": [],
+      "inversion_candidates": [],
+      "mixed_elements": [],
+      "element_source_hits": [
+        {
+          "index": 0,
+          "text": "",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 1,
+          "text": "Figure 1: Knowledge distillation with low-frequency teacher model.",
+          "source_hits": {
+            "acl-p2-U02": {
+              "unique_anchor_count": 26,
+              "example": "1knowledgedistil"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U02"
+          ]
+        },
+        {
+          "index": 2,
+          "text": "performance of high-frequency words of the student model. Our main contributions are as follows:",
+          "source_hits": {
+            "acl-p2-U03": {
+              "unique_anchor_count": 48,
+              "example": "aincontributions"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U03"
+          ]
+        },
+        {
+          "index": 3,
+          "text": "* We propose to improve the performance of low-frequency word translation through knowledge distillation, transferring the translation knowledge of low-frequency words effectively from the low-frequency teacher model to the student model.",
+          "source_hits": {
+            "acl-p2-U04": {
+              "unique_anchor_count": 150,
+              "example": "achermodeltothes"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U04"
+          ]
+        },
+        {
+          "index": 4,
+          "text": "To further ensure the performance of highfrequency word translation on very large datasets, we introduce a dual-teacher knowledge distillation framework. It utilizes two teacher models to simultaneously guide the learning of both high-frequency and lowfrequency words.",
+          "source_hits": {
+            "acl-p2-U05": {
+              "unique_anchor_count": 174,
+              "example": "acherknowledgedi"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U05"
+          ]
+        },
+        {
+          "index": 5,
+          "text": "Our single-teacher distillation method already achieves +0.64 BLEU improvements over the state-of-the-art method on the WMT 16 English—German translation task on the low-frequency test set without hamper the performance on the high-frequency test set. While our dual-teacher framework leads to +0.87, +1.24, +0.47, 十 0.87 and +0.86 BLEU improvements on the IWSLT 14 German—English, WMT 16 English—German, WMT 15 English— Czech, WMT 14 English—French and WMT 18 Chinese—English tasks respectively compared to the baseline, while maintaining the performance on the high-frequency test set even on very large datasets.",
+          "source_hits": {
+            "acl-p2-U06": {
+              "unique_anchor_count": 423,
+              "example": "064bleuimproveme"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U06"
+          ]
+        },
+        {
+          "index": 6,
+          "text": "2 Our Method",
+          "source_hits": {
+            "acl-p2-U07": {
+              "unique_anchor_count": 1,
+              "example": "2ourmethod"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U07"
+          ]
+        },
+        {
+          "index": 7,
+          "text": "2.1 Low-frequency Word Translation based on Knowledge Distillation",
+          "source_hits": {
+            "acl-p2-U08": {
+              "unique_anchor_count": 24,
+              "example": "1lowfrequencywor"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U08"
+          ]
+        },
+        {
+          "index": 8,
+          "text": "We fine-tune the NMT model on the low-frequency part of the training set to obtain the low-frequency teacher model, and use the prediction probability of the teacher model to supervise the training of the student model together with the original translation loss, as shown in Figure 1.",
+          "source_hits": {
+            "acl-p2-U09": {
+              "unique_anchor_count": 199,
+              "example": "abilityoftheteac"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U09"
+          ]
+        },
+        {
+          "index": 9,
+          "text": "For the input sentence X = (zy, 29,...,2,) and the corresponding target translation Y* = (y1,Y2, ---» Ym) in a training instance. The Transformer encoder takes the the sum of the corresponding word vectors of X and position encodings as input, and transforms it into a sequence of contextual representations.",
+          "source_hits": {
+            "acl-p2-U10": {
+              "unique_anchor_count": 200,
+              "example": "1y2yminatraining"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U10"
+          ]
+        },
+        {
+          "index": 10,
+          "text": "The output of the encoder is fed into the decoder for the computation of cross-attention layers. The output of the last decoder layer Hye. = [Hacc], [Hdee,2)s ..., [Haeem)] is to predict the probability of each token with the softmax function.",
+          "source_hits": {
+            "acl-p2-U11": {
+              "unique_anchor_count": 139,
+              "example": "abilityofeachtok"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U11"
+          ]
+        },
+        {
+          "index": 11,
+          "text": "However, the probabilities of many tokens are close to zero after softmax, especially with the large vocabulary size of the machine translation task. It can be difficult for the student model to learn from the probability distribution which is almost fullfilled very small probabilities. To address this issue, we employ a temperature hyper-parameter T to smooth the probability distribution following Hinton et al. (2015), as shown in Equation 1.",
+          "source_hits": {
+            "acl-p2-U12": {
+              "unique_anchor_count": 340,
+              "example": "015asshowninequa"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U12"
+          ]
+        },
+        {
+          "index": 12,
+          "text": "Out = Softmaz( 3?) (1)",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 13,
+          "text": "S&AA 5544.0",
+          "source_hits": {},
+          "source_ids": []
+        }
+      ]
+    },
+    "final_body": {
+      "observed_anchor_order": [
+        "acl-p2-U02",
+        "acl-p2-U03",
+        "acl-p2-U04",
+        "acl-p2-U05",
+        "acl-p2-U06",
+        "acl-p2-U07",
+        "acl-p2-U08",
+        "acl-p2-U09",
+        "acl-p2-U10",
+        "acl-p2-U11",
+        "acl-p2-U12"
+      ],
+      "unlocated_units": [],
+      "inversion_candidates": [],
+      "mixed_elements": [],
+      "element_source_hits": [
+        {
+          "index": 0,
+          "text": "Figure 1: Knowledge distillation with low-frequency teacher model.",
+          "source_hits": {
+            "acl-p2-U02": {
+              "unique_anchor_count": 26,
+              "example": "1knowledgedistil"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U02"
+          ]
+        },
+        {
+          "index": 1,
+          "text": "Teacher",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 2,
+          "text": "Model",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 3,
+          "text": "(v",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 4,
+          "text": "+",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 5,
+          "text": "Distillation",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 6,
+          "text": "Loss",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 7,
+          "text": "(Dist)",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 8,
+          "text": "上",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 9,
+          "text": "|",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 10,
+          "text": "a",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 11,
+          "text": "+",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 12,
+          "text": "Translation",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 13,
+          "text": "Loss",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 14,
+          "text": "(NLL)",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 15,
+          "text": "|",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 16,
+          "text": "=",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 17,
+          "text": "|",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 18,
+          "text": "Total",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 19,
+          "text": "Loss",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 20,
+          "text": "Swell",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 21,
+          "text": "Student",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 22,
+          "text": "Model",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 23,
+          "text": "performance of high-frequency words of the student model. Our main contributions are as follows:",
+          "source_hits": {
+            "acl-p2-U03": {
+              "unique_anchor_count": 48,
+              "example": "aincontributions"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U03"
+          ]
+        },
+        {
+          "index": 24,
+          "text": "We propose to improve the performance of low-frequency word translation through knowledge distillation, transferring the translation knowledge of low-frequency words effectively from the low-frequency teacher model to the student model.",
+          "source_hits": {
+            "acl-p2-U04": {
+              "unique_anchor_count": 150,
+              "example": "achermodeltothes"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U04"
+          ]
+        },
+        {
+          "index": 25,
+          "text": "To further ensure the performance of highfrequency word translation on very large datasets, we introduce a dual-teacher knowledge distillation framework. It utilizes two teacher models to simultaneously guide the learning of both high-frequency and lowfrequency words.",
+          "source_hits": {
+            "acl-p2-U05": {
+              "unique_anchor_count": 174,
+              "example": "acherknowledgedi"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U05"
+          ]
+        },
+        {
+          "index": 26,
+          "text": "Our single-teacher distillation method already achieves +0.64 BLEU improvements over the state-of-the-art method on the WMT 16 English—German translation task on the low-frequency test set without hamper the performance on the high-frequency test set. While our dual-teacher framework leads to +0.87, +1.24, +0.47, 十 0.87 and +0.86 BLEU improvements on the IWSLT 14 German—English, WMT 16 English—German, WMT 15 English— Czech, WMT 14 English—French and WMT 18 Chinese—English tasks respectively compared to the baseline, while maintaining the performance on the high-frequency test set even on very large datasets.",
+          "source_hits": {
+            "acl-p2-U06": {
+              "unique_anchor_count": 423,
+              "example": "064bleuimproveme"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U06"
+          ]
+        },
+        {
+          "index": 27,
+          "text": "2 Our Method",
+          "source_hits": {
+            "acl-p2-U07": {
+              "unique_anchor_count": 1,
+              "example": "2ourmethod"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U07"
+          ]
+        },
+        {
+          "index": 28,
+          "text": "2.1 Low-frequency Word Translation based on Knowledge Distillation",
+          "source_hits": {
+            "acl-p2-U08": {
+              "unique_anchor_count": 24,
+              "example": "1lowfrequencywor"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U08"
+          ]
+        },
+        {
+          "index": 29,
+          "text": "We fine-tune the NMT model on the low-frequency part of the training set to obtain the low-frequency teacher model, and use the prediction probability of the teacher model to supervise the training of the student model together with the original translation loss, as shown in Figure 1.",
+          "source_hits": {
+            "acl-p2-U09": {
+              "unique_anchor_count": 199,
+              "example": "abilityoftheteac"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U09"
+          ]
+        },
+        {
+          "index": 30,
+          "text": "For the input sentence X = (zy, 29,...,2,) and the corresponding target translation Y* = (y1,Y2, ---» Ym) in a training instance. The Transformer encoder takes the the sum of the corresponding word vectors of X and position encodings as input, and transforms it into a sequence of contextual representations.",
+          "source_hits": {
+            "acl-p2-U10": {
+              "unique_anchor_count": 200,
+              "example": "1y2yminatraining"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U10"
+          ]
+        },
+        {
+          "index": 31,
+          "text": "The output of the encoder is fed into the decoder for the computation of cross-attention layers. The output of the last decoder layer Hye. = [Hacc], [Hdee,2)s ..., [Haeem)] is to predict the probability of each token with the softmax function.",
+          "source_hits": {
+            "acl-p2-U11": {
+              "unique_anchor_count": 139,
+              "example": "abilityofeachtok"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U11"
+          ]
+        },
+        {
+          "index": 32,
+          "text": "However, the probabilities of many tokens are close to zero after softmax, especially with the large vocabulary size of the machine translation task. It can be difficult for the student model to learn from the probability distribution which is almost fullfilled very small probabilities. To address this issue, we employ a temperature hyper-parameter T to smooth the probability distribution following Hinton et al. (2015), as shown in Equation 1.",
+          "source_hits": {
+            "acl-p2-U12": {
+              "unique_anchor_count": 340,
+              "example": "015asshowninequa"
+            }
+          },
+          "source_ids": [
+            "acl-p2-U12"
+          ]
+        },
+        {
+          "index": 33,
+          "text": "",
+          "source_hits": {},
+          "source_ids": []
+        },
+        {
+          "index": 34,
+          "text": "S&AA 5544.0",
+          "source_hits": {},
+          "source_ids": []
+        }
+      ]
+    }
+  },
+  "native_relation_mappings": {
+    "predictor_output_cids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "predict_to_captions": {
+      "0": [
+        1
+      ]
+    },
+    "predict_to_footnotes": {},
+    "predict_merges": {}
+  },
+  "limitations": "PyPdfium raster fixtures supply no vector separators. Assembled input array order is a predictor input, not an accepted reading sequence. Observer wraps only this local predictor instance; no SDK file or inference/output changed."
+}

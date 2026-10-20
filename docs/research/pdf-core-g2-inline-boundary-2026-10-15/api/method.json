@@ -1,0 +1,108 @@
+{
+  "method": "Six new context images, direct API component; no official pipeline or production acceptance",
+  "template_path": "docs/research/pdf-core-g2-inline-api-2026-10-15/api/run.py",
+  "template_sha256": "324378386b9c8cde56640003e245a27e046947bdf8cb379dceeebdec588772ea",
+  "existing_client_path": "docs/research/pdf-core-g2-api-2026-10-14/run.py",
+  "existing_client_sha256": "bc218bf3ebb0e15a3cfeea589ea1b0011140e1c43590d1053a15390b77e58e20",
+  "runner_sha256": "f399f1296121bc909579c6d9f150c7a5df3a55378141f0b78c17f33577a3621d",
+  "input_manifest_sha256": "9cbaf2d1e31dc8fca9820c75f5c7b14d3a08f4bf8909698e39f3f6466856e22b",
+  "model": "gpt-6-luna",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "reasoning_effort": "low",
+  "temperature_omitted": true,
+  "image_detail": "high",
+  "max_completion_tokens": 4096,
+  "store": false,
+  "automatic_retries": 0,
+  "http_timeout_seconds": 180,
+  "connect_timeout_seconds": 20,
+  "shared_lock": "/private/tmp/data-ingestion-pdf-qualification.lock",
+  "changed_from_previous_method": "New producer-derived source context and generic context prompt; schema/system prompt/model/settings reused",
+  "model_input_has_oracle_answers": false,
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "blocks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "paragraph",
+                "heading",
+                "code",
+                "formula",
+                "caption",
+                "footnote",
+                "list_item",
+                "other"
+              ]
+            },
+            "bbox": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "segments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "text",
+                      "math",
+                      "code",
+                      "unknown"
+                    ]
+                  },
+                  "text": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "text"
+                ]
+              }
+            },
+            "code_language": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "bbox",
+            "segments",
+            "code_language"
+          ]
+        }
+      },
+      "uncertainties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "blocks",
+      "uncertainties"
+    ]
+  }
+}

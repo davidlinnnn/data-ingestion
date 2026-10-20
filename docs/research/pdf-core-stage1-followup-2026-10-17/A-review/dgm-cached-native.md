@@ -1,0 +1,19 @@
+```
+test_success, test_output, test_stats = self.run_tests() - # Create and store attempt + # Create and store attempt with enhanced information attempt = SolutionAttempt( patch=current_patch, test_output=test_output, test_success=test_success, - test_stats=test_stats + test_stats=test_stats , + error_messages = test_stats . get( ' error_messages ' , []) , + test_details=test_stats . get( ' test_details ' , {}) , + execution_time=test_stats . get( ' execution_time ' , None) , + attempt_number = attempt_num + 1 ) attempts.append(attempt) - # Update best attempt if this one is better - if test_success and (best_attempt is None or - attempt . test_stats["passed"] > best_attempt . test_stats["passed"]): + # Update best attempt based on multiple criteria + if test_success and ( + best_attempt is None or + (attempt . test_stats["passed"] > best_attempt . test_stats["passed"]) or + (attempt . test_stats["passed"] == best_attempt . test_stats["passed"] and + len(attempt . error_messages or []) < len(best_attempt . error_messages or [])) + ): best_attempt = attempt + # Log detailed attempt information + safe_log(f"\n=== Attempt {attempt_num + 1} Summary ===") + safe_log(f " Test Success: {test_success}") + safe_log(f " Tests Passed: {test_stats . get( ' passed ' , 0)}") + safe_log(f " Tests Failed: {test_stats . get( ' failed ' , 0)}") + safe_log(f " Errors: {test_stats . get( ' errors ' , 0)}") + safe_log(f " Execution Time: {test_stats . get( ' execution_time ' , ' N/A ' ):.2f}s") + # If tests pass perfectly, we can stop if test_success and attempt.test_stats["failed"] == 0 and attempt.test_stats["errors"] == ,→ ,→ 0: break
+```
+
+## D Similar Target Functionality, Different Implementations
+
+For the same target functionality, the suggestions provided to the coding agents and the resulting implementations can differ significantly, leading to large variations in coding capability and benchmark performance. For example, consider nodes 6 and 24 in the DGM run on SWE-bench (Figure 3). Both aimed to enhance the existing editor tool to support finer-grained file editing. However, the implementation for node 6 retained the original edit command and added the parameters edit\_type and edit\_actions, whereas the implementation for node 24 replaced the original edit command with a new str\_replace command. Despite targeting similar functionality, the feature suggestions and thus the implementation details differed greatly, as did their performance. Node 6 achieved only 23.3%, while node 24 achieved 40.5%.
+
+Feature suggestion to obtain node 6:
+
+```
+Within the tools/edit.py file, remove the ' edit ' command and introduce a ' str_replace ' command. It ,→ ,→ should accept parameters ' old_str ' (the unique text to find) and ' new_str ' (the new text to ,→ ,→ replace it with). After verifying that ' old_str ' appears exactly once in the file, replace ,→ ,→ the first occurrence with ' new_str ' . If ' old_str ' is not unique or is missing, do not write ,→ ,→ any changes. Replace the ' edit ' command in the editor tool with a ' str_replace ' command that locates and replaces ,→ ,→ an exact substring in a file. The ' old_str ' must match consecutive lines uniquely, and if it ,→ ,→ is not found or occurs multiple times, no write should occur. The ' new_str ' parameter ,→ ,→ contains the revised lines. This precise substring replacement flow will enable small ,→ ,→ incremental edits with minimal breakage.
+```
+
+Feature suggestion to obtain node 24:
+
+```
+Augment the existing ' editor ' tool to support line or token-based editing. The agent would specify ,→ ,→ individual lines or tokens to insert, delete, or replace. Internally, the tool would parse ,→ ,→ the file contents, apply changes atomically, and verify that the surrounding context remains ,→ ,→ intact. This prevents entire-file overwrites, reducing the risk of losing unrelated logic.
+```

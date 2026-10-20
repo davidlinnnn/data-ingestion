@@ -1,0 +1,49 @@
+{
+  "case": "G1-T02",
+  "scope": "Independent read-only source and raw DocTags/DoclingDocument/Markdown review of the six Table2 panels; Table3 excluded",
+  "fixed_numeric_denominator": 84,
+  "full_numeric_error_rate": null,
+  "counting_note": "All 8 critical comparisons reviewed. No full 84-point error numerator computed; visible numeric presence does not establish row/column/condition binding.",
+  "comparisons": [
+    {
+      "left": "G1-T02.a.r05.c03", "operator": ">", "right": "G1-T02.a.r01.c03", "accepted": false,
+      "source": "Training size LiveMath: 100%70.5 > 1example59.1",
+      "evidence": "Table0 has setting plus two data columns. LiveMath59.1 and70.5 are absent from its data cells; merged SearchQA Spreadsheet LiveMath header spans the two remaining data columns."
+    },
+    {
+      "left": "G1-T02.a.r03.c01", "operator": "=", "right": "G1-T02.a.r04.c01", "accepted": false,
+      "source": "Training size SearchQA: 40%86.1 = 80%86.1",
+      "evidence": "Both86.1 values appear beside the correct setting strings in Table0, but the merged three-benchmark header over two data columns does not encode an unambiguous SearchQA binding. Numeric tie alone is insufficient."
+    },
+    {
+      "left": "G1-T02.b.r04.c01", "operator": ">", "right": "G1-T02.b.r05.c01", "accepted": false,
+      "source": "Mini-batch SearchQA: 8=>87.1 > 16=>87.0",
+      "evidence": "Table1 loses the panel title; settings1,2,4,8,16,32 become1,2,4,5,6,7.87.1 and87.0 bind to generated setting5 and6, with merged benchmark header."
+    },
+    {
+      "left": "G1-T02.c.r05.c01", "operator": ">", "right": "G1-T02.c.r03.c01", "accepted": false,
+      "source": "Batchsize SearchQA: full epoch87.2 > 40=>87.1",
+      "evidence": "Table2 preserves full epoch/40 and87.2/87.1, but one merged SearchQA Spreadsheet LiveMath cell spans only two numeric columns. Required benchmark binding is not delivered."
+    },
+    {
+      "left": "G1-T02.d.r03.c02", "operator": "=", "right": "G1-T02.d.r05.c02", "accepted": false,
+      "source": "Learning rate Spreadsheet: lr4=>78.2 = lr16=>78.2",
+      "evidence": "Table3 includes both78.2 values in second numeric slots, but merges Setting and all three benchmarks across only3total columns. The second slot also holds66.9 for lr8, which is source LiveMath rather than Spreadsheet. Cannot accept column binding."
+    },
+    {
+      "left": "G1-T02.d.r04.c03", "operator": ">", "right": "G1-T02.d.r03.c03", "accepted": false,
+      "source": "Learning rate LiveMath: lr8=>66.9 > lr4=>56.5",
+      "evidence": "Table3 puts lr8=>66.9 into the second numeric slot while source lr8Spreadsheet73.6 is lost; lr4LiveMath56.5 is absent."
+    },
+    {
+      "left": "G1-T02.e.r01.c02", "operator": ">", "right": "G1-T02.e.r02.c02", "accepted": false,
+      "source": "Scheduler Spreadsheet: constant80.7 > cosine77.5",
+      "evidence": "Table4 preserves setting/value pairs but has merged three-benchmark header spanning2numeric columns. Numeric magnitude is present without required Spreadsheet binding."
+    },
+    {
+      "left": "G1-T02.f.r02.c03", "operator": ">", "right": "G1-T02.f.r03.c03", "accepted": false,
+      "source": "Slow-update LiveMath: 10=>65.3 > 20=>61.3",
+      "evidence": "Table5 retains setting and only2numeric slots; LiveMath65.3/61.3 are absent. Table7 duplicates the same incomplete slow-update data after Table3, and does not restore them."
+    }
+  ]
+}

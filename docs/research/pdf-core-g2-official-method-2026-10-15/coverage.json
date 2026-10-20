@@ -1,0 +1,661 @@
+{
+  "format": "pdf-core-g2-task-method-coverage-v1",
+  "date": "2026-10-15",
+  "kind": "read_only_evidence_synthesis",
+  "scope": "Previously exposed G1/G2 plus explicitly named historical evidence; no holdout PDF read, no inference, no API call, no credential access. No production/code/profile modification.",
+  "comparison_warning": "Bounded source/configuration evidence; not all candidates executed, not production accuracy, not controlled hardware/model causal ranking. Separate API RTT, predict_batch, convert and child wall. F14 typed JSON is an experimental contract, not an automatically added product requirement.",
+  "global_status": {
+    "g2_fully_passed": false,
+    "official_remote_VlmPipeline_run_before_this_step": false,
+    "complete_composed_candidate_qualified": false,
+    "company_Qwen3_GPU_executed": false,
+    "high_frequency_SLO_validated": false,
+    "holdout_enabled": false
+  },
+  "models": {
+    "heron": {
+      "repo": "docling-project/docling-layout-heron",
+      "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+      "status": "executed_bounded",
+      "evidence": [
+        "E01",
+        "M01"
+      ]
+    },
+    "TableFormerV1": {
+      "repo": "docling-project/docling-models",
+      "revision": "fc0f2d45e2218ea24bce5045f58a389aed16dc23",
+      "mode": "accurate/cell_matching=True",
+      "status": "executed_bounded",
+      "evidence": [
+        "E01",
+        "M01"
+      ]
+    },
+    "TableFormerV2": {
+      "repo": "docling-project/TableFormerV2",
+      "revision": "51559fad3946873e26a6f9b8e912f948e8745bef",
+      "status": "executed_bounded",
+      "evidence": [
+        "E02",
+        "M02"
+      ]
+    },
+    "CodeFormulaV2": {
+      "repo": "docling-project/CodeFormulaV2",
+      "revision": "ecedbe111d15c2dc60bfd4a823cbe80127b58af4",
+      "status": "executed_bounded_cpu",
+      "evidence": [
+        "E02"
+      ]
+    },
+    "GraniteDocling258M": {
+      "repo": "ibm-granite/granite-docling-258M",
+      "revision": "982fe3b40f2fa73c365bdb1bcacf6c81b7184bfe",
+      "status": "executed_components_and_official_local_VlmPipeline",
+      "evidence": [
+        "E03",
+        "E08"
+      ]
+    },
+    "figure_classifier": {
+      "repo": "docling-project/DocumentFigureClassifier-v2.5",
+      "revision": "f859dfbff5c9916cd996942d4b0db7fa25808220",
+      "status": "executed_bounded_cpu",
+      "evidence": [
+        "E05"
+      ]
+    },
+    "SmolVLM": {
+      "repo": "HuggingFaceTB/SmolVLM-256M-Instruct",
+      "revision": "7e3e67edbbed1bf9888184d9df282b700a323964",
+      "status": "executed_bounded_cpu_description",
+      "evidence": [
+        "E05"
+      ]
+    },
+    "orientation": {
+      "repo": "PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx",
+      "revision": "7330ab7039123e46af2dc03154b9969aa412c61d",
+      "status": "executed_cpu_with_custom_coordinate_adapter",
+      "evidence": [
+        "E07"
+      ]
+    },
+    "RapidOCR": {
+      "model_files": [
+        "PP-OCRv6_det_small.onnx",
+        "PP-OCRv6_rec_small.onnx",
+        "ch_ppocr_mobile_v2.0_cls_mobile.onnx"
+      ],
+      "status": "executed_cpu_explicit_actual_models",
+      "evidence": [
+        "E07",
+        "M01"
+      ]
+    },
+    "PPOCRv5": {
+      "names": [
+        "RapidAI PP-OCRv5 mobile recognizer ONNX",
+        "RapidAI PP-OCRv5 server recognizer ONNX"
+      ],
+      "status": "executed_fixed_panel_cpu_not_full_OCR_stack_comparison",
+      "evidence": [
+        "E03"
+      ]
+    },
+    "GraniteVision4.1": {
+      "repo": "ibm-granite/granite-vision-4.1-4b",
+      "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+      "status": "historical_table_CPU_bounded_timeout_no_new_G2_T02_quality_result; description/chart_primary_source_only",
+      "evidence": [
+        "E05",
+        "E14",
+        "E16",
+        "M03"
+      ]
+    },
+    "gpt6luna": {
+      "model": "gpt-6-luna",
+      "revision": null,
+      "status": "executed_direct_HTTP_components_not_official_remote_VlmPipeline",
+      "production_fit": "temporary_comparison_only_not_company_selfhosted_open_source",
+      "evidence": [
+        "E04",
+        "E09",
+        "E11"
+      ]
+    },
+    "companyQwen3": {
+      "family": "Qwen3-VL",
+      "model_id": null,
+      "revision": null,
+      "status": "user_reported_available_not_executed",
+      "evidence": [
+        "E14"
+      ]
+    },
+    "PaddleOCRVL": {
+      "status": "user_referenced_official_conversion_example_only_not_executed_in_this_G2",
+      "evidence": [
+        "E17"
+      ],
+      "source": "https://docling-project.github.io/docling/examples/paddleocr_vl_result_to_docling.py"
+    }
+  },
+  "tasks": [
+    {
+      "id": "T01",
+      "task": "全文文字／layout",
+      "features": [
+        "F01",
+        "F02"
+      ],
+      "methods": [
+        "StandardPdfPipeline / docling-project/docling-layout-heron",
+        "DoclingParseDocumentBackend",
+        "Granite-Docling-258M page VLM"
+      ],
+      "tested_scope": "Standard六次首輪單頁；另重用既有完整provider。Granite英文頁／SkillOpt頁及inline五頁。",
+      "quality_and_selection": "Heron保留作比較基底，非全內容合格。Granite有PLMs→LLMs與其他遺漏；不以選中段落成功替換全文producer。",
+      "time_evidence": "首輪native convert 0.338–2.199s/page（排除部分啟動）；Granite兩個full-page predict_batch約24–26s。",
+      "remaining_gate": "完整來源／furniture／list／footnote／bibliography仍需按原分母核對；主producer變更須重驗其他必含任務。",
+      "evidence": [
+        "E01",
+        "E03",
+        "E08"
+      ]
+    },
+    {
+      "id": "T02",
+      "task": "多欄閱讀順序／跨頁延續",
+      "features": [
+        "F02"
+      ],
+      "methods": [
+        "Standard stock reading order",
+        "歷史continuation-v3（本案adapter）",
+        "Granite-Docling-258M DocTags page",
+        "gpt-6-luna full-page JSON component"
+      ],
+      "tested_scope": "英文scan兩段16行；SEAL跨頁段落；保存provider的stock/v3 assembly重放。",
+      "quality_and_selection": "Stock/v3皆有右欄段落插入。Granite與暫用API在選中兩段改善，但整頁保真及跨頁組裝未完成。continuation不是官方現成功能。",
+      "time_evidence": "Stock/v3 assembly各約1.4ms，僅組裝段；API英文頁RTT16.212s，單次。",
+      "remaining_gate": "先驗官方頁面方法是否有較少客製的交付；不再靠特定bbox/句子硬接。",
+      "evidence": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E08"
+      ]
+    },
+    {
+      "id": "T03",
+      "task": "章節深度／title／parent",
+      "features": [
+        "F03",
+        "F17"
+      ],
+      "methods": [
+        "Docling2.132 assign_heading_levels（bookmarks→numbering→style；規則stage）"
+      ],
+      "tested_scope": "WikiSkill28頁既有assembled document，13個選定節點；無書籤消融；控制頁title＋六節。",
+      "quality_and_selection": "13/13有outline時正確；無outline附錄0/4；無編號控制六節皆多一層。原生parent未成語意章節樹。保留候選，不宣稱F03完成。",
+      "time_evidence": "stage含deepcopy約0.017s／28頁；非完整conversion。",
+      "remaining_gate": "相容新版stack、title角色與無書籤附錄、語意parent映射、fresh/restored所需inputs。",
+      "evidence": [
+        "E06"
+      ]
+    },
+    {
+      "id": "T04",
+      "task": "一般表格內容與比較",
+      "features": [
+        "F04",
+        "F05"
+      ],
+      "methods": [
+        "TableFormer V1 accurate＋cell_matching=True",
+        "docling-project/TableFormerV2"
+      ],
+      "tested_scope": "Memory-R1 p8 T01，六個method×metric值、三個critical比較及caption；V2同表stage。",
+      "quality_and_selection": "V1所選值／比較／caption正確；V2所選stage內容保留。保留V1基底，不能推廣所有一般表／Canonical。",
+      "time_evidence": "V1該page convert0.667s；V2 child3.147s，含載入。",
+      "remaining_gate": "一般表全部必要點與同版schema/Markdown/來源交付；不因V2命名預設較佳。",
+      "evidence": [
+        "E01",
+        "E02",
+        "M02"
+      ]
+    },
+    {
+      "id": "T05",
+      "task": "複雜／跨頁表格及比較語意",
+      "features": [
+        "F04",
+        "F05",
+        "F18"
+      ],
+      "methods": [
+        "TableFormer V1/V2",
+        "Granite-Docling-258M full-page／OTSL region",
+        "gpt-6-luna table JSON component",
+        "GraniteVisionTableStructureModel / granite-vision-4.1-4b（歷史有界CPU嘗試）"
+      ],
+      "tested_scope": "G2主實測SkillOpt p8六panel T02；其餘三張完整G1邏輯表／跨頁尚未完成本輪。GraniteVision歷史兩個不同TABLE clusters不當新T02證據。",
+      "quality_and_selection": "V1/V2與258M皆漏值／綁定錯。API84/84數值綁定、8項比較正確，但漏字面Table2標號且未交付schema/Markdown。GraniteVision歷史CPU600s逾時無品質結論；不盲重跑。",
+      "time_evidence": "V2 T02 child4.187s；258M table-crop predict6.359s；API table RTT15.925s，工作/輸入不同不能直接排名。",
+      "remaining_gate": "保留完整邏輯表、caption/條件/notes及既定≤5%與critical門檻；公司GPU可比較GraniteVision或其他VLM。",
+      "evidence": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E14",
+        "E16",
+        "M03"
+      ]
+    },
+    {
+      "id": "T06",
+      "task": "掃描／混合頁OCR與四方向",
+      "features": [
+        "F09",
+        "F01",
+        "F02"
+      ],
+      "methods": [
+        "RapidOCR3.9.2＋ONNX Runtime，PP-OCRv6_det_small/rec_small＋ch_ppocr_mobile_v2.0_cls_mobile",
+        "Paddle PP-LCNet_x1_0_doc_ori_onnx＋座標adapter"
+      ],
+      "tested_scope": "英文scan與C08–C11四方向、C12 native＋圖片、C13整頁raster；selective/full對照。",
+      "quality_and_selection": "四個corrective angles、座標逆映射、normalized16行均正確；Standard欄位順序仍錯。selective保native；full OpenAI→OpenAl僅此普通文字案例已接受minor。不能全域放寬OCR或識別字。",
+      "time_evidence": "頁面方向inference約1.986–2.352ms；normalized Standard child6.05–6.57s/page。",
+      "remaining_gate": "保留selective比較起點；方向adapter非Docling原生接妥；繁中混排字形、順序、同版交付及更多清晰真實scan。",
+      "evidence": [
+        "E07",
+        "M01"
+      ]
+    },
+    {
+      "id": "T07",
+      "task": "圖片OCR",
+      "features": [
+        "F08"
+      ],
+      "methods": [
+        "RapidOCR固定PP-OCRv6組合",
+        "PP-OCRv5 mobile/server ONNX recognizer",
+        "gpt-6-luna region OCR component"
+      ],
+      "tested_scope": "NCCU中央五組必要內容、pipeline實際PictureItem與scale3、same-input line-cls-off；不是全圖片corpus。",
+      "quality_and_selection": "v6/v5仍繁簡錯字／漏句；關閉line-cls只定位兩個漏句，非全域建議。API漢字/位置保留但改引號，strict4/5。保留VLM候選，尚未完成F08。",
+      "time_evidence": "v5 fixed-panel child約0.79s；API9.218s RTT；輸入/範圍不同。",
+      "remaining_gate": "不能用繁簡轉換猜修原稿；需完整圖片inventory、image-key supplement、actual crop上的模型比較。",
+      "evidence": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E07"
+      ]
+    },
+    {
+      "id": "T08",
+      "task": "獨立／多行公式LaTeX",
+      "features": [
+        "F13"
+      ],
+      "methods": [
+        "docling-project/CodeFormulaV2",
+        "ibm-granite/granite-docling-258M formula preset",
+        "gpt-6-luna region/context JSON component"
+      ],
+      "tested_scope": "SEAL Eq2同一約120dpi固定crop；controls矩陣/分數/分段式；原生formula gate與hidden picture children另核對。",
+      "quality_and_selection": "CodeFormula漏第二分支；258M找回但漏footnote marker且格式錯。API Eq2分支/marker保留但renderer待驗；完整controls envelopes成功。真實SEAL四formula仍scope未執行，不能以controls取代。",
+      "time_evidence": "CodeFormula predict約2.011s；258M1.957s；API Eq2 RTT9.748s，非硬體加速比。",
+      "remaining_gate": "完整來源crop和公式發現／renderer／footnote／原位交付；圖框修正可做，raw prime/符號錯誤不靠字串猜補。",
+      "evidence": [
+        "E02",
+        "E03",
+        "E04",
+        "E10",
+        "E11"
+      ]
+    },
+    {
+      "id": "T09",
+      "task": "全文行內公式LaTeX",
+      "features": [
+        "F13"
+      ],
+      "methods": [
+        "258M official VlmPipeline與paragraph component",
+        "gpt-6-luna paragraph/page JSON component",
+        "candidate1 producer context planner（自訂）"
+      ],
+      "tested_scope": "先17item＋5頁；candidate1再36targets（27paragraph/6code/3formula），selected41來源單位及4protected anchors。",
+      "quality_and_selection": "258M default不足。API paragraph E14六處/E13十一處及完整prose可保留；page仍漏LaTeX/下標。candidate1含prime/SE身份錯誤，五scope未嘗試；不選完整challenger。不是Docling各模型準度上限已證明。",
+      "time_evidence": "258M paragraph child5.04–9.86s/page14.65–31.44s；candidate1全部36RTT median5.03s、sum193.37s，非同工作量方法排名。",
+      "remaining_gate": "優先官方remote VlmPipeline接點與輸出保留預檢；若可行再按41固定單位比較，不增加逐案修補。",
+      "evidence": [
+        "E08",
+        "E09",
+        "E10",
+        "E11",
+        "E12",
+        "E17",
+        "M04"
+      ]
+    },
+    {
+      "id": "T10",
+      "task": "Code block／縮排／註解",
+      "features": [
+        "F14"
+      ],
+      "methods": [
+        "CodeFormulaV2 code preset",
+        "258M official VlmPipeline",
+        "gpt-6-luna paragraph/context component"
+      ],
+      "tested_scope": "受控七行Python／註解與兩個target分離；真實DGM p51 code items，非所有code/diff。",
+      "quality_and_selection": "CodeFormula所選七行通過；258M page controls較好，paragraph註解重複/語言誤標。API context保七行；candidate1 DGM646 {}→[]及縮排錯，必須內容級失敗。",
+      "time_evidence": "CodeFormula predict約1.698s，fresh child4.724s；其他見inline總體，不冒稱純code延遲。",
+      "remaining_gate": "保留專用小模型有界code證據；補真實code/偽碼、gate/layout誤分類、完整縮排與同版交付；不能以可編譯代替忠實原稿。",
+      "evidence": [
+        "E02",
+        "E08",
+        "E09",
+        "E10",
+        "E11"
+      ]
+    },
+    {
+      "id": "T11",
+      "task": "Inline code／偽碼",
+      "features": [
+        "F14"
+      ],
+      "methods": [
+        "258M paragraph/page DocTags",
+        "gpt-6-luna typed JSON（實驗契約）"
+      ],
+      "tested_scope": "DGM E04五tokens/node6,node24/23.3%,40.5%；controls items[i] <= limit；既有算法被當table的歷史缺口。",
+      "quality_and_selection": "E04必要內容/bindings可保留；部分edit未typed code屬實驗表示缺陷，不能自動升為F14產品失敗。controls更正role前內容忠實但strict parser可拒絕；真實偽碼完整驗證未完成。",
+      "time_evidence": "沒有足夠獨立inline-code latency樣本；不從混合36項推code p95。",
+      "remaining_gate": "F14重點內容/區塊/符號/縮排；backticks或每token typed JSON不是自動新增要求。保留raw契約歷史評分，另分產品判準。",
+      "evidence": [
+        "E08",
+        "E09",
+        "E11",
+        "E17"
+      ]
+    },
+    {
+      "id": "T12",
+      "task": "圖片／頁／表影像與原文caption",
+      "features": [
+        "F06",
+        "F07"
+      ],
+      "methods": [
+        "Standard/Heron PictureItem/table/page assets",
+        "Docling origin/prov/caption refs＋本案mapping"
+      ],
+      "tested_scope": "六個實際PictureItems與固定來源crop核對；頁/圖片/表來源保存已有bounded證據。",
+      "quality_and_selection": "六圖必要文字/關係/axes範圍完整；caption與生成描述分開。未證明全文件圖片發現或cross-page表影像交付，stock image placeholder不等image-key。",
+      "time_evidence": "Standard兩個新page child5.244/3.680s（含其他stage），非純圖片耗時。",
+      "remaining_gate": "完整source inventory、fragment映射、same-revision artifact實際讀取與caption歸屬；不是重建更多模型。",
+      "evidence": [
+        "E05",
+        "E07",
+        "E14"
+      ]
+    },
+    {
+      "id": "T13",
+      "task": "圖片分類（可選、偏好啟用）",
+      "features": [
+        "F10"
+      ],
+      "methods": [
+        "docling-project/DocumentFigureClassifier-v2.5"
+      ],
+      "tested_scope": "6來源×固定/實際crop＝12推論；流程圖/截圖/bar/line/log-line/pie broad family。",
+      "quality_and_selection": "本次broad family核對正確，保留小classifier；top-class gate無品質保證，不能因分類失誤/other略過必含圖意與chart工作。",
+      "time_evidence": "stage每crop0.094–0.107s；12次共用model child3.982s。",
+      "remaining_gate": "原生filters/gate與required-work對賬；公司GPU非小classifier採用的前置必要條件。",
+      "evidence": [
+        "E05",
+        "M05"
+      ]
+    },
+    {
+      "id": "T14",
+      "task": "圖片描述／關係理解",
+      "features": [
+        "F11"
+      ],
+      "methods": [
+        "HuggingFaceTB/SmolVLM-256M-Instruct official description preset",
+        "gpt-6-luna image JSON component",
+        "granite-vision-4.1-4b／公司Qwen3-VL（此任務待驗）"
+      ],
+      "tested_scope": "WikiSkill流程圖S05、NCCU操作畫面S07。",
+      "quality_and_selection": "Smol預設漏三層/四步與操作關係，正常EOS並非cap；API兩張必要圖意保留。不是所有圖片/候選合格。",
+      "time_evidence": "Smol annotate約2.421/2.609s；API RTT12.060/10.127s；不同prompt/輸出配置。",
+      "remaining_gate": "沿用官方description API seam時仍需真接點；公司模型相同任務重驗，不重跑已知不足小模型預設。",
+      "evidence": [
+        "E05",
+        "E14"
+      ]
+    },
+    {
+      "id": "T15",
+      "task": "Bar／line／pie圖表資料",
+      "features": [
+        "F12"
+      ],
+      "methods": [
+        "gpt-6-luna chart JSON component",
+        "Docling native granite-vision-v4 chart stage／ibm-granite/granite-vision-4.1-4b（此任務未推論）"
+      ],
+      "tested_scope": "C03–C06四張受控bar/linear/log/pie，13值/歸屬與critical relations。",
+      "quality_and_selection": "API13點及印值/估值/scale關係通過；pie about25%/75%且unit=null為typed交付缺口。native chart從未因API成功而變成已驗；真實chart仍缺。",
+      "time_evidence": "API各4.636–7.330s RTT，單次。",
+      "remaining_gate": "保留numeric/estimated status與既定容差及critical比較；native parser/API seam版本、實際模型、真實chart與同版supplement仍待驗。",
+      "evidence": [
+        "E05",
+        "E14",
+        "M05"
+      ]
+    },
+    {
+      "id": "T16",
+      "task": "Canonical Markdown／supplement／custody／診斷",
+      "features": [
+        "F18",
+        "F19",
+        "F20",
+        "F21"
+      ],
+      "methods": [
+        "Core serializer與完整ConversionResult保存",
+        "自訂typed parser＋working Markdown overlay",
+        "Q39 provider preservation bounded checks"
+      ],
+      "tested_scope": "已保存各stage/provider/raw responses；candidate1 34/36結構套用、2parser拒絕，23negative controls；非正式Canonical mapper。",
+      "quality_and_selection": "34套用仍含內容錯誤，不等Acceptance。圖片OCR/生成描述不灌入source正文；image-key與同版讀取尚待正式交付。原生parent不當章節parent。",
+      "time_evidence": "目前沒有完整admission→Acceptance/publication端到端量測；API RTT/convert不替代它。",
+      "remaining_gate": "G3完整handoff/recovery及required-work/known failure checks；不新增每次人工批准或通用LLM judge。",
+      "evidence": [
+        "E06",
+        "E07",
+        "E11",
+        "E14"
+      ]
+    }
+  ],
+  "minimum_composed_candidate": {
+    "status": "recommendation_for_further_feasibility_not_adopted_profile",
+    "base": [
+      "explicit StandardPdfPipeline / Heron",
+      "TableFormer V1 accurate + cell_matching",
+      "selective RapidOCR with pinned actual model files",
+      "page/picture/source image capture and full provider diagnostics"
+    ],
+    "bounded_additions": [
+      "optional DocumentFigureClassifier-v2.5",
+      "CodeFormulaV2 only where code fidelity and gate/source coverage are proven",
+      "official heading recovery only on compatible stack; title/appendix/parent remain unresolved",
+      "learned page orientation only with original-source coordinate mapping; adapter is custom"
+    ],
+    "unresolved_required_work": [
+      "formula incl inline, true code/pseudocode, complex/cross-page tables, CJK picture OCR, diagram/chart understanding need proven model/method routes",
+      "inspect official remote VlmPipeline before expanding custom paragraph planner; if unsuitable do not force adoption",
+      "necessary Canonical Markdown + same-revision supplements and source accounting still required"
+    ],
+    "no_automatic_routing_claim": "No confidence/self-reported uncertainty/native-token rule is demonstrated to discover every semantic error; do not call the baseline plus selective fallback complete."
+  },
+  "feasibility_gates": [
+    {
+      "id": "FG1",
+      "owner": "agent",
+      "action": "official remote API request/parser/provenance preflight; if feasible bounded same-source method run, otherwise documented no-go",
+      "needs_user_now": false
+    },
+    {
+      "id": "FG2",
+      "owner": "agent",
+      "action": "finish fixed development quality/regression across original source units, keep failures and unattempted work; max3 configurations/single challenger protocol remains",
+      "needs_user_now": false
+    },
+    {
+      "id": "FG3",
+      "owner": "agent",
+      "action": "lock one viable baseline/challenger and independent source-only holdout labels before one paired holdout; do not open rawholdout during method choice",
+      "needs_user_now": false
+    },
+    {
+      "id": "FG4",
+      "owner": "user/company supplies deployment facts; agent evaluates",
+      "action": "exact Qwen3-VL or alternate model ID/revision, serving/API capabilities, GPU model/count/VRAM/capacity; then same-task quality and GPU/serving qualification",
+      "needs_user_now": "only_when_company_execution_is_next_blocking_dependency"
+    },
+    {
+      "id": "FG5",
+      "owner": "user/#54 with agent capacity evidence",
+      "action": "define sustained/burst ingest, document/page/content mix, latency/resource targets; retain pilot baseline; no invented high-frequency threshold",
+      "needs_user_now": "only_when_high_frequency_SLO_acceptance_requires_business_target"
+    },
+    {
+      "id": "FG6",
+      "owner": "agent/relevant repo owners",
+      "action": "G3 same-revision Canonical handoff/custody/recovery then G4 realistic load; does not require routine per-document human approval",
+      "needs_user_now": false
+    }
+  ],
+  "not_claimed": [
+    "all models/candidates verified",
+    "Docling accuracy ceiling reached",
+    "gpt-6-luna results transferred to Qwen3",
+    "34 structurally applied outputs equal Canonical Acceptance",
+    "generic postprocessing can correct raw mathematical/code/identifier errors"
+  ],
+  "evidence": {
+    "E01": {
+      "path": "docs/research/pdf-core-g2-local-cpu-2026-10-14.md",
+      "sha256": "03c3625a10f6769f21ac729a109b989053a4143eed50daf690c0ef5d32fbbecc"
+    },
+    "E02": {
+      "path": "docs/research/pdf-core-g2-round2-2026-10-14.md",
+      "sha256": "fd0f631adec67f183ef0f11b04ec8f2f108119755d5e2ba4ea466f39c3544379"
+    },
+    "E03": {
+      "path": "docs/research/pdf-core-g2-round3-2026-10-14.md",
+      "sha256": "b310f965ce2f7f9891268b8c37a5ee8c6f0e87a6458c6ee94fd6109bb837864d"
+    },
+    "E04": {
+      "path": "docs/research/pdf-core-g2-api-2026-10-14.md",
+      "sha256": "6b04d07f3b112dad9d1d8f118aed3a6caff07021582843e302fc430639045fe6"
+    },
+    "E05": {
+      "path": "docs/research/pdf-core-g2-images-2026-10-14.md",
+      "sha256": "55d7e24ca93b546d973852bf5f05b9e750a25cdf33fbb1b9350e7493eb04901c"
+    },
+    "E06": {
+      "path": "docs/research/pdf-core-g2-heading-2026-10-15.md",
+      "sha256": "a1f8986b436ce283025da6a8ad2b7ecc232083d3018098f1842ea93e2a1d8247"
+    },
+    "E07": {
+      "path": "docs/research/pdf-core-g2-orientation-2026-10-15.md",
+      "sha256": "6adf0d20642cd9a164eb8dc7e0f217d4d813bbbc35cc07acad0c9606bc73642f"
+    },
+    "E08": {
+      "path": "docs/research/pdf-core-g2-inline-2026-10-15.md",
+      "sha256": "e3e2a3cafa3c3c39ad1f48421b43e297ac1d3fbac052c8cf4cb71c5025bb03e0"
+    },
+    "E09": {
+      "path": "docs/research/pdf-core-g2-inline-api-2026-10-15.md",
+      "sha256": "80549f3c81477f390d81522b26b7d642642ac48184ac18e109a630df5b05659d"
+    },
+    "E10": {
+      "path": "docs/research/pdf-core-g2-inline-boundary-2026-10-15.md",
+      "sha256": "5fb368bb44eb1306b9acdc7ea89df5a390e2417cf8f0f3076f12580e8c7a6e58"
+    },
+    "E11": {
+      "path": "docs/research/pdf-core-g2-context-api-2026-10-15.md",
+      "sha256": "485ce0cc1847f448cb19dff176de2796cbbfa0c3326b60e8a8923eeefd0aaf85"
+    },
+    "E12": {
+      "path": "docs/research/pdf-core-g2-context-candidate-2026-10-15.md",
+      "sha256": "e6a95c6b3ac71b7bdba26fee4093bde512e3f2df395d34e5aeee6b3a1c8ecc70"
+    },
+    "E13": {
+      "path": "docs/research/pdf-core-g2-eval-freeze-2026-10-15.md",
+      "sha256": "d0dac14afd5103357e5515b350eb3b3c200aa60e43574762821668363ef925f3"
+    },
+    "E14": {
+      "path": "docs/research/docling-pdf-core-capability-validation-plan-2026-10-14.md",
+      "sha256": "24b266fa5cc018f5a4d95b5ff678520d612fef348477bd19bc54b638a9f60861"
+    },
+    "E15": {
+      "path": "docs/research/pdf-core-g2-official-custom-boundary-2026-10-15.md",
+      "sha256": "223ed03f7bd453a95b13e480e3195d76a6439b182dbcd21d6baf60607db8175e"
+    },
+    "E16": {
+      "path": "docs/research/paper-pdf-docling-official-table-remedies-2026-10-11.md",
+      "sha256": "3eac67ddfea03b6b135f7522e4dad824f9c2ee9dfcb8f5ed7e3059d7c263e71e"
+    },
+    "E17": {
+      "path": "docs/research/pdf-core-g2-method-selection-plan-2026-10-15.md",
+      "sha256": "dd8c536b49e341625df18fda293ab108b9f1b93cc66120266c1c75e95f9af9ed"
+    },
+    "M01": {
+      "path": "docs/research/pdf-core-g2-local-cpu-2026-10-14/runs/nccu-p3-full-ocr/method.json",
+      "sha256": "c6d2572805ecdb73abf8360077ee3a01c6aec634f2f3b3283fc15c75a5682716"
+    },
+    "M02": {
+      "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/method.json",
+      "sha256": "7941b5a89b22f693fed0cabe07918202cb7b4b395854e5eb38e995c7655cbed2"
+    },
+    "M03": {
+      "path": "docs/research/paper-pdf-granite-table-2026-10-11/method.json",
+      "sha256": "d5e95930e88e52b187375c64de7055a440f780c4b6764c42bf78cf4069b0485c"
+    },
+    "M04": {
+      "path": "docs/research/pdf-core-g2-context-api-2026-10-15/usage.json",
+      "sha256": "b9e94ade72e654cec87d4e977b24d747e1b21c36c5933e3e73177365f5b50f71"
+    },
+    "M05": {
+      "path": "docs/research/pdf-core-g2-images-2026-10-14/review/output-review.json",
+      "sha256": "3538af3b88b2d6a7617d0f108a091ddda218052d8aa4957beb578382d6e3db83"
+    },
+    "M06": {
+      "path": "docs/research/pdf-core-g2-context-api-2026-10-15/summary.json",
+      "sha256": "4c042a4a9e49e49b010323b213618e3ec85c95fe7c34ec67c8779f270a070028"
+    }
+  }
+}

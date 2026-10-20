@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-16",
+  "authorization": "User: OK, execute the next step after independent experiment audit.",
+  "purpose": "Verify actual model-input rendering and native parser/Markdown delivery before fixing the next model candidate.",
+  "inference_budget": 0,
+  "network_model_calls": 0,
+  "holdout_content_reads": 0,
+  "historical_evidence_mutations": false,
+  "render_preflight": {
+    "runtime": "Docling 2.132.0 / Core 2.99.0 / Parse 7.22.3; existing isolated MLX environment; no MLX model load",
+    "pipeline": "Actual VlmPipeline with dots_ocr preset and API-engine transport replaced by a fixed synthetic stub; socket networking forbidden",
+    "backends": ["DoclingParseDocumentBackend", "PyPdfiumDocumentBackend"],
+    "images_scale": 2,
+    "vlm_scale": 2,
+    "batch_size": 1,
+    "pages_fixed_before_new_outputs": ["controls physical p1", "WikiSkill 2608.27454v1 physical p4", "validation-02 0704.0001v1 physical p1", "validation-02 0704.0001v1 physical p12"],
+    "rationale": "Ordinary formula/code control, real agent-wiki diagram page, and the two known renderer failures. This is diagnostic regression, not unseen quality scoring.",
+    "approval": "Source-visible inspection of actual engine-input PNGs; approve by source hash/page/backend/options/actual pixels/full engine-input fingerprint. No universal dark-pixel rejection threshold.",
+    "negative_controls": ["missing approval", "changed pixels", "changed page", "changed source digest", "changed backend", "changed scale", "changed engine request", "unapproved known bad renderer"],
+    "scope_limit": "Research-run input approval only; no per-ingest human-approval policy, semantic acceptance, or claim that Docling renders equal a future Paddle preprocessing pipeline."
+  },
+  "delivery_preflight": "Independent reviewers register and execute perfect-provider parser controls before evaluating saved model outputs; content, parser loss and Markdown representation are separate outcomes.",
+  "candidate_selection": "One explicit next candidate with immutable model/source identities and official full-pipeline requirements; no model inference until its actual inputs and delivery path satisfy the preflight.",
+  "stop_policy": "If perfect-provider inputs lose required formula/code content through the official delivery path, record that limitation; do not spend inference to hide parser failures or append case-specific text repairs."
+}

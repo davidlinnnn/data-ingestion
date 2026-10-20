@@ -1,0 +1,297 @@
+[
+  {
+    "name": "formula-bare",
+    "raw": [
+      {
+        "category": "Formula",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "p(y_{<s}) = \\sum_{i=1}^{n} x_i^2 \\tag{4}"
+      }
+    ],
+    "kind": "formula",
+    "expected_content": "p(y_{<s}) = \\sum_{i=1}^{n} x_i^2 \\tag{4}",
+    "expected_markdown": "$$p(y_{<s}) = \\sum_{i=1}^{n} x_i^2 \\tag{4}$$"
+  },
+  {
+    "name": "formula-display-wrapped",
+    "raw": [
+      {
+        "category": "Formula",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "$$p(y_{<s}) = \\sum_{i=1}^{n} x_i^2 \\tag{4}$$"
+      }
+    ],
+    "kind": "formula",
+    "expected_content": "$$p(y_{<s}) = \\sum_{i=1}^{n} x_i^2 \\tag{4}$$",
+    "expected_markdown": "$$p(y_{<s}) = \\sum_{i=1}^{n} x_i^2 \\tag{4}$$"
+  },
+  {
+    "name": "formula-inline-wrapped",
+    "raw": [
+      {
+        "category": "Formula",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "$x_i^2$"
+      }
+    ],
+    "kind": "formula",
+    "expected_content": "$x_i^2$",
+    "expected_markdown": "$$x_i^2$$"
+  },
+  {
+    "name": "inline-math-code",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "For $x_i^2$ and $\\theta'$ use `items[i] <= limit`; preserve the sentence."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "For $x_i^2$ and $\\theta'$ use `items[i] <= limit`; preserve the sentence.",
+    "expected_markdown": "For $x_i^2$ and $\\theta'$ use `items[i] <= limit`; preserve the sentence."
+  },
+  {
+    "name": "formula-less-s-tag",
+    "raw": [
+      {
+        "category": "Formula",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "a<s>0"
+      }
+    ],
+    "kind": "formula",
+    "expected_content": "a<s>0",
+    "expected_markdown": "$$a<s>0$$"
+  },
+  {
+    "name": "inline-less-s-tag",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "Require $a<s>0$ and $p(y_{<s})$."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "Require $a<s>0$ and $p(y_{<s})$.",
+    "expected_markdown": "Require $a<s>0$ and $p(y_{<s})$."
+  },
+  {
+    "name": "fenced-html-code",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "```python\ndef render_html(user_id):\n    literal_tag = \"<b>bold</b>\"\n    if user_id <= 2:\n        return {\"under_score\": literal_tag}\n    return \"<s>strike</s>\"\n```"
+      }
+    ],
+    "kind": "code",
+    "expected_content": "def render_html(user_id):\n    literal_tag = \"<b>bold</b>\"\n    if user_id <= 2:\n        return {\"under_score\": literal_tag}\n    return \"<s>strike</s>\"",
+    "expected_markdown": "```\ndef render_html(user_id):\n    literal_tag = \"<b>bold</b>\"\n    if user_id <= 2:\n        return {\"under_score\": literal_tag}\n    return \"<s>strike</s>\"\n```"
+  },
+  {
+    "name": "inline-html-code",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "Use `<b>bold</b>` literally; keep `under_score` and `a <= b`."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "Use `<b>bold</b>` literally; keep `under_score` and `a <= b`.",
+    "expected_markdown": "Use `<b>bold</b>` literally; keep `under_score` and `a <= b`."
+  },
+  {
+    "name": "inline-unknown-tag-code",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "Use `<widget>` and `a <= b` literally."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "Use `<widget>` and `a <= b` literally.",
+    "expected_markdown": "Use `<widget>` and `a <= b` literally."
+  },
+  {
+    "name": "html-code-semantic",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "<p>Use <code>&lt;b&gt;bold&lt;/b&gt;</code> literally.</p>"
+      }
+    ],
+    "kind": "html-code",
+    "expected_content": "<b>bold</b>",
+    "expected_markdown": "Use `<b>bold</b>` literally."
+  },
+  {
+    "name": "ordinary-prose",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "Normal task-specific prose, price $5, identifiers under_score_name and ReflACT, 3 < 4."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "Normal task-specific prose, price $5, identifiers under_score_name and ReflACT, 3 < 4.",
+    "expected_markdown": "Normal task-specific prose, price $5, identifiers under_score_name and ReflACT, 3 < 4."
+  },
+  {
+    "name": "escaped-literal-prose",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "Literal \\_\\_init\\_\\_, \\_TEMP\\_, &lt;widget&gt;, price $5 and 3 < 4."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "Literal \\_\\_init\\_\\_, \\_TEMP\\_, &lt;widget&gt;, price $5 and 3 < 4.",
+    "expected_markdown": "Literal \\_\\_init\\_\\_, \\_TEMP\\_, &lt;widget&gt;, price $5 and 3 < 4."
+  },
+  {
+    "name": "unescaped-literal-prose",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "Literal __init__, _TEMP_ and <widget>."
+      }
+    ],
+    "kind": "text",
+    "expected_content": "Literal __init__, _TEMP_ and <widget>.",
+    "expected_markdown": "Literal __init__, _TEMP_ and <widget>."
+  },
+  {
+    "name": "ordinary-html",
+    "raw": [
+      {
+        "category": "Text",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "<p>Normal <b>bold</b>, H<sub>2</sub>O and x<sup>2</sup>.</p>"
+      }
+    ],
+    "kind": "html",
+    "expected_content": "<p>Normal <b>bold</b>, H<sub>2</sub>O and x<sup>2</sup>.</p>",
+    "expected_markdown": "<p>Normal <b>bold</b>, H<sub>2</sub>O and x<sup>2</sup>.</p>"
+  },
+  {
+    "name": "merged-table",
+    "raw": [
+      {
+        "category": "Table",
+        "bbox": [
+          40,
+          40,
+          1080,
+          300
+        ],
+        "text": "<table><tr><th rowspan=\"2\">Method</th><th colspan=\"2\">Score</th></tr><tr><th>Train</th><th>Test</th></tr><tr><td>Baseline</td><td>1</td><td>2</td></tr></table>"
+      }
+    ],
+    "kind": "table",
+    "expected_content": "<table><tr><th rowspan=\"2\">Method</th><th colspan=\"2\">Score</th></tr><tr><th>Train</th><th>Test</th></tr><tr><td>Baseline</td><td>1</td><td>2</td></tr></table>",
+    "expected_markdown": "<table><tr><th rowspan=\"2\">Method</th><th colspan=\"2\">Score</th></tr><tr><th>Train</th><th>Test</th></tr><tr><td>Baseline</td><td>1</td><td>2</td></tr></table>"
+  },
+  {
+    "name": "picture-caption",
+    "kind": "picture",
+    "raw": [
+      {
+        "category": "Picture",
+        "bbox": [
+          40,
+          40,
+          240,
+          240
+        ]
+      },
+      {
+        "category": "Caption",
+        "bbox": [
+          40,
+          260,
+          400,
+          300
+        ],
+        "text": "Figure 1. Synthetic source-fixed square."
+      }
+    ]
+  }
+]

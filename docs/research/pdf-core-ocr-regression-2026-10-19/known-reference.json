@@ -1,0 +1,1888 @@
+{
+  "schema": "single-page-reference-v1",
+  "locked_before_new_inference": true,
+  "source": {
+    "path": "docs/prototypes/pdf-checkpoint-prototype/fixtures/llm-survey-2303.18223v1.pdf",
+    "sha256": "d58be5fc39608dc9aec45194c602436d793f2f2bf56f267d0e38d6258a9f7a9e",
+    "physical_page": 3,
+    "url": "https://arxiv.org/pdf/2303.18223v1"
+  },
+  "scan": {
+    "path": "docs/prototypes/pdf-checkpoint-prototype/fixtures/scan-pages-3-5.pdf",
+    "sha256": "7856cfe6127948d506ca5fad750e915134be362b5e1436c70b378f42a6fda2a0",
+    "physical_page": 1
+  },
+  "page_size": [
+    612,
+    792
+  ],
+  "coordinate_origin": "TOPLEFT",
+  "visual_check": {
+    "image": "docs/research/pdf-core-ocr-boundary-trace-2026-10-19/live/page.png",
+    "sha256": "f30ca718a1b55577fcb237319ce0da65bbfe8cf04be8ba193c1e23983b7b7103",
+    "review": "Full page visually inspected before inference; left then right body, 11 paragraphs, one left-column section heading, 2 footnotes, page number. No legitimate cross-column heading. P01 continues previous page; P11 continues next page."
+  },
+  "normalization": "Reference only: PDFium U+FFFE marks visual line-end hyphens and is removed to join soft-wrap word fragments; whitespace joined; whitespace before punctuation removed. Source wording and typo no a formal retained. Raw native text/charspans retained. No OCR/output repair.",
+  "body_order": [
+    "P01",
+    "P02",
+    "H01",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07",
+    "P08",
+    "P09",
+    "P10",
+    "P11"
+  ],
+  "legitimate_cross_column_items": [],
+  "items": [
+    {
+      "id": "PAGE",
+      "role": "page_header",
+      "column": "right",
+      "text": "3",
+      "native_line_indexes": [
+        0
+      ],
+      "bbox": [
+        560.3319702148438,
+        28.5999755859375,
+        563.6499633789062,
+        33.71697998046875
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P01",
+      "role": "paragraph",
+      "column": "left",
+      "text": "We are also aware of several related review articles on PLMs or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either discuss PLMs or some specific (or general) aspects of LLMs. Compared with them, we focus on the techniques and methods to develop and use LLMs and provide a relatively comprehensive reference to important aspects of LLMs.",
+      "native_line_indexes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "bbox": [
+        48.07600021362305,
+        44.8599853515625,
+        299.88299560546875,
+        112.1358642578125
+      ],
+      "continues_from_previous_page": true,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P02",
+      "role": "paragraph",
+      "column": "left",
+      "text": "The remainder of the survey is organized as follows: Section 2 introduces the background for the survey article, with the terminology, settings, resources, and organization outline, followed by the summarization of available resources for developing LLMs in Section 3. Sections 4, 5, 6, and 7 review and summarize the recent progress from the four aspects of pre-training, adaptation tuning, utilization, and capacity evaluation, respectively. Finally, we conclude this survey in Section 8 by summarizing the major findings and discuss the remaining issues for future work.",
+      "native_line_indexes": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "bbox": [
+        48.05699920654297,
+        114.536865234375,
+        299.9020080566406,
+        227.99169921875
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "H01",
+      "role": "section_header",
+      "column": "left",
+      "text": "2 OVERVIEW",
+      "native_line_indexes": [
+        16
+      ],
+      "bbox": [
+        48.605003356933594,
+        251.06268310546875,
+        117.85880279541016,
+        259.4556884765625
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": true
+    },
+    {
+      "id": "P03",
+      "role": "paragraph",
+      "column": "left",
+      "text": "In this section, we introduce the background of LLMs with key terminologies, abilities and techniques.",
+      "native_line_indexes": [
+        17,
+        18
+      ],
+      "bbox": [
+        48.199501037597656,
+        269.57769775390625,
+        299.90203857421875,
+        290.71270751953125
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P04",
+      "role": "paragraph",
+      "column": "left",
+      "text": "Background. Typically, large language models (LLMs) refer to language models that contain hundreds of billions (or more) of parameters5, which are trained on massive text data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and LLaMA [57]. Specifically, LLMs are built upon the Transformer architecture [22], where multi-head attention layers are stacked in a very deep neural network. Existing LLMs mainly adopt similar model architectures (i.e., Transformer) and pre-training objectives (i.e., language modeling) as small language models. As the major difference, LLMs largely scale the model size, pre-training data, and total compute (orders of magnification). They can better understand the natural language and generate high-quality text based on the given context (i.e., prompts). Such a capacity improvement can be partially described by the scaling law, where the performance roughly follows a substantial increase with respect to the model size [30]. However, some abilities (e.g., in-context learning [55]) are unpredictable according to the scaling law, which can be observed only when the model size exceeds a certain level (as discussed below).",
+      "native_line_indexes": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "bbox": [
+        48.05699920654297,
+        299.730224609375,
+        299.9364929199219,
+        527.9868774414062
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": true
+    },
+    {
+      "id": "P05",
+      "role": "paragraph",
+      "column": "left",
+      "text": "Emergent Abilities of LLMs. In the literature [31], emergent abilities of LLMs are formally defined as “the abilities that are not present in small models but arise in large models”, which is one of the most distinctive features that distinguish LLMs from previous PLMs. It also introduces a notable characteristic when emergent abilities occur: performance rises significantly above random when the scale reaches a certain level. By analogy, such an emergent pattern has close connections with the phenomenon of phase transition in physics [31, 58]. In principle, emergent abilities can be also defined in relation to some complex tasks [31, 59], while we are more concerned with general abilities that can be applied to solve multiple tasks. Here, we briefly introduce three representative emergent abilities for LLMs, described as follows.",
+      "native_line_indexes": [
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52
+      ],
+      "bbox": [
+        48.03801345825195,
+        537.7168884277344,
+        299.93603515625,
+        706.3543243408203
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "F05",
+      "role": "footnote",
+      "column": "left",
+      "text": "5. In existing literature, there is no a formal consensus on the minimum parameter scale for LLMs. In this survey, we mainly focus on discussing LLMs with a model size larger than 10B.",
+      "native_line_indexes": [
+        53,
+        54
+      ],
+      "bbox": [
+        48.16802978515625,
+        720.350830078125,
+        299.9200439453125,
+        746.4308280944824
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P06",
+      "role": "paragraph",
+      "column": "right",
+      "text": "• In-context learning. The in-context learning ability is formally introduced by GPT-3 [55]: assuming that the language model has been provided with a natural language instruction and/or several task demonstrations, it can generate the expected output for the test instances by completing the word sequence of input text, without requiring additional training or gradient updates6.",
+      "native_line_indexes": [
+        55,
+        56,
+        57,
+        58,
+        59,
+        60
+      ],
+      "bbox": [
+        312.0570373535156,
+        44.81231689453125,
+        563.8070068359375,
+        123.6947021484375
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P07",
+      "role": "paragraph",
+      "column": "right",
+      "text": "• Instruction following. By fine-tuning with a mixture of multi-task datasets formatted via natural language descriptions (i.e., instructions), LLMs are shown to perform well on unseen tasks that are also described in the form of instructions [28, 61, 62]. With this ability, instruction tuning enables LLMs to perform new tasks by understanding the task instructions without using explicit examples, which can largely improve the generalization ability.",
+      "native_line_indexes": [
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67
+      ],
+      "bbox": [
+        312.05706787109375,
+        126.84521484375,
+        564.0730590820312,
+        217.267578125
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P08",
+      "role": "paragraph",
+      "column": "right",
+      "text": "• Step-by-step reasoning. For small language models, it is usually difficult to solve complex tasks that involve multiple reasoning steps, e.g., mathematical word problems. While, with the chain-of-thought reasoning strategy [33], LLMs can solve such tasks by utilizing the prompting mechanism that involves intermediate reasoning steps for deriving the final answer. This ability is speculated to be potentially obtained by training on code [33, 47].",
+      "native_line_indexes": [
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75
+      ],
+      "bbox": [
+        311.8670959472656,
+        220.41705322265625,
+        563.9306640625,
+        310.8394775390625
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P09",
+      "role": "paragraph",
+      "column": "right",
+      "text": "Key Techniques for LLMs. It has been a long way that LLMs evolve into the current state: general and capable learners. In the development process, a number of important techniques are proposed, which largely improve the capacity of LLMs. Here, we briefly list several important techniques that (potentially) lead to the success of LLMs, as follows.",
+      "native_line_indexes": [
+        76,
+        77,
+        78,
+        79,
+        80,
+        81
+      ],
+      "bbox": [
+        312.1995544433594,
+        320.739501953125,
+        563.93359375,
+        397.05706787109375
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P10",
+      "role": "paragraph",
+      "column": "right",
+      "text": "• Scaling. Scaling is the key factor to increase the model capacity of LLMs. As the initial attempt, GPT-3 firstly increases the model size to an extremely large scale of 175B parameters. Later on, PaLM further raises the parameter scale to a new record of 540B. As discussed before, a large model size is essential to emergent abilities. While, scaling is not only conducted on model size but also related to data size and total compute [34, 63]. A recent study [34] has discussed the optimal schedule among the three aspects of model size, data size, and total compute, given a fixed budget. Further, the quality of the pre-training data plays a key role in achieving good performance, so that data collection and cleaning strategies are very important to consider when scaling the pre-training corpora.",
+      "native_line_indexes": [
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94
+      ],
+      "bbox": [
+        311.8670654296875,
+        402.7050476074219,
+        563.883056640625,
+        562.3676147460938
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    },
+    {
+      "id": "P11",
+      "role": "paragraph",
+      "column": "right",
+      "text": "• Training. Due to the huge model size, it is very challenging to successfully train a capable LLM. Distributed training algorithms are needed to learn the network parameters of LLMs, in which various parallel strategies are often jointly utilized. To support distributed training, several optimization frameworks have been released to facilitate the implementation and deployment of parallel algorithms, such as DeepSpeed [64] and Megatron-LM [65]. Besides, optimization tricks are also important for training stability and model performance, e.g., restart with training loss spike [56] and mixed precision training [66]. More recently, GPT-4 [46] proposes to develop special infrastructure and",
+      "native_line_indexes": [
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102
+      ],
+      "bbox": [
+        312.1995544433594,
+        565.5846099853516,
+        563.8070678710938,
+        702.0815734863281
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": true,
+      "critical": false
+    },
+    {
+      "id": "F06",
+      "role": "footnote",
+      "column": "right",
+      "text": "6. In some recent studies [60], it also shows that in-context learning implicitly performs meta-optimization through the attention mechanism.",
+      "native_line_indexes": [
+        103,
+        104
+      ],
+      "bbox": [
+        312.0480651855469,
+        720.3675689697266,
+        563.9041137695312,
+        744.3275680541992
+      ],
+      "continues_from_previous_page": false,
+      "continues_on_next_page": false,
+      "critical": false
+    }
+  ],
+  "native_lines": [
+    {
+      "index": 0,
+      "text": "3",
+      "bbox": [
+        560.3319702148438,
+        28.5999755859375,
+        563.6499633789062,
+        33.71697998046875
+      ],
+      "charspan": [
+        0,
+        1
+      ]
+    },
+    {
+      "index": 1,
+      "text": "We are also aware of several related review articles on PLMs",
+      "bbox": [
+        48.07600021362305,
+        44.8599853515625,
+        299.68353271484375,
+        51.95648193359375
+      ],
+      "charspan": [
+        3,
+        63
+      ]
+    },
+    {
+      "index": 2,
+      "text": "or LLMs [32, 36, 38, 39, 43, 48–54]. These papers either",
+      "bbox": [
+        48.30400085449219,
+        56.41900634765625,
+        299.79754638671875,
+        65.9759521484375
+      ],
+      "charspan": [
+        65,
+        121
+      ]
+    },
+    {
+      "index": 3,
+      "text": "discuss PLMs or some specific (or general) aspects of LLMs.",
+      "bbox": [
+        48.33250045776367,
+        67.93994140625,
+        299.36053466796875,
+        77.53497314453125
+      ],
+      "charspan": [
+        123,
+        182
+      ]
+    },
+    {
+      "index": 4,
+      "text": "Compared with them, we focus on the techniques and",
+      "bbox": [
+        48.20899963378906,
+        79.47991943359375,
+        299.69305419921875,
+        89.055908203125
+      ],
+      "charspan": [
+        184,
+        234
+      ]
+    },
+    {
+      "index": 5,
+      "text": "methods to develop and use LLMs and provide a relatively",
+      "bbox": [
+        48.152000427246094,
+        91.0389404296875,
+        299.88299560546875,
+        100.61492919921875
+      ],
+      "charspan": [
+        236,
+        292
+      ]
+    },
+    {
+      "index": 6,
+      "text": "comprehensive reference to important aspects of LLMs.",
+      "bbox": [
+        48.24700164794922,
+        102.55987548828125,
+        281.842529296875,
+        112.1358642578125
+      ],
+      "charspan": [
+        294,
+        347
+      ]
+    },
+    {
+      "index": 7,
+      "text": "The remainder of the survey is organized as follows:",
+      "bbox": [
+        62.42100143432617,
+        114.536865234375,
+        299.35101318359375,
+        124.13189697265625
+      ],
+      "charspan": [
+        349,
+        401
+      ]
+    },
+    {
+      "index": 8,
+      "text": "Section 2 introduces the background for the survey article,",
+      "bbox": [
+        48.22800064086914,
+        126.07684326171875,
+        299.6929931640625,
+        135.671875
+      ],
+      "charspan": [
+        403,
+        462
+      ]
+    },
+    {
+      "index": 9,
+      "text": "with the terminology, settings, resources, and organization",
+      "bbox": [
+        48.05699920654297,
+        137.6358642578125,
+        299.9020080566406,
+        147.21185302734375
+      ],
+      "charspan": [
+        464,
+        523
+      ]
+    },
+    {
+      "index": 10,
+      "text": "outline, followed by the summarization of available re￾sources for developing LLMs in Section 3. Sections 4, 5, 6,",
+      "bbox": [
+        48.28499984741211,
+        149.15679931640625,
+        299.7974853515625,
+        170.29180908203125
+      ],
+      "charspan": [
+        525,
+        639
+      ]
+    },
+    {
+      "index": 11,
+      "text": "and 7 review and summarize the recent progress from the",
+      "bbox": [
+        48.30400085449219,
+        172.23675537109375,
+        299.7025146484375,
+        181.831787109375
+      ],
+      "charspan": [
+        641,
+        696
+      ]
+    },
+    {
+      "index": 12,
+      "text": "four aspects of pre-training, adaptation tuning, utilization,",
+      "bbox": [
+        48.21849822998047,
+        183.7767333984375,
+        299.6930236816406,
+        193.37176513671875
+      ],
+      "charspan": [
+        698,
+        759
+      ]
+    },
+    {
+      "index": 13,
+      "text": "and capacity evaluation, respectively. Finally, we conclude",
+      "bbox": [
+        48.30400085449219,
+        195.33575439453125,
+        299.7025146484375,
+        204.9117431640625
+      ],
+      "charspan": [
+        761,
+        820
+      ]
+    },
+    {
+      "index": 14,
+      "text": "this survey in Section 8 by summarizing the major findings",
+      "bbox": [
+        48.20899963378906,
+        206.856689453125,
+        299.68353271484375,
+        216.45172119140625
+      ],
+      "charspan": [
+        822,
+        880
+      ]
+    },
+    {
+      "index": 15,
+      "text": "and discuss the remaining issues for future work.",
+      "bbox": [
+        48.30400085449219,
+        218.39666748046875,
+        256.58203125,
+        227.99169921875
+      ],
+      "charspan": [
+        882,
+        931
+      ]
+    },
+    {
+      "index": 16,
+      "text": "2 OVERVIEW",
+      "bbox": [
+        48.605003356933594,
+        251.06268310546875,
+        117.85880279541016,
+        259.4556884765625
+      ],
+      "charspan": [
+        933,
+        943
+      ]
+    },
+    {
+      "index": 17,
+      "text": "In this section, we introduce the background of LLMs with",
+      "bbox": [
+        48.20899963378906,
+        269.57769775390625,
+        299.90203857421875,
+        279.1727294921875
+      ],
+      "charspan": [
+        945,
+        1002
+      ]
+    },
+    {
+      "index": 18,
+      "text": "key terminologies, abilities and techniques.",
+      "bbox": [
+        48.199501037597656,
+        281.13671875,
+        229.84906005859375,
+        290.71270751953125
+      ],
+      "charspan": [
+        1004,
+        1048
+      ]
+    },
+    {
+      "index": 19,
+      "text": "Background. Typically, large language models (LLMs) refer",
+      "bbox": [
+        48.37049865722656,
+        299.730224609375,
+        299.7965087890625,
+        309.3727111816406
+      ],
+      "charspan": [
+        1050,
+        1107
+      ]
+    },
+    {
+      "index": 20,
+      "text": "to language models that contain hundreds of billions (or",
+      "bbox": [
+        48.20899963378906,
+        311.3177490234375,
+        299.7974853515625,
+        320.9127197265625
+      ],
+      "charspan": [
+        1109,
+        1165
+      ]
+    },
+    {
+      "index": 21,
+      "text": "more) of parameters5",
+      "bbox": [
+        48.152000427246094,
+        321.576904296875,
+        140.5823516845703,
+        332.4337463378906
+      ],
+      "charspan": [
+        1167,
+        1187
+      ]
+    },
+    {
+      "index": 22,
+      "text": ", which are trained on massive text",
+      "bbox": [
+        141.50498962402344,
+        322.8767395019531,
+        299.9364929199219,
+        331.23675537109375
+      ],
+      "charspan": [
+        1189,
+        1224
+      ]
+    },
+    {
+      "index": 23,
+      "text": "data [32], such as GPT-3 [55], PaLM [56], Galactica [35], and",
+      "bbox": [
+        48.33250045776367,
+        334.416748046875,
+        299.6930236816406,
+        343.05224609375
+      ],
+      "charspan": [
+        1226,
+        1287
+      ]
+    },
+    {
+      "index": 24,
+      "text": "LLaMA [57]. Specifically, LLMs are built upon the Trans￾former architecture [22], where multi-head attention layers",
+      "bbox": [
+        48.20899963378906,
+        345.9377746582031,
+        299.79754638671875,
+        367.07275390625
+      ],
+      "charspan": [
+        1289,
+        1404
+      ]
+    },
+    {
+      "index": 25,
+      "text": "are stacked in a very deep neural network. Existing LLMs",
+      "bbox": [
+        48.30400085449219,
+        369.0367736816406,
+        299.6835021972656,
+        378.6127624511719
+      ],
+      "charspan": [
+        1406,
+        1462
+      ]
+    },
+    {
+      "index": 26,
+      "text": "mainly adopt similar model architectures (i.e., Transformer)",
+      "bbox": [
+        48.152000427246094,
+        380.55780029296875,
+        299.4309997558594,
+        390.15277099609375
+      ],
+      "charspan": [
+        1464,
+        1524
+      ]
+    },
+    {
+      "index": 27,
+      "text": "and pre-training objectives (i.e., language modeling) as small",
+      "bbox": [
+        48.30400085449219,
+        392.1167907714844,
+        299.8085021972656,
+        401.6927795410156
+      ],
+      "charspan": [
+        1526,
+        1588
+      ]
+    },
+    {
+      "index": 28,
+      "text": "language models. As the major difference, LLMs largely",
+      "bbox": [
+        48.199501037597656,
+        403.6378173828125,
+        299.8830261230469,
+        413.2327880859375
+      ],
+      "charspan": [
+        1590,
+        1644
+      ]
+    },
+    {
+      "index": 29,
+      "text": "scale the model size, pre-training data, and total compute",
+      "bbox": [
+        48.28499984741211,
+        415.1968078613281,
+        299.7025451660156,
+        424.7727966308594
+      ],
+      "charspan": [
+        1646,
+        1704
+      ]
+    },
+    {
+      "index": 30,
+      "text": "(orders of magnification). They can better understand the",
+      "bbox": [
+        48.56999969482422,
+        426.71783447265625,
+        299.70257568359375,
+        436.31280517578125
+      ],
+      "charspan": [
+        1706,
+        1763
+      ]
+    },
+    {
+      "index": 31,
+      "text": "natural language and generate high-quality text based on",
+      "bbox": [
+        48.05699920654297,
+        438.2768249511719,
+        299.9019775390625,
+        447.8528137207031
+      ],
+      "charspan": [
+        1765,
+        1821
+      ]
+    },
+    {
+      "index": 32,
+      "text": "the given context (i.e., prompts). Such a capacity improve￾ment can be partially described by the scaling law, where",
+      "bbox": [
+        48.152000427246094,
+        449.81683349609375,
+        299.80401611328125,
+        470.9328308105469
+      ],
+      "charspan": [
+        1823,
+        1939
+      ]
+    },
+    {
+      "index": 33,
+      "text": "the performance roughly follows a substantial increase with",
+      "bbox": [
+        48.20899963378906,
+        472.87786865234375,
+        299.9020080566406,
+        482.47283935546875
+      ],
+      "charspan": [
+        1941,
+        2000
+      ]
+    },
+    {
+      "index": 34,
+      "text": "respect to the model size [30]. However, some abilities (e.g.,",
+      "bbox": [
+        48.199501037597656,
+        484.4368591308594,
+        299.5539855957031,
+        493.9938659667969
+      ],
+      "charspan": [
+        2002,
+        2064
+      ]
+    },
+    {
+      "index": 35,
+      "text": "in-context learning [55]) are unpredictable according to the",
+      "bbox": [
+        48.199501037597656,
+        495.97686767578125,
+        299.7025146484375,
+        505.5528564453125
+      ],
+      "charspan": [
+        2066,
+        2126
+      ]
+    },
+    {
+      "index": 36,
+      "text": "scaling law, which can be observed only when the model",
+      "bbox": [
+        48.28499984741211,
+        507.5168762207031,
+        299.80706787109375,
+        517.0928649902344
+      ],
+      "charspan": [
+        2128,
+        2182
+      ]
+    },
+    {
+      "index": 37,
+      "text": "size exceeds a certain level (as discussed below).",
+      "bbox": [
+        48.28499984741211,
+        519.056884765625,
+        252.2025146484375,
+        527.9868774414062
+      ],
+      "charspan": [
+        2184,
+        2234
+      ]
+    },
+    {
+      "index": 38,
+      "text": "Emergent Abilities of LLMs. In the literature [31], emergent",
+      "bbox": [
+        48.37049865722656,
+        537.7168884277344,
+        299.7820129394531,
+        547.2263946533203
+      ],
+      "charspan": [
+        2236,
+        2296
+      ]
+    },
+    {
+      "index": 39,
+      "text": "abilities of LLMs are formally defined as “the abilities that",
+      "bbox": [
+        48.03801345825195,
+        549.1903839111328,
+        299.93603515625,
+        558.8328857421875
+      ],
+      "charspan": [
+        2298,
+        2359
+      ]
+    },
+    {
+      "index": 40,
+      "text": "are not present in small models but arise in large models”,",
+      "bbox": [
+        48.304019927978516,
+        560.796875,
+        299.69305419921875,
+        570.3728790283203
+      ],
+      "charspan": [
+        2361,
+        2420
+      ]
+    },
+    {
+      "index": 41,
+      "text": "which is one of the most distinctive features that distinguish",
+      "bbox": [
+        48.0570182800293,
+        572.31787109375,
+        299.90203857421875,
+        581.9128723144531
+      ],
+      "charspan": [
+        2422,
+        2484
+      ]
+    },
+    {
+      "index": 42,
+      "text": "LLMs from previous PLMs. It also introduces a notable",
+      "bbox": [
+        48.20901870727539,
+        583.8578643798828,
+        299.7025146484375,
+        593.4338684082031
+      ],
+      "charspan": [
+        2486,
+        2539
+      ]
+    },
+    {
+      "index": 43,
+      "text": "characteristic when emergent abilities occur: performance",
+      "bbox": [
+        48.24702072143555,
+        595.3978576660156,
+        299.7025451660156,
+        604.9928588867188
+      ],
+      "charspan": [
+        2541,
+        2598
+      ]
+    },
+    {
+      "index": 44,
+      "text": "rises significantly above random when the scale reaches",
+      "bbox": [
+        48.199520111083984,
+        606.9378509521484,
+        299.6835632324219,
+        616.5328521728516
+      ],
+      "charspan": [
+        2600,
+        2655
+      ]
+    },
+    {
+      "index": 45,
+      "text": "a certain level. By analogy, such an emergent pattern has",
+      "bbox": [
+        48.304019927978516,
+        618.4968414306641,
+        299.6835632324219,
+        628.0728454589844
+      ],
+      "charspan": [
+        2657,
+        2714
+      ]
+    },
+    {
+      "index": 46,
+      "text": "close connections with the phenomenon of phase transition in",
+      "bbox": [
+        48.24702072143555,
+        629.9703369140625,
+        299.905517578125,
+        639.5938415527344
+      ],
+      "charspan": [
+        2716,
+        2776
+      ]
+    },
+    {
+      "index": 47,
+      "text": "physics [31, 58]. In principle, emergent abilities can be also",
+      "bbox": [
+        48.07603073120117,
+        641.5768280029297,
+        299.69305419921875,
+        651.15283203125
+      ],
+      "charspan": [
+        2778,
+        2840
+      ]
+    },
+    {
+      "index": 48,
+      "text": "defined in relation to some complex tasks [31, 59], while",
+      "bbox": [
+        48.3325309753418,
+        653.0978240966797,
+        299.7025146484375,
+        662.673828125
+      ],
+      "charspan": [
+        2842,
+        2899
+      ]
+    },
+    {
+      "index": 49,
+      "text": "we are more concerned with general abilities that can be",
+      "bbox": [
+        48.057029724121094,
+        664.6568222045898,
+        299.7025146484375,
+        674.2328262329102
+      ],
+      "charspan": [
+        2901,
+        2957
+      ]
+    },
+    {
+      "index": 50,
+      "text": "applied to solve multiple tasks. Here, we briefly introduce",
+      "bbox": [
+        48.30403137207031,
+        676.1778259277344,
+        299.7025451660156,
+        685.7728271484375
+      ],
+      "charspan": [
+        2959,
+        3018
+      ]
+    },
+    {
+      "index": 51,
+      "text": "three representative emergent abilities for LLMs, described",
+      "bbox": [
+        48.20903015136719,
+        687.7178268432617,
+        299.69305419921875,
+        697.3128280639648
+      ],
+      "charspan": [
+        3020,
+        3079
+      ]
+    },
+    {
+      "index": 52,
+      "text": "as follows.",
+      "bbox": [
+        48.30403137207031,
+        699.2578277587891,
+        92.19403076171875,
+        706.3543243408203
+      ],
+      "charspan": [
+        3081,
+        3092
+      ]
+    },
+    {
+      "index": 53,
+      "text": "5. In existing literature, there is no a formal consensus on the min￾imum parameter scale for LLMs. In this survey, we mainly focus on",
+      "bbox": [
+        48.16802978515625,
+        720.350830078125,
+        299.9200439453125,
+        737.4308280944824
+      ],
+      "charspan": [
+        3094,
+        3228
+      ]
+    },
+    {
+      "index": 54,
+      "text": "discussing LLMs with a model size larger than 10B.",
+      "bbox": [
+        48.280029296875,
+        738.366828918457,
+        231.20806884765625,
+        746.4308280944824
+      ],
+      "charspan": [
+        3230,
+        3280
+      ]
+    },
+    {
+      "index": 55,
+      "text": "• In-context learning. The in-context learning ability is for￾mally introduced by GPT-3 [55]: assuming that the language",
+      "bbox": [
+        312.15203857421875,
+        44.81231689453125,
+        563.7975463867188,
+        65.99481201171875
+      ],
+      "charspan": [
+        3282,
+        3402
+      ]
+    },
+    {
+      "index": 56,
+      "text": "model has been provided with a natural language instruc￾tion and/or several task demonstrations, it can generate the",
+      "bbox": [
+        312.15203857421875,
+        67.95880126953125,
+        563.797607421875,
+        89.07476806640625
+      ],
+      "charspan": [
+        3404,
+        3520
+      ]
+    },
+    {
+      "index": 57,
+      "text": "expected output for the test instances by completing the",
+      "bbox": [
+        312.2470397949219,
+        91.01971435546875,
+        563.7025146484375,
+        100.61474609375
+      ],
+      "charspan": [
+        3522,
+        3578
+      ]
+    },
+    {
+      "index": 58,
+      "text": "word sequence of input text, without requiring additional",
+      "bbox": [
+        312.0570373535156,
+        102.5596923828125,
+        563.8070068359375,
+        112.15472412109375
+      ],
+      "charspan": [
+        3580,
+        3637
+      ]
+    },
+    {
+      "index": 59,
+      "text": "training or gradient updates6",
+      "bbox": [
+        312.20904541015625,
+        112.81884765625,
+        434.6962585449219,
+        123.6947021484375
+      ],
+      "charspan": [
+        3639,
+        3668
+      ]
+    },
+    {
+      "index": 60,
+      "text": ".",
+      "bbox": [
+        436.0435485839844,
+        119.961181640625,
+        437.1455383300781,
+        121.0537109375
+      ],
+      "charspan": [
+        3670,
+        3671
+      ]
+    },
+    {
+      "index": 61,
+      "text": "• Instruction following. By fine-tuning with a mixture",
+      "bbox": [
+        326.7980041503906,
+        126.84521484375,
+        563.7020263671875,
+        136.48773193359375
+      ],
+      "charspan": [
+        3673,
+        3727
+      ]
+    },
+    {
+      "index": 62,
+      "text": "of multi-task datasets formatted via natural language de￾scriptions (i.e., instructions), LLMs are shown to perform",
+      "bbox": [
+        312.2850646972656,
+        138.43267822265625,
+        563.8705444335938,
+        159.54864501953125
+      ],
+      "charspan": [
+        3729,
+        3844
+      ]
+    },
+    {
+      "index": 63,
+      "text": "well on unseen tasks that are also described in the form of",
+      "bbox": [
+        312.05706787109375,
+        161.51263427734375,
+        564.0730590820312,
+        168.609130859375
+      ],
+      "charspan": [
+        3846,
+        3905
+      ]
+    },
+    {
+      "index": 64,
+      "text": "instructions [28, 61, 62]. With this ability, instruction tuning",
+      "bbox": [
+        312.1995544433594,
+        173.0716552734375,
+        563.883056640625,
+        182.64764404296875
+      ],
+      "charspan": [
+        3907,
+        3971
+      ]
+    },
+    {
+      "index": 65,
+      "text": "enables LLMs to perform new tasks by understanding the",
+      "bbox": [
+        312.2470703125,
+        184.59259033203125,
+        563.7025756835938,
+        194.1876220703125
+      ],
+      "charspan": [
+        3973,
+        4027
+      ]
+    },
+    {
+      "index": 66,
+      "text": "task instructions without using explicit examples, which can",
+      "bbox": [
+        312.2090759277344,
+        196.151611328125,
+        563.902099609375,
+        205.72760009765625
+      ],
+      "charspan": [
+        4029,
+        4089
+      ]
+    },
+    {
+      "index": 67,
+      "text": "largely improve the generalization ability.",
+      "bbox": [
+        312.1995544433594,
+        207.69158935546875,
+        487.7215576171875,
+        217.267578125
+      ],
+      "charspan": [
+        4091,
+        4134
+      ]
+    },
+    {
+      "index": 68,
+      "text": "• Step-by-step reasoning. For small language models, it is",
+      "bbox": [
+        326.7980041503906,
+        220.41705322265625,
+        563.6840209960938,
+        230.0595703125
+      ],
+      "charspan": [
+        4136,
+        4194
+      ]
+    },
+    {
+      "index": 69,
+      "text": "usually difficult to solve complex tasks that involve multiple",
+      "bbox": [
+        312.1710510253906,
+        232.0045166015625,
+        563.7025146484375,
+        241.59954833984375
+      ],
+      "charspan": [
+        4196,
+        4258
+      ]
+    },
+    {
+      "index": 70,
+      "text": "reasoning steps, e.g., mathematical word problems. While,",
+      "bbox": [
+        312.1995544433594,
+        243.56353759765625,
+        563.695068359375,
+        253.1395263671875
+      ],
+      "charspan": [
+        4260,
+        4317
+      ]
+    },
+    {
+      "index": 71,
+      "text": "with the chain-of-thought reasoning strategy [33], LLMs can",
+      "bbox": [
+        312.0570983886719,
+        255.08447265625,
+        563.902099609375,
+        264.67950439453125
+      ],
+      "charspan": [
+        4319,
+        4378
+      ]
+    },
+    {
+      "index": 72,
+      "text": "solve such tasks by utilizing the prompting mechanism that",
+      "bbox": [
+        312.28509521484375,
+        266.64349365234375,
+        563.9306640625,
+        276.219482421875
+      ],
+      "charspan": [
+        4380,
+        4438
+      ]
+    },
+    {
+      "index": 73,
+      "text": "involves intermediate reasoning steps for deriving the final",
+      "bbox": [
+        312.1995849609375,
+        278.16448974609375,
+        563.80712890625,
+        287.75946044921875
+      ],
+      "charspan": [
+        4440,
+        4500
+      ]
+    },
+    {
+      "index": 74,
+      "text": "answer. This ability is speculated to be potentially obtained",
+      "bbox": [
+        312.3040771484375,
+        289.7234802246094,
+        563.693115234375,
+        299.2994689941406
+      ],
+      "charspan": [
+        4502,
+        4563
+      ]
+    },
+    {
+      "index": 75,
+      "text": "by training on code [33, 47].",
+      "bbox": [
+        311.8670959472656,
+        301.26348876953125,
+        429.2205810546875,
+        310.8394775390625
+      ],
+      "charspan": [
+        4565,
+        4594
+      ]
+    },
+    {
+      "index": 76,
+      "text": "Key Techniques for LLMs. It has been a long way that",
+      "bbox": [
+        312.37060546875,
+        320.739501953125,
+        563.93359375,
+        330.31549072265625
+      ],
+      "charspan": [
+        4596,
+        4648
+      ]
+    },
+    {
+      "index": 77,
+      "text": "LLMs evolve into the current state: general and capable",
+      "bbox": [
+        312.2091064453125,
+        332.2130126953125,
+        563.8580932617188,
+        341.78900146484375
+      ],
+      "charspan": [
+        4650,
+        4705
+      ]
+    },
+    {
+      "index": 78,
+      "text": "learners. In the development process, a number of impor￾tant techniques are proposed, which largely improve the",
+      "bbox": [
+        312.1995544433594,
+        343.800537109375,
+        563.7975463867188,
+        364.9355163574219
+      ],
+      "charspan": [
+        4707,
+        4818
+      ]
+    },
+    {
+      "index": 79,
+      "text": "capacity of LLMs. Here, we briefly list several important",
+      "bbox": [
+        312.2470703125,
+        366.88055419921875,
+        563.9306030273438,
+        376.47552490234375
+      ],
+      "charspan": [
+        4820,
+        4877
+      ]
+    },
+    {
+      "index": 80,
+      "text": "techniques that (potentially) lead to the success of LLMs, as",
+      "bbox": [
+        312.2090759277344,
+        378.4205627441406,
+        563.68359375,
+        388.0155334472656
+      ],
+      "charspan": [
+        4879,
+        4940
+      ]
+    },
+    {
+      "index": 81,
+      "text": "follows.",
+      "bbox": [
+        312.21856689453125,
+        389.9605712890625,
+        344.7560729980469,
+        397.05706787109375
+      ],
+      "charspan": [
+        4942,
+        4950
+      ]
+    },
+    {
+      "index": 82,
+      "text": "• Scaling. Scaling is the key factor to increase the model",
+      "bbox": [
+        326.7980041503906,
+        402.7050476074219,
+        563.8125610351562,
+        412.3475341796875
+      ],
+      "charspan": [
+        4952,
+        5010
+      ]
+    },
+    {
+      "index": 83,
+      "text": "capacity of LLMs. As the initial attempt, GPT-3 firstly in￾creases the model size to an extremely large scale of 175B",
+      "bbox": [
+        312.2470703125,
+        414.2925720214844,
+        563.797607421875,
+        435.42755126953125
+      ],
+      "charspan": [
+        5012,
+        5129
+      ]
+    },
+    {
+      "index": 84,
+      "text": "parameters. Later on, PaLM further raises the parameter",
+      "bbox": [
+        312.0760498046875,
+        437.3725891113281,
+        563.797607421875,
+        446.9485778808594
+      ],
+      "charspan": [
+        5131,
+        5186
+      ]
+    },
+    {
+      "index": 85,
+      "text": "scale to a new record of 540B. As discussed before, a large",
+      "bbox": [
+        312.2850646972656,
+        448.91259765625,
+        563.7025146484375,
+        458.507568359375
+      ],
+      "charspan": [
+        5188,
+        5247
+      ]
+    },
+    {
+      "index": 86,
+      "text": "model size is essential to emergent abilities. While, scaling",
+      "bbox": [
+        312.1520690917969,
+        460.4715881347656,
+        563.883056640625,
+        470.0475769042969
+      ],
+      "charspan": [
+        5249,
+        5310
+      ]
+    },
+    {
+      "index": 87,
+      "text": "is not only conducted on model size but also related to",
+      "bbox": [
+        312.1995544433594,
+        472.0115966796875,
+        563.6930541992188,
+        481.58758544921875
+      ],
+      "charspan": [
+        5312,
+        5367
+      ]
+    },
+    {
+      "index": 88,
+      "text": "data size and total compute [34, 63]. A recent study [34]",
+      "bbox": [
+        312.3325500488281,
+        483.5516052246094,
+        563.24658203125,
+        493.1275939941406
+      ],
+      "charspan": [
+        5369,
+        5426
+      ]
+    },
+    {
+      "index": 89,
+      "text": "has discussed the optimal schedule among the three aspects",
+      "bbox": [
+        312.05706787109375,
+        495.09161376953125,
+        563.68359375,
+        504.6676025390625
+      ],
+      "charspan": [
+        5428,
+        5486
+      ]
+    },
+    {
+      "index": 90,
+      "text": "of model size, data size, and total compute, given a fixed",
+      "bbox": [
+        312.3040466308594,
+        506.6126403808594,
+        563.6930541992188,
+        516.2076110839844
+      ],
+      "charspan": [
+        5488,
+        5546
+      ]
+    },
+    {
+      "index": 91,
+      "text": "budget. Further, the quality of the pre-training data plays",
+      "bbox": [
+        311.8670654296875,
+        518.1526489257812,
+        563.68359375,
+        527.7476196289062
+      ],
+      "charspan": [
+        5548,
+        5607
+      ]
+    },
+    {
+      "index": 92,
+      "text": "a key role in achieving good performance, so that data",
+      "bbox": [
+        312.3040466308594,
+        529.692626953125,
+        563.7216186523438,
+        539.2876281738281
+      ],
+      "charspan": [
+        5609,
+        5663
+      ]
+    },
+    {
+      "index": 93,
+      "text": "collection and cleaning strategies are very important to",
+      "bbox": [
+        312.2470703125,
+        541.2516174316406,
+        563.6930541992188,
+        550.8276214599609
+      ],
+      "charspan": [
+        5665,
+        5721
+      ]
+    },
+    {
+      "index": 94,
+      "text": "consider when scaling the pre-training corpora.",
+      "bbox": [
+        312.2470703125,
+        552.7916107177734,
+        511.94659423828125,
+        562.3676147460938
+      ],
+      "charspan": [
+        5723,
+        5770
+      ]
+    },
+    {
+      "index": 95,
+      "text": "• Training. Due to the huge model size, it is very chal￾lenging to successfully train a capable LLM. Distributed",
+      "bbox": [
+        312.1995544433594,
+        565.5846099853516,
+        563.8050537109375,
+        586.7006072998047
+      ],
+      "charspan": [
+        5772,
+        5884
+      ]
+    },
+    {
+      "index": 96,
+      "text": "training algorithms are needed to learn the network param￾eters of LLMs, in which various parallel strategies are of￾ten jointly utilized. To support distributed training, several",
+      "bbox": [
+        312.2090759277344,
+        588.6645965576172,
+        563.8070678710938,
+        621.3205871582031
+      ],
+      "charspan": [
+        5886,
+        6065
+      ]
+    },
+    {
+      "index": 97,
+      "text": "optimization frameworks have been released to facilitate",
+      "bbox": [
+        312.3040466308594,
+        623.2655792236328,
+        563.7025756835938,
+        632.8415832519531
+      ],
+      "charspan": [
+        6067,
+        6123
+      ]
+    },
+    {
+      "index": 98,
+      "text": "the implementation and deployment of parallel algorithms,",
+      "bbox": [
+        312.2090759277344,
+        634.8055725097656,
+        563.6930541992188,
+        644.4005737304688
+      ],
+      "charspan": [
+        6125,
+        6182
+      ]
+    },
+    {
+      "index": 99,
+      "text": "such as DeepSpeed [64] and Megatron-LM [65]. Besides,",
+      "bbox": [
+        312.2850646972656,
+        646.3645629882812,
+        563.6930541992188,
+        655.9405670166016
+      ],
+      "charspan": [
+        6184,
+        6237
+      ]
+    },
+    {
+      "index": 100,
+      "text": "optimization tricks are also important for training stabil￾ity and model performance, e.g., restart with training loss",
+      "bbox": [
+        312.1995544433594,
+        657.8855743408203,
+        563.7975463867188,
+        679.0205688476562
+      ],
+      "charspan": [
+        6239,
+        6357
+      ]
+    },
+    {
+      "index": 101,
+      "text": "spike [56] and mixed precision training [66]. More recently,",
+      "bbox": [
+        312.2850646972656,
+        680.9845657348633,
+        563.693115234375,
+        690.5605697631836
+      ],
+      "charspan": [
+        6359,
+        6419
+      ]
+    },
+    {
+      "index": 102,
+      "text": "GPT-4 [46] proposes to develop special infrastructure and",
+      "bbox": [
+        312.2090759277344,
+        692.5055694580078,
+        563.6930541992188,
+        702.0815734863281
+      ],
+      "charspan": [
+        6421,
+        6478
+      ]
+    },
+    {
+      "index": 103,
+      "text": "6. In some recent studies [60], it also shows that in-context learning",
+      "bbox": [
+        320.2560729980469,
+        720.3675689697266,
+        563.9041137695312,
+        728.431568145752
+      ],
+      "charspan": [
+        6480,
+        6550
+      ]
+    },
+    {
+      "index": 104,
+      "text": "implicitly performs meta-optimization through the attention mecha￾nism.",
+      "bbox": [
+        312.0480651855469,
+        729.3515663146973,
+        563.8321533203125,
+        744.3275680541992
+      ],
+      "charspan": [
+        6552,
+        6623
+      ]
+    }
+  ],
+  "criteria": {
+    "cross_column_mixed_text_elements": 0,
+    "whole_paragraph_omissions": 0,
+    "whole_paragraph_duplicates": 0,
+    "major_body_order_inversions": 0,
+    "minor_glyph_errors": "allowed; report differences without claiming zero-error quality"
+  },
+  "notes": [
+    "Fixture is exact clean raster derivative, not noisy natural scan.",
+    "Footnotes evaluated separately; their position relative to body is not a body-order failure.",
+    "Source native extraction contains superscript markers 5 and 6; these are retained."
+  ],
+  "id": "known"
+}

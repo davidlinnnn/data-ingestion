@@ -1,0 +1,227 @@
+{
+  "format": "native-vs-frozen-image-coverage-review-v1",
+  "review_date": "2026-10-14",
+  "reviewer": "Codex source-preparation agent; visual inspection of all six saved native PNGs against frozen target PNGs and referenced G1 oracles",
+  "native_inventory_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/native-inventory.json",
+  "native_inventory_sha256": "39380b054486f7b7daee1413218961ddf3f45ec48f68d953ae12709cd05f0a03",
+  "frozen_cases_path": "docs/fixtures/pdf-core-g1-2026-10-14/cases.json",
+  "frozen_cases_sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+  "scope": "Read-only source-coverage review of actual PictureItem bboxes rerendered from pinned PDFs. No inference and no proof of future provider crop identity.",
+  "summary": {
+    "native_crops": 6,
+    "necessary_content_covered": 6,
+    "necessary_content_clipped": 0,
+    "complete_fixed_envelope": 1
+  },
+  "reviews": [
+    {
+      "frozen_case_id": "G1-S05",
+      "native_input_id": "native-wikiskill-p4-picture0",
+      "native_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/crops/wikiskill-p4-0.png",
+      "native_sha256": "e21cd39e79885dc94a4ffe39ac2fabcca54c7c9c046f2d8be8879e22bc2b450c",
+      "native_picture_ref": "#/pictures/0",
+      "fixed_target_path": "docs/research/pdf-core-g2-images-2026-10-14/inputs/g1-s05.png",
+      "fixed_target_sha256": "5069621b6ce14c3ed40d3292d6a2ed59d0b345f07b7833dbc1000ab6b20e95ba",
+      "frozen_bbox_points_top_left": [
+        62,
+        83,
+        534,
+        309
+      ],
+      "native_bbox_points_top_left": [
+        60.92380142211914,
+        84.3405532836914,
+        533.2265014648438,
+        302.372314453125
+      ],
+      "native_contains_entire_frozen_envelope": false,
+      "frozen_envelope_area_covered_fraction": 0.963161317159991,
+      "overlap_metric_status": "Descriptive geometry only; not a new IoU/acceptance threshold. Manual frozen envelopes include margins and differ from necessary visible content.",
+      "necessary_content_status": "covered_in_current_visual_review",
+      "necessary_content_clipped": false,
+      "visible_required_content": [
+        "Skill/Wiki/Raw layer names and skills/wiki/raw paths",
+        "Reversible conditional skill update, compounding/never-reset wiki, permanent/write-once immutable traces",
+        "Four numbered agents/steps with Step1->Step2->Step3->Step4 directions",
+        "Inject Skills/Write Traces, Sample Traces/Consolidate Patterns, Read Skill Wiki Traces, Update Skill if Better/Update Wiki Logs labels and corresponding directional arrows",
+        "Step4->next iteration->Step1 return loop and Next Iteration label"
+      ],
+      "edge_observation": "Bottom green return-loop stroke touches the crop edge; its path and upward arrow to Step1 remain visible. Native box omits fixed-envelope margin but no required relation or label is lost.",
+      "outside_scope": "Original Figure2 caption is below both model graphic crops; source-caption provenance remains separate."
+    },
+    {
+      "frozen_case_id": "G1-C03",
+      "native_input_id": "native-controls-p2-picture0",
+      "native_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/crops/controls-p2-0.png",
+      "native_sha256": "2725d643b6a771e66e48e7bc8011d8e601f9698543fcbe2c8d39b5dbda7ac4ab",
+      "native_picture_ref": "#/pictures/0",
+      "fixed_target_path": "docs/research/pdf-core-g2-images-2026-10-14/inputs/g1-c03.png",
+      "fixed_target_sha256": "e594303ccdf3d50e5c5c22c41c7336391eebccf65827e88a0939ae510d307cda",
+      "frozen_bbox_points_top_left": [
+        42,
+        102,
+        270,
+        324
+      ],
+      "native_bbox_points_top_left": [
+        49.244197845458984,
+        124.34300994873047,
+        239.7091064453125,
+        302.2254638671875
+      ],
+      "native_contains_entire_frozen_envelope": false,
+      "frozen_envelope_area_covered_fraction": 0.6693607817112489,
+      "overlap_metric_status": "Descriptive geometry only; not a new IoU/acceptance threshold. Manual frozen envelopes include margins and differ from necessary visible content.",
+      "necessary_content_status": "covered_in_current_visual_review",
+      "necessary_content_clipped": false,
+      "visible_required_content": [
+        "Score (%) axis unit and 0/10/20 ticks",
+        "Both complete bars with printed values 10 and 20",
+        "A/B category labels bound to their bars"
+      ],
+      "edge_observation": "Right end of horizontal axis is slightly truncated at the image edge (native right239.709 versus generator endpoint240 points); no value/category/scale content is lost. Panel title is outside native crop.",
+      "outside_scope": "Panel heading is not a numeric observation and is not needed to bind these bars."
+    },
+    {
+      "frozen_case_id": "G1-C04",
+      "native_input_id": "native-controls-p2-picture2",
+      "native_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/crops/controls-p2-2.png",
+      "native_sha256": "d21aaed2fb20b8fe8e798c22362abde099a165fdbab59f4baf377433e8158b64",
+      "native_picture_ref": "#/pictures/2",
+      "fixed_target_path": "docs/research/pdf-core-g2-images-2026-10-14/inputs/g1-c04.png",
+      "fixed_target_sha256": "f95f814872b223f7b083df124d29f69fa9b72d1416220868ecaf25a6f09d64b0",
+      "frozen_bbox_points_top_left": [
+        314,
+        102,
+        545,
+        350
+      ],
+      "native_bbox_points_top_left": [
+        323.30535888671875,
+        123.90357208251953,
+        518.1870727539062,
+        346.5358581542969
+      ],
+      "native_contains_entire_frozen_envelope": false,
+      "frozen_envelope_area_covered_fraction": 0.7573481614271391,
+      "overlap_metric_status": "Descriptive geometry only; not a new IoU/acceptance threshold. Manual frozen envelopes include margins and differ from necessary visible content.",
+      "necessary_content_status": "covered_in_current_visual_review",
+      "necessary_content_clipped": false,
+      "visible_required_content": [
+        "Score (%) axis and 0/50/100 ticks",
+        "Step axis with 1/2/3 labels",
+        "Both complete crossing series and endpoint markers",
+        "Blue/Orange color legends and their source association"
+      ],
+      "edge_observation": "All six data points and both legends are within crop. Panel title is outside native crop.",
+      "outside_scope": "Do not count overlapping step2 values as one source observation; the fixed oracle has two coincident series points."
+    },
+    {
+      "frozen_case_id": "G1-C05",
+      "native_input_id": "native-controls-p2-picture1",
+      "native_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/crops/controls-p2-1.png",
+      "native_sha256": "a1a9e8c25c0549dc9878d66458348500034fc692d2130aaf3632402d159fe866",
+      "native_picture_ref": "#/pictures/1",
+      "fixed_target_path": "docs/research/pdf-core-g2-images-2026-10-14/inputs/g1-c05.png",
+      "fixed_target_sha256": "dd821ef93dea301167fdc88aae25d7561b336302333c301bffec03abd4801a8f",
+      "frozen_bbox_points_top_left": [
+        42,
+        403,
+        280,
+        642
+      ],
+      "native_bbox_points_top_left": [
+        49.68219757080078,
+        438.40118408203125,
+        243.71759033203125,
+        639.2623291015625
+      ],
+      "native_contains_entire_frozen_envelope": false,
+      "frozen_envelope_area_covered_fraction": 0.6851758230078974,
+      "overlap_metric_status": "Descriptive geometry only; not a new IoU/acceptance threshold. Manual frozen envelopes include margins and differ from necessary visible content.",
+      "necessary_content_status": "covered_in_current_visual_review",
+      "necessary_content_clipped": false,
+      "visible_required_content": [
+        "Value (log10) axis label and 1/10/100 ticks",
+        "Step axis and source step1/2/3 labels",
+        "All three plotted markers and equal plotted intervals"
+      ],
+      "edge_observation": "Rightmost step3 label lies close to right edge but remains visibly complete. Panel title is outside native crop.",
+      "outside_scope": "No linear-axis substitution; category association and logarithmic scale remain required."
+    },
+    {
+      "frozen_case_id": "G1-C06",
+      "native_input_id": "native-controls-p2-picture3",
+      "native_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/crops/controls-p2-3.png",
+      "native_sha256": "a3757aad559080cafed2d26d43fc47103bc0accc49979b3705e7f44c13f9f61d",
+      "native_picture_ref": "#/pictures/3",
+      "fixed_target_path": "docs/research/pdf-core-g2-images-2026-10-14/inputs/g1-c06.png",
+      "fixed_target_sha256": "fccf6d430a928e07991af3d1de46dba2ec1455b4014fb763367a16f94a995fa5",
+      "frozen_bbox_points_top_left": [
+        314,
+        403,
+        552,
+        642
+      ],
+      "native_bbox_points_top_left": [
+        339.4870300292969,
+        437.8525390625,
+        497.6393737792969,
+        623.3491821289062
+      ],
+      "native_contains_entire_frozen_envelope": false,
+      "frozen_envelope_area_covered_fraction": 0.5157471407248222,
+      "overlap_metric_status": "Descriptive geometry only; not a new IoU/acceptance threshold. Manual frozen envelopes include margins and differ from necessary visible content.",
+      "necessary_content_status": "covered_in_current_visual_review",
+      "necessary_content_clipped": false,
+      "visible_required_content": [
+        "Complete blue and orange sectors, including shared radial boundaries and complete circle",
+        "Color-matched A/B category labels below pie"
+      ],
+      "edge_observation": "A and B labels are visibly complete at bottom. Pie circle is fully inside native crop. Panel title is outside native crop.",
+      "outside_scope": "Sector values remain unprinted; source labels A/B must not be replaced by unlabeled colors."
+    },
+    {
+      "frozen_case_id": "G1-S07",
+      "native_input_id": "native-nccu-p3-picture0",
+      "native_path": "docs/research/pdf-core-g2-images-2026-10-14/layout/crops/nccu-p3-0.png",
+      "native_sha256": "0860e63a8306eb10c8514d0b9976d0e7453e9c8d7702dc530acf78d5d0c15a50",
+      "native_picture_ref": "#/pictures/0",
+      "fixed_target_path": "docs/research/pdf-core-g2-images-2026-10-14/inputs/g1-s07.png",
+      "fixed_target_sha256": "67daf56dc4b467605c202096cb16413818dd22063a85dc13a40d2401ce109f68",
+      "frozen_bbox_points_top_left": [
+        148.6297,
+        303.0645,
+        390.6052,
+        405.1958
+      ],
+      "native_bbox_points_top_left": [
+        62.58289337158203,
+        242.54855346679688,
+        509.465087890625,
+        569.2747192382812
+      ],
+      "native_contains_entire_frozen_envelope": true,
+      "frozen_envelope_area_covered_fraction": 1.0,
+      "overlap_metric_status": "Descriptive geometry only; not a new IoU/acceptance threshold. Manual frozen envelopes include margins and differ from necessary visible content.",
+      "necessary_content_status": "covered_in_current_visual_review",
+      "necessary_content_clipped": false,
+      "visible_required_content": [
+        "Complete fixed selected panel within full screenshot",
+        "Breadcrumb with 首頁/我的專區/應用系統 in source order",
+        "Both central headings plus complete selection/link instruction and B5A label"
+      ],
+      "edge_observation": "Native crop includes the entire fixed selected panel and additional screenshot context. It is a larger-scope input than the frozen selected-panel PNG.",
+      "outside_scope": "Additional visible screenshot text/photos do not expand the fixed S07 oracle or authorize invented follow-up outcomes."
+    }
+  ],
+  "quality_review_ready": {
+    "state": "awaiting_saved_description_or_API_output_paths",
+    "method": "Offline compare saved outputs against exact referenced frozen oracles and image input hashes; preserve producer task/model/prompt/output provenance; no network/inference.",
+    "semantic_checks": "S05 directed workflow, knowledge layers and update conditions; S07 navigation/instruction/link source associations and no invented downstream outcomes. Keep original caption, OCR and generated interpretation distinct.",
+    "chart_checks": "C03 two printed values exact with A/B/% association. C04 six unprinted series points with Blue/Orange/Step association, estimate flags and <=2% normalized numeric-axis error. C05 three unprinted log10 points with Step association, estimate flags and <=2% normalized logarithmic-axis error. C06 two unprinted sectors with A/B color association, estimate flags and <=2 percentage points each. Preserve every critical comparison from the frozen oracle.",
+    "routing_checks": "Record raw classifier outcome/confidence, including unknown/misclassification; no empty output or classification can silently skip required F11 semantics. Classifier type is not V09 quality evidence.",
+    "oracle_references": "oracle-references.json",
+    "candidate_verdict": "not_run"
+  }
+}

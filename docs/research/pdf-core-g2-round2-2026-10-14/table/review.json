@@ -1,0 +1,379 @@
+{
+  "format": "pdf-core-g2-round2-table-review-v1",
+  "date": "2026-10-14",
+  "validation": {
+    "registry_sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+    "runner_hash_matches_method": true,
+    "retained_model_weight_hash_matches_hf_snapshot_metadata": true,
+    "originals_unchanged": true,
+    "source_original_physical_pages": [
+      8,
+      8
+    ],
+    "numeric_oracle_denominators": [
+      6,
+      84
+    ],
+    "both_eos_without_truncation": true,
+    "both_children_exit_zero_reaped_no_stop": true
+  },
+  "results": [
+    {
+      "case_id": "G1-T01",
+      "source": {
+        "pdf": "/Users/david/work/data-ingestion/docs/fixtures/agent-self-evolution-pilot-2026-10-11/11-2508.19828v5.pdf",
+        "sha256": "c206af4e792e9550f2aaec8a6c4d9b141d1ddcb587e781d7866870c8f3e4dd4f",
+        "page_no": 8,
+        "size": {
+          "width": 595.2760009765625,
+          "height": 841.8900146484375
+        },
+        "case_id": "G1-T01",
+        "provider_result": "/Users/david/work/data-ingestion/docs/research/pdf-core-g2-local-cpu-2026-10-14/runs/memory-r1-p8/conversion-result.json",
+        "provider_sha256": "76588db51a4cfb0efaaae6db513b1b7078243cd182826be40bccf5f7767f61fa",
+        "full_original_table_cluster": true,
+        "numeric_oracle_count": 6
+      },
+      "producer": "official TableStructureModelV2.predict_tables output, before any project mapper",
+      "expected_numeric_points": 6,
+      "full_numeric_error_rate": null,
+      "generation": {
+        "new_tokens": 16,
+        "eos_reached": true,
+        "length_limit_reached_without_eos": false,
+        "last_structure_token": "nl"
+      },
+      "output_rows": 3,
+      "output_columns": 4,
+      "reviewer": "Codex source visual and complete table-cell output review",
+      "reviewed_full_source_crop": true,
+      "artifacts": {
+        "table.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/memory-r1-p8/table.json",
+          "sha256": "6e9a92578c6dfaf1f9e3168e18c693911f641285f76b1d1d9c8a29959ced57e0"
+        },
+        "settings.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/memory-r1-p8/settings.json",
+          "sha256": "995b2f85dc2a7e2c340fb67fd0d402bb56aabb85b7d5a1da0dec548b0d627e48"
+        },
+        "generation.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/memory-r1-p8/generation.json",
+          "sha256": "fb68a94e485657c85033eb3176116b2a69c928c5b2c3bc0cc181a24ea851c6e1"
+        },
+        "source.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/memory-r1-p8/source.json",
+          "sha256": "4a7a2598c80c86145c170073ccd9fc17e9967edfea6afac9917a064a719d1548"
+        },
+        "capture-table.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/memory-r1-p8/capture-table.json",
+          "sha256": "9ab211233cb1a6bd70199c049ae337d97d5e355c563bface3ba6fbb7d3f8c09d"
+        },
+        "table-crop-144dpi.png": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/memory-r1-p8/table-crop-144dpi.png",
+          "sha256": "621422ad06592dfd70b47b010ee313e3dddf4c92c9972ae6b4f4a1b710da30ec"
+        }
+      },
+      "status": "pass_stage_content_and_method_metric_binding",
+      "numeric_point_reviews": {
+        "G1-T01.r01.c01": {
+          "expected": "33.69",
+          "actual": "33.69",
+          "provider_row_col_0based": [
+            1,
+            1
+          ],
+          "status": "pass_value_method_metric_binding"
+        },
+        "G1-T01.r01.c02": {
+          "expected": "23.36",
+          "actual": "23.36",
+          "provider_row_col_0based": [
+            1,
+            2
+          ],
+          "status": "pass_value_method_metric_binding"
+        },
+        "G1-T01.r01.c03": {
+          "expected": "63.58",
+          "actual": "63.58",
+          "provider_row_col_0based": [
+            1,
+            3
+          ],
+          "status": "pass_value_method_metric_binding"
+        },
+        "G1-T01.r02.c01": {
+          "expected": "41.05",
+          "actual": "41.05",
+          "provider_row_col_0based": [
+            2,
+            1
+          ],
+          "status": "pass_value_method_metric_binding"
+        },
+        "G1-T01.r02.c02": {
+          "expected": "32.91",
+          "actual": "32.91",
+          "provider_row_col_0based": [
+            2,
+            2
+          ],
+          "status": "pass_value_method_metric_binding"
+        },
+        "G1-T01.r02.c03": {
+          "expected": "57.54",
+          "actual": "57.54",
+          "provider_row_col_0based": [
+            2,
+            3
+          ],
+          "status": "pass_value_method_metric_binding"
+        }
+      },
+      "critical_comparisons": [
+        {
+          "left": "G1-T01.r01.c03",
+          "operator": ">",
+          "right": "G1-T01.r02.c03",
+          "reason": "J-based J 63.58 > EM-based 57.54.",
+          "status": "pass"
+        },
+        {
+          "left": "G1-T01.r02.c01",
+          "operator": ">",
+          "right": "G1-T01.r01.c01",
+          "reason": "EM-based F1 41.05 > J-based 33.69.",
+          "status": "pass"
+        },
+        {
+          "left": "G1-T01.r02.c02",
+          "operator": ">",
+          "right": "G1-T01.r01.c02",
+          "reason": "EM-based B1 32.91 > J-based 23.36.",
+          "status": "pass"
+        }
+      ],
+      "limitations": [
+        "Table stage only; caption and Markdown attachment were not regenerated; no Canonical or full-page acceptance claim."
+      ]
+    },
+    {
+      "case_id": "G1-T02",
+      "source": {
+        "pdf": "/Users/david/work/data-ingestion/docs/fixtures/agent-self-evolution-pilot-2026-10-11/04-2605.23904v2.pdf",
+        "sha256": "87f7f0f323b1671e9202b3ebb1596e909e507c71ecd1b360b0075a5ee1727fe3",
+        "page_no": 8,
+        "size": {
+          "width": 595.2760009765625,
+          "height": 841.8900146484375
+        },
+        "case_id": "G1-T02",
+        "provider_result": "/Users/david/work/data-ingestion/docs/research/pdf-core-g2-local-cpu-2026-10-14/runs/skillopt-p8/conversion-result.json",
+        "provider_sha256": "a69800e89e3f9fe13d88eae818438ce2e8b5f1c90df9838c5dbb8e8a4c93af73",
+        "full_original_table_cluster": true,
+        "numeric_oracle_count": 84
+      },
+      "producer": "official TableStructureModelV2.predict_tables output, before any project mapper",
+      "expected_numeric_points": 84,
+      "full_numeric_error_rate": null,
+      "generation": {
+        "new_tokens": 157,
+        "eos_reached": true,
+        "length_limit_reached_without_eos": false,
+        "last_structure_token": "nl"
+      },
+      "output_rows": 13,
+      "output_columns": 11,
+      "reviewer": "Codex source visual and complete table-cell output review",
+      "reviewed_full_source_crop": true,
+      "artifacts": {
+        "table.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/skillopt-p8/table.json",
+          "sha256": "eb5df13a6b3f1bfeae1df29e9788c386d50efd3f585e55616d56668c95c2ed7b"
+        },
+        "settings.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/skillopt-p8/settings.json",
+          "sha256": "2f5f2df277c0d5f24bf27eeb493e9c5795c2ca1f29646d99962e9e88e50725f9"
+        },
+        "generation.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/skillopt-p8/generation.json",
+          "sha256": "0dc368ee755c70a2d472b15096b4e2aeb8d35d7f2eec3ee79c5c1bf087620cc7"
+        },
+        "source.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/skillopt-p8/source.json",
+          "sha256": "debf49ee29a039f09a37b5908883a035bc724f623c15e0b009c1c8d6e8590b18"
+        },
+        "capture-table.json": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/skillopt-p8/capture-table.json",
+          "sha256": "295b264704b0d14a45e7b4721154c5b7e56ab92dabc9dd31f3ca23b312f0e842"
+        },
+        "table-crop-144dpi.png": {
+          "path": "docs/research/pdf-core-g2-round2-2026-10-14/table/skillopt-p8/table-crop-144dpi.png",
+          "sha256": "e15d7737e1fd4dc28dde61fd7845dc00a59cda731a521a6a8bebc39b3a9dfc9a"
+        }
+      },
+      "status": "fail_required_structure_and_binding",
+      "critical_comparisons": [
+        {
+          "left": "G1-T02.a.r05.c03",
+          "operator": ">",
+          "right": "G1-T02.a.r01.c03",
+          "reason": "Training size, LiveMath: 100% 70.5 > 1 example 59.1.",
+          "status": "fail_unique_row_value_binding",
+          "note": "100% LiveMath output row6/col3 = 67.0 70.5; source 100% is 70.5 only."
+        },
+        {
+          "left": "G1-T02.a.r03.c01",
+          "operator": "=",
+          "right": "G1-T02.a.r04.c01",
+          "reason": "SearchQA 86.1 tie at 40% and 80%.",
+          "status": "not_accepted_metric_header_binding",
+          "note": "40%/80% SearchQA tie values 86.1 are present, but header row1/col1 merges SearchQA Spreadsheet LiveMath."
+        },
+        {
+          "left": "G1-T02.b.r04.c01",
+          "operator": ">",
+          "right": "G1-T02.b.r05.c01",
+          "reason": "Mini-batch 8 SearchQA 87.1 > mini-batch 16 87.0.",
+          "status": "fail_missing_setting_and_metric_binding",
+          "note": "Panel b setting/SearchQA columns are blank in rows2–6; setting 8 and setting 16 comparison cannot be reconstructed."
+        },
+        {
+          "left": "G1-T02.c.r05.c01",
+          "operator": ">",
+          "right": "G1-T02.c.r03.c01",
+          "reason": "Rollout full epoch SearchQA 87.2 > batch 40 87.1.",
+          "status": "fail_unique_row_value_binding",
+          "note": "Panel c full epoch output setting = 56 full epoch; SearchQA = 86.5 87.2."
+        },
+        {
+          "left": "G1-T02.d.r03.c02",
+          "operator": "=",
+          "right": "G1-T02.d.r05.c02",
+          "reason": "Spreadsheet 78.2 tie at lr=4 and lr=16.",
+          "status": "fail_unique_row_binding",
+          "note": "Learning-rate setting labels lr=2 lr=4 and lr=8 lr=16 are merged, even where Spreadsheet 78.2 is present."
+        },
+        {
+          "left": "G1-T02.d.r04.c03",
+          "operator": ">",
+          "right": "G1-T02.d.r03.c03",
+          "reason": "LiveMath lr=8 66.9 > lr=4 56.5.",
+          "status": "fail_missing_value_binding",
+          "note": "Learning-rate rows10/11 LiveMath cells are empty for source lr=4 and lr=8."
+        },
+        {
+          "left": "G1-T02.e.r01.c02",
+          "operator": ">",
+          "right": "G1-T02.e.r02.c02",
+          "reason": "Scheduler constant Spreadsheet 80.7 > cosine 77.5.",
+          "status": "fail_missing_metrics",
+          "note": "Scheduler constant label alone survives at row9/col4; corresponding source scores are absent from expected panel columns."
+        },
+        {
+          "left": "G1-T02.f.r02.c03",
+          "operator": ">",
+          "right": "G1-T02.f.r03.c03",
+          "reason": "Slow-update 10 LiveMath 65.3 > 20 61.3.",
+          "status": "fail_unique_row_binding",
+          "note": "Slow-update 65.3 attaches to row10 setting 10 20; setting 10 is not independent."
+        }
+      ],
+      "counterexamples": [
+        {
+          "row": 6,
+          "col": 1,
+          "actual": "86.1 84.1"
+        },
+        {
+          "row": 6,
+          "col": 3,
+          "actual": "67.0 70.5"
+        },
+        {
+          "row": 5,
+          "col": 2,
+          "actual": "73.5 77.6"
+        },
+        {
+          "row": 6,
+          "col": 7,
+          "actual": "56 full epoch"
+        },
+        {
+          "row": 6,
+          "col": 8,
+          "actual": "86.5 87.2"
+        },
+        {
+          "row": 10,
+          "col": 0,
+          "actual": "lr=2 lr=4"
+        },
+        {
+          "row": 12,
+          "col": 0,
+          "actual": "lr=8 lr=16"
+        },
+        {
+          "row": 10,
+          "col": 7,
+          "actual": "10 20"
+        },
+        {
+          "row": 10,
+          "col": 10,
+          "actual": "65.3"
+        },
+        {
+          "row": 9,
+          "col": 4,
+          "actual": "constant"
+        },
+        {
+          "row": 0,
+          "col": 0,
+          "actual": "(a) Training set size (b) Mini-batchsize"
+        },
+        {
+          "row": 1,
+          "col": 1,
+          "actual": "SearchQA Spreadsheet LiveMath"
+        }
+      ],
+      "missing_regions": [
+        {
+          "kind": "Panel b settings/SearchQA",
+          "output_rows_0based": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "output_cols_0based": [
+            4,
+            5
+          ]
+        },
+        {
+          "kind": "Panel e metrics",
+          "output_rows_0based": [
+            9,
+            10,
+            11
+          ],
+          "output_cols_0based": [
+            5,
+            6
+          ]
+        }
+      ],
+      "limitations": [
+        "No complete 84-point error classification and no numeric error percentage claimed. All 84 source-point bboxes were checked inside unchanged stage TABLE crop.",
+        "Output is already wrong in official producer stage; not introduced by a project mapper or Markdown export.",
+        "No six-panel segmentation, table-only VLM or per-panel rerun performed."
+      ]
+    }
+  ]
+}

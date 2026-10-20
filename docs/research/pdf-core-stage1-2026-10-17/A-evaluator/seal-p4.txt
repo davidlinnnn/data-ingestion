@@ -1,0 +1,108 @@
+associated answers about the passage. In few-shot learning, C includes few-shot demonstrations of a
+novel task, and τ is the query input and ground-truth output. Given C, the model generates a self-edit
+SE—the form of which varies by domain (see §3.2)—and updates its parameters via supervised
+finetuning: θ
+′ ← SFT(θ, SE).
+We optimize the self-edit generation process using reinforcement learning: the model takes an action
+(generating SE), receives a reward r based on LMθ
+′ ’s performance on τ , and updates its policy to
+maximize expected reward:
+LRL(θt) := −E(C,τ)∼D h
+ESE∼LMθt
+(·|C)
+[r(SE, τ, θt)]i
+. (1)
+Algorithm 1 Self-Adapting LLMs (SEAL):
+Self-Edit Reinforcement Learning Loop
+1: Input: LMθ, dataset D = {(C, τ )}
+2: for outer iteration t = 1, 2, . . . do
+3: Sample (C, τ ) ∼ D
+4: Generate self-edit SE ∼ LMθ(· | C)
+5: Inner Loop Update: θ
+′
+t ← SFT(θt, SE)
+6: Evaluate: Ans ∼ LMθ
+′
+t
+(· | τ )
+7: Compute reward: r ← r(Ans, τ )
+8: Update: θt+1 ← RL_Update(θt, r, SE)
+9: end for
+Unlike in standard RL setups, the reward assigned to
+a given action in our setting depends on the model
+parameters θ at the time the action is taken (since θ
+is updated to θ
+′
+, which is then evaluated). As a re￾sult, the underlying RL state must include the policy’s
+parameters and is given by (C, θ), even though the
+policy’s observation is limited to C (placing θ directly
+in context is infeasible). The implication of this is that
+(state, action, reward) triples collected with a previous
+version of the model, θold, may become stale and mis￾aligned for the current model θcurrent. For this reason,
+we adopt an on-policy approach, in which self-edits
+are sampled from—and, crucially, rewards are computed using—the current model.
+We experimented with various on-policy methods such as Group Relative Policy Optimization
+(GRPO) [60] and Proximal Policy Optimization (PPO) [61], but found the training to be unstable.
+Instead, we adopt ReSTEM [36], a simpler approach based on filtered behavior cloning—also known
+as “rejection sampling + SFT” [62, 63, 64, 35, 65].
+ReSTEM can be viewed as an expectation-maximization (EM) procedure: the E-step samples candi￾date outputs from the current model policy, and the M-step reinforces only those samples that receive
+positive reward through supervised finetuning. This approach optimizes an approximation of our
+objective (1) under the binary reward:
+r(SE, τ, θt) = 
+1 If on τ , adaptation using SE improves LMθt
+’s performance2
+0 Otherwise (2)
+More precisely, in optimizing (1), we must compute the gradient ∇θtLRL. However, as we noted,
+the reward term r(SE, τ, θt) depends on θt in our setup but is not differentiable. We address this by
+treating the reward as fixed with respect to θt. With this approximation, the Monte-Carlo estimator
+for a minibatch of N contexts and M sampled self-edits per context becomes
+∇θtLRL ≈ −
+1
+NM
+X
+N
+i=1
+X
+M
+j=1
+rij ∇θt
+log pθt
+(SEij | Ci) (3)
+= −
+1
+NM
+X
+N
+i=1
+X
+M
+j=1
+rij X
+T
+s=1
+∇θt
+log pθt
+(y
+(i,j)
+s
+| y
+(i,j)
+<s , Ci), (4)
+where pθt
+denotes the model’s autoregressive distribution and y
+(i,j)
+s is the s
+th token of self-edit SEij ,
+the j
+th sample for context Ci
+. Since sequences with r = 0 can be ignored in (4), we have shown that
+ReSTEM, with simple “SFT on good self-edits,” indeed optimizes (1) under the binary reward (2)
+(with a stop-gradient applied to the reward term). The SEAL training loop is summarized in Alg. 1.
+Finally, we note that while the implementation in this work uses a single model for both generating
+self-edits and learning from these self-edits, it is also possible to decouple these roles. In such a
+“teacher-student” formulation [66], a student model would be updated using edits proposed by a
+separate teacher model. The teacher would then be trained via RL to generate edits that maximize
+student improvement.
+2The reward may also be assigned to the single self-edit that yields the greatest improvement among sampled
+candidates, which we do in knowledge incorporation, rather than to all edits that yield a positive improvement.
+4

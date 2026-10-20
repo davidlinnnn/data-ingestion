@@ -1,0 +1,62 @@
+{
+  "model_calls": 0,
+  "processor_class": "DotsVLProcessor",
+  "image_processor_class": "Qwen2VLImageProcessorPil",
+  "formatted_prompt": " <|img|><|imgpad|><|endofimg|>Please output the layout information from the PDF image, including each layout element's bbox, its category, and the corresponding text content within the bbox.\n\n1. Bbox format: [x1, y1, x2, y2]\n\n2. Layout Categories: The possible categories are ['Caption', 'Footnote', 'Formula', 'List-item', 'Page-footer', 'Page-header', 'Picture', 'Section-header', 'Table', 'Text', 'Title'].\n\n3. Text Extraction & Formatting Rules:\n    - Picture: For the 'Picture' category, the text field should be omitted.\n    - Formula: Format its text as LaTeX.\n    - Table: Format its text as HTML.\n    - All Others (Text, Title, etc.): Format their text as Markdown.\n\n4. Constraints:\n    - The output text must be the original text from the image, with no translation.\n    - All layout elements must be sorted according to human reading order.\n\n5. Final Output: The entire output must be a single JSON object.<|assistant|>",
+  "formatted_prompt_equal_cpu": true,
+  "image_grid_thw": [
+    [
+      1,
+      120,
+      86
+    ]
+  ],
+  "arrays": {
+    "input_ids": {
+      "shape": [
+        1,
+        2795
+      ],
+      "dtype": "int64",
+      "sha256": "73b82bd172125715840dd3de5712b8db3edd646dbbfb9e28d58e3d05c97b6260"
+    },
+    "attention_mask": {
+      "shape": [
+        1,
+        2795
+      ],
+      "dtype": "int64",
+      "sha256": "772e1d1bd28aaacff3ee576957fc264787408281410e8af60e689626b63f6a90"
+    },
+    "mm_token_type_ids": {
+      "shape": [
+        1,
+        2795
+      ],
+      "dtype": "int64",
+      "sha256": "be813f15e5be01541ba7fc24421f4b6807ece60945821a2b471fd1a9d1ab3d34"
+    },
+    "pixel_values": {
+      "shape": [
+        10320,
+        588
+      ],
+      "dtype": "float32",
+      "sha256": "0d3ebe54135651d43c32b78dfed075d3cf58f5934fd1eb3ddeb2804fa7965e9e"
+    },
+    "image_grid_thw": {
+      "shape": [
+        1,
+        3
+      ],
+      "dtype": "int64",
+      "sha256": "311e49e54ef76c31880a694d5586038d43cc8b121e98692cc58c05be14d28f33"
+    }
+  },
+  "arrays_equal_cpu": false,
+  "public_loader_kwargs": {
+    "trust_remote_code": true,
+    "use_fast": false
+  },
+  "why": "Docling2.132 declares trust_remote_code but does not forward it to mlx_vlm.load; public loader kwargs required before weights. use_fast=False preserves CPU slow processor choice."
+}

@@ -1,0 +1,57 @@
+Agent 0
+Base Code
+Benchmarks
+Bench 1
+Bench 2
+Bench 3
+Agent 1
+Agent 1 Code
+Benchmarks
+Bench 1
+Bench 2
+Bench 3
+Agent 2
+Agent 2 Code
+Benchmarks
+Bench 1
+Bench 2
+Bench 3
+Base Agent
+Meta-Improvement
+Meta-Improvement
+Meta-Improvement
+Best Agent 0, 1
+Best Agent 0, ..., 2
+...
+Figure 1: Meta Agent Loop: the agents starts with the minimal code required to support initial
+self-improvement, and then follows a sequence of benchmarking and meta-improvement.
+Our contributions are:
+• A self-improving coding agent (SICA) that eliminates the distinction between meta-agent
+and target agent, and is capable of editing its own codebase to improve itself with respect to
+its cost, speed and benchmark performance.
+• Empirical evidence that self-referential agents can effectively improve their own implemen￾tations; we find performance improves from 17% to 53% performance on a random subset
+of SWE-Bench Verified, even with consideration given to safety constraints and resource
+efficiency.
+• We share a our implementation of a self-improving coding agent (SICA) with the community.
+SICA is implemented in standard Python without a domain-specific language, and provides
+a reference agent framework for building new SICA systems, as well as those seeking to
+post-train LLMs on tool use and other agent tasks.
+We make our code available at https://github.com/MaximeRobeyns/self_improving_coding_
+agent.
+2 Related Work
+The traditional approach to developing and optimizing agent systems has been to manually design
+agent architectures and prompting techniques. Notable examples include Chain-of-Thought prompt￾ing [39], self-refinement [23] and self-reflection [37] for improving reasoning, tool use frameworks
+[33], and various compositional agent systems [38, 1]. While these hand-crafted approaches have
+achieved strong results, they require significant human effort and may miss useful patterns that could
+be discovered through automated search.
+Another direction focuses on enabling agents to learn reusable skills and continuously self-improve.
+MaestroMotif [19] uses LLM feedback to learn skill rewards and combines skills through code
+generation. This builds on earlier work on intrinsically motivated reinforcement learning [6] and
+autotelic agents [8] that develop repertoires of internally motivated skills, as well as work in open￾endedness [48, 12] that use LLMs to identify interesting and useful directions to explore in.
+Several approaches leverage LLMs to optimize agent behaviors through natural language interaction.
+OPRO [41] and Promptbreeder [13] focus on optimizing prompts through language. Others have
+explored using LLMs to critique and refine agent behaviors [18], generate training curricula [21], or
+provide natural language feedback for reinforcement learning [31]. Since our agent can edit its entire
+codebase, this includes the ability to tune its own prompts to optimise the behaviour of any part of
+the agent.
+2

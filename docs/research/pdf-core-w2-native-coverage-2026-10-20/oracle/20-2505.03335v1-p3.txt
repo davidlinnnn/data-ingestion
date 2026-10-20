@@ -1,0 +1,72 @@
+Absolute Zero: Reinforced Self-play Reasoning with Zero Data
+compared to models trained in the “zero” setting using in-domain data. These surprising results highlight that general reasoning skills
+can emerge without human-curated domain targeted data, positioning Absolute Zero as an promising research direction and AZR as a
+first pivotal milestone. Besides the remarkable results AZR achieved with zero human data for reasoning, we also make very interesting
+findings summarized below:
+• Code priors amplify reasoning. The base Qwen-Coder-7b model started with math performance 3.6 points lower than Qwen-7b.
+But after AZR training for both models, the coder variant surpassed the base by 0.7 points, suggesting that strong coding capabilities
+may potentially amplify overall reasoning improvements after AZR training.
+• Cross domain transfer is more pronounced for AZR. After RLVR, expert code models raise math accuracy by only 0.65 points on
+average, whereas AZR-Base-7B and AZR-Coder-7B trained on self-proposed code reasoning tasks improve math average by 10.9 and
+15.2, respectively, demonstrating much stronger generalized reasoning capability gains.
+• Bigger bases yield bigger gains. Performance improvements scale with model size: the 3B, 7B, and 14B coder models gain +5.7,
++10.2, and +13.2 points respectively, suggesting continued scaling is advantageous for AZR.
+• Comments as intermediate plans emerge naturally. When solving code induction tasks, AZR often interleaves step-by-step plans
+as comments and code (Appendix C.3), resembling the ReAct prompting framework (Yao et al., 2023). Similar behavior has been
+observed in much larger formal-math models such as DeepSeek Prover v2 (671B) (Ren et al., 2025). We therefore believe that allowing
+the model to use intermediate scratch-pads when generating long-form answers may be beneficial in other domains as well.
+• Cognitive Behaviors and Token length depends on reasoning mode. Distinct cognitive behaviors—such as step-by-step reasoning,
+enumeration, and trial-and-error all emerged through AZR training, but different behaviors are particularly evident across different
+types of tasks. Furthermore token counts grow over AZR training, but the magnitude of increase also differs by task types: abduction
+grows the most because the model performs trial-and-error until output matches, whereas deduction and induction grow modestly.
+• Safety alarms ringing. We observe AZR with Llama3.1-8b occasionally produces concerning chains of thought, we term the
+“uh-oh moment”, example shown in Figure 32, highlighting the need for future work on safety-aware training (Zhang et al., 2025a).
+2. The Absolute Zero Paradigm
+2.1. Preliminaries
+Supervised Fine-Tuning (SFT). SFT requires the datasets of task-rationale-answer demonstrations D = {(x, c⋆
+, y⋆
+)}, where
+x is the query, c
+⋆
+is the gold chain-of-thought (CoT)) and y
+⋆
+is the gold answer, all provided by human experts or superior AI models.
+The model trains to imitate the reference responses to minimize the conditional negative log-likelihood (Ouyang et al., 2022):
+LSFT(θ) = − E(x,c⋆,y⋆)∼D log πθ
+
+c
+⋆
+, y
+⋆
+| x). (1)
+However, at the frontier level, there’s no stronger model to distill from, and expert human labeling doesn’t scale well.
+Reinforcement Learning with Verifiable Rewards (RLVR). To move beyond the limits of pure imitation, RLVR only
+requires a dataset of task and answer D = {(x, y⋆
+)}, without labeled rationale. RLVR allows the model to generate its own CoT and
+calculate a verifiable reward with the golden answer r(y, y⋆
+). However, the learning task distribution D, with its set of queries and gold
+answers are still labeled by human experts. The trainable policy πθ is optimized to maximize expected reward:
+JRLVR(θ) = E(x,y⋆)∼D, y∼πθ(· |x)
+
+r(y, y
+⋆
+)
+
+. (2)
+In summary, both SFT and RLVR still rely on human-curated datasets of either queries, demonstrations, or verifiers, which ultimately
+limit scalability. The Absolute Zero paradigm removes this dependency by allowing the model to generate, solve, and learn from its own
+interactions with the environment entirely through self-play.
+2.2. Absolute Zero
+We propose the Absolute Zero paradigm, where during training, the model simultaneously proposes tasks, solves them, and learns from
+both stages. No external data is required and the model learns entirely through self-play and experience, aided by some environment. We
+illustrate this paradigm in Figure 2, which contrasts Absolute Zero with supervised learning and RLVR, highlighting how our approach
+eliminates the need for any human-curated data by enabling self-improving task proposal and solution through self-play.
+To make the Absolute Zero setting concrete, we now define how one model can act both as the proposer and solver role. To aid
+understanding, we include an illustration in Figure 3. Let πθ be our parameterized language model, it is used to play two roles, proposer
+π
+propose
+θ
+and solver π
+solve
+θ during training.
+3

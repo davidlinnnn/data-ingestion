@@ -1,0 +1,24 @@
+{
+  "bug_type": "PDFium UTF16 raw-char unit decoding: get_text_range(i,1) returned empty for each surrogate half, losing supplementary mathematical glyphs.",
+  "correction": "After unchanged source tight-bbox-center selection, pair only adjacent high/low surrogate code units on the same original page and within the selected source region. Decode to one Unicode scalar; retain both raw physical indices. Half-pair => UNKNOWN, no bbox expansion.",
+  "helpers_sha256": {
+    "pdfium_glyph_helpers.py": "2bdabe1ac4444de416b2443aed283b222e3c9269466e984a4058ad665995d5fe",
+    "character_helpers.py": "30062c071423c623e1a078e763524ba83b34a0820a0233cf52eab6b7c394976d"
+  },
+  "old_r1_collector_sha256": "0909a8d668ed517824d5c636462f09bc2d3c2bc550b97e08c978ba9889f5b4f6",
+  "new_r1_collector_sha256": "bad79071962c29b5e57764d211721779b7fa90a28e1468263935b354d790965f",
+  "preserved_prior_features_metrics_plots": "signals/pre-utf16-v2/preserved-artifacts.json",
+  "unchanged": [
+    "source gold",
+    "human labels",
+    "style normalization",
+    "operator/number lexer",
+    "threshold .95",
+    "geometry selection",
+    "no target-based relocation"
+  ],
+  "application": "All R1 and W3 formula units; code source collector independently audited under same rule by heading agent. All integrated statistics/ROC recomputed.",
+  "synthetic_checks": "signals/pdfium-utf16-selfchecks.json",
+  "initial_decoder_sha256": "a2b4a8fd22cb5246554e5c0ea2bdab3cbfcae91e5b62f24c52b6838507dcebdc",
+  "BMP_preservation": "All non-surrogate BMP input text remains byte-identical to original get_text_range; no raw control-code substitution. Only paired surrogate recovery changes text. Missing input text uses raw BMP scalar as fallback; actual collectors supply original text."
+}

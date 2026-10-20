@@ -1,0 +1,317 @@
+{
+  "schema": "source-chart-evaluator-contract-v1",
+  "date": "2026-10-18",
+  "custody": "evaluator-only exposed DEV; never producer routing or prompt input",
+  "source": {
+    "source_id": "SRC01",
+    "physical_page": 1,
+    "figure": "Figure 1",
+    "page_render": "docs/research/pdf-core-bc-closure-2026-10-17/C/pages/SRC01-p01.png",
+    "page_render_sha256": "e6e1a7716356a5d92fdf6aeaac6981b8b7054412b90abe3902aca49b02228807",
+    "native_baseline": "docs/research/pdf-core-eval-interfaces-2026-10-18/C/native/SRC01-p01-19/document.json",
+    "native_baseline_sha256": "3d4230115deab6ab4bd5b60151fe8c7f48956f713b610b69b9b1d716e39a933d",
+    "native_document_revision": "b1868fe5523ec63f484d5394e43642327057bcbb8a967b5cd65aa34701fbd899",
+    "native_owner_ref": "#/pictures/1",
+    "native_crop": "/Users/david/work/data-ingestion/docs/research/pdf-core-eval-interfaces-2026-10-18/C/crops/e18236759553e90343388c2d6bc7795dfcf71a1dde065689d8a03156cccc5770.png",
+    "native_crop_sha256": "a3d6ff00707ddf91e48439d7b652f966cbbceb6016307eeb23601a93b8d22ede",
+    "image_key": "e18236759553e90343388c2d6bc7795dfcf71a1dde065689d8a03156cccc5770",
+    "native_size_px": [
+      869,
+      401
+    ]
+  },
+  "scope": {
+    "method": "source page reviewed first; native crop reviewed second; no paper Table 1 values or VLM outputs used",
+    "printed_numeric_data_labels": 0,
+    "estimated_marked_observations": 16,
+    "underlying_exact_data_recovery_claim": false,
+    "not_an_independent_holdout": true
+  },
+  "axes": {
+    "x_kind": "categorical model labels; no numeric spacing or model-size inference",
+    "x_categories": [
+      "Qwen3.5-4B",
+      "Qwen3.5-9B",
+      "Qwen3.6-27B",
+      "Gemini 3.5 Flash"
+    ],
+    "y_label": "Accuracy (%)",
+    "y_unit": "percent",
+    "y_scale": "linear",
+    "printed_y_ticks_percent": [
+      75,
+      60,
+      45,
+      30
+    ],
+    "aggregation_context": "Source caption describes average accuracy across evaluated benchmarks; do not invent a dataset-specific score."
+  },
+  "series": [
+    {
+      "label": "No skill",
+      "color": "blue",
+      "marker": "circle"
+    },
+    {
+      "label": "EvoSkill",
+      "color": "green",
+      "marker": "square"
+    },
+    {
+      "label": "SkillOpt",
+      "color": "orange/red",
+      "marker": "triangle"
+    },
+    {
+      "label": "WikiSkill",
+      "color": "yellow/gold",
+      "marker": "diamond"
+    }
+  ],
+  "finite_numeric_reference": {
+    "calibration_native_crop": {
+      "y75_px": 10,
+      "y30_px": 263,
+      "reference_tick_span_px": 253,
+      "reference_tick_span_percentage_points": 45
+    },
+    "marker_annotation_uncertainty_px": 2,
+    "acceptance": "Project candidate percent into the linear tick calibration; distance to the annotated marker interval [center_y-2,center_y+2] divided by253 must be <=0.02. Keep all16 points/series/category bindings. This is an estimated geometry reference, not printed or exact underlying data.",
+    "tolerance_fraction_of_visible_tick_span": 0.02,
+    "no_inferred_axis_origin_or_full_domain": true,
+    "missing_unreadable_wrong_binding": "retained in16-point denominator; not passed by omitting an observation",
+    "observations": [
+      {
+        "series": "No skill",
+        "category": "Qwen3.5-4B",
+        "marker_center_native_crop_px": [
+          92,
+          284
+        ],
+        "estimated_percent": 26.3,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "No skill",
+        "category": "Qwen3.5-9B",
+        "marker_center_native_crop_px": [
+          323,
+          263
+        ],
+        "estimated_percent": 30.0,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "No skill",
+        "category": "Qwen3.6-27B",
+        "marker_center_native_crop_px": [
+          555,
+          210
+        ],
+        "estimated_percent": 39.4,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "No skill",
+        "category": "Gemini 3.5 Flash",
+        "marker_center_native_crop_px": [
+          786,
+          153
+        ],
+        "estimated_percent": 49.6,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "EvoSkill",
+        "category": "Qwen3.5-4B",
+        "marker_center_native_crop_px": [
+          92,
+          242
+        ],
+        "estimated_percent": 33.7,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "EvoSkill",
+        "category": "Qwen3.5-9B",
+        "marker_center_native_crop_px": [
+          323,
+          194
+        ],
+        "estimated_percent": 42.3,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "EvoSkill",
+        "category": "Qwen3.6-27B",
+        "marker_center_native_crop_px": [
+          555,
+          131
+        ],
+        "estimated_percent": 53.5,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "EvoSkill",
+        "category": "Gemini 3.5 Flash",
+        "marker_center_native_crop_px": [
+          786,
+          116
+        ],
+        "estimated_percent": 56.1,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "SkillOpt",
+        "category": "Qwen3.5-4B",
+        "marker_center_native_crop_px": [
+          92,
+          235
+        ],
+        "estimated_percent": 35.0,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "SkillOpt",
+        "category": "Qwen3.5-9B",
+        "marker_center_native_crop_px": [
+          323,
+          205
+        ],
+        "estimated_percent": 40.3,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "SkillOpt",
+        "category": "Qwen3.6-27B",
+        "marker_center_native_crop_px": [
+          555,
+          146
+        ],
+        "estimated_percent": 50.8,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "SkillOpt",
+        "category": "Gemini 3.5 Flash",
+        "marker_center_native_crop_px": [
+          786,
+          117
+        ],
+        "estimated_percent": 56.0,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "WikiSkill",
+        "category": "Qwen3.5-4B",
+        "marker_center_native_crop_px": [
+          92,
+          214
+        ],
+        "estimated_percent": 38.7,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "WikiSkill",
+        "category": "Qwen3.5-9B",
+        "marker_center_native_crop_px": [
+          323,
+          165
+        ],
+        "estimated_percent": 47.4,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "WikiSkill",
+        "category": "Qwen3.6-27B",
+        "marker_center_native_crop_px": [
+          555,
+          76
+        ],
+        "estimated_percent": 63.3,
+        "value_status": "estimated",
+        "printed_data_label": false
+      },
+      {
+        "series": "WikiSkill",
+        "category": "Gemini 3.5 Flash",
+        "marker_center_native_crop_px": [
+          786,
+          49
+        ],
+        "estimated_percent": 68.1,
+        "value_status": "estimated",
+        "printed_data_label": false
+      }
+    ]
+  },
+  "required_meaning_and_comparisons": [
+    {
+      "id": "F1-M1",
+      "check": "WikiSkill is above every other series at each of the four categories."
+    },
+    {
+      "id": "F1-M2",
+      "check": "No skill is below all skill-evolution series at each category."
+    },
+    {
+      "id": "F1-M3",
+      "check": "Each of the four series rises from left to right across the displayed category order; x is categorical."
+    },
+    {
+      "id": "F1-M4",
+      "check": "At Gemini 3.5 Flash, EvoSkill and SkillOpt are visually near-coincident. Do not require a strict ordering below source/estimate resolution."
+    },
+    {
+      "id": "F1-M5",
+      "check": "Do not invent a monotonically increasing WikiSkill-minus-No-skill gap across all four models: the third-category gap is visibly larger than the fourth. A source-caption claim may be attributed as source wording, not silently converted into a stronger generated numeric claim."
+    }
+  ],
+  "required_image_OCR": {
+    "scope": "all visible chart labels, axis ticks and legend text in the original chart; no generated caption substituted",
+    "source_text_items": [
+      "Accuracy (%)",
+      "75%",
+      "60%",
+      "45%",
+      "30%",
+      "Qwen3.5-4B",
+      "Qwen3.5-9B",
+      "Qwen3.6-27B",
+      "Gemini 3.5 Flash",
+      "No skill",
+      "EvoSkill",
+      "SkillOpt",
+      "WikiSkill"
+    ],
+    "minor_equivalence": "Whitespace/case/percent spacing or obvious OCR glyph differences may be minor if series/model identity and numeric meaning remain clear; no universal exact-character gate.",
+    "not_source_OCR": "The page/native PDF text extractor and this evaluator list are reference evidence only, not model OCR results.",
+    "native_crop_note": "The final x-label touches the right crop edge; keep source spelling as reference and record any actual OCR omission. No producer crop padding or repair was applied."
+  },
+  "source_caption_policy": "Keep the original Figure 1 caption in source Markdown and provenance; generated chart interpretation/OCR/description belongs only to the same-revision image-key supplement. A missing native caption link alone is not a failure if standalone source content and a usable association are verified.",
+  "delivery_review": {
+    "typed_and_markdown": "Check actual saved/reloaded supplement and its image key; primary Markdown must not acquire generated OCR/description as source text.",
+    "unreviewed_status": "pending; not a model-quality pass",
+    "failures": "Record source/series/unit/critical comparison errors separately from numeric geometry tolerance."
+  },
+  "independent_visual_review": {
+    "reviewer": "/root/b_closure_feasibility",
+    "result": "pass: source page and registered native crop checked; no blocking reference error",
+    "scope": "16 estimated markers, axes, model categories, legend and critical comparisons only; no model output/Table1/benchmark GT read",
+    "precision_claim": "not exact underlying data"
+  }
+}

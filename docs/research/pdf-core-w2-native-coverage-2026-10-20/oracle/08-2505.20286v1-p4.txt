@@ -1,0 +1,51 @@
+3 Methods
+We propose Alita, a generalist agent enabling scalable agentic reasoning with minimal predefinition and maximal
+self-evolution to tackle diverse and complex tasks. Figure 3 illustrates the framework of Alita. In contrast to generalist
+agents that typically depend on extensive manually-designed tools and workflows [8, 9], the manager agent in Alita
+solely orchestrates the web agent using only basic tools. Through this approach, our framework enables Alita to plan
+task-specific tools through brainstorming. It then utilizes a Web Agent to search for helpful open-source libraries
+and other resources related to these tools. Leveraging the search results, Alita autonomously generates new tools and
+configures the necessary environments to enhance its capabilities and effectively solve tasks. During this process, if
+any issues arise with the newly generated tools or their environments, Alita can provide feedback and self-correct,
+improving the quality of the generated tools. Furthermore, the new tools can be encapsulated as MCP servers for future
+reuse. With the aid of MCPs, Alita can generate increasingly powerful, diverse, and complex MCPs, thus establishing a
+self-reinforcing cycle. Therefore, Alita autonomously expands its capabilities through continuous MCP integration.
+Web Agent Manager Agent
+Open-source
+Searching
+Script 
+Generating
+Virtual Env 
+Execution
+CodeReAct Loop
+Output
+MCP Box
+Encapsulate
+Question
+MCP 
+Brainstorming
+Self Evolving
+MCP Creation
+Figure 3: The architecture of Alita. Upon receiving a question, the Manager Agent initiates an iterative CodeReAct
+loop to analyze tasks, identify functional gaps, and trigger MCP Brainstorming for creative synthesis. The system
+dynamically performs open-source searching, script generation, and virtual environment execution to construct task￾related functions. Useful ones are encapsulated into reusable MCPs and stored in the MCP Box. Throughout this
+process, the Manager Agent collaborates with the Web Agent for external information retrieval and continuously
+integrates intermediate results until a final output is produced. This process enables Alita to self-evolve without relying
+on a huge hand-crafted, elaborate tools and workflows.
+3.1 Execution Pipeline
+Each task commences with the construction of an augmented prompt that incorporates the original query. The manager
+agent (Sec. 3.2) then initiates a multi-step reasoning process to address the task at hand. Throughout this process, the
+agent may query external sources via the web agent (Sec. 3.3), plan and synthesize new tools (Sec. 3.4), and execute
+them within isolated environments (Sec. 3.4.4).
+Upon successful tool generation and accurate result formulation, the corresponding script is transformed into an MCP
+and stored in the internal tool registry for future reuse. All reasoning steps, intermediate code, and final outputs are
+systematically logged to facilitate comprehensive analysis.
+3.2 Manager Agent
+The Manager Agent functions as the central coordinator within framework of Alita. When receiving a task prompt, the
+manager agent initially calls the MCP Brainstorming to determine whether additional tools are needed and which
+specific tools are required. Then the manager agent decomposes the task into subtasks and dispatches them to web
+agent or generates the required external tools to complete the subtask. When necessary, the manager agent utilizes the
+information retrieved by the web agent to generate the required new tools along with their corresponding environment
+configuration instructions. After collecting all intermediate results, the manager performs final aggregation and response
+formulation.
+4

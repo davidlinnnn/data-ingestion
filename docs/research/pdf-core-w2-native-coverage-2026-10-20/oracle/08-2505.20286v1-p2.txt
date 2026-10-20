@@ -1,0 +1,76 @@
+1 Introduction
+"Simplicity is the ultimate sophistication." — Leonardo da Vinci
+Large language models (LLMs) have rapidly evolved from merely generating text to autonomous agents capable of
+independently planning and executing complex tasks on behalf of users with limited human oversight [2]. These
+capabilities have enabled a wide range of applications, ranging from travel planning [3], computer use [4, 5, 6],
+to the multi-step research tasks [7]. To support such diverse and demanding tasks, a new class of systems called
+generalist agents has emerged. These agents are designed to handle a wide range of domains and tasks through a unified
+architecture, allowing them to generalize beyond task-specific solutions, such as OpenAI Deep Research [1] and Manus.
+However, most of the current general-purpose agents heavily rely on large-scale manual engineering, including tediously
+designed workflows, considerable pre-defined tools, and hardcoded components [8, 9]. This reliance introduces several
+critical limitations: i) It is impractical, if not impossible, to predefine all the tools required for the wide variety of
+real-world tasks an agent might encounter (imcomplete coverage); ii) Many complex tasks require agents to creatively
+compose new tools or leverage existing ones in novel ways while pre-designed workflow and hardcoded components
+constrain this compositional flexibility and inhibit the development of adaptive behaviors (limited creativity and
+flexibility); iii) It is not always the case that the interface or environment of different tools are compatible with the agent
+(mismatch). For example, many useful tools are not written in Python, which makes it difficult, though not entirely
+impossible, for them to be pre-connected to the mainstream agent frameworks that are primarily written in Python.
+Together, these challenges ultimately hinder the scalability, adaptability, and generalization of existing generalist agents.
+In contrast to the prevailing trend of growing complexity, we propose a radically simple design philosophy built on two
+principles: i) Minimal Predefinition: Equip the agent with only a minimal set of core capabilities, avoiding manually
+engineered components for specific tasks or modalities; ii) Maximal Self-Evolution: Empower the agent to autonomously
+create, refine, and reuse external capabilities as needed. We instantiate this vision through Alita, a generalist agent built
+with a single core capability (i.e., the web agent) and a small set of general-purpose modules that enable self-directed
+capability expansion. Specifically, we take advantage of the Model Context Protocols (MCPs) 1 which is an open
+protocol that standardizes how different systems provide context to LLMs, and empower Alita to dynamically generate,
+adapt, and reuse MCPs based on the demands of each task rather than relying on static, predefined tools. This shift from
+manually designed capabilities to on-the-fly MCP construction unlocks a new path for building agents that are simple
+yet profoundly capable.
+Youtube 
+Caption 
+Crawler
+Image 
+Url Text Captioner
+Extractor
+Path 
+Generalist 
+Classifier
+Relevant 
+Patch 
+Zoomer
+Web Agent MCP Box
+Alita
+(Ours)
+Minimal Predefinition
+Maximal Self-Evolution
+Self Evolving
+Other
+Agents
+Manager Agent
+Manager Agent
+MCP Creation
+Large-scale Manual 
+Engineering
+Traditional 
+Generalist
+Agents
+Scalable Dynamic Capability
+Enhanced Creativity & Flexibility
+Cross-ecosystem Compatibility
+Incomplete Coverage
+Limited Creativity & Flexibility
+Mismatch
+Web 
+Agent
+Figure 2: Comparison between Traditional Generalist Agents and Alita. Traditional generalist agents heavily rely on
+large-scale manual engineering while Alita adheres to minimal predefinition and maximal self-evolution.
+We conduct comprehensive experiments on several benchmarks to assess Alita in real-world applications, especially
+on the most popular GAIA [10]. Alita proves that simplicity is not a constraint, but a strength, and that creative agent
+behavior can emerge from a design that prioritizes autonomy over manual engineering. To sum up, our key contributions
+can be summarized as follows.
+• We propose a new agent architecture centered on minimal predefinition and maximal self-evolution, challenging
+conventional design norms in generalist agents, aiming to call for a more scalable and generalizable agent
+framework.
+1
+https://www.anthropic.com/news/model-context-protocol
+2

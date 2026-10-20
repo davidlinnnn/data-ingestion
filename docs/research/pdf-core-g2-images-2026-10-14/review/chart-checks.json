@@ -1,0 +1,323 @@
+{
+  "format": "g2-offline-chart-check-v1",
+  "scope": "Current saved output schema; numeric/binding/status/unit checks plus manual source-semantic review. Not Canonical acceptance.",
+  "frozen_cases_path": "docs/fixtures/pdf-core-g1-2026-10-14/cases.json",
+  "frozen_cases_sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+  "results": [
+    {
+      "case_id": "G1-C03",
+      "fixed_numeric_denominator": 2,
+      "observed_rows": 2,
+      "added_numeric_rows": 0,
+      "numeric_errors": 0,
+      "axis_labels_and_scale_ok": true,
+      "critical_comparison_checks": [
+        true
+      ],
+      "source_critical_comparisons": [
+        "B=20%, A=10%, B>A"
+      ],
+      "critical_semantics_note": "Step2 tie is checked directly. Manual review also checks tie wording and factor10 meaning; numeric tolerances do not replace semantic checks.",
+      "points": [
+        {
+          "association": "A",
+          "expected": 10,
+          "provider_value": 10,
+          "review_numeric_value": 10,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0,
+          "allowed_error": 0,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": "B",
+          "expected": 20,
+          "provider_value": 20,
+          "review_numeric_value": 20,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0,
+          "allowed_error": 0,
+          "status_ok": true,
+          "unit_ok": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "case_id": "G1-C04",
+      "fixed_numeric_denominator": 6,
+      "observed_rows": 6,
+      "added_numeric_rows": 0,
+      "numeric_errors": 0,
+      "axis_labels_and_scale_ok": true,
+      "critical_comparison_checks": [
+        true,
+        true,
+        true
+      ],
+      "source_critical_comparisons": [
+        "step1 Orange>Blue",
+        "step2 same value",
+        "step3 Blue>Orange"
+      ],
+      "critical_semantics_note": "Step2 tie is checked directly. Manual review also checks tie wording and factor10 meaning; numeric tolerances do not replace semantic checks.",
+      "points": [
+        {
+          "association": [
+            "Blue",
+            1
+          ],
+          "expected": 0,
+          "provider_value": 0,
+          "review_numeric_value": 0,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": [
+            "Blue",
+            2
+          ],
+          "expected": 50,
+          "provider_value": 50,
+          "review_numeric_value": 50,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": [
+            "Blue",
+            3
+          ],
+          "expected": 100,
+          "provider_value": 100,
+          "review_numeric_value": 100,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": [
+            "Orange",
+            1
+          ],
+          "expected": 100,
+          "provider_value": 100,
+          "review_numeric_value": 100,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": [
+            "Orange",
+            2
+          ],
+          "expected": 50,
+          "provider_value": 50,
+          "review_numeric_value": 50,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": [
+            "Orange",
+            3
+          ],
+          "expected": 0,
+          "provider_value": 0,
+          "review_numeric_value": 0,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "case_id": "G1-C05",
+      "fixed_numeric_denominator": 3,
+      "observed_rows": 3,
+      "added_numeric_rows": 0,
+      "numeric_errors": 0,
+      "axis_labels_and_scale_ok": true,
+      "critical_comparison_checks": [
+        true,
+        true
+      ],
+      "source_critical_comparisons": [
+        "equal plotted intervals mean factors10, not additive differences",
+        "all3points retain source step association"
+      ],
+      "critical_semantics_note": "Step2 tie is checked directly. Manual review also checks tie wording and factor10 meaning; numeric tolerances do not replace semantic checks.",
+      "points": [
+        {
+          "association": 1,
+          "expected": 1,
+          "provider_value": 1,
+          "review_numeric_value": 1,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": 2,
+          "expected": 10,
+          "provider_value": 10,
+          "review_numeric_value": 10,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": 3,
+          "expected": 100,
+          "provider_value": 100,
+          "review_numeric_value": 100,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 0.02,
+          "status_ok": true,
+          "unit_ok": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "case_id": "G1-C06",
+      "fixed_numeric_denominator": 2,
+      "observed_rows": 2,
+      "added_numeric_rows": 0,
+      "numeric_errors": 0,
+      "axis_labels_and_scale_ok": true,
+      "critical_comparison_checks": [
+        true,
+        true
+      ],
+      "source_critical_comparisons": [
+        "B is larger than A",
+        "A=25%, B=75% ground truth but displayed values are unprinted"
+      ],
+      "critical_semantics_note": "Step2 tie is checked directly. Manual review also checks tie wording and factor10 meaning; numeric tolerances do not replace semantic checks.",
+      "points": [
+        {
+          "association": "A",
+          "expected": 25,
+          "provider_value": "about 25%",
+          "review_numeric_value": 25.0,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 2,
+          "status_ok": true,
+          "unit_ok": true
+        },
+        {
+          "association": "B",
+          "expected": 75,
+          "provider_value": "about 75%",
+          "review_numeric_value": 75.0,
+          "binding_matches_once": true,
+          "numeric_ok": true,
+          "normalized_axis_error_or_percentage_point_error": 0.0,
+          "allowed_error": 2,
+          "status_ok": true,
+          "unit_ok": true
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "fixed_numeric_observations": 13,
+  "negative_controls": [
+    {
+      "control": "wrong_printed_value",
+      "case_id": "G1-C03",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 1,
+      "status_errors": 0
+    },
+    {
+      "control": "swapped_Blue_Orange",
+      "case_id": "G1-C04",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 4,
+      "status_errors": 0
+    },
+    {
+      "control": "log_midpoint_as_linear",
+      "case_id": "G1-C05",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 1,
+      "status_errors": 0
+    },
+    {
+      "control": "estimated_labeled_printed",
+      "case_id": "G1-C04",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 0,
+      "status_errors": 1
+    },
+    {
+      "control": "pie_A_B_swapped",
+      "case_id": "G1-C06",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 2,
+      "status_errors": 0
+    },
+    {
+      "control": "unequal_step2_tie_within_tolerance",
+      "case_id": "G1-C04",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 0,
+      "status_errors": 0
+    },
+    {
+      "control": "invented_log_percentage_unit",
+      "case_id": "G1-C05",
+      "expected": "reject",
+      "rejected": true,
+      "numeric_errors": 0,
+      "status_errors": 0
+    }
+  ],
+  "inclusive_tolerance_boundary_controls": "3 passed/3 outside rejected",
+  "provider_mutations": false
+}

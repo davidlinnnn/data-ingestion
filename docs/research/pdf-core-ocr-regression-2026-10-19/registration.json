@@ -1,0 +1,984 @@
+{
+  "status": "frozen_before_candidate_inference",
+  "profiles": {
+    "R0": {
+      "document_timeout": null,
+      "accelerator_options": {
+        "num_threads": 4,
+        "device": "cpu",
+        "cuda_use_flash_attention2": false
+      },
+      "enable_remote_services": false,
+      "allow_external_plugins": false,
+      "artifacts_path": "/private/tmp/pdf-core-native-20261017/artifacts",
+      "do_picture_classification": false,
+      "picture_classification_options": {
+        "engine_options": {
+          "engine_type": "transformers",
+          "top_k": null,
+          "torch_dtype": null,
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "document_figure_classifier_v2",
+          "repo_id": "docling-project/DocumentFigureClassifier-v2.5",
+          "revision": "main",
+          "engine_overrides": {}
+        }
+      },
+      "do_picture_description": false,
+      "picture_description_options": {
+        "batch_size": 8,
+        "scale": 2.0,
+        "picture_area_threshold": 0.05,
+        "classification_allow": null,
+        "classification_deny": null,
+        "classification_min_confidence": 0.0,
+        "engine_options": {
+          "engine_type": "auto_inline",
+          "prefer_vllm": false
+        },
+        "model_spec": {
+          "name": "SmolVLM-256M-Instruct",
+          "default_repo_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+          "revision": "main",
+          "prompt": "Describe this image in a few sentences.",
+          "response_format": "plaintext",
+          "supported_engines": null,
+          "engine_overrides": {
+            "mlx": {
+              "repo_id": "moot20/SmolVLM-256M-Instruct-MLX",
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {}
+            },
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": "bfloat16",
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext"
+              }
+            }
+          },
+          "api_overrides": {
+            "api_lmstudio": {
+              "params": {
+                "model": "smolvlm-256m-instruct"
+              }
+            }
+          },
+          "trust_remote_code": false,
+          "stop_strings": [],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "prompt": "Describe this image in a few sentences.",
+        "generation_config": {
+          "max_new_tokens": 200,
+          "do_sample": false
+        }
+      },
+      "do_chart_extraction": false,
+      "chart_extraction_options": {
+        "engine_options": {
+          "engine_type": "transformers",
+          "device": null,
+          "load_in_8bit": true,
+          "llm_int8_threshold": 6.0,
+          "quantized": false,
+          "torch_dtype": null,
+          "trust_remote_code": true,
+          "use_kv_cache": true,
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "Granite-Vision-4.1-4B",
+          "default_repo_id": "ibm-granite/granite-vision-4.1-4b",
+          "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+          "prompt": "<chart2csv>",
+          "response_format": "plaintext",
+          "supported_engines": [
+            "api_lmstudio",
+            "api_ollama",
+            "api_openai",
+            "transformers"
+          ],
+          "engine_overrides": {
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": "bfloat16",
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext"
+              }
+            }
+          },
+          "api_overrides": {
+            "api_lmstudio": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            },
+            "api_ollama": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            },
+            "api_openai": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            }
+          },
+          "trust_remote_code": true,
+          "stop_strings": [],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "chart2csv": true,
+        "chart2summary": false,
+        "chart2code": false,
+        "output_format": "granite_vision_charts",
+        "use_natural_language_prompts": false
+      },
+      "images_scale": 2.0,
+      "generate_page_images": true,
+      "generate_picture_images": true,
+      "do_table_structure": true,
+      "do_ocr": true,
+      "do_code_enrichment": false,
+      "do_formula_enrichment": false,
+      "force_backend_text": false,
+      "table_structure_options": {
+        "do_cell_matching": true,
+        "mode": "accurate"
+      },
+      "ocr_options": {
+        "mode": "default",
+        "lang": [
+          "ch"
+        ],
+        "scale": 3.0,
+        "backend": "onnxruntime",
+        "text_score": 0.5,
+        "use_det": true,
+        "use_cls": true,
+        "use_rec": true,
+        "print_verbose": false,
+        "det_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx",
+        "cls_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx",
+        "rec_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx",
+        "rec_keys_path": null,
+        "rec_font_path": null,
+        "font_path": null,
+        "rapidocr_params": {
+          "EngineConfig.onnxruntime.intra_op_num_threads": 4,
+          "EngineConfig.onnxruntime.inter_op_num_threads": 1
+        },
+        "force_full_page_ocr": false
+      },
+      "layout_options": {
+        "keep_empty_clusters": false,
+        "skip_cell_assignment": false,
+        "create_orphan_clusters": true,
+        "engine_options": {
+          "engine_type": "transformers",
+          "score_threshold": 0.3,
+          "torch_dtype": "float32",
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "layout_heron",
+          "repo_id": "docling-project/docling-layout-heron",
+          "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+          "engine_overrides": {
+            "onnxruntime": {
+              "repo_id": "docling-project/docling-layout-heron-onnx",
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {
+                "model_filename": "model.onnx"
+              }
+            }
+          }
+        }
+      },
+      "code_formula_options": {
+        "engine_options": {
+          "engine_type": "auto_inline",
+          "prefer_vllm": false
+        },
+        "model_spec": {
+          "name": "CodeFormulaV2",
+          "default_repo_id": "docling-project/CodeFormulaV2",
+          "revision": "main",
+          "prompt": "",
+          "response_format": "plaintext",
+          "supported_engines": null,
+          "engine_overrides": {
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext",
+                "extra_generation_config": {
+                  "skip_special_tokens": false
+                },
+                "torch_dtype": "bfloat16"
+              }
+            }
+          },
+          "api_overrides": {},
+          "trust_remote_code": false,
+          "stop_strings": [
+            "</doctag>",
+            "<end_of_utterance>"
+          ],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "scale": 2.0,
+        "max_size": null,
+        "extract_code": true,
+        "extract_formulas": true
+      },
+      "generate_table_images": false,
+      "generate_parsed_pages": true,
+      "use_reading_order_separators": true,
+      "heading_hierarchy_options": {
+        "enabled": false,
+        "use_bookmarks": true,
+        "use_numbering": true,
+        "use_style": true,
+        "use_font_style": true,
+        "style_size_tolerance": 0.05,
+        "numbering_schemes": null,
+        "max_level": 6,
+        "bookmark_match_threshold": 0.8
+      },
+      "ocr_batch_size": 1,
+      "layout_batch_size": 1,
+      "table_batch_size": 1,
+      "batch_polling_interval_seconds": 0.5,
+      "queue_max_size": 100,
+      "stage_shutdown_timeout_seconds": 15.0
+    },
+    "R1": {
+      "document_timeout": null,
+      "accelerator_options": {
+        "num_threads": 4,
+        "device": "cpu",
+        "cuda_use_flash_attention2": false
+      },
+      "enable_remote_services": false,
+      "allow_external_plugins": false,
+      "artifacts_path": "/private/tmp/pdf-core-native-20261017/artifacts",
+      "do_picture_classification": false,
+      "picture_classification_options": {
+        "engine_options": {
+          "engine_type": "transformers",
+          "top_k": null,
+          "torch_dtype": null,
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "document_figure_classifier_v2",
+          "repo_id": "docling-project/DocumentFigureClassifier-v2.5",
+          "revision": "main",
+          "engine_overrides": {}
+        }
+      },
+      "do_picture_description": false,
+      "picture_description_options": {
+        "batch_size": 8,
+        "scale": 2.0,
+        "picture_area_threshold": 0.05,
+        "classification_allow": null,
+        "classification_deny": null,
+        "classification_min_confidence": 0.0,
+        "engine_options": {
+          "engine_type": "auto_inline",
+          "prefer_vllm": false
+        },
+        "model_spec": {
+          "name": "SmolVLM-256M-Instruct",
+          "default_repo_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+          "revision": "main",
+          "prompt": "Describe this image in a few sentences.",
+          "response_format": "plaintext",
+          "supported_engines": null,
+          "engine_overrides": {
+            "mlx": {
+              "repo_id": "moot20/SmolVLM-256M-Instruct-MLX",
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {}
+            },
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": "bfloat16",
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext"
+              }
+            }
+          },
+          "api_overrides": {
+            "api_lmstudio": {
+              "params": {
+                "model": "smolvlm-256m-instruct"
+              }
+            }
+          },
+          "trust_remote_code": false,
+          "stop_strings": [],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "prompt": "Describe this image in a few sentences.",
+        "generation_config": {
+          "max_new_tokens": 200,
+          "do_sample": false
+        }
+      },
+      "do_chart_extraction": false,
+      "chart_extraction_options": {
+        "engine_options": {
+          "engine_type": "transformers",
+          "device": null,
+          "load_in_8bit": true,
+          "llm_int8_threshold": 6.0,
+          "quantized": false,
+          "torch_dtype": null,
+          "trust_remote_code": true,
+          "use_kv_cache": true,
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "Granite-Vision-4.1-4B",
+          "default_repo_id": "ibm-granite/granite-vision-4.1-4b",
+          "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+          "prompt": "<chart2csv>",
+          "response_format": "plaintext",
+          "supported_engines": [
+            "api_lmstudio",
+            "api_ollama",
+            "api_openai",
+            "transformers"
+          ],
+          "engine_overrides": {
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": "bfloat16",
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext"
+              }
+            }
+          },
+          "api_overrides": {
+            "api_lmstudio": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            },
+            "api_ollama": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            },
+            "api_openai": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            }
+          },
+          "trust_remote_code": true,
+          "stop_strings": [],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "chart2csv": true,
+        "chart2summary": false,
+        "chart2code": false,
+        "output_format": "granite_vision_charts",
+        "use_natural_language_prompts": false
+      },
+      "images_scale": 2.0,
+      "generate_page_images": true,
+      "generate_picture_images": true,
+      "do_table_structure": true,
+      "do_ocr": true,
+      "do_code_enrichment": false,
+      "do_formula_enrichment": false,
+      "force_backend_text": false,
+      "table_structure_options": {
+        "do_cell_matching": true,
+        "mode": "accurate"
+      },
+      "ocr_options": {
+        "mode": "default",
+        "lang": [
+          "ch"
+        ],
+        "scale": 3.0,
+        "backend": "onnxruntime",
+        "text_score": 0.5,
+        "use_det": true,
+        "use_cls": false,
+        "use_rec": true,
+        "print_verbose": false,
+        "det_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx",
+        "cls_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx",
+        "rec_model_path": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx",
+        "rec_keys_path": null,
+        "rec_font_path": null,
+        "font_path": null,
+        "rapidocr_params": {
+          "EngineConfig.onnxruntime.intra_op_num_threads": 4,
+          "EngineConfig.onnxruntime.inter_op_num_threads": 1
+        },
+        "force_full_page_ocr": false
+      },
+      "layout_options": {
+        "keep_empty_clusters": false,
+        "skip_cell_assignment": false,
+        "create_orphan_clusters": true,
+        "engine_options": {
+          "engine_type": "transformers",
+          "score_threshold": 0.3,
+          "torch_dtype": "float32",
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "layout_heron",
+          "repo_id": "docling-project/docling-layout-heron",
+          "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+          "engine_overrides": {
+            "onnxruntime": {
+              "repo_id": "docling-project/docling-layout-heron-onnx",
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {
+                "model_filename": "model.onnx"
+              }
+            }
+          }
+        }
+      },
+      "code_formula_options": {
+        "engine_options": {
+          "engine_type": "auto_inline",
+          "prefer_vllm": false
+        },
+        "model_spec": {
+          "name": "CodeFormulaV2",
+          "default_repo_id": "docling-project/CodeFormulaV2",
+          "revision": "main",
+          "prompt": "",
+          "response_format": "plaintext",
+          "supported_engines": null,
+          "engine_overrides": {
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext",
+                "extra_generation_config": {
+                  "skip_special_tokens": false
+                },
+                "torch_dtype": "bfloat16"
+              }
+            }
+          },
+          "api_overrides": {},
+          "trust_remote_code": false,
+          "stop_strings": [
+            "</doctag>",
+            "<end_of_utterance>"
+          ],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "scale": 2.0,
+        "max_size": null,
+        "extract_code": true,
+        "extract_formulas": true
+      },
+      "generate_table_images": false,
+      "generate_parsed_pages": true,
+      "use_reading_order_separators": true,
+      "heading_hierarchy_options": {
+        "enabled": false,
+        "use_bookmarks": true,
+        "use_numbering": true,
+        "use_style": true,
+        "use_font_style": true,
+        "style_size_tolerance": 0.05,
+        "numbering_schemes": null,
+        "max_level": 6,
+        "bookmark_match_threshold": 0.8
+      },
+      "ocr_batch_size": 1,
+      "layout_batch_size": 1,
+      "table_batch_size": 1,
+      "batch_polling_interval_seconds": 0.5,
+      "queue_max_size": 100,
+      "stage_shutdown_timeout_seconds": 15.0
+    },
+    "T1": {
+      "document_timeout": null,
+      "accelerator_options": {
+        "num_threads": 4,
+        "device": "cpu",
+        "cuda_use_flash_attention2": false
+      },
+      "enable_remote_services": false,
+      "allow_external_plugins": false,
+      "artifacts_path": "/private/tmp/pdf-core-native-20261017/artifacts",
+      "do_picture_classification": false,
+      "picture_classification_options": {
+        "engine_options": {
+          "engine_type": "transformers",
+          "top_k": null,
+          "torch_dtype": null,
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "document_figure_classifier_v2",
+          "repo_id": "docling-project/DocumentFigureClassifier-v2.5",
+          "revision": "main",
+          "engine_overrides": {}
+        }
+      },
+      "do_picture_description": false,
+      "picture_description_options": {
+        "batch_size": 8,
+        "scale": 2.0,
+        "picture_area_threshold": 0.05,
+        "classification_allow": null,
+        "classification_deny": null,
+        "classification_min_confidence": 0.0,
+        "engine_options": {
+          "engine_type": "auto_inline",
+          "prefer_vllm": false
+        },
+        "model_spec": {
+          "name": "SmolVLM-256M-Instruct",
+          "default_repo_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
+          "revision": "main",
+          "prompt": "Describe this image in a few sentences.",
+          "response_format": "plaintext",
+          "supported_engines": null,
+          "engine_overrides": {
+            "mlx": {
+              "repo_id": "moot20/SmolVLM-256M-Instruct-MLX",
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {}
+            },
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": "bfloat16",
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext"
+              }
+            }
+          },
+          "api_overrides": {
+            "api_lmstudio": {
+              "params": {
+                "model": "smolvlm-256m-instruct"
+              }
+            }
+          },
+          "trust_remote_code": false,
+          "stop_strings": [],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "prompt": "Describe this image in a few sentences.",
+        "generation_config": {
+          "max_new_tokens": 200,
+          "do_sample": false
+        }
+      },
+      "do_chart_extraction": false,
+      "chart_extraction_options": {
+        "engine_options": {
+          "engine_type": "transformers",
+          "device": null,
+          "load_in_8bit": true,
+          "llm_int8_threshold": 6.0,
+          "quantized": false,
+          "torch_dtype": null,
+          "trust_remote_code": true,
+          "use_kv_cache": true,
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "Granite-Vision-4.1-4B",
+          "default_repo_id": "ibm-granite/granite-vision-4.1-4b",
+          "revision": "dd48e97503de471803850df70843cf9eb5da8712",
+          "prompt": "<chart2csv>",
+          "response_format": "plaintext",
+          "supported_engines": [
+            "api_lmstudio",
+            "api_ollama",
+            "api_openai",
+            "transformers"
+          ],
+          "engine_overrides": {
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": "bfloat16",
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext"
+              }
+            }
+          },
+          "api_overrides": {
+            "api_lmstudio": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            },
+            "api_ollama": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            },
+            "api_openai": {
+              "params": {
+                "model": "granite-vision-4.1-4b"
+              }
+            }
+          },
+          "trust_remote_code": true,
+          "stop_strings": [],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "chart2csv": true,
+        "chart2summary": false,
+        "chart2code": false,
+        "output_format": "granite_vision_charts",
+        "use_natural_language_prompts": false
+      },
+      "images_scale": 2.0,
+      "generate_page_images": true,
+      "generate_picture_images": true,
+      "do_table_structure": true,
+      "do_ocr": true,
+      "do_code_enrichment": false,
+      "do_formula_enrichment": false,
+      "force_backend_text": false,
+      "table_structure_options": {
+        "do_cell_matching": true,
+        "mode": "accurate"
+      },
+      "ocr_options": {
+        "mode": "default",
+        "lang": [
+          "eng",
+          "chi_tra"
+        ],
+        "scale": 3.0,
+        "tesseract_cmd": "/opt/homebrew/bin/tesseract",
+        "path": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/tessdata",
+        "psm": 3,
+        "force_full_page_ocr": false
+      },
+      "layout_options": {
+        "keep_empty_clusters": false,
+        "skip_cell_assignment": false,
+        "create_orphan_clusters": true,
+        "engine_options": {
+          "engine_type": "transformers",
+          "score_threshold": 0.3,
+          "torch_dtype": "float32",
+          "compile_model": false
+        },
+        "model_spec": {
+          "name": "layout_heron",
+          "repo_id": "docling-project/docling-layout-heron",
+          "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+          "engine_overrides": {
+            "onnxruntime": {
+              "repo_id": "docling-project/docling-layout-heron-onnx",
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {
+                "model_filename": "model.onnx"
+              }
+            }
+          }
+        }
+      },
+      "code_formula_options": {
+        "engine_options": {
+          "engine_type": "auto_inline",
+          "prefer_vllm": false
+        },
+        "model_spec": {
+          "name": "CodeFormulaV2",
+          "default_repo_id": "docling-project/CodeFormulaV2",
+          "revision": "main",
+          "prompt": "",
+          "response_format": "plaintext",
+          "supported_engines": null,
+          "engine_overrides": {
+            "transformers": {
+              "repo_id": null,
+              "revision": null,
+              "torch_dtype": null,
+              "min_engine_version": null,
+              "extra_config": {
+                "transformers_model_type": "automodel-imagetexttotext",
+                "extra_generation_config": {
+                  "skip_special_tokens": false
+                },
+                "torch_dtype": "bfloat16"
+              }
+            }
+          },
+          "api_overrides": {},
+          "trust_remote_code": false,
+          "stop_strings": [
+            "</doctag>",
+            "<end_of_utterance>"
+          ],
+          "temperature": 0.0,
+          "max_new_tokens": 4096,
+          "extra_generation_config": {}
+        },
+        "scale": 2.0,
+        "max_size": null,
+        "extract_code": true,
+        "extract_formulas": true
+      },
+      "generate_table_images": false,
+      "generate_parsed_pages": true,
+      "use_reading_order_separators": true,
+      "heading_hierarchy_options": {
+        "enabled": false,
+        "use_bookmarks": true,
+        "use_numbering": true,
+        "use_style": true,
+        "use_font_style": true,
+        "style_size_tolerance": 0.05,
+        "numbering_schemes": null,
+        "max_level": 6,
+        "bookmark_match_threshold": 0.8
+      },
+      "ocr_batch_size": 1,
+      "layout_batch_size": 1,
+      "table_batch_size": 1,
+      "batch_polling_interval_seconds": 0.5,
+      "queue_max_size": 100,
+      "stage_shutdown_timeout_seconds": 15.0
+    }
+  },
+  "runtime": {
+    "docling-slim": "2.132.0",
+    "docling-core": "2.99.0",
+    "docling-parse": "7.22.3",
+    "rapidocr": "3.9.2",
+    "onnxruntime": "1.24.3",
+    "torch": "2.14.1",
+    "transformers": "5.20.0",
+    "pydantic": "2.14.1"
+  },
+  "hashes": {
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/README.md": "19aa74d8e9dea3cb9f081972cd6e73b7b5e2fb503e01312e393f5ff31e9ab846",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/build.py": "a9f63bbc90b0deecc38dcf88c890d8a699701f0ab78a3763fa3b2fd6ba53222c",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/acl-p1.pdf": "2449211267c81871e89be2cf36e3161a34dacb5ec758e92d47522ce0e30ed1c1",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/acl-p2.pdf": "b4fe5ab8f55a9bb37f862a26c1d498cfbfca5580c11f2597ef0f2933a6a6357f",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/nccu-p3.pdf": "27aaf6d37eb43b8b78a86682984985f05e49a19067d0a34fd9a010b306a8e529",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/ndhu-p7.pdf": "4628856aaf69658884b5525241b40b9d2c42a6b222d667dcd8b3a157c2c12c21",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/ndhu-p9.pdf": "b92b48f59acdd0c77849a3cd6d81ad5ccfa8e70a27dccbafaeb93844ea43fb8c",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/wiki-p2.pdf": "0f56d9c3404a60f2f9a2f5a74920c208eb1e294a124732fa96b6dee5e5d7f671",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/manifest.json": "ac16f34ff60dadd6ba42b6e3da7fa282bbe385b8889193ef00b141645081df0a",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O01.png": "696904e98a39e0fe56632eb0275f461c2e999af16fc59fea5288d756cfcb1798",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O02.png": "bf21acb0520e463c07a3e5233d28cea3aba1a2e57701edf9cab58561556007a5",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O03.png": "2dca082c67157f3306a5f4241d72ed3ed0e2f82a6f53e491c1a5b0b60a139621",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O04.png": "5c24e7f4e31e72e084915a2fd93a28948c8718a9d69156d51349660c4b235160",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O05.png": "06bd6d8d03a7e28980812d3e030274ac24c61d73a9602ea8811a6b7b059e09bf",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O06.png": "4947447b14179f4b071da87160644ab843175cad930944a8305678f6728c0cc2",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O07.png": "1b4d58dc13f135eaf0de06aecf0b56d2422f3a2643792db53ca17c20a062ac54",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O08.png": "4a88da802f197f3fe40ed39bf400c4035f0d552dc25614b8e89cb6ad3fc1bf0c",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O09.png": "b84da011368fba72910a67840b263f99fa4b5b0f653e97c6971c9bdb47762589",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O10.png": "b81f7acfde3ba9298eebb38e53183020dae2e61ead03763214ea10069ef513cd",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O11.png": "d0f95030aac45cef8f0901a6ad1bb64de93e2a1a56d77fbda7680ee14bb68b71",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/O12.png": "88de1ee4a99de2fdfc08d87cf845e82b8ae4075c80370fd805055719c1026ce4",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation/source-contact-sheet.png": "d233da63b42b810a474746b3e1527fe9afa118f67146e75c389796b9c2b112d7",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/orientation.json": "6c88e3257adc7c7428ba0da241ccca8fe2a5e00c07b0ec6a5becfa87eb018f97",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/reference.json": "cf6b1e99f1ac6c2a1c64ecdae6c1900e374ce5b668e23ac89447f2109d391f3f",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p1-native.txt": "55580a6c31560ca6024659a8ea38b888ae0b601bd03fae2de816f14a57791511",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p1-reference.png": "96204182f5e772a445156d1f617013eb7caa5d1e3d46ce9e92fae0f2a88ff064",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p1.png": "ce19fe995e8e4f0efeb77b83b815e8c198eb4de1b142ed45593572007e984af4",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p2-native.txt": "bce7a152140c20382cb5d2206ad7f5d9b536edb2912c0aca81245f44d4aa737f",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p2-reference.png": "a58e140e9af57abeccb792c6f317f82aa5464bc1ff5dbaf43b34279eca0d250d",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p2.png": "8a7396ada5bf4d36af429ae024f70daa5f953135a972d6910ed315822a1d84eb",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/nccu-p3-native.txt": "223d3041d7984cbffcd61becb2d86c99e996799f6995e26d8e441845d729b6b1",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/nccu-p3-reference.png": "79d8a0e1fa1e731a387a94d6543ab2cf13f82de2ed4cd5302cb89ee8d9d2e5ca",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/nccu-p3.png": "c041eab964b8f84ef8e294a1d88dd021ebb9839fe7093c9252a234ef29352195",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/ndhu-p7-native.txt": "1091f092680756699959c17dfeb60a9ff2a51887d60411f9c8746b2c8a6428b6",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/ndhu-p7-reference.png": "8df181622f59030097ea285bcf35b4d42d83dceebe6a573a53b8f93fd6dfa361",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/ndhu-p7.png": "3aacfd444775342a3fccb1677f6a511b0afda59995a052828164feb1aec8ac77",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/ndhu-p9-native.txt": "c3148769b3e9f9c40f16236817aa5fbe3b216dec19f3110cdc04c43e1f884adf",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/ndhu-p9-reference.png": "19f2d814f6297e38f292a7e79f1a3ffd20529357e952903ea807c12e0b409b4e",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/ndhu-p9.png": "a70b43206b6f589bae77b7c62bdadc2f032960a9e82e08dfcb0142e8869a6077",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/wiki-p2-native.txt": "73d2d2d39cf7f7782e24d87a09fafe0ed367a72552af0b7131ab88b3ea1a4b57",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/wiki-p2-reference.png": "8f51bb97e0160887814eb2c9c743d205ddee91c1c138d590666ef72da9a7f5ea",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/wiki-p2.png": "e1dbdae2c66399db63d63354e1ab04defae4d4a0cc9b6ac0eebb5a5e7a34e555",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/sources/acl.pdf": "9e7692e06ed049928391e2a20bd9b9b7ad4834a6e047a3c4b64df1e82376ced3",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/sources/nccu.pdf": "3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/sources/ndhu.pdf": "cde6026e4657869a06d9240243ef4c58620d5f0e04526d5ac1d2abc42ef8ec54",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/sources/wiki.pdf": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/freeze.json": "0da250cc882ddef9743d9a6a4965ba9bbbdbda65ed52973327d1f43a2b6c7448",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/run.py": "db1cf4f28da4a9e30a74023db735d752efedb01809b7c45bab3b5612d9cce690",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/orientation.py": "02dedb2d145fdb04f3564f0bcb3f434e5bcf58b1620a542691bd17db1cbbf355",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/test_run.py": "34001bf7176f755e5011ab5c50209f468df903f4c818b1c20e30559cb6e6f8e2",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/test_evaluate.py": "9eb5a402b73a103975b77f25b19078c7b1c13c34842d53b8adce1227ef022f96",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/evaluate.py": "a02ca245cd44b3d87fd3ca4815afc5a7466b31988e12d965d3701a4a5201adfb",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/tessdata/eng.traineddata": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/tessdata/manifest.json": "2214d5abb3b2e4a67c079b631d2af72215ef4a4df4c4e20dbff0751b601ae5d1",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/tessdata/osd.traineddata": "9cf5d576fcc47564f11265841e5ca839001e7e6f38ff7f7aacf46d15a96b00ff",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/tessdata/chi_tra.traineddata": "529c5b5797d64b126065cd55f2bb4c7fd7b15790798091b1ff259941a829330b",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/evaluator-preflight-receipt.json": "1627598611edc72025a8c2ebe93aa2201d27eb2d7e0353637cfff5e4fab8b634",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/run.py": "90bd44c4a1551d3b13d2b115218e5aab92f70d3e13c1fc5963321543f59c83e5",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-crop-ablation-2026-10-19/score.py": "89eae416b683267533aed69d85d6ca245579e9e8303b0401c3ee6c28ed0dca81",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-eval-interfaces-2026-10-18/C/cpu_baseline_v2.py": "7a54df318e1fc16854f98826e8486ed32a0c16a88a695edcee7f2ea0ad8cf08b",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-eval-interfaces-2026-10-18/C/cpu_baseline.py": "89e572ac2986d5c18233c08830c998c3394e3070daa2a95dc4140e7713f7f44c",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-crop-ablation-2026-10-19/reference.json": "415216bada09152e082db98411fabae978c6f1e234b88dfd7dc6945e44218a8f",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/known-reference.json": "79da9e8127439f995b45814b2c85d2d64db55dc41f774b128798fdf8eedbc883",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/live/result.json": "abd8eb7cc331e2e059ec672fb5f9169fd38edd10dcaddf8267ba5090d74a2bed",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/live/document.md": "3471578a6b633e91b66a50136abb293e1154d6dd65c3e542c495642d581de614",
+    "/opt/homebrew/Cellar/tesseract/5.5.3/bin/tesseract": "21674e0595020d02c049765fba6a51cedccdbae26eac94c5d15b55e3e6ecdec3",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/README.md": "175700839bc7808eac6af1d0c23e4f483606ab2276fe01122f4093e61a1a65b6",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/config.json": "fdea30805ce2f5666b147fca941dcdd27ad468e27d6ed21902207d3da056a97d",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/model.safetensors": "00333a43451945aaf89db8ca9c0a17e75d1537c17db60fdb91aa95f4c7929e0c",
+    "/private/tmp/pdf-core-native-20261017/hf/hub/models--docling-project--docling-layout-heron/snapshots/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8/preprocessor_config.json": "cd38cd59999e7a95d68e487fbe5132df3d4e5c32a0836add57e6126ba0c4eaf1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_det_small.onnx": "090f04abcd9d9a7498bc4ebf677e4cb9bdce1fe4197ddb7e529f1ef44e1ff94f",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/PP-OCRv6_rec_small.onnx": "6f327246b50388f3c176ae304bd95767ea6dc0c9ae92153ef8cbe210b3c14884",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx": "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c",
+    "/private/tmp/pdf-core-native-20261017/artifacts/docling-project--docling-models/model_artifacts/tableformer/accurate/tableformer_accurate.safetensors": "2a7d6c924b3cd12fb99a09280ca9c33a89c5d60b93253617d2e088c1a40374d9",
+    "/private/tmp/pdf-core-native-20261017/artifacts/docling-project--docling-models/model_artifacts/tableformer/accurate/tm_config.json": "984e122ceb8ccf84d84c9d2882f6f2302a44b4f1e577babd6289892c36f3cffd",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/pipeline/standard_pdf_pipeline.py": "595185558770730dd59b0dc766d15f42eec4d531dd36f50d8a151c5446762846",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/datamodel/pipeline_options.py": "befb3a4cf311fc9b3c551a97f15f1fe7b15f3f11c9e0338afd4f6a8f04821120",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/ocr/rapid_ocr_model.py": "27520d5527f0dc448320906ad1d77dc114ac89ad5eca546c0a0e281fc6f80e25",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/layout/layout_model.py": "5d11b9f3b00eeb8e2334ef96845a22a28ead37470a2354ac09602e396012d057",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/table_structure/table_structure_model.py": "184a68adba5b7230713e1d58fdfba38f7e5bf6e4b7a2a50866efe9bf9942cf86",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/document.py": "36396b6045cd903ee7785729955a911d6f98220562895c48428a974567c91947",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py": "4fc56f5bb7dc8da0a3162968d7f7d217b90fff0d37554d23fbd46decf8b09310",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py": "901247aa864647bac32864d98f9bf642aca3096c3f98c159511fd8eaccf393d1",
+    "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/fixtures/scan-pages-3-5.pdf": "7856cfe6127948d506ca5fad750e915134be362b5e1436c70b378f42a6fda2a0",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/S0/effective-options.json": "37da040815f8759de6b371a66a1f36b091694190c761acee7552c47aaed7658d",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/S0/scan/result.json": "abd8eb7cc331e2e059ec672fb5f9169fd38edd10dcaddf8267ba5090d74a2bed",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-native-round-2026-10-17/S1/scan/result.json": "13cbb062f73f1b50c14a924b549cb51620b70f9345e0406af2017b0595de8605",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/run.py": "6fa0bbcbabfe3996c33210d2cdc1cd9680e96a8e91d5fee530b5e71df6553f53",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/check.py": "238ddbb09f3020ebd8b97c4347b624bc96d47eae7dcc39cbb7d26fe1b3c07c15",
+    "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-boundary-trace-2026-10-19/test_capture.py": "6244fee0664d7b1c8e2e483366623b599c7cd143b5d182096ceb2ed14aa288a3",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/base_ocr_model.py": "1563b9b30e2e4ee670ac58e865bd32a53462efce0a1b610602bb1b4dbc8c1a32",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/layout/layout_object_detection_model.py": "e724cb26c44c9f8fbe7bf42f3562889f7dbc432882146b04ef436fbf22bfa07e",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/layout/layout_postprocessing_model.py": "59318ee44c5ea4873677a052607488df0794b4b3caf3c31f675341377486eff9",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/page_assemble/page_assemble_model.py": "464799876dd35a1fb841a996accddc14c9afdb0fa58b3e5ca08dbc119a130400"
+  },
+  "jobs": [
+    {
+      "id": "known",
+      "pdf": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/fixtures/scan-pages-3-5.pdf",
+      "source": "known exposed failure"
+    },
+    {
+      "id": "acl-p1",
+      "pdf": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/acl-p1.pdf",
+      "source_id": "acl"
+    },
+    {
+      "id": "acl-p2",
+      "pdf": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/acl-p2.pdf",
+      "source_id": "acl"
+    },
+    {
+      "id": "wiki-p2",
+      "pdf": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/wiki-p2.pdf",
+      "source_id": "wiki"
+    },
+    {
+      "id": "ndhu-p7",
+      "pdf": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/ndhu-p7.pdf",
+      "source_id": "ndhu"
+    },
+    {
+      "id": "ndhu-p9",
+      "pdf": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/ndhu-p9.pdf",
+      "source_id": "ndhu"
+    },
+    {
+      "id": "nccu-p3",
+      "pdf": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/corpus/inputs/nccu-p3.pdf",
+      "source_id": "nccu"
+    }
+  ],
+  "orientation": {
+    "upright_source_crops": 12,
+    "paired_rotations": [
+      0,
+      180
+    ],
+    "classifier_calls": 1,
+    "recognizer_calls": 2,
+    "line_inputs_per_call": 24
+  },
+  "budgets": {
+    "profiles": 3,
+    "source_pages_per_profile": 7,
+    "page_attempts_per_job": 1,
+    "automatic_inference_retries": 0,
+    "candidate_variants_after_results": 0,
+    "profile_seconds": 900,
+    "page_seconds": 180,
+    "initialization_seconds": 180,
+    "max_sampled_tree_rss_bytes": 12884901888,
+    "min_available_bytes": 8589934592
+  },
+  "environment": {
+    "OMP_NUM_THREADS": "4",
+    "OMP_THREAD_LIMIT": "4",
+    "TESSDATA_PREFIX": "/Users/david/work/data-ingestion/docs/research/pdf-core-ocr-regression-2026-10-19/tessdata",
+    "offline_HF": true
+  },
+  "acceptance": "Manual source-page adjudication: no unrelated cross-column sentences, whole headings/paragraphs lost, severe identifier/meaning corruption or new major regressions. Minor glyph/typography differences tolerated. Source coverage/anchors are diagnostics, never semantic pass. Direction-off cannot qualify generally without an upstream upright guarantee.",
+  "excluded_scope": "Reading-order repair, figure interior OCR, formula/code enrichment, GPU, VLM, production throughput, existing sealed holdout",
+  "source_exposure": "Known development and exposed regression documents, not an unseen holdout or accuracy benchmark.",
+  "stop": "One frozen round. If no method passes, stop and report no qualified OCR method; no automatic threshold/model/padding/SDK-policy follow-up."
+}

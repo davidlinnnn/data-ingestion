@@ -1,0 +1,460 @@
+{
+  "format": "adapter-continuation-results-v1",
+  "controls_sha256": "5b02f864b67e1bb915f28cc05402edd7b79cb2a65259a32225d4d9182f494d33",
+  "runtime": {
+    "executable": "/Users/david/work/data-ingestion/docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python",
+    "packages": {
+      "docling": "2.102.0",
+      "docling-core": "2.96.0",
+      "docling-ibm-models": "3.15.0"
+    }
+  },
+  "source_identities": [
+    {
+      "path": "src/pdf_processing/continuation.py",
+      "sha256": "791e2ebef036d6f2468fb607162a135eecb3c4eaa056d4e35b1a81bffde49772"
+    },
+    {
+      "path": "docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/docling_ibm_models/reading_order/reading_order_rb.py",
+      "sha256": "68e2be8f709e8ed29a44597780d38dbb93deec4841e007b7b61a99b8a0cecf10"
+    },
+    {
+      "path": "tests/pdf_processing/q01/test_continuation.py",
+      "sha256": "cd7489bbe89f659b0366648ef4b2add99684ed1e5b52b05fb06d6e409f5723c6"
+    },
+    {
+      "path": "tests/pdf_processing/q01/replay.py",
+      "sha256": "8d57204a5fab2ebced7cf61c194075f3df435cec99a6ad766ace82d0c23d53de"
+    },
+    {
+      "path": "docs/research/pdf-core-g2-inline-boundary-2026-10-15.md",
+      "sha256": "5fb368bb44eb1306b9acdc7ea89df5a390e2417cf8f0f3076f12580e8c7a6e58"
+    },
+    {
+      "path": "docs/research/pdf-core-g2-inline-boundary-2026-10-15/review/source-snapshot.json",
+      "sha256": "ac24732003ac15e77ec1af8213cb686c174fff3b8983f904020504c96ab14fad"
+    },
+    {
+      "path": "docs/research/pdf-core-adapter-contract-2026-10-16/continuation/freeze.py",
+      "sha256": "d9d26516971714887503566d97f57b617bacdb1b0672849d84a5ecbe054bca80"
+    },
+    {
+      "path": "docs/research/pdf-core-adapter-contract-2026-10-16/continuation/run.py",
+      "sha256": "0f7e769d10b6ee4876386a7a851e6fb6112515bb3faac88ef3d8474ad0dfd131"
+    }
+  ],
+  "policy": "unchanged src/pdf_processing/continuation.py predict_merges; ReadingOrderPredictor only as upstream rule helper",
+  "results": [
+    {
+      "id": "margin_before_body",
+      "required": true,
+      "expected": {
+        "0": [
+          2
+        ]
+      },
+      "actual": {
+        "0": [
+          2
+        ]
+      },
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "cross_column_uppercase",
+      "required": true,
+      "expected": {
+        "0": [
+          1
+        ]
+      },
+      "actual": {
+        "0": [
+          1
+        ]
+      },
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "container_barrier",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "cross_page_chain",
+      "required": true,
+      "expected": {
+        "0": [
+          1,
+          2
+        ]
+      },
+      "actual": {
+        "0": [
+          1,
+          2
+        ]
+      },
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "margin_target",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "skipped_page",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "interior_target",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "heading_target",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "finished_sentence",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "interior_source",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "ambiguous_targets",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "duplicate_ownership",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "inline_chain",
+      "required": true,
+      "expected": {
+        "0": [
+          1,
+          2
+        ]
+      },
+      "actual": {
+        "0": [
+          1,
+          2
+        ]
+      },
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "overlapping_entrances",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "exit_barrier_text_2",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "exit_barrier_text_1",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "exit_barrier_key_value_region_2",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "exit_barrier_key_value_region_1",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "explicit_caption_barrier",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "explicit_section_header_barrier",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "ordinary_next_paragraph",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    },
+    {
+      "id": "ordinary_unpunctuated_next_paragraph",
+      "required": true,
+      "expected": {},
+      "actual": {
+        "0": [
+          1
+        ]
+      },
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": false
+    },
+    {
+      "id": "retained_tall_body_right_title_text_label",
+      "required": true,
+      "expected": {},
+      "actual": {
+        "0": [
+          1
+        ]
+      },
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": false
+    },
+    {
+      "id": "tall_body_title_typed_counterfactual",
+      "required": true,
+      "expected": {},
+      "actual": {},
+      "invariants": {
+        "input_unchanged": true,
+        "all_output_ids_exist": true,
+        "chains_have_no_self_or_cycle": true,
+        "targets_have_single_ownership": true,
+        "chain_roots_not_targets": true
+      },
+      "pass": true
+    }
+  ],
+  "case_count": 24,
+  "passed": 22,
+  "failed": [
+    "ordinary_unpunctuated_next_paragraph",
+    "retained_tall_body_right_title_text_label"
+  ],
+  "existing_unmodified_test_suite": {
+    "tests_run": 11,
+    "successful": true,
+    "log": "test_ambiguous_successors_rejected (unchanged_continuation_tests.Continuations.test_ambiguous_successors_rejected) ... ok\ntest_container_before_text_is_barrier (unchanged_continuation_tests.Continuations.test_container_before_text_is_barrier) ... ok\ntest_cross_column_uppercase (unchanged_continuation_tests.Continuations.test_cross_column_uppercase) ... ok\ntest_full_stop_and_interior_column_rejected (unchanged_continuation_tests.Continuations.test_full_stop_and_interior_column_rejected) ... ok\ntest_lowercase_page_and_chain (unchanged_continuation_tests.Continuations.test_lowercase_page_and_chain) ... ok\ntest_margin_before_real_successor (unchanged_continuation_tests.Continuations.test_margin_before_real_successor) ... ok\ntest_rejections (unchanged_continuation_tests.Continuations.test_rejections) ... ok\ntest_ambiguous_owners (unchanged_continuation_tests.Preservation.test_ambiguous_owners) ... ok\ntest_inline_chain_retained (unchanged_continuation_tests.Preservation.test_inline_chain_retained) ... ok\ntest_intervening_content_blocks_column_exit (unchanged_continuation_tests.Preservation.test_intervening_content_blocks_column_exit) ... ok\ntest_overlapping_entrances_are_ambiguous (unchanged_continuation_tests.Preservation.test_overlapping_entrances_are_ambiguous) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.000s\n\nOK\n",
+    "not_run": [
+      {
+        "test": "Continuation.test_source_continues_into_body",
+        "reason": "Required historical /private/tmp checkpoint directory absent"
+      },
+      {
+        "test": "Preservation.test_input_content_not_mutated",
+        "reason": "Required historical /private/tmp checkpoint directory absent; per-control input preservation checks run separately"
+      }
+    ]
+  },
+  "network_attempts": [],
+  "known_learned_runtime_modules_imported": [],
+  "model_loads": 0,
+  "inferences": 0,
+  "installs": 0,
+  "environment_creations": 0,
+  "pdf_image_holdout_reads": 0,
+  "elapsed_seconds": 0.0034346249885857105,
+  "stop_required": true,
+  "interpretation": "Pure continuation prerequisite control; no mapper or live Paddle capture. A failed native-label control remains a failure even if its typed counterfactual passes."
+}

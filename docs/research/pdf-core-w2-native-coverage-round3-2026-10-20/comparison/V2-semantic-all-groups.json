@@ -1,0 +1,900 @@
+[
+  {
+    "source_rootcause_group": "alita-p12-code-intro-role",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 1,
+    "affected_pages": [
+      12
+    ],
+    "failure_type": "OLD_CODE_ROLE_ALARM_WITH_CONTENT_PRESERVED",
+    "source_reason": "p12 case-study box places the Python-code introduction after installation commands and immediately before the Python code.",
+    "baseline_reason": "The complete introductory sentence is inside code text237 and exported in its code block. The original raw role alarm had already been adjudicated clean.",
+    "variant_reason": "The complete introduction remains present and exportable with a text-compatible role. Removing the raw alarm is metadata normalization, not repair of a Q4 defect."
+  },
+  {
+    "source_rootcause_group": "alita-p2-figure2-caption-label",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      2
+    ],
+    "failure_type": "ISOLATED_NUMBERED_CAPTION_CLASSIFIED_TEXT",
+    "source_reason": "Whole-page p2 shows this as the full Figure2 caption beneath its own figure/table, separated from surrounding body prose.",
+    "baseline_reason": "The full caption is separately present with its Figure/Table identifier; baseline does not merge this source caption into unrelated prose.",
+    "variant_reason": "#/texts/94 is label=text but contains only the complete numbered Figure2 caption; the Markdown paragraph retains its identifying prefix and remains separate from following body/heading. No negation, number, object or list dependency changes. Both raw caption alarms are label-only for the same intact caption."
+  },
+  {
+    "source_rootcause_group": "alita-p4-figure3-caption-label",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 10,
+    "affected_pages": [
+      4
+    ],
+    "failure_type": "ISOLATED_NUMBERED_CAPTION_CLASSIFIED_TEXT",
+    "source_reason": "Whole-page p4 shows this as the full Figure3 caption beneath its own figure/table, separated from surrounding body prose.",
+    "baseline_reason": "The full caption is separately present with its Figure/Table identifier; baseline does not merge this source caption into unrelated prose.",
+    "variant_reason": "#/texts/136 is label=text but contains only the complete numbered Figure3 caption; the Markdown paragraph retains its identifying prefix and remains separate from following body/heading. No negation, number, object or list dependency changes. Both raw caption alarms are label-only for the same intact caption."
+  },
+  {
+    "source_rootcause_group": "alita-p7-table1-caption-label",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 8,
+    "affected_pages": [
+      7
+    ],
+    "failure_type": "ISOLATED_NUMBERED_CAPTION_CLASSIFIED_TEXT",
+    "source_reason": "Whole-page p7 shows this as the full Table1 caption beneath its own figure/table, separated from surrounding body prose.",
+    "baseline_reason": "The full caption is separately present with its Figure/Table identifier; baseline does not merge this source caption into unrelated prose.",
+    "variant_reason": "#/texts/181 is label=text but contains only the complete numbered Table1 caption; the Markdown paragraph retains its identifying prefix and remains separate from following body/heading. No negation, number, object or list dependency changes. Both raw caption alarms are label-only for the same intact caption."
+  },
+  {
+    "source_rootcause_group": "alita-p8-table2-caption-label",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      8
+    ],
+    "failure_type": "ISOLATED_NUMBERED_CAPTION_CLASSIFIED_TEXT",
+    "source_reason": "Whole-page p8 shows this as the full Table2 caption beneath its own figure/table, separated from surrounding body prose.",
+    "baseline_reason": "The full caption is separately present with its Figure/Table identifier; baseline does not merge this source caption into unrelated prose.",
+    "variant_reason": "#/texts/189 is label=text but contains only the complete numbered Table2 caption; the Markdown paragraph retains its identifying prefix and remains separate from following body/heading. No negation, number, object or list dependency changes. Both raw caption alarms are label-only for the same intact caption."
+  },
+  {
+    "source_rootcause_group": "alita-p8-table3-caption-label",
+    "job_id": "P-08-2505.20286v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      8
+    ],
+    "failure_type": "ISOLATED_NUMBERED_CAPTION_CLASSIFIED_TEXT",
+    "source_reason": "Whole-page p8 shows this as the full Table3 caption beneath its own figure/table, separated from surrounding body prose.",
+    "baseline_reason": "The full caption is separately present with its Figure/Table identifier; baseline does not merge this source caption into unrelated prose.",
+    "variant_reason": "#/texts/192 is label=text but contains only the complete numbered Table3 caption; the Markdown paragraph retains its identifying prefix and remains separate from following body/heading. No negation, number, object or list dependency changes. Both raw caption alarms are label-only for the same intact caption."
+  },
+  {
+    "source_rootcause_group": "imagetransformer-figure2-breaks-body-sentence",
+    "job_id": "F-icml_imagetransformer",
+    "family": "ICML",
+    "semantic_verdict": "CONFIRMED_FIXED",
+    "changed_rows": 10,
+    "affected_pages": [
+      5
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p5 simpler depen-應接dence across channels，Figure2圖說獨立。",
+    "baseline_reason": "baseline108把圖內字與caption接進未完正文句。",
+    "variant_reason": "V2 texts/109恢復完整simpler dependence across channels... DMOL段落，115獨立caption；native/MD皆真修復p5根因。10removed只計1fixed；p7 Table5故障仍在，整篇未修好。"
+  },
+  {
+    "source_rootcause_group": "p16-task-ids-formula-role-p25",
+    "job_id": "P-16-2505.22954v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "CONFIRMED_FIXED",
+    "changed_rows": 2,
+    "affected_pages": [
+      25
+    ],
+    "failure_type": "formula_mapping_omission",
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；原60個唯一task IDs多個formula.text空而orig保留。V2改tables/2(5x2)與tables/3(25x2)，原60 IDs全部在MD恰一次、p25 empty formula從35變0，完整group真修復。",
+    "baseline_reason": "原60個唯一task IDs多個formula.text空而orig保留。V2改tables/2(5x2)與tables/3(25x2)，原60 IDs全部在MD恰一次、p25 empty formula從35變0，完整group真修復。",
+    "variant_reason": "原60個唯一task IDs多個formula.text空而orig保留。V2改tables/2(5x2)與tables/3(25x2)，原60 IDs全部在MD恰一次、p25 empty formula從35變0，完整group真修復。"
+  },
+  {
+    "source_rootcause_group": "p20-caption-duplicated-p28",
+    "job_id": "P-20-2505.03335v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "PERSISTING_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      28
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；V2只把污染段落轉caption；原PDF clipped舊字流及backend bounded-query擴增造成的重複/截斷文字仍完整存在於text/orig/MD。p28 Figure21多份、p48舊SolveAbduction混實際SumProduct條件，仍改變必要含義；非serializer新造重複，也不是wholegroup修復。",
+    "baseline_reason": "V2只把污染段落轉caption；原PDF clipped舊字流及backend bounded-query擴增造成的重複/截斷文字仍完整存在於text/orig/MD。p28 Figure21多份、p48舊SolveAbduction混實際SumProduct條件，仍改變必要含義；非serializer新造重複，也不是wholegroup修復。",
+    "variant_reason": "V2只把污染段落轉caption；原PDF clipped舊字流及backend bounded-query擴增造成的重複/截斷文字仍完整存在於text/orig/MD。p28 Figure21多份、p48舊SolveAbduction混實際SumProduct條件，仍改變必要含義；非serializer新造重複，也不是wholegroup修復。"
+  },
+  {
+    "source_rootcause_group": "p20-caption-object-contamination-p48",
+    "job_id": "P-20-2505.03335v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "PERSISTING_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      48
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；V2只把污染段落轉caption；原PDF clipped舊字流及backend bounded-query擴增造成的重複/截斷文字仍完整存在於text/orig/MD。p28 Figure21多份、p48舊SolveAbduction混實際SumProduct條件，仍改變必要含義；非serializer新造重複，也不是wholegroup修復。",
+    "baseline_reason": "V2只把污染段落轉caption；原PDF clipped舊字流及backend bounded-query擴增造成的重複/截斷文字仍完整存在於text/orig/MD。p28 Figure21多份、p48舊SolveAbduction混實際SumProduct條件，仍改變必要含義；非serializer新造重複，也不是wholegroup修復。",
+    "variant_reason": "V2只把污染段落轉caption；原PDF clipped舊字流及backend bounded-query擴增造成的重複/截斷文字仍完整存在於text/orig/MD。p28 Figure21多份、p48舊SolveAbduction混實際SumProduct條件，仍改變必要含義；非serializer新造重複，也不是wholegroup修復。"
+  },
+  {
+    "source_rootcause_group": "sica-p12-prompt-export-suppression",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "PERSISTING_BLOCKING",
+    "changed_rows": 6,
+    "affected_pages": [
+      12
+    ],
+    "failure_type": "EXISTING_PROMPT_PICTURE_EXPORT_OMISSION",
+    "source_reason": "p12 lower Base Sub-Agent Prompt is a published necessary numbered/negated instruction list. The two framed prompts are document content.",
+    "baseline_reason": "Both p12 prompt frames already sit under pictures4/5 (nested list groups also parent picture5), and Markdown omits their text. These particular list strings are absent from baseline Markdown, despite some inherited list labels avoiding the raw role alarm.",
+    "variant_reason": "The same prompts remain under pictures4/5. Egret changes nested list labels to text lines, adding role alarms, but Markdown still omits both entire frames. Neither frame is restored; this is not a new semantic failure or complete group fix."
+  },
+  {
+    "source_rootcause_group": "sica-p13-initialrequest-problem-order",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "PERSISTING_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      13
+    ],
+    "failure_type": "EXISTING_PAYLOAD_OBJECT_ORDER_BUG_REPLACED_BY_EXPORT_OMISSION",
+    "source_reason": "p13 lower prompt explicitly orders initial-request intro, initial-request payload/end, then current-problem intro, current-problem payload/end.",
+    "baseline_reason": "texts299/300 place the current-problem introduction before the initial-request payload in texts301, so object binding is already wrong although Markdown has the text.",
+    "variant_reason": "Native pictures6 children texts331–337 restore source payload order, but the whole necessary prompt is now a picture subtree suppressed from Markdown. The source group remains blocked; native order improvement is partial and must not count as a delivered full fix."
+  },
+  {
+    "source_rootcause_group": "sica-p14-between-boxes-intro-label",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 1,
+    "affected_pages": [
+      14
+    ],
+    "failure_type": "TEXT_TO_HEADING_LABEL_ONLY",
+    "source_reason": "The sentence The judgements of the overseer will generally be in the following form is a separate introduction between the two p14 prompt boxes.",
+    "baseline_reason": "The complete sentence is body text314 and is present in Markdown.",
+    "variant_reason": "The same complete sentence is body section_header370 and is still exported separately. Its role label changes, with no missing content, object change or order defect for this identity."
+  },
+  {
+    "source_rootcause_group": "sica-p14-overseer-export-suppression",
+    "job_id": "P-07-2504.15228v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 30,
+    "affected_pages": [
+      14
+    ],
+    "failure_type": "picture_delivery_omission",
+    "source_reason": "p14 publishes the complete Overseer Prompt and a structured judgement example in two frames, including cancellation conditions, notifications and example field values. This is a distinct source prompt from p12.",
+    "baseline_reason": "The affected p14 prompt/JSON text is represented by body texts306–327 and body list groups38; the words and fields are available in baseline Markdown. For example prose188 has baseline native_body and Markdown offsets.",
+    "variant_reason": "Egret wraps the two frames in pictures7/8, with nested text/list descendants. Native text is retained but the Markdown export suppresses both regions; these necessary conditions/fields disappear. Missing and role alarms share this single new source-rootcause group, not thirty separate defects."
+  },
+  {
+    "source_rootcause_group": "v2-03-label-p13",
+    "job_id": "P-03-2603.25158v5",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 6,
+    "affected_pages": [
+      13
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-03-label-p19",
+    "job_id": "P-03-2603.25158v5",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      19
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-03-label-p6",
+    "job_id": "P-03-2603.25158v5",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      6
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-06-label-p17",
+    "job_id": "P-06-2606.14239v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      17
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-06-label-p19",
+    "job_id": "P-06-2606.14239v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      19
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-06-label-p20",
+    "job_id": "P-06-2606.14239v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      20
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-06-label-p23",
+    "job_id": "P-06-2606.14239v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      23
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-06-label-p4",
+    "job_id": "P-06-2606.14239v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 8,
+    "affected_pages": [
+      4
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-06-label-p9",
+    "job_id": "P-06-2606.14239v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      9
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-10-label-p27",
+    "job_id": "P-10-2509.25140v2",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      27
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-10-label-p4",
+    "job_id": "P-10-2509.25140v2",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      4
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-20-label-p11",
+    "job_id": "P-20-2505.03335v1",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 12,
+    "affected_pages": [
+      11
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "baseline_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。",
+    "variant_reason": "Caption 仍是完整、獨立且可辨識段落；caption/text role 改變沒有把必要句接斷。"
+  },
+  {
+    "source_rootcause_group": "v2-adam-algorithm2-split-update",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      9
+    ],
+    "failure_type": "reading_order",
+    "source_reason": "p9 Algorithm2的ut與theta更新及英文Update parameters應完整在同一算法內。",
+    "baseline_reason": "texts368/369完整更新後接endwhile與正文。",
+    "variant_reason": "V2 texts365–369只剩ut前半及theta碎片，其餘更新片段384–396被排到Conclusion之後；MD同錯序。非純inline攤平，更新對象/程序順序改變。"
+  },
+  {
+    "source_rootcause_group": "v2-adam-header-plus-continuation",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 1,
+    "affected_pages": [
+      10
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "頁圖header與正文large datasets分離。",
+    "baseline_reason": "fallback錯把頁首接正文形成anchor。",
+    "variant_reason": "text398 page_header與399正文分開正確，新增role警報是oracle跨區組合。"
+  },
+  {
+    "source_rootcause_group": "v2-adam-inline-display-composite",
+    "job_id": "F-iclr_adam",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 2,
+    "affected_pages": [
+      2,
+      5
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "PDF fallback anchor把英文與數學字串混成單一句；不得按D1 prose判公式等價。",
+    "baseline_reason": "公式攤平與空formula另存原baseline證據。",
+    "variant_reason": "text22/text55現在包含這些數學字串，故匹配恢復；不是已證明英文語義修復，數學等價未裁定。"
+  },
+  {
+    "source_rootcause_group": "v2-agentevolver-figure3-breaks-constructing",
+    "job_id": "P-19-2511.10395v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 6,
+    "affected_pages": [
+      4,
+      5
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p4正文manually constructing multi-step...跨頁p5；captionFigure3在p5浮圖下。",
+    "baseline_reason": "baselinetext304接with constructing且caption306分開。",
+    "variant_reason": "V2text306成with Figure3整段caption，constructing到text357；MD在manually與constructing間插caption。"
+  },
+  {
+    "source_rootcause_group": "v2-agentevolver-figure6-breaks-components",
+    "job_id": "P-19-2511.10395v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      8,
+      9
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p8每個experience comprises跨頁接p9two components:WhentouseandContent；Figure6獨立圖說。",
+    "baseline_reason": "baselinetext424跨頁完整正文，caption425獨立。",
+    "variant_reason": "V2text424於Each experience comprises後插Figure6，two components直到text490；MD混斷定義對象。"
+  },
+  {
+    "source_rootcause_group": "v2-agentevolver-isolated-captions",
+    "job_id": "P-19-2511.10395v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 12,
+    "affected_pages": [
+      3,
+      8,
+      16,
+      26
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "Figure2/5/11與Table7圖說獨立。",
+    "baseline_reason": "baselinecaption獨立。",
+    "variant_reason": "V2改text，Figure11跨兩text但連續；沒有正文混入。"
+  },
+  {
+    "source_rootcause_group": "v2-agentevolver-table2-label",
+    "job_id": "P-19-2511.10395v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      20
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "Table2是獨立caption。",
+    "baseline_reason": "baseline845labeltext但caption獨立。",
+    "variant_reason": "V2labelcaption；內容相同，非實際fix。"
+  },
+  {
+    "source_rootcause_group": "v2-amem-prompt-code-to-text",
+    "job_id": "P-09-2502.12110v11",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 11,
+    "affected_pages": [
+      19,
+      20
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p19/20 boxedprompts的條件/keys/列表原本全部可見。",
+    "baseline_reason": "code575/577/583及MD保留完整prompt。",
+    "variant_reason": "V2改text/listitem，native+MD仍保留條件、keys及更新對象；不是baseline必要文字修復。"
+  },
+  {
+    "source_rootcause_group": "v2-attention-figure2-label",
+    "job_id": "F-nips_attention",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      4
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "頁圖Figure2是獨立caption。",
+    "baseline_reason": "text77 caption完整獨立。",
+    "variant_reason": "text84轉text仍是完整獨立段，Markdown未串入正文。"
+  },
+  {
+    "source_rootcause_group": "v2-evoskill-footnote-wrap",
+    "job_id": "P-02-2603.02766v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 2,
+    "affected_pages": [
+      5,
+      6
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p5註2 URL換行；p6註3 Opus4.5換行仍同一註。",
+    "baseline_reason": "baseline127/155單個footnote完整。",
+    "variant_reason": "V2 128/129、158/159仍各labelfootnote，合串字義未變；凍結單itemrole檢查誤報。"
+  },
+  {
+    "source_rootcause_group": "v2-imagetransformer-cifar-role",
+    "job_id": "F-icml_imagetransformer",
+    "family": "ICML",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 1,
+    "affected_pages": [
+      8
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p8 CIFAR-10...是圖下、Conclusion前獨立正文段落。",
+    "baseline_reason": "baseline label=text。",
+    "variant_reason": "V2 texts/172 label=caption但parent仍body，段落獨立完整；MD保留NLL2.76/2.78與1D/2D對應，未拼Figure6caption，僅metadata錯標。"
+  },
+  {
+    "source_rootcause_group": "v2-imagetransformer-table4-label",
+    "job_id": "F-icml_imagetransformer",
+    "family": "ICML",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      6
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p6 Table4caption本來已視覺獨立。",
+    "baseline_reason": "baseline129為獨立caption內容但label=text，早已裁非Q4。",
+    "variant_reason": "V2 133 label=caption且仍獨立；4removed只metadata校正，不算semantic fix。"
+  },
+  {
+    "source_rootcause_group": "v2-memgen-runin-heading",
+    "job_id": "P-13-2601.01885v3",
+    "family": "ACL/EMNLP",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 1,
+    "affected_pages": [
+      5
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p5runinheading緊接正文。",
+    "baseline_reason": "heading277加text278，MD連續完整。",
+    "variant_reason": "V2合成text271，內容/順序相同；oracleheading+body警報消失不是Q4fix。"
+  },
+  {
+    "source_rootcause_group": "v2-ngcf-figure1-breaks-result-clause",
+    "job_id": "F-acm_ngcf",
+    "family": "ACM sigconf",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      1,
+      2
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p1末As a result應接p2圖下when the embeddings...；Figure1獨立。",
+    "baseline_reason": "baseline texts/30把p1–2正文完整接合，caption分離。",
+    "variant_reason": "V2 texts/25於As a result後插入圖字與Figure1caption，texts/42才續when the embeddings...。native/MD皆新錯接；2新增告警同1根因。"
+  },
+  {
+    "source_rootcause_group": "v2-p03-analyst-example-picture-delivery-p23",
+    "job_id": "P-03-2603.25158v5",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      23
+    ],
+    "failure_type": "picture_delivery_omission",
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；原MD有完整analyst reasoning與patch。V2 texts/494 code是pictures/8 child，text/orig均保留必要理由與程式patch，但MD只picture placeholder，整框必要內容未交付。",
+    "baseline_reason": "原MD有完整analyst reasoning與patch。V2 texts/494 code是pictures/8 child，text/orig均保留必要理由與程式patch，但MD只picture placeholder，整框必要內容未交付。",
+    "variant_reason": "原MD有完整analyst reasoning與patch。V2 texts/494 code是pictures/8 child，text/orig均保留必要理由與程式patch，但MD只picture placeholder，整框必要內容未交付。"
+  },
+  {
+    "source_rootcause_group": "v2-p03-success-prompt-table-p22",
+    "job_id": "P-03-2603.25158v5",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 2,
+    "affected_pages": [
+      22
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Frequency Awareness與Generalization在tables/14 cells及MD完整存在；不是prose text角色不等於漏交付。表格另把Mission末詞answer.移至Role末，人工保守判尚不足證明必要含義改變，不計新Q4阻擋。",
+    "baseline_reason": "Frequency Awareness與Generalization在tables/14 cells及MD完整存在；不是prose text角色不等於漏交付。表格另把Mission末詞answer.移至Role末，人工保守判尚不足證明必要含義改變，不計新Q4阻擋。",
+    "variant_reason": "Frequency Awareness與Generalization在tables/14 cells及MD完整存在；不是prose text角色不等於漏交付。表格另把Mission末詞answer.移至Role末，人工保守判尚不足證明必要含義改變，不計新Q4阻擋。"
+  },
+  {
+    "source_rootcause_group": "v2-p10-sourcing-linebreak-p11",
+    "job_id": "P-10-2509.25140v2",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 1,
+    "affected_pages": [
+      11
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；baseline sourc-/ing跨行只是字形/換行，必要句已交付；V2整合sourcing但不是Q4真修復。",
+    "baseline_reason": "baseline sourc-/ing跨行只是字形/換行，必要句已交付；V2整合sourcing但不是Q4真修復。",
+    "variant_reason": "baseline sourc-/ing跨行只是字形/換行，必要句已交付；V2整合sourcing但不是Q4真修復。"
+  },
+  {
+    "source_rootcause_group": "v2-p16-polyglot-constraint-tail-order-p24",
+    "job_id": "P-16-2505.22954v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 1,
+    "affected_pages": [
+      24
+    ],
+    "failure_type": "reading_order",
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；原完整Polyglot prompt中edit_line_ranges with type=array之限制在同一code block。V2 texts/652止於with，必要續文texts/661移到A.4標題、說明與完整Algorithm1之後；限制條件對象被其他章節插斷，非單純跨行。",
+    "baseline_reason": "原完整Polyglot prompt中edit_line_ranges with type=array之限制在同一code block。V2 texts/652止於with，必要續文texts/661移到A.4標題、說明與完整Algorithm1之後；限制條件對象被其他章節插斷，非單純跨行。",
+    "variant_reason": "原完整Polyglot prompt中edit_line_ranges with type=array之限制在同一code block。V2 texts/652止於with，必要續文texts/661移到A.4標題、說明與完整Algorithm1之後；限制條件對象被其他章節插斷，非單純跨行。"
+  },
+  {
+    "source_rootcause_group": "v2-p16-polyglot-prompt-role-p24",
+    "job_id": "P-16-2505.22954v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 8,
+    "affected_pages": [
+      24
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；baseline為code、V2為text，原本不是漏句；角色候選消失不算真修復。prose00317另有續文移到Algorithm1後的新F02，已以新增missing row獨立保留。",
+    "baseline_reason": "baseline為code、V2為text，原本不是漏句；角色候選消失不算真修復。prose00317另有續文移到Algorithm1後的新F02，已以新增missing row獨立保留。",
+    "variant_reason": "baseline為code、V2為text，原本不是漏句；角色候選消失不算真修復。prose00317另有續文移到Algorithm1後的新F02，已以新增missing row獨立保留。"
+  },
+  {
+    "source_rootcause_group": "v2-p16-polyglot-task-table-p27",
+    "job_id": "P-16-2505.22954v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 2,
+    "affected_pages": [
+      27
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；原initial10 task IDs在tables/5(5x2)及MD全有；oracle整段原column順序和table row-major序不完全一致。此為無從屬意義的task集合，沒有漏ID或改變對象。",
+    "baseline_reason": "原initial10 task IDs在tables/5(5x2)及MD全有；oracle整段原column順序和table row-major序不完全一致。此為無從屬意義的task集合，沒有漏ID或改變對象。",
+    "variant_reason": "原initial10 task IDs在tables/5(5x2)及MD全有；oracle整段原column順序和table row-major序不完全一致。此為無從屬意義的task集合，沒有漏ID或改變對象。"
+  },
+  {
+    "source_rootcause_group": "v2-p16-self-improve-prompt-picture-delivery-p23-p24",
+    "job_id": "P-16-2505.22954v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 48,
+    "affected_pages": [
+      23,
+      24
+    ],
+    "failure_type": "picture_delivery_omission",
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；來源p23橙色Self-Improve Prompt跨p24續框，含工具schema、不可安裝依賴、私有測試邊界及JSON輸出要求。baseline code/MD均交付；V2 pictures/4的多個text children與pictures/5的texts/646 code保留原文字，MD不輸出ordinary picture children，48條anchor缺失屬同一跨頁必要prompt出口回歸。個別anchor跨native節點故單節點exact不能證backend漏抽。",
+    "baseline_reason": "來源p23橙色Self-Improve Prompt跨p24續框，含工具schema、不可安裝依賴、私有測試邊界及JSON輸出要求。baseline code/MD均交付；V2 pictures/4的多個text children與pictures/5的texts/646 code保留原文字，MD不輸出ordinary picture children，48條anchor缺失屬同一跨頁必要prompt出口回歸。個別anchor跨native節點故單節點exact不能證backend漏抽。",
+    "variant_reason": "來源p23橙色Self-Improve Prompt跨p24續框，含工具schema、不可安裝依賴、私有測試邊界及JSON輸出要求。baseline code/MD均交付；V2 pictures/4的多個text children與pictures/5的texts/646 code保留原文字，MD不輸出ordinary picture children，48條anchor缺失屬同一跨頁必要prompt出口回歸。個別anchor跨native節點故單節點exact不能證backend漏抽。"
+  },
+  {
+    "source_rootcause_group": "v2-p16-task-introduction-p26",
+    "job_id": "P-16-2505.22954v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 1,
+    "affected_pages": [
+      26
+    ],
+    "failure_type": null,
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；Additional140 tasks說明仍在native/MD，只改角色，不改對應後續task清單。",
+    "baseline_reason": "Additional140 tasks說明仍在native/MD，只改角色，不改對應後續task清單。",
+    "variant_reason": "Additional140 tasks說明仍在native/MD，只改角色，不改對應後續task清單。"
+  },
+  {
+    "source_rootcause_group": "v2-p18-table5-breaks-effectiveness-clause-p7",
+    "job_id": "P-18-2511.16043v1",
+    "family": "ICML",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      7
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "逐一對照原PDF頁圖及凍結LaTeX anchor；來源p7左欄尾effectiveness of our應接右欄co-evolutionary loop，Table5 caption在右欄上方獨立。baseline texts/300完整合併正文，caption301獨立；V2 texts/292把Table5 caption接在our之後，texts/293才續co-evolutionary loop，必要句讀序被插斷。",
+    "baseline_reason": "來源p7左欄尾effectiveness of our應接右欄co-evolutionary loop，Table5 caption在右欄上方獨立。baseline texts/300完整合併正文，caption301獨立；V2 texts/292把Table5 caption接在our之後，texts/293才續co-evolutionary loop，必要句讀序被插斷。",
+    "variant_reason": "來源p7左欄尾effectiveness of our應接右欄co-evolutionary loop，Table5 caption在右欄上方獨立。baseline texts/300完整合併正文，caption301獨立；V2 texts/292把Table5 caption接在our之後，texts/293才續co-evolutionary loop，必要句讀序被插斷。"
+  },
+  {
+    "source_rootcause_group": "v2-resnet-table10-label",
+    "job_id": "F-cvpr_resnet",
+    "family": "CVPR/AAAI",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      11
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p11 Table10caption獨立於寬表之下。",
+    "baseline_reason": "baseline獨立caption。",
+    "variant_reason": "V2 texts/459亦僅含完整Table10caption、獨立段落，僅label=text。"
+  },
+  {
+    "source_rootcause_group": "v2-resnet-table12-breaks-bydoingso",
+    "job_id": "F-cvpr_resnet",
+    "family": "CVPR/AAAI",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 2,
+    "affected_pages": [
+      11
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p11左欄底By doing so應接右欄Table12下we achieve 85.6%...。",
+    "baseline_reason": "baseline texts/468完整接原句，469獨立Table12caption。",
+    "variant_reason": "V2 texts/465在By doing so後插入Table12caption，表格後才恢復正文。native/MD新錯接；與既有p1讀序是不同來源事件。"
+  },
+  {
+    "source_rootcause_group": "v2-seal-figure2-5-label",
+    "job_id": "P-17-2506.10943v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 10,
+    "affected_pages": [
+      5,
+      8
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "Figure2/5獨立圖說。",
+    "baseline_reason": "baselinecaption120/238完整獨立。",
+    "variant_reason": "V2text130/257完整獨立，沒有正文句子被截斷。"
+  },
+  {
+    "source_rootcause_group": "v2-seal-training-options-wrap",
+    "job_id": "P-17-2506.10943v1",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "ORACLE_FALSE_POSITIVE",
+    "changed_rows": 2,
+    "affected_pages": [
+      18
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "TrainingConfiguration兩個互斥選項，其後另列learningrate/epochs。",
+    "baseline_reason": "baseline449同段保留選項。",
+    "variant_reason": "V2將alltokens選項分成code，MD仍在chooseoneof之後且outputtokens亦在；兩互斥項交換及分段未造成條件/對象改義。sourceanchor因code排body及標題拆分不匹配。"
+  },
+  {
+    "source_rootcause_group": "v2-selfmem-caption-label",
+    "job_id": "P-14-2607.03726v1",
+    "family": "ACL/EMNLP",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 10,
+    "affected_pages": [
+      15,
+      16
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "Table3/5/8caption獨立於prompt及表格。",
+    "baseline_reason": "baseline各caption是完整text段。",
+    "variant_reason": "V2labelcaption，內容仍相同獨立段；只metadata改善。"
+  },
+  {
+    "source_rootcause_group": "v2-skillopt-page7-footer",
+    "job_id": "P-04-2605.23904v2",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 1,
+    "affected_pages": [
+      7
+    ],
+    "failure_type": "furniture",
+    "source_reason": "p7底部頁碼7屬家具。",
+    "baseline_reason": "baseline頁碼是footer且MD不出現獨立7。",
+    "variant_reason": "V2text245把頁碼7標bodytext，MD在Table1和Table2間輸出獨立7。"
+  },
+  {
+    "source_rootcause_group": "v2-skillopt-table3-4-label",
+    "job_id": "P-04-2605.23904v2",
+    "family": "general arXiv (article; template uncertain)",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 18,
+    "affected_pages": [
+      8,
+      9
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "頁圖Table3/4caption獨立。",
+    "baseline_reason": "caption244/248完整獨立。",
+    "variant_reason": "V2 247/251只labeltext；MD仍分段，未接正文。"
+  },
+  {
+    "source_rootcause_group": "v2-skillrl-case3-duplicate-cell",
+    "job_id": "P-05-2602.08234v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "PARTIAL_IMPROVEMENT",
+    "changed_rows": 1,
+    "affected_pages": [
+      24
+    ],
+    "failure_type": "duplication",
+    "source_reason": "p24 Case3 KeySkills只在Result一處。",
+    "baseline_reason": "MD同一句序列出現3次，native表格有跨欄重輸出。",
+    "variant_reason": "V2MD該KeySkills只出現1次，正文/表格其他對象仍在；這是該instance真正去重，p22/p23其他重複仍存。"
+  },
+  {
+    "source_rootcause_group": "v2-skillrl-figure2-label",
+    "job_id": "P-05-2602.08234v2",
+    "family": "NeurIPS/ICLR",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 2,
+    "affected_pages": [
+      3
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "Figure2獨立圖說。",
+    "baseline_reason": "baselinecaption53獨立。",
+    "variant_reason": "V2text83仍獨立圖說；MD完整接後續GRPO正文無串句。"
+  },
+  {
+    "source_rootcause_group": "v2-tacotron-table3-label",
+    "job_id": "F-ieee_tacotron2",
+    "family": "IEEE conference",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 4,
+    "affected_pages": [
+      4
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p4 Table3為獨立表說，比較Griffin-Lim/WaveNet及linear/mel。",
+    "baseline_reason": "baseline獨立caption，內容完整。",
+    "variant_reason": "V2 texts/119仍僅含Table3完整caption，Markdown獨立段落；label=text，沒有正文混入或比較對象改變。"
+  },
+  {
+    "source_rootcause_group": "v2-vera-figure3-breaks-verifiers-clause",
+    "job_id": "P-15-2610.05923v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 12,
+    "affected_pages": [
+      3,
+      4
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p3→4正文verifiers decide whether each update is kept是同一句；Figure3單獨浮圖。",
+    "baseline_reason": "baselineMethod正文完整跨頁text，caption263獨立。",
+    "variant_reason": "V2text264在verifiers後插入Figure3整段，decidewhether後移；MD同樣改變主詞/受詞連接。"
+  },
+  {
+    "source_rootcause_group": "v2-wikiskill-figure3-breaks-pattern-count",
+    "job_id": "P-01-2608.27454v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "CONFIRMED_NEW_BLOCKING",
+    "changed_rows": 6,
+    "affected_pages": [
+      11,
+      12
+    ],
+    "failure_type": "caption_splice",
+    "source_reason": "p11正文6.3–8.9 patterns created跨頁接p12 and7.0–18.4 edits；Figure3在p12頂端。",
+    "baseline_reason": "baseline正文跨頁延續完整，caption175獨立。",
+    "variant_reason": "V2 text160把Figure3插在patterns created與and7.0–18.4之間，數值/對象句被打斷；MD同樣。"
+  },
+  {
+    "source_rootcause_group": "v2-wikiskill-table2-label",
+    "job_id": "P-01-2608.27454v1",
+    "family": "Pilot-other/unknown",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 8,
+    "affected_pages": [
+      10
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "Table2caption本來與正文獨立。",
+    "baseline_reason": "text153是完整獨立caption但labeltext。",
+    "variant_reason": "text148改caption，字義/順序未修復既有問題。"
+  },
+  {
+    "source_rootcause_group": "v2-yolo-lossfunction-role",
+    "job_id": "F-cvpr_yolo",
+    "family": "CVPR/AAAI",
+    "semantic_verdict": "METADATA_ONLY",
+    "changed_rows": 1,
+    "affected_pages": [
+      3,
+      4
+    ],
+    "failure_type": "metadata_or_oracle",
+    "source_reason": "p3末During training...multi-part續p4首loss function:。",
+    "baseline_reason": "baseline導讀跨頁text。",
+    "variant_reason": "V2 texts/130保留首段，131僅把loss function標heading；Markdown保留相同詞序與式子位置，未發現Q4改義，屬metadata。"
+  }
+]

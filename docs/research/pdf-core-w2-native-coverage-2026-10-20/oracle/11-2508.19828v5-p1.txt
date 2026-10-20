@@ -1,0 +1,80 @@
+Memory-R1: Enhancing Large Language Model Agents to Manage and
+Utilize Memories via Reinforcement Learning
+Sikuan Yan*1,2, Xiufeng Yang*3, Zuchao Huang1
+, Ercong Nie1,2
+,
+Zifeng Ding2,4
+, Zonggen Li5
+, Xiaowen Ma1
+, Jinhe Bi1
+, Kristian Kersting6
+,
+Jeff Z. Pan7
+, Hinrich Schuetze1,2
+, Volker Tresp1,2
+, Yunpu Ma†1,2
+1Ludwig Maximilian University of Munich, 2Munich Center for Machine Learning,
+3Technical University of Munich, 4University of Cambridge, 5University of Hong Kong,
+6Technical University of Darmstadt, 7University of Edinburgh
+s.yan@campus.lmu.de, cognitive.yunpu@gmail.com
+Abstract
+Large Language Models (LLMs) have demon￾strated impressive capabilities across a wide
+range of NLP tasks, but they remain funda￾mentally stateless, constrained by limited con￾text windows that hinder long-horizon reason￾ing. Recent efforts to address this limitation
+often augment LLMs with an external memory
+bank, yet most existing pipelines are static and
+heuristic-driven, lacking a learned mechanism
+for deciding what to store, update, or retrieve.
+We present Memory-R1, a reinforcement learn￾ing (RL) framework that equips LLMs with
+the ability to actively manage and utilize exter￾nal memory through two specialized agents: a
+Memory Manager that learns structured oper￾ations, including ADD, UPDATE, DELETE,
+and NOOP; and an Answer Agent that pre￾selects and reasons over relevant entries. Both
+agents are fine-tuned with outcome-driven RL
+(PPO and GRPO), enabling adaptive memory
+management with minimal supervision. With
+only 152 training QA pairs, Memory-R1 outper￾forms strong baselines and generalizes across
+diverse question types, three benchmarks (Lo￾CoMo, MSC, LongMemEval), and multiple
+model scales (3B–14B).
+1 Introduction
+Large Language Models (LLMs) have shown re￾markable ability in understanding and generat￾ing natural language, making them central to re￾cent advances in AI (OpenAI et al., 2024; Qwen
+et al., 2025). Yet, they remain fundamentally state￾less (Yu et al., 2025; Fan et al., 2025; Goodyear
+et al., 2025): their memory is bounded by a fi￾nite context window and any information that falls
+outside this window is forgotten, preventing them
+from maintaining knowledge across long conver￾sations or evolving tasks (Wang et al., 2024; Fei
+et al., 2023).
+One early effort is the Tensor Brain framework,
+which uses a bilayer tensor network with index and
+representation layers to model episodic, semantic,
+and working memory (Tresp et al., 2023). Recent
+studies augment LLMs with explicit external mem￾ory modules (Zhang et al., 2024), most of which
+adopt the retrieval-augmented generation (RAG)
+paradigm (Pan et al., 2025; Salama et al., 2025),
+appending retrieved memory entries to the model’s
+input prompt. While this extends access to past
+information, it also creates a fundamental retrieval
+challenge: heuristics may return too few entries,
+omitting crucial context, or too many, flooding the
+model with irrelevant information and degrading
+performance (Liu et al., 2023). In this paradigm,
+retrieved memories are passed to the LLM without
+meaningful filtering or prioritization, forcing the
+model to reason over both relevant and irrelevant
+content, which makes it prone to distraction by
+noise. Humans, by contrast, retrieve broadly but
+then filter, integrating only the most useful pieces
+to maintain coherent, evolving knowledge.
+Equally important is the challenge of memory
+management: deciding what to remember, up￾date, or discard. Some systems (Packer et al.,
+2023; Modarressi et al., 2024; Xiong et al.,
+2025) adopt CRUD-style operations, namely cre￾ate, read, update, and delete, which are adapted
+from databases (Martin, 1983). A more re￾cent work (AIOS Foundation, 2024) augments
+this paradigm with a search operator, while
+Mem0 (Chhikara et al., 2025) investigates the
+operator set {ADD, UPDATE, DELETE, NOOP}. We
+adopt this setting, as it provides a minimal yet
+expressive framework for modeling memory dy￾namics. Existing approaches mainly rely on vanilla
+LLMs to choose operations from in-context instruc￾tions without any learning signal tied to correct￾ness (Packer et al., 2023; Chhikara et al., 2025).
+Even simple cases can fail. Figure 1, a simplified
+example drawn from a LoCoMo conversation (Ma￾harana et al., 2024), shows how a user says “I
+adopted a dog named Buddy” and later adds “I
+1
+arXiv:2508.19828v5 [cs.CL] 14 Jan 2026

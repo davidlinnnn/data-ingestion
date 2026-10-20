@@ -1,0 +1,91 @@
+arXiv:2505.03335v1 [cs.LG] 6 May 2025
+May 7, 2025
+Absolute Zero: Reinforced Self-play Reasoning with Zero Data
+Andrew Zhao 1
+, Yiran Wu3
+, Yang Yue 1
+, Tong Wu2
+, Quentin Xu1
+, Yang Yue 1
+, Matthieu Lin1
+,
+Shenzhi Wang 1
+, Qingyun Wu3
+, Zilong Zheng 2, and Gao Huang 1,
+1 Tsinghua University 2 Beĳing Institute for General Artificial Intelligence 3 Pennsylvania State University
+zqc21@mails.tsinghua.edu.cn, yiran.wu@psu.edu, zlzheng@bigai.ai, gaohuang@tsinghua.edu.cn
+Reinforcement learning with verifiable rewards (RLVR) has shown promise in enhancing the reasoning
+capabilities of large language models by learning directly from outcome-based rewards. Recent RLVR
+works that operate under the zero setting avoid supervision in labeling the reasoning process, but still
+depend on manually curated collections of questions and answers for training. The scarcity of high￾quality, human-produced examples raises concerns about the long-term scalability of relying on human
+supervision, a challenge already evident in the domain of language model pretraining. Furthermore, in a
+hypothetical future where AI surpasses human intelligence, tasks provided by humans may offer limited
+learning potential for a superintelligent system. To address these concerns, we propose a new RLVR
+paradigm called Absolute Zero, in which a single model learns to propose tasks that maximize its own
+learning progress and improves reasoning by solving them, without relying on any external data. Under
+this paradigm, we introduce the Absolute Zero Reasoner (AZR), a system that self-evolves its training
+curriculum and reasoning ability by using a code executor to both validate proposed code reasoning tasks
+and verify answers, serving as an unified source of verifiable reward to guide open-ended yet grounded
+learning. Despite being trained entirely without external data, AZR achieves overall SOTA performance
+on coding and mathematical reasoning tasks, outperforming existing zero-setting models that rely on tens
+of thousands of in-domain human-curated examples. Furthermore, we demonstrate that AZR can be
+effectively applied across different model scales and is compatible with various model classes.
+Code Project Page Logs Models
+10
+1 10
+1 10
+3 10
+5
+Curated Data Size
+PRIME-Zero
+AceCoder
+CodeR1
+ORZ
+SimpleRL-Zoo
+Oat-Zero
+AZR (Ours)
+22k
+12k
+57k
+8.5k
+8.5k
+27k 457k
+0 Data Types
+Math
+Code
+0 100 200 300
+0.25
+0.28
+0.30
+0.33
+0.35
+0.38
+0.40
+Performance
+0 100 200 300
+0.56
+0.57
+0.58
+0.59
+0.60
+0.61
+0.62
+0.63
+0 50 100 150 200 250 300 350
+0.40
+0.42
+0.44
+0.46
+0.48
+0.50
+0.52
+Base model
+Prev. SOTA Model
+Performance During RL
+AZR Final Model
+Training Steps
+Figure 1. Absolute Zero Reasoner (AZR) achieves state-of-the-art performance with ZERO DATA. Without relying on any gold
+labels or human-defined queries, Absolute Zero Reasoner trained using our proposed self-play approach demonstrates impressive general
+reasoning capabilities improvements in both math and coding, despite operating entirely out-of-distribution. Remarkably, AZR surpasses
+models trained on tens of thousands of expert-labeled in-domain examples in the combined average score across both domains.
+ Corresponding author(s)

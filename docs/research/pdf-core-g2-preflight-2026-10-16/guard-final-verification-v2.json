@@ -1,0 +1,973 @@
+{
+  "purpose": "Independent final native gate evidence and actual saved approval negative controls; process validation only",
+  "runner_sha256": "b444aea51a33f30a99cb1e9a13961b68516105ab813253789d7f8bd54eb53f5a",
+  "collection_results_sha256": "1b1d968c6fa32e609376c34647274d878f19bbbe745f6523af295c6753c7f126",
+  "gate_results_sha256": "2bdf940d942ab94a8ff0bf3703e663f90824f0507e9612db470e366a94c264f5",
+  "approvals_sha256": "27f49000c188b522729f485987e10e2979955b19f4a18dd4905d09d8d64c92c1",
+  "options_sha256": "58bc18ad4adf953ebb62b8980594f454f227c9fe71c571584709694fd9537a92",
+  "model_calls": 0,
+  "network_calls": 0,
+  "pipeline_runs_by_reviewer": 0,
+  "native_allowed": 6,
+  "native_blocked_before_stub": 2,
+  "integrity_checks": [
+    {
+      "name": "render-execution-freeze-v3.json: docs/research/pdf-core-g2-preflight-2026-10-16/registration.json",
+      "passed": true
+    },
+    {
+      "name": "render-execution-freeze-v3.json: docs/research/pdf-core-g2-preflight-2026-10-16/render_preflight.py",
+      "passed": true
+    },
+    {
+      "name": "render-execution-freeze-v3.json: docs/research/pdf-core-g2-preflight-2026-10-16/render-config-stability.json",
+      "passed": true
+    },
+    {
+      "name": "render-execution-freeze-v3.json: docs/research/pdf-core-g2-dots-mlx-2026-10-16/inputs.json",
+      "passed": true
+    },
+    {
+      "name": "render-execution-freeze-v3.json: docs/research/pdf-core-g2-dots-mlx-2026-10-16/renderer-preflight/results.json",
+      "passed": true
+    },
+    {
+      "name": "render-approval-freeze-v2.json: docs/research/pdf-core-g2-preflight-2026-10-16/render-approvals-v2.json",
+      "passed": true
+    },
+    {
+      "name": "render-approval-freeze-v2.json: docs/research/pdf-core-g2-preflight-2026-10-16/render-inputs-v2/results.json",
+      "passed": true
+    },
+    {
+      "name": "render-approval-freeze-v2.json: docs/research/pdf-core-g2-preflight-2026-10-16/render_preflight.py",
+      "passed": true
+    },
+    {
+      "name": "render-approval-freeze-v2.json: docs/research/pdf-core-g2-preflight-2026-10-16/render-execution-freeze-v3.json",
+      "passed": true
+    },
+    {
+      "name": "render-approval-freeze-v2.json: docs/research/pdf-core-g2-preflight-2026-10-16/guard-artifact-integrity-v2.json",
+      "passed": true
+    }
+  ],
+  "native_records": [
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "approval": "approved",
+      "native_gate_decision": "allowed",
+      "native_stub_transport_calls": 1,
+      "native_conversion_status": "success",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "approval": "approved",
+      "native_gate_decision": "allowed",
+      "native_stub_transport_calls": 1,
+      "native_conversion_status": "success",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--validation-02-p1",
+      "approval": "rejected",
+      "native_gate_decision": "blocked",
+      "native_stub_transport_calls": 0,
+      "native_conversion_status": "failure",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--validation-02-p12",
+      "approval": "rejected",
+      "native_gate_decision": "blocked",
+      "native_stub_transport_calls": 0,
+      "native_conversion_status": "failure",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "approval": "approved",
+      "native_gate_decision": "allowed",
+      "native_stub_transport_calls": 1,
+      "native_conversion_status": "success",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "approval": "approved",
+      "native_gate_decision": "allowed",
+      "native_stub_transport_calls": 1,
+      "native_conversion_status": "success",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "approval": "approved",
+      "native_gate_decision": "allowed",
+      "native_stub_transport_calls": 1,
+      "native_conversion_status": "success",
+      "exact_approval_binding": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "approval": "approved",
+      "native_gate_decision": "allowed",
+      "native_stub_transport_calls": 1,
+      "native_conversion_status": "success",
+      "exact_approval_binding": true
+    }
+  ],
+  "guard_control_count": 106,
+  "guard_controls": [
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "actual saved approval",
+      "expected": "allowed",
+      "observed": "allowed",
+      "synthetic_returns_after_gate": 1,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed source_path",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed source_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed physical_page",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed backend",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed images_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed vlm_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed options_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed image_size",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed pixel_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "changed engine_input_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "actual one-pixel change",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "actual changed request prompt",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "actual changed request max_new_tokens",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "actual changed request extra_generation_config",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--controls-p1",
+      "name": "incomplete approval fingerprint",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "actual saved approval",
+      "expected": "allowed",
+      "observed": "allowed",
+      "synthetic_returns_after_gate": 1,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed source_path",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed source_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed physical_page",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed backend",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed images_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed vlm_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed options_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed image_size",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed pixel_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "changed engine_input_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "actual one-pixel change",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "actual changed request prompt",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "actual changed request max_new_tokens",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "actual changed request extra_generation_config",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--wikiskill-p4",
+      "name": "incomplete approval fingerprint",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--validation-02-p1",
+      "name": "actual saved approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--validation-02-p1",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--validation-02-p12",
+      "name": "actual saved approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "DoclingParseDocumentBackend--validation-02-p12",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "actual saved approval",
+      "expected": "allowed",
+      "observed": "allowed",
+      "synthetic_returns_after_gate": 1,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed source_path",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed source_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed physical_page",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed backend",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed images_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed vlm_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed options_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed image_size",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed pixel_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "changed engine_input_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "actual one-pixel change",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "actual changed request prompt",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "actual changed request max_new_tokens",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "actual changed request extra_generation_config",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--controls-p1",
+      "name": "incomplete approval fingerprint",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "actual saved approval",
+      "expected": "allowed",
+      "observed": "allowed",
+      "synthetic_returns_after_gate": 1,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed source_path",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed source_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed physical_page",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed backend",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed images_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed vlm_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed options_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed image_size",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed pixel_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "changed engine_input_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "actual one-pixel change",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "actual changed request prompt",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "actual changed request max_new_tokens",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "actual changed request extra_generation_config",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--wikiskill-p4",
+      "name": "incomplete approval fingerprint",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "actual saved approval",
+      "expected": "allowed",
+      "observed": "allowed",
+      "synthetic_returns_after_gate": 1,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed source_path",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed source_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed physical_page",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed backend",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed images_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed vlm_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed options_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed image_size",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed pixel_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "changed engine_input_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "actual one-pixel change",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "actual changed request prompt",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "actual changed request max_new_tokens",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "actual changed request extra_generation_config",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p1",
+      "name": "incomplete approval fingerprint",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "actual saved approval",
+      "expected": "allowed",
+      "observed": "allowed",
+      "synthetic_returns_after_gate": 1,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "missing approval",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed source_path",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed source_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed physical_page",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed backend",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed images_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed vlm_scale",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed options_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed image_size",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed pixel_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "changed engine_input_sha256",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "actual one-pixel change",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "actual changed request prompt",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "actual changed request max_new_tokens",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "actual changed request extra_generation_config",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    },
+    {
+      "id": "PyPdfiumDocumentBackend--validation-02-p12",
+      "name": "incomplete approval fingerprint",
+      "expected": "blocked",
+      "observed": "blocked",
+      "synthetic_returns_after_gate": 0,
+      "passed": true
+    }
+  ],
+  "verdict": "pass for the exact eight approved/rejected research inputs; no model-quality claim"
+}

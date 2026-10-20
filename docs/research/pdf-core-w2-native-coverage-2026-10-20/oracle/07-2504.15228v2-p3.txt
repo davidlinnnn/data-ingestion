@@ -1,0 +1,53 @@
+Recent work has begun exploring automated approaches for designing and optimizing agent systems.
+AgentSquare [35] proposed a modular design space that abstracts agent components into planning,
+reasoning, tool use and memory modules, allowing automated search over module combinations.
+AlphaEvolve [28] set out to use a coding agent to make scientific discoveries and optimize compu￾tational infrastructure, the results of which may accelerate the training of the LLM underpinning
+AlphaEvolve itself. The approach taken by these works leans more heavily on structured, evolutionary
+search than our own.
+Perhaps the most closely related line of prior work began with ADAS [16]. ADAS used a target-agent
+which performs the actual task, and a meta-agent which improves the target-agent. As such, ADAS is
+not self-improving (as the meta-agent improves the target agent, not itself). Moreover, in ADAS the
+meta-agent edits only a single forward function, written in a domain-specific language which has
+been carefully designed to make expressing different prompting schemes very straightforward. In
+contrast, our self-improving coding agent is fully self-improving (i.e. there is no distinction between
+the meta and target agent), and it operates over the agent’s full Python codebase.
+Of course, we would expect the first truly self-improving agents to be coding agents, because
+agents are written in code. The natural approach is to start off with a basic coding agent that
+can open/close/edit files, run commands in the terminal etc, then to launch this agent in a self￾improvement loop. We believe that our self-improving coding agent is the first such work. However,
+there are two papers claiming self-improving agents, but they do not evaluate in the coding setting,
+as they do not consider “full” coding agents. First, Gödel Agent [44] has specific tools (such as
+action_adjust_logic and action_read_logic) that allow modification of small parts of the
+agent as it is running. Thus, it is not a general-purpose coding agent, as it is traditionally understood.
+And as such, as with ADAS, it was evaluated on language understanding and mathematical benchmarks
+(DROP [11], MGSM [36], MMLU [15] and GPQA [32]), rather than coding benchmarks. Second,
+Zelikman et al. [47] introduce a self-taught optimizer for recursively self-improving code generation.
+Again, this is not a general-purpose coding agent with the ability to e.g. work on arbitrary software
+engineering tasks, and as such, it self-improves and evaluates and only on algorithmic tasks such as
+learning parity with noise [4], String Grid Distance, and 3-SAT.
+3 Methods
+The main running loop of SICA resembles the ADAS loop Hu et al. [16] and is illustrated in Figure 1.
+In particular, both SICA, and ADAS keep an archive of previous agents and their benchmark results.
+In the first step, SICA takes the best performing agent from the archive up until this point as the
+meta-agent, which is instructed to look through the archive, identify an improvement, and implement
+it. The high-level scheme is illustrated in Algorithm 1. Note that this is different from ADAS, in that
+ADAS has a fixed meta-agent, so does not select the meta-agent from the archive (the archive in ADAS
+is an archive of target-agents, not meta-agents). Second, both ADAS and SICA evaluate the new agent
+on a set of evaluation benchmarks and store the results.
+We define the ‘best’ performing agent by a utility function, which incorporates common desiderata
+for a good agent; the normalised benchmark performance score pscore ∈ [0, 1], the wall-clock time in
+seconds ptime, as well as the dollar cost pcost. The base utility is calculated as
+U = wscorepscore + wcost(1 − min(1, pcost/$10)) + wtime(1 − min(1, ptime/300 s)) (1)
+where we set the coefficients to wscore = 0.5, wcost = 0.25 and wtime = 0.25. We cap the worst cost at
+$10 per problem, and impose a timeout of 300 s after which we cancel the agent. To give partial credit
+for work done before the timeout, we calculate the final utility as follows, with a timeout penalty of
+τ = 0.5:
+Ufinal =
+
+U(1 − τ ), if timed out
+U, otherwise (2)
+Note that since we are not performing any weight updates, this numerical score is only used to pick
+the next meta agent, as well as the base agent for the next iteration.
+We begin by describing the initial coding agent. We then go on to describe the benchmark runner
+framework, and how this framework naturally allows us to create a self-referential task (that of
+improving the coding agent).
+3

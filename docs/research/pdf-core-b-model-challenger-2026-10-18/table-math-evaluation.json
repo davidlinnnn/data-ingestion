@@ -1,0 +1,48 @@
+{
+  "result": {
+    "passed": true,
+    "correct": 4,
+    "denominator": 4
+  },
+  "observations": [
+    [
+      "N_{\\mathrm{train}} + \\left(1 + \\frac{1}{c-1}\\right)\\frac{N_{\\mathrm{train}}}{B} + 1",
+      "\\mathcal{O}\\left(N_{\\mathrm{train}} + \\frac{N_{\\mathrm{train}}}{B}\\right)"
+    ],
+    [
+      "\\frac{2N_{\\mathrm{train}}}{B}",
+      "\\mathcal{O}\\left(\\frac{N_{\\mathrm{train}}}{B}\\right)"
+    ],
+    [
+      "\\frac{K_{\\mathrm{opt}}\\cdot N_{\\mathrm{train}}}{B}",
+      "\\mathcal{O}\\left(\\frac{N_{\\mathrm{train}}}{B}\\right)"
+    ],
+    [
+      "(1 + T_{\\mathrm{ReAct}})\\frac{N_{\\mathrm{train}}}{B}",
+      "\\mathcal{O}\\left(\\frac{N_{\\mathrm{train}}}{B}\\right)"
+    ]
+  ],
+  "explicit_source_decisions": [
+    {
+      "passed": true,
+      "evidence": "Trace2Skill fraction denominator is c-1, with Ntrain, batch division and both additions retained.",
+      "observed_sha256": "75bc59cf92584a44d14849ef0fe660514ca5423d3bb8c0115c3bd0c45d847fb0"
+    },
+    {
+      "passed": true,
+      "evidence": "EvoSkill per-iteration 2*Ntrain/B retained; big-O drops constant 2 equivalently.",
+      "observed_sha256": "2f249d2cfbfd54bdb1adb010e8169e6e25884130c0fe8fe7f03fcc37756c936f"
+    },
+    {
+      "passed": true,
+      "evidence": "SkillOpt Kopt*Ntrain/B and asymptotic Ntrain/B retained.",
+      "observed_sha256": "b76d56b560e934badad7d05edea62d750f6750470c8ff90a5802f4a08b1e8810"
+    },
+    {
+      "passed": true,
+      "evidence": "WikiSkill (1+TReAct)*Ntrain/B and asymptotic Ntrain/B retained.",
+      "observed_sha256": "03600ac2685af41a4abb246731db30317aca03aa24d59f9211fe9940c59dde0d"
+    }
+  ],
+  "note": "Root visually reviewed all four source rows; no automated algebra-equivalence claim."
+}

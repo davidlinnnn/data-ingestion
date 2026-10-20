@@ -1,0 +1,45 @@
+{
+  "status": "A gate failed; B intentionally not started",
+  "api_requests": 0,
+  "new_model_inferences": 0,
+  "mechanical_checks": {
+    "public_HTML_import": true,
+    "public_PDF_envelope_rebinding": true,
+    "JSON_reload": true,
+    "stock_Markdown_reload": true
+  },
+  "material_findings": [
+    {
+      "case": "row_groups",
+      "finding": "First source row group promoted into global metric headers; second group remains body text under contradictory first-group header",
+      "typed_flags": "column_header=True and row_section=False; diagnostic, not a standalone requirement for a specific label",
+      "markdown_header": "Category - By Device | Count - By Device"
+    },
+    {
+      "case": "escaped_literal",
+      "finding": "HTML input escaped correctly and typed cell contains <s>, but stock Markdown emits raw <s>; CommonMark with HTML enabled consumes it as a tag",
+      "rendered_cell_texts": [
+        "",
+        "item[i] < limit & ready"
+      ],
+      "scope": "reference CommonMark renderer; not an observation of Codex UI or every consumer",
+      "html_disabled_preserves_literal": true
+    }
+  ],
+  "minor_findings": [
+    {
+      "case": "blank_missing_precision",
+      "finding": "Native HTML unicode cleanup maps em dash to hyphen. Blank, missing marker and zero remain distinct; precision000.00 retained.",
+      "classification": "glyph normalization; not equivalent to losing the missing value and not the independent material stop reason"
+    }
+  ],
+  "negative_controls": "unescaped literal and zero-span input both return native success; preserved as invalid/normalized inputs, not positive fidelity results",
+  "not_executed": [
+    "HTML target-envelope implementation/validation beyond importer gate",
+    "four-page API run",
+    "two additional S0 pages",
+    "source oracle evaluation",
+    "holdout/Paddle/company serving"
+  ],
+  "decision": "Stop this stock HTML→TableData→Markdown configuration under the agreed gate. Do not patch SDK, repair content, or add a renderer during this round."
+}

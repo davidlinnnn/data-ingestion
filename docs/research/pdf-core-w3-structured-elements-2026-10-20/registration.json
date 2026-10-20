@@ -1,0 +1,32 @@
+{
+  "start_utc": "2026-10-20T08:15:05Z",
+  "deadline_utc": "2026-10-20T11:15:05Z",
+  "conversion_stop_utc": "2026-10-20T11:00:05Z",
+  "scope": "36/715 frozen W2 corpus",
+  "E0": "PyPdfium/Heron/separators=True/bookmark-only; saved outputs reused",
+  "E1": "E0 plus formula and code enrichment only; local CodeFormulaV2",
+  "pilot": [
+    "F-ieee_crnn",
+    "P-07-2504.15228v2"
+  ],
+  "pilot_selection": "Before reading E0: short formula paper and long prompt/code paper; full selected pages",
+  "cost_rule": "<=7200 seconds estimated full conversion wall: full36; else preregistered family<=40 display formulas, all code/algorithm; list frozen before sampled inference",
+  "guards": {
+    "worker": 1,
+    "cpu_threads": 4,
+    "rss_gib": 12,
+    "host_available_gib": 4,
+    "retries": 0
+  },
+  "model": {
+    "path": "/private/tmp/pdf-core-native-20261017/artifacts/docling-project--CodeFormulaV2",
+    "revision": "ecedbe111d15c2dc60bfd4a823cbe80127b58af4",
+    "bytes": 630993616
+  },
+  "oracle_policy": "All category oracle files sealed before any E0 output is read or E1 conversion started. No unknown localization guesses.",
+  "method_sha256": {
+    "run_e1.py": "e08f6231021efb1921f38619a54fea500916805dc721cba583c0dadbbdfb7fb7",
+    "worker.py": "1d0c1470cdc4597667c35af52a5a2f023f5797ab93750f508b447128c02815a1",
+    "jobs.json": "19a5a9910c9eaefb1d1dac1e3537a97ce1722923b870aad097f9cb42addea93b"
+  }
+}

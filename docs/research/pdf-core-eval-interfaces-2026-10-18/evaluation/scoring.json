@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "status": "preregistered_not_executed",
+  "official_task": "end2end_dataset with JSON GT",
+  "official_metrics": {
+    "text_block": ["Edit_dist"],
+    "display_formula": ["Edit_dist", "CDM"],
+    "table": ["TEDS", "Edit_dist"],
+    "table_structure_output": "TEDS_structure_only (TEDS-S), emitted by TEDS implementation",
+    "reading_order": ["Edit_dist"]
+  },
+  "matching": {
+    "match_method": "quick_match",
+    "match_workers": 1,
+    "quick_match_truncated_timeout_sec": 300,
+    "match_timeout_sec": 420,
+    "enable_timeout_match_fallback": true,
+    "timeout_fallback_max_chunk_span": 10,
+    "timeout_fallback_order_penalty": 0.1,
+    "record": ["matched and unmatched units", "ignored categories and counts", "timeout pages", "fallback reason and count", "normalization version"],
+    "no_gt_feedback_to_producer": true
+  },
+  "workers": {"cdm_workers": 1, "teds_workers": 1},
+  "comparison": {
+    "arms": ["frozen_standard_baseline", "one_frozen_candidate"],
+    "same": ["selected pages", "source input bytes", "image/raster conversion", "DPI", "evaluator revision", "GT revision", "normalization", "matching and fallback", "timeouts", "hardware and inference concurrency"],
+    "input_tracks_must_not_pool": ["page image/raster-PDF", "original born-digital PDF with verified text layer"],
+    "official_score_reproduction": "do not silently modify official evaluator normalization or exclude official failures"
+  },
+  "denominators": {
+    "page_count": "all selected pages including conversion, routing, inference, truncation, export and evaluation failures",
+    "report": ["official output as generated", "effective scored pages/units and excluded/ignored counts", "all-selected delivery success", "per-stratum baseline/candidate paired differences", "missing necessary content and semantic gate failures"],
+    "failure_policy": "no failed page removal or success-only averages; preserve failure row, denominator, raw evidence and official scoring exceptions; no invented zero metric for evaluator crashes",
+    "uncertainty": "descriptive paired page results only; no page-IID confidence claims; known families are clusters and unresolved provenance is one correlated pool",
+    "absent_category": "N/A with zero-unit count, never perfect score"
+  },
+  "complementary_semantic_gates": {
+    "B": ["complex table numeric error at most 5% per logical table", "required headers and conditions correctly bound", "registered critical comparisons correct", "table math preserves required operations and scope", "cross-page identity and continuation require separate whole-document evaluation"],
+    "C": ["image source census and required work complete", "original source caption retained", "OCR/description/chart supplement keyed to image with provenance", "generated enrichment excluded from primary source Markdown", "image OCR and chart/description grounded in source; no invented values"],
+    "A": ["inline formulas/code required semantics, identifiers, operators and reading order audited separately"],
+    "not_equivalent": ["TEDS 95 is not numeric error 5%", "CDM is not symbolic algebra equivalence", "overall average is not necessary-content acceptance"]
+  },
+  "costs": {
+    "ingest": ["full pipeline elapsed", "component inference elapsed", "calls", "input/output tokens", "pixels", "timeouts", "peak memory", "hardware", "cold/warm status"],
+    "offline_evaluation_separate": ["matching elapsed", "TEDS elapsed", "CDM render/scoring elapsed", "evaluation peak memory"],
+    "preprocessing_separate": "image-to-PDF conversion recorded separately from receiver-to-export latency",
+    "not_a_production_slo": true
+  },
+  "readiness": {
+    "candidate_method_lock_required": true,
+    "source_input_hashes_required": true,
+    "runtime_image_digest_required": true,
+    "official_evaluator_executed": false,
+    "production_qualified": false
+  }
+}

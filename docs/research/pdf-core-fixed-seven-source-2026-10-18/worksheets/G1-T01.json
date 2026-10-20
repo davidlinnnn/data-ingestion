@@ -1,0 +1,574 @@
+{
+  "case_id": "G1-T01",
+  "job": "memory-r1-p8-table0",
+  "in_seven_call_round": true,
+  "oracle": "docs/fixtures/pdf-core-g1-2026-10-14/cases.json",
+  "oracle_sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+  "case_json_pointer": "/cases/52",
+  "denominator": {
+    "logical_table_count": 1,
+    "data_rows": 2,
+    "all_expected_data_slots": 6,
+    "numeric_data_points": 6,
+    "explicit_missing_markers": 0,
+    "source_ambiguous_exclusions": 0,
+    "numeric_error_denominator": 6,
+    "coverage": "all rows and all data columns of the complete logical table"
+  },
+  "acceptance_reference": {
+    "numeric_error_rate_max": 0,
+    "critical_comparisons_must_all_hold": true,
+    "header_condition_note_binding_required": true,
+    "missing_or_extra_numeric_value_is_error": true,
+    "wrong_row_column_condition_binding_is_error": true,
+    "same_datapoint_counted_once_for_multiple_faults": true,
+    "extra_outputs_do_not_enlarge_denominator": true,
+    "source_missing_markers_checked_separately_and_must_be_preserved": true,
+    "source_ambiguous_exclusions_require_source_evidence": true
+  },
+  "required_semantics": {
+    "caption": {
+      "text": "Table 2: Reward Design Choice Comparison. PPO with J-based reward achieves higher J scores but lower F1 and B1 due to verbose outputs, while the EM-based reward yields balanced performance across metrics.",
+      "source": {
+        "page": 8,
+        "bbox_top_left_points": [
+          70.557,
+          317.858,
+          289.878,
+          363.686
+        ],
+        "bbox_kind": "tight_source_text_bbox"
+      }
+    },
+    "headers": [
+      {
+        "key": "method",
+        "raw_text": "Method",
+        "role": "row_dimension",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            81.084,
+            268.192,
+            110.536,
+            277.028
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "key": "F1",
+        "raw_text": "F1↑",
+        "role": "higher_is_better_metric",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            204.935,
+            268.059,
+            219.17,
+            277.028
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "key": "B1",
+        "raw_text": "B1↑",
+        "role": "higher_is_better_metric",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            234.254,
+            268.059,
+            248.984,
+            277.028
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "key": "J",
+        "raw_text": "J↑",
+        "role": "higher_is_better_metric",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            266.772,
+            268.059,
+            275.608,
+            277.028
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      }
+    ],
+    "conditions": [
+      "PPO reward-design comparison: J-based versus EM-based reward model.",
+      "No foundation-model identifier is printed in the table/caption; do not borrow one from a neighboring figure."
+    ],
+    "unit": "No explicit unit in Table 2/caption; do not infer percent from neighboring figures.",
+    "rows": [
+      {
+        "row_id": "G1-T01.r01",
+        "context": {
+          "method": "PPO (J-based reward model)"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            81.084,
+            283.784,
+            281.131,
+            292.682
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            81.084,
+            283.846,
+            182.614,
+            292.682
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      },
+      {
+        "row_id": "G1-T01.r02",
+        "context": {
+          "method": "PPO (EM-based reward model)"
+        },
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            81.084,
+            294.758,
+            281.131,
+            303.657
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "row_label_source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            81.084,
+            294.82,
+            192.431,
+            303.657
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        }
+      }
+    ],
+    "structure": {
+      "column_count": 4,
+      "header_rows": 1,
+      "data_rows": 2,
+      "cell_spans": "all 1 × 1",
+      "row_header": "Method"
+    }
+  },
+  "points": [
+    {
+      "oracle_pointer": "/cases/52/details/expected_datapoints/0",
+      "expected": {
+        "id": "G1-T01.r01.c01",
+        "row_id": "G1-T01.r01",
+        "column_key": "F1",
+        "raw_value": "33.69",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            202.116,
+            283.846,
+            221.998,
+            292.682
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "33.69"
+      },
+      "expected_row_context": {
+        "method": "PPO (J-based reward model)"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          1,
+          1
+        ],
+        "provider_cell_id": "r1-f1",
+        "header_path": [
+          {
+            "id": "h-method",
+            "text": "Method"
+          },
+          {
+            "id": "h-f1",
+            "text": "F1↑"
+          }
+        ],
+        "row_dimensions": {
+          "Method": "PPO (J-based reward model)"
+        },
+        "group": null,
+        "typed_text": "33.69",
+        "rendered_markdown_text": "33.69",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "33.69",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/expected_datapoints/1",
+      "expected": {
+        "id": "G1-T01.r01.c02",
+        "row_id": "G1-T01.r01",
+        "column_key": "B1",
+        "raw_value": "23.36",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            231.682,
+            283.846,
+            251.564,
+            292.682
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "23.36"
+      },
+      "expected_row_context": {
+        "method": "PPO (J-based reward model)"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          1,
+          2
+        ],
+        "provider_cell_id": "r1-b1",
+        "header_path": [
+          {
+            "id": "h-method",
+            "text": "Method"
+          },
+          {
+            "id": "h-b1",
+            "text": "B1↑"
+          }
+        ],
+        "row_dimensions": {
+          "Method": "PPO (J-based reward model)"
+        },
+        "group": null,
+        "typed_text": "23.36",
+        "rendered_markdown_text": "23.36",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "23.36",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/expected_datapoints/2",
+      "expected": {
+        "id": "G1-T01.r01.c03",
+        "row_id": "G1-T01.r01",
+        "column_key": "J",
+        "raw_value": "63.58",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            261.249,
+            283.784,
+            281.131,
+            292.62
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "63.58"
+      },
+      "expected_row_context": {
+        "method": "PPO (J-based reward model)"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          1,
+          3
+        ],
+        "provider_cell_id": "r1-j",
+        "header_path": [
+          {
+            "id": "h-method",
+            "text": "Method"
+          },
+          {
+            "id": "h-j",
+            "text": "J↑"
+          }
+        ],
+        "row_dimensions": {
+          "Method": "PPO (J-based reward model)"
+        },
+        "group": null,
+        "typed_text": "63.58",
+        "rendered_markdown_text": "63.58",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "63.58",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/expected_datapoints/3",
+      "expected": {
+        "id": "G1-T01.r02.c01",
+        "row_id": "G1-T01.r02",
+        "column_key": "F1",
+        "raw_value": "41.05",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            202.116,
+            294.758,
+            221.998,
+            303.595
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "41.05"
+      },
+      "expected_row_context": {
+        "method": "PPO (EM-based reward model)"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          2,
+          1
+        ],
+        "provider_cell_id": "r2-f1",
+        "header_path": [
+          {
+            "id": "h-method",
+            "text": "Method"
+          },
+          {
+            "id": "h-f1",
+            "text": "F1↑"
+          }
+        ],
+        "row_dimensions": {
+          "Method": "PPO (EM-based reward model)"
+        },
+        "group": null,
+        "typed_text": "41.05",
+        "rendered_markdown_text": "41.05",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "41.05",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/expected_datapoints/4",
+      "expected": {
+        "id": "G1-T01.r02.c02",
+        "row_id": "G1-T01.r02",
+        "column_key": "B1",
+        "raw_value": "32.91",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            231.682,
+            294.758,
+            251.564,
+            303.595
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "32.91"
+      },
+      "expected_row_context": {
+        "method": "PPO (EM-based reward model)"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          2,
+          2
+        ],
+        "provider_cell_id": "r2-b1",
+        "header_path": [
+          {
+            "id": "h-method",
+            "text": "Method"
+          },
+          {
+            "id": "h-b1",
+            "text": "B1↑"
+          }
+        ],
+        "row_dimensions": {
+          "Method": "PPO (EM-based reward model)"
+        },
+        "group": null,
+        "typed_text": "32.91",
+        "rendered_markdown_text": "32.91",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "32.91",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/expected_datapoints/5",
+      "expected": {
+        "id": "G1-T01.r02.c03",
+        "row_id": "G1-T01.r02",
+        "column_key": "J",
+        "raw_value": "57.54",
+        "value_kind": "number",
+        "source": {
+          "page": 8,
+          "bbox_top_left_points": [
+            261.249,
+            294.82,
+            281.131,
+            303.657
+          ],
+          "bbox_kind": "tight_source_text_bbox"
+        },
+        "decimal_value": "57.54"
+      },
+      "expected_row_context": {
+        "method": "PPO (EM-based reward model)"
+      },
+      "observed": {
+        "canonical_ref": "#/tables/0",
+        "normalized_anchor": [
+          2,
+          3
+        ],
+        "provider_cell_id": "r2-j",
+        "header_path": [
+          {
+            "id": "h-method",
+            "text": "Method"
+          },
+          {
+            "id": "h-j",
+            "text": "J↑"
+          }
+        ],
+        "row_dimensions": {
+          "Method": "PPO (EM-based reward model)"
+        },
+        "group": null,
+        "typed_text": "57.54",
+        "rendered_markdown_text": "57.54",
+        "rendered_table_index": 0,
+        "binding_correct": true,
+        "numeric_component_index": 0,
+        "numeric_value": "57.54",
+        "reviewer_notes": "Source image and scoped meaning reviewed; Core reloaded and actual Markdown rendered independently. IDs alone are not evidence.",
+        "numeric_correct": true,
+        "printed_literal_exact_diagnostic": true,
+        "error_categories": []
+      },
+      "review_status": "reviewed"
+    }
+  ],
+  "comparisons": [
+    {
+      "oracle_pointer": "/cases/52/details/critical_comparisons/0",
+      "expected": {
+        "left": "G1-T01.r01.c03",
+        "operator": ">",
+        "right": "G1-T01.r02.c03",
+        "reason": "J-based J 63.58 > EM-based 57.54."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/critical_comparisons/1",
+      "expected": {
+        "left": "G1-T01.r02.c01",
+        "operator": ">",
+        "right": "G1-T01.r01.c01",
+        "reason": "EM-based F1 41.05 > J-based 33.69."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    },
+    {
+      "oracle_pointer": "/cases/52/details/critical_comparisons/2",
+      "expected": {
+        "left": "G1-T01.r02.c02",
+        "operator": ">",
+        "right": "G1-T01.r01.c02",
+        "reason": "EM-based B1 32.91 > J-based 23.36."
+      },
+      "observed_relation": ">",
+      "passed": true,
+      "review_status": "reviewed"
+    }
+  ],
+  "manual_structure_review": {
+    "header_condition_binding": true,
+    "row_dimension_binding": true,
+    "group_membership": true,
+    "caption_ownership": true,
+    "paired_cell_identity_and_role_order": true,
+    "non_target_preservation": true,
+    "notes": "Scoped headers, source row contexts, both aggregation sections/pair roles when applicable, source captions and non-target preservation reviewed."
+  },
+  "unmatched_extras": [],
+  "overall_status": "pass",
+  "registered_source_crop": {
+    "image": "/Users/david/work/data-ingestion/docs/research/pdf-core-table-crops-2026-10-17/memory-r1-p8/table0/input.png",
+    "image_sha256": "8ca3119e62e290d7df59bce0494b7d74e0a4bb93d404c671fe6d48f99dd41239",
+    "source_path": "/Users/david/work/data-ingestion/docs/fixtures/agent-self-evolution-pilot-2026-10-11/11-2508.19828v5.pdf",
+    "source_sha256": "c206af4e792e9550f2aaec8a6c4d9b141d1ddcb587e781d7866870c8f3e4dd4f",
+    "physical_page": 8,
+    "target_key": "p8:#/tables/0"
+  },
+  "paired_source_cell_review": []
+}

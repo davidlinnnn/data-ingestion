@@ -1,0 +1,110 @@
+{
+  "role": "evaluator_only; producer access forbidden",
+  "scope": "Complete visible native image, not adjacent page prose; exposed DEV source annotation before new C candidate outputs",
+  "review": "Single annotator, two visual passes: frozen native crop and independently rendered complete PDF page. Not independent human adjudication.",
+  "acceptance": {
+    "minor_glyph_spacing_punctuation_errors": "retain existing tolerance; no new exact-character gate",
+    "material_failure": "missing substantial visible blocks, changed required UI action/relationship, omitted timeline axis or changed clearly connected chronology",
+    "source_uncertainty": "explicitly marked uncertain small logo text/ambiguous branch joins; do not guess or borrow external release dates",
+    "OCR": "Score all readable literal blocks; keyword presence alone cannot pass full-image OCR",
+    "description": "Evaluate source meaning separately from OCR; generated text never replaces original source captions"
+  },
+  "images": [
+    {
+      "source_group_id": "SRC03-p03-screenshot",
+      "source": "docs/fixtures/pdf-s2-candidates-2026-09-13/03-nccu-personal-statement-manual.pdf",
+      "source_sha256": "3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e",
+      "physical_page": 3,
+      "image_key": "30c2a4ce12ea1c836b370398d0d59ee35d4b9edfad81f53d055140920dadc26d",
+      "crop_sha256": "65c23a375857ce9aee69d9b25d320306fc2b35d94ae38a91c89635ac1291f82b",
+      "literal_blocks": [
+        {"region": "banner", "texts": ["行政院人事行政局", "eCPA人事服務網"]},
+        {"region": "top_right_counters", "texts": ["目前線上人數：562", "今日總計人數：4098", "累積上線人數：10119160"]},
+        {"region": "navigation", "texts": ["民國100年11月15日", "首頁", "最新公告", "主題投票", "機關組織", "公告搜尋", "搜尋"]},
+        {"region": "left_navigation", "texts": ["新手上路", "使用手冊", "個人資料"]},
+        {"region": "user_panel", "texts": ["高雄市政府人事處", "WebHR測試人員@測試（帳號登入）", "登出", "我的專區", "電子賀卡", "待辦事項", "應用系統"]},
+        {"region": "left_poll", "texts": ["主題投票", "自100年9月1日後，您在使用eCPA人事服務網，覺得速度如何？", "1.很快", "2.可以接受", "3.有時很慢（如每月月初），其他時間尚可", "4.仍有改善空間", "投票", "看結果"]},
+        {"region": "main_header", "texts": ["現在位置：首頁 > 我的專區 > 應用系統", "我的專區", "應用系統"]},
+        {"region": "main_shortcut", "texts": ["請由右方點選您要設定的常用應用系統或直接點選『連結』進入應用系統：", "B5A:個人簡要自述"]},
+        {"region": "right_application_groups", "texts": ["A.人事資料填報及考核", "B.人事資料服務", "D.其他人事業務", "E.人事局暨所屬機關", "非人事局機關及系統", "測試應用系統"]},
+        {"region": "right_expanded_B", "texts": ["B5:公務人員個人資料校對網站（連結）", "B5A:個人簡要自述（連結）", "B6:人事資訊系統服務網（連結）", "個人待遇資料查詢（連結）", "個人資料查詢（連結）"]},
+        {"region": "footer_note", "texts": ["上述無法連結的應用系統需自然人憑證登入才可使用"]}
+      ],
+      "meaning_obligations": [
+        "This is a screenshot of the eCPA personnel-service portal application-system page.",
+        "Breadcrumb follows 首頁 → 我的專區 → 應用系統.",
+        "The left 應用系統 control is highlighted by a red rectangle.",
+        "The right B.人事資料服務 group is expanded and outlined in red.",
+        "B5A:個人簡要自述 is checked in the right list; it is also present as a highlighted main-area shortcut.",
+        "The depicted navigation/action involves 應用系統, B.人事資料服務 and B5A:個人簡要自述; do not substitute a neighboring B5/B6 service.",
+        "The main instruction distinguishes selecting usual applications from directly using the 連結 link.",
+        "The bottom note states that applications unavailable for linking require natural-person certificate login.",
+        "The page includes user/navigation, a poll and counters; these are part of full-image OCR scope, not grounds to infer live user identity or current website state."
+      ],
+      "source_uncertainties": ["The small @/account typography is low resolution; equivalent punctuation is not a material failure."],
+      "full_literal_scope_reviewed": true
+    },
+    {
+      "source_group_id": "SRC04-p02-figure1",
+      "source": "docs/prototypes/pdf-checkpoint-prototype/fixtures/scan-pages-3-5.pdf",
+      "source_sha256": "7856cfe6127948d506ca5fad750e915134be362b5e1436c70b378f42a6fda2a0",
+      "physical_page": 2,
+      "image_key": "02dd22b833cc0b48608a64ea8fce95d4f2ad1ad0c7cb2e053a6d22a57a84bfce",
+      "crop_sha256": "812b83f6bb48b9001454c27b675cfc9a4d52d916c668b85ccaf2669d080d98be",
+      "year_axis": ["2019", "2020", "2021", "2022", "2023"],
+      "period_axis": [
+        {"year": "2021", "periods": ["1-4", "5-8", "9-10", "11-12"]},
+        {"year": "2022", "periods": ["1-3", "4-6", "7-10", "11-12"]},
+        {"year": "2023", "periods": ["1-3"]}
+      ],
+      "model_labels": [
+        "T5", "GPT-3", "GShard", "Ernie 3.0", "mT5", "PanGu-α", "PLUG",
+        "BLOOM", "Jurassic-1", "HyperCLOVA", "LaMDA", "Codex", "MT-NLG", "T0",
+        "FLAN", "Yuan 1.0", "CPM-2", "Gopher", "GLaM", "WebGPT", "Ernie 3.0 Titan",
+        "InstructGPT", "GPT-NeoX-20B", "AlphaCode", "Chinchilla", "PanGu-Σ", "UL2",
+        "PaLM", "Sparrow", "Flan-T5", "Flan-PaLM", "mT0", "BLOOMZ", "Galactica",
+        "OPT-IML", "CodeGen", "Tk-Instruct", "GLM", "OPT", "AlexaTM", "ChatGPT",
+        "Bard", "ERNIE Bot", "LLaMA", "GPT-4"
+      ],
+      "yellow_model_labels": [
+        "T5", "mT5", "PanGu-α", "PLUG", "BLOOM", "CPM-2", "T0", "GPT-NeoX-20B",
+        "UL2", "Flan-T5", "mT0", "BLOOMZ", "Galactica", "OPT-IML", "CodeGen",
+        "Tk-Instruct", "GLM", "OPT", "LLaMA"
+      ],
+      "other_literal_labels": ["Open-Source", "AI21 labs", "NAVER LABS", "BAAI", "HUAWEI", "inspur", "AI2"],
+      "caption_context_only": "Fig. 1. A timeline of existing large language models (having a size larger than 10B) in recent years. We mark the open-source LLMs in yellow color.",
+      "caption_is_outside_native_crop": true,
+      "definite_connections": [
+        {"from": "2019", "to": "T5"},
+        {"from": "2020", "to": "GPT-3"},
+        {"from": "2020", "to": "GShard"},
+        {"from": "2021 / 1-4", "to_block": ["mT5", "PanGu-α", "PLUG"]},
+        {"from": "2021 / 5-8", "to_block": ["Jurassic-1", "HyperCLOVA", "LaMDA"]},
+        {"from": "2021 / 11-12", "to": "WebGPT"},
+        {"from": "2022 / 1-3", "to": "GPT-NeoX-20B"},
+        {"from": "2022 / 11-12", "to": "ChatGPT"},
+        {"from": "2023 / 1-3", "to": "GPT-4"}
+      ],
+      "meaning_obligations": [
+        "Identify a chronological model timeline spanning 2019 through 2023, with an arrow continuing beyond the right edge.",
+        "Preserve every year and every visible within-year period in axis order; repeated month labels belong to their corresponding years.",
+        "Model names, organization logos and branch connectors are distinct visual elements; this is not a numerical performance chart.",
+        "Retain all 45 readable model labels in full-image OCR, including Greek α/Σ and the distinction T0/mT0/T5/mT5.",
+        "Yellow label backgrounds denote Open-Source according to the figure legend; preserve the 19 highlighted model associations.",
+        "Retain the explicitly connected model/year/period associations listed above without inventing exact release dates.",
+        "The timeline leads through ChatGPT near late 2022 to GPT-4 near early 2023; they are distinct labels and positions.",
+        "Floating labels and dense multi-name blocks do not justify assigning each model an exact month without a visible unambiguous connector.",
+        "The adjacent source caption provides the >10B context; it must not be falsely reported as OCR text inside the crop.",
+        "Reconstruct what this source depicts, even where external historical release-date knowledge would disagree."
+      ],
+      "source_uncertainties": [
+        "Small subtitle text under some organization logos is not fully legible; do not fabricate those glyphs.",
+        "Several floating model labels lack individual connector endpoints. All readable labels remain in scope, but exact release-month claims for those labels are unscorable from this image."
+      ],
+      "full_literal_scope_reviewed": true
+    }
+  ],
+  "source_annotation_ready": true,
+  "model_quality_evaluated": false,
+  "full_C_source_coverage_pass": false
+}

@@ -1,0 +1,161 @@
+{
+  "variant": "V1",
+  "official_option_change": {
+    "use_reading_order_separators": false
+  },
+  "reviewed_documents": 3,
+  "reviewed_physical_pages": 3,
+  "review_method": "Each original source PDF page rendered with pypdfium2 at scale 1.5 and inspected in memory; no page-image file written. Native saved items and complete Markdown diffs cross-checked.",
+  "scope": "Supplementary full-output differential review beyond frozen anchor metrics; does not modify frozen oracle or candidate counts.",
+  "summary": {
+    "FIX": 1,
+    "REGRESSION": 1,
+    "NEUTRAL": 1,
+    "confirmed_new_blocking_pages": 1,
+    "incidental_baseline_blocking_pages": 1
+  },
+  "root_cause_precision": "The causal official configuration toggle and changed native traversal are established. Exact internal predictor/merger subroutine was not separately replayed for these three cases; geometric explanations are source-layout inferences.",
+  "cases": [
+    {
+      "id": "P-02-2603.02766v1",
+      "pages": [
+        1
+      ],
+      "verdict": "FIX",
+      "q4_effect": "AUTHOR_ATTRIBUTION_ORDER_FIXED",
+      "F01_change": "No author name omitted or duplicated; first-author attribution order corrected.",
+      "F02_change": "Top author row is restored before second row; outside frozen body prose anchors.",
+      "before": "Noah Provenzano 2 → Salaheddin Alzubi 1* → Jaydon Bingham 2",
+      "after": "Salaheddin Alzubi 1* → Noah Provenzano 2 → Jaydon Bingham 2",
+      "source_reason": "Page 1 visibly places Salaheddin Alzubi on a separate centered upper author row. Noah Provenzano is the leftmost author of the lower row. Top row precedes lower row.",
+      "source_geometry": "One centered upper author, four authors on the next row; default separator grouping apparently preferred leftmost lower-column author over the centered upper author.",
+      "baseline_refs": [
+        "#/texts/2",
+        "#/texts/3"
+      ],
+      "variant_refs": [
+        "#/texts/2",
+        "#/texts/3"
+      ],
+      "frozen_anchor_blind_spot": "Author/title metadata is outside the frozen正文prose anchor sequence, so this meaningful attribution-order correction changes no anchor candidate.",
+      "confirmed_new_blocking": false,
+      "reviewed_visual": true,
+      "baseline_document_map": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/baseline-inputs.json",
+      "V1_document": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/runs/V1/jobs/P-02-2603.02766v1/document.json",
+      "V1_markdown": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/runs/V1/jobs/P-02-2603.02766v1/document.md",
+      "complete_diff": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/comparison/V1-full-differences/P-02-2603.02766v1.diff",
+      "q4_blocking_baseline": true,
+      "q4_blocking_V1": false,
+      "baseline_F01_blocking": false,
+      "baseline_F02_blocking": true,
+      "incidental_outside_oracle": true
+    },
+    {
+      "id": "P-13-2601.01885v3",
+      "pages": [
+        19
+      ],
+      "verdict": "NEUTRAL",
+      "q4_effect": "ALLOWED_WHOLE_FLOAT_RELOCATION_WITH_LAYOUT_ORDER_IMPROVEMENT",
+      "F01_change": "No content difference established; ordering correction.",
+      "F02_change": "Algorithm2 moves closer to its visual composite/caption, but its complete independent Training(Part2) title and code persist. No changed algorithm condition/object or incorrect semantic association is established; this differential is treated as allowed whole-float relocation, not a Q4 repair.",
+      "before": "Algorithm 1 → Figure 8 caption → Section B/B.1 case study and dialogue → Algorithm 2 → Algorithm 3",
+      "after": "Algorithm 1 → Algorithm 2 → Figure 8 caption → Section B/B.1 case study and dialogue → Algorithm 3",
+      "source_reason": "Page 19 shows Algorithm 1 in upper left and Algorithm 2 in upper right, a full-width Figure 8 caption below both, then the lower two-column Section B case study. The caption explicitly identifies left rollout/right advantage/policy parts.",
+      "source_geometry": "Upper pair of algorithm boxes, shared spanning caption, and lower two-column prose form a compound layout. Baseline puts the upper-right algorithm after the lower case study; V1 restores its visual/content group.",
+      "baseline_refs": [
+        "#/texts/602",
+        "#/texts/603",
+        "#/texts/616",
+        "#/texts/617"
+      ],
+      "variant_refs": [
+        "#/texts/602",
+        "#/texts/604",
+        "#/texts/605",
+        "#/texts/618"
+      ],
+      "frozen_anchor_blind_spot": "Algorithm environment anchors are excluded. Section B prose moves as an internally ordered block relative to the excluded algorithm; relative aligned body-anchor order stays identical.",
+      "confirmed_new_blocking": false,
+      "reviewed_visual": true,
+      "baseline_document_map": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/baseline-inputs.json",
+      "V1_document": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/runs/V1/jobs/P-13-2601.01885v3/document.json",
+      "V1_markdown": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/runs/V1/jobs/P-13-2601.01885v3/document.md",
+      "complete_diff": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/comparison/V1-full-differences/P-13-2601.01885v3.diff",
+      "q4_blocking_baseline": false,
+      "q4_blocking_V1": false,
+      "baseline_F01_blocking": false,
+      "baseline_F02_blocking": false,
+      "layout_order_closer_to_source": true,
+      "semantic_reason": "Figure8 caption still explicitly describes rollout(left)/advantage-update(right); Algorithm2 retains its own Part2 label and complete code. The saved diff shows only a whole labelled float moving relative to body, not text merged into the dialogue or algorithm operands reassigned. Source-geometric closeness alone does not prove meaning-changing failure."
+    },
+    {
+      "id": "P-18-2511.16043v1",
+      "pages": [
+        18
+      ],
+      "verdict": "REGRESSION",
+      "q4_effect": "CONFIRMED_BLOCKING_QUESTION_CONDITIONS_REORDERED",
+      "F01_change": "No new omission/duplication established by this differential; existing formula decoding problems remain separate.",
+      "F02_change": "Table 17 condition continuation is detached from its own stem and placed before Tables 18–20, while its caption/stem/formula move after those independent problems.",
+      "before": "Table 17 caption → Polytopia city/sphere stem → formula → 'for i=1,2,3' → Given coordinates of cities A/B → Tables 18/19/20",
+      "after": "'for i=1,2,3' → Given coordinates of cities A/B → Tables 18/19/20 → Table 17 caption → Polytopia city/sphere stem → formula",
+      "source_reason": "Page 18 is a single vertical stack of Table 17, Table 18, Table 19 and Table 20 question boxes. The Table 17 top box visibly contains the city/sphere stem, formula, 'for i=1,2,3', and Given A/B coordinates as one question. V1 separates its conditions and changes their apparent association.",
+      "source_geometry": "One full-width Table 17 contains an inline/display formula and continuation before three later full-width independent question boxes. Disabling reading-order separators destroys the first question's internal/source vertical order.",
+      "baseline_refs": [
+        "#/texts/659",
+        "#/texts/661",
+        "#/texts/664",
+        "#/texts/665",
+        "#/texts/666",
+        "#/texts/669",
+        "#/texts/672"
+      ],
+      "variant_refs": [
+        "#/texts/659",
+        "#/texts/660",
+        "#/texts/661",
+        "#/texts/664",
+        "#/texts/667",
+        "#/texts/670",
+        "#/texts/672"
+      ],
+      "frozen_anchor_blind_spot": "Table environments and formula material are excluded from the frozen prose oracle. Its anchor alignment therefore does not cover this boxed-question condition association.",
+      "confirmed_new_blocking": true,
+      "F01_blocking": false,
+      "F02_blocking": true,
+      "reviewed_visual": true,
+      "baseline_document_map": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/baseline-inputs.json",
+      "V1_document": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/runs/V1/jobs/P-18-2511.16043v1/document.json",
+      "V1_markdown": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/runs/V1/jobs/P-18-2511.16043v1/document.md",
+      "complete_diff": "/Users/david/work/data-ingestion/docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/comparison/V1-full-differences/P-18-2511.16043v1.diff",
+      "q4_blocking_baseline": false,
+      "q4_blocking_V1": true,
+      "baseline_F01_blocking": false,
+      "baseline_F02_blocking": false
+    }
+  ],
+  "incidental_outside_oracle_findings": [
+    {
+      "id": "P02-p1-author-order",
+      "job_id": "P-02-2603.02766v1",
+      "pages": [
+        1
+      ],
+      "baseline_q4_blocking": true,
+      "F01_blocking": false,
+      "F02_blocking": true,
+      "source_author_order": [
+        "Salaheddin Alzubi",
+        "Noah Provenzano",
+        "Jaydon Bingham",
+        "Weiyuan Chen",
+        "Tu Vu"
+      ],
+      "baseline_error": "Noah precedes upper-row first author Salaheddin; first-author attribution changes.",
+      "V1_fixed": true,
+      "frozen_candidate_catalog_member": false,
+      "report_separately_from_original_875": true
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "status": "protocol frozen; not an executable registration until both S0 page inventories and image hashes exist",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-6-luna",
+  "immutable_weights_snapshot": false,
+  "image_detail": "high",
+  "reasoning_effort": "low",
+  "response_format": {
+    "type": "json_object"
+  },
+  "max_completion_tokens": 8192,
+  "store": false,
+  "timeout_seconds": 180,
+  "retries": 0,
+  "concurrency": 1,
+  "max_requests": 2,
+  "max_total_targets": 8,
+  "source_pages": [
+    {
+      "id": "memory-r1-p8",
+      "stage": "requires same-version S0 conversion; older 2.102 document is not reused as S0"
+    },
+    {
+      "id": "skillopt-p8",
+      "stage": "S0 native inventory available",
+      "native_target_keys": [
+        "p8:#/tables/0",
+        "p8:#/tables/1"
+      ]
+    }
+  ],
+  "credential": {
+    "checked_environment_variable": "OPENAI_API_KEY",
+    "available": false,
+    "read_from_chat": false
+  },
+  "protocol_sha256": {
+    "mapper.py": "baf2ff1f5dc1522da566fd58db9915182aeb91d87e7ad5adc7b294d02c7e8333",
+    "prompt.txt": "c444e9cd7975c6de7a683e30ddf2aaa2fa23f0f66600d5ab96ed07bc7bd61455",
+    "response-schema.json": "bf6cc1e1d549a05af95c4b5ea3200f48bc05f4dab0274a73cffa5e99ec972ccc"
+  },
+  "requests_sent": 0
+}

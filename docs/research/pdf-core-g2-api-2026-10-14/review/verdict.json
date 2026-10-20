@@ -1,0 +1,74 @@
+{
+  "candidate": "Temporary GPT-6 Luna via Chat Completions",
+  "execution_of_this_review": "Offline only; no additional API requests",
+  "scope": "Four fixed images and task-specific JSON contracts; not full Docling integration or company Qwen3 qualification",
+  "oracle_changed": false,
+  "cases": {
+    "G1-O01": {
+      "strict_item_matches": 4,
+      "strict_item_denominator": 5,
+      "content_and_traditional_chinese_glyphs_correct": 5,
+      "source_positions_visually_consistent": 5,
+      "literal_difference": "Source ASCII double quotes around 連結 became corner quotes「連結」in item b4",
+      "normalization_policy_expanded": false,
+      "verdict": "Content/location recovered; strict transcription still has one punctuation-only mismatch",
+      "canonical_image_ocr_backfill": "not tested"
+    },
+    "G1-E07": {
+      "both_reward_branches_and_conditions_preserved": true,
+      "visible_math_variables_and_indices_preserved": true,
+      "equation_label_separate": true,
+      "visible_footnote_marker_and_performance_anchor_preserved": true,
+      "footnote_treated_as_mathematical_exponent": false,
+      "unseen_footnote_body_invented": false,
+      "latex_source_manual_review": "Source-faithful two-branch expression with explicit footnotemark[2]; balanced braces and dollars; no malformed closing tags",
+      "latex_compilation_or_markdown_renderer_tested": false,
+      "footnote_body_and_anchor_to_body_delivery": "outside supplied crop; not tested",
+      "detector_inline_alignment_and_canonical_backfill": "not tested",
+      "verdict": "Visible crop semantics and note-marker preservation verified; full G1-E07/source-qualified delivery remains unverified"
+    },
+    "G1-O03": {
+      "selected_source_lines": 16,
+      "selected_paragraphs": 2,
+      "normalized_text_exact": true,
+      "paragraph_boundaries_and_order_preserved": true,
+      "selected_left_column_bboxes_visually_consistent": true,
+      "right_column_inserted_between_selected_paragraphs": false,
+      "additional_spot_check_previous_PLMs_preserved": true,
+      "whole_page_quality_oracle_available": false,
+      "verdict": "Selected-scope pass; no whole-page accuracy score"
+    },
+    "G1-T02": {
+      "panels_visually_reviewed": 6,
+      "rows_visually_reviewed": 28,
+      "fixed_numeric_denominator": 84,
+      "correct_panel_setting_metric_value_bindings": 84,
+      "all_printed_numeric_strings_preserved": true,
+      "numeric_errors": 0,
+      "extra_numeric_observations": 0,
+      "numeric_error_rate": 0.0,
+      "critical_comparisons_preserved": 8,
+      "critical_comparison_denominator": 8,
+      "metric_headers_and_panel_titles_preserved": true,
+      "caption_body_and_conditions_semantically_preserved": true,
+      "caption_literal_difference": "The literal Table 2 prefix is omitted from the caption field; table identity comes from task/source context",
+      "separate_Table3_included": false,
+      "per_cell_source_coordinate_or_canonical_mapping": "not tested",
+      "verdict": "Table2 numeric, binding and critical-comparison gates pass on this fixed source; caption body/conditions preserved with explicit label-prefix omission"
+    }
+  },
+  "not_established": [
+    "Company self-hosted Qwen3 quality or equivalence",
+    "vLLM/GPU serving latency and high-frequency throughput",
+    "End-to-end Docling pipeline, fallback/routing and Canonical Acceptance",
+    "Markdown renderer compatibility for footnotemark",
+    "Unseen holdout or whole551pagepilot quality"
+  ],
+  "registry_sha256": "8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a",
+  "response_output_sha256": {
+    "nccu-panel": "90ba9d75cd211fb15d3d71792bf191e087b8128f98c7c489a73c3947012bcdf9",
+    "seal-eq2": "997b393d4ee1a53e1878381471477c0f5cc5a83ce654f7565a86db8354974e40",
+    "english-scan-p1": "7924c412520c0a33a520eb2ece43093e0f6908b8f47ccafd9eaae3f3edd30834",
+    "skillopt-p8": "144488286ea3df2a672b5638d81755cbb185579e8c945c8b6b878f8bfa705764"
+  }
+}

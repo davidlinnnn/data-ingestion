@@ -1,0 +1,443 @@
+[
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-357",
+    "source": "wikiskill",
+    "source_reference_transcription": "Evaluation robustness with small validation sets Following established setups in prior work (Alzubi et al., 2026; Yang et al., 2026), benchmark validation splits are relatively small, which can introduce evaluation noise into gating decision. To account for this variability, all reported scores represent the average test performance across three independent runs of the entire evolutionary pipeline, with paired bootstrap significance testing (detailed in Appendix C).",
+    "source_requirements": [
+      "Preserve bold lead-in as part of one ordinary paragraph; all words from Evaluation through Appendix C.",
+      "Both target page fragments must appear once, in page20→page21 order; join after represent.",
+      "Alzubi et al., 2026; Yang et al., 2026; three independent runs; paired bootstrap; Appendix C are exact critical content."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-361",
+    "source": "wikiskill",
+    "source_reference_transcription": "To provide diagnostic feedback for the Wiki maintainer, we apply a stratified sampling strategy (\\mathcal{T}_{sample,k} \\subset \\mathcal{T}_{train,k}) at each iteration k. Specifically, the system samples up to 8 traces per iteration, stratified into a maximum of 5 failing traces (to perform root-cause analysis of errors) and up to 3 passing traces (to identify effective strategies and prevent regressions in working behaviors). Each individual execution log is capped at 15,000 characters prior to injection into the prompt.",
+    "source_requirements": [
+      "Preserve the full paragraph and inline ordered math: \\mathcal{T}_{sample,k} \\subset \\mathcal{T}_{train,k}, then k.",
+      "Keep subscript comma k attached to both sets, subset direction, up to 8 total, maximum 5 failing/up to 3 passing, their distinct purposes, and 15,000-character cap.",
+      "Wiki proper name and root-cause error analysis remain exact."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-362",
+    "source": "wikiskill",
+    "source_reference_transcription": "Statistical significance testing We perform paired bootstrap significance tests with 1,000 iterations for each benchmark. In each bootstrap iteration, task instances are sampled with replacement from the test split \\mathcal{D}_{test} to construct a bootstrap evaluation set of size |\\mathcal{D}_{test}|, from which candidate accuracy scores and pairwise performance margins are computed. To evaluate overall cross-benchmark performance, we conduct stratified macro-average bootstrap resampling: in each iteration, task instances are resampled independently with replacement within each benchmark, and we calculate macro-average accuracy by assigning equal weight to all benchmarks.",
+    "source_requirements": [
+      "Keep bold lead-in plus complete opening sentence, not only the later bootstrap description; math occurrences \\mathcal{D}_{test} and |\\mathcal{D}_{test}| remain at prose positions.",
+      "Preserve 1,000 iterations, replacement sampling from test split, candidate scores and pairwise margins, independent per-benchmark stratified sampling and equal macro weights."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-363",
+    "source": "wikiskill",
+    "source_reference_transcription": "We determine top-performing methods in our evaluation tables as follows. Methods are initially ranked by their observed performance (or macro-average performance across benchmarks). A top-ranked method M^{*} is the sole top performer if and only if it achieves a statistically significant gain over all competing methods at p<0.05. If M^{*} is not statistically distinguishable (p\\ge0.05) against one or more lower-ranked methods, no single method is declared the sole top performer. Instead, all methods whose performance is not statistically distinguishable from M^{*} (p\\ge0.05) are grouped into a top-tier statistical tie (and bolded accordingly).",
+    "source_requirements": [
+      "All six ordered inline math occurrences M^{*}, p<0.05, M^{*}, p\\ge0.05, M^{*}, p\\ge0.05.",
+      "Keep every word in the source paragraph, sole winner iff significant against all, one-or-more lower-ranked non-distinguishable methods deny sole winner, all non-distinguishable methods tied/bolded.",
+      "Remain one ordinary paragraph; top- + ranked reflows to top-ranked."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-366",
+    "source": "wikiskill",
+    "source_reference_transcription": "Trace2Skill (Ni et al., 2026) Trace2Skill employs a three-stage pipeline centered on parallel trace analysis and hierarchical merging. It evaluates the current skill on training tasks and dispatches parallel success analysts and error analysts to extract effective strategies from passing tasks and diagnose root causes of failures. The resulting structured patches are recursively consolidated via a hierarchical merge operator into a single patch set. The consolidated patches are applied to the skill document and accepted based on validation performance.",
+    "source_requirements": [
+      "Preserve Trace2Skill and Ni et al., 2026 twice/once respectively, three-stage pipeline, parallel success/error analysts and distinct purposes.",
+      "Complete recursive hierarchical consolidation→single patch set→skill document→validation acceptance chain."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-367",
+    "source": "wikiskill",
+    "source_reference_transcription": "EvoSkill (Alzubi et al., 2026) EvoSkill frames skill evolution as a search over a frontier of candidate programs. In each iteration, it samples training tasks via a round-robin category schedule and executes rollouts. EvoSkill feeds only failure traces to the proposer alongside a flat feedback history of past proposal outcomes. The proposer generates candidate skill modifications that are materialized into SKILL.md files, scored on a validation split, and added to a bounded frontier of top-performing programs.",
+    "source_requirements": [
+      "Preserve EvoSkill, Alzubi et al., 2026, frontier programs, round-robin schedule and rollouts.",
+      "Only failure traces (source emphasis), flat feedback history, proposer, SKILL.md literal, validation split and bounded top-performing frontier all remain in prose."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "wikiskill/ordinary_paragraph--texts-368",
+    "source": "wikiskill",
+    "source_reference_transcription": "SkillOpt (Yang et al., 2026) SkillOpt implements a six-stage ReflACT pipeline (Rollout, Reflect, Aggregate, Select, Update, Evaluate) for iterative skill optimization. In each epoch, the system rolls out the agent on training tasks and reflects on full execution traces, including both successes and failures, to generate candidate patches. These patches are hierarchically aggregated and selected to update a single monolithic skill document, which is accepted or rejected based on validation performance.",
+    "source_requirements": [
+      "Complete cross-page paragraph from SkillOpt through performance, including page21 ending rolls →page22 out.",
+      "Preserve Yang et al., 2026, SkillOpt, ReflACT exact capitalization; six stages Rollout, Reflect, Aggregate, Select, Update, Evaluate in order.",
+      "Keep both success and failure full traces, candidate patches, hierarchical aggregation/selection, monolithic document, acceptance or rejection by validation."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "dgm/code_item--texts-646",
+    "source": "dgm",
+    "source_reference_transcription": "test_success, test_output, test_stats = self.run_tests()\n\n- # Create and store attempt\n+ # Create and store attempt with enhanced information\nattempt = SolutionAttempt(\npatch=current_patch,\ntest_output=test_output,\ntest_success=test_success,\n- test_stats=test_stats\n+ test_stats=test_stats,\n+ error_messages=test_stats.get('error_messages', []),\n+ test_details=test_stats.get('test_details', {}),\n+ execution_time=test_stats.get('execution_time', None),\n+ attempt_number=attempt_num + 1\n)\nattempts.append(attempt)\n\n- # Update best attempt if this one is better\n- if test_success and (best_attempt is None or\n- attempt.test_stats[\"passed\"] > best_attempt.test_stats[\"passed\"]):\n+ # Update best attempt based on multiple criteria\n+ if test_success and (\n+ best_attempt is None or\n+ (attempt.test_stats[\"passed\"] > best_attempt.test_stats[\"passed\"]) or\n+ (attempt.test_stats[\"passed\"] == best_attempt.test_stats[\"passed\"] and\n+ len(attempt.error_messages or []) < len(best_attempt.error_messages or []))\n+ ):\nbest_attempt = attempt\n\n+ # Log detailed attempt information\n+ safe_log(f\"\\n=== Attempt {attempt_num + 1} Summary ===\")\n+ safe_log(f\"Test Success: {test_success}\")\n+ safe_log(f\"Tests Passed: {test_stats.get('passed', 0)}\")\n+ safe_log(f\"Tests Failed: {test_stats.get('failed', 0)}\")\n+ safe_log(f\"Errors: {test_stats.get('errors', 0)}\")\n+ safe_log(f\"Execution Time: {test_stats.get('execution_time', 'N/A'):.2f}s\")\n+\n# If tests pass perfectly, we can stop\nif test_success and attempt.test_stats[\"failed\"] == 0 and attempt.test_stats[\"errors\"] == 0:\nbreak",
+    "source_requirements": [
+      "Full diff block, every removed/added/context line; preserve signs, comments, identifiers, strings, literals, operators and line order as listed.",
+      "Unchanged context lines preserve L0/L1 relation; diff +/- lines are visibly flush at source margin after the sign, not rewritten into an idealized Python indentation.",
+      "Keep test_stats defaults [], {}, None; attempt_num + 1; greater-than then equality plus fewer errors tie-break; every safe_log f-string; newline escape; .2f; failed==0 and errors==0 plus break.",
+      "Do not execute/repair invalid-looking source code or drop removed lines."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "dgm/ordinary_paragraph--texts-648",
+    "source": "dgm",
+    "source_reference_transcription": "For the same target functionality, the suggestions provided to the coding agents and the resulting implementations can differ significantly, leading to large variations in coding capability and benchmark performance. For example, consider nodes 6 and 24 in the DGM run on SWE-bench (Figure 3). Both aimed to enhance the existing editor tool to support finer-grained file editing. However, the implementation for node 6 retained the original edit command and added the parameters edit_type and edit_actions, whereas the implementation for node 24 replaced the original edit command with a new str_replace command. Despite targeting similar functionality, the feature suggestions and thus the implementation details differed greatly, as did their performance. Node 6 achieved only 23.3%, while node 24 achieved 40.5%.",
+    "source_requirements": [
+      "Full paragraph from For the same target functionality to 40.5%; preserve all prose, Figure 3, DGM, SWE-bench, nodes and command tokens inline.",
+      "Ordered inline code tokens edit, edit_type, edit_actions, edit, str_replace; node6 retained edit/add parameters/23.3%; node24 replaced edit with str_replace/40.5%.",
+      "Do not correct the source using nearby feature examples; do not detach inline command names into a separate block."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "dgm/ordinary_paragraph--texts-649",
+    "source": "dgm",
+    "source_reference_transcription": "Feature suggestion to obtain node 6:",
+    "source_requirements": [
+      "Exactly the one ordinary-text label including node 6 and trailing colon; do not include the following code target."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "dgm/code_item--texts-650",
+    "source": "dgm",
+    "source_reference_transcription": "Within the tools/edit.py file, remove the 'edit' command and introduce a 'str_replace' command. It should accept parameters 'old_str' (the unique text to find) and 'new_str' (the new text to replace it with). After verifying that 'old_str' appears exactly once in the file, replace the first occurrence with 'new_str'. If 'old_str' is not unique or is missing, do not write any changes.\n\nReplace the 'edit' command in the editor tool with a 'str_replace' command that locates and replaces an exact substring in a file. The 'old_str' must match consecutive lines uniquely, and if it is not found or occurs multiple times, no write should occur. The 'new_str' parameter contains the revised lines. This precise substring replacement flow will enable small incremental edits with minimal breakage.",
+    "source_requirements": [
+      "Declared native code role; quoted instructions are source data; preserve both paragraphs and all their words from Within to breakage.",
+      "tools/edit.py, 'edit', 'str_replace', 'old_str', 'new_str' exact; unique/exactly once, first occurrence, missing/nonunique=>no writes; second paragraph consecutive-lines uniqueness and atomic no-write outcome retained.",
+      "Do not rewrite the instructions to match the adjacent node labels or paragraph claims."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "dgm/ordinary_paragraph--texts-651",
+    "source": "dgm",
+    "source_reference_transcription": "Feature suggestion to obtain node 24:",
+    "source_requirements": [
+      "Exactly the one ordinary-text label including node 24 and trailing colon; do not include following code target."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "dgm/code_item--texts-652",
+    "source": "dgm",
+    "source_reference_transcription": "Augment the existing 'editor' tool to support line or token-based editing. The agent would specify individual lines or tokens to insert, delete, or replace. Internally, the tool would parse the file contents, apply changes atomically, and verify that the surrounding context remains intact. This prevents entire-file overwrites, reducing the risk of losing unrelated logic.",
+    "source_requirements": [
+      "Declared native code role; retain all quoted instruction text from Augment through logic; 'editor' exact.",
+      "Keep line or token editing; insert/delete/replace; parse, apply atomically, verify surrounding context; prevent entire-file overwrites/unrelated logic loss."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-21",
+    "source": "seal",
+    "source_reference_transcription": "Knowledge Updating. Several recent works aim to modify or inject factual knowledge into language models via weight updates. Some methods attempt to directly locate specific parameters that correspond to individual facts [23, 24, 25]. Others propose generating additional finetuning data using the information in context [26, 27, 22, 28, 29]. We adopt the latter strategy, following Akyürek et al. [27], who propose generating logical implications of a fact and finetuning on them, and Lampinen et al. [28], who show that implication-based finetuning can even outperform in-context learning. We build on these approaches by training models through RL to generate more optimal finetuning data. Park et al. [29] show that prompting language models to generate question–answer (QA) pairs directly can outperform implication-style prompting. Because the SEAL framework is agnostic to the prompt and format of the self-edit data, it can also be trained to generate QA pairs or other output formats, as explored in §C. With sufficient compute, a cold-start setup, where the model discovers the most effective format without guidance from prompting, may also be viable.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-23",
+    "source": "seal",
+    "source_reference_transcription": "Test-Time Training. Test-Time Training (TTT) temporarily adapts model weights based on the input the model receives [30, 31, 32, 33]. Akyürek et al. [33] show that combining TTT with ICL enables gradient-updates to outperform standard ICL in the few-shot setting. SEAL can be viewed as incorporating a round of TTT in its inner-loop optimization, leveraging TTT’s efficiency relative to full-scale training to perform multiple updates and reward the generated data that yields the greatest performance gain. Although our method is trained using single-example TTT episodes, we demonstrate in the knowledge incorporation setting that it generalizes to the continued pretraining setting—where placing data directly in context is no longer feasible.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-24",
+    "source": "seal",
+    "source_reference_transcription": "Reinforcement Learning for LLMs. Reinforcement learning has played a central role in improving LLM behavior, originally through RLHF [34]. More recently, RL with verifiable rewards has been applied to boost reasoning performance by optimizing the model directly for task success [35, 36, 37]. SEAL applies RL not to optimize final answers or trace revisions, but to optimize the generation of self-edit data that is then used for weight updates.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-25",
+    "source": "seal",
+    "source_reference_transcription": "Meta-Learning and Self-Modifying Systems. SEAL embodies meta-learning principles [38, 39, 40] by learning an adaptation strategy—how to generate effective self-edits—via its outer optimization loop. The goal is to learn how to learn efficiently from task contexts. Meta-learning has similarly been applied in reinforcement learning [41, 42, 43, 44, 45], where models are trained with a meta-objective to rapidly adapt to new tasks. A natural extension of this line of work is self-referential networks, where models modify their own parameters Schmidhuber [46], Irie et al. [47]. In the domain of large language models, recent work has applied meta-learning principles to improve LLM adaptation [48, 49]. Notably, Hu et al. [49] trained a smaller model to output token-specific weights during finetuning on a corpus, addressing a knowledge incorporation task similar to ours. However, SEAL offers greater generality across domains by leveraging the model’s existing generative capabilities to parametrize updates.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-26",
+    "source": "seal",
+    "source_reference_transcription": "Self-Improvement. Several recent works fall under the umbrella of self-improvement or self-training. Methods such as RLAIF [50, 51] and self-rewarding language models [52, 53] use the model itself to provide reward signals, leveraging the observation that judging outputs is often easier than generating them [54]. Other recent works improve performance on mathematical tasks by using majority-vote or model confidence as reinforcement learning rewards, enabling performance improvement without access to ground-truth labels [55, 56, 57, 58, 59]. However, all of these methods are fundamentally limited by the model’s current evaluation abilities and self-consistency. In contrast, we view self-improvement through interaction with external data as a more powerful and scalable path. SEAL learns how to best utilize this external data for self-improvement.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-28",
+    "source": "seal",
+    "source_reference_transcription": "We propose Self-Adapting LLMs (SEAL), a framework that enables language models to improve themselves by generating their own synthetic data and optimization parameters (“self-edits”) in response to new data. The model is trained to produce these self-edits directly through token generation with the data provided in the model’s context. Self-edit generation is learned via reinforcement learning (RL) where the model is rewarded for generating self-edits (SE) that, when applied, improve the model’s performance at the target task. SEAL can therefore be interpreted as an algorithm with two nested loops: an outer RL loop, which optimizes the self-edit generation, and an inner update loop, which uses the generated self-edit to update the model via gradient descent. Our method can be seen as an instance of meta-learning where we meta-learn how to generate effective self-edits.",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "\\mathrm{SE}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-30",
+    "source": "seal",
+    "source_reference_transcription": "Let \\theta denote the parameters of the language model \\mathrm{LM}_{\\theta}. SEAL operates on individual task instances (C,\\tau) where C is a context containing information relevant to the task, and \\tau defines the downstream evaluation used to assess the model’s adaptation. For example, in knowledge incorporation, C is the passage intended to be integrated into the model’s internal knowledge, and \\tau is a set of questions and associated answers about the passage. In few-shot learning, C includes few-shot demonstrations of a novel task, and \\tau is the query input and ground-truth output. Given C, the model generates a self-edit SE—the form of which varies by domain (see §3.2)—and updates its parameters via supervised finetuning: \\theta' \\leftarrow \\mathrm{SFT}(\\theta,\\mathrm{SE}).",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "\\theta",
+      "\\mathrm{LM}_{\\theta}",
+      "(C,\\tau)",
+      "C",
+      "\\tau",
+      "C",
+      "\\tau",
+      "C",
+      "\\tau",
+      "C",
+      "\\mathrm{SE}",
+      "\\theta' \\leftarrow \\mathrm{SFT}(\\theta,\\mathrm{SE})"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-32",
+    "source": "seal",
+    "source_reference_transcription": "We optimize the self-edit generation process using reinforcement learning: the model takes an action (generating SE), receives a reward r based on \\mathrm{LM}_{\\theta'}’s performance on \\tau, and updates its policy to maximize expected reward:",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "\\mathrm{SE}",
+      "r",
+      "\\mathrm{LM}_{\\theta'}",
+      "\\tau"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-45",
+    "source": "seal",
+    "source_reference_transcription": "are sampled from—and, crucially, rewards are computed using—the current model.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-46",
+    "source": "seal",
+    "source_reference_transcription": "We experimented with various on-policy methods such as Group Relative Policy Optimization (GRPO) [60] and Proximal Policy Optimization (PPO) [61], but found the training to be unstable. Instead, we adopt \\mathrm{ReST}^{EM} [36], a simpler approach based on filtered behavior cloning—also known as “rejection sampling + SFT” [62, 63, 64, 35, 65].",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "\\mathrm{ReST}^{EM}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-47",
+    "source": "seal",
+    "source_reference_transcription": "\\mathrm{ReST}^{EM} can be viewed as an expectation-maximization (EM) procedure: the E-step samples candidate outputs from the current model policy, and the M-step reinforces only those samples that receive positive reward through supervised finetuning. This approach optimizes an approximation of our objective (1) under the binary reward:",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "\\mathrm{ReST}^{EM}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-49",
+    "source": "seal",
+    "source_reference_transcription": "More precisely, in optimizing (1), we must compute the gradient \\nabla_{\\theta_t}\\mathcal{L}_{\\mathrm{RL}}. However, as we noted, the reward term r(\\mathrm{SE},\\tau,\\theta_t) depends on \\theta_t in our setup but is not differentiable. We address this by treating the reward as fixed with respect to \\theta_t. With this approximation, the Monte-Carlo estimator for a minibatch of N contexts and M sampled self-edits per context becomes",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "\\nabla_{\\theta_t}\\mathcal{L}_{\\mathrm{RL}}",
+      "r(\\mathrm{SE},\\tau,\\theta_t)",
+      "\\theta_t",
+      "\\theta_t",
+      "N",
+      "M"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-52",
+    "source": "seal",
+    "source_reference_transcription": "where p_{\\theta_t} denotes the model’s autoregressive distribution and y_s^{(i,j)} is the s^{th} token of self-edit \\mathrm{SE}_{ij}, the j^{th} sample for context C_i. Since sequences with r = 0 can be ignored in (4), we have shown that \\mathrm{ReST}^{EM}, with simple “SFT on good self-edits,” indeed optimizes (1) under the binary reward (2) (with a stop-gradient applied to the reward term). The SEAL training loop is summarized in Alg. 1.",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "p_{\\theta_t}",
+      "y_s^{(i,j)}",
+      "s^{th}",
+      "\\mathrm{SE}_{ij}",
+      "j^{th}",
+      "C_i",
+      "r=0",
+      "\\mathrm{ReST}^{EM}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-53",
+    "source": "seal",
+    "source_reference_transcription": "Finally, we note that while the implementation in this work uses a single model for both generating self-edits and learning from these self-edits, it is also possible to decouple these roles. In such a “teacher-student” formulation [66], a student model would be updated using edits proposed by a separate teacher model. The teacher would then be trained via RL to generate edits that maximize student improvement.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "controls/formula_envelope--pictures-0",
+    "source": "controls",
+    "source_reference_transcription": "M=\\begin{bmatrix}1&-2\\\\3&4\\end{bmatrix}",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "M=\\begin{bmatrix}1&-2\\\\3&4\\end{bmatrix}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "controls/formula_envelope--pictures-1",
+    "source": "controls",
+    "source_reference_transcription": "g(x)=\\frac{1}{x+1}",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "g(x)=\\frac{1}{x+1}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "controls/formula_envelope--pictures-2",
+    "source": "controls",
+    "source_reference_transcription": "f(x)=\\begin{cases}x^2&\\text{if }x\\geq0\\\\0&\\text{if }x<0\\end{cases}",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "f(x)=\\begin{cases}x^2&\\text{if }x\\geq0\\\\0&\\text{if }x<0\\end{cases}"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "controls/ordinary_paragraph--texts-1",
+    "source": "controls",
+    "source_reference_transcription": "Original toy source. It supplements real papers; it does not prove real-document quality.",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "controls/ordinary_paragraph--texts-4",
+    "source": "controls",
+    "source_reference_transcription": "Let y = x^2 + 1. This is part of the sentence.",
+    "source_requirements": [],
+    "original_math_annotation": [
+      "y=x^2+1"
+    ],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "controls/code_item--texts-12",
+    "source": "controls",
+    "source_reference_transcription": "# keep the boundary and block nesting",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": [
+      "# keep the boundary and block nesting"
+    ]
+  },
+  {
+    "unit_id": "controls/code_item--texts-13",
+    "source": "controls",
+    "source_reference_transcription": "if x <= limit:\n    total += x\n    if ready:\n        emit(\"ok\")\nelse:\n    emit(\"skip\")",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": [
+      "if x <= limit:\n    total += x\n    if ready:\n        emit(\"ok\")\nelse:\n    emit(\"skip\")"
+    ]
+  },
+  {
+    "unit_id": "controls/code_item--texts-14",
+    "source": "controls",
+    "source_reference_transcription": "Inline code: items[i] <= limit",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": [
+      "items[i] <= limit"
+    ]
+  },
+  {
+    "unit_id": "controls/ordinary_paragraph--texts-15",
+    "source": "controls",
+    "source_reference_transcription": "Read the source faithfully; preserve operators and nesting. [1]",
+    "source_requirements": [],
+    "original_math_annotation": [],
+    "code_tokens_or_lines": []
+  },
+  {
+    "unit_id": "seal/formula--texts-33",
+    "source": "seal",
+    "source_reference_transcription": "\\mathcal{L}_{\\mathrm{RL}}(\\theta_t):=-\\mathbb{E}_{(C,\\tau)\\sim\\mathcal{D}}[\\mathbb{E}_{\\mathrm{SE}\\sim\\mathrm{LM}_{\\theta_t}(\\cdot\\mid C)}[r(\\mathrm{SE},\\tau,\\theta_t)]].\\quad(1)",
+    "source_requirements": [
+      "Preserve nested expectations, outer (C,tau) drawn from D, inner SE drawn from LM_theta_t conditional C; negative sign; reward arguments SE,tau,theta_t; displayed equation1."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "seal/ordinary_paragraph--texts-34",
+    "source": "seal",
+    "source_reference_transcription": "Unlike in standard RL setups, the reward assigned to a given action in our setting depends on the model parameters \\theta at the time the action is taken (since \\theta is updated to \\theta', which is then evaluated). As a result, the underlying RL state must include the policy’s parameters and is given by (C,\\theta), even though the policy’s observation is limited to C (placing \\theta directly in context is infeasible). The implication of this is that (state, action, reward) triples collected with a previous version of the model, \\theta_{old}, may become stale and misaligned for the current model \\theta_{current}. For this reason, we adopt an on-policy approach, in which self-edits [separate heading:] Algorithm 1 Self-Adapting LLMs (SEAL): Self-Edit Reinforcement Learning Loop",
+    "source_requirements": [
+      "Native item34 incorrectly combines left-column paragraph with right-column Algorithm1 title; source roles must be separate, source reading order must not insert algorithm heading into the paragraph.",
+      "Retain all left-column words and inline theta,theta-prime,(C,theta),C,theta,theta_old,theta_current; heading text must be complete.",
+      "Paragraph continues into unit45 are sampled from...; may join those two native items in one logical paragraph without duplicating either.",
+      "Algorithm1 body is visible additional page content outside this frozen unit; score body only as supplemental collateral, never claim comprehensive algorithm accuracy from title."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "seal/formula--texts-48",
+    "source": "seal",
+    "source_reference_transcription": "r(\\mathrm{SE},\\tau,\\theta_t)=\\begin{cases}1&\\text{If on }\\tau\\text{, adaptation using SE improves }\\mathrm{LM}_{\\theta_t}\\text{’s performance}^{2}\\\\0&\\text{Otherwise}\\end{cases}\\quad(2)",
+    "source_requirements": [
+      "Two cases 1 if adaptation improves LM_theta_t performance on tau, 0 otherwise; arguments SE,tau,theta_t; retain footnote2 association as footnote marker not exponent altering performance; equation2."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "seal/formula--texts-50",
+    "source": "seal",
+    "source_reference_transcription": "\\nabla_{\\theta_t}\\mathcal{L}_{\\mathrm{RL}}\\approx-\\frac1{NM}\\sum_{i=1}^{N}\\sum_{j=1}^{M}r_{ij}\\nabla_{\\theta_t}\\log p_{\\theta_t}(\\mathrm{SE}_{ij}\\mid C_i)\\quad(3)",
+    "source_requirements": [
+      "Gradient w.r.t.theta_t, approximation, leading negative reciprocal NM, sums i=1..N,j=1..M, r_ij, gradient log p_theta_t of SE_ij conditional C_i; equation3."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  },
+  {
+    "unit_id": "seal/formula--texts-51",
+    "source": "seal",
+    "source_reference_transcription": "=-\\frac1{NM}\\sum_{i=1}^{N}\\sum_{j=1}^{M}r_{ij}\\sum_{s=1}^{T}\\nabla_{\\theta_t}\\log p_{\\theta_t}(y_s^{(i,j)}\\mid y_{<s}^{(i,j)},C_i),\\quad(4)",
+    "source_requirements": [
+      "Continuation equality, negative reciprocal NM, i/j sums and r_ij, inner s=1..T, gradient log p_theta_t; y_s^(i,j) conditional y_<s^(i,j),C_i; equation4.",
+      "Equation3 and4 may be one aligned display if both complete and equation labels/order remain identifiable; do not doublecount aligned structure as extra units."
+    ],
+    "original_math_annotation": null,
+    "code_tokens_or_lines": null
+  }
+]

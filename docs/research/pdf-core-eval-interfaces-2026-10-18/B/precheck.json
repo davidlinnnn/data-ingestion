@@ -1,0 +1,8 @@
+{
+  "tests_run": 10,
+  "failures": 4,
+  "cause": "Inherited recursive process enumeration raised sandbox PermissionError before the first injected request; psutil own-process RSS remains readable.",
+  "correction": "This synchronous API-only runner spawns no subprocesses. Use an explicitly current-process RSS guard with the same wall-clock, RSS and available-memory limits; never claim recursive process-tree monitoring.",
+  "remote_calls": 0,
+  "source_or_candidate_content_repaired": false
+}

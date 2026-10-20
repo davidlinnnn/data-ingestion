@@ -1,0 +1,199 @@
+{
+  "scope": "No inference; read saved B boundaries and replay unchanged native geometric ReadingOrderPredictor only. No text/order/score/reference/SDK changes. Raw OCR list order is not scored as semantic order.",
+  "hashes": {
+    "docs/research/pdf-core-ocr-crop-ablation-2026-10-19/B/downstream.json": "926927979f0013d20642942fd8c9292524ba02882774cfc8d140e99a35d5f6b8",
+    "docs/research/pdf-core-ocr-crop-ablation-2026-10-19/B/score.json": "94cc30daa9a3c659773de0c880d43277a933286f4a2995fb9be137fc2601704e",
+    "docs/research/pdf-core-ocr-crop-ablation-2026-10-19/reference.json": "415216bada09152e082db98411fabae978c6f1e234b88dfd7dc6945e44218a8f",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/postprocessing/reading_order_rb.py": "db55a4148d39536a7840bdb1b815f0409e22b0d82066683206dd93b9b452e1f5",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/models/stages/reading_order/readingorder_model.py": "7fca755080095cfc63991af1b96ae041d477c8f762c9ea9e0a2e621eff7d74ae",
+    "/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/utils/layout_postprocessor.py": "ec49e7254f30bd679ebc3bf8267f7bb7519db8cbef8d242122d7b7ecf86bec79"
+  },
+  "raw_and_after_merge_cells_equal": false,
+  "postlayout": {
+    "paragraphs_remain_column_separated": true,
+    "cluster_id_to_reference_id": {
+      "3": "P01",
+      "7": "P06",
+      "2": "P02",
+      "11": "P07",
+      "9": "P08",
+      "5": "P03",
+      "0": "P04",
+      "4": "P09",
+      "8": "P10",
+      "1": "P05",
+      "6": "P11",
+      "12": "F05",
+      "13": "F06"
+    },
+    "storage_order": [
+      "P01",
+      "P06",
+      "P02",
+      "P07",
+      "P08",
+      "P03",
+      "P04",
+      "P09",
+      "P10",
+      "P05",
+      "P11",
+      "F05",
+      "F06"
+    ],
+    "storage_order_semantics": "SDK _sort_clusters(mode=id) uses minimum source cell index; this is deterministic assembly order, not final reading order."
+  },
+  "assembly": {
+    "order": [
+      "P01",
+      "P06",
+      "P02",
+      "P07",
+      "P08",
+      "P03",
+      "P04",
+      "P09",
+      "P10",
+      "P05",
+      "P11",
+      "F05",
+      "F06"
+    ],
+    "preserves_postlayout_clusters": true,
+    "cross_column_paragraph_merge": false
+  },
+  "reading_order": {
+    "input_order": [
+      "P01",
+      "P06",
+      "P02",
+      "P07",
+      "P08",
+      "P03",
+      "P04",
+      "P09",
+      "P10",
+      "P05",
+      "P11",
+      "F05",
+      "F06"
+    ],
+    "output_order": [
+      "P01",
+      "P06",
+      "P02",
+      "P03",
+      "P04",
+      "P05",
+      "P07",
+      "P08",
+      "P09",
+      "P10",
+      "P11",
+      "F05",
+      "F06"
+    ],
+    "native_geometric_output_matches_saved_document_text_order_exactly": true,
+    "source_shape_lines": null,
+    "source_shape_bounding_boxes": [],
+    "accepted_separator_count": 0,
+    "first_wrong_semantic_edge_method": "ReadingOrderPredictor._init_l2r_map",
+    "P01_P06": {
+      "input_cids": [
+        0,
+        1
+      ],
+      "cluster_ids": [
+        3,
+        7
+      ],
+      "adjacent_input_cids": true,
+      "left_strictly_left_of_right": true,
+      "vertical_iou": 0.8493723849372384,
+      "threshold": 0.8,
+      "l2r_edge": [
+        0,
+        1
+      ],
+      "dn_map_P01": [
+        1
+      ],
+      "up_map_P02": [
+        1
+      ],
+      "explanation": "CID adjacency + strong vertical overlap + no separator creates P01->P06 same-row edge. _init_ud_maps redirects the vertical predecessor of P02 along l2r from P01 to P06, enforcing P01->P06->P02."
+    },
+    "initial_l2r_edges": {
+      "P01": "P06",
+      "P05": "P11",
+      "F05": "F06"
+    },
+    "initial_down_edges": {
+      "P01": [
+        "P06"
+      ],
+      "P06": [
+        "P02",
+        "P07"
+      ],
+      "P02": [
+        "P03"
+      ],
+      "P07": [
+        "P08"
+      ],
+      "P08": [
+        "P09"
+      ],
+      "P03": [
+        "P04"
+      ],
+      "P04": [
+        "P05"
+      ],
+      "P09": [
+        "P10"
+      ],
+      "P10": [
+        "P11"
+      ],
+      "P05": [
+        "P11"
+      ],
+      "P11": [
+        "F05",
+        "F06"
+      ],
+      "F05": [
+        "F06"
+      ],
+      "F06": []
+    },
+    "critical_final_inversions": [
+      [
+        "P02",
+        "P06"
+      ],
+      [
+        "P03",
+        "P06"
+      ],
+      [
+        "P04",
+        "P06"
+      ],
+      [
+        "P05",
+        "P06"
+      ]
+    ]
+  },
+  "limits": "This locates the retained B semantic-order defect; no parameter changes or proposed repair tested. The source-order feed and ReadingOrder rule interact; source-cell interleaving alone is not the semantic failure criterion.",
+  "after_merge_and_final_parsed_cells_equal": true,
+  "raw_after_merge_difference": {
+    "same_count": true,
+    "same_order_and_all_fields_except_reindexed_index": true,
+    "changed_index_cells": 109,
+    "notes": "Native post_process_cells reindexes concatenated per-crop cells; no text, coordinates, confidence, or order change."
+  }
+}

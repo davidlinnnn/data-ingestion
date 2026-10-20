@@ -1,0 +1,29 @@
+{
+  "frozen_utc": "2026-10-20T11:56:30.374432+00:00",
+  "phase": "PRE_BEGIN5_NO_LABELED_FEATURES_OR_R1_READ",
+  "thresholds_unchanged": true,
+  "distance": "Exact unit-cost insertion/deletion/substitution Levenshtein via dynamic programming. similarity=1-distance/max(len(left),len(right)); empty sides UNKNOWN, not perfect agreement.",
+  "Unicode": {
+    "all_kinds": "NFC; CRLF/CR -> LF. Never global NFKC.",
+    "code_and_description": "Retain all remaining codepoints and all whitespace including indentation and quoted string spaces; do not strip comments, quotes, punctuation or string literals.",
+    "formula": "Only Mathematical Alphanumeric Symbols U+1D400..U+1D7FF with Unicode name prefix MATHEMATICAL are font-folded to base characters. Explicit native typography ligatures ﬀ/ﬁ/ﬂ/ﬃ/ﬄ/ﬅ/ﬆ -> ff/fi/fl/ffi/ffl/st/st. Remove whitespace only for character-distance string, never token inventories. All other symbols retained, including − vs -, × vs *, Greek variants, accents, superscript Unicode and fences."
+  },
+  "visible_formula_projection": {
+    "TeX": "Use pinned latex2mathml3.81.1 to PresentationMathML; unsupported commands surviving as backslash in visible tokens, merror or unsupported structural nodes => UNKNOWN. No author-macro guessing and no raw TeX-control-command-length comparison.",
+    "MathML": "Read visible token text in declared tree sequence; ignore annotations/phantoms; fraction numerator then denominator separated by line boundary; table row-major with spaces/newlines; msqrt prefixes √; mroot index then √ then radicand. mfenced explicit fences/separator. Script/accent tokens are linearized, not reconstructed 2D grouping.",
+    "native": "Use explicitly source-aligned native visible glyph/character sequence; same NFC and kind-specific normalization. Do not infer missing fraction bars/2D braces from semantic source.",
+    "limitation": "Character/op/number agreement cannot establish fraction scope, superscript attachment, matrices/cases or other 2D grouping; agreement may falsely support semantically wrong reconstructions."
+  },
+  "operator_sequence": "Exact ordered subsequence of preregistered visible symbol set in character_helpers.OPERATORS, before font/ligature or whitespace normalization. Includes quoted-code symbols. No aliases for −/- or ×/*. Alphabetic named operators not semantically interpreted. No invented fraction slash.",
+  "number_sequence": "Ordered ASCII decimal/scientific lexical runs from original NFC visible text before style/whitespace changes; includes indices and quoted strings. Signs checked independently as operators; no numeric rounding or merging whitespace-separated digits. Regex frozen in helper. Unicode non-ASCII digits remain literal for character comparison and are not silently numerically interpreted.",
+  "primary_a_b": "Known and character>=.95 AND ordered operators exact AND ordered numbers exact. b additionally requires source-derived same-region identity. Missing feature/provenance => UNKNOWN/NO_DECISION, not negative semantic truth.",
+  "b_identity": "PDF SHA equal + original page equal + matching frozen source_equation_identity OR frozen_native_ref_identity OR crop_identity. Never reconstruction-text similarity for pairing. Multi-page block correspondence unresolved => UNKNOWN; do not attach its block label to lines.",
+  "c": "Pinned latex2mathml -> sanitized static local MathML with actual isolated Chrome155 render. Unsupported/unresolved TeX/MathML UNKNOWN. Require MathMLCore CSS support, nonempty per-unit bbox, no merror and screenshot exists. Rendering is not semantic proof. Batch local file only; no raw paper scripts/CDN; CSP default-src none; resolver MAP * ~NOTFOUND; background networking/component update/sync/extensions disabled; profile/cache/crashdump only W3b/tmp.",
+  "unit_and_labels": "W3 original50 whole source blocks retain their original labels; primary excludes7 metadata items. Code21 source units exclude4 alignment errors. No block labels copied to fake line labels. Unknown-label signal-pass separate.",
+  "metrics": "Frozen signals-preregistration/operationalization remain authoritative. Exact primary confusion matrix on known/evaluable labels; unavailable NO_DECISION separately; error-positive and pass-as-correct precision/recall both; verified wrong and coverage, exact binomial CI; continuous/binary ROC descriptive, no threshold change.",
+  "render_syntax_before_execution": "UNKNOWN_UNEXECUTED",
+  "helpers_sha256": {
+    "character_helpers.py": "2cd883d0a5b2cd6431edeb2ceed5c31e032fc5c0817c3e69e8efab5259f8a1e7",
+    "render_helpers.py": "f7d077390def403c9afa6c97b525d9c5cd84341d29f9817711686601de88f786"
+  }
+}
