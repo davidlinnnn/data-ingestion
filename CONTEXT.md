@@ -60,7 +60,8 @@ _Avoid_: Source, current file bytes, filename, storage location
 **Corpus**:
 A platform-managed logical collection of Assets that defines a reusable knowledge
 scope for multiple projections, such as Wiki and Retrieval. An Asset may belong
-to multiple Corpora without membership granting additional access.
+to multiple Corpora; membership alone does not grant access. Explicit authorization
+may target a Corpus as a Resource, subject to current governance.
 In v1, precomputed products are materialized within one Resource (ADR-0007);
 whether Corpus remains a separate entity is open in #55.
 _Avoid_: ingestion batch, Source, Published View, access grant
@@ -87,6 +88,17 @@ _Avoid_: ingestion batch, arbitrary collection of hyperlinks
 **Canonicalization**:
 The interpretation and normalization of source observations into a reusable
 representation with attributable evidence and processing origin.
+
+**Processing Profile**:
+A named, versioned specification of the processing capabilities and completion
+requirements for preparing a canonical result for a declared supported use.
+_Avoid_: caller-defined feature switches, Canonical Acceptance
+
+**Knowledge Profile**:
+A Source-level setting naming the Projection Types whose products that Source's
+Assets go into, and therefore the projections Context Readiness waits for. It
+contains no method versions, readers or grouping.
+_Avoid_: Processing Profile, Corpus, access grant
 
 **Canonical Knowledge**:
 The governed, versioned representation of source-derived content and structure
@@ -148,12 +160,6 @@ Retrieval, Graph, or Wiki.
 The specification of a projection's meaning, inputs, and transformation method.
 _Avoid_: Published View, live output
 
-**Knowledge Profile**:
-A Source-level setting naming the Projection Types whose products that Source's
-Assets go into, and therefore the projections Context Readiness waits for. It
-contains no method versions, readers or grouping.
-_Avoid_: Processing Profile, Corpus, access grant
-
 **Published View**:
 A governed knowledge product offered to External Consumers with its own
 publication lifecycle.
@@ -189,6 +195,36 @@ The party accountable for a knowledge product's publication, withdrawal, and
 replacement.
 
 ## Governance
+
+**tSSO**:
+The company's user-authentication authority, whose tokens establish user identity
+for resource authorization.
+_Avoid_: resource authorization decision, GAM
+
+**GAM**:
+The company's central resource-authorization service, governing relationships
+between resources and users identified through tSSO and providing request-time
+authorization decisions.
+_Avoid_: user-authentication provider, tSSO
+
+**GAM-compatible Authorization**:
+An alternative resource-authorization mechanism using tSSO user identity and
+conforming to the agreed GAM authorization meanings and supported scope.
+_Avoid_: separate user identity system, API-shape compatibility alone
+
+**Resource Service**:
+The platform capability through which authorized maintainers manage resources,
+their relationships and authorization-target bindings within a declared scope,
+when the platform's built-in authorization is used. With GAM, maintainers manage
+these relationships directly in GAM.
+Knowledge-domain ownership and applicable policy authority remain distinct.
+_Avoid_: new content/lifecycle authority, grant from registration alone
+
+**Resource**:
+A declared authorization target or scope, defined by an authorized owner, to
+which document bindings and access policies apply. A Corpus may itself serve
+this role; binding or membership alone grants no user access.
+_Avoid_: mandatory Workspace entity, source-authorization override
 
 **Source Policy Authority**:
 The party entitled to define or change source access policy, held by the Source
