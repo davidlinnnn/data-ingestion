@@ -4,7 +4,11 @@ Evidence for [#84](https://github.com/davidlinnnn/data-ingestion/issues/84) (fir
 
 ## What is committed
 
-Per user decision U5, only reports, plans, scripts, registrations, review records, summary JSON and small figures are committed. That is the top two levels of each `docs/research/pdf-core-*` round directory, with text files ≤ 2 MB and images ≤ 300 KB. Third-party papers (arXiv PDFs and LaTeX sources) are not committed; their URLs and SHA-256 are in each round's `jobs.json` / `corpus` manifest.
+**Merged into `dev` (slim, user decision 2026-10-20):** the closure decision record, this evidence folder with its manifests, and the Markdown reports and plans of each research round (`*.md` up to one level inside each round directory). This is 368 files, about 9.6 MB.
+
+**Full curated evidence:** commit [`2524a1a5`](https://github.com/davidlinnnn/data-ingestion/tree/2524a1a50d7f05dc8e33f2a1831d7bdcf5344774/docs/research) on branch `research/issue84-pdf-core` (3,030 files, about 143 MB). It adds scripts, registrations, review records, summary JSON and small figures, and is what the #84 decision record links to. Keep that branch.
+
+Per user decision U5, nothing larger was committed: text files ≤ 2 MB and images ≤ 300 KB, from the top two levels of each round directory. Third-party papers (arXiv PDFs and LaTeX sources) are not committed; their URLs and SHA-256 are in each round's `jobs.json` / `corpus` manifest.
 
 ## What is not committed
 
