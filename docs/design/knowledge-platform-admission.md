@@ -225,13 +225,124 @@ Tenant entry to state that tenants are not part of resource authorization policy
 and would be enforced as a separate boundary if tenants later share a
 deployment. The multi-tenant isolation design is recorded as pending in #56.
 
+Round 2 below resolves the submission flow, upload grants, idempotency,
+versioning and the acceptance store.
+
+## Confirmed admission decisions on 2026-10-20 (round 2)
+
+Grilling round 2 for #31. Evidence is recorded in the
+[admission authorization research](../research/admission-authorization-csp-practices-2026-10-20.md)
+(sections 7–12).
+
+### Submission flow (Q4, Q4a)
+
+1. Declare: the client submits items with Asset IDs, expected files, their
+   SHA-256 digests and sizes, and `resources`.
+2. The platform runs the Q3.1 checks and rejects failing items early. Passing
+   items receive upload locations and grants; nothing is admitted yet.
+3. The client uploads the files directly to platform storage.
+4. The client calls finalize explicitly.
+5. The platform verifies completeness, digests and fixed versions and re-checks
+   Resource permissions.
+6. Durable admission, then `202` with per-item request IDs.
+
+An SDK wraps the three client calls into one operation. Automatic finalization
+when all declared files arrive is a later optimization. v1 and the pilot offer no
+inline content mode; inline content would be added, with a size limit, only if a
+pilot client cannot use the SDK.
+
+### Integrity information (Q4b)
+
+Every declared file carries a SHA-256 digest and its size. The platform
+recomputes the digest at finalization and rejects only that item on mismatch.
+When storage supports it, the digest is signed into the upload grant, but the
+platform does not rely on storage enforcement. The admission record stores the
+platform-verified digest as the artifact's integrity information.
+
+### Upload grants and sessions (Q5, Q5a, Q5b)
+
+- One short-lived grant per declared file, limited to its staging location and
+  declared size (and digest where supported). Default lifetime is one hour;
+  grants may be reissued while the session is open. The concrete form is a
+  storage-native presigned URL or SAS, chosen with the storage product.
+- An upload session not finalized within 24 hours expires: its items are not
+  admitted and staged files are deleted. Finalizing an expired session fails
+  explicitly.
+- Revocation does not chase grants already issued. It stops new grants and makes
+  finalization fail; bytes uploaded with a still-valid grant stay in staging and
+  are deleted on expiry. Staging is separate from retained custody; finalization
+  moves admitted files into custody with fixed versions. The user accepted this
+  bounded bearer delegation for the pilot.
+
+### Idempotency and unchanged content (Q6, Q6a)
+
+- Declaration accepts an `Idempotency-Key`, scoped per Source and kept for 24
+  hours. The same key and body replays the original result, a different body
+  returns `422`, and a request still in progress returns `409`. Results of `503`
+  or validation failures before commit are not stored, so retries re-execute.
+  Finalization and grant reissue are idempotent without a key.
+- If every artifact digest of an Asset's package equals the currently admitted
+  version, the item result is `unchanged`: no new Source Revision and no
+  reprocessing, counted as success in Batch aggregates. A changed attachment
+  creates a new Source Revision; equal bytes in another Asset are not merged;
+  method-only reprocessing is outside submission.
+
+### Version ordering (Q6b, Q6c)
+
+- An item may carry an optional `source_version` representing the version of the
+  whole package, as an integer or RFC 3339 time used consistently per Source.
+  Newer creates a Source Revision; equal with equal digests is `unchanged`; equal
+  with different digests is rejected as a version conflict; older is rejected as
+  stale. Without it, finalization order decides. Finalization is serialized per
+  Asset.
+- Platform Source Revision and Canonical Revision IDs are platform-generated
+  opaque IDs, decoupled from `source_version`, which serves only as an ordering
+  guard and source evidence. Results return both. Re-baselining after a Source
+  renumbers its versions is deferred.
+
+### Acceptance store and dispatch (Q7.1–Q7.6)
+
+- The admission record and an outbox row are written in one PostgreSQL
+  transaction; `202` follows the commit. Not adopted: starting Temporal before
+  `202`, which would make admission unavailable during a Temporal outage and
+  violate the 24-hour requirement; and a separate broker, which would create a
+  dual write and is not needed for the current throughput and single consumer.
+- Durability requirement: an admission acknowledged with `202` survives a single
+  node failure (RPO 0); admission may return `503` during failover. DEV/POC may
+  run a single instance and is explicitly marked as not meeting the requirement.
+  Before pilot go-live, run CloudNativePG with three instances and quorum
+  synchronous replication; this is a pilot go-live condition. No managed
+  PostgreSQL service exists in the company today. Provisioning and operation are
+  handed to #78 and coordinated with #57.
+- The dispatcher starts the Temporal workflow with the request ID as workflow ID
+  and `REJECT_DUPLICATE`, treating `WorkflowExecutionAlreadyStarted` as success.
+  During a Temporal outage outbox rows wait and are dispatched with backoff.
+- A request marked dispatched is not complete until processing reports a terminal
+  outcome. A reconciler checks dispatched requests without a terminal outcome:
+  a running workflow is left alone, a closed workflow has its outcome recorded,
+  and a missing workflow (for example after Temporal history loss) is
+  re-dispatched with the same workflow ID and the reason recorded. Processing side
+  effects must therefore be safe to repeat; that belongs to the processing owners.
+- The outbox is the durable buffer (Queue-Based Load Leveling). The dispatcher
+  applies global and per-Source in-flight budgets, rotates fairly across Sources
+  and reserves a priority field; dispatchers claim rows with
+  `FOR UPDATE SKIP LOCKED`. A broker is introduced only if throughput exceeds the
+  database or company policy requires one. The pilot pause rule from Q1 is
+  triggered by backlog depth.
+- Intake quota per Source: a token bucket of 50 declared items per minute, at
+  most 50 items per request (provisional), exceeding requests rejected whole with
+  `429` and `Retry-After`; open-session limits remain unmeasured; per-Source
+  overrides are configuration. Processing throughput and latency belong to a
+  separate specification.
+- The canonical-to-projection handoff (events, change log or polling) belongs to
+  #55; #31 owns only the correlation from requests to downstream processing and
+  publication outcomes. NATS is not part of #31.
+
 ### Still open
 
-- Q4: submission flow and finalization trigger (declare, upload, finalize versus
-  upload first).
-- Upload grant mechanism, lifetime and expiry handling.
-- Acceptance store (database inbox, JetStream or outbox), deduplication and
-  idempotency, and status definitions.
+- Status definitions and the unified status query, including correlation IDs
+  across request, processing, Canonical Acceptance and projection publication.
+- Exact routes and field names.
 
 ## Principle for later architecture documentation
 
@@ -265,10 +376,10 @@ discussion.
 
 Presigned URLs are bearer capabilities: possession can permit use within their
 scope and validity. Grant-issuance attribution alone does not prove who actually
-sent every byte. The design must settle whether the company accepts that bounded
-delegation or needs identity-bound storage access, and when withdrawal must stop
-already-authorized uploads. Retained versions must remain stable after admission;
-expired grants, incomplete uploads and staged data need defined handling.
+sent every byte. Round 2 (Q5, Q5b) accepts this bounded delegation with
+one-hour grants, a finalization re-check and separate staging; withdrawal stops
+admission rather than bytes already in transit. Expired sessions and staged data
+are handled by Q5a.
 
 ## References
 

@@ -1,6 +1,6 @@
 # Admission 授權、可見性與憑證範圍的業界實務
 
-**研究日期：2026-10-19 至 2026-10-20（Asia/Taipei）。狀態：作為 #31 第一輪 grilling Q3 的決策依據；決議另記於 [admission 設計筆記](../design/knowledge-platform-admission.md)。**
+**研究日期：2026-10-19 至 2026-10-20（Asia/Taipei）。狀態：作為 #31 第一輪 grilling Q3 與第二輪 Q4–Q7 的決策依據；決議另記於 [admission 設計筆記](../design/knowledge-platform-admission.md)。**
 
 背景：[Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31)
 在討論文件提交時，平台如何決定文件的讀者範圍（Resource binding）、提交與管理權限是否分開、錯誤回應如何避免洩漏存在性，以及 tenant／Source 是否由憑證推導。
@@ -89,8 +89,77 @@ CSP 的 index、data store、connection 或 shared drive 不視為本平台 Sour
 | Q3.9 由憑證推導 | §4、§6 | API 不帶 tenant 與 Source；未來需要代理多個 Source 時，比照 `Stripe-Account` 加選填欄位 | 一把憑證對一個 Source，屬整合型模式 |
 | Q3.12 Tenant 定義 | §4 | Tenant 不屬於 resource authorization；未來多 tenant 時作為授權之外的強制邊界 | 與 AWS SaaS 指引一致 |
 
+## 7. 直接上傳的呼叫流程
+
+| 服務 | 流程 | 來源 |
+|---|---|---|
+| Slack | `files.getUploadURLExternal` 取得 `upload_url` → 上傳 bytes → `files.completeUploadExternal`；未呼叫 complete 則上傳中止。原單次呼叫的 `files.upload` 已退役，官方理由是新方式更可靠，尤其是大檔 | [Changelog](https://docs.slack.dev/changelog/2024-04-a-better-way-to-upload-files-is-here-to-stay)、[completeUploadExternal](https://docs.slack.dev/reference/methods/files.completeUploadExternal) |
+| OpenAI Uploads | Create Upload（宣告總 bytes，一小時後過期）→ Add Parts → Complete；完成時 bytes 數須與宣告相符 | [Uploads API](https://developers.openai.com/api/docs/api-reference/uploads) |
+| Google Drive resumable | 初始化 session 取得 session URI → 上傳 bytes；最後一段完成傳輸 | [第三方整理](https://fast.io/resources/google-drive-resumable-upload.md)；正式文件前應改引 Google 官方文件 |
+
+**來源直接支持：**直接上傳到 storage 的 API 普遍採「建立 → 上傳 → 完成」三步，OpenAI 並在完成時比對宣告值。
+
+## 8. 上傳完整性檢查
+
+| 來源 | 事實 |
+|---|---|
+| [Amazon S3: checking object integrity](https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity) | 支援 CRC-64/NVME、CRC-32、CRC-32C、SHA-1、SHA-256、MD5 等；S3 計算 checksum 與提供值比對並與物件一同保存 |
+| [Amazon S3: presigned URLs](https://docs.amazonaws.cn/en_us/AmazonS3/latest/userguide/using-presigned-url.html) | SigV4 presigned URL 支援 SHA-256 等額外 checksum；SigV2 僅支援 MD5 |
+
+**設計推論：**CRC 只偵測意外損毀，不能防止刻意替換；MD5／SHA-1 已有碰撞攻擊。因此採 SHA-256，並由平台在完成時自行驗證，不依賴 storage。
+
+## 9. Idempotency
+
+| 來源 | 事實 |
+|---|---|
+| [Stripe: idempotent requests](https://docs.stripe.com/api/idempotent_requests) | 保存第一次請求的狀態碼與 body，相同 key 回傳相同結果；參數不同時回錯誤；v1 API key 保存 24 小時；建議 V4 UUID |
+| [IETF draft: Idempotency-Key header](https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header) | HTTPAPI 工作小組草案（查閱時為 draft-07），尚非 RFC |
+| [Bedrock IngestKnowledgeBaseDocuments](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_IngestKnowledgeBaseDocuments.html) | 以 `clientToken` 處理 request idempotency |
+
+**設計推論：**與 Stripe 不同，本平台不保存 `503` 或 commit 前驗證失敗的結果，否則重試永遠得到相同的 `503`。
+
+## 10. 外部版本號排序
+
+| 來源 | 事實 |
+|---|---|
+| [Elasticsearch Index API: versioning](https://www.elastic.co:443/guide/en/elasticsearch/reference/6.4/docs-index_.html) | `version_type=external`：只有提供的版本號大於現存版本才寫入，否則版本衝突；適用於以外部資料庫為權威來源的同步 |
+
+**設計推論：**本平台借用「較舊即拒」的排序防護，但不把外部版本號當作平台版本，因為平台有 Source Revision 與 Canonical Revision 兩層，且外部版本可能不存在或被重編。
+
+## 11. 耐久受理與派送
+
+| 來源 | 事實 |
+|---|---|
+| [AWS Prescriptive Guidance: transactional outbox](https://docs.aws.amazon.com/en_en/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html) | 資料庫更新與 outbox 寫入在同一 transaction，解決 dual write；relay 可能重送，消費端須 idempotent |
+| [Temporal: Workflow Id](https://docs.temporal.io/concepts/what-is-a-workflow-id)、[WorkflowIdReusePolicy](https://python.temporal.io/temporalio.common.WorkflowIDReusePolicy.html) | 同一 workflow ID 同時最多一個執行；`REJECT_DUPLICATE` 不允許重用已關閉 workflow 的 ID，拒絕時回 `WorkflowExecutionAlreadyStarted` |
+| [PostgreSQL synchronous_commit](https://postgresqlco.nf/en/doc/param/synchronous_commit) | `on` 時 commit 等待同步 standby 回報已寫入耐久儲存；交易只在 primary 與所有同步 standby 同時損毀時遺失 |
+| [Amazon RDS Multi-AZ](https://aws.amazon.com/rds/details/multi-az/) | 自動建立另一 AZ 的同步 standby 並自動 failover |
+| [CloudNativePG: Replication](https://cloudnative-pg.io/docs/1.28/replication) | 以 `minSyncReplicas`／`maxSyncReplicas` 設定 quorum 同步複寫，operator 產生 `ANY q (...)`；所需 standby 不足時預設暫停寫入，以耐久性優先 |
+
+## 12. 緩衝與流量控制
+
+| 來源 | 事實 |
+|---|---|
+| [Azure Architecture Center: Queue-Based Load Leveling](https://learn.microsoft.com/azure/architecture/patterns/queue-based-load-leveling) | 在 task 與其呼叫的服務之間放置 queue 作為緩衝，平滑間歇性尖峰，並使收件與處理的故障互相隔離 |
+| [PostgreSQL SELECT locking clause](https://www.postgresql.org/docs/current/sql-select.html) | `SKIP LOCKED` 可避免多個消費者存取 queue 型資料表時的鎖競爭 |
+
+## 第二輪設計推論
+
+以下為本平台設計判斷，對應 #31 第二輪 Q4–Q7。
+
+| 決策 | 依據 | 本平台選擇 |
+|---|---|---|
+| Q4 提交流程 | §7 | 宣告 → 上傳 → 明確完成；SDK 包成一個呼叫 |
+| Q4b 完整性 | §8 | SHA-256 加大小必填，平台完成時重算 |
+| Q6 idempotency | §9 | 宣告用 `Idempotency-Key`，每 Source、24 小時；不保存 `503` |
+| Q6b／Q6c 版本 | §10 | `source_version` 只作排序防護與來源證據，平台版本解耦 |
+| Q7.1–Q7.3 受理與派送 | §11 | PostgreSQL＋outbox；workflow ID＝request ID；reconciler 補救 history 遺失 |
+| Q7.2 耐久性 | §11 | RPO 0；pilot 上線前 CloudNativePG quorum 同步複寫 |
+| Q7.4 緩衝 | §12 | Outbox 即 queue，dispatcher 控制預算與公平性 |
+
 ## 未查證或未採用
 
 - Microsoft Graph `ExternalItem.ReadWrite.OwnedBy` 的範圍描述引自第三方整理站；正式文件撰寫前應改引 Microsoft Learn 的 permissions reference。
 - Amazon Kendra 的 IAM action 分離未在本次查證，未列入依據。
+- Google Drive resumable upload 的流程描述引自第三方整理，正式文件前應改引 Google 官方文件。
 - 本筆記未驗證任何 live API 行為；所有結論來自查閱時的公開文件。
