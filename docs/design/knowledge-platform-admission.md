@@ -24,8 +24,9 @@ a presigned URL, SAS, token format, endpoint, grant lifetime or revocation polic
 ## Client clarification on 2026-10-18
 
 The user clarified that the intended integration client is the Data Owner's
-system calling the platform API. The document's Resource binding would be
-provided during submission, with GAM or compatible authorization governing
+system calling the platform API. Submissions reference the document's Resource
+binding; the [confirmed admission rules](#confirmed-admission-decisions-on-2026-10-19-and-2026-10-20)
+govern which references are accepted, and GAM or compatible authorization governs
 subsequent data access. A human may trigger the source system; this alone does
 not establish that the platform must authorize the operation as that human.
 
@@ -73,11 +74,14 @@ Keep the pilot's submission boundary small:
   are not required by this pilot decision. Configuration propagation and any
   effect on previously issued upload grants remain admission-design details.
 
-Data access control retains first priority and remains owned by
-[Define governance enforcement across canonical data and published views](https://github.com/davidlinnnn/data-ingestion/issues/56).
-Admission consumes and enforces its applicable
-contract, including the trusted Resource binding; it does not create a second
-reader-authorization system or waive governed access for the pilot.
+Data access control retains first priority. The pilot's built-in authorization
+is designed in [#85](https://github.com/davidlinnnn/data-ingestion/issues/85),
+the production GAM track in [#86](https://github.com/davidlinnnn/data-ingestion/issues/86),
+and governance enforcement across canonical data and published views in
+[#56](https://github.com/davidlinnnn/data-ingestion/issues/56). Admission
+consumes and enforces the applicable contract, including the trusted Resource
+binding; it does not create a second reader-authorization system or waive
+governed access for the pilot.
 
 Platform API authentication and the temporary storage grant used for direct
 upload retain distinct purposes. The confirmed direct-upload / Valet Key
@@ -98,11 +102,136 @@ cross-Source or cross-authorization-scope admission rules, and persistence remai
 open. An item represents a complete captured document package, which can include
 required attachments rather than exactly one file.
 
-The user has not yet decided partial-admission/atomicity: the example with 19
-valid items and one invalid item at admission remains unanswered. Independent
-outcomes after admission remain required. Neither this agreement nor the batch
+Partial admission was decided on 2026-10-19; see
+[Partial admission](#partial-admission-q2). Independent outcomes after admission
+remain required. Neither this agreement nor the batch
 research chooses inline bytes, external-location import, the finalization trigger
 or the storage-grant mechanism.
+
+## Confirmed admission decisions on 2026-10-19 and 2026-10-20
+
+Grilling round 1 for #31. The industry evidence and the separation between
+source-supported facts and platform design inferences are recorded in the
+[admission authorization research](../research/admission-authorization-csp-practices-2026-10-20.md).
+Question numbers refer to that round.
+
+### Design target (Q1)
+
+Design the contract and the admission/dispatch mechanism to production
+requirements; the pilot implements the same mechanism. The only staged
+difference is the first-adoption Q22 rule: during processing-side outages
+(Temporal, workers, models) the pilot may pause new admissions and ask clients
+to retry later, while production durably accepts and processes later. Capacity
+figures remain marked as unmeasured.
+
+### Partial admission (Q2)
+
+- Request-level errors, such as failed authentication, a malformed request or an
+  exceeded item limit, reject the whole request.
+- Item-level errors reject only that item; the other items are admitted. The
+  response lists a result for every item: a request ID for each admitted item and
+  a reason for each rejected item.
+- If every item is rejected, the request fails and no Batch is created.
+- v1 offers no all-or-nothing option. The client resubmits corrected items in a
+  new submission.
+
+### Sources, tenants and credentials (Q3.2, Q3.3, Q3.3a, Q3.9)
+
+- A Source is typically one Data Owner knowledge-management application; the
+  platform does not model a separate application layer. An application needing
+  different restrictions registers multiple Sources.
+- Pilot onboarding is one-time platform configuration: register one or more
+  Sources and issue their credentials. Automated Source registration is deferred.
+- Submitting (Ingest API) and managing relations (Resource API) are distinct
+  permissions. A credential may hold either or both; separate credentials are
+  recommended when an application runs separate components. The submit
+  permission includes read-only list/get of Resources visible to its Source.
+- Each credential belongs to exactly one Source and each Source to one tenant.
+  Requests carry neither a tenant nor a Source; both are derived from the
+  credential. Admission records, Sources, Assets and Resources store the tenant
+  ID from the start. A future credential acting for several Sources would add an
+  optional Source selector that defaults to the credential's Source.
+- This refines the 2026-10-18 pilot wording: holding a credential grants nothing
+  by itself; authority comes from the relations held by its Source.
+
+### Resource binding at admission (Q3.1, Q3.4, Q3.5, Q3.10a)
+
+Each item is checked in order:
+
+1. Structural tenant check: the Source's tenant equals the credential's tenant.
+2. The credential belongs to Source S and holds the submit permission.
+3. S may place documents into each referenced Resource R: R was created under
+   S, or R's maintainer granted S.
+
+- Items reference only existing Resources; a submission never creates a
+  Resource. Sources create and manage Resources, their readers and their grants
+  dynamically through the Resource Service; the platform does not configure
+  individual Resources.
+- A Source may set a default Resource. Resources specified by an item replace the
+  default. A new Asset with neither is rejected.
+- For an existing Asset, an omitted Resource keeps the current binding, the same
+  Resource is admitted, and a different Resource rejects the item as a binding
+  conflict. Binding changes go only through the Resource API, with permission on
+  both the current and the new Resource.
+- If S's permission is revoked between declaration and finalization, the item is
+  rejected at the finalization re-check. A revocation after `202` does not undo
+  admission: it blocks later submissions, documents already placed remain until
+  R's maintainer removes them, and reads follow current policy.
+- Multiple audiences in v1: for a union, the Source creates one Resource whose
+  readers cover both audiences; for an intersection, a Resource representing the
+  intersection; for appearing in several knowledge scopes, Corpus membership
+  rather than binding. Uploading the same document twice is discouraged; if used,
+  the copies are distinct Assets managed independently.
+
+### Authorization availability and error visibility (Q3.6, Q3.7, Q3.7a)
+
+- If the authorization decision service is unavailable, the whole request fails
+  with a retryable error (`503` with `Retry-After`) and nothing is admitted. There
+  is no pending-authorization state. The decision service is therefore an
+  admission dependency in both pilot and production. Safe retry requires the
+  idempotency design, which remains open.
+- Anything whose existence is protected and is not visible to the caller returns
+  not found: a nonexistent Resource, another Source's Resource without a grant,
+  another tenant's Resource, and status lookups of another Source's requests.
+  Insufficient permissions of the caller's own credential return `403`. A
+  distinct "visible but not permitted" Resource error is reserved for future
+  relations.
+- Every error carries a trace ID. The admission record stores the internal reason
+  (does not exist, not granted, revoked, other tenant) and the decision ID and
+  time, visible only to platform operators. Only "does not exist" may be told to
+  the caller; other reasons are routed to the Resource maintainer or not
+  disclosed. The operator disclosure procedure belongs to #56.
+
+### Submitter attribution (Q3.8)
+
+An item may carry an optional `uploaded_by` tSSO identity asserted by the
+Source. It is recorded only, marked as Source-asserted, and is neither used for
+authorization nor proof that the person acted. Verified end-user submission is
+deferred.
+
+### Contract assumptions shared with #85 (Q3.10)
+
+1. Resources are referenced by opaque IDs.
+2. Items carry `resources[1..N]`; v1 limits this to one.
+3. Readers are defined on Resources; items carry no reader list.
+4. Admission consumes one decision per check: allow, deny or unavailable.
+
+If a decision in #85 violates any assumption, #31 is explicitly reopened.
+
+### Glossary (Q3.11, Q3.12)
+
+`CONTEXT.md` updates the Source entry to describe the application role and the
+Tenant entry to state that tenants are not part of resource authorization policy
+and would be enforced as a separate boundary if tenants later share a
+deployment. The multi-tenant isolation design is recorded as pending in #56.
+
+### Still open
+
+- Q4: submission flow and finalization trigger (declare, upload, finalize versus
+  upload first).
+- Upload grant mechanism, lifetime and expiry handling.
+- Acceptance store (database inbox, JetStream or outbox), deduplication and
+  idempotency, and status definitions.
 
 ## Principle for later architecture documentation
 
@@ -130,7 +259,9 @@ A candidate minimal implementation authorizes a grant through the platform,
 issues a temporary capability for a designated upload target, and checks current
 submission authority and capture readiness at finalization/admission. It would
 correlate the grant recipient, Source/Asset context, target and admission outcome
-for audit. This check schedule and mechanism are proposals awaiting discussion.
+for audit. The Resource-binding re-check at finalization is confirmed below
+(Q3.5); the remaining check schedule and mechanism are proposals awaiting
+discussion.
 
 Presigned URLs are bearer capabilities: possession can permit use within their
 scope and validity. Grant-issuance attribution alone does not prove who actually
@@ -142,7 +273,8 @@ expired grants, incomplete uploads and staged data need defined handling.
 ## References
 
 - [Inline content and storage-reference ingestion](../research/document-inline-reference-ingestion-2026-10-18.md) — delivery trade-offs and Bedrock evidence; no additional input mode selected.
-- [Single and multiple-document admission: CSP API investigation](../research/document-batch-admission-csp-practices-2026-10-18.md) — evidence for the confirmed shared `items[1..N]` contract; detailed routes, scope and partial-admission behavior remain open.
+- [Single and multiple-document admission: CSP API investigation](../research/document-batch-admission-csp-practices-2026-10-18.md) — evidence for the confirmed shared `items[1..N]` contract; detailed routes and scope remain open; partial admission is decided above.
+- [Admission authorization, visibility and credential scope: industry practices](../research/admission-authorization-csp-practices-2026-10-20.md) — evidence for the Q3 decisions.
 - [Valet Key pattern, Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/patterns/valet-key)
 - [Confirmed source delivery and finalization direction](https://github.com/davidlinnnn/data-ingestion/blob/9be8021a25a39545c28af8f420c3750a7ce21859/docs/design/knowledge-platform-source-handoff.md#L157)
 - [Original cloud-practice investigation and decision history](https://github.com/davidlinnnn/data-ingestion/blob/9be8021a25a39545c28af8f420c3750a7ce21859/docs/research/attachment-handoff-cloud-practices-2026-10-02.md)
