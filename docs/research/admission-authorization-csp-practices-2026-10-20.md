@@ -1,6 +1,6 @@
 # Admission 授權、可見性與憑證範圍的業界實務
 
-**研究日期：2026-10-19 至 2026-10-20（Asia/Taipei）。狀態：作為 #31 第一輪 grilling Q3 與第二輪 Q4–Q7 的決策依據；決議另記於 [admission 設計筆記](../design/knowledge-platform-admission.md)。**
+**研究日期：2026-10-19 至 2026-10-20（Asia/Taipei）。狀態：作為 #31 第一輪 grilling Q3、第二輪 Q4–Q7 與第三輪 Q8 的決策依據；決議另記於 [admission 設計筆記](../design/knowledge-platform-admission.md)。**
 
 背景：[Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31)
 在討論文件提交時，平台如何決定文件的讀者範圍（Resource binding）、提交與管理權限是否分開、錯誤回應如何避免洩漏存在性，以及 tenant／Source 是否由憑證推導。
@@ -157,9 +157,57 @@ CSP 的 index、data store、connection 或 shared drive 不視為本平台 Sour
 | Q7.2 耐久性 | §11 | RPO 0；pilot 上線前 CloudNativePG quorum 同步複寫 |
 | Q7.4 緩衝 | §12 | Outbox 即 queue，dispatcher 控制預算與公平性 |
 
+## 13. 多方回報的狀態
+
+| 來源 | 事實 |
+|---|---|
+| [GitHub REST API: Using the REST API to interact with checks](https://docs.github.com/en/rest/guides/using-the-rest-api-to-interact-with-checks) | 建立與更新 check run 的寫入權只開放給 GitHub App；同一 commit 上，每個 App 有自己的 check suite，內含它建立的多個 check runs。`status` 可為 `queued`、`in_progress`、`completed` 等，完成時附 `conclusion`；`stale` 只有 GitHub 能設定（check run 未完成超過 14 天時自動標示） |
+| [Kubernetes API: Condition (meta/v1)](https://v1-36.docs.kubernetes.io/docs/reference/kubernetes-api/definitions/condition-v1-meta/) | 共用欄位為 `type`、`status`（`True`／`False`／`Unknown`）、`reason`（程式用識別碼）、`message`（給人看的說明）、`lastTransitionTime` 與 `observedGeneration`；`observedGeneration` 落後於物件目前的 `metadata.generation` 時，該 condition 已過時 |
+| [KEP-1623: Standardize Conditions](https://www.kubernetes.dev/resources/keps/1623/) | 把各 API 自定的 condition 結構統一為共用的 `metav1.Condition`，讓不同 controller 以同一格式回報 |
+
+## 14. 長時間作業與錯誤格式
+
+| 來源 | 事實 |
+|---|---|
+| [Google AIP-151: Long-running operations](https://google.aip.dev/151) | Operation 由 `name`、`metadata`、`done` 與 `error`／`response` 組成；`metadata` 由各服務定義，用來放進度等資訊；執行階段失敗必須以 AIP-193 錯誤放在 `Operation.error`（`google.rpc.Status`） |
+| [Google AIP-193: Errors](https://google.aip.dev/193) | `ErrorInfo.reason` 須符合 `[A-Z][A-Z0-9_]+[A-Z0-9]`（UPPER_SNAKE_CASE），最長 63 字元；`domain` 須全域唯一，通常是產生錯誤的服務名稱；同一種錯誤使用同一組 (reason, domain)；與這次請求相關的資訊放在 `metadata` |
+
+## 15. 衍生內容的讀者與敏感度
+
+| 來源 | 事實 |
+|---|---|
+| [Microsoft Purview: Microsoft 365 Copilot & Copilot Chat — Sensitivity label inheritance](https://learn.microsoft.com/en-us/purview/ai-m365-copilot) | Copilot in Word／PowerPoint／Outlook 依已標記的檔案產生新內容時，自動繼承來源的 sensitivity label 與其保護設定；以多個檔案產生時，採用優先級最高的 label（優先級高通常代表更敏感、權限更嚴格）。使用者可覆寫或移除繼承的 label |
+| [Glean: Security principles](https://docs.glean.com/security/security-principles) | 搜尋結果只出現使用者在來源系統能存取的文件；AI 回答只用查詢者有權存取的內容產生；權限於查詢時依登入者身分比對；無法在來源開啟的文件不能作為 context、搜尋結果或引用 |
+
+## 16. 方法變更、逐份狀態與滾動更新
+
+| 來源 | 事實 |
+|---|---|
+| [Amazon Bedrock: Customize ingestion for a data source](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-managed-customize-ingestion.html) | 「You can't change the chunking strategy after connecting to the data source.」預設的 `SMART_PARSING` 是服務管理的解析策略，自動為內容選擇最佳解析方式，使用者不需設定解析模型 |
+| [Amazon Bedrock: KnowledgeBaseDocumentDetail](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_KnowledgeBaseDocumentDetail.html) | 每份文件一個 `status`（`INDEXED`、`PARTIALLY_INDEXED`、`PENDING`、`FAILED`、`METADATA_PARTIALLY_INDEXED`、`METADATA_UPDATE_FAILED`、`IGNORED`、`NOT_FOUND`、`STARTING`、`IN_PROGRESS`、`DELETING`、`DELETE_IN_PROGRESS`），另有 `statusReason` |
+| [Google Cloud: Parse and chunk documents](https://docs.cloud.google.com/generative-ai-app-builder/docs/parse-chunk-documents) | 修改 parser 設定「only apply to new documents imported」，既有文件不會重新解析；document chunking 在 data store 建立後不能開關 |
+| [Azure AI Search: Update or rebuild an index](https://learn.microsoft.com/en-us/azure/search/search-howto-reindex)、[Create an index alias](https://learn.microsoft.com/en-us/azure/search/search-how-to-alias) | 更換 embedding 模型須重建 index；建議並行建立新 index，完成後以 index alias 切換，應用程式不需改參照 |
+| [Kubernetes: Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) | Rollout 卡住時設定 `Progressing` 為 `False`、reason `ProgressDeadlineExceeded`，與可用性分開表示；「Kubernetes takes no action on a stalled Deployment other than reporting a status condition」；每次更新 Pod template 產生新的 revision，可查 rollout history |
+
+## 第三輪設計推論
+
+以下為本平台設計判斷，對應 #31 第三輪的最終決策（Q8 與 R 系列）。
+
+| 決策 | 依據 | 本平台選擇 |
+|---|---|---|
+| Readiness 與 attention（Q8.2、R9） | §13、§16 | `readiness` 只表示 agent 讀得到什麼（`ready`、`ready_stale`、`not_ready`、`withdrawn`），`attention[]` 表示誰要處理；與 Kubernetes 把可用性和 rollout 進度分開相同。Readiness 不擋發布、不授權 |
+| 狀態回報契約（Q8.3、R7） | §13 | 格式共用、stage 由 owner 定義、只寫自己的 namespace；以 `attempt_id`＋`seq` 排序；serving 事實每個產品版本回報一次收錄清單。逾時只檢查進行中的 attempt，對應 GitHub 只把未完成的 check run 標為 `stale`；Kubernetes 的 `observedGeneration` 對應的是版本落後（`ready_stale`），不是時間過期 |
+| Error 區塊（Q8.4） | §14 | 採 AIP-193 外框：`domain`＝pipeline ID、`reason` 由 owner 定義且平台不解讀，加上 `retryable`、`support_ref` 方便報案 |
+| Correlation（Q8.6） | §14 | 類似 Operation `name` 的穩定追蹤 ID：`request_id` 串到 Source／Canonical Revision 與產品版本，另加 `attempt_id` 與重刷的發起者 |
+| Current 選定與平台重刷（R1a、R2、R13） | §16 | 雲端服務多以鎖定方法（Bedrock、Vertex）或整批切換（Azure alias）避開同一文件多版本並存；本平台採逐份滾動，類似 Deployment revision：採用序號遞增、新結果 accepted 後才切換、重刷失敗只回報並保留舊版 |
+| 處理方式（R6f） | §16 | 類似 Bedrock `SMART_PARSING`，由處理線依文件內容決定功能，Source 不選處理方式 |
+| 元件紀錄（R0b） | §16 | Vertex 修改 parser 只影響新文件，且不逐份記錄方法；本平台每次執行記錄實際元件，才能界定重刷範圍 |
+| ADR-0007 衍生產品讀者 | §15 | 查詢時針對個人生成（Glean 式 RAG）天生只用可讀內容；事先生成的產品取最嚴格者，本平台規定讀者不超過輸入讀者交集，v1 以單一 Resource 生成 |
+
 ## 未查證或未採用
 
 - Microsoft Graph `ExternalItem.ReadWrite.OwnedBy` 的範圍描述引自第三方整理站；正式文件撰寫前應改引 Microsoft Learn 的 permissions reference。
 - Amazon Kendra 的 IAM action 分離未在本次查證，未列入依據。
 - Google Drive resumable upload 的流程描述引自第三方整理，正式文件前應改引 Google 官方文件。
+- §16 的 Azure AI Search 敘述取自搜尋結果摘錄，未逐頁擷取全文；正式文件前應再核對。
 - 本筆記未驗證任何 live API 行為；所有結論來自查閱時的公開文件。

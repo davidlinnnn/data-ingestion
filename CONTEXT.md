@@ -31,12 +31,25 @@ system, including adoption of proposed corrections or improvements.
 The party accountable for an agent's behavior and adoption of changes to its
 skills, memory, prompts, tools, or other operating methods.
 
+**Tenant**:
+A logical boundary for one organization or data-source owner using the
+Knowledge Platform, currently bound one-to-one to a deployment. It is not part
+of resource authorization policy: no grant or relation crosses it. If tenants
+later share a deployment, tenant isolation is enforced in addition to resource
+authorization.
+_Avoid_: Resource, Corpus, access grant
+
 ## Knowledge and its use
 
 **Source**:
 A configured and governed external acquisition boundary through which the
 Knowledge Platform discovers Assets.
-_Avoid_: Asset, individual document
+In practice, a Source is typically one Data Owner knowledge-management
+application, which submits Assets and manages its Resources and their
+relationships within its scope. An application needing different restrictions
+or projections registers multiple Sources. A Source bounds admission, not
+consumption: reading across Sources is limited only by Resource readers.
+_Avoid_: Asset, individual document, end user
 
 **Asset**:
 A logical knowledge object discovered through a Source, such as an SOP or a
@@ -48,6 +61,8 @@ _Avoid_: Source, current file bytes, filename, storage location
 A platform-managed logical collection of Assets that defines a reusable knowledge
 scope for multiple projections, such as Wiki and Retrieval. An Asset may belong
 to multiple Corpora without membership granting additional access.
+In v1, precomputed products are materialized within one Resource (ADR-0007);
+whether Corpus remains a separate entity is open in #55.
 _Avoid_: ingestion batch, Source, Published View, access grant
 
 **Source Revision**:
@@ -133,6 +148,12 @@ Retrieval, Graph, or Wiki.
 The specification of a projection's meaning, inputs, and transformation method.
 _Avoid_: Published View, live output
 
+**Knowledge Profile**:
+A Source-level setting naming the Projection Types whose products that Source's
+Assets go into, and therefore the projections Context Readiness waits for. It
+contains no method versions, readers or grouping.
+_Avoid_: Processing Profile, Corpus, access grant
+
 **Published View**:
 A governed knowledge product offered to External Consumers with its own
 publication lifecycle.
@@ -144,6 +165,20 @@ method can be traced.
 **Governed Published Interface**:
 The boundary through which an authorized External Consumer observes a Published
 View and its permitted evidence, version, and availability information.
+
+**Projection Status Report**:
+A pipeline owner's report, in the platform's common status format, of a
+projection pipeline's attempt progress and outcome and of which revisions its
+published products serve. The owner remains authoritative; the platform does not
+interpret owner-defined stages, error reasons or method manifests.
+_Avoid_: Published View Version, platform-defined pipeline stages
+
+**Context Readiness**:
+What agents can currently read of an Asset through the projections its Knowledge
+Profile requires: the latest Source Revision, an older one, none yet, or nothing
+because of withdrawal. Who must act is reported separately. It neither gates
+publication nor grants access.
+_Avoid_: Canonical Acceptance, projection input readiness, publication approval, access grant
 
 **Projection Definition Owner**:
 The party accountable for a projection's meaning and adoption of changes to its

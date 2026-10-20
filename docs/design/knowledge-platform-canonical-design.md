@@ -216,6 +216,13 @@ C2's applicable acceptance criteria does not make it replace C1 under rules stil
 selecting A. Existing exact-revision and source-target selection meanings remain;
 this decision does not prescribe a single global current pointer for all consumers.
 
+> **Refined on 2026-10-20 ([#31 round 3](knowledge-platform-admission.md#current-canonical-revision-r1a-r1d-r1e), R1a/R1e):**
+> admission status needs one default current revision per Asset. Eligible
+> revisions are accepted, still governance-eligible and produced under an adopted
+> version; experiment runs are never eligible. The order is the newer Source
+> Revision, then the higher per-Source adoption sequence, then the existing
+> selection on a tie. Exact-revision references keep their meaning.
+
 See [ADR-0003](../adr/0003-immutable-accepted-canonical-revisions.md) for the
 immutability/selection boundary. Detailed source/method applicability, ordering,
 competing-candidate handling and lifecycle mechanisms remain open; Q9 below
@@ -341,6 +348,14 @@ This extends the [acceptance/selection boundary](../adr/0003-immutable-accepted-
 to the required old-capture/refreshed-precondition validation scenario. It does not
 select a concurrency mechanism, require live-latest fetching during execution, or
 require a person to approve every historical reprocessing request.
+
+> **Superseded in part on 2026-10-20 ([#31 round 3](knowledge-platform-admission.md#current-canonical-revision-r1a-r1d-r1e), R1e):**
+> under the confirmed push model, admission ordering (round 2 Q6b/Q6c) decides
+> source order. With `source_version`, an older capture is rejected as stale;
+> without it, finalization order decides, and applications are advised to always
+> send `source_version`. The "no reliable source-order basis" row therefore no
+> longer arises at admission, and admission defines no platform-state
+> precondition such as `expected=P2`.
 
 The attachment-only and refreshed-precondition design-case review is complete.
 Concrete identifiers, compatibility rules and runnable validation remain part of

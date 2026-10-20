@@ -16,6 +16,15 @@ changes on the Resource therefore apply to the product directly. When an input i
 rebound to another Resource or withdrawn, the products whose Materialization
 Input Snapshot includes it are rebuilt or withdrawn.
 
+This relies on every input in a Resource having exactly that Resource's readers:
+no per-document reader exceptions (still open in #56) and no differing source
+ceilings among Sources that submit into the same Resource. If either is
+introduced, Resource-scoped materialization no longer guarantees the intersection
+and must be re-evaluated. When a rebind narrows an input's audience, removing it
+from the previous Resource's products follows the #56 revocation path; ordinary
+rebuild or update targets are not a disclosure grace period. Admission status
+counts only products in the document's current Resource.
+
 Cross-Resource synthesis is not supported in v1; a topic needing documents with
 different audiences uses one Resource covering the intended audience. There is no
 short-term requirement for it. If one arises, evaluate and design a migration
