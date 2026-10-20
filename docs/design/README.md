@@ -98,6 +98,12 @@ architecture documentation. Read these when designing upload authorization,
 finalization or admission AA; storage and grant mechanisms remain open in the
 admission decision.
 
+[Internal product strategy](knowledge-platform-internal-product-strategy.md)
+records the confirmed 2026-10-17 internal product direction, owner handoffs and
+company identity/authorization requirements (tSSO, GAM or GAM-compatible, data-owner
+Resource management). Read it with the governance research it cites; it adds no
+MVP gate and selects no provider.
+
 ## Earlier direction and candidate history
 
 The [HLD](../../HLD.md) and [Architecture Baseline](../../ARCHITECTURE-BASELINE.md)

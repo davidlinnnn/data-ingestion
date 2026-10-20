@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Context layer 治理邊界 spike</title>
+<style>
+  :root{font-family:system-ui,sans-serif;color:#182c35;background:#f3f6f7;line-height:1.6}
+  body{max-width:1080px;margin:32px auto;padding:0 20px}h1{line-height:1.25}h2{font-size:1.2rem}
+  section{background:white;padding:20px;margin:16px 0;border:1px solid #d4dfe3;border-radius:10px}
+  button,select{font:inherit;padding:8px 12px;border:1px solid #8caaaf;border-radius:6px;background:white;color:#143b43}
+  button{cursor:pointer;margin:4px}button:hover{background:#e3f0f0}button:disabled{cursor:default;opacity:.5}
+  button[aria-selected=true]{background:#176b75;color:white}button:focus-visible,select:focus-visible{outline:3px solid #db9620}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.field{background:#f4f8f8;padding:12px}
+  .label{display:block;color:#49636b;font-size:.9rem}.value{white-space:pre-wrap;overflow-wrap:anywhere}
+  .note{border-left:4px solid #b47c17;padding-left:14px}#last{font-weight:600}#checks{overflow-wrap:anywhere}ol{padding-left:24px}
+  code{overflow-wrap:anywhere}small{color:#49636b}summary{cursor:pointer}
+</style>
+<h1>Context layer 能承諾到哪裡？</h1>
+<p><strong>Throwaway 狀態模型，非正式契約或 production implementation。</strong>問題：在受信任身分與政策已存在的假設下，平台能否阻止偽報用途、撤回後的快取／晚到成果／restore 再披露，同時誠實保留「已交付副本收不回」的邊界？</p>
+<p class="note">每次「釋出回應」將目前資格檢查與釋出視為一個原子轉移。這是假設，並未驗證真實 IAM、DB、網路串流或多節點競態。沒有 agent／模型／工具執行器；來源文字通過授權也可能含 injection。</p>
+<p><small>這是 operator／教學檢視，會顯示內部版本、route 與診斷；不是 consumer UI。「拒絕時不披露」只指模型的 response object。自由操作與導覽共用狀態；重新選分頁或「全部重設」可重開始導覽。</small></p>
+<section aria-label="目前狀態">
+  <h2>目前狀態</h2><div id="state" class="grid"></div>
+  <p id="last" role="status" aria-live="polite"></p>
+  <details><summary>已釋出紀錄（不代表 agent 實際使用）</summary><ol id="receipts"></ol></details>
+</section>
+<section><h2>自由操作</h2><div id="actions"></div><button id="reset">全部重設</button></section>
+<section><h2>導覽案例</h2><div id="tabs" role="tablist" aria-label="導覽案例"></div>
+  <div id="scenario" role="tabpanel"><p id="description"></p><ol id="steps"></ol></div>
+</section>
+<section><h2>可重跑的模型檢查</h2><button id="verify">執行 self-check</button><p id="checks" role="status"></p>
+  <small>固定案例加上五事件的 120 種排列；另執行刻意只在請求開始驗權的反例。通過表示模型自洽，不代表外部系統具備這些控制。</small>
+</section>
+<script id="governance-model">
+const ContextGovernanceSpike = (() => {
+  const initial = () => ({epoch:1, eligible:true, authorityKnown:true, userAllowed:true,
+    published:"view-v1", cache:null, pending:null, externalCopies:[], receipts:[],
+    response:null, last:"尚未提出請求。"});
+  const routes = {internal:{approved:true}, external:{approved:false}};
+  function decision(state, route) {
+    if (!state.authorityKnown) return "authority-unavailable";
+    if (!state.userAllowed) return "user-denied";
+    if (!routes[route]?.approved) return "consumer-route-unapproved";
+    if (!state.eligible) return "input-withdrawn";
+    return "allow";
+  }
+  function step(previous, action, startOnly = false) {
+    const s = structuredClone(previous);
+    s.response = null;
+    switch (action.type) {
+      case "begin": {
+        // shortcut: trusted session/route are fixture facts; qualify the real identity/policy adapter before integration.
+        const route = action.route || "internal";
+        s.pending = {route, epoch:s.epoch, version:s.cache || s.published,
+          initialDecision:decision(s, route), claim:action.claim || "read"};
+        s.last = `開始請求；受信 route=${route}，caller 自述用途=${s.pending.claim}。`;
+        break;
+      }
+      case "release": {
+        const p = s.pending;
+        const reason = !p ? "no-request" : startOnly ? p.initialDecision :
+          decision(s, p.route) !== "allow" ? decision(s, p.route) :
+          p.epoch !== s.epoch ? "request-generation-stale" : "allow";
+        if (reason === "allow") {
+          s.response = {text:"來源證據片段（文字仍可能含惡意指令）", version:p.version,
+            evidence:"source-revision-1#page-2", kind:"source-evidence"};
+          s.cache = p.version;
+          s.externalCopies.push(structuredClone(s.response));
+          s.receipts.push({principal:"fixture-user", consumer:p.route, version:p.version,
+            policyEpoch:s.epoch, correlation:`request-${s.receipts.length + 1}`, event:"release"});
+          s.last = "已釋出固定版本與證據；紀錄只代表此邊界釋出，不代表 agent 已使用。";
+        } else {
+          s.response = {unavailable:true};
+          s.last = `未釋出內容／版本／證據。內部診斷：${reason}（不送給 caller）。`;
+        }
+        s.pending = null;
+        break;
+      }
+      case "withdraw":
+        s.eligible = false; s.epoch++; s.last = "撤回輸入資格；既有 payload 快取與外部副本仍存在。"; break;
+      case "late":
+        s.published = "view-v2"; s.last = "晚到處理產生新成果；不能修改治理資格。"; break;
+      case "restore":
+        s.published = "view-v1"; s.cache = "view-v1";
+        s.last = "僅還原舊 publication／payload 快取；目前治理狀態未倒退。真實恢復機制仍待驗證。"; break;
+      case "outage":
+        s.authorityKnown = false; s.last = "無法取得有效政策；未把快取的舊 allow 當成現在允許。"; break;
+      case "user-deny":
+        s.userAllowed = false; s.epoch++; s.last = "撤銷使用者資格；應用本身可存取不會擴大使用者權限。"; break;
+      case "regrant":
+        s.eligible = true; s.epoch++; s.last = "模擬有權責者重新核准；舊請求仍不能跨 generation 重用。"; break;
+      default: throw new Error(`Unknown prototype action: ${action.type}`);
+    }
+    return s;
+  }
+  const run = (actions, startOnly = false) => actions.reduce((s,a) => step(s,a,startOnly), initial());
+  function verify() {
+    let count = 0;
+    const check = (ok, name) => { if (!ok) throw new Error(name); count++; };
+    const b = {type:"begin"}, r = {type:"release"}, w = {type:"withdraw"};
+    const allowed = run([b,r]);
+    check(allowed.response.version === "view-v1" && allowed.receipts.length === 1, "allowed fixed evidence");
+    const forged = run([{type:"begin",route:"external",claim:"approved-internal"},r]);
+    check(forged.response.unavailable && forged.receipts.length === 0, "caller purpose cannot grant route");
+    check(run([{type:"begin",route:"unknown"},r]).response.unavailable, "unregistered route denied");
+    check(run([b,{type:"user-deny"},r]).response.unavailable, "workload grant cannot widen user access");
+    check(run([b,w,r]).response.unavailable, "in-flight revocation");
+    const cached = run([b,r,w,b,r]);
+    check(cached.response.unavailable && cached.externalCopies.length === 1, "cache recheck, external copy retained");
+    check(Object.keys(cached.response).join() === "unavailable", "denial does not disclose references");
+    check(run([b,{type:"outage"},r]).response.unavailable, "authority outage fail closed");
+    check(run([w,{type:"late"},{type:"restore"},b,r]).response.unavailable, "late/restore cannot regrant");
+    check(run([b,w,{type:"regrant"},r]).response.unavailable, "ABA old request fenced");
+    check(run([w,{type:"regrant"},b,r]).response.version === "view-v1", "new request after explicit regrant");
+    check(!Object.hasOwn(allowed.receipts[0],"modelUsed"), "release record makes no model-use claim");
+    check(run([b,w,r],true).externalCopies.length === 1, "negative control exposes stale allow");
+    function permutations(xs) {
+      return xs.length ? xs.flatMap((x,i) => permutations(xs.filter((_,j) => i !== j)).map(t => [x,...t])) : [[]];
+    }
+    const schedules = permutations([b,w,{type:"late"},{type:"restore"},r]);
+    let unsafeStartOnly = 0;
+    for (const events of schedules) {
+      for (const naive of [false,true]) {
+        let s = initial();
+        for (const action of events) {
+          const next = step(s,action,naive);
+          if (!s.eligible && next.externalCopies.length > s.externalCopies.length) {
+            if (naive) unsafeStartOnly++; else throw new Error("withdrawn disclosure in guarded model");
+          }
+          s = next;
+        }
+      }
+    }
+    check(unsafeStartOnly > 0, "schedule negative control must fail");
+    return {assertions:count, schedules:schedules.length, guardedViolations:0,
+      startOnlyViolations:unsafeStartOnly, externalCopiesRecall:"not provided",
+      realProviderOrNetworkValidated:false};
+  }
+  return {initial, step, run, verify};
+})();
+</script>
+<script>
+const model = ContextGovernanceSpike;
+let state = model.initial();
+let activeScenario = 0;
+const actions = [
+  ["開始內部核准路徑",{type:"begin"}], ["外部路徑偽報用途",{type:"begin",route:"external",claim:"approved-internal"}],
+  ["釋出回應",{type:"release"}], ["撤回輸入",{type:"withdraw"}],
+  ["晚到新成果",{type:"late"}], ["還原舊快取",{type:"restore"}],
+  ["政策服務不可用",{type:"outage"}], ["撤銷使用者資格",{type:"user-deny"}], ["權責者重新核准",{type:"regrant"}]
+];
+const scenarios = [
+  {name:"正常交付",text:"同一條核准路徑取得固定版本、證據與最小釋出紀錄。這不表示來源文字為真或沒有 injection。",steps:[actions[0],actions[2]]},
+  {name:"偽報用途",text:"client 即使自述 approved-internal，不能覆寫已驗證的應用／路徑身分。真實身分與 provider binding 尚未接入。",steps:[actions[1],actions[2]]},
+  {name:"快取與收不回的副本",text:"先成功交付再撤回：平台可阻止快取再次披露，但已交付副本仍留在接收方。",steps:[actions[0],actions[2],actions[3],actions[0],actions[2]]},
+  {name:"晚到與 restore",text:"請求開始後撤回，晚到成果與舊 payload restore 不能倒退治理狀態。實際 backup restore 的 ledger 對帳仍待實作。",steps:[actions[0],actions[3],actions[4],actions[5],actions[2]]},
+  {name:"政策不可用",text:"即使請求開始時允許，釋出時無法建立目前資格就停止。這會犧牲可用性；需測實際延遲與 outage 行為。",steps:[actions[0],actions[6],actions[2]]},
+  {name:"重新核准",text:"撤回後由有權責者重新核准。舊請求不能重用，新請求才採用新的 generation。這只是候選 fencing 模型。",steps:[actions[0],actions[3],actions[8],actions[2],actions[0],actions[2]]}
+];
+function button(label, handler) {const b = document.createElement("button");b.textContent=label;b.onclick=handler;return b;}
+function field(label,value) {const box=document.createElement("div");box.className="field";
+  const l=document.createElement("span");l.className="label";l.textContent=label;
+  const v=document.createElement("span");v.className="value";v.textContent=String(value);box.append(l,v);return box;}
+function render() {
+  const response=state.response ? state.response.unavailable ? "不可用（不包含 protected references）" : `${state.response.version}\n${state.response.evidence}\n${state.response.text}` : "尚無回應";
+  document.getElementById("state").replaceChildren(...[
+    ["目前治理資格／generation",`${state.eligible ? "適用" : "已撤回"} / ${state.epoch}`],
+    ["政策權威／使用者資格",`${state.authorityKnown ? "可建立" : "未知"} / ${state.userAllowed ? "允許" : "不允許"}`],
+    ["已準備成果／payload 快取",`${state.published} / ${state.cache || "無"}`],
+    ["進行中的請求",state.pending ? `${state.pending.route}, generation ${state.pending.epoch}, ${state.pending.version}` : "無"],
+    ["本次回應",response], ["接收方已取得的副本",`${state.externalCopies.length} 份；平台無法回收這些 bytes`]
+  ].map(([k,v])=>field(k,v)));
+  document.getElementById("last").textContent=state.last;
+  document.getElementById("receipts").replaceChildren(...state.receipts.map(x=>{const li=document.createElement("li");
+    li.textContent=`${x.event}: ${x.principal} / ${x.consumer} / ${x.version} / generation ${x.policyEpoch} / ${x.correlation}`;return li;}));
+}
+function dispatch(action) {state=model.step(state,action);render();}
+document.getElementById("actions").append(...actions.map(([label,a])=>button(label,()=>dispatch(a))));
+document.getElementById("reset").onclick=()=>selectScenario(activeScenario);
+const tabs=document.getElementById("tabs");
+function selectScenario(index) {
+  activeScenario=index;
+  state=model.initial();render();
+  [...tabs.children].forEach((tab,i)=>tab.setAttribute("aria-selected",String(i===index)));
+  const scenario=scenarios[index];document.getElementById("description").textContent=scenario.text;
+  let next=0;const list=document.getElementById("steps");list.replaceChildren();
+  const buttons=scenario.steps.map(([label,action],i)=>{const b=button(`${i+1}. ${label}`,()=>{dispatch(action);next++;
+    buttons.forEach((x,j)=>x.disabled=j!==next);});b.disabled=i!==0;const li=document.createElement("li");li.append(b);list.append(li);return b;});
+}
+scenarios.forEach((s,i)=>{const b=button(s.name,()=>selectScenario(i));b.setAttribute("role","tab");
+  b.setAttribute("aria-controls","scenario");b.onkeydown=e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){
+    e.preventDefault();const j=(i+(e.key==="ArrowRight"?1:-1)+scenarios.length)%scenarios.length;selectScenario(j);tabs.children[j].focus();}};tabs.append(b);});
+document.getElementById("verify").onclick=()=>{try{document.getElementById("checks").textContent=JSON.stringify(model.verify());}
+  catch(error){document.getElementById("checks").textContent=`模型檢查失敗：${error.message}`;}};
+selectScenario(0);
+</script>
+</html>
