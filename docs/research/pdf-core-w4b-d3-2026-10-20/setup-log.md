@@ -1,0 +1,1 @@
+Initial nano dev load stopped before any model forward because official device_map loader requires accelerate, absent in the existing environment. Preserved load error. Installed accelerate as isolated W4b/runtime-deps, with existing dependencies; no shared environment or SDK modified. MPS compatibility remains to probe; no quality output or test seen.

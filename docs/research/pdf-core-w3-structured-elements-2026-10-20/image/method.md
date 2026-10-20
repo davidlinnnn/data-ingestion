@@ -1,0 +1,15 @@
+# W3 image oracle：source-only 方法（封存前）
+
+只讀W2R4 jobs、W2R2 source oracle、已下載原始LaTeX archive與原PDF字層；沒有讀任何Docling／mapper結果。35篇有實際LaTeX；Adam是298字wrapper而非article source，整篇UNKNOWN_SOURCE，不以0張圖代替未知。
+
+從先前source_audit.root展開可達input/include，註解改同長空白保留原檔offset。保留每個figure/figure*、subfigure環境與subfigure/subfloat命令、includegraphics命令的原檔名／行／Unicode字元offset／原檔SHA256，以及expanded offset。archive與PDF均SHA256。includegraphics優先原路徑／相對路徑／常見副檔名，basename只有唯一檔案時才解析；多候選UNKNOWN，不執行TeX或載入圖片內容。
+
+figure與subfigure的parent/child及includegraphics多對一關係保留。另獨立標記含includegraphics的table/table* image-table floats，不能因LaTeX用table容器而漏登ImageTransformer的圖格；這8個補充容器不混入220個literal figure數。includegraphics呼叫可能是logo、宏定義或多張小圖，508次呼叫不是508張可見圖。
+
+caption保留raw LaTeX、清理後文字與來源offset。頁定位先用同來源檔／caption行範圍且內容確實包含的W2 caption anchor，直接在原PDF字流做NFKD/casefold/alnum匹配；只接受唯一PDF頁。若不匹配，使用完整caption（至少3詞12alnum）或至少45alnum的10詞窗口，仍需唯一頁。重複舊字流若同頁多次，不影響該頁定位；絕不以Docling的box或caption位置反推gold。子figure可繼承已獨立定位的父float頁，但另列INHERITED狀態。附近正文anchor只存context、永不當float頁證據（float可移頁）。
+
+無確切caption頁證據保留UNKNOWN；只有確據落選定範圍外才OUT_OF_SCOPE。全部LaTeX來源的候選保留，包含F篇12頁以外；評分只能用IN_SCOPE。這是詞法來源inventory，未執行任意宏、條件／循環／自訂figure命令；含conditional或無法展開的macro存在性不能當確定可見PDF gold，需保留UNKNOWN。圖片裁切完整性另用原PDF raster imageobjects，不以來源includegraphics數直接計；vector／clip／未知物件不可假裝通過。
+
+自檢含comment排除、nested figure/subfloat、graphics parent、exact原始offset，以及全語料每個source item的原檔offset／行重驗。source-only自檢不驗證Docling表現。欄位pdf_pages是文字定位證據，不是圖bbox；phase2仍必須有caption文字與關聯或獨立raster幾何，不可僅同頁就計偵測成功。
+
+全域oracle freeze前禁止讀E0或mapper輸出。此image/freeze.json只封存本類別；收到主線全部oracle凍結通知後才進PHASE2。
