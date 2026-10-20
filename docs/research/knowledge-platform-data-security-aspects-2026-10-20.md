@@ -1,10 +1,10 @@
 # Knowledge Platform 資料安全治理面向
 
-**日期：2026-10-20（Asia/Taipei）。狀態：討論用框架，不是已確認的決策、新增 MVP gate 或技術選型。** 後續討論與決議由 [#87](https://github.com/davidlinnnn/data-ingestion/issues/87) 承接。
+**日期：2026-10-20，更新 2026-10-21（Asia/Taipei）。狀態：討論用框架，不是已確認的決策、新增 MVP gate 或技術選型。** 後續討論與決議由 [#87](https://github.com/davidlinnnn/data-ingestion/issues/87) 承接；持續更新的面向表格在 #87 的 Overview，本文是 2026-10-21 的快照。
 
 Knowledge Platform 管「哪些資料、以誰的身分、在什麼條件下被釋出」；Agent Platform 管「agent 拿到資料後做了什麼」。15 個資料安全面向中，4 項已有 ticket 推進，7 項只部分涵蓋，4 項目前沒有負責的 ticket。
 
-本文補充 [Knowledge Platform 作為 Agent Context Layer 的治理研究](knowledge-governance-context-layer-2026-10-17.md)與其 [retro](knowledge-governance-retro-spike-2026-10-17.md)。那份研究涵蓋來源權威、品質、用途限制與 agent context 責任；本文只看資料安全，並依 2026-10-19／10-20 的授權決策（#56、#85、#86、#31）更新各 ticket 的現況。第 7、8 項、灰色地帶第 1 點和第 14 項與該研究重疊；第 4、9、12、13、15 項是新增。沿用 retro 的界線：這些面向要依已選 pilot 和資料流判斷是否適用，不是整包新增的 gate。
+本文補充 [Knowledge Platform 作為 Agent Context Layer 的治理研究](knowledge-governance-context-layer-2026-10-17.md)與其 [retro](knowledge-governance-retro-spike-2026-10-17.md)。那份研究涵蓋來源權威、品質、用途限制與 agent context 責任；本文只看資料安全，並依 2026-10-19／10-20 的授權決策（#56、#85、#86、#31 第一至三輪）與 #84 結案紀錄更新各 ticket 的現況。第 7、8 項、灰色地帶第 1 點和第 14 項與該研究重疊；第 4、9、12、13、15 項是新增。沿用 retro 的界線：這些面向要依已選 pilot 和資料流判斷是否適用，不是整包新增的 gate。
 
 ## 邊界
 
@@ -34,14 +34,14 @@ Knowledge Platform 管「哪些資料、以誰的身分、在什麼條件下被�
 
 | # | 面向 | 要回答的核心問題 | 現況 | 負責 ticket 與備註 |
 |---|---|---|---|---|
-| 1 | 身分與委派 | 每次存取能歸屬到具體的人或服務嗎？委派會擴大權限嗎？ | 有 ticket 推進 | #85、#56、#76 |
+| 1 | 身分與委派 | 每次存取能歸屬到具體的人或服務嗎？委派會擴大權限嗎？ | 有 ticket 推進 | #85、#56、#76；#31 第三輪把 service account 憑證的簽發交給 #85 |
 | 2 | 存取控制與職責分離 | 讀取、提交、管理權限分開嗎？授權服務無法判定時 fail-closed 嗎？ | 有 ticket 推進 | #85、#56、#31 |
-| 3 | **衍生資料洩漏**（知識平台特有） | 摘要、Wiki、embedding、KG、搜尋片段、結果數量、引用，會不會洩漏無權看的內容或其存在？ | 部分涵蓋 | ADR-0007（#55、#56）只涵蓋事先生成的產品；embedding 與索引未討論 |
+| 3 | **衍生資料洩漏**（知識平台特有） | 摘要、Wiki、embedding、KG、搜尋片段、結果數量、引用，會不會洩漏無權看的內容或其存在？ | 部分涵蓋 | ADR-0007（#55、#56）只涵蓋事先生成的產品，前提是同一 Resource 內的輸入讀者相同；embedding 與索引未討論。#31 第三輪定了狀態查詢的揭露限制：只有 Source 憑證能查，自由文字不得帶出其他文件 |
 | 4 | 特權存取 | 維運人員和 DBA 能直接讀內容嗎？有 break-glass 流程與稽核嗎？ | 無 owner | — |
-| 5 | 撤權、撤回、刪除的傳播 | 會傳到索引、快取、衍生產品、備份嗎？多久生效？ | 有 ticket 推進 | #56、#57、#32 |
+| 5 | 撤權、撤回、刪除的傳播 | 會傳到索引、快取、衍生產品、備份嗎？多久生效？ | 有 ticket 推進 | #56、#57、#32；#31 第三輪：rebind 縮小讀者時走撤權路徑，撤下時效待 #56 決定 |
 | 6 | 保留、合法刪除、legal hold | 什麼資料保留多久？刪除時要提出什麼證據？ | 部分涵蓋 | #57、#54 |
 | 7 | **資料分級與處理規則** | 誰標敏感等級？各等級能做什麼，例如能不能送外部模型、能不能進 Wiki 綜合？ | 無 owner | 目前最大的缺口 |
-| 8 | 處理過程的資料流出 | 內容送到哪些 OCR、VLM、LLM、embedding 服務？在哪裡執行、會不會留存？ | 部分涵蓋 | #84 用地端 VLM，但未寫成準則 |
+| 8 | 處理過程的資料流出 | 內容送到哪些 OCR、VLM、LLM、embedding 服務？在哪裡執行、會不會留存？ | 部分涵蓋 | #84 已結案：DEV 推論用外部 API，正式版維持地端開源模型；哪些資料可以送外部 API 尚未寫成準則 |
 | 9 | 文件夾帶的敏感資訊 | 文件裡有密碼或 PII 時，要偵測、遮蔽，還是由 Source 自己負責？ | 無 owner | — |
 | 10 | 來源完整性與 provenance | 能偵測竄改、追溯來源版本、分辨原文與生成內容嗎？ | 有 ticket 推進 | #31（digest）、#76、#32 |
 | 11 | 知識投毒 | 誰能影響別人或 agent 讀到的內容？ | 部分涵蓋 | #85 的 contributor 模型，尚未以此角度審視 |
@@ -67,4 +67,4 @@ Knowledge Platform 管「哪些資料、以誰的身分、在什麼條件下被�
 
 - [OWASP LLM09:2026 Vector and Embedding Weaknesses](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/blob/main/2026/final/LLM09_VectorAndEmbeddingWeaknesses.md)（查閱 2026-10-20）
 - [Morris et al., Text Embeddings Reveal (Almost) As Much As Text, EMNLP 2023](https://arxiv.org/abs/2310.06816)
-- 各面向的現況取自 [#52](https://github.com/davidlinnnn/data-ingestion/issues/52) 及 #31、#53、#55、#56、#57、#58、#76、#78、#85、#86 的內文與留言（2026-10-20 讀取）
+- 各面向的現況取自 [#52](https://github.com/davidlinnnn/data-ingestion/issues/52) 及 #31、#53、#55、#56、#57、#58、#76、#78、#85、#86 的內文與留言（2026-10-21 讀取）
