@@ -1,0 +1,42 @@
+# Runs scripts/check-docs on every pull request: secrets (gitleaks), local paths and
+# emails in added lines (check-publish), and relative links and anchors in changed
+# Markdown (lychee, offline). The repo is public, so these gate what gets published.
+name: docs-checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_VERSION: 8.30.1
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+  LYCHEE_VERSION: 0.24.2
+  LYCHEE_SHA256: 1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks and lychee (pinned, checksum-verified)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tools" "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP/tools"
+          curl -fsSLo gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          curl -fsSLo lychee.tar.gz "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${LYCHEE_SHA256}  lychee.tar.gz" | sha256sum -c -
+          tar -xzf lychee.tar.gz
+          install -m 0755 gitleaks "$RUNNER_TEMP/bin/gitleaks"
+          install -m 0755 "$(find . -type f -name lychee | head -1)" "$RUNNER_TEMP/bin/lychee"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: check-docs
+        run: scripts/check-docs "origin/${{ github.base_ref }}"
