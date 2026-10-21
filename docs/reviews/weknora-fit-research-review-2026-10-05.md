@@ -1,5 +1,7 @@
 # Independent review — WeKnora fit research
 
+The 2026-10-05 review and hashes below bind the original report. The appended 2026-10-06 UI/MCP supplement has a separate scope and verification record at the end of this file.
+
 **Date:** 2026-10-05. **Scope:** research issue [#73](https://github.com/davidlinnnn/data-ingestion/issues/73), independently reviewed from the background report author. No product, architecture, implementation, deployment or runtime qualification approval follows.
 
 **Report:** [WeKnora fit for the Knowledge Platform](../research/weknora-knowledge-platform-fit-2026-10-05.md).
@@ -60,3 +62,20 @@ No blocking findings remain. This pass binds the research report's evidence and 
 ## Q14 decision refresh recheck
 
 2026-10-05 — Independent narrow recheck passed for report SHA-256 `1efe3b94bd642a5d5581a38362671f70560c04bc53fd85f7a227b7b1d8b5355a` (60,805 bytes; 271 lines). Reviewed the delta from published commit `d393a3a3d058c2470724fccde79be4bc41db1555` against [#53’s revised Q14 confirmation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5992838620) and [pending final-review checkpoint](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5992917196), current #52, and unchanged #54. The update preserves package-scoped attachment identity, excludes global catalog/deduplication as a prerequisite or mandatory later task, permits eligible physical artifact reuse under custody obligations, and does not derive authorization from IDs or copies. #53 remains open pending shared-understanding confirmation; downstream design choices remain with their owners. No actionable findings. Read-only documentation/diff/hash checks only; no runtime tests, deployment or merge performed.
+
+
+## Unified UI and external-agent entry supplement — 2026-10-06
+
+**Scope:** section 11 of the [report](../research/weknora-knowledge-platform-fit-2026-10-05.md#11-supplement--unified-human-ui-and-external-agent-knowledge-access-2026-10-06), authored by a background research agent and checked independently by the coordinating agent. The original 2026-10-05 report is preserved as an exact byte prefix, retaining SHA-256 `1efe3b94bd642a5d5581a38362671f70560c04bc53fd85f7a227b7b1d8b5355a`; its original review and bounded PDF/Docling evidence remain unchanged.
+
+**Supplemented report SHA-256:** `f7cda79d89ca7a97505d535f78d5ffa67f9f9193201520cbd1b47cf4a441c8d8`.
+
+**Outcome:** pass for the bounded documentation/source comparison; no blocking findings. This check does not adopt a UI, product, protocol or hosted agent, or qualify runtime interoperability/governance.
+
+- Independently checked the pinned frontend composition and Wiki source-link path: document list/folder and Wiki views share the knowledge-base page, with Wiki references opening the document drawer. Connected navigation is supported by source; usability and savings remain unmeasured inferences.
+- Checked the built-in MCP server's catalog, transport/routes, list/call allowlisting and endpoint scope against the cited source. The supplement correctly separates the outbound MCP client and deprecated Python server from the built-in external-client entry.
+- Checked `tools_ask.go`: `ask` runs an endpoint-selected agent and owns persisted sessions/messages; `readOnlyHint=false` prevents treating the default catalog as proof of side-effect-free agent execution. Direct external-harness tools and hosted answering remain separate comparisons.
+- Checked endpoint authentication and KB scope resolution. These are scoped local controls, not proof of user delegation, current Source-policy authority or cross-interface withdrawal. Universal harness compatibility remains unverified.
+- Reviewed the four adoption paths, dispositions, one-client proposed comparison and #55/#54/#32/#56/#31/#57 ownership against the current map and tracker drafts. Unified entrances preserve projection-owned interfaces/publication and add no reverse canonical dependency or new runtime/memory requirement.
+
+Document QA checks the original report prefix/hash, 12 additional fixed upstream source paths, reference resolution, table structure and whitespace. Only the supplement was re-audited; no new UI interaction, MCP connection/tool call, model/API/deployment, fault, load, restore or harness test was run. The original narrow license-script result is historical evidence, not rerun or extended by this supplement.

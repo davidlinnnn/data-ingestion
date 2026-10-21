@@ -5,6 +5,8 @@
 The current [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52)
 started with source-to-publication system design. The user confirmed the overall
 logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporation.
+The map's standing charter, authority and working-method notes are in
+[map notes](knowledge-platform-map-notes.md).
 
 - [Logical system design](knowledge-platform-logical-design.md): confirmed
   responsibilities, Corpus and revision behavior, workflows and detailed owners.
