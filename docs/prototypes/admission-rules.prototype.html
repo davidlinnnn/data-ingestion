@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admission Rules Prototype</title>
+<style>
+  :root { --bg:#fbfbfa; --fg:#1d1d1f; --muted:#6b6b70; --line:#e3e3e0; --accent:#2f5bd3; --ok:#1f7a3d; --bad:#b3261e; --card:#ffffff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151517; --fg:#ececee; --muted:#9a9aa1; --line:#2c2c30; --accent:#7ea2ff; --ok:#5cc983; --bad:#ff7b72; --card:#1d1d20; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.55 -apple-system, "PingFang TC", "Noto Sans TC", system-ui, sans-serif; }
+  main { max-width:1180px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:22px; margin:0 0 6px; } h2 { font-size:16px; margin:28px 0 10px; } h3 { font-size:14px; margin:14px 0 6px; }
+  .muted { color:var(--muted); } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:10px 0; }
+  table { border-collapse:collapse; width:100%; font-size:13px; } th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; }
+  .wrap { overflow-x:auto; }
+  button { font:inherit; border:1px solid var(--line); background:var(--card); color:var(--fg); border-radius:7px; padding:5px 10px; margin:3px 4px 3px 0; cursor:pointer; }
+  button:hover { border-color:var(--accent); } button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  .tabs button.active { border-color:var(--accent); color:var(--accent); }
+  pre { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px; overflow-x:auto; font-size:12px; margin:6px 0; }
+  .step { display:flex; gap:10px; align-items:flex-start; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .step .mark { width:22px; flex:none; font-weight:600; } .step .body { flex:1; }
+  .pill { display:inline-block; padding:0 7px; border-radius:20px; border:1px solid var(--line); font-size:12px; }
+  .r-ready { color:var(--ok); } .r-ready_stale { color:#2f7fd3; } .r-not_ready { color:#b7791f; } .r-deleted, .r-withdrawn { color:var(--muted); }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; } @media (max-width:800px){ .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Admission 規則 prototype（#31 第四輪）</h1>
+<p class="muted">PROTOTYPE，用完即丟。只為回答一個問題：</p>
+<div class="card">
+  <b>第 1–4 輪決定的受理規則放在一起，彼此有沒有矛盾？</b>
+  規則包括：batch 與 item 狀態、<code>unchanged</code> 在宣告時判定、版本排序（<code>source_version</code>／<code>arrival</code>，同版號可取代被判壞檔的版本）、只上傳有變動的檔案、平台失敗後 app 重送與平台批次重跑不重複、刪除與重建、暫停受理只擋宣告、readiness 與 attention 的計算。
+  下方每個情境分頁都是一個案例，依序按下步驟，每一步會顯示預期結果，以及模型實際算出的是否相符。也可以按「全部自動執行」一次跑完。
+  <div class="muted" style="margin-top:6px">簡化之處：時間以小時計；處理和發布都由按鈕觸發；不模擬 Temporal、網路與資料庫故障，那些屬於驗證計畫的叢集層。</div>
+</div>
+
+<h2>情境</h2>
+<div class="card">
+  <div class="tabs" id="tabs"></div>
+  <div id="scenario"></div>
+  <div style="margin-top:10px"><button class="primary" id="runAll">全部自動執行</button> <span id="summary"></span></div>
+</div>
+
+<h2>自由操作</h2>
+<div class="card" id="free"></div>
+
+<div class="grid">
+  <div><h2>最近一次呼叫的結果</h2><div class="card"><pre id="result">（尚未呼叫）</pre></div></div>
+  <div><h2>平台旗標與 Source 設定</h2><div class="card" id="flags"></div></div>
+</div>
+<h2>文件</h2><div class="card wrap" id="docs"></div>
+<h2>Batch</h2><div class="card wrap" id="batches"></div>
+<h2>Request</h2><div class="card wrap" id="requests"></div>
+</main>
+
+<script>
+/* ==== MODEL START ==== pure module: no DOM access */
+const FORMATS = { pdf:'application/pdf', md:'text/markdown', png:'image/png', xls:'application/vnd.ms-excel' };
+const SUPPORTED_MAIN = new Set([FORMATS.pdf, FORMATS.md]);
+const H = { RETENTION:720, BATCH_TTL:24, IDEM_TTL:24, MAX_ITEMS:50, QUOTA:50 };
+
+function initialState() {
+  return {
+    now:0, seq:0,
+    flags:{ paused:false, authDown:false },
+    sources:{
+      'hr-km':        { ordering:'source_version', projections:['retrieval','llm-wiki'], tokens:H.QUOTA, defaultResource:'R-hr' },
+      'manual-upload':{ ordering:'arrival',        projections:['retrieval'],             tokens:H.QUOTA, defaultResource:'R-hr' },
+      'fin-km':       { ordering:'source_version', projections:['retrieval'],             tokens:H.QUOTA, defaultResource:'R-fin' },
+    },
+    resources:{
+      'R-hr':     { owner:'hr-km',  grants:['manual-upload'] },
+      'R-hr-mgr': { owner:'hr-km',  grants:[] },
+      'R-fin':    { owner:'fin-km', grants:[] },
+    },
+    adoption:{ canonical:1 },
+    idem:{}, batches:{}, docs:{}, index:{}, requests:{},
+  };
+}
+const clone = (x) => JSON.parse(JSON.stringify(x));
+function nextId(S, p) { S.seq += 1; return `${p}_${S.seq}`; }
+function canPlace(S, source, r) { const R = S.resources[r]; return !!R && (R.owner === source || R.grants.includes(source)); }
+function lastRev(doc) { return doc.revisions[doc.revisions.length - 1]; }
+function filesOf(item) { const o = {}; item.files.forEach(f => { o[f.path] = f.digest; }); return o; }
+function sameFiles(a, b) { const ka = Object.keys(a).sort(), kb = Object.keys(b).sort(); return ka.length === kb.length && ka.every((k, i) => k === kb[i] && a[k] === b[k]); }
+function docKey(source, document_id) { return `${source}/${document_id}`; }
+function liveDoc(S, source, document_id) { const d = S.docs[S.index[docKey(source, document_id)]]; return d && !d.deleted ? d : null; }
+function isActive(r) { return r.state === 'queued' || r.state === 'processing'; }
+function activeProcess(S, uid, srid) { return Object.values(S.requests).find(r => r.kind === 'process' && r.uid === uid && r.srid === srid && isActive(r)); }
+function lastFailed(S, uid, srid) { const rs = Object.values(S.requests).filter(r => r.kind === 'process' && r.uid === uid && r.srid === srid && r.state === 'failed'); return rs[rs.length - 1]; }
+function newRequest(S, f) { const r = { id:nextId(S, 'req'), state:'queued', createdAt:S.now, terminalAt:null, ...f }; S.requests[r.id] = r; return r; }
+function applyCatalog(doc, it) { if (it.title !== undefined) doc.title = it.title; if (it.source_url !== undefined) doc.source_url = it.source_url; if (it.metadata !== undefined) doc.metadata = { ...it.metadata }; }
+function currentCanonical(doc) { const acc = doc.revisions.filter(r => r.state === 'accepted'); return acc[acc.length - 1] || null; }
+
+// Version ordering against the latest Source Revision (Q6b, Q10.1b, Q10.1c).
+function compareOrder(S, source, doc, it) {
+  const latest = lastRev(doc), same = sameFiles(filesOf(it), latest.files);
+  if (S.sources[source].ordering === 'source_version') {
+    const sv = Number(it.source_version), lv = Number(latest.source_version);
+    if (sv < lv) return { kind:'reject', error:'STALE_SOURCE_VERSION' };
+    if (sv === lv) {
+      if (same) return { kind:'same' };
+      if (latest.state === 'rejected') return { kind:'new' };       // Q10.1b: replace a rejected version
+      return { kind:'reject', error:'VERSION_CONFLICT' };
+    }
+    return { kind:'new' };
+  }
+  return same ? { kind:'same' } : { kind:'new' };
+}
+
+// Same content as the latest revision: unchanged, or a retry after a platform failure (Q9.3, Q9.7, Q9.7a).
+function sameContent(S, source, doc, it) {
+  const latest = lastRev(doc);
+  applyCatalog(doc, it);
+  const active = activeProcess(S, doc.uid, latest.srid);                // Q10.1h: in flight -> return the active request
+  if (active) return { status:'queued', request_id:active.id, document_uid:doc.uid, source_revision_id:latest.srid, note:'同一版本已在處理中：回傳進行中的 request' };
+  if (latest.state === 'failed') {
+    let r = activeProcess(S, doc.uid, latest.srid);
+    if (!r) {
+      const prev = lastFailed(S, doc.uid, latest.srid);
+      r = newRequest(S, { kind:'process', uid:doc.uid, srid:latest.srid, source, initiator:'source', retry_of: prev ? prev.id : null });
+      latest.state = 'pending';
+    }
+    return { status:'queued', request_id:r.id, document_uid:doc.uid, source_revision_id:latest.srid, note:'平台原因失敗後的重送：開新 request，不必上傳' };
+  }
+  return { status:'unchanged', document_uid:doc.uid, source_revision_id:latest.srid };
+}
+
+function evalDeclare(S, source, it) {
+  const base = { document_id:it.document_id };
+  const mains = it.files.filter(f => f.role === 'main');
+  if (mains.length !== 1) return { ...base, status:'rejected', error:'INVALID_PACKAGE' };
+  if (!SUPPORTED_MAIN.has(mains[0].media_type)) return { ...base, status:'rejected', error:'UNSUPPORTED_FORMAT' };
+  const src = S.sources[source];
+  if (src.ordering === 'source_version' && it.source_version == null) return { ...base, status:'rejected', error:'SOURCE_VERSION_REQUIRED' };
+  const doc = liveDoc(S, source, it.document_id);
+  if (doc && it.resources && it.resources[0] !== doc.resource) return { ...base, status:'rejected', error:'BINDING_CONFLICT', document_uid:doc.uid };
+  const resource = doc ? doc.resource : (it.resources ? it.resources[0] : src.defaultResource);
+  if (!canPlace(S, source, resource)) return { ...base, status:'rejected', error:'RESOURCE_NOT_FOUND' };
+  if (doc) {
+    const o = compareOrder(S, source, doc, it);
+    if (o.kind === 'reject') return { ...base, status:'rejected', error:o.error, document_uid:doc.uid };
+    if (o.kind === 'same') return { ...base, ...sameContent(S, source, doc, it) };
+    const latest = lastRev(doc);
+    return { ...base, status:'declared', document_uid:doc.uid,
+      upload_needed: it.files.filter(f => latest.files[f.path] !== f.digest).map(f => f.path),     // Q10.1d
+      carried_over:  it.files.filter(f => latest.files[f.path] === f.digest).map(f => f.path) };
+  }
+  return { ...base, status:'declared', document_uid:null, upload_needed:it.files.map(f => f.path), carried_over:[] };
+}
+
+function itemView(i) {
+  const v = { index:i.index, document_id:i.document_id, status:i.status };
+  ['document_uid','request_id','source_revision_id','error','upload_needed','carried_over','note'].forEach(k => { if (i[k] != null && !(Array.isArray(i[k]) && !i[k].length)) v[k] = i[k]; });
+  return v;
+}
+
+const A = {};
+A.declare = (S, { source, key, items }) => {
+  if (S.flags.authDown) return { http:503, error:'AUTHZ_UNAVAILABLE', retry_after:'60s' };
+  if (S.flags.paused) return { http:503, error:'ADMISSION_PAUSED', retry_after:'10m' };          // Q10.1e: pause blocks declaration only
+  if (items.length > H.MAX_ITEMS) return { http:400, error:'TOO_MANY_ITEMS' };
+  const body = JSON.stringify(items), k = key ? `${source}:${key}` : null;
+  if (k && S.idem[k]) { const e = S.idem[k]; return e.body === body ? { ...clone(e.result), replayed:true } : { http:422, error:'IDEMPOTENCY_KEY_REUSED' }; }
+  const src = S.sources[source];
+  if (src.tokens < items.length) return { http:429, error:'RATE_LIMITED', retry_after:'1m' };
+  src.tokens -= items.length;
+  const results = items.map((it, i) => ({ index:i, ...evalDeclare(S, source, it), spec:it, uploaded:{} }));
+  if (results.every(r => r.status === 'rejected')) return { http:422, error:'ALL_ITEMS_REJECTED', items:results.map(itemView) };
+  const b = { id:nextId(S, 'batch'), source, state:'open', createdAt:S.now, items:results };
+  results.forEach(r => { if (r.request_id) S.requests[r.request_id].batch = b.id; });
+  S.batches[b.id] = b;
+  const result = { http:201, batch_id:b.id, state:'open', items:results.map(itemView) };
+  if (k) S.idem[k] = { body, result:clone(result), at:S.now };
+  return result;
+};
+
+A.upload = (S, { batch_id, skip = [], corrupt = [] }) => {
+  const b = S.batches[batch_id]; if (!b || b.state !== 'open') return { error:'BATCH_NOT_OPEN' };
+  const done = [];
+  b.items.filter(i => i.status === 'declared' && !skip.includes(i.document_id)).forEach(i => {
+    const want = filesOf(i.spec);
+    (i.upload_needed || []).forEach(p => { i.uploaded[p] = corrupt.includes(i.document_id) ? 'BAD' : want[p]; done.push(`${i.document_id}:${p}`); });
+  });
+  return { uploaded:done };
+};
+
+A.finalize = (S, { source, batch_id }) => {
+  const b = S.batches[batch_id];
+  if (!b || b.source !== source) return { http:404, error:'NOT_FOUND' };
+  if (b.state === 'expired') return { http:409, error:'BATCH_EXPIRED' };
+  if (b.state === 'finalized') return { ...clone(b.finalResult), replayed:true };
+  const reject = (i, e) => { i.status = 'rejected'; i.error = e; };
+  for (const i of b.items) {
+    if (i.status !== 'declared') continue;
+    const spec = i.spec;
+    if (i.document_uid && S.docs[i.document_uid] && S.docs[i.document_uid].deleted) { reject(i, 'DOCUMENT_DELETED'); continue; }
+    let doc = i.document_uid ? S.docs[i.document_uid] : liveDoc(S, source, spec.document_id);
+    const resource = doc ? doc.resource : (spec.resources ? spec.resources[0] : S.sources[source].defaultResource);
+    if (!canPlace(S, source, resource)) { reject(i, 'RESOURCE_NOT_FOUND'); continue; }
+    const want = filesOf(spec);
+    if (i.upload_needed.some(p => !(p in i.uploaded))) { reject(i, 'FILES_MISSING'); continue; }
+    if (i.upload_needed.some(p => i.uploaded[p] !== want[p])) { reject(i, 'DIGEST_MISMATCH'); continue; }
+    if (doc) {
+      const o = compareOrder(S, source, doc, spec);                       // re-checked: another batch may have finalized first
+      if (o.kind === 'reject') { reject(i, o.error); continue; }
+      if (o.kind === 'same') { Object.assign(i, sameContent(S, source, doc, spec), { upload_needed:[], carried_over:[] }); if (i.request_id) S.requests[i.request_id].batch = S.requests[i.request_id].batch || b.id; continue; }
+    } else {
+      doc = { uid:nextId(S, 'doc'), source, document_id:spec.document_id, resource, revisions:[], serving:{}, deleted:false, title:null, source_url:null, metadata:{} };
+      S.docs[doc.uid] = doc; S.index[docKey(source, spec.document_id)] = doc.uid;
+    }
+    const sr = { srid:nextId(S, 'sr'), source_version:spec.source_version ?? null, files:want, state:'pending' };
+    doc.revisions.push(sr); applyCatalog(doc, spec);
+    const r = newRequest(S, { kind:'process', uid:doc.uid, srid:sr.srid, source, initiator:'source', batch:b.id });
+    Object.assign(i, { status:'queued', document_uid:doc.uid, request_id:r.id, source_revision_id:sr.srid });
+  }
+  b.state = 'finalized'; b.finalizedAt = S.now;
+  const allRejected = b.items.every(i => i.status === 'rejected');
+  b.finalResult = { http: allRejected ? 422 : 202, batch_id:b.id, state:'finalized', items:b.items.map(itemView) };
+  return clone(b.finalResult);
+};
+
+// Canonical processing outcome for one request: accepted | platform_fail | content_reject.
+A.runCanonical = (S, { request_id, outcome }) => {
+  const r = S.requests[request_id]; if (!r || r.kind !== 'process' || !isActive(r)) return { error:'REQUEST_NOT_ACTIVE' };
+  const doc = S.docs[r.uid], sr = doc.revisions.find(x => x.srid === r.srid);
+  r.state = outcome === 'accepted' ? 'succeeded' : 'failed'; r.terminalAt = S.now;
+  if (outcome !== 'accepted') r.cause = outcome === 'platform_fail' ? 'platform' : 'source';
+  if (r.initiator === 'platform') return { request_id, state:r.state, note:'平台重刷：Source Revision 與 serving 不變，失敗只告警 owner' };
+  sr.state = outcome === 'accepted' ? 'accepted' : outcome === 'platform_fail' ? 'failed' : 'rejected';
+  return { request_id, state:r.state, revision_state:sr.state, note: doc.deleted ? '晚到的結果：文件已刪除，不會恢復可讀' : undefined };
+};
+
+// A projection publishes a product that includes the current canonical revision.
+A.publish = (S, { uid, projections }) => {
+  const doc = S.docs[uid]; if (!doc) return { error:'NOT_FOUND' };
+  if (doc.deleted) return { ignored:true, note:'已刪除的文件不會被發布' };
+  const cur = currentCanonical(doc); if (!cur) return { ignored:true, note:'尚無可用的 canonical revision' };
+  const ps = projections || S.sources[doc.source].projections;
+  ps.forEach(p => { doc.serving[p] = { srid:cur.srid, resource:doc.resource }; });
+  return { published:ps, source_revision_id:cur.srid };
+};
+
+A.redrive = (S) => {
+  const made = [];
+  Object.values(S.docs).filter(d => !d.deleted).forEach(d => {
+    const latest = lastRev(d);
+    if (latest.state === 'failed' && !activeProcess(S, d.uid, latest.srid)) {
+      const prev = lastFailed(S, d.uid, latest.srid);
+      const r = newRequest(S, { kind:'process', uid:d.uid, srid:latest.srid, source:d.source, initiator:'operator', retry_of: prev ? prev.id : null });
+      latest.state = 'pending'; made.push({ document_id:d.document_id, request_id:r.id });
+    }
+  });
+  return { rerun:made };
+};
+
+A.adoptVersion = (S) => {
+  S.adoption.canonical += 1;
+  const made = [];
+  Object.values(S.docs).filter(d => !d.deleted).forEach(d => {
+    const cur = currentCanonical(d);
+    if (cur && !activeProcess(S, d.uid, cur.srid)) { const r = newRequest(S, { kind:'process', uid:d.uid, srid:cur.srid, source:d.source, initiator:'platform', priority:'low' }); made.push({ document_id:d.document_id, request_id:r.id }); }
+  });
+  return { adoption:S.adoption.canonical, refresh:made };
+};
+
+A.delete = (S, { source, document_id }) => {
+  const doc = S.docs[S.index[docKey(source, document_id)]];
+  if (!doc || doc.source !== source) return { http:404, error:'NOT_FOUND' };
+  if (doc.deleteRequest) return { http:202, request_id:doc.deleteRequest, repeated:true };
+  const r = newRequest(S, { kind:'delete', uid:doc.uid, source, initiator:'source' });
+  doc.deleteRequest = r.id;
+  return { http:202, request_id:r.id };
+};
+A.applyDeletion = (S, { request_id }) => {
+  const r = S.requests[request_id]; if (!r || r.kind !== 'delete') return { error:'NOT_FOUND' };
+  const doc = S.docs[r.uid]; doc.deleted = true; doc.deletedAt = S.now; r.state = 'processing';
+  doc.title = null; doc.source_url = null; doc.metadata = {};                // Q10.7: catalog fields cleared when deletion is applied
+  return { applied:true, note:'serving 已擋下（#56）' };
+};
+A.dropFromProjections = (S, { request_id }) => {
+  const r = S.requests[request_id]; if (!r || r.kind !== 'delete' || r.state !== 'processing') return { error:'NOT_APPLIED' };
+  S.docs[r.uid].serving = {}; r.state = 'succeeded'; r.terminalAt = S.now;
+  return { enforced:true };
+};
+
+A.rebind = (S, { source, document_id, resource }) => {
+  const doc = liveDoc(S, source, document_id); if (!doc) return { http:404, error:'NOT_FOUND' };
+  if (!canPlace(S, source, doc.resource) || !canPlace(S, source, resource)) return { http:404, error:'RESOURCE_NOT_FOUND' };
+  doc.resource = resource; return { http:200, resource };
+};
+A.addProjection = (S, { source, projection }) => { S.sources[source].projections.push(projection); return { projections:S.sources[source].projections }; };
+A.revokeGrant = (S, { resource, source }) => { const R = S.resources[resource]; R.grants = R.grants.filter(x => x !== source); return { grants:R.grants }; };
+A.setFlag = (S, { flag, value }) => { S.flags[flag] = value; return { flags:S.flags }; };
+
+A.advance = (S, { hours }) => {
+  S.now += hours;
+  Object.values(S.sources).forEach(s => { s.tokens = H.QUOTA; });
+  Object.values(S.batches).forEach(b => {
+    if (b.state === 'open' && S.now - b.createdAt >= H.BATCH_TTL) { b.state = 'expired'; b.expiredAt = b.createdAt + H.BATCH_TTL; b.items.forEach(i => { if (i.status === 'declared') i.status = 'expired'; }); }
+  });
+  Object.entries(S.idem).forEach(([k, e]) => { if (S.now - e.at >= H.IDEM_TTL) delete S.idem[k]; });
+  Object.values(S.batches).forEach(b => {
+    let end = null;
+    if (b.state === 'expired') end = b.expiredAt;
+    if (b.state === 'finalized') {
+      const reqs = b.items.filter(i => i.request_id).map(i => S.requests[i.request_id]).filter(Boolean);
+      if (!reqs.some(isActive)) end = Math.max(b.finalizedAt, ...reqs.map(r => r.terminalAt));
+    }
+    if (end != null && S.now - end >= H.RETENTION) delete S.batches[b.id];
+  });
+  Object.values(S.requests).forEach(r => { if (r.terminalAt != null && S.now - r.terminalAt >= H.RETENTION) delete S.requests[r.id]; });
+  Object.values(S.docs).forEach(d => {
+    if (d.deleted && S.now - d.deletedAt >= H.RETENTION) { if (S.index[docKey(d.source, d.document_id)] === d.uid) delete S.index[docKey(d.source, d.document_id)]; delete S.docs[d.uid]; }
+  });
+  return { now:S.now };
+};
+
+// ---- readiness, attention and queries ----
+function readiness(S, doc) {
+  if (doc.deleted) return 'deleted';
+  const latest = lastRev(doc), s = S.sources[doc.source].projections.map(p => doc.serving[p]);
+  if (s.some(x => !x || x.resource !== doc.resource)) return 'not_ready';
+  return s.every(x => x.srid === latest.srid) ? 'ready' : 'ready_stale';
+}
+function attention(S, doc) {
+  if (doc.deleted) return [];
+  const latest = lastRev(doc);
+  if (latest.state === 'rejected') return [{ kind:'source_revision_rejected', action_owner:'source' }];
+  if (latest.state === 'failed' && !activeProcess(S, doc.uid, latest.srid)) return [{ kind:'processing_failed', track:'canonical', action_owner:'platform' }];
+  return [];
+}
+function docView(S, d) {
+  const latest = lastRev(d);
+  return { document_id:d.document_id, document_uid:d.uid, readiness:readiness(S, d), attention:attention(S, d),
+    latest:{ source_revision_id:latest.srid, source_version:latest.source_version, state:latest.state },
+    serving:Object.fromEntries(S.sources[d.source].projections.map(p => [p, d.serving[p] ? `${d.serving[p].srid}@${d.serving[p].resource}` : null])),
+    resource:d.resource, title:d.title, metadata:d.metadata, deleted_at: d.deleted ? d.deletedAt : undefined };
+}
+A.getDocument = (S, { source, document_id }) => {
+  const d = S.docs[S.index[docKey(source, document_id)]];
+  return d && d.source === source ? { http:200, ...docView(S, d) } : { http:404, error:'NOT_FOUND' };
+};
+A.listDocuments = (S, { source, readiness:want }) => ({ http:200, documents:Object.values(S.docs).filter(d => d.source === source).map(d => docView(S, d)).filter(v => !want || v.readiness === want) });
+A.getRequest = (S, { source, request_id }) => {
+  const r = S.requests[request_id];
+  return r && r.source === source ? { http:200, request_id:r.id, kind:r.kind, state:r.state, initiator:r.initiator, retry_of:r.retry_of, cause:r.cause } : { http:404, error:'NOT_FOUND' };
+};
+A.getBatch = (S, { source, batch_id }) => {
+  const b = S.batches[batch_id]; if (!b || b.source !== source) return { http:404, error:'NOT_FOUND' };
+  const status = (i) => i.request_id && S.requests[i.request_id] ? ({ queued:'queued', processing:'processing', succeeded:'succeeded', failed:'failed' })[S.requests[i.request_id].state] : i.status;
+  const counts = {}; b.items.forEach(i => { const s = status(i); counts[s] = (counts[s] || 0) + 1; });
+  return { http:200, batch_id:b.id, state:b.state, counts };
+};
+A.agentView = (S, { source, document_id }) => {
+  const d = liveDoc(S, source, document_id);
+  if (!d || readiness(S, d) === 'not_ready') return { visible:false };
+  return { visible:true, source_id:d.source, document_id:d.document_id, document_uid:d.uid, title:d.title, source_url:d.source_url };
+};
+
+function dispatch(state, action) { const S = clone(state); const fn = A[action.type]; const result = fn(S, action); return { state:S, result }; }
+/* ==== MODEL END ==== */
+
+/* ==== SCENARIOS START ==== */
+const f = {
+  pdf:(path, d) => ({ path, role:'main', digest:d, media_type:FORMATS.pdf }),
+  md: (path, d) => ({ path, role:'main', digest:d, media_type:FORMATS.md }),
+  png:(path, d) => ({ path, role:'attachment', digest:d, media_type:FORMATS.png }),
+  xls:(path, d) => ({ path, role:'main', digest:d, media_type:FORMATS.xls }),
+};
+const itemA  = { document_id:'A', source_version:'1', title:'差旅規定', files:[f.pdf('a.pdf','a-1')] };
+const itemB2 = { document_id:'B', source_version:'2', title:'請假流程', files:[f.md('policy.md','b-main-1'), f.png('assets/flow.png','b-img-1')] };
+const itemB3 = { document_id:'B', source_version:'3', title:'請假流程', files:[f.md('policy.md','b-main-1'), f.png('assets/flow.png','b-img-2')] };
+const itemC1 = { document_id:'C', source_version:'1', title:'舊標題', files:[f.pdf('c.pdf','c-1')] };
+const itemD  = { document_id:'D', source_version:'1', files:[f.xls('d.xls','d-1')] };
+const item = (o) => ({ document_id:o.id, source_version:o.v, title:o.title, files:o.files, resources:o.resources });
+
+// Seed: B (v2) and C (v1) exist for hr-km, accepted and served by both projections.
+function seed(S) {
+  let r = dispatch(S, { type:'declare', source:'hr-km', items:[itemB2, itemC1] }); S = r.state; const b = r.result.batch_id;
+  S = dispatch(S, { type:'upload', batch_id:b }).state;
+  r = dispatch(S, { type:'finalize', source:'hr-km', batch_id:b }); S = r.state;
+  r.result.items.forEach(i => { S = dispatch(S, { type:'runCanonical', request_id:i.request_id, outcome:'accepted' }).state; S = dispatch(S, { type:'publish', uid:i.document_uid }).state; });
+  return S;
+}
+const uidOf = (S, id, source = 'hr-km') => S.index[`${source}/${id}`];
+const reqOf = (res, id) => (res.items || []).find(i => i.document_id === id) || {};
+const itemsN = (n, prefix) => Array.from({ length:n }, (_, k) => ({ document_id:`${prefix}${k}`, source_version:'1', files:[f.pdf(`${prefix}${k}.pdf`, `${prefix}${k}`)] }));
+
+const SCENARIOS = [
+ { title:'1 一批四份', desc:'HR 的 KM app 一次送 A（新）、B（只改附件）、C（沒變但改標題）、D（.xls）。看宣告時各 item 的結果、只上傳有變動的檔案、finalize 後的整批進度。', seed:true, steps:[
+   { label:'宣告 A、B、C、D', act:() => ({ type:'declare', source:'hr-km', key:'k1', items:[itemA, itemB3, { ...itemC1, title:'新標題' }, itemD] }), save:(r,c)=>{c.b=r.batch_id;},
+     expect:'201；A 待上傳；B 只需上傳附件 flow.png；C 回 unchanged 且標題已更新；D 被拒（UNSUPPORTED_FORMAT）',
+     check:(r,S)=> r.http===201 && reqOf(r,'A').status==='declared' && JSON.stringify(reqOf(r,'B').upload_needed)==='["assets/flow.png"]' && reqOf(r,'C').status==='unchanged' && S.docs[uidOf(S,'C')].title==='新標題' && reqOf(r,'D').error==='UNSUPPORTED_FORMAT' },
+   { label:'上傳需要的檔案', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'只上傳 A 的 a.pdf 和 B 的 flow.png', check:(r)=> r.uploaded.length===2 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), expect:'202；A、B 為 queued，各有 request', check:(r)=> r.http===202 && reqOf(r,'A').status==='queued' && reqOf(r,'B').status==='queued' },
+   { label:'查整批進度', act:(c)=>({ type:'getBatch', source:'hr-km', batch_id:c.b }), expect:'queued 2、unchanged 1、rejected 1', check:(r)=> r.counts.queued===2 && r.counts.unchanged===1 && r.counts.rejected===1 },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'ready_stale：新版處理中，舊版 v2 繼續服務', check:(r)=> r.readiness==='ready_stale' },
+ ]},
+ { title:'2 回應不確定', desc:'宣告和 finalize 都逾時，app 重送。再看 Idempotency-Key 過期後重送同樣內容的結果。', seed:true, steps:[
+   { label:'宣告 A（key k2）', act:()=>({ type:'declare', source:'hr-km', key:'k2', items:[itemA] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'逾時，用同一個 key 重送', act:()=>({ type:'declare', source:'hr-km', key:'k2', items:[itemA] }), expect:'回放同一個 batch，不建立第二個', check:(r,S,c)=> r.replayed && r.batch_id===c.b },
+   { label:'同一個 key 但內容不同', act:()=>({ type:'declare', source:'hr-km', key:'k2', items:[{ ...itemA, title:'改過' }] }), expect:'422 IDEMPOTENCY_KEY_REUSED', check:(r)=> r.http===422 && r.error==='IDEMPOTENCY_KEY_REUSED' },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳 a.pdf', check:(r)=> r.uploaded.length===1 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), save:(r,c)=>{c.req=reqOf(r,'A').request_id;}, expect:'202，A queued', check:(r)=> r.http===202 },
+   { label:'逾時，再 finalize 一次', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), expect:'回放同樣結果，request 不變', check:(r,S,c)=> r.replayed && reqOf(r,'A').request_id===c.req },
+   { label:'A 處理成功', act:(c)=>({ type:'runCanonical', request_id:c.req, outcome:'accepted' }), expect:'succeeded', check:(r)=> r.state==='succeeded' },
+   { label:'時間 +25 小時', act:()=>({ type:'advance', hours:25 }), expect:'key 已過期', check:(r,S)=> !S.idem['hr-km:k2'] },
+   { label:'用同一個 key 再送同樣內容', act:()=>({ type:'declare', source:'hr-km', key:'k2', items:[itemA] }), expect:'新的 batch，但 A 是 unchanged，不重複處理', check:(r,S,c)=> r.http===201 && r.batch_id!==c.b && reqOf(r,'A').status==='unchanged' },
+ ]},
+ { title:'3 受理後立即可查', desc:'Finalize 回 202 之後，即使還沒有任何 workflow 開始，也立即查得到 request。', seed:false, steps:[
+   { label:'宣告 A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳 a.pdf', check:(r)=> r.uploaded.length===1 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), save:(r,c)=>{c.req=reqOf(r,'A').request_id;}, expect:'202', check:(r)=> r.http===202 },
+   { label:'立即查 request', act:(c)=>({ type:'getRequest', source:'hr-km', request_id:c.req }), expect:'queued', check:(r)=> r.state==='queued' },
+   { label:'查文件 A', act:()=>({ type:'getDocument', source:'hr-km', document_id:'A' }), expect:'not_ready（還沒有任何 projection 服務它）', check:(r)=> r.readiness==='not_ready' },
+ ]},
+ { title:'4 平台失敗與重送', desc:'A 因 OCR 當機失敗。app 自己重送，平台之後也批次重跑：同一個版本同時只會有一個重跑。', seed:false, steps:[
+   { label:'宣告、上傳、finalize A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳 a.pdf', check:(r)=> r.uploaded.length===1 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), save:(r,c)=>{c.req=reqOf(r,'A').request_id;}, expect:'202', check:(r)=> r.http===202 },
+   { label:'處理失敗：平台原因', act:(c)=>({ type:'runCanonical', request_id:c.req, outcome:'platform_fail' }), expect:'failed', check:(r)=> r.state==='failed' },
+   { label:'查文件 A', act:()=>({ type:'getDocument', source:'hr-km', document_id:'A' }), expect:'not_ready，attention 為 processing_failed（平台處理）', check:(r)=> r.readiness==='not_ready' && r.attention[0]?.kind==='processing_failed' },
+   { label:'App 重送同樣的 A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), save:(r,c)=>{c.retry=reqOf(r,'A').request_id;}, expect:'A 直接 queued，開了新 request，不必上傳', check:(r,S,c)=> reqOf(r,'A').status==='queued' && reqOf(r,'A').request_id!==c.req && !reqOf(r,'A').upload_needed },
+   { label:'App 又重送一次', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), expect:'回傳同一個重跑 request，不開第二個', check:(r,S,c)=> reqOf(r,'A').request_id===c.retry },
+   { label:'平台批次重跑', act:()=>({ type:'redrive' }), expect:'跳過 A（已有進行中的重跑）', check:(r)=> r.rerun.length===0 },
+   { label:'重跑成功', act:(c)=>({ type:'runCanonical', request_id:c.retry, outcome:'accepted' }), expect:'succeeded', check:(r)=> r.state==='succeeded' },
+   { label:'各 projection 發布', act:(c,S)=>({ type:'publish', uid:uidOf(S,'A') }), expect:'發布', check:(r)=> r.published.length===2 },
+   { label:'查文件 A', act:()=>({ type:'getDocument', source:'hr-km', document_id:'A' }), expect:'ready，attention 清除', check:(r)=> r.readiness==='ready' && r.attention.length===0 },
+ ]},
+ { title:'5 壞檔與同版號修正', desc:'B v3 的新附件是壞檔，被判為內容失敗。原檔重送沒用；用同一個版本號 v3 送修好的檔案，平台接受。', seed:true, steps:[
+   { label:'宣告 B v3', act:()=>({ type:'declare', source:'hr-km', items:[itemB3] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'只需上傳附件', check:(r)=> JSON.stringify(reqOf(r,'B').upload_needed)==='["assets/flow.png"]' },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳 flow.png', check:(r)=> r.uploaded.length===1 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), save:(r,c)=>{c.req=reqOf(r,'B').request_id;}, expect:'202', check:(r)=> r.http===202 },
+   { label:'處理失敗：內容原因', act:(c)=>({ type:'runCanonical', request_id:c.req, outcome:'content_reject' }), expect:'failed，revision 為 rejected', check:(r)=> r.revision_state==='rejected' },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'ready_stale（v2 繼續服務），attention 為 source_revision_rejected', check:(r)=> r.readiness==='ready_stale' && r.attention[0]?.kind==='source_revision_rejected' },
+   { label:'原檔重送', act:()=>({ type:'declare', source:'hr-km', items:[itemB3] }), expect:'unchanged，不重跑', check:(r)=> reqOf(r,'B').status==='unchanged' },
+   { label:'用 v3 送修好的附件', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB3, files:[f.md('policy.md','b-main-1'), f.png('assets/flow.png','b-img-3')] }] }), save:(r,c)=>{c.b2=r.batch_id;}, expect:'接受，不是 VERSION_CONFLICT；只需上傳附件', check:(r)=> reqOf(r,'B').status==='declared' && JSON.stringify(reqOf(r,'B').upload_needed)==='["assets/flow.png"]' },
+   { label:'上傳並 finalize', act:(c)=>({ type:'upload', batch_id:c.b2 }), expect:'上傳', check:(r)=> r.uploaded.length===1 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b2 }), save:(r,c)=>{c.req2=reqOf(r,'B').request_id;}, expect:'B queued', check:(r)=> reqOf(r,'B').status==='queued' },
+   { label:'處理成功並發布', act:(c)=>({ type:'runCanonical', request_id:c.req2, outcome:'accepted' }), expect:'succeeded', check:(r)=> r.state==='succeeded' },
+   { label:'發布', act:(c,S)=>({ type:'publish', uid:uidOf(S,'B') }), expect:'發布', check:(r)=> r.published.length===2 },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'ready', check:(r)=> r.readiness==='ready' && r.attention.length===0 },
+ ]},
+ { title:'6 舊資料與版本衝突', desc:'目前 B 是 v2。看舊版、同版不同內容、沒帶版本號的結果；再看 arrival 排序的手動上傳 client。', seed:true, steps:[
+   { label:'送 B v1（舊版）', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB2, source_version:'1' }] }), expect:'422（全部被拒）：STALE_SOURCE_VERSION', check:(r)=> r.http===422 && reqOf(r,'B').error==='STALE_SOURCE_VERSION' },
+   { label:'送 B v2 但主檔不同', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB2, files:[f.md('policy.md','b-main-X'), f.png('assets/flow.png','b-img-1')] }] }), expect:'VERSION_CONFLICT（v2 先前是正常的）', check:(r)=> reqOf(r,'B').error==='VERSION_CONFLICT' },
+   { label:'送 B 不帶版本號', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB3, source_version:undefined }] }), expect:'SOURCE_VERSION_REQUIRED', check:(r)=> reqOf(r,'B').error==='SOURCE_VERSION_REQUIRED' },
+   { label:'手動上傳 client 不帶版本號送 M', act:()=>({ type:'declare', source:'manual-upload', items:[{ document_id:'M', files:[f.pdf('m.pdf','m-1')] }] }), expect:'接受（arrival 排序）', check:(r)=> reqOf(r,'M').status==='declared' },
+ ]},
+ { title:'7 份數上限與頻率', desc:'超過份數上限是格式錯誤（400），宣告太頻繁才是 429。', seed:false, steps:[
+   { label:'一次送 51 份', act:()=>({ type:'declare', source:'hr-km', items:itemsN(51,'x') }), expect:'400 TOO_MANY_ITEMS', check:(r)=> r.http===400 },
+   { label:'送 30 份', act:()=>({ type:'declare', source:'hr-km', items:itemsN(30,'y') }), expect:'201', check:(r)=> r.http===201 },
+   { label:'馬上再送 30 份', act:()=>({ type:'declare', source:'hr-km', items:itemsN(30,'z') }), expect:'429 RATE_LIMITED，附 Retry-After', check:(r)=> r.http===429 && r.retry_after },
+   { label:'時間 +1 小時後再送', act:()=>({ type:'advance', hours:1 }), expect:'額度恢復', check:()=> true },
+   { label:'再送 30 份', act:()=>({ type:'declare', source:'hr-km', items:itemsN(30,'z') }), expect:'201', check:(r)=> r.http===201 },
+ ]},
+ { title:'8 暫停受理', desc:'Pilot 因積欠太多而暫停時，只擋新的宣告；已開啟的 batch 仍可 finalize，已上傳的檔案不會白傳。', seed:false, steps:[
+   { label:'宣告 A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳', check:(r)=> r.uploaded.length===1 },
+   { label:'平台暫停受理', act:()=>({ type:'setFlag', flag:'paused', value:true }), expect:'暫停', check:(r)=> r.flags.paused },
+   { label:'宣告新的文件 E', act:()=>({ type:'declare', source:'hr-km', items:[{ document_id:'E', source_version:'1', files:[f.pdf('e.pdf','e-1')] }] }), expect:'503 ADMISSION_PAUSED，附 Retry-After', check:(r)=> r.http===503 && r.error==='ADMISSION_PAUSED' },
+   { label:'Finalize 已開啟的 batch', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), expect:'202，A queued', check:(r)=> r.http===202 && reqOf(r,'A').status==='queued' },
+ ]},
+ { title:'9 授權停擺與權限撤銷', desc:'授權服務停擺時整個請求回 503；宣告到 finalize 之間權限被撤銷，finalize 時拒絕。', seed:false, steps:[
+   { label:'授權服務停擺', act:()=>({ type:'setFlag', flag:'authDown', value:true }), expect:'停擺', check:()=> true },
+   { label:'宣告 A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), expect:'503 AUTHZ_UNAVAILABLE，什麼都沒受理', check:(r,S)=> r.http===503 && Object.keys(S.batches).length===0 },
+   { label:'授權服務恢復', act:()=>({ type:'setFlag', flag:'authDown', value:false }), expect:'恢復', check:()=> true },
+   { label:'手動上傳 client 把 M 放進 R-hr（有授權）', act:()=>({ type:'declare', source:'manual-upload', items:[{ document_id:'M', files:[f.pdf('m.pdf','m-1')] }] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳', check:(r)=> r.uploaded.length===1 },
+   { label:'R-hr 的 maintainer 撤銷授權', act:()=>({ type:'revokeGrant', resource:'R-hr', source:'manual-upload' }), expect:'撤銷', check:()=> true },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'manual-upload', batch_id:c.b }), expect:'422：M 被拒（RESOURCE_NOT_FOUND）', check:(r)=> r.http===422 && reqOf(r,'M').error==='RESOURCE_NOT_FOUND' },
+ ]},
+ { title:'10 上傳問題、全部被拒與過期', desc:'檔案沒傳完或內容不符時，只拒絕那一份；全部被拒時不建立 batch；沒 finalize 的 batch 24 小時後過期。', seed:false, steps:[
+   { label:'宣告 A、E、F', act:()=>({ type:'declare', source:'hr-km', items:[itemA, { document_id:'E', source_version:'1', files:[f.pdf('e.pdf','e-1')] }, { document_id:'F', source_version:'1', files:[f.pdf('f.pdf','f-1')] }] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳：E 沒傳，F 傳錯', act:(c)=>({ type:'upload', batch_id:c.b, skip:['E'], corrupt:['F'] }), expect:'只上傳了 A、F', check:(r)=> r.uploaded.length===2 },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), expect:'202：A queued；E FILES_MISSING；F DIGEST_MISMATCH', check:(r)=> r.http===202 && reqOf(r,'A').status==='queued' && reqOf(r,'E').error==='FILES_MISSING' && reqOf(r,'F').error==='DIGEST_MISMATCH' },
+   { label:'只送 D（.xls）', act:()=>({ type:'declare', source:'hr-km', items:[itemD] }), expect:'422 ALL_ITEMS_REJECTED，不建立 batch', check:(r,S)=> r.http===422 && r.error==='ALL_ITEMS_REJECTED' && Object.keys(S.batches).length===1 },
+   { label:'宣告 G', act:()=>({ type:'declare', source:'hr-km', items:[{ document_id:'G', source_version:'1', files:[f.pdf('g.pdf','g-1')] }] }), save:(r,c)=>{c.g=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'時間 +25 小時', act:()=>({ type:'advance', hours:25 }), expect:'G 的 batch 過期', check:(r,S,c)=> S.batches[c.g].state==='expired' },
+   { label:'Finalize G 的 batch', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.g }), expect:'409 BATCH_EXPIRED', check:(r)=> r.http===409 },
+ ]},
+ { title:'11 綁定衝突與他人文件', desc:'既有文件指定不同 Resource 會被拒；其他 Source 查不到、也放不進別人的 Resource。', seed:true, steps:[
+   { label:'送 B v3 並指定 R-hr-mgr', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB3, resources:['R-hr-mgr'] }] }), expect:'BINDING_CONFLICT（要改用 rebind）', check:(r)=> reqOf(r,'B').error==='BINDING_CONFLICT' },
+   { label:'fin-km 查 B', act:()=>({ type:'getDocument', source:'fin-km', document_id:'B' }), expect:'404', check:(r)=> r.http===404 },
+   { label:'fin-km 把文件放進 R-hr', act:()=>({ type:'declare', source:'fin-km', items:[{ document_id:'X', source_version:'1', resources:['R-hr'], files:[f.pdf('x.pdf','x-1')] }] }), expect:'RESOURCE_NOT_FOUND', check:(r)=> reqOf(r,'X').error==='RESOURCE_NOT_FOUND' },
+ ]},
+ { title:'12 兩個同步程式同時送 B', desc:'同一份文件依序 finalize，每次 finalize 都重新比對版本。', seed:true, steps:[
+   { label:'程式甲宣告 B v3', act:()=>({ type:'declare', source:'hr-km', items:[itemB3] }), save:(r,c)=>{c.x=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'程式乙宣告 B v4', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB3, source_version:'4', files:[f.md('policy.md','b-main-1'), f.png('assets/flow.png','b-img-4')] }] }), save:(r,c)=>{c.y=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'兩邊都上傳', act:(c)=>({ type:'upload', batch_id:c.x }), expect:'上傳', check:()=> true },
+   { label:'（乙上傳）', act:(c)=>({ type:'upload', batch_id:c.y }), expect:'上傳', check:()=> true },
+   { label:'乙先 finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.y }), expect:'B v4 queued', check:(r)=> reqOf(r,'B').status==='queued' },
+   { label:'甲後 finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.x }), expect:'B v3 被拒：STALE_SOURCE_VERSION', check:(r)=> reqOf(r,'B').error==='STALE_SOURCE_VERSION' },
+   { label:'丙、丁都宣告同樣的 B v5', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB3, source_version:'5', files:[f.md('policy.md','b-main-5'), f.png('assets/flow.png','b-img-4')] }] }), save:(r,c)=>{c.z=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'（丁宣告）', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemB3, source_version:'5', files:[f.md('policy.md','b-main-5'), f.png('assets/flow.png','b-img-4')] }] }), save:(r,c)=>{c.w=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'丙上傳並 finalize', act:(c)=>({ type:'upload', batch_id:c.z }), expect:'上傳', check:()=> true },
+   { label:'（丙 finalize）', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.z }), save:(r,c)=>{c.v5=reqOf(r,'B').request_id;}, expect:'B v5 queued', check:(r)=> reqOf(r,'B').status==='queued' },
+   { label:'丁上傳並 finalize', act:(c)=>({ type:'upload', batch_id:c.w }), expect:'上傳', check:()=> true },
+   { label:'（丁 finalize）', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.w }), expect:'回傳丙的 request（內容與 v5 相同，仍在處理中）', check:(r,S,c)=> reqOf(r,'B').status==='queued' && reqOf(r,'B').request_id===c.v5 },
+ ]},
+ { title:'13 owner 升版重刷', desc:'Canonical owner 升版後平台自動重刷；重刷失敗不影響燈號，也不出現 attention。', seed:true, steps:[
+   { label:'Owner 採用新版本', act:()=>({ type:'adoptVersion' }), save:(r,c)=>{c.rb=r.refresh.find(x=>x.document_id==='B').request_id; c.rc=r.refresh.find(x=>x.document_id==='C').request_id;}, expect:'B、C 各建立一個平台重刷 request', check:(r)=> r.refresh.length===2 },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'仍是 ready', check:(r)=> r.readiness==='ready' },
+   { label:'B 的重刷失敗', act:(c)=>({ type:'runCanonical', request_id:c.rb, outcome:'platform_fail' }), expect:'failed，只告警 owner', check:(r)=> r.state==='failed' },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'仍是 ready，沒有 attention', check:(r)=> r.readiness==='ready' && r.attention.length===0 },
+   { label:'C 的重刷成功', act:(c)=>({ type:'runCanonical', request_id:c.rc, outcome:'accepted' }), expect:'succeeded', check:(r)=> r.state==='succeeded' },
+ ]},
+ { title:'14 刪除與重建', desc:'KM 下架 C。看收到、套用、落實三個層次；刪除前宣告的 item 在 finalize 時被拒；之後重建的 C 是新的一代。', seed:true, steps:[
+   { label:'宣告 C v2（尚未 finalize）', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemC1, source_version:'2', files:[f.pdf('c.pdf','c-2')] }] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳', check:()=> true },
+   { label:'刪除 C', act:()=>({ type:'delete', source:'hr-km', document_id:'C' }), save:(r,c)=>{c.del=r.request_id;}, expect:'202 加刪除 request', check:(r)=> r.http===202 },
+   { label:'查文件 C', act:()=>({ type:'getDocument', source:'hr-km', document_id:'C' }), expect:'仍是 ready（只是收到，serving 還沒擋）', check:(r)=> r.readiness==='ready' },
+   { label:'再刪除一次', act:()=>({ type:'delete', source:'hr-km', document_id:'C' }), expect:'回傳同一個刪除 request', check:(r,S,c)=> r.request_id===c.del },
+   { label:'套用刪除（serving 擋下）', act:(c)=>({ type:'applyDeletion', request_id:c.del }), expect:'套用', check:(r)=> r.applied },
+   { label:'查文件 C', act:()=>({ type:'getDocument', source:'hr-km', document_id:'C' }), expect:'deleted，標題與 metadata 已清除', check:(r)=> r.readiness==='deleted' && r.title===null },
+   { label:'Finalize 刪除前的 batch', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), expect:'C 被拒：DOCUMENT_DELETED', check:(r)=> reqOf(r,'C').error==='DOCUMENT_DELETED' },
+   { label:'各 projection 撤下', act:(c)=>({ type:'dropFromProjections', request_id:c.del }), expect:'落實', check:(r)=> r.enforced },
+   { label:'查刪除 request', act:(c)=>({ type:'getRequest', source:'hr-km', request_id:c.del }), expect:'succeeded', check:(r)=> r.state==='succeeded' },
+   { label:'Agent 搜尋 C', act:()=>({ type:'agentView', source:'hr-km', document_id:'C' }), expect:'看不到', check:(r)=> !r.visible },
+   { label:'重建一份新的 C', act:()=>({ type:'declare', source:'hr-km', items:[{ ...itemC1, title:'新的 C' }] }), save:(r,c)=>{c.b2=r.batch_id;}, expect:'被當成新文件（沒有 document_uid）', check:(r)=> reqOf(r,'C').status==='declared' && !reqOf(r,'C').document_uid },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b2 }), expect:'上傳', check:()=> true },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b2 }), save:(r,c)=>{c.newUid=reqOf(r,'C').document_uid;}, expect:'新的 document_uid', check:(r,S)=> reqOf(r,'C').status==='queued' },
+   { label:'GET C', act:()=>({ type:'getDocument', source:'hr-km', document_id:'C' }), expect:'回傳新的一代', check:(r,S,c)=> r.document_uid===c.newUid },
+   { label:'列出 deleted 的文件', act:()=>({ type:'listDocuments', source:'hr-km', readiness:'deleted' }), expect:'舊的 C 在這裡', check:(r,S,c)=> r.documents.length===1 && r.documents[0].document_uid!==c.newUid },
+ ]},
+ { title:'15 刪除時處理仍在進行', desc:'A 還在處理就被刪除；之後處理成功也不能讓它恢復可讀。', seed:false, steps:[
+   { label:'宣告 A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳', check:()=> true },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), save:(r,c)=>{c.req=reqOf(r,'A').request_id;}, expect:'A queued', check:(r)=> reqOf(r,'A').status==='queued' },
+   { label:'刪除 A', act:()=>({ type:'delete', source:'hr-km', document_id:'A' }), save:(r,c)=>{c.del=r.request_id;}, expect:'202', check:(r)=> r.http===202 },
+   { label:'套用刪除', act:(c)=>({ type:'applyDeletion', request_id:c.del }), expect:'套用', check:(r)=> r.applied },
+   { label:'處理晚到成功', act:(c)=>({ type:'runCanonical', request_id:c.req, outcome:'accepted' }), expect:'結果記錄下來，但註明文件已刪除', check:(r)=> !!r.note },
+   { label:'Projection 嘗試發布', act:(c,S)=>({ type:'publish', uid:uidOf(S,'A') }), expect:'被忽略', check:(r)=> r.ignored },
+   { label:'查文件 A', act:()=>({ type:'getDocument', source:'hr-km', document_id:'A' }), expect:'仍是 deleted', check:(r)=> r.readiness==='deleted' },
+ ]},
+ { title:'16 改綁 Resource', desc:'把 B 改綁到 R-hr-mgr。不重跑處理；新 Resource 的產品收錄之前是 not_ready。', seed:true, steps:[
+   { label:'Rebind B 到 R-hr-mgr', act:()=>({ type:'rebind', source:'hr-km', document_id:'B', resource:'R-hr-mgr' }), expect:'200', check:(r,S)=> r.http===200 && Object.values(S.requests).filter(x=>x.state==='queued').length===0 },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'not_ready（舊 Resource 的服務不算）', check:(r)=> r.readiness==='not_ready' },
+   { label:'新 Resource 的產品收錄 B', act:(c,S)=>({ type:'publish', uid:uidOf(S,'B') }), expect:'發布', check:()=> true },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'ready', check:(r)=> r.readiness==='ready' },
+ ]},
+ { title:'17 加開 projection', desc:'Knowledge Profile 加開 graph。既有文件在補建完成前是 not_ready。', seed:true, steps:[
+   { label:'hr-km 加開 graph', act:()=>({ type:'addProjection', source:'hr-km', projection:'graph' }), expect:'三個 projection', check:(r)=> r.projections.length===3 },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'not_ready', check:(r)=> r.readiness==='not_ready' },
+   { label:'Graph 補建 B', act:(c,S)=>({ type:'publish', uid:uidOf(S,'B'), projections:['graph'] }), expect:'發布', check:()=> true },
+   { label:'查文件 B', act:()=>({ type:'getDocument', source:'hr-km', document_id:'B' }), expect:'ready', check:(r)=> r.readiness==='ready' },
+ ]},
+ { title:'18 Agent 看到的結果', desc:'Serving 結果帶 source_id、document_id、document_uid、title，讓 app 自己對應 metadata（#76 交接）。', seed:true, steps:[
+   { label:'Agent 搜到 B', act:()=>({ type:'agentView', source:'hr-km', document_id:'B' }), expect:'source_id = hr-km、document_id = B，附 document_uid 與標題', check:(r)=> r.visible && r.source_id==='hr-km' && r.document_id==='B' && !!r.document_uid && r.title==='請假流程' },
+ ]},
+ { title:'19 30 天之後', desc:'Request 和 batch 在終態 30 天後消失，文件狀態仍在；已刪除的文件 30 天後也消失。', seed:false, steps:[
+   { label:'宣告 A', act:()=>({ type:'declare', source:'hr-km', items:[itemA] }), save:(r,c)=>{c.b=r.batch_id;}, expect:'201', check:(r)=> r.http===201 },
+   { label:'上傳', act:(c)=>({ type:'upload', batch_id:c.b }), expect:'上傳', check:()=> true },
+   { label:'Finalize', act:(c)=>({ type:'finalize', source:'hr-km', batch_id:c.b }), save:(r,c)=>{c.req=reqOf(r,'A').request_id;}, expect:'202', check:(r)=> r.http===202 },
+   { label:'處理成功', act:(c)=>({ type:'runCanonical', request_id:c.req, outcome:'accepted' }), expect:'succeeded', check:(r)=> r.state==='succeeded' },
+   { label:'時間 +31 天', act:()=>({ type:'advance', hours:744 }), expect:'過了 30 天', check:()=> true },
+   { label:'查 request', act:(c)=>({ type:'getRequest', source:'hr-km', request_id:c.req }), expect:'404', check:(r)=> r.http===404 },
+   { label:'查 batch', act:(c)=>({ type:'getBatch', source:'hr-km', batch_id:c.b }), expect:'404', check:(r)=> r.http===404 },
+   { label:'查文件 A', act:()=>({ type:'getDocument', source:'hr-km', document_id:'A' }), expect:'仍查得到', check:(r)=> r.http===200 },
+   { label:'刪除 A', act:()=>({ type:'delete', source:'hr-km', document_id:'A' }), save:(r,c)=>{c.del=r.request_id;}, expect:'202', check:(r)=> r.http===202 },
+   { label:'套用刪除', act:(c)=>({ type:'applyDeletion', request_id:c.del }), expect:'套用', check:()=> true },
+   { label:'時間 +31 天', act:()=>({ type:'advance', hours:744 }), expect:'過了 30 天', check:()=> true },
+   { label:'查文件 A', act:()=>({ type:'getDocument', source:'hr-km', document_id:'A' }), expect:'404', check:(r)=> r.http===404 },
+ ]},
+];
+/* ==== SCENARIOS END ==== */
+
+function startScenario(sc) { let S = initialState(); if (sc.seed) S = seed(S); return { S, ctx:{}, i:0, marks:[] }; }
+function runStep(run, sc) {
+  const st = sc.steps[run.i]; const action = st.act(run.ctx, run.S);
+  const { state, result } = dispatch(run.S, action);
+  if (st.save) try { st.save(result, run.ctx); } catch (e) {}
+  let ok = false; try { ok = !!st.check(result, state, run.ctx); } catch (e) { ok = false; }
+  run.S = state; run.marks.push(ok); run.i += 1;
+  return { action, result, ok };
+}
+function runAllScenarios() { return SCENARIOS.map(sc => { const run = startScenario(sc); const fails = []; sc.steps.forEach((st, k) => { const out = runStep(run, sc); if (!out.ok) fails.push({ step:k + 1, label:st.label, expect:st.expect, result:out.result }); }); return { title:sc.title, steps:sc.steps.length, fails }; }); }
+if (typeof module !== 'undefined') module.exports = { runAllScenarios };
+</script>
+
+<script>
+if (typeof document !== 'undefined') {
+  const $ = (id) => document.getElementById(id);
+  let S = initialState(); let lastResult = null; let changed = '';
+  let cur = 0; let run = null;
+  const READY = { ready:'ready（綠）', ready_stale:'ready_stale（藍）', not_ready:'not_ready（黃）', deleted:'deleted（黑）' };
+  const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+
+  function render() {
+    $('result').textContent = lastResult ? JSON.stringify(lastResult, null, 2) : '（尚未呼叫）';
+    $('flags').innerHTML = `<div>時間：第 <b>${S.now}</b> 小時　暫停受理：<b>${S.flags.paused ? '是' : '否'}</b>　授權服務停擺：<b>${S.flags.authDown ? '是' : '否'}</b>　canonical 採用版本：<b>${S.adoption.canonical}</b></div>
+      <table><tr><th>Source</th><th>排序方式</th><th>必要 projection</th><th>剩餘額度</th></tr>${Object.entries(S.sources).map(([k, s]) => `<tr><td>${k}</td><td>${s.ordering}</td><td>${s.projections.join(', ')}</td><td>${s.tokens}</td></tr>`).join('')}</table>`;
+    const docs = Object.values(S.docs);
+    $('docs').innerHTML = docs.length ? `<table><tr><th>Source / document_id</th><th>document_uid</th><th>readiness</th><th>attention</th><th>最新版本</th><th>serving</th><th>Resource</th><th>標題</th></tr>${docs.map(d => { const v = docView(S, d); return `<tr><td>${d.source} / <b>${d.document_id}</b></td><td>${d.uid}</td><td class="r-${v.readiness}">${READY[v.readiness]}</td><td>${v.attention.map(a => `${a.kind}（${a.action_owner}）`).join('<br>') || '—'}</td><td>${v.latest.source_revision_id} v${v.latest.source_version ?? '—'}：${v.latest.state}</td><td>${Object.entries(v.serving).map(([p, s]) => `${p}: ${s || '—'}`).join('<br>')}</td><td>${d.resource}</td><td>${esc(d.title)}</td></tr>`; }).join('')}</table>` : '<span class="muted">（沒有文件）</span>';
+    const bs = Object.values(S.batches);
+    $('batches').innerHTML = bs.length ? `<table><tr><th>batch_id</th><th>Source</th><th>狀態</th><th>items</th></tr>${bs.map(b => `<tr><td>${b.id}</td><td>${b.source}</td><td>${b.state}</td><td>${b.items.map(i => `${i.document_id}: ${i.status}${i.error ? '（' + i.error + '）' : ''}`).join('<br>')}</td></tr>`).join('')}</table>` : '<span class="muted">（沒有 batch）</span>';
+    const rs = Object.values(S.requests);
+    $('requests').innerHTML = rs.length ? `<table><tr><th>request_id</th><th>種類</th><th>文件</th><th>版本</th><th>狀態</th><th>發起者</th><th>重跑自</th></tr>${rs.map(r => `<tr><td>${r.id}</td><td>${r.kind}</td><td>${S.docs[r.uid]?.document_id ?? r.uid}</td><td>${r.srid ?? '—'}</td><td>${r.state}${r.cause ? '（' + r.cause + '）' : ''}</td><td>${r.initiator}</td><td>${r.retry_of ?? '—'}</td></tr>`).join('')}</table>` : '<span class="muted">（沒有 request）</span>';
+    renderScenario();
+  }
+  function act(action) { const out = dispatch(S, action); S = out.state; lastResult = { 呼叫:action.type, ...out.result }; render(); }
+
+  function renderTabs() { $('tabs').innerHTML = SCENARIOS.map((s, k) => `<button class="${k === cur ? 'active' : ''}" data-k="${k}">${esc(s.title)}</button>`).join(''); $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => { cur = +b.dataset.k; run = null; renderTabs(); renderScenario(); }); }
+  function renderScenario() {
+    const sc = SCENARIOS[cur];
+    const started = run && run.sc === cur;
+    $('scenario').innerHTML = `<h3>${esc(sc.title)}</h3><p>${esc(sc.desc)}</p><p class="muted">${sc.seed ? '初始狀態：hr-km 已有 B（v2，附圖）和 C（v1），兩者都已處理並由所有 projection 服務。' : '初始狀態：空的平台。'}</p>
+      <button class="primary" id="startSc">${started ? '重新開始' : '開始這個情境'}</button>
+      <div>${sc.steps.map((st, k) => { const done = started && k < run.i; const mark = done ? (run.marks[k] ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>') : (k + 1); const can = started && k === run.i; return `<div class="step"><div class="mark">${mark}</div><div class="body"><button ${can ? '' : 'disabled'} data-step="${k}">${esc(st.label)}</button><div class="muted">預期：${esc(st.expect)}</div></div></div>`; }).join('')}</div>`;
+    $('startSc').onclick = () => { const r = startScenario(sc); run = { ...r, sc:cur }; S = run.S; lastResult = null; render(); };
+    $('scenario').querySelectorAll('[data-step]').forEach(b => b.onclick = () => { run.S = S; const out = runStep(run, sc); S = run.S; lastResult = { 呼叫:out.action.type, ...out.result }; render(); });
+  }
+  $('runAll').onclick = () => { const res = runAllScenarios(); const total = res.reduce((a, r) => a + r.steps, 0), fails = res.flatMap(r => r.fails.map(f => ({ ...f, title:r.title }))); $('summary').innerHTML = fails.length ? `<span class="bad">${fails.length} / ${total} 步不符：${fails.map(f => esc(f.title + ' 第 ' + f.step + ' 步')).join('、')}</span>` : `<span class="ok">${res.length} 個情境、${total} 步全部符合預期</span>`; };
+
+  const FREE = [
+    ['重置為空平台', () => { S = initialState(); lastResult = null; render(); }],
+    ['重置為已有 B、C', () => { S = seed(initialState()); lastResult = null; render(); }],
+    ['宣告 A（新文件）', () => act({ type:'declare', source:'hr-km', items:[itemA] })],
+    ['宣告 B v3（只改附件）', () => act({ type:'declare', source:'hr-km', items:[itemB3] })],
+    ['宣告 C（沒變，改標題）', () => act({ type:'declare', source:'hr-km', items:[{ ...itemC1, title:'改過的標題' }] })],
+    ['上傳最新的 open batch', () => { const b = Object.values(S.batches).filter(x => x.state === 'open').pop(); if (b) act({ type:'upload', batch_id:b.id }); }],
+    ['Finalize 最新的 open batch', () => { const b = Object.values(S.batches).filter(x => x.state === 'open').pop(); if (b) act({ type:'finalize', source:b.source, batch_id:b.id }); }],
+    ['最舊的 queued request：處理成功', () => { const r = Object.values(S.requests).find(x => x.kind === 'process' && x.state === 'queued'); if (r) act({ type:'runCanonical', request_id:r.id, outcome:'accepted' }); }],
+    ['最舊的 queued request：平台失敗', () => { const r = Object.values(S.requests).find(x => x.kind === 'process' && x.state === 'queued'); if (r) act({ type:'runCanonical', request_id:r.id, outcome:'platform_fail' }); }],
+    ['最舊的 queued request：內容失敗', () => { const r = Object.values(S.requests).find(x => x.kind === 'process' && x.state === 'queued'); if (r) act({ type:'runCanonical', request_id:r.id, outcome:'content_reject' }); }],
+    ['所有文件發布到必要 projection', () => { Object.values(S.docs).forEach(d => { S = dispatch(S, { type:'publish', uid:d.uid }).state; }); lastResult = { 呼叫:'publish (all)' }; render(); }],
+    ['平台批次重跑', () => act({ type:'redrive' })],
+    ['Owner 升版', () => act({ type:'adoptVersion' })],
+    ['刪除 C', () => act({ type:'delete', source:'hr-km', document_id:'C' })],
+    ['套用最舊的刪除', () => { const r = Object.values(S.requests).find(x => x.kind === 'delete' && x.state === 'queued'); if (r) act({ type:'applyDeletion', request_id:r.id }); }],
+    ['Projection 撤下已套用的刪除', () => { const r = Object.values(S.requests).find(x => x.kind === 'delete' && x.state === 'processing'); if (r) act({ type:'dropFromProjections', request_id:r.id }); }],
+    ['切換暫停受理', () => act({ type:'setFlag', flag:'paused', value:!S.flags.paused })],
+    ['切換授權服務停擺', () => act({ type:'setFlag', flag:'authDown', value:!S.flags.authDown })],
+    ['時間 +25 小時', () => act({ type:'advance', hours:25 })],
+    ['時間 +31 天', () => act({ type:'advance', hours:744 })],
+  ];
+  $('free').innerHTML = FREE.map((x, k) => `<button data-f="${k}">${esc(x[0])}</button>`).join('');
+  $('free').querySelectorAll('[data-f]').forEach(b => b.onclick = () => FREE[+b.dataset.f][1]());
+  renderTabs(); render();
+}
+</script>
+</body>
+</html>
