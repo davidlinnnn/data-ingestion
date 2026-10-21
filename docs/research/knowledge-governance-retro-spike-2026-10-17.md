@@ -57,7 +57,7 @@
 
 - [#53 Q12／Q13](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5991845520)已要求 accountable policy authority、可信 document／authorization-target binding、meaning／scope／validity 相容、caller 不能自選寬鬆 provider、denial 與 unavailable 分開；provider allow 不推翻 platform withdrawal。**沒有 qualified 的具體 GAM protocol／SDK／policy engine。**
 - [#56](https://github.com/davidlinnnn/data-ingestion/issues/56)本來就要求 current-state、cache、late completion、rollback／restore、觀察邊界與 enforcement evidence；receipt／applied／enforcement／purge 不混為一談。研究補充不能把它擴張成所有 agent security。
-- 本地 checkout 的 [processing](../../src/pdf_processing/processing.py)、[object store](../../src/pdf_processing/object_store.py)、[enrichment](../../src/pdf_processing/enrichment.py)可重用固定 object version／digest、checked artifact reads、producer binding 及必要 evidence barrier。**這些不是 user authorization、Canonical Acceptance 或 Published View publication。** 成功 enrichment 仍明示 `canonical_accepted: False`／`quality_accepted: False`。
+- 本地 checkout 的 [processing](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/processing.py)、[object store](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/object_store.py)、[enrichment](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/enrichment.py)可重用固定 object version／digest、checked artifact reads、producer binding 及必要 evidence barrier。**這些不是 user authorization、Canonical Acceptance 或 Published View publication。** 成功 enrichment 仍明示 `canonical_accepted: False`／`quality_accepted: False`。
 - 本地 `src` 未見可直接接入的通用 Serving／GAM adapter／Wiki／Retrieval／撤回／purge／delivery audit；此 branch 落後，不能推論所有 remote 分支都沒有實作。以本地證據只能說：本次尚無可用的端到端整合環境。
 
 ## Spike 2：用途、撤回與副本邊界的可執行模型

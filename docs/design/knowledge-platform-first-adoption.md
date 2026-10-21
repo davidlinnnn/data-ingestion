@@ -66,9 +66,9 @@ Fetch 是線上讀取的工作類型；Canonical 對 agent／application 直接�
 
 ### 可重用的既有量測及其限制
 
-[PDF qualification 的 supported configuration](../../tests/pdf_processing/t09b/SUPPORTED-CONFIGURATION.md) 只涵蓋四個固定 fixtures 與其受控序列；採單一 parser slot、serialized business work，worker 配置為 4 CPU／5 GiB hard limit。這不是整個平台的資源選擇，也未資格化 two-child throughput；拒收上限不代表其範圍內任意 PDF 均通過資格。
+[PDF qualification 的 supported configuration](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/tests/pdf_processing/t09b/SUPPORTED-CONFIGURATION.md) 只涵蓋四個固定 fixtures 與其受控序列；採單一 parser slot、serialized business work，worker 配置為 4 CPU／5 GiB hard limit。這不是整個平台的資源選擇，也未資格化 two-child throughput；拒收上限不代表其範圍內任意 PDF 均通過資格。
 
-現有處理時間不提供 production-capacity／SLA 主張。[PDF-core handoff](../../deploy/pdf-processing/HANDOFF.md) 明確區分 processing completion 與 Canonical acceptance；該份資格證據不包含本次 20 篇論文的 Canonical／Wiki／Retrieval 端到端完成時間。Q8–Q11 的日常 5 篇每篇 10 分鐘／初批 20 篇整批 1 小時可搜尋、Wiki 24 小時、多人服務與 10 個同時檢索請求之 p95 ≤ 3 秒目標，仍需依實際文件、方法與 projection／serving 方案評估驗證。Q14 的尖峰負載與 Q15 的全量重建／日常工作共存亦未量測。單一 parser slot 的已量測範圍不能推論為 query 單用戶限制或 query capacity 證明。
+現有處理時間不提供 production-capacity／SLA 主張。[PDF-core handoff](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/deploy/pdf-processing/HANDOFF.md) 明確區分 processing completion 與 Canonical acceptance；該份資格證據不包含本次 20 篇論文的 Canonical／Wiki／Retrieval 端到端完成時間。Q8–Q11 的日常 5 篇每篇 10 分鐘／初批 20 篇整批 1 小時可搜尋、Wiki 24 小時、多人服務與 10 個同時檢索請求之 p95 ≤ 3 秒目標，仍需依實際文件、方法與 projection／serving 方案評估驗證。Q14 的尖峰負載與 Q15 的全量重建／日常工作共存亦未量測。單一 parser slot 的已量測範圍不能推論為 query 單用戶限制或 query capacity 證明。
 
 ## 邊界與交付責任
 
