@@ -1,252 +1,104 @@
 # Enterprise AI Data Foundation
 
-The Enterprise AI Data Foundation is a target architecture for turning
-heterogeneous enterprise information into reusable, governed knowledge for AI
-systems.
+A proposed architecture for reusable enterprise knowledge and future experience
+from applying that knowledge. The **Knowledge Platform** is the current design
+focus: understand governed Sources, preserve Canonical Knowledge, and publish
+independently evolving views for consumers.
 
-Its first bounded delivery domain is the **Knowledge Platform**:
+This repository contains a **user-confirmed Knowledge Platform logical baseline**,
+a separate proposed Architecture Direction Review package, and an independently
+qualified PDF processing core. Detailed platform contracts and implementation
+remain in progress; PDF-core qualification is not whole-platform readiness.
 
-> Understand governed source knowledge once, preserve it as Canonical
-> Knowledge, and publish many independently governed views.
+## Start here
 
-This repository currently contains the architecture baseline and explanatory
-materials. It is not yet a deployable implementation or delivery plan.
+Start with the [Knowledge Platform logical design](docs/design/knowledge-platform-logical-design.md)
+and [overall review](docs/design/knowledge-platform-overall-review.md) for the confirmed
+2026-09-28 responsibilities and handoff. The [active wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52)
+owns the remaining decisions and integration checkpoints. The following direction
+package provides background and retains its separate proposed status.
 
-## Purpose
+1. [HLD.md](HLD.md) — problem framing, full Knowledge Loop, current scope,
+   responsibilities, scenarios, and trade-offs.
+2. [ARCHITECTURE-BASELINE.md](ARCHITECTURE-BASELINE.md) — proposed boundaries and
+   principles, explicit open design questions, and direction-review criteria.
+3. [Review brief](docs/reviews/architecture-direction-review.md) — the candidate
+   package, walkthrough prompts, and pending reviewer outcomes.
+4. [CONTEXT.md](CONTEXT.md) — the current conceptual glossary.
 
-Enterprise knowledge is distributed across documents, tables, business
-systems, SaaS platforms, APIs, images, diagrams, audio, video, and other
-modalities. AI applications repeatedly need the same upstream capabilities:
+Use the [documentation guide](docs/README.md) to distinguish confirmed logical
+decisions, proposed direction material, historical evidence, and implementation.
 
-- source acquisition and change detection;
-- parsing and structural reconstruction;
-- policy interpretation and enforcement;
-- versioning, lineage, and provenance;
-- transformation into retrieval, graph, or synthesized knowledge products.
+## Problem and direction
 
-When every application rebuilds those capabilities independently, the
-enterprise gets duplicated processing, inconsistent source interpretation,
-fragmented governance, incomplete lineage, and derived products that cannot be
-reliably rebuilt.
+The existing shared ingestion pipeline has accumulated consumer-specific
+preparation alongside source acquisition and understanding. The working diagnosis
+is that consumers cannot reuse the intermediate knowledge and evolve their
+methods independently enough. The HLD identifies the operational examples needed
+to validate that diagnosis.
 
-The enterprise's existing shared ingestion pipeline avoided that duplication
-but exhibits the mirror-image failure mode: without a durable canonical
-boundary, consumer-specific preparation — chunking, embedding, summarization,
-agent-specific transforms — has accumulated inside one ingestion flow,
-coupling every consumer's lifecycle to every other's. Both failure modes share
-one root cause: no durable knowledge layer between source understanding and
-knowledge consumption. [`HLD.md`](HLD.md) tells this story in full.
-
-The Foundation separates **source understanding** from **knowledge
-consumption**. Source information is first preserved as durable Canonical
-Knowledge. Independently owned Published Views can then evolve for different
-consumer needs without reconnecting to or re-parsing enterprise Sources.
+The proposed architecture separates reusable source understanding from projection
+methods and publication. Retrieval, Graph, and Wiki illustrate different knowledge
+products that can consume Canonical Knowledge while retaining their own meaning,
+ownership, product-operation semantics, and lifecycle. Applications and agents
+own application-level query orchestration, additional ranking, context assembly,
+tool use, and their application behavior.
 
 ## Knowledge Loop
 
-![Enterprise AI Data Foundation Knowledge Loop](docs/diagrams/knowledge-loop.png)
+![Knowledge Loop: current Knowledge Platform and future experience improvement paths](docs/diagrams/knowledge-loop.png)
 
-The long-term direction is:
+The [editable Mermaid diagram](docs/diagrams/knowledge-loop.md) shows current
+design scope with solid lines and future experience paths with dashed lines.
+It is a conceptual architecture, not an implementation status or service topology.
 
-```text
-Know → Apply → Learn → Improve
-```
-
-- **Know:** transform governed Sources into source-faithful Canonical Knowledge
+- **Know:** turn governed source observations into reusable Canonical Knowledge
   and Published Views.
-- **Apply:** deliver governed knowledge to search, RAG, graph, wiki, agent, and
-  application experiences.
-- **Learn:** capture future evidence about which knowledge, models, prompts,
-  tools, actions, and feedback participated in AI or agent execution.
-- **Improve:** use governed experience evidence to improve AI systems and
-  enterprise knowledge through accountable lifecycle changes.
+- **Apply:** applications and agents use published knowledge and authorized tools.
+- **Learn:** future processing organizes Agent Traces into reusable Canonical
+  Agent Trajectories within Canonical Experience.
+- **Improve:** evaluation informs changes to agents, projection methods or
+  products, canonical processing methods, or source content. Each change returns
+  through its owner's normal lifecycle.
 
-The editable version is available in
-[`docs/diagrams/knowledge-loop.md`](docs/diagrams/knowledge-loop.md). It is a
-discussion aid; the Architecture Baseline remains normative.
+For example, an agent can propose a better SOP based on execution evidence. The
+Source Owner validates and publishes the revision in the source system; ordinary
+Source Integration then brings it into the knowledge lifecycle.
 
-## Architecture at a glance
+## What this review agrees
 
-```text
-External Sources
-      │
-      ▼
-┌──────────────────────────────────────────────────────────┐
-│ Knowledge Platform                                       │
-│ Source Integration → Canonicalization                    │
-│                    → Canonical Knowledge                 │
-│                    → Materialization → Published Views   │
-└────────────────────────────┬─────────────────────────────┘
-                             │
-                             ▼
-                 Governed Published Interfaces
-                             │
-                             ▼
-                    External Consumers
-```
+Reviewers are asked to align on the problem, scope, responsibilities, principles,
+trade-offs, and next investigations. Source fidelity, governance, lineage,
+independent evolution, and accountable improvement remain central.
 
-The Knowledge Platform owns the governed lifecycle from Source Integration
-through publication. External Sources and External Consumers remain outside
-its boundary.
+Exact canonical schemas, identity and lifecycle protocols, publication units,
+replay guarantees, trajectory contracts, and technology choices are subsequent
+design work. [Open questions](ARCHITECTURE-BASELINE.md#7-open-design-questions)
+make those decisions visible without selecting their answers prematurely.
 
-Canonical Knowledge preserves reusable, source-faithful content, structure,
-evidence, lineage, and governance before consumer-specific specialization.
-Materialization consumes Canonical Knowledge without Source access and produces
-immutable Published View Versions.
+The next progression is direction alignment, focused design validation, reviewed
+logical contracts, and then physical design and delivery planning. Dates,
+budgets, and implementation sequence remain to be planned.
 
-The initial standard Published View interface families are:
+## Candidate and design history
 
-- **Retrieval:** governed passages and representations for lexical, dense,
-  vector-similarity, and hybrid retrieval;
-- **Graph:** independently owned nodes, edges, meanings, and evidence-backed
-  claims;
-- **Wiki:** governed synthesis with mandatory citations and accountable
-  publication.
+The direction package is preserved in this design checkpoint. Its
+[review brief](docs/reviews/architecture-direction-review.md) retains pending
+reviewer outcomes; publishing this checkpoint does not establish a new formal
+direction-review record or change the confirmed logical-design scope.
 
-Additional Projection Types can be registered when they preserve the same
-governance, lineage, coverage, lifecycle, and deletion-propagation obligations.
-
-## Consumer value
-
-The Foundation creates value through External Consumer applications while
-leaving product behavior and semantic ownership with those consumers.
-
-### Multimodal RAG
-
-Multimodal RAG can retrieve across text, tables, layout, images, audio, and
-video while retaining source evidence, policy, versions, and lineage. Consumer
-teams remain free to choose retrieval strategy, reranking, context assembly,
-models, and generation behavior.
-
-### Graph RAG
-
-Graph RAG can combine governed retrieval with domain-owned graph semantics for
-relationship discovery and multi-hop reasoning. Different Graph definitions
-may serve different domains without forcing one enterprise-wide ontology or
-shared semantic identity.
-
-### LLM Wiki
-
-LLM Wiki applications can publish synthesized knowledge products with complete
-citations, immutable versions, rollback, and an accountable Knowledge
-Publisher. Reading-product presentation and interaction remain consumer
-responsibilities.
-
-### Agents and copilots
-
-Agents and copilots can combine Retrieval, Graph, and Wiki Published Views
-without implementing Source connectors, parsing, or canonicalization. Published
-knowledge remains untrusted generator input, so prompt-injection and
-content-trust controls remain consumer responsibilities.
-
-## Binding architecture principles
-
-The normative baseline establishes these cross-cutting principles:
-
-1. **Governance and leakage:** source authorization is the access ceiling;
-   materialization and query paths fail closed.
-2. **Lineage:** every published observation carries evidence lineage through
-   Canonical Knowledge to its originating Source Revision.
-3. **Rebuildability:** Published View Versions remain reproducible without
-   Source access while their complete Reconstruction Closure is lawfully
-   retained.
-4. **Deletion propagation:** Tombstones, security invalidation, erasure, and
-   retention expiry close affected eligibility and prevent future disclosure.
-5. **Canonicalization quality:** typed canonical primitives preserve source
-   fidelity, and publication is gated against silent omission or structural
-   reduction.
-
-For precise definitions and obligations, use
-[`ARCHITECTURE-BASELINE.md`](ARCHITECTURE-BASELINE.md), not this summary.
-
-## Scope
-
-### Current target
-
-The current target is the complete logical Knowledge Platform architecture:
-Source Integration, Canonicalization, Canonical Knowledge, governance,
-materialization, publication, and Governed Published Interfaces.
-
-### Future direction
-
-**Canonical Experience** is a separate future canonical domain for reusable
-observations of AI and agent execution. The current baseline defines only the
-Knowledge-side `Knowledge Consumption Reference`; it does not define future
-experience ingestion, curation, training eligibility, retention, or feedback
-machinery.
-
-### Explicitly not defined
-
-This baseline does not choose or promise:
-
-- vendors, products, databases, storage engines, or deployment topology;
-- physical schemas, concrete APIs, or endpoint definitions;
-- parser, embedding-model, or retrieval-tuning choices;
-- numeric SLOs, capacity targets, budgets, staffing, or delivery dates;
-- an implementation backlog or migration plan;
-- final threat-model, security-certification, or compliance outcomes.
-
-## Current status
-
-The coordinated architecture-review candidate is
+The [previous GitHub review record](https://github.com/davidlinnnn/data-ingestion/issues/29)
+belongs to candidate
 [`babda22`](https://github.com/davidlinnnn/data-ingestion/commit/babda22bfc0eeb06bed5a6af7d94717f648c5265)
-on the
-[`architecture-baseline-review-babda22`](https://github.com/davidlinnnn/data-ingestion/tree/architecture-baseline-review-babda22)
-review branch. It supersedes candidate `1acfc9a`: the HLD is restructured
-around the existing ingestion pipeline's limits, and the Baseline now
-separates frozen invariants from provisional mechanism contracts (Baseline
-authority levels).
+and its former contract-completeness scope. It does not cover this revised
+package. Earlier evidence keeps its original version and attribution.
 
-Formal Architecture Baseline Endorsement is pending in
-[`Architecture baseline review — babda22`](https://github.com/davidlinnnn/data-ingestion/issues/29).
-The Review Record requires independent outcomes from:
+The [design-note index](docs/design/README.md) preserves the earlier detailed
+Baseline, rationale, rejected options, and taxonomy examples as non-normative
+material for later design. The [scope review memo](docs/reviews/hld-stage-scope-review.md)
+explains this change in review stage. Historical normative wording in those
+materials does not create requirements for the current candidate.
 
-- the Enterprise Architecture Reviewer;
-- the Security and Data Governance Reviewer;
-- the AI Consumer Architecture Reviewer.
-
-Endorsement means the architecture is decision-complete for later design. It
-does not authorize funding, delivery, production, or final security and
-compliance certification.
-
-## Documentation
-
-- [`HLD.md`](HLD.md) — explanatory narrative covering background, the limits
-  of the existing ingestion pipeline, strategy, target value, current
-  positioning, and the complete Knowledge Loop.
-- [`ARCHITECTURE-BASELINE.md`](ARCHITECTURE-BASELINE.md) — sole normative
-  source for boundaries, contracts, lifecycle rules, governance, publication,
-  consumer interfaces, and review criteria.
-- [`CONTEXT.md`](CONTEXT.md) — canonical domain glossary.
-- [`docs/registries/foundation-seed-registrations.md`](docs/registries/foundation-seed-registrations.md)
-  — governed registry seed data for initial Element Kinds, payload contracts,
-  and Source Evidence locator families.
-- [`docs/diagrams/knowledge-loop.md`](docs/diagrams/knowledge-loop.md) —
-  editable Mermaid representation of the complete Knowledge Loop.
-- [Architecture wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/1)
-  — index of the decisions and investigations that produced the candidate.
-
-## Proposed progression
-
-The following progression is a discussion aid, not an approved roadmap:
-
-1. complete Architecture Baseline Endorsement;
-2. use `/to-spec` to turn the linked architecture decisions into a buildable
-   logical and physical design;
-3. use `/to-tickets` to split the specification into reviewable,
-   dependency-aware tracer bullets;
-4. implement and validate each ticket against the endorsed boundaries;
-5. expand Sources, Projection Definitions, and consumer applications according
-   to demonstrated value and governance readiness.
-
-Dates, budgets, delivery sequence, and the first tracer-bullet scope remain
-future planning decisions.
-
-## Discussing changes
-
-Use the Mermaid diagram for collaborative exploration, but treat diagram edits
-as proposals. A change to system boundaries, canonical or publication
-contracts, governance or lifecycle invariants, architecture principles, or
-consumer-observable behavior must be reconciled with the Architecture Baseline
-and may require a new review.
-
+The [architecture exploration map](https://github.com/davidlinnnn/data-ingestion/issues/1)
+remains the index of earlier decisions and investigations. The repository uses
+[GitHub Issues](docs/agents/issue-tracker.md) for issues and resulting specifications.
