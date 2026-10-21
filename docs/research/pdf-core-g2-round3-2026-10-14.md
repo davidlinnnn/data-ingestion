@@ -24,23 +24,23 @@ Paddle 官方將 PP-OCRv5 mobile／server 列為支援繁中的 recognizer；本
 
 兩個內建字典都含全部 oracle 漢字，包括 `統／結`；字典與 CTC output class 數相符。因此不能把錯字歸因為詞彙缺漏，也不能做全域繁簡轉換後宣稱來源保真。兩個候選都未達五項通過，因此沒有額外跑 actual PictureItem scale3 分支。
 
-[OCR 完整比較](pdf-core-g2-round3-2026-10-14/ocr/review.md) · [逐位置字串與來源](pdf-core-g2-round3-2026-10-14/ocr/selection-review.json) · [固定來源檢查](pdf-core-g2-round3-2026-10-14/ocr/review.py)
+[OCR 完整比較](pdf-core-g2-round3-2026-10-14/ocr/review.md) · 逐位置字串與來源 (`pdf-core-g2-round3-2026-10-14/ocr/selection-review.json`) · 固定來源檢查 (`pdf-core-g2-round3-2026-10-14/ocr/review.py`)
 
 ## Granite：小模型能跑，任務結果分開判斷
 
-本次固定 `ibm-granite/granite-docling-258M` revision `982fe3b40f2fa73c365bdb1bcacf6c81b7184bfe`。權重 515,093,104B，匿名下載13個必要檔案約20.063秒；所有 bytes hash 保存，LFS 檔與官方固定 revision hash 相符，使用獨立 cache，未改既有 baseline 模型。Docling2.102.0／Core2.96.0／Transformers5.8.1／Torch2.14.0；實際全部 parameters 驗證為 CPU FP32，4 intra-op／1 inter-op、batch1、compile=False、quantized=False、trust_remote_code=False。[下載與 hash](pdf-core-g2-round3-2026-10-14/vlm/download.json)
+本次固定 `ibm-granite/granite-docling-258M` revision `982fe3b40f2fa73c365bdb1bcacf6c81b7184bfe`。權重 515,093,104B，匿名下載13個必要檔案約20.063秒；所有 bytes hash 保存，LFS 檔與官方固定 revision hash 相符，使用獨立 cache，未改既有 baseline 模型。Docling2.102.0／Core2.96.0／Transformers5.8.1／Torch2.14.0；實際全部 parameters 驗證為 CPU FP32，4 intra-op／1 inter-op、batch1、compile=False、quantized=False、trust_remote_code=False。下載與 hash (`pdf-core-g2-round3-2026-10-14/vlm/download.json`)
 
 模型卡明確提供 `<formula>`、`<code>`、`<otsl>` 與整頁 conversion 任務。本輪用官方 preset、engine 和 parser；直接 component probe 省略完整 pipeline lifecycle，不能等同正式 `VlmPipeline` 或 Standard enrichment 已接通。[固定 revision 模型卡](https://huggingface.co/ibm-granite/granite-docling-258M/blob/982fe3b40f2fa73c365bdb1bcacf6c81b7184bfe/README.md)、[具體 API／parser 與範圍](pdf-core-g2-round3-2026-10-14/vlm/research.md)
 
-公式輸入與第二輪 CodeFormulaV2 的 input PNG **byte 相同**，約120dpi，使用官方 `<formula>` prompt／postprocess；兩種模型的結果可作這個固定 crop 的比較，沒有暗中改 crop 或提高解析度。Granite 生成內容已包含 `1` 與 `0` 分支，但註腳 marker 2 消失、只保留 equation label `(2)`；條件文字有不平衡 `$`／混入 LaTeX。不只以「看得懂」作為可交付的公式內容。[Engine 輸出](pdf-core-g2-round3-2026-10-14/vlm/seal-eq2/raw-output.json) · [清理後公式](pdf-core-g2-round3-2026-10-14/vlm/seal-eq2/cleaned.txt)
+公式輸入與第二輪 CodeFormulaV2 的 input PNG **byte 相同**，約120dpi，使用官方 `<formula>` prompt／postprocess；兩種模型的結果可作這個固定 crop 的比較，沒有暗中改 crop 或提高解析度。Granite 生成內容已包含 `1` 與 `0` 分支，但註腳 marker 2 消失、只保留 equation label `(2)`；條件文字有不平衡 `$`／混入 LaTeX。不只以「看得懂」作為可交付的公式內容。Engine 輸出 (`pdf-core-g2-round3-2026-10-14/vlm/seal-eq2/raw-output.json`) · 清理後公式 (`pdf-core-g2-round3-2026-10-14/vlm/seal-eq2/cleaned.txt`)
 
-**另定位出一個 engine 清理缺陷**：離線用固定 tokenizer 解碼保存的 generated IDs，模型確有生成完整 `</formula>`／`</doctag>` 與 EOS；目前安裝的 Transformers engine 用 `text.rstrip(pad_token)` 清尾端，`rstrip` 把 pad token 當字元集合，連前一個 tag 的 `>` 也刪掉。這能精確重現保存的 engine output。公式後處理因此留下 `</formula`，不能歸因為模型未生成 closing tag 或 token budget 截斷。原始 IDs、未受該清理影響的 decode 與重現檢查另外保存，沒有修改官方套件；漏註腳、條件格式與表格漏值在清理前已存在，仍未通過。[離線 decode 證據](pdf-core-g2-round3-2026-10-14/review/token-decode.json) · [獨立來源核對](pdf-core-g2-round3-2026-10-14/review/review.md)
+**另定位出一個 engine 清理缺陷**：離線用固定 tokenizer 解碼保存的 generated IDs，模型確有生成完整 `</formula>`／`</doctag>` 與 EOS；目前安裝的 Transformers engine 用 `text.rstrip(pad_token)` 清尾端，`rstrip` 把 pad token 當字元集合，連前一個 tag 的 `>` 也刪掉。這能精確重現保存的 engine output。公式後處理因此留下 `</formula`，不能歸因為模型未生成 closing tag 或 token budget 截斷。原始 IDs、未受該清理影響的 decode 與重現檢查另外保存，沒有修改官方套件；漏註腳、條件格式與表格漏值在清理前已存在，仍未通過。離線 decode 證據 (`pdf-core-g2-round3-2026-10-14/review/token-decode.json`) · [獨立來源核對](pdf-core-g2-round3-2026-10-14/review/review.md)
 
 兩個全頁任務保留原 PDF physical page，按 scale2 render，直接送入官方 engine，未再乘2。prompt 為 `Convert this page to docling.`，明確 `skip_special_tokens=False`，4096-token 探測上限；公式上限512。三次皆正常 EOS，分別84／1673／1601個生成 tokens，未撞長度上限。engine metadata 的 num_tokens 含 input，不拿來當生成 tokens。
 
 原始文字先保存，再用 `DocTagsDocument.from_doctags_and_image_pairs`／`DoclingDocument.load_from_doctags` 產生結構與 Markdown。解析成功不代表完整或正確；這次表格錯誤已存在 raw output。孤立圖片 parser 的 page1／pixel bbox 與原 PDF physical page／point 不同，來源 mapping 保留於 input.json，尚未實作正式回填。頁面輸出與其中較好看的表格不能直接送入 Canonical Acceptance。
 
-[公式／整頁 runner](pdf-core-g2-round3-2026-10-14/vlm/probe.py) · [CPU 執行記錄](pdf-core-g2-round3-2026-10-14/vlm/observations.json) · [英文 Markdown](pdf-core-g2-round3-2026-10-14/vlm/english-scan-p1/document.md) · [SkillOpt Markdown](pdf-core-g2-round3-2026-10-14/vlm/skillopt-p8/document.md)
+公式／整頁 runner (`pdf-core-g2-round3-2026-10-14/vlm/probe.py`) · CPU 執行記錄 (`pdf-core-g2-round3-2026-10-14/vlm/observations.json`) · 英文 Markdown (`pdf-core-g2-round3-2026-10-14/vlm/english-scan-p1/document.md`) · SkillOpt Markdown (`pdf-core-g2-round3-2026-10-14/vlm/skillopt-p8/document.md`)
 
 ## 專門 OTSL table 任務補充
 
@@ -48,7 +48,7 @@ Paddle 官方將 PP-OCRv5 mobile／server 列為支援繁中的 recognizer；本
 
 435個生成 tokens、EOS、未撞4096上限。輸出為沒有 opening wrapper 的 bare OTSL，依官方 `parse_otsl_table_content` 解析成一個 TableData，保存 adapter 與格式異常，不把多個 OTSL block 硬併；兩個 block 分開解析、bare OTSL 及非 OTSL 拒絕均有離線自檢。沒有捏造 producer bbox 或補上 caption 關係。
 
-raw producer 已缺 mini-batch32 三個值、panel(c)五列15個 metric、panel(f)四列12個 metric，至少30個來源數值沒有必要 panel／setting 關係；不是 parser 才丟失。這是具體遺漏證據，不拿30／84冒充完整分類的全表 error%。[完整 table task 記錄](pdf-core-g2-round3-2026-10-14/vlm/table-crop/README.md) · [OTSL raw](pdf-core-g2-round3-2026-10-14/vlm/table-crop/run/output.txt) · [結構結果](pdf-core-g2-round3-2026-10-14/vlm/table-crop/run/document.json)
+raw producer 已缺 mini-batch32 三個值、panel(c)五列15個 metric、panel(f)四列12個 metric，至少30個來源數值沒有必要 panel／setting 關係；不是 parser 才丟失。這是具體遺漏證據，不拿30／84冒充完整分類的全表 error%。完整 table task 記錄 (`pdf-core-g2-round3-2026-10-14/vlm/table-crop/README.md`) · OTSL raw (`pdf-core-g2-round3-2026-10-14/vlm/table-crop/run/output.txt`) · 結構結果 (`pdf-core-g2-round3-2026-10-14/vlm/table-crop/run/document.json`)
 
 ## 本機可行性與 latency
 
@@ -74,4 +74,4 @@ OCR 起初 enum 設定錯誤發生於推論前，失敗 runner／summary／log �
 3. 表格仍須通過六 panel、完整邏輯表、caption／條件與八個必要比較；較能分區的輸出也不可直接視為通過。保留每表≤5%及 critical comparison 門檻。Granite 這兩種 table 配置未修好來源，下一個 producer／分區方法須有新假設，不繼續盲試同一小模型。
 4. 使用者已允許的暫用 OpenAI VLM API 可作下一比較，但確切 model ID／endpoint／已配置的環境變數名稱待提供，不請求在對話貼密鑰、不自行假設模型。公司 Qwen3／vLLM 候選用相同來源另驗，效果與 latency 不當作等效。
 
-本輪未驗其他真實 OCR／公式／code、inline detector／回填、圖片分類／描述／chart、heading recovery、另外三張完整 G1 表、完整 Canonical 交付／Acceptance／恢復、remote API、公司 GPU 或高頻負載。人類未另行逐字認證本輪結果；所選來源由 Codex 交叉檢查。本機檔案未 commit／push；第一／二輪與 G1 原始證據保留。[離線自檢](pdf-core-g2-round3-2026-10-14/review/check.py) · [完整性核對](pdf-core-g2-round3-2026-10-14/verify.py) · [Artifact manifest](pdf-core-g2-round3-2026-10-14/artifacts.json) · [核對結果](pdf-core-g2-round3-2026-10-14/validation.json)
+本輪未驗其他真實 OCR／公式／code、inline detector／回填、圖片分類／描述／chart、heading recovery、另外三張完整 G1 表、完整 Canonical 交付／Acceptance／恢復、remote API、公司 GPU 或高頻負載。人類未另行逐字認證本輪結果；所選來源由 Codex 交叉檢查。本機檔案未 commit／push；第一／二輪與 G1 原始證據保留。離線自檢 (`pdf-core-g2-round3-2026-10-14/review/check.py`) · 完整性核對 (`pdf-core-g2-round3-2026-10-14/verify.py`) · Artifact manifest (`pdf-core-g2-round3-2026-10-14/artifacts.json`) · 核對結果 (`pdf-core-g2-round3-2026-10-14/validation.json`)

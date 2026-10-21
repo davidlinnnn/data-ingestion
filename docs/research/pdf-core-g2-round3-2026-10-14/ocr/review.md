@@ -13,13 +13,13 @@ RapidAI 官方說明既有 RapidOCR 前後處理能配合 PP-OCRv5 ONNX recogniz
 | `ch_PP-OCRv5_rec_mobile.onnx` | `RapidAI/RapidOCR v3.9.2` | 16,631,306 | `5825fc7ebf84ae7a412be049820b4d86d77620f204a041697b0494669b1742c5` |
 | `ch_PP-OCRv5_rec_server.onnx` | `RapidAI/RapidOCR v3.9.2` | 84,577,022 | `e09385400eaaaef34ceff54aeb7c4f0f1fe014c27fa8b9905d4709b65746562a` |
 
-[download.json](download.json) 保存版本化 URL、HEAD metadata、實際大小／hash 與下載時間。兩個模型僅放在 `/private/tmp/pdf-core-g2r3-ocr-models-20261014/`；沒有裝套件、改舊模型 cache 或增加 DB 內容。`inference_executed:false` 是下載當下的狀態；後續實際執行以 [summary.json](summary.json) 為準。版本 tag 不當作不可變 revision，下載後的 SHA-256 才固定本次 bytes。
+`download.json` 保存版本化 URL、HEAD metadata、實際大小／hash 與下載時間。兩個模型僅放在 `<tmp>/pdf-core-g2r3-ocr-models-20261014/`；沒有裝套件、改舊模型 cache 或增加 DB 內容。`inference_executed:false` 是下載當下的狀態；後續實際執行以 `summary.json` 為準。版本 tag 不當作不可變 revision，下載後的 SHA-256 才固定本次 bytes。
 
 ## 相同輸入與執行邊界
 
-沿用 [G1-O01 registry](../../../fixtures/pdf-core-g1-2026-10-14/cases.json) 的 NCCU PDF physical p3；選取原始 embedded Image35 中央 panel，685×230，未放大。來源 PDF SHA `3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e`；固定圖片 SHA `67daf56dc4b467605c202096cb16413818dd22063a85dc13a40d2401ce109f68`。逐位置核對中央 b1–b5，禁止以右側或側欄重複字串替代。
+沿用 G1-O01 registry (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`) 的 NCCU PDF physical p3；選取原始 embedded Image35 中央 panel，685×230，未放大。來源 PDF SHA `3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e`；固定圖片 SHA `67daf56dc4b467605c202096cb16413818dd22063a85dc13a40d2401ce109f68`。逐位置核對中央 b1–b5，禁止以右側或側欄重複字串替代。
 
-[run.py](run.py) 依序執行兩個 CPU child，重用第二輪 runner 的 raw-stage instrumentation 與來源座標映射；保留既有 v6-small detector（SHA `090f04abcd9d9a7498bc4ebf677e4cb9bdce1fe4197ddb7e529f1ef44e1ff94f`）及 v2 orientation classifier（SHA `e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c`）。detector 框、detector scores、classifier results 和 preprocessing coordinate record，皆與第二輪同圖片 `fixed-panel-1x` 完全一致，由 [review.py](review.py) 斷言檢查，因此這次有隔離識別模型差異的證據。
+`run.py` 依序執行兩個 CPU child，重用第二輪 runner 的 raw-stage instrumentation 與來源座標映射；保留既有 v6-small detector（SHA `090f04abcd9d9a7498bc4ebf677e4cb9bdce1fe4197ddb7e529f1ef44e1ff94f`）及 v2 orientation classifier（SHA `e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c`）。detector 框、detector scores、classifier results 和 preprocessing coordinate record，皆與第二輪同圖片 `fixed-panel-1x` 完全一致，由 `review.py` 斷言檢查，因此這次有隔離識別模型差異的證據。
 
 RapidOCR 3.9.2／ONNX Runtime 1.24.3；三個 session 的實際 providers 皆保存且斷言為 `CPUExecutionProvider`，intra-op 4／inter-op 1 thread，recognition／classification batch 1。未啟用 CUDA、MPS、MLX、CoreML 或 API。
 
@@ -30,11 +30,11 @@ RapidOCR 3.9.2／ONNX Runtime 1.24.3；三個 session 的實際 providers 皆保
 | `mobile-fixed-panel-1x` | 0.398 | 0.788 | 1.183 |
 | `server-fixed-panel-1x` | 0.471 | 0.793 | 1.230 |
 
-單 child 180 秒／RSS 6 GiB 軟停止，0.25 秒取樣，啟動前 available memory 至少 8 GiB；兩次均 exit 0、未觸發停止。這是本機一次觀察，非穩定 latency、全文件 SLO 或高頻容量。最初錯把 RapidOCR enum 參數傳成字串，於載入模型／推論前失敗；[失敗 runner](startup-failure-run.py)、[summary](startup-failure-summary.json) 與 [log](startup-failure-mobile/child.log) 原樣保存，修正 enum 後才完成上述兩次推論。
+單 child 180 秒／RSS 6 GiB 軟停止，0.25 秒取樣，啟動前 available memory 至少 8 GiB；兩次均 exit 0、未觸發停止。這是本機一次觀察，非穩定 latency、全文件 SLO 或高頻容量。最初錯把 RapidOCR enum 參數傳成字串，於載入模型／推論前失敗；失敗 runner (`startup-failure-run.py`)、summary (`startup-failure-summary.json`) 與 log (`startup-failure-mobile/child.log`) 原樣保存，修正 enum 後才完成上述兩次推論。
 
 ## 逐位置結果
 
-[selection-review.json](selection-review.json) 保存每項預期、實際字串、confidence、source envelope、raw box 與位置對應。已目視原始 crop；只允許空白與雙引號字形正規化，不改漢字或冒號／句點。
+`selection-review.json` 保存每項預期、實際字串、confidence、source envelope、raw box 與位置對應。已目視原始 crop；只允許空白與雙引號字形正規化，不改漢字或冒號／句點。
 
 | 項目 | PP-OCRv5 mobile | PP-OCRv5 server |
 |---|---|---|

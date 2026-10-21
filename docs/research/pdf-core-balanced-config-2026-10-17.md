@@ -23,7 +23,7 @@
 | VLM 完整 cells→公開 Core＋serializer | 前輪T01/T02完整表示成功；新crop T04讀值295/300且無遺漏；T05交付通過 | 新crop仍座標重疊／越界，普通表回歸，生成量與本次延遲增加；caption重複已用ownership控制避免 | 保留公開接合；停止目前每格完整座標JSON配置的追加推論 |
 | 圖片／chart 的 task-specific VLM | 兩張真實圖意與四張受控 chart 有正面內容證據 | 實際 chart 分布、圖片 inventory、同版 typed supplement／image keys 及公司模型未完整驗 | 優先保留為 component VLM 候選，分類不作豁免必要工作的依據 |
 
-證據：[原生比較](pdf-core-native-round-results-2026-10-17.md)、[CodeFormula](pdf-core-standard-enrichment-results-2026-10-17.md)、[Direct cells](pdf-core-direct-cell-results-2026-10-17.md)、[圖片](pdf-core-g2-images-2026-10-14.md)、[HTML gate](pdf-core-table-html-results-2026-10-17.md)、[官方 API 比較](pdf-core-g2-method-selection-decision-2026-10-15.md)、[retro 範圍校正](../reviews/pdf-core-retro-closure-2026-10-16.md)。
+證據：[原生比較](pdf-core-native-round-results-2026-10-17.md)、[CodeFormula](pdf-core-standard-enrichment-results-2026-10-17.md)、[Direct cells](pdf-core-direct-cell-results-2026-10-17.md)、[圖片](pdf-core-g2-images-2026-10-14.md)、[HTML gate](pdf-core-table-html-results-2026-10-17.md)、[官方 API 比較](pdf-core-g2-method-selection-decision-2026-10-15.md)、retro 範圍校正 (`docs/reviews/pdf-core-retro-closure-2026-10-16.md`)。
 
 研究主幹固定 Docling-slim2.132.0／Core2.99.0／PyPdfium；Heron `8f39ad3c…` CPU FP32、compile off、threshold0.3；RapidOCR PP-OCRv6 det_small／rec_small＋mobile_v2 cls，selective OCR、bitmap threshold0.05、text score0.5；TableFormer V1 accurate、cell matching=True；CPU4／interop1、batches1。已完成相容的80套件 runtime；不沿用舊草案的「環境尚缺套件」。144dpi 是保存頁圖與本次 table API 圖片，不能當每個 native stage 的真實輸入尺度。
 

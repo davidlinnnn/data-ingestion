@@ -159,10 +159,10 @@ A/B 數值互換、單位遺失或註解漏掉／掛錯，都無法滿足本案�
 ```markdown
 # 重試與發布
 1. 僅暫時性處理錯誤且作業冪等時，可重試。
-   ![品質警告](assets/check.png)
+   品質警告 (`assets/check.png`)
 2. 完成處理後執行品質檢查。
 3. 品質通過才發布；未通過則停止並通知負責人。
-   ![發布警告](assets/check.png)
+   發布警告 (`assets/check.png`)
 ```
 
 完整 Capture Package 把 `assets/check.png` 綁到固定圖片 I1。

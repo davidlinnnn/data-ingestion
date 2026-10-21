@@ -4,7 +4,7 @@
 
 The metadata inventory found **46 PDF paths, 35 distinct byte hashes and 32 excluded work IDs**. It covers the 20-paper pilot, all 10 earlier September candidates (WikiSkill overlaps the pilot), the survey/scan family, controls and historical scratch matrix variants. It uses manifests, source provenance and byte hashing; no new source content, pixels, candidate results, inference or network was inspected.
 
-[Machine-readable audit](exposure-audit.json) records every local PDF path and actual SHA-256, provenance file/hash/pointer, G2 input/artifact manifest hashes and derivative ancestry. The controls include survey and NCCU content; generated or normalized controls must clear all ancestor groups. Controls + survey + NCCU are one connected leakage component, leaving at most 30 conservative components. The 32 work IDs are not 32 independent source/template families. No internal grouped CV may split those ancestors, and no independent-family count is certified.
+Machine-readable audit (`exposure-audit.json`) records every local PDF path and actual SHA-256, provenance file/hash/pointer, G2 input/artifact manifest hashes and derivative ancestry. The controls include survey and NCCU content; generated or normalized controls must clear all ancestor groups. Controls + survey + NCCU are one connected leakage component, leaving at most 30 conservative components. The 32 work IDs are not 32 independent source/template families. No internal grouped CV may split those ancestors, and no independent-family count is certified.
 
 | Excluded original work/group | PDF paths |
 | --- | ---: |
@@ -41,7 +41,7 @@ The metadata inventory found **46 PDF paths, 35 distinct byte hashes and 32 excl
 | `tainan:tech-hearing-2` — 臺南科技產業專區第2次公聽會紀錄（更正掃描版） | 1 |
 | `uncertain:historical-profile-matrix` — Historical scratch profile-quality matrix variants | 4 |
 
-The frozen [G1 registry](../../fixtures/pdf-core-g1-2026-10-14/cases.json) remains SHA-256 `8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a`: **57 cases, 44 source-reviewed positive regression references, 11 declarative negative cases and 2 load protocols; V01–V19 retained**. Pool membership and reviewed source labels are separate from candidate output approval. Positive expectations are linked by registry JSON pointer and byte hash; the audit does not regrade outputs.
+The frozen G1 registry (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`) remains SHA-256 `8b798cdf808d01782b8dce9fabf85c7373effaa63477248dc1e95f8410813c6a`: **57 cases, 44 source-reviewed positive regression references, 11 declarative negative cases and 2 load protocols; V01–V19 retained**. Pool membership and reviewed source labels are separate from candidate output approval. Positive expectations are linked by registry JSON pointer and byte hash; the audit does not regrade outputs.
 
 Required positive regression anchors remain numbered/appendix heading hierarchy (S02/S03), style-only heading recovery (C07), complete formula/code source objects (C01/C02), ordinary inline math and cross-page/threshold meaning (E13/E14), and the existing SEAL body-continuation/caption source contract. A method that emits nothing or rejects every candidate cannot count those positive requirements as passed. The source-boundary diagnostics do not enlarge the frozen G1 denominator.
 

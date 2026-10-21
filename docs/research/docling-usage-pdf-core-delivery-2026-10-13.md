@@ -36,7 +36,7 @@
 
 ## 2. PDF 與 canonical output 功能矩陣
 
-以下把「可表示」、「會產生」、「baseline 有開」、「品質已驗證」分開；有 schema 欄位或 CLI flag 不等於處理結果已適合 Canonical Acceptance。baseline 欄取自 [#70 survey][previous]、[published profile][profile] 與 [2026-10-12 handoff][handoff]，不是本次重新執行 inference 的結果。
+以下把「可表示」、「會產生」、「baseline 有開」、「品質已驗證」分開；有 schema 欄位或 CLI flag 不等於處理結果已適合 Canonical Acceptance。baseline 欄取自 [#70 survey][previous]、[published profile][profile] 與 2026-10-12 handoff (`docs/handoffs/paper-pdf-profile-2026-10-12/decision.md`)，不是本次重新執行 inference 的結果。
 
 R01–R20 是本研究的分類編號；決策票另以 F01–F22 拆分，逐項決定以決策票為準。所有 R 項均 **待逐項決定**。採納時選擇：**必要輸出**、**有條件必要**（明定條件）、**非阻塞附加輸出**（失敗仍有明確 outcome）、或 **本次不提供**。同一列可拆成不同層級；例如「保留表格影像」和「可拿數值作跨文比較」不能以一個 checkbox 合併。
 
@@ -46,7 +46,7 @@ R01–R20 是本研究的分類編號；決策票另以 F01–F22 拆分，逐�
 | R02 頁首頁尾、footnote、caption、bibliography 等原始內容與關聯 | label／content layer／refs；原始 caption 與 generated description 不同。[Document][document]、[舊能力證據][previous] | 有界 fixtures 保留部分 graph／caption 關係；不代表全部來源皆完整 | 哪些項目及原始關聯必要；未可靠連結時保留 standalone／unknown，不能猜成引用解析或作者 metadata |
 | R03 Heading 層級 | `SectionHeaderItem.level`；bookmark → numbering → style，逐 heading 決定；不需額外模型。[Heading levels][headings] | `2.102.0` 無該 hierarchy stage；舊觀察輸出皆 level 1 | 是否需要可靠 section path。style 需 retained parsed cells；OCR 無 font weight/slant；無訊號不會補出正確層級。對既有 document 可只跑 numbering，並非必須重跑全部 layout |
 | R04 整頁／scan OCR | page text／位置；Auto、Tesseract、EasyOCR、RapidOCR、macOS Vision、Surya 等選擇。[Catalog][catalog] | native profile 關閉 page OCR；不同於 R05 | 是否包含 scanned／混合 PDF、語言、旋轉／低品質掃描；選 engine、語言與 full-page 行為後才有可驗收的契約 |
-| R05 圖內文字 OCR | 來源 picture crop 的文字、boxes、scores、no-text／failure outcome | repo 已獨立要求每個 emitted PictureItem 的 RapidOCR；此為 repo operation，不是官方 picture-description flag。[Profile][profile]、[handoff][handoff] | 是否保留目前範圍、擴及漏偵測圖／其他區域；OCR 完成不等於 diagram 理解，也不能以未產生 PictureItem 宣告來源沒有圖 |
+| R05 圖內文字 OCR | 來源 picture crop 的文字、boxes、scores、no-text／failure outcome | repo 已獨立要求每個 emitted PictureItem 的 RapidOCR；此為 repo operation，不是官方 picture-description flag。[Profile][profile]、handoff (`docs/handoffs/paper-pdf-profile-2026-10-12/decision.md`) | 是否保留目前範圍、擴及漏偵測圖／其他區域；OCR 完成不等於 diagram 理解，也不能以未產生 PictureItem 宣告來源沒有圖 |
 | R06 表格結構與 cell 內容 | rows／columns／cells／spans；TableFormer fast/accurate、matching；另有 Granite table method。[Catalog][catalog]、[advanced][advanced] | pinned TableFormer V1 ACCURATE＋matching 有輸出；#72 對 general table-dependent 分析保留 uninterpreted | 分開選「保存觀察」與「可比較數據」。後者須檢查 header→value、model／metric／condition、units、notes、spans、跨頁續表；參數或模型名稱不提供正確性保證 |
 | R07 圖片、頁影像、表格 crop | pixels 與 page／region ref；有 page image 時可依表／圖 provenance crop。[舊 source audit][previous] | page／picture images 已開；獨立 table artifact 尚非既定承諾 | 需哪些可檢視 artifact、解析度、座標原點與保留關係；不要只存會過期的 URL，或把 crop 可生成等同已持久保存 |
 | R08 圖片分類 | `meta.classification` 類別／分數，例如圖表、diagram、照片。[Enrichments][enrichments] | pinned 已有，profile 關閉 | 分類僅供顯示還是決定後續工作；誤分類及未處理項目需可見，不能因分類器漏判就省略必要輸出 |
@@ -57,7 +57,7 @@ R01–R20 是本研究的分類編號；決策票另以 F01–F22 拆分，逐�
 | R13 表單、field、key-value、rich cells | Core 有相關集合；特定 VLM 路徑也可產生 checkbox／radio／fillable value、rich table content。[舊 Core audit][previous]、[Vision][vision] | 舊 retained fixtures 的 form/key-value 集合空，field collections 的 comparator 覆蓋不足 | 要保存 populated 原始結構，還是保證 PDF 自動辨識；兩者不同。Chandra 不會只憑視覺距離推論 key-value 關係 |
 | R14 Schema-driven facts／metadata | `DocumentExtractor` 依要求的 template/schema 取得欄位；是 extraction 路徑，不等於普通 converter。[Agent skill index][skills]、[舊 tagged audit][previous] | pinned 已有 extractor；未選入 PDF profile | 若要 author/title/reference resolution／指定研究事實，需逐欄定義與 source attribution；schema 存在、valid JSON 或 bibliography text 都不證明事實正確 |
 | R15 Alternative whole-page VLM conversion | rendered page → DocTags／Markdown／HTML 等 → DoclingDocument。[Vision][vision] | pinned 有 VLM pipeline；未採用為 selected parser | 這是方法選擇，可影響 R01–R14；需自己的 method identity／baseline／recovery，不能當成開啟所有 optional features 的總開關 |
-| R16 細粒度來源定位與處理身份 | document/item provenance、可用 bbox／page／graph refs；repo 可另綁 Source Revision、artifact digest、method/model/options。[Document][document]、[handoff][handoff] | 已有有界證據；並非完整 canonical schema | 下游引用要精確到 page、block、cell 或更細；模型未提供 word/cell 座標時不能偽造。每個衍生輸出須能回到支持它的 evidence |
+| R16 細粒度來源定位與處理身份 | document/item provenance、可用 bbox／page／graph refs；repo 可另綁 Source Revision、artifact digest、method/model/options。[Document][document]、handoff (`docs/handoffs/paper-pdf-profile-2026-10-12/decision.md`) | 已有有界證據；並非完整 canonical schema | 下游引用要精確到 page、block、cell 或更細；模型未提供 word/cell 座標時不能偽造。每個衍生輸出須能回到支持它的 evidence |
 | R17 信心、錯誤、partial／unsupported outcomes | ConversionResult confidence／errors／status；各頁及整份 grades。[Confidence][confidence]、[REST][rest] | 舊調查保留 quality/canonical acceptance 未通過的界線 | 所需欄位與失敗 disposition；`table_score` 官網仍明載未實作，不能拿來替代 table gate；producer confidence 不是來源真實性或 Canonical Acceptance |
 | R18 原始結構化結果與人讀輸出 | JSON 為 DoclingDocument 的 lossless serialization；另有 Markdown／HTML／text／DocTags／DocLang／dclx／WebVTT／LaTeX／chunks JSONL。[Formats][formats] | baseline 寫 JSON／Markdown；非所有 exporter 都已整合 | 決定 handoff 的必要 artifacts 與 authoritative representation；JSON lossless 指 DoclingDocument，不是 source PDF 無遺漏；LaTeX export 圖片為 placeholder |
 | R19 Chunking／Retrieval-ready 輸出 | chunked JSONL 可選 chunker/tokenizer/limit；hierarchical、hybrid、line-based 等既有 Core 能力。[Formats][formats]、[舊 audit][previous] | 未成為 PDF canonical processing 必要 stage | 是否作附加出口，或交給 Materialization；不要把特定 consumer 的 token chunk schema 默認成 Canonical Knowledge |
@@ -93,13 +93,13 @@ R01–R20 是本研究的分類編號；決策票另以 F01–F22 拆分，逐�
 
 | 比較面 | 之前實際涵蓋 | 本次補充／應改正的理解 |
 |---|---|---|
-| 2026-09-11 [canonical-processing note][initial] | PDF／Markdown／PPTX、DoclingDocument、table/headings/enrichments、Kubernetes/serve，建議可替換 adapter | 原本就不是只有 PDF 五個開關；仍是研究與擬議評估，並非 canonical adoption |
+| 2026-09-11 canonical-processing note (`docling-canonical-processing.md`) | PDF／Markdown／PPTX、DoclingDocument、table/headings/enrichments、Kubernetes/serve，建議可替換 adapter | 原本就不是只有 PDF 五個開關；仍是研究與擬議評估，並非 canonical adoption |
 | 2026-10-02/03 [#70 note][previous] | pinned/latest capability、enabled/retained/qualified、stage remote seams／memory/protocol、canonical handoff、retained-output probes、治理／成本／跨格式使用情境 | 已相當廣泛，但不是逐頁 Usage exhaustive-read。大量缺口本來已記錄，不應因這次重讀就說成「以前完全沒 survey」 |
 | 幾乎所有 PDF 功能 | #70 已包含 native order、tables、images、page vs picture OCR、classification/description/chart、code/formula、heading、VLM、schema extraction、unknown fields、confidence/export/chunking | 本次主要把可供決策的輸出粒度拆開，**不沿用 #70 的 retain/defer ranking 當作使用者新選擇** |
 | 現行 Usage 廣度 | 舊 note 對 ecosystem/non-PDF 多是摘要 | 補齊 15 頁 read inventory；尤其 agent skills、Jobkit connectors、managed service、video frames/diarization、JSON reimport、native no-model pipeline、progress、model-specific rich output |
 | 細節與限制 | 舊 heading/picture API／chart source audit 已辨識版本差異 | 現行 docs 可補充 heading 對既有 document 使用、formula repetition/crop、VLM native-caption/bbox 限制；這些不是都證實為 pinned 可用，也未一律證明在舊 survey 之後才新增 |
 | 文件中的不一致 | 舊報告已提醒 moving docs | enrichments 主表只列四種，但 Vision／REST 有 chart；formats 的 video 摘要偏重 audio，Audio & video 正文還有 frames/diarization；模型列表／示例／API docs 未必同步同版。需用採納版本的 source/schema 收斂，不能取聯集就宣稱單一版本全部支持 |
-| 現行第一版範圍 | [#72 handoff][handoff] 採用 restricted mechanism-comparison／body-explicit results；general table-dependent analysis 與 universal enrichments 不在第一版 | 這是正在被使用者要求重新檢視的決策背景，不是本次新清單的預選答案；新 confirmation 前保留原紀錄及 #80–#83 的來源關係 |
+| 現行第一版範圍 | #72 handoff (`docs/handoffs/paper-pdf-profile-2026-10-12/decision.md`) 採用 restricted mechanism-comparison／body-explicit results；general table-dependent analysis 與 universal enrichments 不在第一版 | 這是正在被使用者要求重新檢視的決策背景，不是本次新清單的預選答案；新 confirmation 前保留原紀錄及 #80–#83 的來源關係 |
 
 ## 5. 逐項確認後應產生的 delivery target
 
@@ -114,7 +114,7 @@ R01–R20 是本研究的分類編號；決策票另以 F01–F22 拆分，逐�
 | 驗收證據 | source-reviewed oracle、正例／失敗或不支援案例、graph/lineage、fresh/reuse/recovery 保留；不能只驗 JSON 欄位存在 |
 | Method 與交付影響 | 選版／model／config、是否改 checkpoint、新 artifact／mapper／consumer／resource qualification；確認後再改 #80–#83 或另開必要實作票 |
 
-這是決策格式建議，不是新增一套框架。先確定「第一個 delivery 必須產生什麼可重用結果」，再選最小實作方法；保留完整候選的 Canonical Acceptance 與 Source Evidence 要求。[CONTEXT](../../CONTEXT.md) [既有 handoff][handoff]
+這是決策格式建議，不是新增一套框架。先確定「第一個 delivery 必須產生什麼可重用結果」，再選最小實作方法；保留完整候選的 Canonical Acceptance 與 Source Evidence 要求。[CONTEXT](../../CONTEXT.md) 既有 handoff (`docs/handoffs/paper-pdf-profile-2026-10-12/decision.md`)
 
 ## 6. 未做與證據風險
 
@@ -137,7 +137,6 @@ R01–R20 是本研究的分類編號；決策票另以 F01–F22 拆分，逐�
 [managed]: https://docling-project.github.io/docling/usage/api_server/managed/
 [document]: https://docling-project.github.io/docling/concepts/docling_document/
 [confidence]: https://docling-project.github.io/docling/concepts/confidence_scores/
-[initial]: docling-canonical-processing.md
+
 [previous]: docling-capabilities-vs-pdf-core-2026-10-02.md
 [profile]: https://github.com/davidlinnnn/data-ingestion/blob/fe1b283c49c83ad5aeee6808e77b4f25549eba03/deploy/pdf-processing/profiles/selected-native-v1.json
-[handoff]: ../handoffs/paper-pdf-profile-2026-10-12/decision.md

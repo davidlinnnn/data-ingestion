@@ -13,7 +13,7 @@
 - 原mobile-v2方向分類器保持開啟；det／cls／rec皆只有CPUExecutionProvider，實際載入路徑／hash／版本／大小及ONNX內嵌辨識字典已驗。
 - OCR scale3、page image scale2、text_score0.5；RapidOCR det short-side736／min、mean/std0.5、thresh0.3、box_thresh0.5、unclip1.6、dilation=True均保留。Docling各stage batch1；RapidOCR內部cls／rec batch6。
 
-模型配置逐欄等於[最初凍結配置](../pdf-core-ocr-v5server-2026-10-20/registration.json)，**這次只調資源護欄**。沒有custom選區、去重、修字、重排或SDK修改。[官方Docling模型路徑接點](https://docling-project.github.io/docling/_generated/examples/rapidocr_with_custom_models/)、[RapidAI版本／大小參數](https://rapidai.github.io/RapidOCRDocs/v3.9.2/install_usage/rapidocr/how_to_use_ppocrv5/)。這是RapidOCR整合，不是Paddle完整pipeline或內建具名Docling preset。
+模型配置逐欄等於最初凍結配置 (`docs/research/pdf-core-ocr-v5server-2026-10-20/registration.json`)，**這次只調資源護欄**。沒有custom選區、去重、修字、重排或SDK修改。[官方Docling模型路徑接點](https://docling-project.github.io/docling/_generated/examples/rapidocr_with_custom_models/)、[RapidAI版本／大小參數](https://rapidai.github.io/RapidOCRDocs/v3.9.2/install_usage/rapidocr/how_to_use_ppocrv5/)。這是RapidOCR整合，不是Paddle完整pipeline或內建具名Docling preset。
 
 使用者明確允許提高memory fence後，保留每次中止：
 
@@ -37,7 +37,7 @@
 | 中文SOP p9 | 恢復隱私條款尾句「提供的資訊」；但登入限定功能與註解的`※`皆失去，破壞對應關係。**拒絕** |
 | 中文SOP NCCU p3 | 登入方法／進入人事服務網／B5A保留；標題枚舉、空格、列點有差異，非整個標題遺失。未觀察到同等重大正文缺陷；未驗圖片內所有文字 |
 
-具體text ref、完整observed文字、來源圖hash與原始OCR cell座標見[人工評讀](manual-review.json)。WikiSkill的raw cells21／22已包含`evolul`、`a cumulativehoryof pior...`；這份內容損失並非只在Markdown renderer出現。本輪沒有再追det／rec哪個子階段造成，也未啟動修復支線。
+具體text ref、完整observed文字、來源圖hash與原始OCR cell座標見人工評讀 (`manual-review.json`)。WikiSkill的raw cells21／22已包含`evolul`、`a cumulativehoryof pior...`；這份內容損失並非只在Markdown renderer出現。本輪沒有再追det／rec哪個子階段造成，也未啟動修復支線。
 
 自動旗標仍只是REVIEW_REQUIRED，無整段遺漏／無錯序旗標不等於語意正確。原凍結scorer、分母、門檻未改。人工判讀由執行agent完成，無獨立第二位盲評者。公式enrichment關閉；即使將公式問題另留後續，原雙欄讀序與單欄正文反例已足以拒絕此固定配置。
 
@@ -54,12 +54,12 @@
 
 ## 視覺化、查核與收斂
 
-[原生R0／v5 server／C10比較](http://127.0.0.1:62729/ocr-v5server-memory32/index.html#wiki-p2)：七頁三組，最終文字／框與讀序／Docling圖文對照，共21份原生展示。僅顯示用副本替換144dpi來源背景，文字、geometry與Markdown不變，input/output hash有manifest。瀏覽器實際核對WikiSkill的兩份iframe文字並保存[畫面](preview.jpg)。
+[原生R0／v5 server／C10比較](http://127.0.0.1:62729/ocr-v5server-memory32/index.html#wiki-p2)：七頁三組，最終文字／框與讀序／Docling圖文對照，共21份原生展示。僅顯示用副本替換144dpi來源背景，文字、geometry與Markdown不變，input/output hash有manifest。瀏覽器實際核對WikiSkill的兩份iframe文字並保存畫面 (`preview.jpg`)。
 
-推論前通過C10讀序正控制、FULL_PAGE反控制及部分行重複的正負控制。輸入／模型／runtime／設定／scorer凍結前後一致；六份較早實驗封存由完成查核核對，另外兩份資源中止封存由[lineage查核](resource-lineage-verification.json)核對，均未改動。原最初初始化的序列化前置檢查修復仍留在前輪封存，這次沒有新增harness修補或模型變體。
+推論前通過C10讀序正控制、FULL_PAGE反控制及部分行重複的正負控制。輸入／模型／runtime／設定／scorer凍結前後一致；六份較早實驗封存由完成查核核對，另外兩份資源中止封存由lineage查核 (`resource-lineage-verification.json`)核對，均未改動。原最初初始化的序列化前置檢查修復仍留在前輪封存，這次沒有新增harness修補或模型變體。
 
 **決策：不採用此固定CPU v5 server組合；額外六頁維持未推論，本輪結束。** C10仍可作讀序對照，但其已知重複內容與自訂選區缺陷未變。資源已允許得到品質結論，剩下是方法取捨，不再以繼續提高memory fence或追加模型搜尋延長本輪。
 
 未測GPU／VLM、自然噪聲、正式負載、完整image／formula／code／table能力；沒有production改動。
 
-零推論複核：`rtk proxy /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-ocr-v5server-memory32-2026-10-20/verify.py`
+零推論複核：`rtk proxy <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-ocr-v5server-memory32-2026-10-20/verify.py`

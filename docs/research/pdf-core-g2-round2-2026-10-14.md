@@ -26,7 +26,7 @@
 
 第一輪沒有保存pre-layout raw OCR，且兩輪影像來源／尺度與路徑不同，因此仍不能宣稱第一輪的漏句唯一發生在detector、recognizer或輸出合併。本輪沒有接到完整same-revision Canonical圖片補充內容／required-work contract。
 
-[OCR review](pdf-core-g2-round2-2026-10-14/ocr/review.md) · [逐位置結果](pdf-core-g2-round2-2026-10-14/ocr/selection-review.json) · [離線檢查](pdf-core-g2-round2-2026-10-14/ocr/review.py)
+[OCR review](pdf-core-g2-round2-2026-10-14/ocr/review.md) · 逐位置結果 (`pdf-core-g2-round2-2026-10-14/ocr/selection-review.json`) · 離線檢查 (`pdf-core-g2-round2-2026-10-14/ocr/review.py`)
 
 ## 閱讀順序：與continuation責任分開
 
@@ -34,7 +34,7 @@
 
 完整provider result重建後parsed object roundtrip相等，15個text的文字／orig／label／provenance未變。兩種assembly的document JSON／Markdown與第一輪byte相同。幾何診斷發現同欄兩段bbox約0.3992 PDF point重疊，與stock左→右規則交互作用；這是後續候選的具體輸入，不是已完成的根因ablation或修復。未刪除右欄文字、修改bbox或硬接段落造通過。
 
-[Order review](pdf-core-g2-round2-2026-10-14/order/review.md) · [重放／trace索引](pdf-core-g2-round2-2026-10-14/order/summary.json)
+[Order review](pdf-core-g2-round2-2026-10-14/order/review.md) · 重放／trace索引 (`pdf-core-g2-round2-2026-10-14/order/summary.json`)
 
 ## 表格：新來源的V2結果
 
@@ -44,17 +44,17 @@ T02本輪是SkillOpt p8 Table2六panel，並非舊p7 Table1；全部84個source�
 
 下一個表格方向應比較能處理多panel的producer／分區方法或table VLM；即使分區，仍須保留整個Table2的panel、caption、條件及84點分母，不只挑容易panel宣稱通過。現有結果不足以選定新方法。
 
-[Table review](pdf-core-g2-round2-2026-10-14/table/review.md) · [逐critical結果](pdf-core-g2-round2-2026-10-14/table/review.json)
+[Table review](pdf-core-g2-round2-2026-10-14/table/review.md) · 逐critical結果 (`pdf-core-g2-round2-2026-10-14/table/review.json`)
 
 ## 小型公式／code模型與成本
 
-匿名讀取官方HF metadata後，取得CodeFormulaV2固定revision `ecedbe111d15c2dc60bfd4a823cbe80127b58af4`。權重630,993,616B（約631MB），下載19.514秒，時間與推論分開；下載bytes的SHA與該revision官方LFS hash相符。存入獨立scratch cache，未改原baseline模型快取或安裝套件；trust_remote_code=False。Granite-Docling-258M metadata所列權重515,093,104B，revision `982fe3b40f2fa73c365bdb1bcacf6c81b7184bfe`；本輪未下載／執行它，不能由大小宣稱CPU品質或時效合格。[模型成本](pdf-core-g2-round2-2026-10-14/models/model-costs.json) · [下載／檔案hash](pdf-core-g2-round2-2026-10-14/models/codeformula-download.json) · [官方LFS核對](pdf-core-g2-round2-2026-10-14/models/model-integrity.json)
+匿名讀取官方HF metadata後，取得CodeFormulaV2固定revision `ecedbe111d15c2dc60bfd4a823cbe80127b58af4`。權重630,993,616B（約631MB），下載19.514秒，時間與推論分開；下載bytes的SHA與該revision官方LFS hash相符。存入獨立scratch cache，未改原baseline模型快取或安裝套件；trust_remote_code=False。Granite-Docling-258M metadata所列權重515,093,104B，revision `982fe3b40f2fa73c365bdb1bcacf6c81b7184bfe`；本輪未下載／執行它，不能由大小宣稱CPU品質或時效合格。模型成本 (`pdf-core-g2-round2-2026-10-14/models/model-costs.json`) · 下載／檔案hash (`pdf-core-g2-round2-2026-10-14/models/codeformula-download.json`) · 官方LFS核對 (`pdf-core-g2-round2-2026-10-14/models/model-integrity.json`)
 
 CodeFormulaV2官方模型卡說明120dpi區域輸入、公式LaTeX及保留縮排的code；本輪使用相同任務prompt與pinned Docling engine／postprocess，但**固定oracle crop、CPU FP32與512-token探索上限**。所選公式crop從G1的216dpi圖以LANCZOS重採樣至約120dpi；code從受控PDF按固定bbox render。不是正式pipeline的偵測、18%擴張crop、完整enrichment或來源回填。[官方模型卡](https://huggingface.co/docling-project/CodeFormulaV2)、[pinned stage](https://github.com/docling-project/docling/blob/v2.102.0/docling/models/stages/code_formula/code_formula_vlm_model.py)
 
 實際所有model parameters均為`cpu`／`torch.float32`，4 intra-op／1 inter-op，batch1、compile=False、quantized=False。保存raw文字、實際generated token IDs、EOS、cleaned文字與來源；不能拿engine metadata的input＋output token總數當生成tokens。code檢查另以`<=→<`、內層emit退縮排、移除註解三個負例確認會拒絕。公式輸入的兩個分支均已目視，模型raw output已漏分支，並非只有postprocess丟字。
 
-[Model runner](pdf-core-g2-round2-2026-10-14/models/probe.py) · [模型結果／來源核對](pdf-core-g2-round2-2026-10-14/models/review.json)
+Model runner (`pdf-core-g2-round2-2026-10-14/models/probe.py`) · 模型結果／來源核對 (`pdf-core-g2-round2-2026-10-14/models/review.json`)
 
 ## 本機資源觀察與限制
 
@@ -79,4 +79,4 @@ OCR最初一次保存Path設定失敗、table supervisor最初缺psutil，都發
 4. CodeFormulaV2保留為code候選，但要補真實code／偽碼、inline、偵測與回填；公式需其他模型／裁圖配置比較。Granite-Docling仍是可考慮的本機小模型候選，不因尚未下載就宣稱必須公司GPU。
 5. Remote大模型需要時，依已允許的暫用OpenAI API進行；公司self-hosted Qwen3／vLLM仍以相同來源另驗，不能把模型效果或效能當成等效。
 
-本輪尚未執行整頁VLM、remote API、GPU、其他OCR模型、另外三張完整G1表、Canonical mapper／Acceptance／custody／recovery或高頻負載。來源圖像與模型輸出由本次Codex交叉核對，沒有另行人類逐字認證。執行資料與hash另見[manifest](pdf-core-g2-round2-2026-10-14/artifacts.json)；本機檔案尚未commit／push。
+本輪尚未執行整頁VLM、remote API、GPU、其他OCR模型、另外三張完整G1表、Canonical mapper／Acceptance／custody／recovery或高頻負載。來源圖像與模型輸出由本次Codex交叉核對，沒有另行人類逐字認證。執行資料與hash另見manifest (`pdf-core-g2-round2-2026-10-14/artifacts.json`)；本機檔案尚未commit／push。

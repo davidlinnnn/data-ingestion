@@ -1,6 +1,6 @@
 # PDF-core Step 1：單一配置草案與可執行性判定
 
-2026-10-16。承接 [retro 收斂](../reviews/pdf-core-retro-closure-2026-10-16.md)及使用者「先進行第一步」的指示，只整理既有證據、模型／版本／設定與必要缺口。**Step 1 已完成；可提出一組具名 Standard 主幹，但現有證據不足以封成完整、可執行的新候選。暫不進入 Step 2 實作或新推論。**
+2026-10-16。承接 retro 收斂 (`docs/reviews/pdf-core-retro-closure-2026-10-16.md`)及使用者「先進行第一步」的指示，只整理既有證據、模型／版本／設定與必要缺口。**Step 1 已完成；可提出一組具名 Standard 主幹，但現有證據不足以封成完整、可執行的新候選。暫不進入 Step 2 實作或新推論。**
 
 這不是把各輪最好輸出拼成成功文件。下列元件是在一份未來配置中的選擇意圖；舊 2.102／DoclingParse 的結果與新版 stage replay 只支持原範圍，沒有轉成這個新組合的品質紀錄。Paddle 建置、後續整合與新推論維持暫停。
 
@@ -39,7 +39,7 @@ TableFormer 實際 stage crop scale=2；code stage 宣告 option scale=2，**實
 | B5 | 執行環境不完整 | 目前 2.132 是 slim；缺 IBM models `>=4.0.2,<5`、Accelerate、RapidOCR、ONNX Runtime 等；Hub2.2.0 不符該 extra `<2` | 沒有建環境或安裝。舊 IBM3.15 不搬進新 SDK。後續須先解析真正所需依賴並固定 lock；補套件不會解決 B1–B4。 |
 | B6 | 完整交付未驗 | F18–F21 同版 mapping、完整診斷／provider、Markdown 到圖片及補充結構、fresh/restored 尚待 G3 | 設計可規劃，不能以原生 JSON 存在或 compare-only 通過取代完整交付。 |
 
-上述有「已觀察失敗」也有「尚未驗證」；兩者沒有混算模型錯誤率。F15／F16／F22 繼續延後，F10 是可選且偏好開啟；其他 18 項必含均在[配置草案](pdf-core-single-config-2026-10-16/proposal.json)逐項對應，沒有刪掉尚無方法的欄位。
+上述有「已觀察失敗」也有「尚未驗證」；兩者沒有混算模型錯誤率。F15／F16／F22 繼續延後，F10 是可選且偏好開啟；其他 18 項必含均在配置草案 (`pdf-core-single-config-2026-10-16/proposal.json`)逐項對應，沒有刪掉尚無方法的欄位。
 
 ## 有界驗證登錄：草稿，不是可執行排程
 
@@ -55,6 +55,6 @@ TableFormer 實際 stage crop scale=2；code stage 宣告 option scale=2，**實
 
 因此本次沒有把「下一步補格式接點」當作默認可行，也沒有自動恢復 Paddle。若要繼續，應先針對 B1 與 B2 提出具體、有限的新方法命題及預期改善，再決定是否投入下一輪；不要求使用者現在放寬必含需求或自行挑模型。
 
-本提案的[核對紀錄](pdf-core-single-config-2026-10-16/verification.json)保存本次文件／來源身分、需求覆蓋、靜態限制與舊 evidence 比對。沒有修改舊評分、manifest、production、套件或模型。這是可行性規劃的完成，不是 G2 或 Canonical Acceptance 通過。
+本提案的核對紀錄 (`pdf-core-single-config-2026-10-16/verification.json`)保存本次文件／來源身分、需求覆蓋、靜態限制與舊 evidence 比對。沒有修改舊評分、manifest、production、套件或模型。這是可行性規劃的完成，不是 G2 或 Canonical Acceptance 通過。
 
 未做實際 import／kernel／模型執行、完整新配置、數學 renderer、公司 serving 或高頻負載；現有元件成功不能轉成這份提案的品質／latency 結論。

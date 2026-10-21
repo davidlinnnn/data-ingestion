@@ -10,7 +10,7 @@
 | 官方 crop | 基底從 `prov[0]` bbox 擴張裁圖；不包含本案跨 provenance、parent/child union、相鄰 context 規則。[Tagged base](https://github.com/docling-project/docling/blob/v2.102.0/docling/models/base_model.py) |
 | 官方擴充範例 | Formula 範例僅 scaffold，沒有真實推論；另一範例示範既有 JSON 的轉換後 enrichment，支持擴充但不保證本案品質。[Formula example](https://docling-project.github.io/docling/_generated/examples/develop_formula_understanding/)、[Existing-document example](https://docling-project.github.io/docling/_generated/examples/enrich_doclingdocument/) |
 | 官方 `VlmPipeline` | 頁面 VLM predictions 組裝 document，屬另一主轉換方法。[Tagged pipeline](https://github.com/docling-project/docling/blob/v2.102.0/docling/pipeline/vlm_pipeline.py) |
-| 本案 | [Planner](pdf-core-g2-context-candidate-2026-10-15/candidate.py)選普通段落與 context；[Parser](pdf-core-g2-inline-api-2026-10-15/parsed/parse.py)採自訂 text/math/code segments，並非 DocTags；[Adapter](pdf-core-g2-context-candidate-2026-10-15/adapter.py)保留 raw graph，以序列化邊界產生 working Markdown overlay，結構合法不代表內容正確。 |
+| 本案 | Planner (`pdf-core-g2-context-candidate-2026-10-15/candidate.py`)選普通段落與 context；Parser (`pdf-core-g2-inline-api-2026-10-15/parsed/parse.py`)採自訂 text/math/code segments，並非 DocTags；Adapter (`pdf-core-g2-context-candidate-2026-10-15/adapter.py`)保留 raw graph，以序列化邊界產生 working Markdown overlay，結構合法不代表內容正確。 |
 
 滾動文件的 repetition 處理、native inline／HTML 路徑是新版調查線索，不能回推舊版可用或宣稱已測。[Enrichments](https://docling-project.github.io/docling/usage/enrichments/)、[Vision guide](https://docling-project.github.io/docling/usage/vision_models/)
 

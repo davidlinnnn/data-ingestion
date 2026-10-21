@@ -1,6 +1,6 @@
 # W2 全量：失敗類型與零推論定位
 
-36 篇中 30 篇成功輸出 499 頁，6 篇 216 頁因 RSS guard 停止。本檔集中 machine candidates、指定代表頁的 stage 證據與資源失敗；**candidate 數量不是語意失敗總數**，同一個問題可能出現在多個指標。完整結構化資料見 [summary.json](summary.json)。主線頁圖抽查與 F01/F02 Q4 裁定另行合併。
+36 篇中 30 篇成功輸出 499 頁，6 篇 216 頁因 RSS guard 停止。本檔集中 machine candidates、指定代表頁的 stage 證據與資源失敗；**candidate 數量不是語意失敗總數**，同一個問題可能出現在多個指標。完整結構化資料見 `summary.json`。主線頁圖抽查與 F01/F02 Q4 裁定另行合併。
 
 候選統計來自 `analysis/candidate-catalog.json`（本次快照 SHA256 在 summary 保存），依數量排序：
 
@@ -45,7 +45,7 @@
 
 P03／P06／P10／P16／P18／P20 共 216 頁。原 PDF metadata 檢查顯示皆標準 A4／Letter；後四篇有較大嵌圖，但未證實是哪一頁或哪個 stage 導致 RSS。0.1 秒 sampled process-tree RSS 最高 **8.230 GiB**，為 8 GiB guard 的真實取樣 overshoot；不能寫成「始終 ≤8 GiB」。各篇首筆／峰值是 worker 累積生命週期狀態，沒有 isolated fresh-process 比較，不能歸因模型 leak。
 
-本類僅選 5 張輸入規模代表頁：P20 p2、P16 p61、P18 p2、P18 p7、P10 p10；沒有 render 大圖。逐頁 metadata、RSS與官方候選見 [resource-failures.md](resource-failures.md)、[resource-pdfs.json](resource-pdfs.json)。
+本類僅選 5 張輸入規模代表頁：P20 p2、P16 p61、P18 p2、P18 p7、P10 p10；沒有 render 大圖。逐頁 metadata、RSS與官方候選見 [resource-failures.md](resource-failures.md)、`resource-pdfs.json`。
 
 ## 建議：只列官方選項，均未執行
 

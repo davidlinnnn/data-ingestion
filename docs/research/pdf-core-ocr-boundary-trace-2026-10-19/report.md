@@ -16,18 +16,18 @@
 | 資源上限 | 整個 worker 含初始化最多 180 秒；sampled tree RSS 12 GiB、可用記憶體至少 8 GiB、啟動至少 10 GiB；重用 Zombie-safe 監督與共享 lock |
 | 實際成本 | worker／監督 8.9346 秒，初始化 1.7814 秒，conversion／保存 4.5671 秒；sampled peak tree RSS 3,260,252,160 bytes，約 3.04 GiB |
 
-[registration.json](registration.json)、[execution.json](live/execution.json)、[conversion.json](live/conversion.json)、[analysis.json](analysis.json)保存精確身分與成本。不是 p95、正式吞吐或完整 Profile 的效能證據。
+`registration.json`、execution.json (`live/execution.json`)、conversion.json (`live/conversion.json`)、`analysis.json`保存精確身分與成本。不是 p95、正式吞吐或完整 Profile 的效能證據。
 
 ## 邊界證據與已排除的假說
 
 | 階段 | 真實觀測 | 可作的結論 |
 |---|---|---|
-| [Heron detections／原始 clusters](live/trace/layout-clusters-001.json) | 22 個候選：8 左、14 右，含重複角色候選；沒有框跨過頁面中央。兩欄最小水平間距約 10.68 PDF points | 對本頁可排除「Heron 原始框已將左右欄畫成同一框」。22 不是獨立段落／來源數 |
-| [Docling OCR dedup](live/trace/ocr-dedup-001.json) | 預設 `dilation_size=20`；把框 rasterize 到頁面座標遮罩、膨脹，再取 connected-component 外接框，22 個候選合為 **1 框 `(38,19,574,756)`** | 跨欄 OCR 區域在送 reader 前已形成。20 是膨脹核尺寸，不是兩側各加 20；mask 使用 PDF page units，而非實際 OCR 高解析 pixels |
-| [實際 OCR 裁圖](live/trace/ocr-engine-001.png) | 寬 1608 × 高 2211、scale 3；[原始 NumPy](live/trace/ocr-engine-001.npy) 與 PNG pixels 相同，尺寸對應 `(536×737)×3` | 真正送給 RapidOCR 的是一張含左右兩欄的大圖，沒有假用事後重製裁圖 |
-| [RapidOCR 原始回覆](live/trace/ocr-engine-001.json) | 共 114 行；index=3（零起算，即第 4 行）同時含左欄 `or LLMs … either` 與右欄 `mally introduced by GPT-3 … language`；quad 亦橫跨兩欄 | 文字在 reader 回覆就已混合，不是 JSON mapper／Markdown 才混句；未捕捉內部 detector／recognizer 各自 tensor，不能再單獨歸因某個 neural 子階段 |
-| OCR／PDF merge | [前](live/trace/ocr-cells-before-merge-001.json)／[後](live/trace/ocr-cells-after-merge-001.json) 114 cells 逐值相同 | 此步沒有引入該混句 |
-| [Layout postprocess](live/trace/layout-after-postprocess-001.json)／[assembly](live/trace/assembly-lines-002.json) | cluster 3 納入左右欄與跨欄 cells；原生合行將 `for-` 後接 `or LLMs`，形成 `foror` | 下游固定／擴大已錯的 cell 邊界；普通 dehyphenation 不是唯一根因，末端排序不能可靠復原 |
+| Heron detections／原始 clusters (`live/trace/layout-clusters-001.json`) | 22 個候選：8 左、14 右，含重複角色候選；沒有框跨過頁面中央。兩欄最小水平間距約 10.68 PDF points | 對本頁可排除「Heron 原始框已將左右欄畫成同一框」。22 不是獨立段落／來源數 |
+| Docling OCR dedup (`live/trace/ocr-dedup-001.json`) | 預設 `dilation_size=20`；把框 rasterize 到頁面座標遮罩、膨脹，再取 connected-component 外接框，22 個候選合為 **1 框 `(38,19,574,756)`** | 跨欄 OCR 區域在送 reader 前已形成。20 是膨脹核尺寸，不是兩側各加 20；mask 使用 PDF page units，而非實際 OCR 高解析 pixels |
+| 實際 OCR 裁圖 (`live/trace/ocr-engine-001.png`) | 寬 1608 × 高 2211、scale 3；原始 NumPy (`live/trace/ocr-engine-001.npy`) 與 PNG pixels 相同，尺寸對應 `(536×737)×3` | 真正送給 RapidOCR 的是一張含左右兩欄的大圖，沒有假用事後重製裁圖 |
+| RapidOCR 原始回覆 (`live/trace/ocr-engine-001.json`) | 共 114 行；index=3（零起算，即第 4 行）同時含左欄 `or LLMs … either` 與右欄 `mally introduced by GPT-3 … language`；quad 亦橫跨兩欄 | 文字在 reader 回覆就已混合，不是 JSON mapper／Markdown 才混句；未捕捉內部 detector／recognizer 各自 tensor，不能再單獨歸因某個 neural 子階段 |
+| OCR／PDF merge | 前 (`live/trace/ocr-cells-before-merge-001.json`)／後 (`live/trace/ocr-cells-after-merge-001.json`) 114 cells 逐值相同 | 此步沒有引入該混句 |
+| Layout postprocess (`live/trace/layout-after-postprocess-001.json`)／assembly (`live/trace/assembly-lines-002.json`) | cluster 3 納入左右欄與跨欄 cells；原生合行將 `for-` 後接 `or LLMs`，形成 `foror` | 下游固定／擴大已錯的 cell 邊界；普通 dehyphenation 不是唯一根因，末端排序不能可靠復原 |
 
 本輪確認的是**框合併引入跨欄輸入，以及此輸入下 reader 真實混句的完整鏈條**。尚未跑更小裁圖的 OCR，所以不能宣稱這個改動單獨就會修復所有文字或閱讀順序。
 
@@ -44,10 +44,10 @@
 
 ## 觀測可信度與執行前檢查
 
-- 真實 [check.py](check.py) 重播原生 `PageAssembleModel.sanitize_text` 與保存 cluster：原 S0 exit 1（paragraph integrity false、`foror` true），S1 exit 0（只代表此段落完整性，不代表完整 reading order）；本輪 fresh S0 仍 exit 1，重現同一缺陷。
-- 五項零推論 [tests](test_capture.py) 通過：reader 的原 input／kwargs／result identity／單次呼叫、原生空結果、patch 復原、凍結紅／綠控制、真實 dedup generator 單次消耗與同值輸出。
+- 真實 `check.py` 重播原生 `PageAssembleModel.sanitize_text` 與保存 cluster：原 S0 exit 1（paragraph integrity false、`foror` true），S1 exit 0（只代表此段落完整性，不代表完整 reading order）；本輪 fresh S0 仍 exit 1，重現同一缺陷。
+- 五項零推論 tests (`test_capture.py`) 通過：reader 的原 input／kwargs／result identity／單次呼叫、原生空結果、patch 復原、凍結紅／綠控制、真實 dedup generator 單次消耗與同值輸出。
 - 本輪 parsed cells、postprocessed layout、assembled page、provider document **逐值等於原 S0**；主要 Markdown **UTF-8 bytes 完全相同**。這支持觀測沒有改變此案例輸出，不外推所有可能輸入。
-- 執行前審查修正了空 reader 欄位的觀測例外，以及原始 asset hash 可能被新雜湊覆寫的檢查漏洞；均在首個模型執行前完成。取得 lock 後才建立 live 目錄的改動另保留 [registration-prelaunch-v1.json](registration-prelaunch-v1.json)，沒有推論重試。
+- 執行前審查修正了空 reader 欄位的觀測例外，以及原始 asset hash 可能被新雜湊覆寫的檢查漏洞；均在首個模型執行前完成。取得 lock 後才建立 live 目錄的改動另保留 `registration-prelaunch-v1.json`，沒有推論重試。
 - 原模型、SDK／runtime、來源、舊輸出及有效 options 在前後通過雜湊／版本核對。臨時 observer 在 child 的 finally 復原，SDK 檔案未改。
 - 唯讀重播：使用既有 pinned Python 執行 `analyze.py --check`，會核對凍結身分、實際 pixels／來源鏈、幾何對照及原輸出相等；不重跑模型、不覆寫 analysis。
 

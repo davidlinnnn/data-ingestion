@@ -20,7 +20,7 @@
 | general arXiv（article，template uncertain） | 3／89 | 29 | 22 | 3／21 | 22 | 2 |
 | **合計** | **36／715** | **235** | **172** | **35／146** | **172** | **14** |
 
-全量逐框 PDF text／bbox／raw char indices、native children text／orig／marker、MD presence：[picture-text-full36.json](picture-text-full36.json)。統計、輸入清單與 inventory SHA：[full36-summary.json](full36-summary.json)。
+全量逐框 PDF text／bbox／raw char indices、native children text／orig／marker、MD presence：`picture-text-full36.json`。統計、輸入清單與 inventory SHA：`full36-summary.json`。
 
 ## 補齊六篇的觀察
 
@@ -41,12 +41,12 @@
 
 picture graph 遞迴收集非 caption／footnote 的 descendant text，保存 text 與 orig，避免清單 marker 從 text 拆走造成誤判。MD 使用 NFKD/casefold/alnum 的完整 child text exact substring，≥30 非空白字元才計 substantial。框內 overlap 可以包含圖外正文或圖中文字，這是保守幾何候選；未作全圖逐字語意人工驗收。
 
-P07 p12 的兩個 prompt boxes，PDFium／native orig 字量分別同為 1,238 與 1,488；第二框 text 少 49 字元是 marker 拆分，orig 仍全保留，不能說抽取漏掉。兩框文字未出現在預設 MD，歸 **#81 匯出映射**。官方 Markdown picture serializer 未遍歷普通 picture text children；full native graph 有字與 MD 未交付可以同時成立。[官方 source](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:872>)。
+P07 p12 的兩個 prompt boxes，PDFium／native orig 字量分別同為 1,238 與 1,488；第二框 text 少 49 字元是 marker 拆分，orig 仍全保留，不能說抽取漏掉。兩框文字未出現在預設 MD，歸 **#81 匯出映射**。官方 Markdown picture serializer 未遍歷普通 picture text children；full native graph 有字與 MD 未交付可以同時成立。官方 source (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:872>`)。
 
-Colspan 重複亦歸 **#81 serialization**：官方 synthetic 2×2 native table 的 colspan2 句子，native table_cells 一次、grid／MD 兩次、HTML 一次且帶 colspan2，所有斷言已通過。原 native input 正確，無模型推論。[native](synthetic-colspan-native.json)、[MD](synthetic-colspan.md)、[HTML](synthetic-colspan.html)、[結果](synthetic-colspan-result.json)。官方 grid 在各覆蓋格放同一 cell，MD 每格輸出 text，HTML 只輸出 span 起點。[grid](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:111>)、[MD](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:819>)、[HTML](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/html.py:398>)。
+Colspan 重複亦歸 **#81 serialization**：官方 synthetic 2×2 native table 的 colspan2 句子，native table_cells 一次、grid／MD 兩次、HTML 一次且帶 colspan2，所有斷言已通過。原 native input 正確，無模型推論。native (`synthetic-colspan-native.json`)、[MD](synthetic-colspan.md)、HTML (`synthetic-colspan.html`)、結果 (`synthetic-colspan-result.json`)。官方 grid 在各覆蓋格放同一 cell，MD 每格輸出 text，HTML 只輸出 span 起點。grid (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:111>`)、MD (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:819>`)、HTML (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/html.py:398>`)。
 
-Caption／algorithm 插入正文仍是另一類：既有 exact 零推論 traces 支持 ImageTransformer p5、P01 p8、P17 p4 由原始 layout text label 及 paragraph merges 造成；不將它們混算成 MD picture-child omission。[固定輸出 evidence／SHA](caption-algorithm-stage-evidence.json)。本次只刷新 baseline 頻率；V1 變更成效尚未分析。
+Caption／algorithm 插入正文仍是另一類：既有 exact 零推論 traces 支持 ImageTransformer p5、P01 p8、P17 p4 由原始 layout text label 及 paragraph merges 造成；不將它們混算成 MD picture-child omission。固定輸出 evidence／SHA (`caption-algorithm-stage-evidence.json`)。本次只刷新 baseline 頻率；V1 變更成效尚未分析。
 
-Egret medium 的本機 preset／config／preprocessor／78,311,396 bytes 模型 SHA 與 1,009-tensor 靜態 header 已核對；沒有載入 tensor或新增推論。[完整本機證據](egret-medium-local.json)。
+Egret medium 的本機 preset／config／preprocessor／78,311,396 bytes 模型 SHA 與 1,009-tensor 靜態 header 已核對；沒有載入 tensor或新增推論。完整本機證據 (`egret-medium-local.json`)。
 
 未修改任何舊 artifact 或套件、未跑 conversion；本報告不取代逐頁語意裁定或 V1 變動根因檢查。

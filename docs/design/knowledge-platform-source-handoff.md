@@ -402,7 +402,7 @@ modes or retain every processing artifact forever.
 The following is a design consistency walkthrough, not an accepted wire schema or
 runtime test. Assume an authorized Source submission and trustworthy reader policy.
 `procedure.md` at fixed artifact version M1 contains
-`![Review flow](assets/flow.png)`; required image version I1 is explicitly bound in
+`Review flow (`assets/flow.png`)`; required image version I1 is explicitly bound in
 the same captured source observation. M1/I1 are illustrative identifiers.
 
 | Boundary | Required outcome |

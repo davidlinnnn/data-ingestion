@@ -10,7 +10,7 @@
 | 既有57個 G1 case、V01–V19、17筆 paragraph outputs及四個既有正例錨點 | 保留為開發與回歸。這兩個角色可以共用已曝光資料；其分數不能冒充獨立 validation。來源正例標籤也不等於模型已通過。 |
 | 六份新科學論文 | 版本、URL、完整 SHA-256及檔案 bytes 已固定，約3.11MB；僅下載／核對 magic、大小及 hash，未開啟 PDF 內容、建立標註或跑模型。與既有排除群組及 bytes 無交集。 |
 
-同一原稿的版本、鏡像、頁面、裁圖、掃描、旋轉及衍生內容須在同一組。歷史頁面即使未個別評分，也不因重新隨機切分成為未見資料。已曝光的失敗結果與正例均保留。[來源盤點](pdf-core-g2-eval-freeze-2026-10-15/exposure-audit.md)／[新文件 custody](pdf-core-g2-eval-freeze-2026-10-15/holdout-custody.md)／[回歸清單](pdf-core-g2-eval-freeze-2026-10-15/regression-manifest.json)
+同一原稿的版本、鏡像、頁面、裁圖、掃描、旋轉及衍生內容須在同一組。歷史頁面即使未個別評分，也不因重新隨機切分成為未見資料。已曝光的失敗結果與正例均保留。[來源盤點](pdf-core-g2-eval-freeze-2026-10-15/exposure-audit.md)／[新文件 custody](pdf-core-g2-eval-freeze-2026-10-15/holdout-custody.md)／回歸清單 (`pdf-core-g2-eval-freeze-2026-10-15/regression-manifest.json`)
 
 新文件是以公開 metadata、既有曝光檢查及可取得性挑選的有界論文集合，並非隨機抽取的 production corpus。這裡的「未見」只指未用於本次實驗選方法，不保證未出現在模型預訓練，也不保證模板／作者／領域統計獨立。SOP、繁中及技術手冊未補齊；公式／code子型態實際數量仍待來源標註，不能先宣稱覆蓋。
 
@@ -49,8 +49,8 @@ PDF bytes 依既有 fixture 慣例留於本機並由 `.gitignore` 排除版控�
 
 **目前 holdout run 尚未開啟**：方法 lock與來源清單尚未完成。看過 holdout 結果後若改方法，該批便成為下輪開發／回歸資料；保留本輪結果，再取得新批次，不能重切資料追求較好分數。隔離是工作流程上的分工，repository 權限並未建立強制的 evaluator sandbox。
 
-[機器可讀 protocol](pdf-core-g2-eval-freeze-2026-10-15/protocol.json)、[primary-source依據](pdf-core-g2-eval-freeze-2026-10-15/primary-sources.md)與[獨立設計核對](pdf-core-g2-eval-freeze-2026-10-15/independent-review.md)保存具體規則。[離線驗證](pdf-core-g2-eval-freeze-2026-10-15/verify.py)核對來源與群組、57項回歸引用、四個正例範圍、前十輪1,816個 payload、九個 split負例，以及全拒絕／空分母／混合失敗的計分小測驗；[結果](pdf-core-g2-eval-freeze-2026-10-15/validation.json)與[manifest](pdf-core-g2-eval-freeze-2026-10-15/artifacts.json)保留證據。這些離線核對不是新候選的行為回歸通過。
+機器可讀 protocol (`pdf-core-g2-eval-freeze-2026-10-15/protocol.json`)、[primary-source依據](pdf-core-g2-eval-freeze-2026-10-15/primary-sources.md)與[獨立設計核對](pdf-core-g2-eval-freeze-2026-10-15/independent-review.md)保存具體規則。離線驗證 (`pdf-core-g2-eval-freeze-2026-10-15/verify.py`)核對來源與群組、57項回歸引用、四個正例範圍、前十輪1,816個 payload、九個 split負例，以及全拒絕／空分母／混合失敗的計分小測驗；結果 (`pdf-core-g2-eval-freeze-2026-10-15/validation.json`)與manifest (`pdf-core-g2-eval-freeze-2026-10-15/artifacts.json`)保留證據。這些離線核對不是新候選的行為回歸通過。
 
 沒有新推論、API費用、正式 gate／profile採用或 production改動；公司 GPU／vLLM、高頻負載及完整 Canonical整合仍待驗，G2 尚未全面通過。
 
-[本輪結論已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6193047443)，本文只新增摘要連結，44個 feature rows及既有需求均保持原樣，issue維持 OPEN；[寫回紀錄](pdf-core-g2-eval-freeze-2026-10-15/ticket-update.json)保存 exact readback與hash。
+[本輪結論已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6193047443)，本文只新增摘要連結，44個 feature rows及既有需求均保持原樣，issue維持 OPEN；寫回紀錄 (`pdf-core-g2-eval-freeze-2026-10-15/ticket-update.json`)保存 exact readback與hash。

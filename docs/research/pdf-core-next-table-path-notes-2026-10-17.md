@@ -26,12 +26,12 @@ IBM 的[目前模型卡](https://huggingface.co/ibm-granite/granite-vision-4.1-4
 
 ## 不可遺忘的既有結果
 
-- [CPU 與上游比較](paper-pdf-table-upstream-results-2026-10-11.md)：同 revision，兩份 shard 合計 7,994,565,368 bytes；SkillOpt **p7 長表**先觸發 8GiB guard，後續固定 12GiB／1thread 在 600 秒逾時；AZR 未開始。部分已生成內容已有數值錯誤。這與目前 **p8 Table2 六 panel** 不同，不能稱 T02 已驗過，也不能稱 CPU 從未試過。
-- [MLX GPU 實測](paper-pdf-granite-mlx-results-2026-10-11.md)：同原始 BF16 checkpoint，MLX-VLM0.7.6／MLX0.32.3／Transformers5.14；temperature0、8192 tokens、600秒、12GiB RSS／Metal guard。SkillOpt p7／AZR p9 完成，wall143.177／63.970秒、Metal peak8.513／8.287GiB；數值、增量、欄位關係仍失敗。它是公開 MLX caller-prepared tensors＋官方 OTSL parser 的研究接合，並非未修改 Docling native table stage。
+- CPU 與上游比較 (`paper-pdf-table-upstream-results-2026-10-11.md`)：同 revision，兩份 shard 合計 7,994,565,368 bytes；SkillOpt **p7 長表**先觸發 8GiB guard，後續固定 12GiB／1thread 在 600 秒逾時；AZR 未開始。部分已生成內容已有數值錯誤。這與目前 **p8 Table2 六 panel** 不同，不能稱 T02 已驗過，也不能稱 CPU 從未試過。
+- MLX GPU 實測 (`paper-pdf-granite-mlx-results-2026-10-11.md`)：同原始 BF16 checkpoint，MLX-VLM0.7.6／MLX0.32.3／Transformers5.14；temperature0、8192 tokens、600秒、12GiB RSS／Metal guard。SkillOpt p7／AZR p9 完成，wall143.177／63.970秒、Metal peak8.513／8.287GiB；數值、增量、欄位關係仍失敗。它是公開 MLX caller-prepared tensors＋官方 OTSL parser 的研究接合，並非未修改 Docling native table stage。
 - [Granite-Docling258M](pdf-core-g2-round3-2026-10-14.md)已測過目前 T02 全頁與完整 table crop OTSL，仍漏值／綁定；不能與 Granite Vision4.1-4B 混稱。TableFormerV2 亦已測 T02，不建議再換名重跑。
 
 ## 建議去留
 
 **本輪先不安排 blind CPU retry、不新增 MLX table plugin、不假設 API 可插入 native table stage。** 若之後專門補 Granite Vision 對六 panel 的遷移覆蓋，可獨立預登錄一次完整 T02 crop 的 MLX component test，重用固定原 checkpoint／官方 prompt／OTSL parser，沿用既有資源界線；應明標「新任務覆蓋、研究接合」，不是新 native pipeline。這需要另一個明確目標，優先度低於尚未驗且具真正新假說的官方方法。
 
-即使補這項，完整判準仍為[原 G1-T02](../fixtures/pdf-core-g1-2026-10-14/cases.json)：六 panel、28 data rows、84 numeric bindings、8 critical comparisons、caption／condition／header 歸屬；錯配、漏值、額外值計原分母，最多 4/84 numeric errors 且全部 critical comparisons 通過。禁止人工 panel crops、oracle 內容送 producer、逐案例 prompt 修正、只驗 rows×cols 或數字存在。成功也僅補此 table component 的證據，不能補 code／inline formula、整份 Canonical Acceptance 或高頻 SLO。
+即使補這項，完整判準仍為原 G1-T02 (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)：六 panel、28 data rows、84 numeric bindings、8 critical comparisons、caption／condition／header 歸屬；錯配、漏值、額外值計原分母，最多 4/84 numeric errors 且全部 critical comparisons 通過。禁止人工 panel crops、oracle 內容送 producer、逐案例 prompt 修正、只驗 rows×cols 或數字存在。成功也僅補此 table component 的證據，不能補 code／inline formula、整份 Canonical Acceptance 或高頻 SLO。

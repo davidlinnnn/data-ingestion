@@ -5,7 +5,7 @@ This repo is **public**: every push publishes.
 ## Where work starts
 
 - `dev` is the integration branch. Start every task from `origin/dev`, and merge it back into `dev` by pull request.
-- `main` is the GitHub default branch, but it is an older snapshot that lags `dev`. Read the current design and evidence from `dev`.
+- `dev` is the GitHub default branch. `main` is a frozen older snapshot, kept because published links point at `blob/main/…`; nothing merges into it.
 - The main checkout (`~/work/data-ingestion`) stays clean on `dev` as the home base. Do task work in a task worktree.
 
 ## One task, one branch, one worktree
@@ -38,7 +38,14 @@ Leave out `<issue>-` only when the work has no ticket.
 
 ## Keeping and deleting branches
 
-- A branch stays while an issue, PR or doc links to its name or to commits only it contains. A research or prototype branch linked from its ticket stays as a primary source, even after a curated summary merges into `dev`.
-- Delete other branches once they are merged.
-- Before deleting a branch with commits `dev` lacks, archive it with `git bundle` and verify the bundle.
+- Archive a branch once its PR merges or its work ends as a primary source (research, prototype): push an annotated tag with the branch's exact name on its tip, then delete the branch. GitHub `blob/<name>/…` and `tree/<name>/…` links resolve to the tag, so links and commits stay valid.
+
+  ```sh
+  git tag -a <branch> origin/<branch> -m "Archived branch <branch>"
+  git push origin refs/tags/<branch>
+  git push origin --delete refs/heads/<branch>
+  ```
+
+- Delete a merged branch that nothing links to without a tag.
+- Archive a branch that was never pushed with `git bundle`, and verify the bundle before deleting it.
 - Retire a task worktree after its PR merges. First archive its uncommitted and untracked files, check that the archive restores, then remove the worktree.

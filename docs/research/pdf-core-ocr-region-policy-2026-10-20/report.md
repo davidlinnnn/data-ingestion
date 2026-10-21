@@ -13,7 +13,7 @@
 
 這不是邊界大小搜尋；10取自原設定，並非針對原案例調參。沒有去重、識別字修補、文字規則或自行重排。僅處理沒有原生文字cell的raster PDF，不能宣稱是混合PDF的完整選區器或已可部署產品。
 
-[凍結計畫](plan.md)、[配置與雜湊](registration.json)、[plugin](region_policy.py)、[測試](test_policy.py)。
+[凍結計畫](plan.md)、配置與雜湊 (`registration.json`)、plugin (`region_policy.py`)、測試 (`test_policy.py`)。
 
 ## 結果
 
@@ -30,7 +30,7 @@
 
 因此這是裁圖的context覆蓋鄰區後，原始OCR已產生的重複；不是Markdown renderer造成，也不能只用最終跨欄旗標為零就判合格。拒絕的是此固定政策，並非宣稱所有分區OCR都不可行。具文字歸屬的輸出政策可能是技術解法，但尚未實作/驗證，本輪不自動補上。
 
-[人工判讀與原文、cell座標、裁圖、文件ref及hash](manual-review.json)。[ACL來源頁](../pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p2.png)。
+人工判讀與原文、cell座標、裁圖、文件ref及hash (`manual-review.json`)。ACL來源頁 (`docs/research/pdf-core-ocr-regression-2026-10-19/corpus/source-pages/acl-p2.png`)。
 
 ## 評讀邊界
 

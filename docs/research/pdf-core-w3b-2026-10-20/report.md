@@ -4,9 +4,9 @@
 
 ## 1. HTML 答案與可信度
 
-36/36 可下載 HTTP 產物；35/36 有可用的結構 HTML。Adam 僅是 PDF wrapper，答案為 UNAVAILABLE，不能視為零表格或零錯誤。每篇 requested/final URL、SHA256、版本宣告在 [html-manifest.json](html-manifest.json) 與 [source-version-summary.json](source-version-summary.json)。轉換器自述為 LaTeXML oxide：16篇0.7.5、20篇0.7.6；不是 Perl LaTeXML 的版本號。
+36/36 可下載 HTTP 產物；35/36 有可用的結構 HTML。Adam 僅是 PDF wrapper，答案為 UNAVAILABLE，不能視為零表格或零錯誤。每篇 requested/final URL、SHA256、版本宣告在 `html-manifest.json` 與 `source-version-summary.json`。轉換器自述為 LaTeXML oxide：16篇0.7.5、20篇0.7.6；不是 Perl LaTeXML 的版本號。
 
-來源先抽固定10張完整表、20條公式行對照原PDF頁圖，再於11:20:54 UTC以 [oracle-freeze.json](oracle-freeze.json) 封存108檔，之後才開始本輪目標評分。10表的數值、標籤與合併格均局部忠實；20公式行中19條可獨立比較，1條忠實但只是續行而排出獨立公式分母。沒有局部確認的 LaTeXML 改義，不能據此推論所有未抽查單位正確。
+來源先抽固定10張完整表、20條公式行對照原PDF頁圖，再於11:20:54 UTC以 `oracle-freeze.json` 封存108檔，之後才開始本輪目標評分。10表的數值、標籤與合併格均局部忠實；20公式行中19條可獨立比較，1條忠實但只是續行而排出獨立公式分母。沒有局部確認的 LaTeXML 改義，不能據此推論所有未抽查單位正確。
 
 公式保留外層環境與逐條身分；矩陣、cases 等內部列不拆成獨立等式。表格以共同 caption 的 semantic table 為判定單位，多子表合為複雜表。246張 semantic tables 中183張確定在範圍內、3張範圍外、60張來源定位仍未知。來源宏、版本、續行、無法定位、跨頁實體範圍與多值角色不明均保留 UNKNOWN，不猜答案。完整規則見 [source-trust.md](source-trust.md)、[method.md](method.md)。
 
@@ -51,11 +51,11 @@ Set F的一般arXiv單欄兩篇沒有此處可評的IN_SCOPE semantic table，�
 
 確認修好3張：P11 p8 Table2、P13 p9 Table4、P13 p26 Table6。0張 PASS→FAIL；但另有8張 UNKNOWN→FAIL，不能宣稱已證零退化。7張 FAIL→UNKNOWN 也不算修好。MAPPED另保留了RAW Markdown丟到表外的父表頭，增加2張通過。
 
-逐表錯誤率及上下界、錯配／漏／多生與未知原因見 [table/per-table.csv](table/per-table.csv)；完整 RAW/MAPPED 證據見 [table/report.md](table/report.md)、[table/summary.json](table/summary.json)。按實際 family 與複雜度的表見 [table/family-summary-supplement.md](table/family-summary-supplement.md)：沿用 W3 的版型標籤，保留 Pilot-other／模板不明，不把來源 oracle 的 Pilot placeholder 冒充版型。這只補充分析標籤，沒有改 source 或評分。精確錯誤率的分布只納入分母、全部資料點及多生都能判定的表；不把未知填為0%。來源多值角色不明與目標壓欄是主要剩餘未知，HTML 解決來源可取得問題，尚未解決所有行列關係。
+逐表錯誤率及上下界、錯配／漏／多生與未知原因見 `table/per-table.csv`；完整 RAW/MAPPED 證據見 [table/report.md](table/report.md)、`table/summary.json`。按實際 family 與複雜度的表見 [table/family-summary-supplement.md](table/family-summary-supplement.md)：沿用 W3 的版型標籤，保留 Pilot-other／模板不明，不把來源 oracle 的 Pilot placeholder 冒充版型。這只補充分析標籤，沒有改 source 或評分。精確錯誤率的分布只納入分母、全部資料點及多生都能判定的表；不把未知填為0%。來源多值角色不明與目標壓欄是主要剩餘未知，HTML 解決來源可取得問題，尚未解決所有行列關係。
 
-已FAIL表的確證錯率下界範圍：E0為5.93%–50%，cellFalse為4.76%–33.33%；其未決上界另列，不能當精確錯率，也不能用兩組不同表的分布宣稱改善。4.76%的YOLO一般表仍FAIL，因一般表門檻為零錯；不是套複雜表5%。完整下界記帳見 [table/fail-rate-bounds-root.json](table/fail-rate-bounds-root.json)。
+已FAIL表的確證錯率下界範圍：E0為5.93%–50%，cellFalse為4.76%–33.33%；其未決上界另列，不能當精確錯率，也不能用兩組不同表的分布宣稱改善。4.76%的YOLO一般表仍FAIL，因一般表門檻為零錯；不是套複雜表5%。完整下界記帳見 `table/fail-rate-bounds-root.json`。
 
-新conversion只跑34篇中有表格的175個原PDF頁、84個連續區間；單worker CPU4。175頁的raw layout與原E0逐值相同，表格變化定位於table structure／cell matching與組裝；RAW父表頭丟失定位於serializer／Markdown語法。conversion wall405.89秒、CPU1401.69秒，含啟動監控wall528.68秒；peak tree RSS6.18GiB，最低host available15.71GiB。所有守門通過，沒有重試或enrichment。完整記錄見 [cell-resources.json](cell-resources.json)、[page-scope-control.json](page-scope-control.json)。這是表頁對照，不是完整文件讀序重新驗收；全文與interval的跨頁組裝等價未另行證明，實體範圍不足的表保留UNKNOWN。
+新conversion只跑34篇中有表格的175個原PDF頁、84個連續區間；單worker CPU4。175頁的raw layout與原E0逐值相同，表格變化定位於table structure／cell matching與組裝；RAW父表頭丟失定位於serializer／Markdown語法。conversion wall405.89秒、CPU1401.69秒，含啟動監控wall528.68秒；peak tree RSS6.18GiB，最低host available15.71GiB。所有守門通過，沒有重試或enrichment。完整記錄見 `cell-resources.json`、`page-scope-control.json`。這是表頁對照，不是完整文件讀序重新驗收；全文與interval的跨頁組裝等價未另行證明，實體範圍不足的表保留UNKNOWN。
 
 ## 3. 逐條公式
 
@@ -65,7 +65,7 @@ Set F的一般arXiv單欄兩篇沒有此處可評的IN_SCOPE semantic table，�
 
 17篇保存E1實際85 refs＝57 formula＋28 code；57 formula refs中39有獨立source行分數（共40行）、7個parent可定位但行界不明、3個複合、8個身分不明。未處理或無法對齊不算模型漏句。E0 orig可獨立取界126條：0完全一致／49接近（38.89%）／77文字錯誤（61.11%），另24 locator行界不明。E0是攤平PDF字流對TeX結構，文字錯誤桶**不等於改義**，亦不表示RAW Markdown已交付；orig由mapper規則1回填並保留角色不確定。共同40條及family的對帳見 [formula/combined-summary-root.md](formula/combined-summary-root.md)。
 
-代表阻擋包括LightGCN p5式11漏必要的 E^(k)、式14把兩個根號相乘改成巢狀根號，EfficientNet的逐元素運算改成張量積、Attention的 d_model 改名、SICA的金額符號改字。反例是YOLO的leaky-ReLU核心分支正確卻帶鄰圖碎片，因此文字ERROR不直接當Q31核心改義。完整逐條、family與頁圖理由見 [formula/assessment-v2/report.md](formula/assessment-v2/report.md)、[formula/assessment-v2/combined-per-formula-scored.json](formula/assessment-v2/combined-per-formula-scored.json)。
+代表阻擋包括LightGCN p5式11漏必要的 E^(k)、式14把兩個根號相乘改成巢狀根號，EfficientNet的逐元素運算改成張量積、Attention的 d_model 改名、SICA的金額符號改字。反例是YOLO的leaky-ReLU核心分支正確卻帶鄰圖碎片，因此文字ERROR不直接當Q31核心改義。完整逐條、family與頁圖理由見 `formula/assessment-v2/report.md`、`formula/assessment-v2/combined-per-formula-scored.json`。
 
 ## 4. 原生 code 與兩版輸出
 
@@ -79,15 +79,15 @@ Set F的一般arXiv單欄兩篇沒有此處可評的IN_SCOPE semantic table，�
 | E0 RAW/MAPPED | 8.23% | 0% | 8/8 | 6/8 |
 | E1 RAW/MAPPED | 16.54% | 0.48% | 6/8 | 4/8 |
 
-逐行字元距離、原文、配對／未配對與縮排診斷見 [code-native/line-diagnostics-root.csv](code-native/line-diagnostics-root.csv)。已配對行的字面縮排差異為native 0/184、E0 7/23、E1 154/180；E0有169個未配對來源行，native有8、E1有12。這些是物理換行／空白差異，含整體縮排offset；**不是已確認邏輯錯誤或漏行數**。文字CER亦不設任意通過閾值。
+逐行字元距離、原文、配對／未配對與縮排診斷見 `code-native/line-diagnostics-root.csv`。已配對行的字面縮排差異為native 0/184、E0 7/23、E1 154/180；E0有169個未配對來源行，native有8、E1有12。這些是物理換行／空白差異，含整體縮排offset；**不是已確認邏輯錯誤或漏行數**。文字CER亦不設任意通過閾值。
 
 原21個人工標籤維持9保義／6 Q4阻擋／4對齊錯誤／2未知。6個阻擋包含log、prompt、檔名與條件文字，不能全稱可執行Q33邏輯錯誤。額外P04 p22 Algorithm1已有頁圖證據：原生與E0保留的∈、≥被E1改成=、>，else也遭改寫，屬static Q33阻擋，未執行來源程式。其餘無法展開算法表示的CER維持UNKNOWN。
 
-在這個小共同子集，原生字面與縮排較忠實；3段Python既有人審並未確認E1邏輯退化，不把字面差異當成邏輯敗例，也不推廣為所有code可靠。完整分母、各單位與原生座標見 [code-native-v4-utf16/report.md](code-native-v4-utf16/report.md)、[code-native-v4-utf16/summary.json](code-native-v4-utf16/summary.json)。UTF-16修正後全99個source重評，僅P03 code00009一個原生字元恢復；主13個的CER與共同8個的全部指標不變。原v3封存不動；逐行補充表的共同8分母亦逐值確認相同。
+在這個小共同子集，原生字面與縮排較忠實；3段Python既有人審並未確認E1邏輯退化，不把字面差異當成邏輯敗例，也不推廣為所有code可靠。完整分母、各單位與原生座標見 [code-native-v4-utf16/report.md](code-native-v4-utf16/report.md)、`code-native-v4-utf16/summary.json`。UTF-16修正後全99個source重評，僅P03 code00009一個原生字元恢復；主13個的CER與共同8個的全部指標不變。原v3封存不動；逐行補充表的共同8分母亦逐值確認相同。
 
 ## 5. 不確定標記的佐證訊號
 
-門檻在任何訊號計算前固定：a與b均要求字元一致度≥0.95、運算子及數字序列完全一致；公式primary verified須a、b、c全部可用且通過，code須a、b。缺訊號不verified。另報固定單訊號及組合、ROC，沒有依結果挑門檻。語法render成功不等於數學保義，描述文字的字層相似度不等於描述內容正確。方法見 [signals-preregistration.json](signals-preregistration.json)、[signals-operationalization.json](signals-operationalization.json)。
+門檻在任何訊號計算前固定：a與b均要求字元一致度≥0.95、運算子及數字序列完全一致；公式primary verified須a、b、c全部可用且通過，code須a、b。缺訊號不verified。另報固定單訊號及組合、ROC，沒有依結果挑門檻。語法render成功不等於數學保義，描述文字的字層相似度不等於描述內容正確。方法見 `signals-preregistration.json`、`signals-operationalization.json`。
 
 W3原50個公式block保留15阻擋／28核心保義／7metadata；原21個code保留9保義／6 Q4阻擋／4對齊錯誤／2未知。沒有把block標籤複製到逐條，也沒有把本輪40條加到這個主分母。primary a只接受原PDF區域glyph，組裝後orig僅作診斷；多人共用大item與human小單位範圍不一致時UNKNOWN。code21來自20個prediction groups，相關性另記。
 
@@ -118,7 +118,7 @@ R1新增的a誤驗例E023保留原嚴格F2人審標籤，理由為一般C與書�
 
 跨重建器b沒有任何可證相同來源區域的配對：相同論文仍在不同原頁／區域，不用末式號或輸出相似度硬配。**b的precision／recall／誤驗率為NA**。完整primary（formula a&b&c、code a&b）因此verified=0、覆蓋率0、誤驗率NA，不是0%錯。a&c省略b的規則仍把W3公式SICA阻擋標為verified（2個中1錯）。本輪沒有證據支持把這三個訊號的組合當可靠認證。
 
-各層完整混淆矩陣、pass-as-correct precision／recall、缺訊號及未知label數、固定門檻敏感度在 [signals/metrics.json](signals/metrics.json)；原始cohort與已知限制見 [signals/report.md](signals/report.md)，138項獨立檢查全部通過，見 [signals/independent-qa.json](signals/independent-qa.json)。[ROC圖（PDF）](signals/figures/roc-by-cohort.pdf) 與 [固定門檻敏感度圖](signals/figures/a-threshold-sensitivity.png) 使用所有觀測門檻，未據此選新門檻。purposive抽樣、同paper／同prediction相關性限制，均不做部署機率校準。 字元一致度的error-positive AUROC：W3 formula 0.717（n=37）、W3 code 0.833（n=8），R1原formula子view 0.125（n=8）、code 0.500（n=3）；語法訊號W3 formula為0.510（n=35）。小分母、不同人審準則與可評覆蓋不同，不能以單一較好的AUC推薦verified或反轉方向挑門檻。
+各層完整混淆矩陣、pass-as-correct precision／recall、缺訊號及未知label數、固定門檻敏感度在 `signals/metrics.json`；原始cohort與已知限制見 [signals/report.md](signals/report.md)，138項獨立檢查全部通過，見 `signals/independent-qa.json`。ROC圖（PDF） (`signals/figures/roc-by-cohort.pdf`) 與 固定門檻敏感度圖 (`signals/figures/a-threshold-sensitivity.png`) 使用所有觀測門檻，未據此選新門檻。purposive抽樣、同paper／同prediction相關性限制，均不做部署機率校準。 字元一致度的error-positive AUROC：W3 formula 0.717（n=37）、W3 code 0.833（n=8），R1原formula子view 0.125（n=8）、code 0.500（n=3）；語法訊號W3 formula為0.510（n=35）。小分母、不同人審準則與可評覆蓋不同，不能以單一較好的AUC推薦verified或反轉方向挑門檻。
 
 ## 6. #84 建議與界線
 
@@ -135,4 +135,4 @@ R1新增的a誤驗例E023保留原嚴格F2人審標籤，理由為一般C與書�
 
 W2最終正文設定不變：PyPdfium、Heron、separators=True、bookmark-only。正式Profile的影像需求與group5記憶體處理沿用W2決策；研究時影像關閉不構成正式交付設定。Q13失敗、Q31改義、已確認Q33變動仍是阻擋，不因帶不確定標記而自動通過Canonical Acceptance；無完整答案／範圍的項目維持UNKNOWN。
 
-執行與交接索引見 [results-index.json](results-index.json)；最終SHA與交叉檢查見 [completion-manifest.json](completion-manifest.json)、[completion-checks.json](completion-checks.json)。本輪只新增表格cell matching消融推論，未新增E1、API或模型下載；完成後停止。
+執行與交接索引見 `results-index.json`；最終SHA與交叉檢查見 `completion-manifest.json`、`completion-checks.json`。本輪只新增表格cell matching消融推論，未新增E1、API或模型下載；完成後停止。

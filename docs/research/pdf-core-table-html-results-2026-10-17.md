@@ -9,13 +9,13 @@
 | 項目 | 實際執行 |
 |---|---|
 | SDK | 既有research runtime：Docling-slim2.132／Core2.99；原80個installed distributions及所讀SDK來源hash未變 |
-| 最小依賴 | 只安裝到`/private/tmp/pdf-core-table-html-20261017/deps`，以PYTHONPATH引入；beautifulsoup4 4.15.0、soupsieve3.0.3、typing-extensions4.16.0（與原環境同版），不修改原venv |
+| 最小依賴 | 只安裝到`<tmp>/pdf-core-table-html-20261017/deps`，以PYTHONPATH引入；beautifulsoup4 4.15.0、soupsieve3.0.3、typing-extensions4.16.0（與原環境同版），不修改原venv |
 | 公開入口 | `DocumentConverter(allowed_formats=[InputFormat.HTML]).convert_string(..., InputFormat.HTML)`；HTML匯入，不跑Standard或VlmPipeline推論 |
 | 來源重綁 | 公開TableItem／insert／append／delete操作，將匯入TableData放進合成PDF文件的原table位置，保留原caption及table-envelope provenance |
 | 交付 | 原生JSON保存／reload及stock `export_to_markdown()`；另外以既有markdown-it-py的CommonMark＋table支援檢查實際渲染，不自訂renderer |
 | 控制 | 一次依賴安裝後smoke conversion；固定8個正向合成案例、2個無效輸入探針，一次執行，無內容修正／迭代搜尋 |
 
-[probe](pdf-core-table-html-2026-10-17/probe.py)、[固定登錄／來源hash](pdf-core-table-html-2026-10-17/registration.json)、[完整機械檢查](pdf-core-table-html-2026-10-17/verification.json)、[語義／渲染評讀](pdf-core-table-html-2026-10-17/decision.json)、[依賴lock](pdf-core-table-html-2026-10-17/overlay-lock.txt)均保存。以HF／Transformers offline設定執行，沒有載入模型或下載權重。
+probe (`pdf-core-table-html-2026-10-17/probe.py`)、固定登錄／來源hash (`pdf-core-table-html-2026-10-17/registration.json`)、完整機械檢查 (`pdf-core-table-html-2026-10-17/verification.json`)、語義／渲染評讀 (`pdf-core-table-html-2026-10-17/decision.json`)、依賴lock (`pdf-core-table-html-2026-10-17/overlay-lock.txt`)均保存。以HF／Transformers offline設定執行，沒有載入模型或下載權重。
 
 ## 哪些已可交付
 
@@ -41,7 +41,7 @@
 | West                 | 14                |
 ```
 
-後面的Region資料仍處於帶有By Device的全域表頭下；數字和group文字都存在，不等於條件歸屬正確。**主要停止理由是實際關係／Markdown語義，不是硬性要求某個Docling label或row_section flag。** 見[原輸入](pdf-core-table-html-2026-10-17/row_groups/input.html)、[typed結果](pdf-core-table-html-2026-10-17/row_groups/imported.json)、[實際Markdown](pdf-core-table-html-2026-10-17/row_groups/document.md)。
+後面的Region資料仍處於帶有By Device的全域表頭下；數字和group文字都存在，不等於條件歸屬正確。**主要停止理由是實際關係／Markdown語義，不是硬性要求某個Docling label或row_section flag。** 見原輸入 (`pdf-core-table-html-2026-10-17/row_groups/input.html`)、typed結果 (`pdf-core-table-html-2026-10-17/row_groups/imported.json`)、[實際Markdown](pdf-core-table-html-2026-10-17/row_groups/document.md)。
 
 固定版HTML source會unwrap thead／tbody，依整行th／td推斷column header，未以scope=rowgroup保留這個例子的語義；Core的header flatten再將領先column-header rows合併。另有Docling特定`row_section` class辨識，但本輪未試其dialect變體，也不由此宣稱所有HTML表達法都無解。[HTML backend2.132](https://github.com/docling-project/docling/blob/v2.132.0/docling/backend/html_backend.py)、[Markdown serializer2.99](https://github.com/docling-project/docling-core/blob/v2.99.0/docling_core/transforms/serializer/markdown.py)
 
@@ -49,7 +49,7 @@
 
 輸入cell使用正確的`&lt;s&gt;`；HTML backend及typed TableData都有literal `<s>`，原始Markdown字串也找得到它，但stock table serializer直接輸出未escaped的`<s>`。CommonMark在HTML enabled下將它解讀為HTML tag，實際cell可見文字為空。
 
-同一張表另一cell的`item[i] < limit & ready`仍可見，不能泛稱所有小於號都消失。HTML disabled的reference renderer則能保留`<s>`，所以問題涉及Markdown HTML語義／consumer policy；**不是觀察到Codex UI或所有consumer都必然吞字。** 見[Markdown](pdf-core-table-html-2026-10-17/escaped_literal/document.md)、[CommonMark渲染](pdf-core-table-html-2026-10-17/escaped_literal/rendered-commonmark.html)、[HTML disabled對照](pdf-core-table-html-2026-10-17/escaped_literal/rendered-html-disabled.html)。
+同一張表另一cell的`item[i] < limit & ready`仍可見，不能泛稱所有小於號都消失。HTML disabled的reference renderer則能保留`<s>`，所以問題涉及Markdown HTML語義／consumer policy；**不是觀察到Codex UI或所有consumer都必然吞字。** 見[Markdown](pdf-core-table-html-2026-10-17/escaped_literal/document.md)、CommonMark渲染 (`pdf-core-table-html-2026-10-17/escaped_literal/rendered-commonmark.html`)、HTML disabled對照 (`pdf-core-table-html-2026-10-17/escaped_literal/rendered-html-disabled.html`)。
 
 固定Core的plain TableCell匯出只處理newline／pipe，未套用一般文字的HTML escaping；並非HTML producer忘記escape，也不能只用raw string包含測試認定交付通過。沒有修改cell文字來修結果，沒有替換serializer。
 

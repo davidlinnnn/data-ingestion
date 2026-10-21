@@ -8,10 +8,10 @@
 
 1. [逐任務選型表](pdf-core-g2-official-method-2026-10-15/coverage.md)：16項任務、14個模型／方法身份，區分實測、歷史有界結果與只查到官方能力。OCR、表格、圖片、heading／order、公式／code及交付缺口都保留。
 2. [官方接點預檢](pdf-core-g2-official-method-2026-10-15/preflight/results.md)：真實 `DocumentConverter → VlmPipeline → ApiVlmEngine → Core parser/assembly`，只用 mock 取代網路。DocTags 可保留 synthetic 公式／code／表／圖／座標，故選它作新比較；所測 MD／HTML 表示有資訊損失，沒有據此否定所有 HTML encoding。
-3. [第二組登記](pdf-core-g2-official-method-2026-10-15/registration.json)：固定 Docling2.102.0／Core2.96.0、官方 DocTags 路徑、API及 `low`；8次真實請求，四份來源、41個固定來源工作單位，包括原先五項未執行內容。
-4. [第三組登記](pdf-core-g2-official-medium-2026-10-15/registration.json)：最後一個預算名額，只將 `reasoning_effort` 改為 `medium`。8張實際輸入PNG完全相同，完整request唯一差異亦只有此欄；prompt、來源標準、parser與影像尺度不變。沒有逐案改 prompt、修答案或重跑挑成功。
+3. 第二組登記 (`pdf-core-g2-official-method-2026-10-15/registration.json`)：固定 Docling2.102.0／Core2.96.0、官方 DocTags 路徑、API及 `low`；8次真實請求，四份來源、41個固定來源工作單位，包括原先五項未執行內容。
+4. 第三組登記 (`pdf-core-g2-official-medium-2026-10-15/registration.json`)：最後一個預算名額，只將 `reasoning_effort` 改為 `medium`。8張實際輸入PNG完全相同，完整request唯一差異亦只有此欄；prompt、來源標準、parser與影像尺度不變。沒有逐案改 prompt、修答案或重跑挑成功。
 
-兩組皆是**真正官方 pipeline**，不是將 direct HTTP probe 稱為 Docling 整合。API runtime 原生 `params` 覆寫 `temperature:null`、8192 completion cap、`store:false`；16次皆HTTP200、正常stop，沒有拒絕或撞cap。前後兩組方法與舊36個段落請求的工作範圍不同，不能當單變因速度／準度排名。[第二組獨立核對](pdf-core-g2-official-method-2026-10-15/api-verification.json)／[第三組獨立核對](pdf-core-g2-official-medium-2026-10-15/verification.json)
+兩組皆是**真正官方 pipeline**，不是將 direct HTTP probe 稱為 Docling 整合。API runtime 原生 `params` 覆寫 `temperature:null`、8192 completion cap、`store:false`；16次皆HTTP200、正常stop，沒有拒絕或撞cap。前後兩組方法與舊36個段落請求的工作範圍不同，不能當單變因速度／準度排名。第二組獨立核對 (`pdf-core-g2-official-method-2026-10-15/api-verification.json`)／第三組獨立核對 (`pdf-core-g2-official-medium-2026-10-15/verification.json`)
 
 ## 相同來源上的結果
 
@@ -56,10 +56,10 @@
 
 ## 時間、成本與證據限制
 
-本輪新增16次真實推論，client RTT合計400.80秒。Low 35,440 tokens，medium 51,939 tokens；reasoning已包含在completion，沒有重複加總。按2026-10-15公開標準token費率估算合計約 **US$0.0250**，不是已核對帳單。Medium時間約2.05倍、token費率估算約1.98倍，單次8頁配對觀察不足以推算production SLO或GPU速度。[Low usage](pdf-core-g2-official-method-2026-10-15/usage.json)／[Medium usage](pdf-core-g2-official-medium-2026-10-15/usage.json)／[官方費率](https://developers.openai.com/api/docs/models/gpt-6-luna)
+本輪新增16次真實推論，client RTT合計400.80秒。Low 35,440 tokens，medium 51,939 tokens；reasoning已包含在completion，沒有重複加總。按2026-10-15公開標準token費率估算合計約 **US$0.0250**，不是已核對帳單。Medium時間約2.05倍、token費率估算約1.98倍，單次8頁配對觀察不足以推算production SLO或GPU速度。Low usage (`pdf-core-g2-official-method-2026-10-15/usage.json`)／Medium usage (`pdf-core-g2-official-medium-2026-10-15/usage.json`)／[官方費率](https://developers.openai.com/api/docs/models/gpt-6-luna)
 
 Observer沿用的安全遮罩regex在兩組SEAL p2各誤遮罩一次普通文字 `task-specific`。官方pipeline使用未改動的原回應，保存的sanitized response／raw DocTags則有此遮罩；精確replay差異另核對。該處在41個選定單位以外，不作模型錯誤、不從parsed結果偽造還原原始HTTP。其餘三份來源的保存回應可精確重放官方結果；所有歷史評分／輸出保留。
 
 驗證僅針對固定41來源工作，沒有聲稱八頁其餘內容全數合格或整個corpus的準確率。完整Canonical交付／恢復與高頻／GPU資格仍未驗，G2尚未全面通過。
 
-[結論已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6196380818)，原正文及44項功能列未變，issue維持OPEN；[exact readback](pdf-core-g2-official-method-2026-10-15/ticket-update.json)與[整體驗證](pdf-core-g2-official-method-2026-10-15/validation.json)保存本輪核對。
+[結論已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6196380818)，原正文及44項功能列未變，issue維持OPEN；exact readback (`pdf-core-g2-official-method-2026-10-15/ticket-update.json`)與整體驗證 (`pdf-core-g2-official-method-2026-10-15/validation.json`)保存本輪核對。

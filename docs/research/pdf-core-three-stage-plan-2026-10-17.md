@@ -14,7 +14,7 @@
 
 **閱讀順序與目前事實**
 
-先讀本文件，再按需要開啟[配置與 F01–F22 盤點](pdf-core-balanced-config-2026-10-17.md)、[最近表格實驗](pdf-core-table-crops-results-2026-10-17.md)、[原生公式／code 結果](pdf-core-standard-enrichment-results-2026-10-17.md)及[retro 結論](../reviews/pdf-core-retro-closure-2026-10-16.md)。歷史計畫中的已執行／已停止候選不因此重啟。
+先讀本文件，再按需要開啟[配置與 F01–F22 盤點](pdf-core-balanced-config-2026-10-17.md)、[最近表格實驗](pdf-core-table-crops-results-2026-10-17.md)、[原生公式／code 結果](pdf-core-standard-enrichment-results-2026-10-17.md)及retro 結論 (`docs/reviews/pdf-core-retro-closure-2026-10-16.md`)。歷史計畫中的已執行／已停止候選不因此重啟。
 
 - Standard＋Heron／RapidOCR／TableFormer V1 是固定研究基線，尚無完整合格 Processing Profile。
 - 表格最近的完整座標 JSON 配置不晉升：T04 raw 數值改善到 295/300、無漏值，但結構錯置；T01 普通表退化；T05 通過。本次串行 API 時間 117→211 秒只是歷史對照。
@@ -49,7 +49,7 @@
 
 **第一段 A 公式與 code 的發現與交付**
 
-輸入固定 Controls p1、WikiSkill p20–22、SEAL p2–4、DGM p51，共8個物理頁。重用保存的 S0 結構、來源與[原41項契約](pdf-core-g2-official-method-2026-10-15/review/contract.json)；原4個保護正例與4個跨頁 join 保留。41是 selected logical units，不是全頁目標數或API呼叫數。
+輸入固定 Controls p1、WikiSkill p20–22、SEAL p2–4、DGM p51，共8個物理頁。重用保存的 S0 結構、來源與原41項契約 (`pdf-core-g2-official-method-2026-10-15/review/contract.json`)；原4個保護正例與4個跨頁 join 保留。41是 selected logical units，不是全頁目標數或API呼叫數。
 
 1. 評讀者只看原稿，補齊這8頁的公式／code完整目標清單與普通陰性段落。包含原生未 emit 的內容；新增目標與原41項分母分列。不得用候選結果生成答案。
 2. Producer 只讀公開原生結構、影像與一般規則，盤點 text/code/formula、picture descendants 及所有來源 fragments。逐項記 discovered、scoped、eligible、scheduled、delivered；再由 evaluator 對照來源清單查漏。
@@ -168,7 +168,7 @@ N與token cap在這份計畫中是**第一段的必要產出**，不是執行時
 | Trace2Skill／ReasoningBank | 分別2／9 | 真實流程圖、真實chart與已印數值 |
 | 原controlled PDF | 全8頁 | 方向、混合、章節、公式／code、bar／line／log／pie及陰性 |
 
-來源檔案由[既有pilot manifest](../fixtures/agent-self-evolution-pilot-2026-10-11/manifest.json)、[G1 regression manifest](pdf-core-g2-eval-freeze-2026-10-15/regression-manifest.json)與[原能力計畫](docling-pdf-core-capability-validation-plan-2026-10-14.md)解析，登錄exact path／hash／頁碼。表中的文件短名不能直接作producer的條件分支。
+來源檔案由既有pilot manifest (`docs/fixtures/agent-self-evolution-pilot-2026-10-11/manifest.json`)、G1 regression manifest (`pdf-core-g2-eval-freeze-2026-10-15/regression-manifest.json`)與[原能力計畫](docling-pdf-core-capability-validation-plan-2026-10-14.md)解析，登錄exact path／hash／頁碼。表中的文件短名不能直接作producer的條件分支。
 
 原DGM p64契約只涵蓋末頁片段，p63尚未評讀；新增p63–64契約獨立保存，不改歷史結果。T03原有264數值／7比較，與單頁470／23分開；必須保留續表、重複表頭的意義、資料點不重複、各頁來源與條件。先以合成多頁表驗公開映射；不能把三張分離table交出去便稱完成續表。
 

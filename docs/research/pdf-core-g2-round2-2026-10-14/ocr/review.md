@@ -4,9 +4,9 @@
 
 ## 固定輸入與方法
 
-來源仍是 [G1-O01](../../../fixtures/pdf-core-g1-2026-10-14/cases.json) 的 NCCU PDF physical p3，SHA-256 `3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e`。逐位置核對中央五項 b1–b5，不以側欄或右側重複文字替代。原始中央 panel 為 embedded Image35 的固定 685×230 crop，SHA-256 `67daf56dc4b467605c202096cb16413818dd22063a85dc13a40d2401ce109f68`。
+來源仍是 G1-O01 (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`) 的 NCCU PDF physical p3，SHA-256 `3a8d8a946a5962cc1b666ec6a33dc5482556da7013a70ca096fc8d86439a5f6e`。逐位置核對中央五項 b1–b5，不以側欄或右側重複文字替代。原始中央 panel 為 embedded Image35 的固定 685×230 crop，SHA-256 `67daf56dc4b467605c202096cb16413818dd22063a85dc13a40d2401ce109f68`。
 
-[runner](run.py) 共執行三次圖片 OCR；不下載模型、不裝套件、不用 API、GPU、MPS、MLX 或 CoreML。採既有 RapidOCR 3.9.2／ONNX Runtime 1.24.3，三個 session 都實際保存並斷言 `get_providers() == ["CPUExecutionProvider"]`，intra-op 4 threads／inter-op 1 thread，classification／recognition batch 1。模型與其餘 resolved config 保存於各 run 的 `producer.json`，不是僅引用配置預期。
+runner (`run.py`) 共執行三次圖片 OCR；不下載模型、不裝套件、不用 API、GPU、MPS、MLX 或 CoreML。採既有 RapidOCR 3.9.2／ONNX Runtime 1.24.3，三個 session 都實際保存並斷言 `get_providers() == ["CPUExecutionProvider"]`，intra-op 4 threads／inter-op 1 thread，classification／recognition batch 1。模型與其餘 resolved config 保存於各 run 的 `producer.json`，不是僅引用配置預期。
 
 | 模型 | SHA-256 |
 |---|---|
@@ -16,17 +16,17 @@
 
 | Run | 輸入 | OCR 含 engine load 秒 | 含 child 啟停秒 | sampled tree peak GiB |
 |---|---|---:|---:|---:|
-| [fixed-panel-1x](runs/fixed-panel-1x/ocr.json) | G1 固定原始 panel，685×230 | 0.345 | 0.792 | 1.192 |
-| [picture-scale3](runs/picture-scale3/ocr.json) | 第一輪 `nccu-p3-native` 的 `#/pictures/0`，原頁 scale 3 重繪、1340×980 | 0.510 | 1.061 | 1.048 |
-| [fixed-panel-2x](runs/fixed-panel-2x/ocr.json) | 原始 panel 以 PIL LANCZOS 放大 2×，1370×460 | 0.313 | 0.794 | 1.194 |
+| fixed-panel-1x (`runs/fixed-panel-1x/ocr.json`) | G1 固定原始 panel，685×230 | 0.345 | 0.792 | 1.192 |
+| picture-scale3 (`runs/picture-scale3/ocr.json`) | 第一輪 `nccu-p3-native` 的 `#/pictures/0`，原頁 scale 3 重繪、1340×980 | 0.510 | 1.061 | 1.048 |
+| fixed-panel-2x (`runs/fixed-panel-2x/ocr.json`) | 原始 panel 以 PIL LANCZOS 放大 2×，1370×460 | 0.313 | 0.794 | 1.194 |
 
-資源資料見 [summary.json](summary.json)。每個 child 180 秒、0.25 秒採樣、process-tree RSS 超過 6 GiB 軟停止；單一 worker 依序執行。數字是本機一次觀察，包含冷暖 cache 差異，不是穩定 latency、容量或 SLO。最初一次在保存含 `Path` 的 resolved config 時失敗，發生於推論前；[失敗 summary](startup-failure-summary.json) 與 child log 原樣保留，修正序列化後的三次推論均正常完成。
+資源資料見 `summary.json`。每個 child 180 秒、0.25 秒採樣、process-tree RSS 超過 6 GiB 軟停止；單一 worker 依序執行。數字是本機一次觀察，包含冷暖 cache 差異，不是穩定 latency、容量或 SLO。最初一次在保存含 `Path` 的 resolved config 時失敗，發生於推論前；失敗 summary (`startup-failure-summary.json`) 與 child log 原樣保留，修正序列化後的三次推論均正常完成。
 
 完整 PictureItem crop 重用既有 [圖片 OCR seam](../../../../src/pdf_processing/ocr.py)：核對 PDF／parsed result SHA、單頁 provenance、座標原點、原頁 cached pixels 及 PictureItem cached crop 完整性後才重繪。三次的 `source-mapping.json` 保存原頁 bbox、原始 embedded pixel mapping、crop 尺度／rounding 與來源雜湊。`picture-scale3` 的原頁 bbox 為 `[62.582893,242.548553,509.465088,569.274719]`，top-left PDF points，涵蓋中央五項，並未把 b4 裁掉。
 
 ## 逐位置結論
 
-[selection-review.json](selection-review.json) 保留每項的預期 PDF envelope、raw detector box、raw index、識別文字與 confidence；[review.py](review.py) 可離線重驗 hash、session providers、batch、來源位置及文字比較。空白與雙引號字形可正規化；不做繁簡轉換。位置對應使用固定近似 envelope，並已目視核對實際 crop；沒有新增 IoU 或文字錯誤率門檻。
+`selection-review.json` 保留每項的預期 PDF envelope、raw detector box、raw index、識別文字與 confidence；`review.py` 可離線重驗 hash、session providers、batch、來源位置及文字比較。空白與雙引號字形可正規化；不做繁簡轉換。位置對應使用固定近似 envelope，並已目視核對實際 crop；沒有新增 IoU 或文字錯誤率門檻。
 
 | 中央項目 | 原始 panel 1× | 完整 PictureItem scale 3 | 原始 panel 2× |
 |---|---|---|---|

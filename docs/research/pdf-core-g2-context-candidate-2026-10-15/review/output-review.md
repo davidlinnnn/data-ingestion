@@ -1,6 +1,6 @@
 # Independent structural/source-input review
 
-The candidate passes this bounded structural review under the pre-output [evaluation contract](evaluation-contract.json). [check.py](check.py) and [output-review.json](output-review.json) reproduce the checks. No new model response was generated or graded. No challenger is selected for holdout, and G2 remains unpassed.
+The candidate passes this bounded structural review under the pre-output evaluation contract (`evaluation-contract.json`). `check.py` and `output-review.json` reproduce the checks. No new model response was generated or graded. No challenger is selected for holdout, and G2 remains unpassed.
 
 | Document | Native item refs | Group refs | Planner rows | Ready | Member | Abstain | Unsupported |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

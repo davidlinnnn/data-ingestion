@@ -46,9 +46,9 @@ The official [plugin documentation](https://docling-project.github.io/docling/co
 
 ## Bounded recommendation
 
-A separate zero-inference native geometry replay in this investigation retained the known page's 22 Heron boxes. None crossed the page midline. Kernels 0/4/8/12/16/20 produced 15/10/7/1/1/1 OCR regions respectively; only the last three settings produced a midline-crossing region. The nearest opposite-column box gap was 10.6816 pt. This isolates a concrete merge-policy mechanism on this page; kernel 8 is **not** a production recommendation. [Replay results](pdf-core-ocr-dilation-source-2026-10-20/geometry.json).
+A separate zero-inference native geometry replay in this investigation retained the known page's 22 Heron boxes. None crossed the page midline. Kernels 0/4/8/12/16/20 produced 15/10/7/1/1/1 OCR regions respectively; only the last three settings produced a midline-crossing region. The nearest opposite-column box gap was 10.6816 pt. This isolates a concrete merge-policy mechanism on this page; kernel 8 is **not** a production recommendation. Replay results (`pdf-core-ocr-dilation-source-2026-10-20/geometry.json`).
 
-Current upstream `main` was pinned to `d01c9c0991920924cf17f6b8366079ac035ffc38` for source inspection and still uses the 20 constant in both region modes. [Source receipt](pdf-core-ocr-dilation-source-2026-10-20/source-receipt.json), [retained source](pdf-core-ocr-dilation-source-2026-10-20/base_ocr_model.py).
+Current upstream `main` was pinned to `d01c9c0991920924cf17f6b8366079ac035ffc38` for source inspection and still uses the 20 constant in both region modes. Source receipt (`pdf-core-ocr-dilation-source-2026-10-20/source-receipt.json`), retained source (`pdf-core-ocr-dilation-source-2026-10-20/base_ocr_model.py`).
 
 1. The first geometry replay is complete. Inspect the retained component connections before deciding the next comparison; disabling dilation alone cannot separate boxes that already overlap on other pages.
 2. If the retained boxes are already accurate, do not launch an unrestricted layout-model search. A different model can be a finite control, but it must demonstrate different OCR crops and preserve coverage on the same regression corpus before being called a remedy.

@@ -6,7 +6,7 @@
 
 ## 實際配置與可重現界線
 
-- MacBook Pro M5 Pro，20 GPU cores、48 GiB unified memory；隔離runtime `/private/tmp/pdf-core-g2-dots-mlx-20261016/venv`。
+- MacBook Pro M5 Pro，20 GPU cores、48 GiB unified memory；隔離runtime `<tmp>/pdf-core-g2-dots-mlx-20261016/venv`。
 - **相同固定權重** `dots-studio/dots.ocr@c0111ce6bc07803dbc267932ffef0ae3a51dc951`，直接載入既有兩份shard。再次核對官方SHA；沒有下載另一個社群checkpoint，也沒有量化。
 - Docling-slim2.132.0／Core2.99.0／Parse7.22.3，MLX0.32.4／MLX-VLM0.7.8／Transformers5.20.0；官方PDF converter extras補齊後依賴檢查通過。Transformers在此提供processor，模型forward使用MLX，不把前次Torch dots模型的Transformers5座標問題直接當作此路徑已知結果。
 - 官方`VlmPipeline`、`dots_ocr` preset、`MlxVlmEngine`、DOTS_JSON parser。保留官方prompt、scale2、max_tokens24000、有效temperature0、BF16與單請求；每頁180秒、12 GiB sampled RSS停止線，MLX allocator預算12 GiB、cache256 MiB、系統available低於4 GiB停止。未把使用者應用關閉或提高系統memory limit。
@@ -18,7 +18,7 @@ Docling2.132宣告`trust_remote_code`但未轉交`mlx_vlm.load`，原生載入�
 
 CPU與MLX的controls實際1191×1684圖片像素相同；formatted prompt、token IDs、attention mask、pixel_values、grid各自hash一致，實際grid為`[1,120,86]`。新processor另有`mm_token_type_ids`，本模型不使用；不把整份dict誤稱byte-identical。MLX原生`temp=0`介面參數與新上游的`temperature=0`預設相符，有效greedy值固定。
 
-[主實驗登記](pdf-core-g2-dots-mlx-2026-10-16/registration.json)／[補參數與輸入等價](pdf-core-g2-dots-mlx-2026-10-16/compatibility-registration.json)／[實際processor](pdf-core-g2-dots-mlx-2026-10-16/run/controls-p1/actual-processor.json)／[權重映射](pdf-core-g2-dots-mlx-2026-10-16/run/weight-mapping.json)／[最終runtime lock](pdf-core-g2-dots-mlx-2026-10-16/requirements-runtime-lock-v2.txt)
+主實驗登記 (`pdf-core-g2-dots-mlx-2026-10-16/registration.json`)／補參數與輸入等價 (`pdf-core-g2-dots-mlx-2026-10-16/compatibility-registration.json`)／實際processor (`pdf-core-g2-dots-mlx-2026-10-16/run/controls-p1/actual-processor.json`)／權重映射 (`pdf-core-g2-dots-mlx-2026-10-16/run/weight-mapping.json`)／最終runtime lock (`pdf-core-g2-dots-mlx-2026-10-16/requirements-runtime-lock-v2.txt`)
 
 ## GPU時間與記憶體
 
@@ -35,7 +35,7 @@ CPU與MLX的controls實際1191×1684圖片像素相同；formatted prompt、toke
 
 MLX確認`Device(gpu,0)`、Metal可用並實際完成生成。這些是單模型、單併發、固定頁面觀察，包含首次kernel／prefill成本，後續頁重用駐留模型；未測多次重複、冷啟動分布、高頻排隊或公司CUDA。CPU數據是timeout截斷值，GPU頁面計時不含相同初始化範圍，因此不報一個虛假的精確加速倍數。
 
-[逐頁結果](pdf-core-g2-dots-mlx-2026-10-16/run/completed-pages.json)／[外部監控](pdf-core-g2-dots-mlx-2026-10-16/run/execution.json)
+逐頁結果 (`pdf-core-g2-dots-mlx-2026-10-16/run/completed-pages.json`)／外部監控 (`pdf-core-g2-dots-mlx-2026-10-16/run/execution.json`)
 
 ## 八頁／41來源單位回歸
 
@@ -54,7 +54,7 @@ MLX確認`Device(gpu,0)`、Metal可用並實際完成生成。這些是單模型
 
 原生交付仍有缺口：Formula.text已含`$$`時，stock Markdown又加一對，出現`$$$$`，完整交付因此未確認通過；HTML sub/sup在正文中被攤平成`ReST EM`等文字。SEAL Algorithm1 collateral被壓成一行，屬額外觀察，不新增到41分母。跨頁段落尚未成為單一logical paragraph。主實驗已有30個原生item無自身provenance（含表格／inline children）；可用bbox全在頁框內，只證明邊界沒有越界，不證明辨識位置正確。前次HTML-in-inline-code parser控制案例的缺口也未被本輪修復。
 
-[全部逐單位review](pdf-core-g2-dots-mlx-2026-10-16/review.json)／[controls Markdown](pdf-core-g2-dots-mlx-2026-10-16/run/controls-p1/document.md)／[SEAL Markdown](pdf-core-g2-dots-mlx-2026-10-16/run/seal-p4/document.md)
+全部逐單位review (`pdf-core-g2-dots-mlx-2026-10-16/review.json`)／controls Markdown (`pdf-core-g2-dots-mlx-2026-10-16/run/controls-p1/document.md`)／SEAL Markdown (`pdf-core-g2-dots-mlx-2026-10-16/run/seal-p4/document.md`)
 
 ## 獨立validation與來源渲染診斷
 
@@ -68,12 +68,12 @@ validation-02的兩頁在主實驗**送模型前已被預設renderer畫黑**，�
 
 兩次診斷都正常stop，頁面耗時約16.16／14.06秒。首頁abstract及DØ名稱保留；第12頁4個公式段落3個符合、1個失敗：兩處來源`gg+gq_S`都被讀成`gg+gq\bar{s}`，改變數學下標／channel。這排除了將黑頁問題全部歸咎於模型的誤判，也獨立證實有效輸入下仍有公式缺陷。
 
-[渲染前後量測](pdf-core-g2-dots-mlx-2026-10-16/renderer-preflight/results.json)／[診斷登記](pdf-core-g2-dots-mlx-renderer-diagnostic-2026-10-16/registration.json)／[診斷逐頁](pdf-core-g2-dots-mlx-renderer-diagnostic-2026-10-16/run/completed-pages.json)
+渲染前後量測 (`pdf-core-g2-dots-mlx-2026-10-16/renderer-preflight/results.json`)／診斷登記 (`pdf-core-g2-dots-mlx-renderer-diagnostic-2026-10-16/registration.json`)／診斷逐頁 (`pdf-core-g2-dots-mlx-renderer-diagnostic-2026-10-16/run/completed-pages.json`)
 
 ## 選型結論
 
 本機Apple GPU已能執行實際文件模型，現階段**公司endpoint不再是繼續模型比較的必要前提**。本輪不採dots.ocr為完整PDF處理方案；即使處理公式外層定界符，也仍有來源公式、code identifier、inline LaTeX、跨頁結構與來源追溯缺口。維持已有Standard／小模型作比較基底，不因速度改善便改正式profile，也不追加逐題後處理。
 
-下一輪應比較其他官方文件模型／元件組合；PyPdfium已成為具體的官方backend候選，仍需完整範圍回歸才可採用。這輪沒有建立vLLM服務、訓練模型或開六份holdout。原freeze、來源答案、舊評分與production程式保留。證據核對見[verification](pdf-core-g2-dots-mlx-2026-10-16/verification.json)及[manifest](pdf-core-g2-dots-mlx-2026-10-16/artifacts.json)。
+下一輪應比較其他官方文件模型／元件組合；PyPdfium已成為具體的官方backend候選，仍需完整範圍回歸才可採用。這輪沒有建立vLLM服務、訓練模型或開六份holdout。原freeze、來源答案、舊評分與production程式保留。證據核對見verification (`pdf-core-g2-dots-mlx-2026-10-16/verification.json`)及manifest (`pdf-core-g2-dots-mlx-2026-10-16/artifacts.json`)。
 
-本輪結果已於2026-10-16成功[寫回#84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6216361258)，讀回內容與[保存文字](pdf-core-g2-dots-mlx-2026-10-16/issue-comment-pending.md)完全一致；[發布狀態](pdf-core-g2-dots-mlx-2026-10-16/issue-update.json)已更新，保留先前連線逾時紀錄。Issue狀態與標籤維持不變，未重跑推論。
+本輪結果已於2026-10-16成功[寫回#84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6216361258)，讀回內容與[保存文字](pdf-core-g2-dots-mlx-2026-10-16/issue-comment-pending.md)完全一致；發布狀態 (`pdf-core-g2-dots-mlx-2026-10-16/issue-update.json`)已更新，保留先前連線逾時紀錄。Issue狀態與標籤維持不變，未重跑推論。

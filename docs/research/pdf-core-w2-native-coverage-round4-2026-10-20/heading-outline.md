@@ -20,4 +20,4 @@
 
 `level_error` 是和凍結 LaTeX 層級不符，含可能的全篇一致層級偏移；未逐案證明對象／條件／從屬改義，不自動等同 Q4 阻擋。`strict missing` 是正規化標題＋唯一匹配＋頁交叉沒有嚴格對上，也不自動等同內容真漏；role／ambiguous 同樣須另外核對。此表不能當 F01/F02 的新增阻擋事件或整篇通過率。
 
-來源：[R3 PDFium integration summary](../pdf-core-w2-native-coverage-round3-2026-10-20/heading/pdfium-integration/summary.json)、[R3 各篇 baseline / B-only 原始評分](../pdf-core-w2-native-coverage-round3-2026-10-20/heading/jobs/)、[凍結評分器](../pdf-core-w2-native-coverage-round2-2026-10-20/heading/assess_headings.py)。逐篇數值與完整有／無 outline 清單見 [heading-outline.json](heading-outline.json)。
+來源：R3 PDFium integration summary (`docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/heading/pdfium-integration/summary.json`)、R3 各篇 baseline / B-only 原始評分 (`docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/heading/jobs`)、凍結評分器 (`docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/heading/assess_headings.py`)。逐篇數值與完整有／無 outline 清單見 `heading-outline.json`。

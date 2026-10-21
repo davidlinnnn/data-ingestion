@@ -6,14 +6,14 @@
 
 - Official code commit：`f133a71e9e91c3621c7ce8994200a7b394a06eb3`。[官方 commit](https://github.com/opendatalab/OmniDocBench/commit/f133a71e9e91c3621c7ce8994200a7b394a06eb3)
 - Dataset revision：`aa1ee96d106dbe53d0ae59474d75c6e6d9b53fec`。[固定 dataset tree](https://huggingface.co/datasets/opendatalab/OmniDocBench/tree/aa1ee96d106dbe53d0ae59474d75c6e6d9b53fec)
-- `OmniDocBench.json`：42,208,096 bytes／1,651 頁；實際下載 bytes 的 SHA256 為 `a45cd84b04ad8b793e775089640e6b681209abea33ead54c1828ddca35fae496`，與官方 LFS metadata 一致。只取得這一個 annotation JSON，存於 `/private/tmp/pdf-core-omnidocbench-eval-20261018/OmniDocBench.json`，權限 0600，沒有放進 repo；未取 images／PDF。[官方 annotation metadata](https://huggingface.co/datasets/opendatalab/OmniDocBench/blob/aa1ee96d106dbe53d0ae59474d75c6e6d9b53fec/OmniDocBench.json)
-- [upstream.lock.json](upstream.lock.json)含官方 code／config／dataset card schema 說明及 API metadata 共 15 個小型 snapshot 的來源 URL、bytes、SHA256。Code commit 固定整體來源；沒有宣稱已下載整份 evaluator 或建立 runtime image lock。Dataset card 是官方描述式 schema，不是假稱官方另有正式 JSON Schema。[artifacts.json](artifacts.json)鎖本次方法、規則、manifest 與本地 snapshot。
+- `OmniDocBench.json`：42,208,096 bytes／1,651 頁；實際下載 bytes 的 SHA256 為 `a45cd84b04ad8b793e775089640e6b681209abea33ead54c1828ddca35fae496`，與官方 LFS metadata 一致。只取得這一個 annotation JSON，存於 `<tmp>/pdf-core-omnidocbench-eval-20261018/OmniDocBench.json`，權限 0600，沒有放進 repo；未取 images／PDF。[官方 annotation metadata](https://huggingface.co/datasets/opendatalab/OmniDocBench/blob/aa1ee96d106dbe53d0ae59474d75c6e6d9b53fec/OmniDocBench.json)
+- `upstream.lock.json`含官方 code／config／dataset card schema 說明及 API metadata 共 15 個小型 snapshot 的來源 URL、bytes、SHA256。Code commit 固定整體來源；沒有宣稱已下載整份 evaluator 或建立 runtime image lock。Dataset card 是官方描述式 schema，不是假稱官方另有正式 JSON Schema。`artifacts.json`鎖本次方法、規則、manifest 與本地 snapshot。
 
 README 的版本名稱與 package metadata 不完全一致，故以以上 commit／revision／bytes 為準。[固定 README](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/README.md)、[固定 package metadata](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/pyproject.toml)
 
 ## 已固定的 60 頁
 
-[sampling.json](sampling.json)是本案 preregistration；[sample.py](sample.py)只取 category／attributes／IDs／provenance metadata，不匯出 text、LaTeX、HTML、polygons 或答案。Seed 是 `pdf-core-external-regression-2026-10-18-v1`。同一頁依下表優先歸入唯一 stratum，無 output-driven reselection；quota 不足會列 deficit，不挪用。Stratum 內先 language round-robin，再 document type round-robin，各 cell 以 `SHA256(seed + NUL + page_id)` 排序。
+`sampling.json`是本案 preregistration；`sample.py`只取 category／attributes／IDs／provenance metadata，不匯出 text、LaTeX、HTML、polygons 或答案。Seed 是 `pdf-core-external-regression-2026-10-18-v1`。同一頁依下表優先歸入唯一 stratum，無 output-driven reselection；quota 不足會列 deficit，不挪用。Stratum 內先 language round-robin，再 document type round-robin，各 cell 以 `SHA256(seed + NUL + page_id)` 排序。
 
 | Primary stratum | Metadata 判斷 | 可選頁 | 固定頁數 |
 |---|---|---:|---:|
@@ -28,14 +28,14 @@ README 的版本名稱與 package metadata 不完全一致，故以以上 commit
 
 Page tags 是頁級 metadata，不保證該頁每張表都有 span／math；沒有解析 GT table 答案來選樣。現行 annotation 的 block `attribute` 全為空（已盤點），所以直接使用已存在 page tags，沒有用內容補標。Ordinary-text control **可能有 inline formula**，不是 formula-negative。部分其他頁不屬於本輪 primary strata。
 
-[sample-manifest.json](sample-manifest.json)固定完整 60 個 page IDs、attributes、category counts、seed rank 與分母，沒有 GT 答案。各 primary quota 均滿足；marginals 如下：
+`sample-manifest.json`固定完整 60 個 page IDs、attributes、category counts、seed rank 與分母，沒有 GT 答案。各 primary quota 均滿足；marginals 如下：
 
 - 語言：英文 22、簡中 20、中英混合 12、繁中 5、other 1。
 - 文件：PPT2PDF 14、book 14、academic literature 9、colorful textbook 8、exam paper 10、magazine 3、historical document 2。**沒有 newspaper／note／research_report**。
 - Layout：single column 35、mixed 4、other 16、double column 5。**沒有 three column**。
 - Subset：v1.5 40、table hard 5、layout hard 14、equation hard 1。
 
-以上是有意偏向 B／C 的小型外部回歸，不能包裝成覆蓋全部 10 類文件的代表性 Overall。[metadata-inventory.json](metadata-inventory.json)與 manifest 明列缺少的 strata／marginals。沒有為補漂亮分布而根據候選輸出換頁。
+以上是有意偏向 B／C 的小型外部回歸，不能包裝成覆蓋全部 10 類文件的代表性 Overall。`metadata-inventory.json`與 manifest 明列缺少的 strata／marginals。沒有為補漂亮分布而根據候選輸出換頁。
 
 ## Source family 與 custody
 
@@ -47,7 +47,7 @@ Evaluator custodian 讀 GT；producer 只取得鎖定的來源輸入及固定接
 
 ## 固定評分與必要條件
 
-[scoring.json](scoring.json)鎖定 JSON GT 的 `end2end_dataset`：text Edit Distance、display formula Edit Distance／CDM、table TEDS／Edit Distance 與 TEDS 自帶 `TEDS_structure_only`（TEDS-S）、reading order Edit Distance。保持官方 category／ignore／normalization；不改 GT 幫候選加分。[官方 config](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/configs/end2end.yaml)、[TEDS／TEDS-S 輸出實作](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/src/metrics/cal_metric.py)
+`scoring.json`鎖定 JSON GT 的 `end2end_dataset`：text Edit Distance、display formula Edit Distance／CDM、table TEDS／Edit Distance 與 TEDS 自帶 `TEDS_structure_only`（TEDS-S）、reading order Edit Distance。保持官方 category／ignore／normalization；不改 GT 幫候選加分。[官方 config](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/configs/end2end.yaml)、[TEDS／TEDS-S 輸出實作](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/src/metrics/cal_metric.py)
 
 Matching 固定 `quick_match`、單 worker、300s truncated／420s page timeout、開啟官方 timeout fallback（max span 10、order penalty 0.10）；CDM／TEDS 各單 worker。保存 unmatched、ignored、timeout、fallback 原因及數量，matching 只屬 evaluator，不能回饋 producer routing。[官方 page matching 實作](https://github.com/opendatalab/OmniDocBench/blob/f133a71e9e91c3621c7ce8994200a7b394a06eb3/src/dataset/end2end_dataset.py)
 
@@ -70,9 +70,9 @@ Code license 與 dataset card 的研究用途／非商用聲明均已保存；�
 只檢查本地鎖與方法測試，不讀 GT、不連網、不執行 official evaluator：
 
 ```sh
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-eval-interfaces-2026-10-18/evaluation/check.py
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-eval-interfaces-2026-10-18/evaluation/check.py
 ```
 
-Evaluator custodian 才能以 `sample.py --annotation /private/tmp/pdf-core-omnidocbench-eval-20261018/OmniDocBench.json` 重播選樣。它先比對實際 annotation hash，既有產物若 bytes 不同會拒絕，沒有 refresh／force 開關。`check.py`只比較期望 hash，不刷新。未重用既有六份公司 holdout 的特定 validator：其 custody／分母綁定不同，本次也沒有開啟那些 holdout。
+Evaluator custodian 才能以 `sample.py --annotation <tmp>/pdf-core-omnidocbench-eval-20261018/OmniDocBench.json` 重播選樣。它先比對實際 annotation hash，既有產物若 bytes 不同會拒絕，沒有 refresh／force 開關。`check.py`只比較期望 hash，不刷新。未重用既有六份公司 holdout 的特定 validator：其 custody／分母綁定不同，本次也沒有開啟那些 holdout。
 
 目前 readiness：**metadata/version lock 完成；60 頁 selection 完成；評分契約完成；live evaluation 尚未就緒；production 未合格。**

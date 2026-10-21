@@ -14,7 +14,7 @@ tags:
 - safetensors
 ---
 
-![d3-turbo: Decision 3.0](assets/banner.png)
+d3-turbo: Decision 3.0 (`assets/banner.png`)
 
 # d3-turbo
 
@@ -44,11 +44,11 @@ tags:
 
 Real answers of this release, drawn as returned. The [Quickstart](#quickstart) below runs these same requests.
 
-![Box: four Box questions about one photo in one request, each answer one box with its confidence](assets/example-box.jpg)
+Box: four Box questions about one photo in one request, each answer one box with its confidence (`assets/example-box.jpg`)
 
-![Images in options: which picture shows the same kind of animal? Each option is an image that only this question sees](assets/example-options.jpg)
+Images in options: which picture shows the same kind of animal? Each option is an image that only this question sees (`assets/example-options.jpg`)
 
-![Video tracking: the hummingbird over an 11-second clip, two boxes per second, each with its confidence and the probability that it is visible](assets/example-track.jpg)
+Video tracking: the hummingbird over an 11-second clip, two boxes per second, each with its confidence and the probability that it is visible (`assets/example-track.jpg`)
 
 <sub>Media from Wikimedia Commons: [Australian Shepherd catching a frisbee](https://commons.wikimedia.org/wiki/File:Australian_Shepherd_catching_a_frisbee.jpg) by Sally Wehner ([CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)); two red panda photos by Mathias Appel ([one](https://commons.wikimedia.org/wiki/File:Red_Panda_(24986761703).jpg), [two](https://commons.wikimedia.org/wiki/File:Red_Panda_(25193861686).jpg); [CC0](https://creativecommons.org/publicdomain/zero/1.0/)), a [raccoon](https://commons.wikimedia.org/wiki/File:Common_Raccoon_in_a_Tree.jpg) (CC0) and an [owl](https://commons.wikimedia.org/wiki/File:An_owl_portrait_(52264733713).jpg) by Ted Moravec (CC0); [Anna's hummingbird in Arizona](https://commons.wikimedia.org/wiki/File:Anna%27s_hummingbird_(Calypte_anna)_in_Arizona.webm) by Larry & Teddy Page ([CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)). The pictures in `assets/` are resized, and the clip is its first 11 seconds, re-encoded.</sub>
 
@@ -135,7 +135,7 @@ On the API, `vllm-sr/d3` names the same model. The free API has its own limits, 
 
 **Ask once, answer many.** d3-turbo reads the input once per request and answers every question on it, so more questions about the same input add little time. On one AMD Instinct MI325X with AutoModel, 255 questions about one photo take 2.12 s, 15.5× less than d3-flash (32.94 s), which reads the photo again for each question; at 64 questions the gap is 9.5× (867 ms against 8.26 s). With a single question, the smaller d3-flash is faster (154 ms against 302 ms); from 4 questions on, d3-turbo is. The free API takes up to 64 questions per request, so the 128 and 255 rows apply when you run the model yourself.
 
-![Ask once, answer many: median time to answer 1, 4, 16, 64, 128 and 255 questions about one photo, d3-turbo and d3-flash on one AMD Instinct MI325X](assets/ask-once.png)
+Ask once, answer many: median time to answer 1, 4, 16, 64, 128 and 255 questions about one photo, d3-turbo and d3-flash on one AMD Instinct MI325X (`assets/ask-once.png`)
 
 | Questions about one photo | d3-turbo, p50 / p90 | d3-flash, p50 / p90 | d3-flash p50 ÷ d3-turbo p50 |
 | ---: | ---: | ---: | ---: |
@@ -155,11 +155,11 @@ On the API, `vllm-sr/d3` names the same model. The free API has its own limits, 
 | **d3-turbo** (our estimate) | **70.2** |
 | d3 (official board) | 66.3 |
 
-![Jev Decision Index rank on the official text and vision boards: d3 (official) and d3-turbo (our estimate)](assets/index-rank.png)
+Jev Decision Index rank on the official text and vision boards: d3 (official) and d3-turbo (our estimate) (`assets/index-rank.png`)
 
 On the public suite, measured with the official 0.3 kit for both models, d3-turbo scores 71.7 against d3's 65.5 (+6.2), ahead in all five areas: Knowledge +3.7, Language +6.4, Retrieval +9.1, Tools +4.3 and Arts +9.6.
 
-![Jev Decision Index by area: public-suite skill of d3-turbo and d3](assets/index-areas.png)
+Jev Decision Index by area: public-suite skill of d3-turbo and d3 (`assets/index-areas.png`)
 
 ### Images: Jev Decision Index vision board 0.3.2
 
@@ -186,7 +186,7 @@ On the public suite, measured with the official 0.3 kit for both models, d3-turb
 
 ## License
 
-Apache-2.0 ([LICENSE](LICENSE)).
+Apache-2.0 (`LICENSE`).
 
 ## Citation
 

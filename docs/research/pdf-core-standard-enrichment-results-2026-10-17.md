@@ -17,9 +17,9 @@
 | 順序 | Controls1 → Wiki20–22 → SEAL2–4 → DGM51；兩個三頁範圍各連續一次 conversion |
 | 保存／匯出 | 公開 stage 前 snapshot、實際 crop／request、engine raw、stock cleanup 後 item、完整 JSON、預設 Markdown；不修改 private crop／parser |
 
-完整[預登錄](pdf-core-standard-enrichment-2026-10-17/registration.json)、[有效 options](pdf-core-standard-enrichment-2026-10-17/registered-options.json)、[runtime](pdf-core-standard-enrichment-2026-10-17/runtime.json)、[模型資產](pdf-core-standard-enrichment-2026-10-17/model-assets.json)、[實際載入型別](pdf-core-standard-enrichment-2026-10-17/E1/loaded-engine.json)均已保存。原生 preset 內雖另有 BF16 default，實際 engine override 及 parameter 觀測確認本次為 FP32。
+完整預登錄 (`pdf-core-standard-enrichment-2026-10-17/registration.json`)、有效 options (`pdf-core-standard-enrichment-2026-10-17/registered-options.json`)、runtime (`pdf-core-standard-enrichment-2026-10-17/runtime.json`)、模型資產 (`pdf-core-standard-enrichment-2026-10-17/model-assets.json`)、實際載入型別 (`pdf-core-standard-enrichment-2026-10-17/E1/loaded-engine.json`)均已保存。原生 preset 內雖另有 BF16 default，實際 engine override 及 parameter 觀測確認本次為 FP32。
 
-先完成[零模型 gate](pdf-core-standard-enrichment-2026-10-17/preflight.json)：root／group code、root formula 的 cleanup／寫回／stock export 可承載合成合法內容，observer 與無 observer 的結果完全相同，保留 `orig`／provenance。首次 mock 的目錄建立失敗在載模型前修正並[留存](pdf-core-standard-enrichment-2026-10-17/preflight-attempt01-failure.json)。沒有安裝新套件或改歷史 runtime／oracle。
+先完成零模型 gate (`pdf-core-standard-enrichment-2026-10-17/preflight.json`)：root／group code、root formula 的 cleanup／寫回／stock export 可承載合成合法內容，observer 與無 observer 的結果完全相同，保留 `orig`／provenance。首次 mock 的目錄建立失敗在載模型前修正並留存 (`pdf-core-standard-enrichment-2026-10-17/preflight-attempt01-failure.json`)。沒有安裝新套件或改歷史 runtime／oracle。
 
 ## 逐任務結果
 
@@ -37,17 +37,17 @@
 
 Eq2 的 superscript 2 仍掛在條件句的 performance **文字**後，原頁 footnote2 本文完整留在同頁；依可見 marker／正文對應保留註腳解讀，沒有把它判作 reward 平方，也沒有新增「必須有 typed hyperlink」要求。這不等於 G3 的機器可用註腳關係已認證，亦不代表區域模型看過遠處 footnote body。
 
-四個 SEAL 式的 LaTeX→MathML 均可解析，[語法檢查](pdf-core-standard-enrichment-2026-10-17/formula-syntax-check.json)只證明表示可處理；它不能讓 Eq1 改義或式號遺失變成通過。Raw 的 stop_reason 都為 unspecified，不宣稱已由它證明 EOS；沒有 cap 截斷證據，不調高 token 上限。
+四個 SEAL 式的 LaTeX→MathML 均可解析，語法檢查 (`pdf-core-standard-enrichment-2026-10-17/formula-syntax-check.json`)只證明表示可處理；它不能讓 Eq1 改義或式號遺失變成通過。Raw 的 stop_reason 都為 unspecified，不宣稱已由它證明 EOS；沒有 cap 截斷證據，不調高 token 上限。
 
 ### 辨識、crop 與 source mapping 的界線
 
-實際[10 個 region 證據](pdf-core-standard-enrichment-2026-10-17/region-review-evidence.json)與[crop contact sheet](pdf-core-standard-enrichment-2026-10-17/actual-crops-contact.png)保存且已目視。DGM 擴圖確有鄰接標題／正文，raw 也確有這些文字；這能支持「原生路徑發生 context ingestion／重複」，不能單獨證明 0.18 擴張是所有錯字的唯一原因。
+實際10 個 region 證據 (`pdf-core-standard-enrichment-2026-10-17/region-review-evidence.json`)與crop contact sheet (`pdf-core-standard-enrichment-2026-10-17/actual-crops-contact.png`)保存且已目視。DGM 擴圖確有鄰接標題／正文，raw 也確有這些文字；這能支持「原生路徑發生 context ingestion／重複」，不能單獨證明 0.18 擴張是所有錯字的唯一原因。
 
 寫回未改原 bbox、charspan 或 orig。這證明 metadata 保留，不代表新增在 code 內的相鄰文字擁有正確來源定位：它們被歸到原 code item，仍是交付缺陷。本輪不重裁、不搬節點、不刪掉新增文字來修成通過。
 
 ## 原 41 項與回歸
 
-[逐項評讀](pdf-core-standard-enrichment-2026-10-17/unit-review.json)沿用全部 41 個來源單位；只對有改動及重複影響的工作重新評讀，其餘以原來源評讀加同 run exact comparison 保留結論。
+逐項評讀 (`pdf-core-standard-enrichment-2026-10-17/unit-review.json`)沿用全部 41 個來源單位；只對有改動及重複影響的工作重新評讀，其餘以原來源評讀加同 run exact comparison 保留結論。
 
 | 交付狀態 | 原 S0 | E1 |
 |---|---:|---:|
@@ -59,7 +59,7 @@ Eq2 的 superscript 2 仍掛在條件句的 performance **文字**後，原頁 f
 
 這不是模型 accuracy 排名：四個先前未重建的式子現在有輸出，其中三項完整契約仍失敗；同時 comment、node24 指令與 Eq2 有恢復，DGM 原正文開頭和 node6 label 又因重複出現新缺陷。數量不能抵銷精確 code 或數學改義。
 
-同一次 E1 的[前後差異](pdf-core-standard-enrichment-2026-10-17/pre-post-diff.json)確認：
+同一次 E1 的前後差異 (`pdf-core-standard-enrichment-2026-10-17/pre-post-diff.json`)確認：
 
 - 四份文件的 pre-enrichment `texts` 全部與保存的 S0 完全相同；除 `texts` 外的 document 欄位前後完全不變。
 - 只變更預期 10 個元素：Controls 2、Wiki 1、SEAL 4、DGM 3；Wiki 這個獨立公式不屬原 41 項，僅作已計數 collateral，不加入成功分母。
@@ -80,7 +80,7 @@ Controls 三個 picture-child 公式和普通段落 inline math 未走原生 enr
 | 最低 sampled system available | 14.72 GiB |
 | Native status | 4/4 success；不作來源保真判準 |
 
-[執行紀錄](pdf-core-standard-enrichment-2026-10-17/E1/execution.json)及[range metrics](pdf-core-standard-enrichment-2026-10-17/range-metrics.json)保留完整取樣，未觸及任何停止線。Engine metadata 的 generation_time 是 batch 平均分攤，不拿它當每個 crop 獨立 wall time；沒有 CPU／GPU 加速比、p95 或高頻 SLO 結論。載入時原生 Transformers 有 checkpoint tied-weight warning，未為消警告改 config；退出時有一則原生 cleanup log warning，worker 仍 exit0，所有結果已保存。
+執行紀錄 (`pdf-core-standard-enrichment-2026-10-17/E1/execution.json`)及range metrics (`pdf-core-standard-enrichment-2026-10-17/range-metrics.json`)保留完整取樣，未觸及任何停止線。Engine metadata 的 generation_time 是 batch 平均分攤，不拿它當每個 crop 獨立 wall time；沒有 CPU／GPU 加速比、p95 或高頻 SLO 結論。載入時原生 Transformers 有 checkpoint tied-weight warning，未為消警告改 config；退出時有一則原生 cleanup log warning，worker 仍 exit0，所有結果已保存。
 
 **去留：不升級 E1 為完整配置，也不把它全域開到正式管線。** 可保留「官方接點可在本機 CPU 執行、部分 root formula／code 內容有恢復」的有界研究證據；但原 code 路徑有新增內容污染，公式仍有數學改義及式號缺失，因此停止對這個固定組合追加調參。不能建立「遇到 Eq2 才用它」這類樣本專用路由。
 

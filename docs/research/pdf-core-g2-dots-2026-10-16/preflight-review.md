@@ -15,11 +15,11 @@
 - `all_boxes_within_page`／`physical_page_preserved` 僅遍歷存在的 provenance；HTML 文字拆分後 `bold` 和句點子項沒有 own provenance，這兩個 true 並非全部 child provenance 完整的證明。
 - 截斷 JSON 原生 parser 仍回傳 10 個 item；strict JSON 完整性 gate 拒絕它，負例有實際意義。JSON 完整仍不保證文字無漏或意思正確。
 
-證據：[原始預檢結果](preflight/results.json)、[原生結構](preflight/document.json)、[原生 Markdown](preflight/native-markdown.md)。所有受檢檔案保持未改。
+證據：原始預檢結果 (`preflight/results.json`)、原生結構 (`preflight/document.json`)、[原生 Markdown](preflight/native-markdown.md)。所有受檢檔案保持未改。
 
 ## 全域 export flags 的實際副作用
 
-獨立 probe 用 Docling-slim 2.132.0、Core 2.99.0、Marko 2.2.4。Marko 只用來檢查一般 Markdown／inline code 的渲染，沒有用它判斷公式排版。[程式](review/export_probe.py)、[逐例 JSON／Markdown／HTML／visible text](review/export-results.json)。
+獨立 probe 用 Docling-slim 2.132.0、Core 2.99.0、Marko 2.2.4。Marko 只用來檢查一般 Markdown／inline code 的渲染，沒有用它判斷公式排版。程式 (`review/export_probe.py`)、逐例 JSON／Markdown／HTML／visible text (`review/export-results.json`)。
 
 | 輸入文字的意圖／表示 | 預設 export | 兩個 flags 關閉 | 判斷 |
 |---|---|---|---|
@@ -39,7 +39,7 @@
 
 ## 已發布版本核對：最早格式支援不等於缺陷已修
 
-官方文件的 Native dots inline formatting 段落來自 [commit 0d604da／PR #4631](https://github.com/docling-project/docling/commit/0d604da3abf47437aa673eca9b5bf4bf6c621e1d)，首次發布為 [v2.135.0](https://github.com/docling-project/docling/releases/tag/v2.135.0)，時間 2026-10-07 10:42:24 UTC。截至本次查核，最新正式發布 [v2.139.0](https://github.com/docling-project/docling/releases/tag/v2.139.0) 是 2026-10-14 12:18:27 UTC，兩版 dots_utils.py SHA-256 相同：`275598760faa3377ccfca453c4bbff49c8912a33875b85601e314ea387b83622`。[版本查核 JSON](review/release-source-check.json)
+官方文件的 Native dots inline formatting 段落來自 [commit 0d604da／PR #4631](https://github.com/docling-project/docling/commit/0d604da3abf47437aa673eca9b5bf4bf6c621e1d)，首次發布為 [v2.135.0](https://github.com/docling-project/docling/releases/tag/v2.135.0)，時間 2026-10-07 10:42:24 UTC。截至本次查核，最新正式發布 [v2.139.0](https://github.com/docling-project/docling/releases/tag/v2.139.0) 是 2026-10-14 12:18:27 UTC，兩版 dots_utils.py SHA-256 相同：`275598760faa3377ccfca453c4bbff49c8912a33875b85601e314ea387b83622`。版本查核 JSON (`review/release-source-check.json`)
 
 v2.135 的 `_add_inline_text` 確實新增 Marko 與 formula／code literal 優先規則，但只在含 `*` 或 `_` 時進入 Markdown 解析，而且只有 rendered HTML 出現 `<strong>`／`<em>` 才採用該輸出。簡單 `Use \`<b>bold</b>\` literally.` 不含這些觸發條件，因此仍讓 raw `<b>` 進 HTML parser；即使有普通 `x_i`，未產生 emphasis 也會回到原字串。故不能因文件總述就宣稱這個 edge case 已修。v2.133／2.134 仍是原 parser；v2.135 至2.139及目前 main 的此段邏輯相同。[v2.135 source](https://github.com/docling-project/docling/blob/v2.135.0/docling/utils/dots_utils.py)、[v2.139 source](https://github.com/docling-project/docling/blob/v2.139.0/docling/utils/dots_utils.py)
 
@@ -47,7 +47,7 @@ v2.135 的 `_add_inline_text` 確實新增 Marko 與 formula／code literal 優�
 
 ## 正常 2× 頁面 geometry 與小圖邊界
 
-未安裝 Transformers 的預檢 runtime 不能直接匯入 processor。因此本核對從官方 [Transformers v4.57.6 source](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/models/qwen2_vl/image_processing_qwen2_vl.py) 取出**未修改的純 `smart_resize` 函式**，用固定 dots preprocessor 的 factor=28、min=3136、max=11289600，與實際 installed Docling helper 比較。這不是 processor／model 執行，亦未 patch runtime。[函式來源紀錄](review/release-source-check.json)、[對照程式](review/geometry_probe.py)、[結果](review/geometry-results.json)
+未安裝 Transformers 的預檢 runtime 不能直接匯入 processor。因此本核對從官方 [Transformers v4.57.6 source](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/models/qwen2_vl/image_processing_qwen2_vl.py) 取出**未修改的純 `smart_resize` 函式**，用固定 dots preprocessor 的 factor=28、min=3136、max=11289600，與實際 installed Docling helper 比較。這不是 processor／model 執行，亦未 patch runtime。函式來源紀錄 (`review/release-source-check.json`)、對照程式 (`review/geometry_probe.py`)、結果 (`review/geometry-results.json`)
 
 | 原始推論圖像 pixels | dots resize | Docling 推定 | 一致 |
 |---|---|---|---|

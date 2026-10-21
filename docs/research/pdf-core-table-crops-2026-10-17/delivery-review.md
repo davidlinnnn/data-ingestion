@@ -28,4 +28,4 @@ T05 若有交付，另核對原正文 Table 4 caption 僅出現一次；沒有�
 
 Provider conditions 若沒有逐字出現在主要 Markdown，會列為待語義核對；不能只因已存入 bindings，就推論主要內容交付完整。這是可見性篩查，不是來源等價性裁決。數值與 critical comparisons 由另外的來源評分處理。
 
-所有 frozen method／保存輸入輸出 hashes 前後一致。完整逐項結果見 [delivery-review.json](delivery-review.json)。
+所有 frozen method／保存輸入輸出 hashes 前後一致。完整逐項結果見 `delivery-review.json`。

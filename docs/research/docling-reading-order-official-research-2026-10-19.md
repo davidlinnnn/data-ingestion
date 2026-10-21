@@ -33,19 +33,19 @@ As of **2026-10-19 Asia/Taipei**。問題來源為現有 S0 的清晰雙欄純�
 
 | 層次 | 保存證據與判斷 |
 | --- | --- |
-| OCR cells | [S0 result.json](pdf-core-native-round-2026-10-17/S0/scan/result.json) 的 `pages[0].parsed_page.textline_cells[3]`（檔案第 171 行附近）已同時包含左欄 `or LLMs ... either` 與右欄 `mally introduced ... language`；bbox x=45.8167–565.4389，橫跨兩欄。這是保存的 post-OCR cells，不冒稱未保存的 engine raw。 |
+| OCR cells | S0 result.json (`pdf-core-native-round-2026-10-17/S0/scan/result.json`) 的 `pages[0].parsed_page.textline_cells[3]`（檔案第 171 行附近）已同時包含左欄 `or LLMs ... either` 與右欄 `mally introduced ... language`；bbox x=45.8167–565.4389，橫跨兩欄。這是保存的 post-OCR cells，不冒稱未保存的 engine raw。 |
 | Cluster | 同檔 postprocessed cluster 3 把左欄首行、右欄以 `for-` 結尾的行及跨欄 cell 分到一起。 |
 | Page assembly | 同檔第 6337 行的 assembled text 已有 `foror`。普通合行／去斷詞把 `for-` 接到後面的 `or LLMs`，由已錯的區域／cell 組合形成壞單字；不能把 dehyphenation 本身認定為唯一根因。Pinned [page assembly](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/page_assemble/page_assemble_model.py#L125) 與 [cluster 合行](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/page_assemble/page_assemble_model.py#L200) 可解釋此行為。 |
-| Final Markdown | [S0 Markdown](pdf-core-native-round-2026-10-17/S0/scan/document.md) 只是輸出已混接的 assembled text；重排 `body.children` 不能可靠拆回原來的句子。 |
-| S1 對照 | [S1 result.json](pdf-core-native-round-2026-10-17/S1/scan/result.json) 對應 cells 分開保留左右欄；其 [Markdown](pdf-core-native-round-2026-10-17/S1/scan/document.md) 仍有完整段落換序。相同凍結 OCR 資產／options，登錄變項是 Heron→Egret，但未保存 pre-OCR rects、raw layout predictions 或完整 tensors，故不能確定是 Heron 權重、rect dedup 或 OCR engine 的哪一項造成差異。 |
+| Final Markdown | S0 Markdown (`pdf-core-native-round-2026-10-17/S0/scan/document.md`) 只是輸出已混接的 assembled text；重排 `body.children` 不能可靠拆回原來的句子。 |
+| S1 對照 | S1 result.json (`pdf-core-native-round-2026-10-17/S1/scan/result.json`) 對應 cells 分開保留左右欄；其 Markdown (`pdf-core-native-round-2026-10-17/S1/scan/document.md`) 仍有完整段落換序。相同凍結 OCR 資產／options，登錄變項是 Heron→Egret，但未保存 pre-OCR rects、raw layout predictions 或完整 tensors，故不能確定是 Heron 權重、rect dedup 或 OCR engine 的哪一項造成差異。 |
 
 原始 OCR crops／rects 未保存，**無法再由這份產物唯一重建 upstream 成因**。本次確認錯誤最晚已在 post-OCR cells 與 cluster 分組出現，精確上游成因待定位；layout 與 OCR 區域處理的互動仍是假說。沒有證明所有 OCR engine、Heron 或原生 reading-order 都必然失敗。
 
 ### 現行官方設定已包含什麼
 
-- **設定名稱更正**：[S0 effective-options](pdf-core-native-round-2026-10-17/S0/effective-options.json) 的實際值是 `ocr_options.mode="default"`，不是先前敘述的 AUTO。`OcrAutoOptions` 是 OCR engine 選擇，不能和此輸入區域 mode 混為一談；歷史封存 artifacts／分數不回寫。
+- **設定名稱更正**：S0 effective-options (`pdf-core-native-round-2026-10-17/S0/effective-options.json`) 的實際值是 `ocr_options.mode="default"`，不是先前敘述的 AUTO。`OcrAutoOptions` 是 OCR engine 選擇，不能和此輸入區域 mode 混為一談；歷史封存 artifacts／分數不回寫。
 - 官方 [PR #3710](https://github.com/docling-project/docling/pull/3710) 已於 2026-07-23 merged，Standard 改為 `preprocess → layout → OCR → layout postprocessing → table → assembly`。本機 2.132.0 [pipeline](https://github.com/docling-project/docling/blob/v2.132.0/docling/pipeline/standard_pdf_pipeline.py#L785) 已採此路徑；[BaseOcrModel](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/base_ocr_model.py#L215) 將 DEFAULT 與 PDF_AWARE_LAYOUT_REGIONS 都交給 `_find_pdf_aware_layout_ocr_rects`。因此「改用 layout-first／layout-region OCR」不能當作尚未試過的解法。
-- [S0 effective-options](pdf-core-native-round-2026-10-17/S0/effective-options.json) 已有 `use_reading_order_separators=true`。官方 [options 定義](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/pipeline_options.py#L2195) 限定它利用 backend 可提供的 visible PDF shape/rule geometry；它不是從 raster 圖中偵測欄間留白的開關。純影像測試頁也沒有原文向量分隔線。PyPdfium 沒覆寫 `get_shape_lines`，[backend 預設](https://github.com/docling-project/docling/blob/v2.132.0/docling/backend/pdf_backend.py#L66) 回傳 None。
+- S0 effective-options (`pdf-core-native-round-2026-10-17/S0/effective-options.json`) 已有 `use_reading_order_separators=true`。官方 [options 定義](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/pipeline_options.py#L2195) 限定它利用 backend 可提供的 visible PDF shape/rule geometry；它不是從 raster 圖中偵測欄間留白的開關。純影像測試頁也沒有原文向量分隔線。PyPdfium 沒覆寫 `get_shape_lines`，[backend 預設](https://github.com/docling-project/docling/blob/v2.132.0/docling/backend/pdf_backend.py#L66) 回傳 None。
 - 本機 vendored [reading-order 實作](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/postprocessing/reading_order_rb.py#L766) 已有 same-row right partner 保留垂直關係的邏輯；沒有核對完整 commit 血緣，但不能直接宣稱 #163 的相同行為在 pinned runtime 缺席。該邏輯也不能拆開已跨欄的 OCR cell。
 
 ### 新版／未合併 PR 的適用限制

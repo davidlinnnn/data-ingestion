@@ -16,7 +16,7 @@
 
 ## 本次新重播：已確認的缺口
 
-[可執行診斷](evaluator-replay-audit.py)及[機器結果](evaluator-replay-audit.json)只改記憶體／temporary copy；原 producer、raw、Core、Markdown 與來源 hashes 前後相同。
+可執行診斷 (`evaluator-replay-audit.py`)及機器結果 (`evaluator-replay-audit.json`)只改記憶體／temporary copy；原 producer、raw、Core、Markdown 與來源 hashes 前後相同。
 
 | 探針 | 真實程式結果 | 應如何解讀 |
 |---|---|---|
@@ -26,7 +26,7 @@
 | `manual_structure_review` | 程式以 delivery 存在自動設 true，overall 只讀數值／比較 | 這些 flags 不能作下一輪的自動來源品質證明；人工審查項目必須有明確 decision／evidence |
 | 真實 T04 saved response | 5 rows／50 metric cells；groups=[] 卻引用 gpt，parser 合理拒絕 | 這次模型輸出確有問題，不能以修 scorer 將它改判通過 |
 
-對應程式：[硬編碼 matching](../pdf-core-fixed-seven-source-2026-10-18/evaluate.py#L81)、[結構旗標／overall](../pdf-core-fixed-seven-source-2026-10-18/evaluate.py#L187)、[math 當輪結果](../pdf-core-fixed-seven-source-2026-10-18/evaluate.py#L221)。本輪不修改這份歷史 materializer，也不讓修正後 evaluator 回寫原版報告。
+對應程式：硬編碼 matching (`docs/research/pdf-core-fixed-seven-source-2026-10-18/evaluate.py`)、結構旗標／overall (`docs/research/pdf-core-fixed-seven-source-2026-10-18/evaluate.py`)、math 當輪結果 (`docs/research/pdf-core-fixed-seven-source-2026-10-18/evaluate.py`)。本輪不修改這份歷史 materializer，也不讓修正後 evaluator 回寫原版報告。
 
 T04 實際 wire image 是 796×563，bytes 與前輪相同。前輪同模型 alias 曾讀到 295/300 數值且無漏值，本輪改 semantic 協定後只回 50 個。這次 completion=1,856、finish=stop，遠低於 32,768 cap，沒有 token 截斷證據。**因此不能宣布已碰到 Luna 能力上限；協定負擔、模型隨機性、供應商 alias／視覺處理差異尚未完全分離。**
 
@@ -42,7 +42,7 @@ T04 實際 wire image 是 796×563，bytes 與前輪相同。前輪同模型 ali
 | **交接與前置檢查的完成定義不一致** | 歷史逐頁 MLX run 卻談跨頁 assembly；兩張實際 model PNG 變黑；Stage1 B 曾缺 runner／token budget，摘要卻概括阻擋後段 | **已確認。** 主線需補測、修正可支持的結論與重接工作；不能把部分完成、mechanical pass、品質通過互換。現在 ZombieProcess／permission 已處理，不應繼續當未解原因 |
 | **有每輪停止線，欠跨輪的有限候選與最終決策點** | 原三段計畫已有硬限與 stop，但停止一個 producer 後又可另立表示／context 假說；導航也曾指向舊狀態 | **治理推論。** 每輪都能合法結束，整體卻持續「下一步」。缺的是 B 整體在有限候選後要交付何種去留／取捨，而不是再加一個每輪 timeout |
 
-歷史 primary evidence：[三項 grader findings 與重播](../../reviews/pdf-core-b-script-review-2026-10-17/review.md)、[修正複核](../../reviews/pdf-core-b-script-review-2026-10-17/fix-review.md)、[A/B/C retro](../../reviews/pdf-core-abc-followup-2026-10-17/retro.md)、[早期方法／輸入問題](../../reviews/pdf-core-experiment-audit-2026-10-16/retro.md)、[Stage1 主線複核](../../reviews/pdf-core-stage1-main-review-2026-10-17.md)、[表示契約審核](../pdf-core-stage1-followup-2026-10-17/contract-audit.md)。
+歷史 primary evidence：三項 grader findings 與重播 (`docs/reviews/pdf-core-b-script-review-2026-10-17/review.md`)、修正複核 (`docs/reviews/pdf-core-b-script-review-2026-10-17/fix-review.md`)、A/B/C retro (`docs/reviews/pdf-core-abc-followup-2026-10-17/retro.md`)、早期方法／輸入問題 (`docs/reviews/pdf-core-experiment-audit-2026-10-16/retro.md`)、Stage1 主線複核 (`docs/reviews/pdf-core-stage1-main-review-2026-10-17.md`)、[表示契約審核](../pdf-core-stage1-followup-2026-10-17/contract-audit.md)。
 
 這不是「所有實驗作廢」：修評讀器通常可重播同一批 raw，不須重付模型成本。也沒有證據可精確把總耗時按百分比分給模型／腳本／溝通，或斷言每次都因 script 出錯。使用者對低延遲、minor 容忍、避免後處理的目標相當一致；主線在實驗分層、readiness 與跨輪收斂上的把關不足，是應由主線負責的部分。
 

@@ -1,6 +1,6 @@
 # 官方逐頁 API：medium 對 low 的獨立來源核對
 
-候選 3 沿用候選 2 完全相同的 8 頁、41 個來源單位及 [來源契約](contract.json)，只改 `reasoning_effort` low → medium。8 次新推論及 4 份官方組裝文件完成後，分別檢查原始 DocTags、官方 parsed document 與 stock Markdown。逐項資料、配對差異及輸出 hashes 見 [results.json](results.json)，可用 [assess.py](assess.py) 重複核對而不覆寫凍結結果。
+候選 3 沿用候選 2 完全相同的 8 頁、41 個來源單位及 來源契約 (`contract.json`)，只改 `reasoning_effort` low → medium。8 次新推論及 4 份官方組裝文件完成後，分別檢查原始 DocTags、官方 parsed document 與 stock Markdown。逐項資料、配對差異及輸出 hashes 見 `results.json`，可用 `assess.py` 重複核對而不覆寫凍結結果。
 
 **候選 3 不採用，也不因整體數字改善而選它作 challenger。** 它找回一些公式與標號，卻新增來源數學錯誤、code 運算符交付錯誤及段落／provenance 退化。這正是先前要求保留回歸案例的用途。
 

@@ -13,7 +13,7 @@
 | 上游 | 重用2.132 S0 StandardPdfPipeline 的 SkillOpt p8結果；PyPdfium、Heron、selective RapidOCR、TableFormer V1 accurate、原生 assembly；本輪未重新推論 |
 | 既有 producer | 10/14暫用 gpt-6-luna 的完整 Table2 raw；未改 prompt、raw或評分規則，未作新API呼叫 |
 | 實際 runtime | 既有 Standard venv，Core2.99／Pydantic，僅載資料型別；檢查未匯入torch／transformers／mlx |
-| 新增接合 | research-only [mapper](pdf-core-table-delivery-2026-10-17/mapper.py)：公開 GroupItem、TableData／TableCell、insert／append／add／delete API；不是官方內建API table stage |
+| 新增接合 | research-only mapper (`pdf-core-table-delivery-2026-10-17/mapper.py`)：公開 GroupItem、TableData／TableCell、insert／append／add／delete API；不是官方內建API table stage |
 | 表示 | 一個邏輯 group，六個 panel titles＋六張子表；原 source caption由首張子表引用一次，其他表格與正文保持原順序 |
 | 匯出 | 原生 `export_to_markdown()`，預設 stock serializer；JSON reload後再次匯出一致 |
 | 來源 | 沿用whole-table native envelope，cell bbox=None；保存原API input／request／response與baseline hashes、source key、原始provenance及provider metadata |
@@ -32,7 +32,7 @@
 | 格式／失敗控制 | 新live schema普通表走相同parser→mapper→export；缺target、重複／未知key、缺欄／重複metric／超列寬、數值型別強制轉換、重複panel、無效來源／越界bbox均拒絕 |
 | 避免oracle滲入 | mapper不讀oracle、不硬編84／28；格式合法的新增row明確允許進入source evaluator評分，不能在ingest冒稱已辨識它是多寫 |
 
-[完整檢查](pdf-core-table-delivery-2026-10-17/verification.json)、[逐點評分](pdf-core-table-delivery-2026-10-17/typed-quality.json)、[輸入與程式身分](pdf-core-table-delivery-2026-10-17/registration.json)已保存。探索過一次public mapper與一次printed precision控制；完整gate首次已通過，補齊lineage記錄後再驗一次，沒有對內容／numeric結果調參。`doc.furniture`公開相容屬性有deprecated warning，未為消警告修改SDK或移動來源。
+完整檢查 (`pdf-core-table-delivery-2026-10-17/verification.json`)、逐點評分 (`pdf-core-table-delivery-2026-10-17/typed-quality.json`)、輸入與程式身分 (`pdf-core-table-delivery-2026-10-17/registration.json`)已保存。探索過一次public mapper與一次printed precision控制；完整gate首次已通過，補齊lineage記錄後再驗一次，沒有對內容／numeric結果調參。`doc.furniture`公開相容屬性有deprecated warning，未為消警告修改SDK或移動來源。
 
 ## 必須保留的界線
 
@@ -44,7 +44,7 @@
 
 ## 下一步與目前阻礙
 
-公開映射可行，因此不用擴張內容後處理，也不需重試Granite CPU。已固定[通用prompt](pdf-core-table-delivery-2026-10-17/prompt.txt)、[新response schema](pdf-core-table-delivery-2026-10-17/response-schema.json)與[API readiness](pdf-core-table-delivery-2026-10-17/api-readiness.json)。它們不含正確數值、表名或oracle內容。
+公開映射可行，因此不用擴張內容後處理，也不需重試Granite CPU。已固定通用prompt (`pdf-core-table-delivery-2026-10-17/prompt.txt`)、新response schema (`pdf-core-table-delivery-2026-10-17/response-schema.json`)與API readiness (`pdf-core-table-delivery-2026-10-17/api-readiness.json`)。它們不含正確數值、表名或oracle內容。
 
 **目前停在credential條件，0/2個live requests送出。** 待安全配置可用後，完成Memory-R1 p8的同版S0 conversion，再凍結兩頁全部native targets／144dpi影像hash，按已確認的單一協定普通表→複雜表各一次比較。Memory-R1已有舊2.102結果，不能冒稱它是本輪2.132 S0，因此尚未列為可直接執行的完整registration；SkillOpt S0已清點兩個targets。沒有跳過缺失的普通表control或只測Table2。
 

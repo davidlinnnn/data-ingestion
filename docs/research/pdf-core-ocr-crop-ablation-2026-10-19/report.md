@@ -21,11 +21,11 @@
 
 本輪是**快取 layout 的元件消融與官方下游重播**。實驗 runner 暫時指定固定 OCR 區域並提供保存像素，沒有把內部框合併方法當成公開設定，亦沒有改正式產品流程。小圖會改變引擎內部縮放與上下文，因此結果支持裁圖介入有效，不能單獨定罪某個神經網路或保證跨文件修復。
 
-身分與原假說：[registration.json](registration.json)、[原邊界追蹤](../pdf-core-ocr-boundary-trace-2026-10-19/report.md)。可讀產物：[A Markdown](A/document.md)、[B Markdown](B/document.md)。
+身分與原假說：`registration.json`、[原邊界追蹤](../pdf-core-ocr-boundary-trace-2026-10-19/report.md)。可讀產物：[A Markdown](A/document.md)、[B Markdown](B/document.md)。
 
 ## 結果與完整內容判準
 
-來源先凍結為 **11 正文段落、1 左欄標題、2 註腳及 1 頁碼**；本頁沒有合法跨欄標題。評讀涵蓋全頁，不能只以 `foror` 消失、框不過中線或字元召回率判定正確。[凍結參照](reference.json)、[全文人工核對](manual-review.md)
+來源先凍結為 **11 正文段落、1 左欄標題、2 註腳及 1 頁碼**；本頁沒有合法跨欄標題。評讀涵蓋全頁，不能只以 `foror` 消失、框不過中線或字元召回率判定正確。凍結參照 (`reference.json`)、[全文人工核對](manual-review.md)
 
 | 指標／內容 | A 大圖 | B 分離圖 |
 |---|---:|---:|
@@ -56,7 +56,7 @@ A reader 001 的 detector 後處理框 indices **3、4、15**（零起算）已�
 
 B reader **007** 收到完整、清楚的 `2 OVERVIEW`，尺寸 **210×36**（寬×高），預處理前後像素相同。原生 detector 回空，沒有後續文字裁圖、分類或辨識，最終 boxes／texts／scores 全 null；worker log 保存 `The text detection result is empty`。這不是辨識後因低分被濾掉。
 
-[實際標題輸入](B/trace/images/53180bec48f9e0c1401ab24b107e3e087db11bfb4c957673372ce8b69f1826a4.png)、[空結果](B/trace/reader-007/result.json)。頁碼 reader 001 亦回空。尚不能區分小圖上下文、內部縮放與偵測門檻的影響；本輪不追加 padding 搜尋。
+實際標題輸入 (`B/trace/images/53180bec48f9e0c1401ab24b107e3e087db11bfb4c957673372ce8b69f1826a4.png`)、空結果 (`B/trace/reader-007/result.json`)。頁碼 reader 001 亦回空。尚不能區分小圖上下文、內部縮放與偵測門檻的影響；本輪不追加 padding 搜尋。
 
 ### 3. Background 首行有獨立、既有的方向誤判
 
@@ -71,11 +71,11 @@ B reader **007** 收到完整、清楚的 `2 OVERVIEW`，尺寸 **210×36**（�
 
 分類前：
 
-![B 原生文字裁圖，正向](B/trace/images/8b8432ad99ee764e320f03b040526d28cece1d0232ba5f1146690a56e937825d.png)
+B 原生文字裁圖，正向 (`B/trace/images/8b8432ad99ee764e320f03b040526d28cece1d0232ba5f1146690a56e937825d.png`)
 
 送入辨識器：
 
-![B 分類器旋轉後，倒置](B/trace/images/fee946e50c39677403e48c03491c77a34eb9d6b0ec4ada649dbad9c473f1c5ed.png)
+B 分類器旋轉後，倒置 (`B/trace/images/fee946e50c39677403e48c03491c77a34eb9d6b0ec4ada649dbad9c473f1c5ed.png`)
 
 ### 4. 分欄段落正確後，ReadingOrder 仍建立錯誤連邊
 
@@ -83,7 +83,7 @@ B 的官方 OCR merge 只重編 109 個 cell index；**115 個 cell 的文字、
 
 最終 ReadingOrder 的 `_init_l2r_map` 因 P01／P06 的輸入 CID 相鄰、垂直 IoU **0.84937 > 0.8**、且 raster PDF 沒有向量分隔線，建立 P01→P06 的左右接續。`_init_ud_maps` 再將 P02 的前置節點沿此關係改為 P06，形成 **P01→P06→P02**。未改規則的原生幾何重播與保存文件順序逐值相同。
 
-因此 B 的最終順序仍為 `P01, P06, P02, P03, P04, P05, P07, P08, P09, P10, P11`，P06 錯放在 P02／P03／P04／P05 之前。這是獨立的閱讀順序接點，不能只換 OCR 就假定會解決。[完整下游證據](downstream-findings.json)
+因此 B 的最終順序仍為 `P01, P06, P02, P03, P04, P05, P07, P08, P09, P10, P11`，P06 錯放在 P02／P03／P04／P05 之前。這是獨立的閱讀順序接點，不能只換 OCR 就假定會解決。完整下游證據 (`downstream-findings.json`)
 
 ## 成本
 
@@ -99,7 +99,7 @@ B 的官方 OCR merge 只重編 109 個 cell index；**115 個 cell 的文字、
 
 B 的觀測 OCR 區段約增加 **45%**；這次拆圖沒有帶來省時。兩組都有證據保存成本，且是各一次觀測；原生 elapsed 不涵蓋空輸出的完整耗時，不能當純模型精密 benchmark。這些數字**不是完整 StandardPdfPipeline ingest latency、p95、吞吐 SLO、GPU 或公司部署表現**。1＋15 是 reader 呼叫，不是神經網路 forward 次數。
 
-[A 成本](A/execution.json)、[B 成本](B/execution.json)、[機器可讀分析](analysis.json)。
+A 成本 (`A/execution.json`)、B 成本 (`B/execution.json`)、機器可讀分析 (`analysis.json`)。
 
 ## 評讀器修正與證據有效性
 
@@ -107,8 +107,8 @@ B 的觀測 OCR 區段約增加 **45%**；這次拆圖沒有帶來省時。兩�
 
 最小修正只支援官方兩種 reference key 並拒絕矛盾值，新增真實原生／alias 非空及全份等價控制；參照、模型、裁圖、閾值及判準未變。原程式、註冊檔與初次評讀全部保留；註冊以具名 amendment 更新，確認 A 已收集的 **251 檔**雜湊不變，再開始 B。修正後共 14 項零模型控制（6 capture＋8 scorer）通過。這揭露了初始 preflight 的真實序列化覆蓋缺口，不能把修評讀器當模型品質改善。
 
-- [原註冊](registration-before-evaluator-schema-amendment.json)與[具名修正／A 封存](evaluator-schema-amendment.json)。
-- [A 原文件評讀，無效版本](A/score.json)與[A 最終評讀](A/score-schema-amended.json)；[B 最終評讀](B/score.json)使用相同新版 evaluator。
+- 原註冊 (`registration-before-evaluator-schema-amendment.json`)與具名修正／A 封存 (`evaluator-schema-amendment.json`)。
+- A 原文件評讀，無效版本 (`A/score.json`)與A 最終評讀 (`A/score-schema-amended.json`)；B 最終評讀 (`B/score.json`)使用相同新版 evaluator。
 - 凍結 reference 的 P01 `continues_from_previous_page` metadata 過寬；P01 是新段落，只有 Introduction 章節承接前頁。此欄未參與評分，正文、段落數與順序均未改；已在人工核對澄清。
 
 ## 決策與停止

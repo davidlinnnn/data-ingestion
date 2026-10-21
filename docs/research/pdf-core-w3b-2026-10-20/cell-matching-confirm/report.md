@@ -17,7 +17,7 @@
 |P15 p15 Table5|一般|PASS|FAIL|1/3＝33.3333%|**確認退化**。baseline完整句清楚表達40／56／46 tasks所屬集合；False把56另混入Lite evaluation core。|
 |P19 p20 Table2|複雜|PASS|FAIL|5/48＝10.4167%|**確認退化**。baseline每model/setting六值原序完整；False的Zero-shot額外混入16.1、232、255、588、498。|
 
-結論為**3確認退化、1兩版同樣失敗、4無法排除退化**；不是把後4張當零退化。baseline通過的3張合計83個必要資料點已逐一檢查。壓欄本身另記為grid缺陷，不等於數值語義正確；通過只限輸出自己能唯一表達的關係。反之，已有明確typed cell把值指派錯欄時，不許flatten後按來源猜回正解。裁定界線見 [adjudication-method.md](adjudication-method.md)，逐圖、全部原native cells及tuple證據見 [regression-audit/report.md](regression-audit/report.md)、[adjudication.json](regression-audit/adjudication.json)。root另獨立覆核 [P15](root-audit/P15-independent-adjudication.json) 與 [P19](root-audit/P19-independent-adjudication.json)。
+結論為**3確認退化、1兩版同樣失敗、4無法排除退化**；不是把後4張當零退化。baseline通過的3張合計83個必要資料點已逐一檢查。壓欄本身另記為grid缺陷，不等於數值語義正確；通過只限輸出自己能唯一表達的關係。反之，已有明確typed cell把值指派錯欄時，不許flatten後按來源猜回正解。裁定界線見 [adjudication-method.md](adjudication-method.md)，逐圖、全部原native cells及tuple證據見 `regression-audit/report.md`、adjudication.json (`regression-audit/adjudication.json`)。root另獨立覆核 P15 (`root-audit/P15-independent-adjudication.json`) 與 P19 (`root-audit/P19-independent-adjudication.json`)。
 
 P04 Table1另暴露答案分母限制：frozen HTML的344不是完整可見score＋gain component個數。逐頁核對每metric cell最多2個可見數字，以完整分母上界688及36個確證錯誤建立5.2326%下界，已超複雜表5%；不能沿用36/344稱完整精確率。沒有修改原oracle。
 
@@ -36,7 +36,7 @@ P04 Table1另暴露答案分母限制：frozen HTML的344不是完整可見score
 |P03 Table9.fig2|UNKNOWN|PASS|PASS|False確實通過；baseline的Runner／metric分組仍無法唯一解讀。|
 |P01 Table1|FAIL|PASS|PASS|新增樣本中另1真修復：3個WikiSkill row各有3個metric順序錯，baseline下界9/150＝6%超過5%。|
 
-因此原3張修好均為真；新增5張中，MAPPED的5張通過均屬實，但只有1張確證從失敗修好，3張原本已通過、1張baseline仍未知。RAW有1張評分器假PASS。完整抽樣登錄、每出口逐表判定及所有數值見 [pass-audit/report.md](pass-audit/report.md)、[sample-audit.json](pass-audit/sample-audit.json)。不能把機器UNKNOWN→PASS全部當作修復，也不能把定向樣本推成全量退化率。
+因此原3張修好均為真；新增5張中，MAPPED的5張通過均屬實，但只有1張確證從失敗修好，3張原本已通過、1張baseline仍未知。RAW有1張評分器假PASS。完整抽樣登錄、每出口逐表判定及所有數值見 `pass-audit/report.md`、sample-audit.json (`pass-audit/sample-audit.json`)。不能把機器UNKNOWN→PASS全部當作修復，也不能把定向樣本推成全量退化率。
 
 ## 3. 正文、caption與讀序
 
@@ -49,7 +49,7 @@ P04 Table1另暴露答案分母限制：frozen HTML的344不是完整可見score
 - 直接拿全文對區間時可見的段落邊界、去連字與45個heading-level差異，由相同頁面區間重播及bookmark-only重播證明為上下文效應，不能歸因cell matching。原差異清單與修正前分類均保留，不隱藏差異。
 - 此選項也作用於8個label=document_index、結構型別為TableElement的目錄／附錄目錄。因此「只影響表格」必須指TableElement處理範圍，不能窄稱只影響label=table的資料表。
 
-逐頁差異、反事實重播與來源SHA見 [body-impact/report.md](body-impact/report.md)。沒有重跑conversion，也沒有新增模型推論。
+逐頁差異、反事實重播與來源SHA見 `body-impact/report.md`。沒有重跑conversion，也沒有新增模型推論。
 
 ## 4. Q13全量記帳與每張FAIL的錯率
 
@@ -62,12 +62,12 @@ P04 Table1另暴露答案分母限制：frozen HTML的344不是完整可見score
 |False RAW|19/4/48|8/5/99|27/9/147|
 |False MAPPED|21/4/46|9/4/99|30/8/145|
 
-全部FAIL表、兩出口及每張錯率／下界在 [q13-summary.md](q13-summary.md)、[fail-tables-final.csv](fail-tables-final.csv)；全183表的原判→人工結果與採用來源在 [per-table-final.csv](per-table-final.csv)。精確率與下界分列；部分FAIL只能確定已超門檻，完整錯率及多生上界未能判定，不拿未評部分填0。
+全部FAIL表、兩出口及每張錯率／下界在 [q13-summary.md](q13-summary.md)、`fail-tables-final.csv`；全183表的原判→人工結果與採用來源在 `per-table-final.csv`。精確率與下界分列；部分FAIL只能確定已超門檻，完整錯率及多生上界未能判定，不拿未評部分填0。
 
 ## 5. Profile建議
 
 **不採用False作為全域設定，維持 `do_cell_matching=True`。** MAPPED已確認4張修復，但同時確認3張新增語義阻擋；RAW另外確認P19 Table3退化。這不是修好與弄壞張數相減的問題，也不以多數通過率取代Q13。
 
-固定官方選項False會直接用預測cell bbox向PDF backend擷取文字；框跨鄰列時可重複捕入其他列的數值，框裁窄也會截掉必要小數／百分比。此機制與頁圖觀察一致，定位在table cell content mapping／backend rectangle extraction，而非正文layout或reading-order。pinned官方程式片段及SHA見 [official-cellFalse-branch.json](root-audit/official-cellFalse-branch.json)。
+固定官方選項False會直接用預測cell bbox向PDF backend擷取文字；框跨鄰列時可重複捕入其他列的數值，框裁窄也會截掉必要小數／百分比。此機制與頁圖觀察一致，定位在table cell content mapping／backend rectangle extraction，而非正文layout或reading-order。pinned官方程式片段及SHA見 official-cellFalse-branch.json (`root-audit/official-cellFalse-branch.json`)。
 
 本輪不實作逐表切換、依文件例外或自訂重建。True仍有既知結構與表格資料缺陷，須保留Q13 UNKNOWN與阻擋清單；本輪結論只排除False無條件取代True的資格，不宣稱True已符合全文件Canonical Acceptance。

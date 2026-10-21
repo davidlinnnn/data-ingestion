@@ -21,7 +21,7 @@
 |Pilot-other/unknown|6／167|41／38|31|4|6／0|10／4|295／21／3／3|
 |general arXiv (article; template uncertain)|3／89|48／45|20|18|10／0|0／0|46／15／1／0|
 
-全主figure：220已知來源，195在選定頁；144有explicit caption-picture連結候選、29來源頁無picture標籤、其餘39 UNKNOWN（其中17來源定位未知、1條件未知、21 native caption／child映射未知），8在選定頁外。子圖58中13有explicit link候選；其餘保留子圖定位／繼承父圖／映射限制。8個image-table floats中4可定位並連結、4 UNKNOWN。完整分子、分母與各原因：[family-summary.csv](family-summary.csv)、[E0-evaluation.json](E0-evaluation.json)。不把known-link比例當整體通過率。
+全主figure：220已知來源，195在選定頁；144有explicit caption-picture連結候選、29來源頁無picture標籤、其餘39 UNKNOWN（其中17來源定位未知、1條件未知、21 native caption／child映射未知），8在選定頁外。子圖58中13有explicit link候選；其餘保留子圖定位／繼承父圖／映射限制。8個image-table floats中4可定位並連結、4 UNKNOWN。完整分子、分母與各原因：`family-summary.csv`、`E0-evaluation.json`。不把known-link比例當整體通過率。
 
 ## RAW／MAPPED 與 UNKNOWN
 
@@ -44,7 +44,7 @@ E0全36重用V3_B保存文件；原30篇conversion的image generation曾開、6�
 
 原PDF遞迴Form imageobjects 983個，3個bbox完全頁外；980個on-page bbox中865完整落至少一個picture框，103僅部分相交、12無交。全部保留原bbox、quad、clip計數與Form矩陣；nested Form synthetic bbox驗證PASS。這些不是「983張可見圖」，clip／舊隱藏字圖／遮擋可使物件不可見；vector也不在raster分母。
 
-已渲染12個原來源頁、檢視source與overlay；其中10頁有實際figure、2頁是無figure的來源控制頁。抽查6個partial raster objects：Tacotron2 p3、NGCF p2、Attention p4兩圖、GradientDescent p4兩圖，縮掉的皆是白邊；原頁排除strip在1.6 scale下均0個<200灰階ink pixels，另保存50／100／250閾值原始測量。這是本樣本頁圖判斷的佐證，pixel閾值不是新接受規則，也不外推其餘partial通過。本樣本未確證必要raster像素遺失；未審的partial／無交仍UNKNOWN。[頁圖審查](visual-audit/records.json)、[strip證據](visual-audit/excluded-strips-pixel-evidence.json)。
+已渲染12個原來源頁、檢視source與overlay；其中10頁有實際figure、2頁是無figure的來源控制頁。抽查6個partial raster objects：Tacotron2 p3、NGCF p2、Attention p4兩圖、GradientDescent p4兩圖，縮掉的皆是白邊；原頁排除strip在1.6 scale下均0個<200灰階ink pixels，另保存50／100／250閾值原始測量。這是本樣本頁圖判斷的佐證，pixel閾值不是新接受規則，也不外推其餘partial通過。本樣本未確證必要raster像素遺失；未審的partial／無交仍UNKNOWN。頁圖審查 (`visual-audit/records.json`)、strip證據 (`visual-audit/excluded-strips-pixel-evidence.json`)。
 
 ResNet p1是vector圖，crop完整性保留UNKNOWN；U-Net p3 photos bbox完整，但箭頭vector不由raster測量認證。P10 p26現行vector曲線被偵測，舊clip／頁外raster未入框不能直接宣稱當前圖遺失。
 
@@ -55,10 +55,10 @@ ResNet p1是vector圖，crop完整性保留UNKNOWN；U-Net p3 photos bbox完整�
 
 Attention p4的source Figure2共享caption只接右picture，左panel只保留其小標；記結構關聯部分不足，Q4是否改義UNKNOWN。P20 p28 Figure21則是原生code／prompt文字圖，無picture label不等於內容真缺；code正確性由另項oracle處理。
 
-5個代表頁官方LayoutPostprocessor零推論重播，full clusters（忽略order）及geometry／label／children全與保存輸出相等；每個官方函式只forward一次，沒有模型或backend呼叫。[replay](layout-zero-inference-replay.json)、[blocking cases](blocking-cases.json)。stage原始碼：[LayoutPostprocessor](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/utils/layout_postprocessor.py:108>)、[picture/table跨類優先](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/utils/layout_postprocessor.py:450>)。
+5個代表頁官方LayoutPostprocessor零推論重播，full clusters（忽略order）及geometry／label／children全與保存輸出相等；每個官方函式只forward一次，沒有模型或backend呼叫。replay (`layout-zero-inference-replay.json`)、blocking cases (`blocking-cases.json`)。stage原始碼：LayoutPostprocessor (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/utils/layout_postprocessor.py:108>`)、picture/table跨類優先 (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/utils/layout_postprocessor.py:450>`)。
 
 ## 沿用W2 picture原生字頻率
 
-W2 full36的**235個picture frames**中，172框含至少30個**原PDFium原生非空白字元**，涉及35篇／146頁；172框皆已有至少30個native descendant字元。只有14／172框在預設MD找到至少一個完整≥30字child；327個substantial child nodes中28個在MD找到。這些frame/doc/page分母來自原PDF字層幾何inventory，**不是從mapped children文字量反推**，不是圖內全文／語義正確率。MAPPED將native children放picture_native_uncertain，不作C_image_supplement。[既有inventory](../../pdf-core-w2-native-coverage-round3-2026-10-20/diagnostics/picture-text-full36.json)、[既有報告](../../pdf-core-w2-native-coverage-round3-2026-10-20/diagnostics/report-full36.md)。
+W2 full36的**235個picture frames**中，172框含至少30個**原PDFium原生非空白字元**，涉及35篇／146頁；172框皆已有至少30個native descendant字元。只有14／172框在預設MD找到至少一個完整≥30字child；327個substantial child nodes中28個在MD找到。這些frame/doc/page分母來自原PDF字層幾何inventory，**不是從mapped children文字量反推**，不是圖內全文／語義正確率。MAPPED將native children放picture_native_uncertain，不作C_image_supplement。既有inventory (`docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/diagnostics/picture-text-full36.json`)、[既有報告](../../pdf-core-w2-native-coverage-round3-2026-10-20/diagnostics/report-full36.md)。
 
 來源oracle、方法與freeze原檔未修改；本報告未執行任何修正、API、conversion或模型下載／推論。

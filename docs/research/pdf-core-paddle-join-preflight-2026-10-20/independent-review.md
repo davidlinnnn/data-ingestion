@@ -15,12 +15,12 @@
 | 圖片包裝與搬移 | 只修改 export view 的資產路徑、以頁 namespace 匯出後，三個 assets 的 key／路徑唯一、原 provider serialization 不變；搬移後 byte/hash 讀回，foreign revision 與缺圖控制被拒絕。這是資產包裝證據，尚非完整 Canonical caption／OCR／chart supplement 交付。 |
 | 座標與聚合 | 原始逐頁 importer 保留 source page 3／4 與各自 pixel canvas；來源 ledger 明示本合成控制的 144dpi、無旋轉／unwarp 與 point mapping。Core concatenate 重新編成頁 1／2，因此仍需 ledger 回到原頁，不能誤稱 source page number 原樣保留。 |
 
-證據：[table-controls.json](paddle/table-controls.json)、[Paddle 結果](paddle/results.json)、[Docling 結果](docling/results.json)、[資產清單](paddle/relocated-bundle/assets.json)、[來源 ledger](docling/source-ledger.json)。具體測試接線見 [paddle_probe.py](paddle_probe.py) 與 [docling_probe.py](docling_probe.py)。官方來源為本輪 registration 鎖定的 PaddleX 3.7.2 `layout_parsing/merge_table.py`：`detect_table_headers` 比對所有前綴列、`perform_table_merge` 跳過 header count，`can_merge_tables` 依寬度／列欄數接受候選。
+證據：table-controls.json (`paddle/table-controls.json`)、Paddle 結果 (`paddle/results.json`)、Docling 結果 (`docling/results.json`)、資產清單 (`paddle/relocated-bundle/assets.json`)、來源 ledger (`docling/source-ledger.json`)。具體測試接線見 `paddle_probe.py` 與 `docling_probe.py`。官方來源為本輪 registration 鎖定的 PaddleX 3.7.2 `layout_parsing/merge_table.py`：`detect_table_headers` 比對所有前綴列、`perform_table_merge` 跳過 header count，`can_merge_tables` 依寬度／列欄數接受候選。
 
 ## 原始指標須另行解讀
 
-1. **Docling 主 Markdown 的圖內 OCR／chart content 指標是 false negative。** `docling/results.json` 的 `image_content_in_docling_primary_markdown`／`chart_content_in_docling_primary_markdown` 使用未 escape 的精確 substring。實際 [p3.md](docling/p3.md) escape underscores；[stock-render.html](docling/stock-render.html) 明確顯示 `DERIVED_IMAGE_OCR_ONLY` 與 `DERIVED_CHART_DATA_ONLY`，原始 [p3.json](docling/p3.json) 亦保留相同 text nodes。因此不能宣稱二者未出現在 stock 主內容；二者實際混入主內容。
-2. **Native numbered formula 的 delimiter 指標是 false negative。** `native_display_bare_formula_delimited=false` 搜尋 `$$E = mc^2$$`，但實際 [document.md](paddle/relocated-bundle/document.md) 輸出 `$$E = mc^2 \tag*{(7)}$$`：式號與 delimiter 均保存。不能以此判缺 delimiter；本輪也未測「沒有式號的 bare formula」。舊 converter component 的其他案例不可冒稱為本輪完整 Result 案例。
+1. **Docling 主 Markdown 的圖內 OCR／chart content 指標是 false negative。** `docling/results.json` 的 `image_content_in_docling_primary_markdown`／`chart_content_in_docling_primary_markdown` 使用未 escape 的精確 substring。實際 [p3.md](docling/p3.md) escape underscores；stock-render.html (`docling/stock-render.html`) 明確顯示 `DERIVED_IMAGE_OCR_ONLY` 與 `DERIVED_CHART_DATA_ONLY`，原始 p3.json (`docling/p3.json`) 亦保留相同 text nodes。因此不能宣稱二者未出現在 stock 主內容；二者實際混入主內容。
+2. **Native numbered formula 的 delimiter 指標是 false negative。** `native_display_bare_formula_delimited=false` 搜尋 `$$E = mc^2$$`，但實際 document.md (`paddle/relocated-bundle/document.md`) 輸出 `$$E = mc^2 \tag*{(7)}$$`：式號與 delimiter 均保存。不能以此判缺 delimiter；本輪也未測「沒有式號的 bare formula」。舊 converter component 的其他案例不可冒稱為本輪完整 Result 案例。
 3. **Paragraph 精確字串未命中不是語意失敗證據。** `native_paragraph_continuation_reconstructed=false` 只檢查一個跨頁 fragment 是否成為單一精確字串；兩個來源 fragment 都仍存在。既定要求允許不改義的 reflow，不強制單一字串或特定 typed label。可確認的是官方 concatenate 僅串接頁面 Markdown，沒有提供 logical paragraph continuation relation；完整跨頁能力仍未證實，不能據此判模型漏段。
 
 上述保留原始結果，須以本覆核／adjudication 說明測量限制，不刪除或悄悄改寫原指標。

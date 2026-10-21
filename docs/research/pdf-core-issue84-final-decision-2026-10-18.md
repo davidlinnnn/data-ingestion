@@ -38,7 +38,7 @@
 
 ### 本次完成點與下一決策
 
-評讀與證據的統一入口見[無推論守門說明](../../tests/pdf_research/README.md)。CI 執行可攜純控制；本機完整模式另比對封存、保存的實際輸出並沿用既有 A／B／C gates。檢查成功只證明其明列的回歸／完整性，不將本表的 `METHOD_STOP` 或 `NOT_RUN` 改成品質通過。
+評讀與證據的統一入口見無推論守門說明 (`tests/pdf_research/README.md`)。CI 執行可攜純控制；本機完整模式另比對封存、保存的實際輸出並沿用既有 A／B／C gates。檢查成功只證明其明列的回歸／完整性，不將本表的 `METHOD_STOP` 或 `NOT_RUN` 改成品質通過。
 
 本次只校正狀態入口與既有評讀的無推論守門；未啟動新模型、A／C 方法設計或整合 run。**R1／R2／R3 尚未選；本次環境修正不是 R1 的 8 小時工程授權。**具體三選一仍見下節，保留原必含及停止條件。後續摘要與交接先讀本矩陣，再依該列連結查原始報告；每有新結果只更新本入口的現況，不重寫封存或複製另一份當前矩陣。
 
@@ -137,7 +137,7 @@ A／C 的「0 個已登錄下一候選」表示**下一方法尚待設計與登�
 | 3 | B 單一 challenger 最多 7＋3 次 DEV；DEV 全過才做事前凍結預算的 28 頁外部回歸 | 交付一次 B 去留結論；A／C 新方法的固定推論須各有具名方法與新預算，由 #80–#83 接手。 |
 | 4 | #84 決策與交接檢查 | 必要方法／身分與交接完整則結束決策票；仍有必含無方法則作資源／範圍／停止取捨，不自動新增下一方法。 |
 
-**A／C 共同來源檢查先開始，尚不登錄新的模型候選。**A 的「方法未合格」指完整來源發現、視覺輸入與輸出責任；公開 Core 的 fragment-order／mock 運輸接點已通過狹義控制。SEAL 第 2 頁的圖題在 `#/texts/0`、圖在 `#/pictures/0`，舊 picture crop 沒有圖題；後來的 FULL_PAGE OCR 已把完整 `RL Outer Loop Iteration t` 放進 Canonical 正文，**仍沒有把圖題放進 picture crop，也沒有重建這個圖題／圖像來源群組的 17 處 math**。這同時影響 A 的公式輸入和 C 的圖片理解輸入，但兩者的輸出與品質判準不能混算。[A 來源邊界](pdf-core-stage1-followup-2026-10-17/A-review/figure-boundary-evidence.json)與[C 實測](pdf-core-c-source-closure-2026-10-18/report.md)保留兩版不同的實際證據。
+**A／C 共同來源檢查先開始，尚不登錄新的模型候選。**A 的「方法未合格」指完整來源發現、視覺輸入與輸出責任；公開 Core 的 fragment-order／mock 運輸接點已通過狹義控制。SEAL 第 2 頁的圖題在 `#/texts/0`、圖在 `#/pictures/0`，舊 picture crop 沒有圖題；後來的 FULL_PAGE OCR 已把完整 `RL Outer Loop Iteration t` 放進 Canonical 正文，**仍沒有把圖題放進 picture crop，也沒有重建這個圖題／圖像來源群組的 17 處 math**。這同時影響 A 的公式輸入和 C 的圖片理解輸入，但兩者的輸出與品質判準不能混算。A 來源邊界 (`pdf-core-stage1-followup-2026-10-17/A-review/figure-boundary-evidence.json`)與[C 實測](pdf-core-c-source-closure-2026-10-18/report.md)保留兩版不同的實際證據。
 
 只用既有 Standard／FULL_PAGE 產物、頁圖與公開 provenance，做**一次有界、零模型的通用輸入方法診斷**：對 A 已凍結的八頁／44 groups／27 陰性、原 41 selected units、五個原未準備目標及所有適用的 inline／prose／code scope，連同 C 已盤點的圖片來源核對；明示 picture、相鄰文字及必要頁面視覺如何組成輸入。至少覆蓋 SEAL 圖題／圖內公式、跨 parent 的 algorithm／正文，以及普通非目標。確認來源字形真的在將送出的影像或文字中，路由不使用文件 ID／人工 oracle bbox，圖題仍在正文原位，圖片 OCR／描述仍以 image key 關聯，A 的重建須有自身可交付的 source binding。若輸入跨多個 owner，context-only 節點不可被當成可改寫 target。核對實際圖片 bytes、完整來源分母、非目標不重複，以及最壞 jobs／pixels；不能以頁圖存在、文字現在可讀或 mock 可存，推定重建成功。
 
@@ -166,7 +166,7 @@ A／C 的「0 個已登錄下一候選」表示**下一方法尚待設計與登�
 ## Retro 後的最小環境修正
 
 1. **最高：單一決策入口。** 研究首頁及舊三階段計畫只指向本頁；歷史結果保留原狀。每輪結束更新上表的狀態、證據與剩餘已登錄候選，防止把 `partial` 自動翻成新實驗。這是主線決策責任，不再往簡短的 `AGENTS.md` 堆規則。
-2. **次高：模型費用前的評讀器反例。** B 的下一輪需有獨立合法 T04、等義 label、正確／錯誤 math、錯 header／group／pair 及 missing／extra 的控制；人工來源決定 pending 時不得通過。既有[舊研究檢查入口](pdf-core-stage1-followup-2026-10-17/check.py)不涵蓋新七次評讀器，應在 B 研究目錄就地加入最小 preflight，避免另造通用評測平台。
+2. **次高：模型費用前的評讀器反例。** B 的下一輪需有獨立合法 T04、等義 label、正確／錯誤 math、錯 header／group／pair 及 missing／extra 的控制；人工來源決定 pending 時不得通過。既有舊研究檢查入口 (`pdf-core-stage1-followup-2026-10-17/check.py`)不涵蓋新七次評讀器，應在 B 研究目錄就地加入最小 preflight，避免另造通用評測平台。
 3. **後續：CI 守門。** 目前研究已有本機 compare-only 檢查，但 repo 無通用 root check／CI／pre-commit；固定路徑 runtime 尚不可攜。先完成本機可重播 gate，環境可重建後再接現有檢查入口，不把這次決策改成基礎建設專案。
 
-此頁的 #84 條件取自[議題原文](https://github.com/davidlinnnn/data-ingestion/issues/84) D 節；A／B／C 現況取自實際輸出與[三階段回顧](../reviews/pdf-core-abc-followup-2026-10-17/retro.md)。實驗方法失敗與產品目標失敗分開記錄；本頁不是新增推論授權。
+此頁的 #84 條件取自[議題原文](https://github.com/davidlinnnn/data-ingestion/issues/84) D 節；A／B／C 現況取自實際輸出與三階段回顧 (`docs/reviews/pdf-core-abc-followup-2026-10-17/retro.md`)。實驗方法失敗與產品目標失敗分開記錄；本頁不是新增推論授權。

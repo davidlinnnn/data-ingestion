@@ -21,8 +21,8 @@
 可安全重跑的 read-only 檢查入口（不加參數為產物產生器，已存在時會拒絕覆寫）：
 
 ```sh
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-stage1-followup-2026-10-17/C/controls.py --check
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B -m unittest discover -s docs/research/pdf-core-stage1-followup-2026-10-17/C -p 'test_controls.py' -v
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-stage1-followup-2026-10-17/C/controls.py --check
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B -m unittest discover -s docs/research/pdf-core-stage1-followup-2026-10-17/C -p 'test_controls.py' -v
 ```
 
 `registration.json` 保存 started/deadline/elapsed、固定計畫 SHA 與下一段未凍結欄位；`results.json` 是實際接合結果，`test-log.txt`／`test-results.json` 是測試，`evidence-hashes.json` 登錄原有來源／方法引用，`method-hashes.json` 固定本輪方法與產物。產生器／只讀檢查分開，重跑檢查不更新 hash 或報告。

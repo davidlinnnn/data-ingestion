@@ -38,7 +38,7 @@ Bold marks the best score in each row.
 
 Python 3.12+ and a CUDA GPU with room for approximately 49 GiB of weights plus working memory.
 
-Download and run the [inference example](inference.py) with uv:
+Download and run the inference example (`inference.py`) with uv:
 
 ```bash
 uvx --from huggingface-hub hf download perplexity-ai/pplx-decider-v1-27b inference.py --local-dir .

@@ -2,7 +2,7 @@
 
 2026-10-17。主線維持 Standard＋必要元件 VLM 的配置目標、原品質容忍與延遲／算力取捨。原六次推論與評分封存，最新結果見 [B-results.md](B-results.md)。
 
-[Matt 雙軸腳本 review](../../reviews/pdf-core-b-script-review-2026-10-17/review.md) 的三項評分缺陷已修正：全部 panel 的計數、明示 row-group scope，以及 pair 結構／數值容忍分離。35 個離線測試通過，T01／T02 Markdown 報表已與實際 render 一致；同六筆 saved responses 的[新版評分](B/rescore-v2/evaluation.json)仍是兩頁交付、兩頁未交付。原推論與報告均保留，完整性核對及[修正後複核](../../reviews/pdf-core-b-script-review-2026-10-17/fix-review.md)已另存。可繼續下方的離線方法取捨；本次評分修正沒有啟動新模型比較。
+Matt 雙軸腳本 review (`docs/reviews/pdf-core-b-script-review-2026-10-17/review.md`) 的三項評分缺陷已修正：全部 panel 的計數、明示 row-group scope，以及 pair 結構／數值容忍分離。35 個離線測試通過，T01／T02 Markdown 報表已與實際 render 一致；同六筆 saved responses 的新版評分 (`B/rescore-v2/evaluation.json`)仍是兩頁交付、兩頁未交付。原推論與報告均保留，完整性核對及修正後複核 (`docs/reviews/pdf-core-b-script-review-2026-10-17/fix-review.md`)已另存。可繼續下方的離線方法取捨；本次評分修正沒有啟動新模型比較。
 
 ## 立即下一步：表示契約與必要意思的離線審核
 

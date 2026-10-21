@@ -1,6 +1,6 @@
 # Real Linux / Kubernetes recovery extension — THROWAWAY
 
-Question and scope: [prototype brief](../../../design/pdf-checkpoint-prototype-brief.md).
+Question and scope: prototype brief (`docs/design/pdf-checkpoint-prototype-brief.md`).
 [Results](VERDICT.md) distinguish actual measured runs from remaining gaps.
 [Earlier environment-blocked preparation](PREPARATION-VERDICT.md) remains available.
 Original macOS code/evidence and `uv.lock` are unchanged.

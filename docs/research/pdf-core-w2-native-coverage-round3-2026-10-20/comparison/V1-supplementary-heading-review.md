@@ -12,4 +12,4 @@
 
 P02 baseline 明確改變 first-author 署名順位，標 q4_blocking_baseline=true／F02=true，另立 incidental outside-oracle finding，供主線更新 paper 分類；不混入原 875 候選數。P13 只有允許的完整 float 位置差，不新增 baseline 阻擋；P18 的新增 F02 阻擋另報，不能用凍結候選零增減抹除。
 
-唯一官方變更是 use_reading_order_separators=False，且保存的原生 traversal 確有改序。上述版面原因是根據原頁的幾何／語意群組推論，未另外重播 predictor／merge 子程序，因此不將精確內部 subroutine 宣告為已證實。[逐案證據](V1-supplementary-heading-review.json)
+唯一官方變更是 use_reading_order_separators=False，且保存的原生 traversal 確有改序。上述版面原因是根據原頁的幾何／語意群組推論，未另外重播 predictor／merge 子程序，因此不將精確內部 subroutine 宣告為已證實。逐案證據 (`V1-supplementary-heading-review.json`)

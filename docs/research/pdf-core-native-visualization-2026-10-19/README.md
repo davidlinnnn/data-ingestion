@@ -4,10 +4,10 @@ Uses retained S0 (`StandardPdfPipeline`, Docling 2.132.0 / Core 2.99.0) from the
 
 Only the in-memory presentation copy's page image is replaced by the exact requested PNG, at the same 612×792 PDF page geometry / 1224×1584 pixels. Saved text, provenance, ordering, historical JSON/Markdown and sealed experiments remain unchanged.
 
-- [Native split-page view](output/source-and-parsed.html): left is the native layout/reading-order overlay, right is the actual parsed HTML text, including defects.
-- [Final layout](output/final-layout.png): native `LayoutVisualizer`, showing final `DocItem.prov` boxes, not raw Heron proposals.
-- [Reading order](output/reading-order.png): native `DoclingDocument.get_visualization`, red arrows follow the saved inferred order, not correct reference order.
-- [OCR input and cells](output/debug_scan-p1/ocr_page_00001.png): native `BaseOcrModel.draw_ocr_rects_and_cells`; yellow is the merged OCR input region and magenta is OCR textline cells.
+- Native split-page view (`output/source-and-parsed.html`): left is the native layout/reading-order overlay, right is the actual parsed HTML text, including defects.
+- Final layout (`output/final-layout.png`): native `LayoutVisualizer`, showing final `DocItem.prov` boxes, not raw Heron proposals.
+- Reading order (`output/reading-order.png`): native `DoclingDocument.get_visualization`, red arrows follow the saved inferred order, not correct reference order.
+- OCR input and cells (`output/debug_scan-p1/ocr_page_00001.png`): native `BaseOcrModel.draw_ocr_rects_and_cells`; yellow is the merged OCR input region and magenta is OCR textline cells.
 
 Native layout labels are hidden because the visualizer's default `1.00` is not a measured model confidence. No custom boxes, arrows, text repairs or ordering are added. The renderer's assertions check preserved text/geometry and source hashes, expected page size and valid output images; no model or download is needed.
 
@@ -15,7 +15,7 @@ Official references: [Docling visualization API](https://docling-project.github.
 
 ## Intermediate stages
 
-[The 13-stage evidence viewer](output/stages/index.html#heron) adds PDF native cells, raw Heron proposals, merged OCR regions, RapidOCR preprocessing/detection/orientation/recognition, PDF/OCR merge, layout postprocessing, inactive table/enrichment stages, paragraph assembly, reading order and export. Serve `output/` with a local HTTP server; the viewer loads `stages/data.json` and cannot load it through `file://`.
+The 13-stage evidence viewer (`output/stages/index.html`) adds PDF native cells, raw Heron proposals, merged OCR regions, RapidOCR preprocessing/detection/orientation/recognition, PDF/OCR merge, layout postprocessing, inactive table/enrichment stages, paragraph assembly, reading order and export. Serve `output/` with a local HTTP server; the viewer loads `stages/data.json` and cannot load it through `file://`.
 
 `render_stages.py` uses native Docling drawing/debug APIs, plus exact retained crops and text. The detector main image draws retained quads with custom index-only labels; a linked alternative uses RapidOCR's native drawing function. The responsive stage navigation is a custom viewer, not an official Docling timeline. No model inference, downloads, SDK changes or text repairs occur. Run it with the pinned native experiment environment. Its assertions verify the replay identity, stage counts, coordinates, the false 180-degree rotation and unchanged source hashes; `output/stages/manifest.json` records inputs and generated assets.
 

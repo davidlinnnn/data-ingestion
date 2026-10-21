@@ -14,7 +14,7 @@
 - 規劃沿用既有暫用 API 候選 gpt-6-luna、low reasoning、high image detail；最多 8 次、concurrency 1、retry 0，每次 180 秒、全輪 1,800 秒，completion cap 每次 8,192／總共 65,536 tokens。暫留 input 每頁 10,000／總共 80,000 的研究 reservation；不是已驗證 tokenizer 或可保證的 provider 硬上限，實際超支須停止後續呼叫。
 - **本輪 reconstruction budget 是 0。** 真實 detector regions、漏失與成本評讀完成後，才能固定下一輪重建預算。
 
-精確 prompt、頁面與方法 hashes、來源 paths 及成本邊界在 [registration.json](registration.json)。它是離線輸入 freeze，**不是 live-ready 登記**；網路 runner／用量、截斷與回應綁定檢查尚待建立及驗證。
+精確 prompt、頁面與方法 hashes、來源 paths 及成本邊界在 `registration.json`。它是離線輸入 freeze，**不是 live-ready 登記**；網路 runner／用量、截斷與回應綁定檢查尚待建立及驗證。
 
 ## 已驗證的接點
 
@@ -24,7 +24,7 @@
 
 另對八個實際頁面各用相同、來源無關的中心框 MOCK，核對頁面 mapping、raw response、native scopes、JSON reload 與不回填。這是接點控制，不是模型找到八個真實目標。實際 PDF pixel 負例亦通過：把頁圖換成同尺寸黑圖並同步更新 image hash，仍由原 PDF 重新 render 的比較拒絕。
 
-舊 ABC compare-only gate 再次通過 71 tests；142 歷史 artifacts、35 live artifacts 未改。完整機械結果與封存 hashes 在 [verification.json](verification.json)。初次 PdfPage context-manager 相容性失敗及加強 metadata 比對前的離線 preparation 已在 precheck-v1／verification 保留，沒有因此重呼叫模型或更動來源判準。
+舊 ABC compare-only gate 再次通過 71 tests；142 歷史 artifacts、35 live artifacts 未改。完整機械結果與封存 hashes 在 `verification.json`。初次 PdfPage context-manager 相容性失敗及加強 metadata 比對前的離線 preparation 已在 precheck-v1／verification 保留，沒有因此重呼叫模型或更動來源判準。
 
 ## 停止位置與續接
 
@@ -37,6 +37,6 @@
 可重跑的離線入口（不呼叫網路、不刷新 freeze）：
 
 ```sh
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-page-discovery-2026-10-17/discovery.py --verify
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B -m unittest discover -s docs/research/pdf-core-page-discovery-2026-10-17 -p 'test_*.py'
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-page-discovery-2026-10-17/discovery.py --verify
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B -m unittest discover -s docs/research/pdf-core-page-discovery-2026-10-17 -p 'test_*.py'
 ```

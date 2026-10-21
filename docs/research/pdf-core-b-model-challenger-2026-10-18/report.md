@@ -15,11 +15,11 @@
 | 執行 | 7/7 calls、retry=0、concurrency=1；180 秒/request、1,800 秒/輪、32,768 completion/call；沿原 input/usage、response bytes、deadline 與本機記憶體守門 |
 | 已排除 | 無案例修值、無重新命名 Qwen family、無 SDK patch、無新 renderer、無 best-of-N、無 holdout、無公司 Qwen3／GPU／vLLM 資格主張 |
 
-[request-diff.json](request-diff.json)逐筆核對 HTTP body 除 model 外完全相同；[candidate.json](candidate.json)保存來源、方法、runtime 與預算；[run.py](run.py)只橋接既有有界 runner。API key 僅從已配置環境讀取，沒有寫進 request、結果或本報告。
+`request-diff.json`逐筆核對 HTTP body 除 model 外完全相同；`candidate.json`保存來源、方法、runtime 與預算；`run.py`只橋接既有有界 runner。API key 僅從已配置環境讀取，沒有寫進 request、結果或本報告。
 
 ## 來源品質與實際交付
 
-本輪逐一查看全部七張凍結原稿，讀回 Core，再實際 render 主要 Markdown。數字計分使用[獨立 scorer](../pdf-core-offline-gates-2026-10-18/scoring.py)；[本輪來源匹配紀錄](evaluate.py)另存每個 source row／column、canonical locator、observed snapshot 及人工決定。匹配紀錄只適用本輪已人工核對的輸出，不冒充下一模型可直接沿用的通用 matcher。
+本輪逐一查看全部七張凍結原稿，讀回 Core，再實際 render 主要 Markdown。數字計分使用獨立 scorer (`docs/research/pdf-core-offline-gates-2026-10-18/scoring.py`)；本輪來源匹配紀錄 (`evaluate.py`)另存每個 source row／column、canonical locator、observed snapshot 及人工決定。匹配紀錄只適用本輪已人工核對的輸出，不冒充下一模型可直接沿用的通用 matcher。
 
 | 來源 | 來源綁定後數值 | 關鍵比較 | 判斷 |
 |---|---:|---:|---|
@@ -55,7 +55,7 @@ T04 的 100 個錯誤歸屬點各只計一次，不再因同一 binding fault �
 
 ## 評讀前置問題與保存
 
-品質結果產生前，新增 preservation probe 曾錯把 public mapper 會重編的 `#/texts/N` 當永久身分，造成文字順序／caption 關聯誤報。已保存[初稿](evaluator-preservation-precheck-v1.py)與[診斷](evaluator-preservation-precheck.json)，改以原文／orig／label／provenance 及 mapped caption edges 核對，並加入實際來源文字被改動必須拒絕的負例。沒有因此修改 provider 回應、重跑推論或把錯誤 Qwen family 修成正確值。這項修正處理 evaluator 的索引假設，不解決模型來源語意錯誤。
+品質結果產生前，新增 preservation probe 曾錯把 public mapper 會重編的 `#/texts/N` 當永久身分，造成文字順序／caption 關聯誤報。已保存初稿 (`evaluator-preservation-precheck-v1.py`)與診斷 (`evaluator-preservation-precheck.json`)，改以原文／orig／label／provenance 及 mapped caption edges 核對，並加入實際來源文字被改動必須拒絕的負例。沒有因此修改 provider 回應、重跑推論或把錯誤 Qwen family 修成正確值。這項修正處理 evaluator 的索引假設，不解決模型來源語意錯誤。
 
 最後的 byte-reproduction 檢查也遇到 `read_text()` 的換行正規化；改為直接比較 re-export UTF-8 bytes 與保存 bytes。這是 verifier 的 I/O 比較修正，Markdown 檔案未變更、API 未重跑。19 項前置控制的覆蓋限於其列出的 scorer／T03／來源邊界，不宣稱涵蓋所有後續報告程式。
 

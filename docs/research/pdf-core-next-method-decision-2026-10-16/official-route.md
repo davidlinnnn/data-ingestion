@@ -37,7 +37,7 @@
 - inline overlap 丟棄、文字裁圖合併：[v3.7.2 uilts.py](https://github.com/PaddlePaddle/PaddleX/blob/v3.7.2/paddlex/inference/pipelines/paddleocr_vl/uilts.py#L111-L172)，`merge_blocks` L284–443。
 - 原生結果／JSON／Markdown：[v3.7.2 result.py](https://github.com/PaddlePaddle/PaddleX/blob/v3.7.2/paddlex/inference/pipelines/paddleocr_vl/result.py#L344-L484)；[共用 converter](https://github.com/PaddlePaddle/PaddleX/blob/v3.7.2/paddlex/inference/common/result/converter/markdown_converter.py#L38-L128)；[algorithm handler](https://github.com/PaddlePaddle/PaddleX/blob/v3.7.2/paddlex/inference/common/result/converter/markdown_format_funcs.py#L353-L363)。
 - layout labels／v1.6 官方設定：[固定 layout revision](https://huggingface.co/PaddlePaddle/PP-DocLayoutV3/blob/241f8bdfc77a7c7bee915a5057aaee58c235a8d3/inference.yml)，[v3.7.2 pipeline YAML](https://github.com/PaddlePaddle/PaddleX/blob/v3.7.2/paddlex/configs/pipelines/PaddleOCR-VL-1.6.yaml)。
-- 既有真實 component 控制：[native-synthetic-results.json](../pdf-core-g2-preflight-2026-10-16/candidate/native-synthetic-results.json)。它只跑完整未改官方 pure converter，不是完整 PaddleOCRVLResult／save，不是模型準度證據。
+- 既有真實 component 控制：native-synthetic-results.json (`docs/research/pdf-core-g2-preflight-2026-10-16/candidate/native-synthetic-results.json`)。它只跑完整未改官方 pure converter，不是完整 PaddleOCRVLResult／save，不是模型準度證據。
 
 本輪未做 import、建環境、抓模型、推論、PDF／holdout 內容讀取或新評分；純 source 可證明路徑與邊界，不能證明完整候選的品質／效能。
 

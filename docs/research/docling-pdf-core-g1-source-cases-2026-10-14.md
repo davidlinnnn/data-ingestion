@@ -6,11 +6,11 @@
 
 ## 1. 本輪交付與證據界線
 
-- [cases.json](../fixtures/pdf-core-g1-2026-10-14/cases.json)：**57 個具體案例**，包含31個既有來源目視案例、13個原創／來源衍生受控案例、11個宣告式契約負例、2個負載情境。每例有F/V對應、輸入／來源、預期意思或資料點、位置／證據及未執行狀態。
+- cases.json (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)：**57 個具體案例**，包含31個既有來源目視案例、13個原創／來源衍生受控案例、11個宣告式契約負例、2個負載情境。每例有F/V對應、輸入／來源、預期意思或資料點、位置／證據及未執行狀態。
 - 集中來源表含13份PDF及1份原pilot manifest；使用SHA-256識別固定bytes，影像也附實際hash。20份原pilot PDF的bytes全部與原manifest再次相符，共551頁，DGM64頁仍是其中第16份。
-- [受控來源PDF](../fixtures/pdf-core-g1-controls-2026-10-14/controls.pdf)、[生成參數／truth](../fixtures/pdf-core-g1-controls-2026-10-14/truth.json)、[最小生成程式](../fixtures/pdf-core-g1-controls-2026-10-14/generate.py)：8頁，補矩陣／無印值圖表、四方向掃描及混合內容。它是明標測試來源，不是論文或公司文件的實測成果。
-- [頁面／區域證據](evidence/pdf-core-g1-2026-10-14/)：所選完整頁、crop、來源與生成驗證紀錄。個別bbox明示PDF point／影像pixel、原點、物理頁及精度；人工區域框是近似範圍，未新設IoU／CER門檻。
-- [資料完整性檢查](../fixtures/pdf-core-g1-2026-10-14/validation.json)：57例身分／F-V引用、73個檔案hash（含59個PNG）、五張表分母與30個關鍵比較均一致；受控PDF重新生成後hash一致。這些只驗fixture與oracle內部一致性。
+- 受控來源PDF (`docs/fixtures/pdf-core-g1-controls-2026-10-14/controls.pdf`)、生成參數／truth (`docs/fixtures/pdf-core-g1-controls-2026-10-14/truth.json`)、最小生成程式 (`docs/fixtures/pdf-core-g1-controls-2026-10-14/generate.py`)：8頁，補矩陣／無印值圖表、四方向掃描及混合內容。它是明標測試來源，不是論文或公司文件的實測成果。
+- 頁面／區域證據 (`evidence/pdf-core-g1-2026-10-14`)：所選完整頁、crop、來源與生成驗證紀錄。個別bbox明示PDF point／影像pixel、原點、物理頁及精度；人工區域框是近似範圍，未新設IoU／CER門檻。
+- 資料完整性檢查 (`docs/fixtures/pdf-core-g1-2026-10-14/validation.json`)：57例身分／F-V引用、73個檔案hash（含59個PNG）、五張表分母與30個關鍵比較均一致；受控PDF重新生成後hash一致。這些只驗fixture與oracle內部一致性。
 
 核對者是本次Codex各代理的來源目視與交叉檢查，**未宣稱另有人類完成逐字認證**。文字工具用於定位／轉錄，圖像、表頭、符號、從屬與作用範圍由渲染頁核對。標示source-reviewed/frozen指測試oracle已固定，並非候選結果PASS；57例也不代表57份獨立來源或統計樣本。部分案例故意重用同頁檢查不同接點。
 

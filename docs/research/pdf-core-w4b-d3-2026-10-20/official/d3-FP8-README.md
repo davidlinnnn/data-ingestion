@@ -18,7 +18,7 @@ tags:
 - fp8
 ---
 
-![d3: Decision 3.0](assets/banner.png)
+d3: Decision 3.0 (`assets/banner.png`)
 
 # d3-FP8
 
@@ -253,7 +253,7 @@ Every multiple-choice question of Perception Test validation (19,140 questions o
 
 ## License
 
-Apache-2.0 ([LICENSE](LICENSE)), as d3. Built on [vllm-sr/d3](https://huggingface.co/vllm-sr/d3), which is built on [Qwen/Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) (Apache-2.0).
+Apache-2.0 (`LICENSE`), as d3. Built on [vllm-sr/d3](https://huggingface.co/vllm-sr/d3), which is built on [Qwen/Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) (Apache-2.0).
 
 ## Citation
 

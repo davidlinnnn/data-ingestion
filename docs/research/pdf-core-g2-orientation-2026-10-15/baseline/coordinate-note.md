@@ -9,12 +9,12 @@ record. No pixel-IoU tolerance was introduced.
 
 The selected `PdfFormatOption` uses `DoclingParseDocumentBackend` (installed
 `document_converter.py`, line 179). Its
-[`get_page_image`](../../../prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/docling/backend/docling_parse_backend.py)
+`get_page_image` (`docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/docling/backend/docling_parse_backend.py`)
 (lines 190–224) renders with PDFium at `scale * 1.5` (4.5 for OCR), supplies
 the requested crop margins, then resizes to
 `round(cropbox.width * scale)` by `round(cropbox.height * scale)`.
 The installed
-[`pypdfium2` rendering implementation](../../../prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/pypdfium2/_helpers/page.py)
+`pypdfium2` rendering implementation (`docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/pypdfium2/_helpers/page.py`)
 (lines 459–478) uses `ceil(page_dimension * scale)` and
 `ceil(crop_margin * scale)` before rendering. This creates rounding and
 resampling uncertainty relative to the runner's idealized mapping, especially

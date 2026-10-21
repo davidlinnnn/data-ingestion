@@ -18,9 +18,9 @@
 - native四次關 OCR；兩次 OCR 明確 RapidOCR／ONNX Runtime、force_full_page_ocr=True。formula／code／classifier／description／chart enrichment 全關，是診斷對照設定，不是需求完成配置。`RapidOcrModel` wrapper 的輸入計數在 OCR 關閉時仍可能為1，不能當作發生 OCR 推論。
 - HF／Transformers offline。使用既有 Heron snapshot `8f39ad3c0b4c58e9c2d2c84a38465abf757272d8`、TableFormer snapshot `fc0f2d45e2218ea24bce5045f58a389aed16dc23` 及三個既有 RapidOCR ONNX；17個資產欄位與固定值／現存bytes相符。
 - child timeout180秒、每0.25秒 sampled process-tree RSS，6 GiB軟停止；每次開跑前available須至少8 GiB。這是本機保護預算，沒有macOS硬memory limit保證。
-- 首次資源監測遭 sandbox 拒絕 process inventory，owned child已停止並保留[startup failure](pdf-core-g2-local-cpu-2026-10-14/startup-failure.json)；取得該本機監測存取後重跑，六次無timeout或memory stop。這是監測setup失敗，不算模型品質結果。
+- 首次資源監測遭 sandbox 拒絕 process inventory，owned child已停止並保留startup failure (`pdf-core-g2-local-cpu-2026-10-14/startup-failure.json`)；取得該本機監測存取後重跑，六次無timeout或memory stop。這是監測setup失敗，不算模型品質結果。
 
-[runner](pdf-core-g2-local-cpu-2026-10-14/run.py) 重用既有[experiment.py](../prototypes/pdf-checkpoint-prototype/experiment.py)，只在本輪process覆寫batch並增加首次完整序列化。每次先保存 `conversion-result.json`（包括pages／predictions、confidence、timings、errors、assembled、document及input），再保存export的`document.json`／Markdown、method、events、metrics及log。首次provider bytes未改；兩種document表示只在`cref`／`$ref` alias與null省略正規化後相等，沒有把export檔冒稱全部provider輸出。
+runner (`pdf-core-g2-local-cpu-2026-10-14/run.py`) 重用既有[experiment.py](../prototypes/pdf-checkpoint-prototype/experiment.py)，只在本輪process覆寫batch並增加首次完整序列化。每次先保存 `conversion-result.json`（包括pages／predictions、confidence、timings、errors、assembled、document及input），再保存export的`document.json`／Markdown、method、events、metrics及log。首次provider bytes未改；兩種document表示只在`cref`／`$ref` alias與null省略正規化後相等，沒有把export檔冒稱全部provider輸出。
 
 來源直接選原PDF physical page，沒有重新編號的抽頁副本。G1 registry與來源bytes未變；G1的`candidate_execution_status=not_run`是當次oracle freeze狀態，本輪執行索引另存，不覆寫固定oracle。
 
@@ -35,7 +35,7 @@
 | NCCU p3，同來源 | full-page RapidOCR | 5.227 | 1.409 | 2.998 |
 | 英文scan physical p1，G1-O03 | full-page RapidOCR | 7.608 | 3.761 | 3.099 |
 
-六次child wall合計32.514秒；不是五份完整文件處理時間。每配置一次、既有模型／OS cache未清空；fresh process不等於清空cache的cold-start benchmark。convert排除部分啟動／模型初始化／輸出，stage時間不能直接加成elapsed，也沒有API、queue、Acceptance或Retrieval publication。沒有p95、持續吞吐或高頻SLO結論。[原始觀察](pdf-core-g2-local-cpu-2026-10-14/summary.json)
+六次child wall合計32.514秒；不是五份完整文件處理時間。每配置一次、既有模型／OS cache未清空；fresh process不等於清空cache的cold-start benchmark。convert排除部分啟動／模型初始化／輸出，stage時間不能直接加成elapsed，也沒有API、queue、Acceptance或Retrieval publication。沒有p95、持續吞吐或高頻SLO結論。原始觀察 (`pdf-core-g2-local-cpu-2026-10-14/summary.json`)
 
 ## 來源核對結果與範圍
 
@@ -47,7 +47,7 @@
 | **G1-O03英文所選兩段16行** | 允許斷行／斷字正規化後文字完整相符；但右欄In-context learning段落插入兩段之間 | 支持該選定範圍的文字轉錄；閱讀順序仍有問題，不宣稱整頁OCR／順序通過。 |
 | **SEAL公式／code來源** | 已形成layout／原生文字對照，未開重建模型 | 不能由本輪判定公式／code重建能力；後續需按各任務開啟候選並用相同oracle比較。 |
 
-核對由本次Codex代理以固定來源／圖像及provider輸出交叉檢查；未新增人類逐字認證。[table review](pdf-core-g2-local-cpu-2026-10-14/table-review.json)、[OCR／identity review](pdf-core-g2-local-cpu-2026-10-14/ocr-review.json)
+核對由本次Codex代理以固定來源／圖像及provider輸出交叉檢查；未新增人類逐字認證。table review (`pdf-core-g2-local-cpu-2026-10-14/table-review.json`)、OCR／identity review (`pdf-core-g2-local-cpu-2026-10-14/ocr-review.json`)
 
 NCCU的完整JSON內已有52個圖片子文字，Markdown僅原生說明與image placeholder。**不能說OCR沒有執行，也不能把它當作已符合F08的同版圖片補充內容交付。** 要繼續驗獨立圖片OCR入口、來源位置／歸屬、same-revision讀取與Markdown reference。
 
@@ -60,4 +60,4 @@ CPU accelerator／thread／batch選項已保存；OCR log確認ONNX Runtime back
 3. CodeFormulaV2、Granite-Docling、classifier與大型vision模型目前未在所查cache中。先按取得大小、CPU smoke時間／RSS判斷可負擔性；缺少cache不是CPU不可行的證據，也不因此先宣告移公司或改模型。
 4. 使用者暫用API待確切model／endpoint可用後才做任務與錯誤／截斷／parser比較；公司Qwen3／vLLM另用相同來源補驗。正式交付／恢復在G3，完整corpus與GPU／高頻資格在G4。
 
-本輪執行資料的檔案與hash見[artifact manifest](pdf-core-g2-local-cpu-2026-10-14/artifacts.json)。沒有重跑舊Granite／MLX失敗、下載新權重、呼叫API、執行GPU、完整mapper／custody／recovery或高頻負載；六次成功只是執行狀態，不能標成G2全面通過。
+本輪執行資料的檔案與hash見artifact manifest (`pdf-core-g2-local-cpu-2026-10-14/artifacts.json`)。沒有重跑舊Granite／MLX失敗、下載新權重、呼叫API、執行GPU、完整mapper／custody／recovery或高頻負載；六次成功只是執行狀態，不能標成G2全面通過。

@@ -16,7 +16,7 @@
 | 環境變更 | 獨立 `/private/tmp` venv 安裝鎖定的 PaddleX client／export dependencies；保留 pip receipt 與完整 lock；未變更既有 Docling runtime，未安裝 Paddle 推論 engine |
 | 網路與推論 | 行為 worker 禁止 socket 連線；兩個 probe 都沒有網路嘗試；task cache 沒有模型權重。套件安裝本身使用 PyPI 網路，不在此零網路宣稱內 |
 
-實驗事前凍結 [plan](plan.md)、[fixture](fixture.json)、腳本及來源 hash：[registration](registration.json)。本輪不是統計準度樣本，也不是實際模型的 response；合成圖只驗證幾何／資產輸出。
+實驗事前凍結 [plan](plan.md)、fixture (`fixture.json`)、腳本及來源 hash：registration (`registration.json`)。本輪不是統計準度樣本，也不是實際模型的 response；合成圖只驗證幾何／資產輸出。
 
 ## 四項判定
 
@@ -43,7 +43,7 @@
 
 merge 把 HTML 放到第一頁 block，第二頁 block content 留空；兩頁 bbox／group link 留著，沒有 row/cell 對雙頁的來源分配。後續官方 Docling importer 拒絕空 table；第一頁成功匯入的 merged table 也只有第一頁 provenance。單純略過空 block 不能恢復資料列來源或被刪資料。
 
-關閉 `merge_tables` 可以避開這段 merge，代價是仍交付逐頁 fragments，不能宣稱達到既有「同一邏輯跨頁表＋正確來源」要求。這輪不建立自訂續表／去重／內容修復演算法。[完整正負控制](paddle/table-controls.json)、[匯入結果](docling/results.json)
+關閉 `merge_tables` 可以避開這段 merge，代價是仍交付逐頁 fragments，不能宣稱達到既有「同一邏輯跨頁表＋正確來源」要求。這輪不建立自訂續表／去重／內容修復演算法。完整正負控制 (`paddle/table-controls.json`)、匯入結果 (`docling/results.json`)
 
 ## Markdown 與來源關係的實際界線
 
@@ -65,7 +65,7 @@ image OCR、chart 解讀可原樣保留在 supplementary artifact，並透過同
 
 ## 評讀更正與證據完整性
 
-原始 probe／結果全部保留；新增 [adjudication](adjudication.json) 與 [獨立覆核](independent-review.md)。兩個診斷誤判已修正：
+原始 probe／結果全部保留；新增 adjudication (`adjudication.json`) 與 [獨立覆核](independent-review.md)。兩個診斷誤判已修正：
 
 1. stock Markdown 轉義 underscores，原始字串搜尋沒找到 marker；實際 rendered visible text **同時包含衍生 image OCR 與 chart data**。
 2. 公式精確搜尋期待無式號的 `$$E = mc^2$$`，實際為正確的 `$$E = mc^2 \tag*{(7)}$$`。本例 delimiter／式號保留成功；本 fixture 沒有另測「無式號 bare formula」。
@@ -82,12 +82,12 @@ Paddle live 與 saved-dict postprocess 也不等價：saved-dict 分支移除 co
 
 ## 重現與檔案
 
-- 初始完整 Result probe：[paddle_probe.py](paddle_probe.py) → [paddle/results.json](paddle/results.json)
-- 官方匯入／render probe：[docling_probe.py](docling_probe.py) → [docling/results.json](docling/results.json)
-- 判讀 assertions：[adjudicate.py](adjudicate.py)；以既有 Docling venv `python -B` 執行，不重跑模型或改原結果。
-- 可攜資產包：[document.md](paddle/relocated-bundle/document.md)、[assets.json](paddle/relocated-bundle/assets.json)、[integrity.json](paddle/relocated-bundle/integrity.json)
-- 座標來源：[source-geometry.json](source-geometry.json)、[source-ledger.json](docling/source-ledger.json)
-- [resolver receipt](install-report.json)、[client lock](paddlex-client-lock.txt)、[runtime check](runtime-check.json)
-- 全目錄交付 hash：[artifact-seal.json](artifact-seal.json)；不含 manifest 本身，包含本報告及原始診斷。
+- 初始完整 Result probe：`paddle_probe.py` → `paddle/results.json`
+- 官方匯入／render probe：`docling_probe.py` → `docling/results.json`
+- 判讀 assertions：`adjudicate.py`；以既有 Docling venv `python -B` 執行，不重跑模型或改原結果。
+- 可攜資產包：document.md (`paddle/relocated-bundle/document.md`)、assets.json (`paddle/relocated-bundle/assets.json`)、integrity.json (`paddle/relocated-bundle/integrity.json`)
+- 座標來源：`source-geometry.json`、source-ledger.json (`docling/source-ledger.json`)
+- resolver receipt (`install-report.json`)、client lock (`paddlex-client-lock.txt`)、runtime check (`runtime-check.json`)
+- 全目錄交付 hash：`artifact-seal.json`；不含 manifest 本身，包含本報告及原始診斷。
 
 官方來源：[PaddleX 3.7.2 Result](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/pipelines/paddleocr_vl/result.py)、[官方 pipeline／postprocess](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/pipelines/paddleocr_vl/pipeline.py)、[Docling importer](https://github.com/docling-project/docling/blob/5c349dd696d81c67fe29c378a4fdff08e28090bd/docling/utils/paddleocr_vl_utils.py)。更完整的逐項來源見 [official-contract.md](official-contract.md)。

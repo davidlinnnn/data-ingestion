@@ -15,6 +15,6 @@
 
 原生 page stage 硬編碼 `temperature=0`／4096 tokens；官方 API runtime 的 `params` 可覆寫。已捕捉實際 payload 證明 `temperature: null`、`max_completion_tokens: 8192`、`reasoning_effort: low` 與 `store: false` 原樣送出，衝突的 `max_tokens` 被移除。這是既有配置介面，沒有 source patch；真實服務是否接受 null 尚未在此測試。[Stage](https://github.com/docling-project/docling/blob/v2.102.0/docling/models/stages/vlm_convert/vlm_convert_model.py)、[API engine](https://github.com/docling-project/docling/blob/v2.102.0/docling/models/inference_engines/vlm/api_openai_compatible_engine.py)
 
-Malformed HTTP error envelope 負例被 helper 吞成空結果，native pipeline 仍可能回報 `success`。外層必須保存並核對 raw HTTP response、每頁非空輸出與 stop reason，不能單憑 native status 判完成；這是傳輸／完整性檢查，不是輸出修補。[Helper](https://github.com/docling-project/docling/blob/v2.102.0/docling/utils/api_image_request.py)、[負例實測](negative-control.json)
+Malformed HTTP error envelope 負例被 helper 吞成空結果，native pipeline 仍可能回報 `success`。外層必須保存並核對 raw HTTP response、每頁非空輸出與 stop reason，不能單憑 native status 判完成；這是傳輸／完整性檢查，不是輸出修補。[Helper](https://github.com/docling-project/docling/blob/v2.102.0/docling/utils/api_image_request.py)、負例實測 (`negative-control.json`)
 
-重現：`rtk proxy docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python docs/research/pdf-core-g2-official-method-2026-10-15/preflight/run.py`。斷言通過，所有非 mock transport 被封鎖；[selfcheck](selfcheck.json)、[summary](summary.json)、[合成 request／response](transport-captures.json) 保留實際結果。未測模型品質、真實 API 接受度、GPU／負載或 Canonical Acceptance。
+重現：`rtk proxy docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python docs/research/pdf-core-g2-official-method-2026-10-15/preflight/run.py`。斷言通過，所有非 mock transport 被封鎖；selfcheck (`selfcheck.json`)、summary (`summary.json`)、合成 request／response (`transport-captures.json`) 保留實際結果。未測模型品質、真實 API 接受度、GPU／負載或 Canonical Acceptance。

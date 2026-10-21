@@ -41,7 +41,7 @@ formula_options.model_spec.revision = revision
 page_options.model_spec.revision = revision
 ```
 
-For the formula A/B, reuse [round-2 probe.py](../../pdf-core-g2-round2-2026-10-14/models/probe.py): construct `CodeFormulaVlmModel` with `formula_options`, use `stage._get_prompt("formula")`, call `stage.engine.predict_batch(...)`, and save raw output before `stage._post_process(...)`. The official stage implements `<formula>` and `<code>` prompts for **both** CodeFormulaV2 and Granite presets. It only selects existing `FORMULA` text items and code items; changing the preset does not add an inline detector.
+For the formula A/B, reuse round-2 probe.py (`docs/research/pdf-core-g2-round2-2026-10-14/models/probe.py`): construct `CodeFormulaVlmModel` with `formula_options`, use `stage._get_prompt("formula")`, call `stage.engine.predict_batch(...)`, and save raw output before `stage._post_process(...)`. The official stage implements `<formula>` and `<code>` prompts for **both** CodeFormulaV2 and Granite presets. It only selects existing `FORMULA` text items and code items; changing the preset does not add an inline detector.
 
 For page probes the minimum engine call is:
 

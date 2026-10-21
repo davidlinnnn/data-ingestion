@@ -6,7 +6,7 @@
 
 完整 native owner 本身不是新方法；舊 A 已驗過部分公開接點與 MOCK。這次只評估兩個增量：保存的粗框能否用通用規則選到完整 owner；跨 owner context 能否有界組合，並沿既有接點限制回填範圍。沒有把舊 MOCK 當新轉錄成績。
 
-資料沿用原 S0、八頁影像與全部 40 個保存 proposals。Routing method／tests／research bounds 先在 [registration.json](registration.json)固定，再一次執行；來源 census 評讀在 routing freeze／replay 之後，沒有回饋 producer 改規則。這是已曝光 DEV，並非盲測或 holdout。
+資料沿用原 S0、八頁影像與全部 40 個保存 proposals。Routing method／tests／research bounds 先在 `registration.json`固定，再一次執行；來源 census 評讀在 routing freeze／replay 之後，沒有回饋 producer 改規則。這是已曝光 DEV，並非盲測或 holdout。
 
 ## 固定規則
 
@@ -61,7 +61,7 @@
 
 ## 全來源對照的界線
 
-[coverage.json](coverage.json)沿用既有 2pt 非空白 glyph-center proxy，分母與先前 frozen source evaluator 精確對齊：44 source groups、27 negatives、另列 41 legacy locators。
+`coverage.json`沿用既有 2pt 非空白 glyph-center proxy，分母與先前 frozen source evaluator 精確對齊：44 source groups、27 negatives、另列 41 legacy locators。
 
 | Proxy | Native-only 選中的 context | Hybrid 選中的 context |
 |---|---:|---:|
@@ -87,4 +87,4 @@
 
 首次 evaluator import 因獨立研究目錄的 import path 缺少 `discovery` 而停止，發生在 source evaluation 產物建立之前；僅修 evaluator 的 module search path，routing freeze／規則／結果未改，沒有推論或資料修補。
 
-可比對 [registration.json](registration.json)、[results.json](results.json)、[crop-manifest.json](crop-manifest.json)及最終 verification；沒有 live API mode。
+可比對 `registration.json`、`results.json`、`crop-manifest.json`及最終 verification；沒有 live API mode。

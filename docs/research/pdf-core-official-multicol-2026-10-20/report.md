@@ -10,7 +10,7 @@ Egret Large 的預設路徑改善了原案例的跨欄句子混接與 Background
 
 共同設定：Docling 2.132.0、Core 2.99.0、docling-parse 7.22.3、RapidOCR 3.9.2；`StandardPdfPipeline`、`PyPdfiumDocumentBackend`、原生 layout postprocessing／assembly／ReadingOrderModel。CPU 4 threads、PyTorch inter-op 1、float32、compile=False；layout／OCR／table batch=1。RapidOCR 使用 ONNX `PP-OCRv6_det_small`、`PP-OCRv6_rec_small`、mobile-v2 方向分類器；det／cls／rec 皆啟用，OCR scale=3、page image scale=2。TableFormer 保留既有 ACCURATE 設定；code/formula/picture enrichment 未啟用，本輪未重新驗收這些能力。
 
-Egret Large 使用官方 `layout_egret_large` preset；revision `fff417c78abd6bab338c87706c95a8d79dc68f1e`，weights 125,100,636 bytes，所有模型檔案雜湊已鎖定。Heron 使用原凍結 revision。完整參數與檔案雜湊見 [registration.json](registration.json)。配置斷言證明，對照各自 OCR 模式時，差異限於 layout model spec，其餘 pipeline／engine 設定相同。沒有自訂 OCR 裁圖、padding、去重、排序或修字。
+Egret Large 使用官方 `layout_egret_large` preset；revision `fff417c78abd6bab338c87706c95a8d79dc68f1e`，weights 125,100,636 bytes，所有模型檔案雜湊已鎖定。Heron 使用原凍結 revision。完整參數與檔案雜湊見 `registration.json`。配置斷言證明，對照各自 OCR 模式時，差異限於 layout model spec，其餘 pipeline／engine 設定相同。沒有自訂 OCR 裁圖、padding、去重、排序或修字。
 
 | 配置 | 原案例句子跨欄混接 | 原案例最終正文讀序 | 7 頁轉換合計 | 初始化 | sampled tree RSS 峰值 |
 |---|---|---|---:|---:|---:|
@@ -33,7 +33,7 @@ Egret Large 使用官方 `layout_egret_large` preset；revision `fff417c78abd6ba
 | NDHU p9 | 遺失 `※`，功能與登入限定註解的連結仍有缺口 | 同左；與 Heron FULL_PAGE 的 Markdown 完全相同 | 原圖在特定功能與註解使用同一符號。不能因句子通順而忽略這個語意關係 |
 | NCCU p3 | 登入方法／進入人事服務網與 B5A 保留，枚舉／字形差異分開記錄 | 與 Heron FULL_PAGE 的 Markdown 完全相同 | 沒有把枚舉差異誤報為整個標題消失 |
 
-`diagnostics.json` 的字元覆蓋、混欄、重複與反轉都是查核提示，最後結論取自來源與輸出對照。未將「零 flags」當成語意正確；也沒有套用文字修正去提高分數。[manual-review.json](manual-review.json) 保存逐頁結論、原生 item ref 與文件雜湊。
+`diagnostics.json` 的字元覆蓋、混欄、重複與反轉都是查核提示，最後結論取自來源與輸出對照。未將「零 flags」當成語意正確；也沒有套用文字修正去提高分數。`manual-review.json` 保存逐頁結論、原生 item ref 與文件雜湊。
 
 ## 最具決定性的證據
 
@@ -52,7 +52,7 @@ Egret DEFAULT：
 ## 實驗流程 review
 
 - 推論前固定七頁舊參考、額外六頁來源、模型 revision／檔案雜湊、完整 options、runtime 與評讀器程式；worker 離線載入模型、remote services=False、external plugins=False。
-- Runner 與已驗過的監督程式之差異保存在 [runner-diff.patch](runner-diff.patch)，僅候選 options、profile 清單與 CLI 說明；沿用既有 ZombieProcess race 修正與資源鎖。
+- Runner 與已驗過的監督程式之差異保存在 `runner-diff.patch`，僅候選 options、profile 清單與 CLI 說明；沿用既有 ZombieProcess race 修正與資源鎖。
 - 正控制 C10 的 12 單位順序得到零反轉；負控制 Heron FULL_PAGE 得到五組反轉；部分文字重複的正／負控制通過。C10 只作評讀器控制，並未重新列為採用候選。
 - 來源建置前置檢查曾因圖像化 header 沒有 native text 而停止；registration 曾將「零推論」數值當成布林失敗而停止。兩者都在凍結與第一個模型初始化前修正。沒有因此重跑或調整候選推論，沒有隱藏模型失敗或放寬門檻。
 - 28 份最終文件均經原生 HTML serializer／visualizer 呈現；檢查顯示用副本的文字、幾何與 Markdown 未被改動。SDK／模型／舊控制的完整性由最終查核再確認。
@@ -69,7 +69,7 @@ Egret DEFAULT：
 ## 查閱與重現
 
 - [互動原生結果比較](http://127.0.0.1:62729/official-multicol/index.html#known)：四組配置、七頁、最終文字／讀序／原生圖文對照。
-- [機器診斷](diagnostics.json)、[評讀器控制](evaluator-selfcheck.json)、[推論前註冊](registration.json)、[額外來源凍結](validation/freeze.json)。
-- 查核命令（零推論）：`rtk proxy /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-official-multicol-2026-10-20/verify.py`
+- 機器診斷 (`diagnostics.json`)、評讀器控制 (`evaluator-selfcheck.json`)、推論前註冊 (`registration.json`)、額外來源凍結 (`validation/freeze.json`)。
+- 查核命令（零推論）：`rtk proxy <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-official-multicol-2026-10-20/verify.py`
 
 限制：未測 GPU、vLLM、真實噪聲掃描、新版本或整體 #84 的 code／table／formula／provenance；沒有由此宣告生產配置合格。

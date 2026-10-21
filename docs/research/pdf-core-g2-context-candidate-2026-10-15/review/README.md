@@ -1,6 +1,6 @@
 # Fixed development evaluation contract
 
-Frozen before candidate outputs were inspected. [evaluation-contract.json](evaluation-contract.json) fixes the source refs and scope from the unchanged [evaluation protocol](../../pdf-core-g2-eval-freeze-2026-10-15/protocol.json) and [regression retention manifest](../../pdf-core-g2-eval-freeze-2026-10-15/regression-manifest.json). These are exposed development/regression documents. No holdout source was opened; no inference, API call, or GitHub action is part of this review.
+Frozen before candidate outputs were inspected. `evaluation-contract.json` fixes the source refs and scope from the unchanged evaluation protocol (`docs/research/pdf-core-g2-eval-freeze-2026-10-15/protocol.json`) and regression retention manifest (`docs/research/pdf-core-g2-eval-freeze-2026-10-15/regression-manifest.json`). These are exposed development/regression documents. No holdout source was opened; no inference, API call, or GitHub action is part of this review.
 
 | Native document | All source item refs | Group refs | Existing selected physical pages |
 | --- | ---: | ---: | --- |

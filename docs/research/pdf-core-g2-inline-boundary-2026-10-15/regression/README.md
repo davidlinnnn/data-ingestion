@@ -2,7 +2,7 @@
 
 **Do not promote this rule as a global rejection gate.** The frozen native-token conservation guard rejects two of four existing source-positive anchors. No regex, threshold, source payload, model response, or application code was changed. No API calls or inference were run.
 
-[regression.py](regression.py) imports only the frozen adapter's `conservation` callable for decisions. [results.json](results.json) records all 17 prior paragraph outputs, source-review labels separately, two new target-only diagnostics, and before/after hash checks for **943 unique frozen files**, including all **846** prior payload entries. [selfchecks.json](selfchecks.json) records six in-memory behavior/limitation checks. `artifact-sha256.json` freezes this regression's four payload files.
+`regression.py` imports only the frozen adapter's `conservation` callable for decisions. `results.json` records all 17 prior paragraph outputs, source-review labels separately, two new target-only diagnostics, and before/after hash checks for **943 unique frozen files**, including all **846** prior payload entries. `selfchecks.json` records six in-memory behavior/limitation checks. `artifact-sha256.json` freezes this regression's four payload files.
 
 | Scope | Guard result | Interpretation |
 |---|---|---|

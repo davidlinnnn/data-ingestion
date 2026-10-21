@@ -6,7 +6,7 @@
 
 V4 唯一 backend 改為 pinned 2.132.0 的 PdfFormatOption 官方預設 `ThreadedDoclingParseDocumentBackend`（docling-parse 7.22.3），並非已 deprecated 的舊 V4 alias。其餘固定選定 S0 組合、研究影像關閉；26 件均重核對 native/MD/原頁圖。凍結 v3 source-identity 比較 72 removed／63 added，共 135 rows 全部逐頁圖裁定；移除警報不直接算修好，新增警報不直接算新壞。Adam 的數學符號／algorithm scope 假警報保留明確理由。未改 oracle、分析器與舊產物。
 
-來源：[註冊與 SHA](registration.json)、[逐件裁定](comparison/V4-adjudicated.json)、[原30篇詳細報告](comparison/original30-summary.md)、[補跑6篇詳細報告](comparison/recovery-report.md)、[backend notes](diagnostics/backend-notes.md)。F03 的 heading transitions 另列於 [heading/V4-changes.json](heading/V4-changes.json)，不與正文候選混算。
+來源：註冊與 SHA (`registration.json`)、逐件裁定 (`comparison/V4-adjudicated.json`)、[原30篇詳細報告](comparison/original30-summary.md)、[補跑6篇詳細報告](comparison/recovery-report.md)、[backend notes](diagnostics/backend-notes.md)。F03 的 heading transitions 另列於 `heading/V4-changes.json`，不與正文候選混算。
 
 ## 完整修復／新增阻擋（來源群組）
 
@@ -61,13 +61,13 @@ V4 唯一 backend 改為 pinned 2.132.0 的 PdfFormatOption 官方預設 `Thread
 | v4-seal-p18-json-keys-orphaned | P-17-2506.10943v1 | 18 | V4text437在Exampleoutput後偷接use_basic/use_chain/use_repeat三key，code438的data_generation只剩use_size。三個key離開原JSON物件，必要清單從屬/對象改錯；非無害paragraphmerge。 |
 | v4-skillrl-p24-result-skills-omitted | P-05-2602.08234v2 | 24 | V4table14最後一列只餘Step3Result:tion.Key碎片；SpatialPriors/完整Result必要結果及技能說明在所有native text/cells及MD均消失。removedduplicate/role是因漏內容，非修復。 |
 
-指定五處字層污染 **0 件完整修好，5 件皆部分改善**：P10 p9、p26；P20 p6、p28、p48。P10 p9仍圖字插入 WebArena/Shopping 和 between/memory，p26仍數字／圖例混在正文；P20仍重複或混入舊 figure 對象。另 P20 p46 Sudoku 重複也僅部分改善。docling-parse 避免 PyPdfium 合併 bbox 再取字的一部分放大，但來源舊字串仍存在，不能宣稱 clipping 問題已解。[五處原生字流與 backend cells 追蹤](diagnostics/backend-source-spotchecks.json)。
+指定五處字層污染 **0 件完整修好，5 件皆部分改善**：P10 p9、p26；P20 p6、p28、p48。P10 p9仍圖字插入 WebArena/Shopping 和 between/memory，p26仍數字／圖例混在正文；P20仍重複或混入舊 figure 對象。另 P20 p46 Sudoku 重複也僅部分改善。docling-parse 避免 PyPdfium 合併 bbox 再取字的一部分放大，但來源舊字串仍存在，不能宣稱 clipping 問題已解。五處原生字流與 backend cells 追蹤 (`diagnostics/backend-source-spotchecks.json`)。
 
 caption 插斷：只有 P20 Table2 p11–12 這件完整修好，其餘 8 件仍在；SICA p12 prompt 出口、p13 引言／payload 順序另完整修好，P10 p10 舊圖 reviewer 任務和 P20 p6 footer 污染完整修好。P16 60 IDs 中 4 個恢復、3 個新漏，交付 25→26，但仍 34 個 formula.text 空；這是同一既有群組內的得失，不是整件修復，也不能描述成「沒有新漏」。
 
 ## 新發現的既有阻擋與 oracle 盲點
 
-P20 p25、27、30、31、33 各一個 caption 重複事件，baseline 原生與 Markdown 原已重複，V4少一些但仍2份。這5件不列新增回歸，不加進原26修復分母；最終選定設定已知31件／13篇／40頁，交接已納入 [decision-record.md](decision-record.md) 與 [selected-limitations.json](selected-limitations.json)。詳見 [逐圖的baseline/V4/source證據](comparison/newly-discovered-baseline.json)。
+P20 p25、27、30、31、33 各一個 caption 重複事件，baseline 原生與 Markdown 原已重複，V4少一些但仍2份。這5件不列新增回歸，不加進原26修復分母；最終選定設定已知31件／13篇／40頁，交接已納入 [decision-record.md](decision-record.md) 與 `selected-limitations.json`。詳見 逐圖的baseline/V4/source證據 (`comparison/newly-discovered-baseline.json`)。
 
 本輪固定 v3 不檢查 caption 字串重複的所有實例，家具50pt margin gate亦會漏識正文區內錯放的頁首；因此 machine furniture contamination 仍0，不等於沒有家具阻擋。原圖確認的新增頁首仍照 Q4 判阻擋。沒有用匹配失敗的符號、code／formula 角色或獨立腳註單獨當語義缺陷。
 
@@ -129,7 +129,7 @@ P20 p25、27、30、31、33 各一個 caption 重複事件，baseline 原生與 
 | P-19-2511.10395v1 | Pilot-other/unknown | 29 | 367→367/367 | 0→0 | 0→0 | 0→0 | 0→0 |
 | P-20-2505.03335v1 | general arXiv (article; template uncertain) | 50 | 241→242/242 | 1→0 | 0→0 | 0→0 | 0→0 |
 
-標題467個：選定B-only 352正確／79層級錯／33 strictmissing／1role／2ambiguous；V4 351／79／33／4／0。correct→role兩件：SICA p15 ExampleTraces被頁首、MD不交付（F03內容損失，但未證成語義改義），P10p9 4.4變text（完整獨立文字仍在，未證從屬改義）。其餘ambiguous/missing轉換不當作整體修復。[逐項評分](heading/V4-assessment.json)與原30／6篇獨立heading review保留。這不是凍結v3正文指標的一部分。
+標題467個：選定B-only 352正確／79層級錯／33 strictmissing／1role／2ambiguous；V4 351／79／33／4／0。correct→role兩件：SICA p15 ExampleTraces被頁首、MD不交付（F03內容損失，但未證成語義改義），P10p9 4.4變text（完整獨立文字仍在，未證從屬改義）。其餘ambiguous/missing轉換不當作整體修復。逐項評分 (`heading/V4-assessment.json`)與原30／6篇獨立heading review保留。這不是凍結v3正文指標的一部分。
 
 ## mapper 與最終交接
 
@@ -139,6 +139,6 @@ P20 p25、27、30、31、33 各一個 caption 重複事件，baseline 原生與 
 
 ## 時間與記憶體
 
-36 conversions，715 pages；逐篇worker總wall **845.98s**（14.10min），其中conversionwall 720.39s。conversionCPU 3013.78s，初始化CPU 49.59s。每頁stage service p50/max **1.164/12.612s**；含佇列的residence p50/max 10.238/94.173s，不可累加當wall。每頁取樣所屬程序treeRSS p50/max **5.29/10.99GiB**，不是每頁獨占記憶體；host取樣可用最低 20.29GiB。[完整資源](resources.json)。
+36 conversions，715 pages；逐篇worker總wall **845.98s**（14.10min），其中conversionwall 720.39s。conversionCPU 3013.78s，初始化CPU 49.59s。每頁stage service p50/max **1.164/12.612s**；含佇列的residence p50/max 10.238/94.173s，不可累加當wall。每頁取樣所屬程序treeRSS p50/max **5.29/10.99GiB**，不是每頁獨占記憶體；host取樣可用最低 20.29GiB。完整資源 (`resources.json`)。
 
-沒有失敗或重試。36PDF與44oracle files、v3、backend、runnerhash與有效設定檢查306項PASS：[verification.json](verification.json)。所有產物限本R4。W2完成，停在此檢查點，交W3；未commit/push/GitHub留言、未開holdout/R1、未下載模型。
+沒有失敗或重試。36PDF與44oracle files、v3、backend、runnerhash與有效設定檢查306項PASS：`verification.json`。所有產物限本R4。W2完成，停在此檢查點，交W3；未commit/push/GitHub留言、未開holdout/R1、未下載模型。

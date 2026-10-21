@@ -12,7 +12,7 @@
 | PaddleX | 3.7.2／`ffb64904d23708863ff5b8da312a5cbd52a7f462` | result SHA256 `1a7f4070a7a978cdbd26eda900b61745bed3eb3ca3eca56d66eb553e8babe77b`；pipeline `32966d14aad6ac1bc043737c96352a4f0b4efcbead96f9354254dd4b9d1c6675` |
 | PaddleOCR usage/wrapper | 3.7.0／`b03f46425e8ff4442b268ce449e3eef758146cd4` | 官方完整流程包括 layout／讀序／裁圖，再逐區 VLM；單呼叫 VLM 不等於完整 pipeline |
 
-來源：[Docling 2.132 importer](https://github.com/docling-project/docling/blob/5c349dd696d81c67fe29c378a4fdff08e28090bd/docling/utils/paddleocr_vl_utils.py)、[2.140 importer](https://github.com/docling-project/docling/blob/0e54294231b69bc2cf7a39873235495788f76b57/docling/utils/paddleocr_vl_utils.py)、[Paddle 完整流程說明](https://github.com/PaddlePaddle/PaddleOCR/blob/b03f46425e8ff4442b268ce449e3eef758146cd4/docs/version3.x/pipeline_usage/PaddleOCR-VL.en.md)。既有下載與 hash：[retrieval.json](../pdf-core-g2-preflight-2026-10-16/candidate/retrieval.json)。
+來源：[Docling 2.132 importer](https://github.com/docling-project/docling/blob/5c349dd696d81c67fe29c378a4fdff08e28090bd/docling/utils/paddleocr_vl_utils.py)、[2.140 importer](https://github.com/docling-project/docling/blob/0e54294231b69bc2cf7a39873235495788f76b57/docling/utils/paddleocr_vl_utils.py)、[Paddle 完整流程說明](https://github.com/PaddlePaddle/PaddleOCR/blob/b03f46425e8ff4442b268ce449e3eef758146cd4/docs/version3.x/pipeline_usage/PaddleOCR-VL.en.md)。既有下載與 hash：retrieval.json (`docs/research/pdf-core-g2-preflight-2026-10-16/candidate/retrieval.json`)。
 
 ## 逐項契約與必要界線
 

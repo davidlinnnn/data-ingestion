@@ -42,7 +42,7 @@
 | R1_ADDITIONAL_MATH / a&c | 7 | 4 | 0 / 3 / 0 / 4 | 0.000 / NA | 1.000 / 0.571 | 0.000 | [0.0, 0.6023646356164746] |
 | R1_ADDITIONAL_MATH / primary | 0 | 0 | 0 / 0 / 0 / 0 | NA / NA | NA / NA | NA | None |
 
-所有單訊號與組合、全部 cohort/eligible/verified/unknown-label 分母、固定 sensitivity grid、各原始訊號連續/二元 ROC 與每個固定 .95 單訊號/組合規則的binary operating-point ROC原始點在 [metrics.json](metrics.json)。NO_DECISION 不列為已證實錯誤；excluded/UNKNOWN-label verified另列，不進混淆矩陣。沒有 verified 時 error/CI 為 null，不能報0%。
+所有單訊號與組合、全部 cohort/eligible/verified/unknown-label 分母、固定 sensitivity grid、各原始訊號連續/二元 ROC 與每個固定 .95 單訊號/組合規則的binary operating-point ROC原始點在 `metrics.json`。NO_DECISION 不列為已證實錯誤；excluded/UNKNOWN-label verified另列，不進混淆矩陣。沒有 verified 時 error/CI 為 null，不能報0%。
 
 ## 訊號與限制
 
@@ -59,8 +59,8 @@
 
 ## 圖與重現
 
-![ROC by source stratum](figures/roc-by-cohort.png)
+ROC by source stratum (`figures/roc-by-cohort.png`)
 
-![Fixed a threshold sensitivity](figures/a-threshold-sensitivity.png)
+Fixed a threshold sensitivity (`figures/a-threshold-sensitivity.png`)
 
 另保存PDF/SVG。`build_r1_cohort.py`、`integrate_signals.py`、`publish_signal_report.py`，全部零API/模型推論；Chrome與Matplotlib產物置於本W3b目錄。來源/labels/helper SHA在各cohort與amendment，外部exact引用讀取在 `../required-external-reference-read-log.json`。

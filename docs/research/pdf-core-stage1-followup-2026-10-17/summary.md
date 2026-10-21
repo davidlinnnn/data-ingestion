@@ -1,6 +1,6 @@
 # PDF core 主線接手：表格離線補齊
 
-日期：2026-10-17。主線直接執行本輪修正、驗收與階段判定。依據 [第一段複核](../../reviews/pdf-core-stage1-main-review-2026-10-17.md) 補齊 B；A 的完整方法及第三段完整配置仍未放行。
+日期：2026-10-17。主線直接執行本輪修正、驗收與階段判定。依據 第一段複核 (`docs/reviews/pdf-core-stage1-main-review-2026-10-17.md`) 補齊 B；A 的完整方法及第三段完整配置仍未放行。
 
 **B 單頁表格的離線 gate 已補齊，後續六次真實 API 比較亦已完成。最新結論見 [B 固定六次比較結果](B-results.md)：精簡協定降低本輪用量，但 T04／T05 結構／交付仍未通過。** 以下保留離線準備紀錄，不能當作最新模型成績。
 
@@ -47,8 +47,8 @@ Model／Chat Completions 能力核對來自 [OpenAI 模型文件](https://develo
 主線允許進入這六次獨立單頁研究比較；這不放行 A 完整分支或第三段。執行憑證只從已配置環境讀取，不放在命令參數、產物或日誌。執行時使用既有 pinned Python：
 
 ```sh
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-stage1-followup-2026-10-17/B/runner.py --verify
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-stage1-followup-2026-10-17/B/runner.py --live
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-stage1-followup-2026-10-17/B/runner.py --verify
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-stage1-followup-2026-10-17/B/runner.py --live
 ```
 
 本輪 API／模型載入／holdout 讀取均為零。A 的必要內容責任與順序接合、C 的座標 mapping 與其他完整功能仍待收斂；未宣稱新模型準度、成本、GPU 效能、高頻吞吐或完整配置通過。

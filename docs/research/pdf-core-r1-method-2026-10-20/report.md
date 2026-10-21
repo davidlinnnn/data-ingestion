@@ -32,4 +32,4 @@
 
 保留此方法作下一個有限模型實驗的可登錄接合候選；停止 R1 工程。原 A/C 模型內容問題、B T04 語意綁定失敗及雙欄/OCR 問題仍在，不因此批准正式部署。新增來源工作的完整語意評讀尚未就緒。連到 footnote 的內容重建目前拒絕，既有 footnote 保留；含特殊 Markdown fence 的 code 未全面驗證。來源精度是誠實的 page envelope，加上保留原 bbox/charspan，沒有捏造 glyph/cell 座標。
 
-重跑唯讀證據檢查：`/private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-r1-method-2026-10-20/check.py`。方法控制：同一 Python 執行 `-B -m unittest discover -s docs/research/pdf-core-r1-method-2026-10-20 -p 'test_*.py'`。檢查不更新 seal、不產生模型輸出。
+重跑唯讀證據檢查：`<tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-r1-method-2026-10-20/check.py`。方法控制：同一 Python 執行 `-B -m unittest discover -s docs/research/pdf-core-r1-method-2026-10-20 -p 'test_*.py'`。檢查不更新 seal、不產生模型輸出。

@@ -1,6 +1,6 @@
 # WikiSkill Figure 1：來源評讀契約
 
-2026-10-18。僅供 evaluator；不是模型輸入、圖號 routing 或新準度成績。完整固定參照見 [JSON](evaluator-wikiskill-figure1-contract.json)。先看原頁，再看已生成的 native crop；沒有借用論文 Table 1 的值。
+2026-10-18。僅供 evaluator；不是模型輸入、圖號 routing 或新準度成績。完整固定參照見 JSON (`evaluator-wikiskill-figure1-contract.json`)。先看原頁，再看已生成的 native crop；沒有借用論文 Table 1 的值。
 
 這是四條 series、四個類別的 line chart，共 16 個未印值 marker。所有數值都是幾何估值，不能標為 printed 或 exact。以可見 75%／30% 刻度間的 253 px 校準，保留人工 marker 中心 ±2 px 的標註不確定範圍，沿用 2% 正規化幾何誤差；不猜未標示的完整 axis domain 或零點。缺少／不可讀／錯綁點保留在 16 點分母。
 

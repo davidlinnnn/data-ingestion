@@ -25,9 +25,9 @@
 
 為確認官方extension不是紙面選項，使用合成TableData明確宣告兩個row sections，並測literal `<s>`、來源本來就是`&lt;s&gt;`的文字、`&`／小於號／pipe、前置零／精度、caption與正文順序。不是修正前輪HTML輸出，也沒有讀來源答案。
 
-[公開API探針](pdf-core-official-table-integration-2026-10-17/public_serializer_probe.py)的專案自訂部分只有一個`MarkdownTableSerializer`子類：在render用副本進行通用HTML escaping，再委派stock表格輸出，將SerializationResult的source item保留為原始item。不改canonical cell text／numeric value／flag，沒有來源名稱或case專用分支。實作過程補上source metadata檢查，避免span攜帶render副本而誤認成原始內容；不是模型／prompt調參。
+公開API探針 (`pdf-core-official-table-integration-2026-10-17/public_serializer_probe.py`)的專案自訂部分只有一個`MarkdownTableSerializer`子類：在render用副本進行通用HTML escaping，再委派stock表格輸出，將SerializationResult的source item保留為原始item。不改canonical cell text／numeric value／flag，沒有來源名稱或case專用分支。實作過程補上source metadata檢查，避免span攜帶render副本而誤認成原始內容；不是模型／prompt調參。
 
-[控制結果](pdf-core-official-table-integration-2026-10-17/verification.json)通過：
+控制結果 (`pdf-core-official-table-integration-2026-10-17/verification.json`)通過：
 
 - 直接typed row-group沒有被併入global column header。
 - CommonMark＋table、HTML enabled下，兩種literal／entity文字均正確可見；pipe與`001.20`保留。

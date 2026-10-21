@@ -1,6 +1,6 @@
 # 下一個固定候選：PaddleOCR-VL-1.6 完整流程
 
-2026-10-16。依 research skill 查核官方固定來源；本輪只預檢交付接點、保存小型原始碼／config／metadata，**0 模型載入、0 推論、0 API inference、0 安裝、0 權重下載**。沒有讀 holdout，也沒有另找候選。這是[原 next-cycle-options](../pdf-core-g2-official-method-2026-10-15/next-cycle-options.md)中第二條的具體化，並延續[新 audit](../../reviews/pdf-core-experiment-audit-2026-10-16.md)的實際影像、連續頁、表示與 raw fidelity 分層。
+2026-10-16。依 research skill 查核官方固定來源；本輪只預檢交付接點、保存小型原始碼／config／metadata，**0 模型載入、0 推論、0 API inference、0 安裝、0 權重下載**。沒有讀 holdout，也沒有另找候選。這是[原 next-cycle-options](../pdf-core-g2-official-method-2026-10-15/next-cycle-options.md)中第二條的具體化，並延續新 audit (`docs/reviews/pdf-core-experiment-audit-2026-10-16.md`)的實際影像、連續頁、表示與 raw fidelity 分層。
 
 **固定一個方向：Paddle CPU layout＋本機 MLX VLM，Paddle 原生 Markdown 作主交付，原始單頁 JSON／圖像與 Docling 結構作補充。狀態是 `awaiting_native_result_export_and_input_preflight`，尚未成為可推論或合格 challenger。** 純 converter 元件已實測，但完整 `PaddleOCRVLResult`／`save_to_markdown` 整合和實際 Paddle 輸入尚未驗；也已有不依賴模型準度的 code／inline 接點缺口。
 
@@ -22,9 +22,9 @@ Apple 指南列 CPU Paddle＋MLX service 路徑，官方實測硬體為 M4；本
 
 ## 已完成的真實 parser／Markdown 預檢
 
-現存 `/private/tmp/pdf-core-g2-dots-mlx-20261016/venv` 的 importer SHA256=`53597708ea8cde2f3477c49bdbd461c0a7868f8401c4153f9f536f5694eb1839`，與官方 v2.132.0 原檔**逐 byte 相同**，也符合 distribution RECORD。相關 chandra／vlm utility RECORD 符合；不是只看套件 metadata，更沒有替換 runtime source。見[runtime identity](candidate/runtime-identity.json)。
+現存 `<tmp>/pdf-core-g2-dots-mlx-20261016/venv` 的 importer SHA256=`53597708ea8cde2f3477c49bdbd461c0a7868f8401c4153f9f536f5694eb1839`，與官方 v2.132.0 原檔**逐 byte 相同**，也符合 distribution RECORD。相關 chandra／vlm utility RECORD 符合；不是只看套件 metadata，更沒有替換 runtime source。見runtime identity (`candidate/runtime-identity.json`)。
 
-[先登記的合成 scope](candidate/synthetic-scope.json)將 perfect single-page provider JSON 送未改的官方 importer、Docling JSON round-trip、stock Markdown；[結果](candidate/synthetic-results.json)及[實際 Markdown](candidate/synthetic-document.md)已保存。可接受 bare mapping／`{"res": ...}`／JSON字串／bytes；JSON與Markdown round-trip穩定。負座標、超界 bbox、缺 page_index 的多頁拼接 payload 均拒絕。
+先登記的合成 scope (`candidate/synthetic-scope.json`)將 perfect single-page provider JSON 送未改的官方 importer、Docling JSON round-trip、stock Markdown；結果 (`candidate/synthetic-results.json`)及[實際 Markdown](candidate/synthetic-document.md)已保存。可接受 bare mapping／`{"res": ...}`／JSON字串／bytes；JSON與Markdown round-trip穩定。負座標、超界 bbox、缺 page_index 的多頁拼接 payload 均拒絕。
 
 | Perfect provider content | Docling2.132／Core2.99 的實測交付 |
 |---|---|
@@ -37,7 +37,7 @@ Apple 指南列 CPU Paddle＋MLX service 路徑，官方實測硬體為 M4；本
 
 因此固定候選改以 **Paddle 原生 Markdown 為主**，Docling只是補充結構，不讓stock Markdown的損失拖累主內容。這沒有改模型或對題目答案做字串修補。
 
-原生路徑也做了真正的**純元件 behavioral preflight**：[先登記scope](candidate/native-synthetic-scope.json)，以完整未改的兩份官方v3.7.2 converter modules作正常namespace import，沒有AST抽函式、依賴stub、安裝或拼接完整Paddle runtime。使用官方DocumentBlock協定的合成輸入、`pretty=False`對應handler wiring。[結果](candidate/native-synthetic-results.json)、[原生Markdown](candidate/native-synthetic-document.md)。[固定 converter](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/common/result/converter/markdown_converter.py)、[固定 formatters](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/common/result/converter/markdown_format_funcs.py)
+原生路徑也做了真正的**純元件 behavioral preflight**：先登記scope (`candidate/native-synthetic-scope.json`)，以完整未改的兩份官方v3.7.2 converter modules作正常namespace import，沒有AST抽函式、依賴stub、安裝或拼接完整Paddle runtime。使用官方DocumentBlock協定的合成輸入、`pretty=False`對應handler wiring。結果 (`candidate/native-synthetic-results.json`)、[原生Markdown](candidate/native-synthetic-document.md)。[固定 converter](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/common/result/converter/markdown_converter.py)、[固定 formatters](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/common/result/converter/markdown_format_funcs.py)
 
 - **實測保留**：fenced code literal／縮排、正文內inline LaTeX、已有delimiter的公式、HTML表頭與span、header/footer；有真PIL image物件時建立正確reference與image map。
 - **仍有缺口**：plain algorithm不補code fence（因此`#`／`<tag>`在Markdown可能被當標記）；分開的inline_formula即使同group仍插空行；bare公式不補math delimiter；缺image物件時省略image reference。這些不可以假設模型一定輸出恰好可用格式來消除。
@@ -46,7 +46,7 @@ Apple 指南列 CPU Paddle＋MLX service 路徑，官方實測硬體為 M4；本
 ## 進模型前真正剩下的工作
 
 1. 在隔離的固定client stack作**零模型**完整Result／save_to_markdown合成test，確認code、公式、HTML表、圖片bytes能在原生Markdown＋同版supplement交付；若plain code或分離inline仍缺必要表示，先決定是否實作一個通用的結構保留接點。本輪沒有暗改官方parser，也沒有將這些缺口當作已解決。
-2. [本輪renderer預檢v2](render-inputs-v2/results.json)是**4個來源頁×2個backend＝8份rendered input**，不是8個不同頁面；[視覺核准v2](render-approvals-v2.json)核准6份可用輸入、拒絕2份變黑的DoclingParse validation影像。修正collection／gate沒有改原始像素。**僅可將已核准影像傳往後續階段**；這些仍是Docling實際PNG，尚不是Paddle actual input。Paddle須直接吃已核准PNG、關閉orientation/unwarp，保存Paddle實際layout輸入與VLM各crop／processor像素及hash後再目視核准；不能讓另一個PDF renderer悄悄重畫。這4個來源頁本身不是連續頁集合；跨頁context須另行固定並核准同來源的連續頁範圍，不能由目前collection推定已具備。
+2. 本輪renderer預檢v2 (`render-inputs-v2/results.json`)是**4個來源頁×2個backend＝8份rendered input**，不是8個不同頁面；視覺核准v2 (`render-approvals-v2.json`)核准6份可用輸入、拒絕2份變黑的DoclingParse validation影像。修正collection／gate沒有改原始像素。**僅可將已核准影像傳往後續階段**；這些仍是Docling實際PNG，尚不是Paddle actual input。Paddle須直接吃已核准PNG、關閉orientation/unwarp，保存Paddle實際layout輸入與VLM各crop／processor像素及hash後再目視核准；不能讓另一個PDF renderer悄悄重畫。這4個來源頁本身不是連續頁集合；跨頁context須另行固定並核准同來源的連續頁範圍，不能由目前collection推定已具備。
 3. 多頁先保留原始每頁JSON與live result物件，再按同來源連續頁走官方restructure_pages。Docling importer只吃原始每頁結果，**不接受concatenated多頁payload**；官方restructure只合表／調heading／串頁，不承諾跨頁paragraph join。若用saved dict重建，官方程式還會對所有block content套`^#+\s`清理，可能傷到code comment，且無法從JSON回復image bytes；因此不得用該路徑假裝live結果。必要logical paragraph／image mapping用同版supplement明列，仍須實測，不靠手填oracle。[固定restructure source](https://github.com/PaddlePaddle/PaddleX/blob/ffb64904d23708863ff5b8da312a5cbd52a7f462/paddlex/inference/pipelines/paddleocr_vl/pipeline.py)
 
-上述通過後才有條件登記一次有界模型執行；本輪不啟動。模型品質、M5資源／時間、公司CUDA、高頻load及holdout均未驗。所有下載來源／hash見[retrieval.json](candidate/retrieval.json)；只有小型source、config、metadata，沒有模型weights。
+上述通過後才有條件登記一次有界模型執行；本輪不啟動。模型品質、M5資源／時間、公司CUDA、高頻load及holdout均未驗。所有下載來源／hash見retrieval.json (`candidate/retrieval.json`)；只有小型source、config、metadata，沒有模型weights。

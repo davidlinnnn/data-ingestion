@@ -29,7 +29,7 @@ Use this guide for the workflows below.
 | Full API service | Supported with manual deployment only | Complete Section 1. Local Runtime Environment Preparation first, then read Section 4.1 Manual Deployment; after that, continue with Section 4.2 Client Invocation Methods and Section 4.3 Pipeline Configuration Adjustment Instructions. |
 | Model fine-tuning | Supported | Read Section 5. Model Fine-Tuning. |
 
-If you only need to confirm which inference methods are available on this hardware, refer to the [PaddleOCR-VL Inference Method and Hardware Support Matrix](./PaddleOCR-VL.en.md#inference-device-support-for-paddleocr-vl) in the main guide.
+If you only need to confirm which inference methods are available on this hardware, refer to the PaddleOCR-VL Inference Method and Hardware Support Matrix (`PaddleOCR-VL.en.md`) in the main guide.
 
 ## 1. Local Runtime Environment Preparation
 
@@ -62,7 +62,7 @@ python -m pip install -U "paddleocr[doc-parser]"
 
 ## 2. Quick Start
 
-Please refer to [PaddleOCR-VL Usage Tutorial - 2. Quick Start](./PaddleOCR-VL.en.md#2-quick-start).
+Please refer to PaddleOCR-VL Usage Tutorial - 2. Quick Start (`PaddleOCR-VL.en.md`).
 
 ## 3. Using VLM Inference Services
 
@@ -123,7 +123,7 @@ pipeline = PaddleOCRVL(
 
 ### 3.3 Performance Tuning
 
-Please refer to [PaddleOCR-VL Usage Tutorial - 3.3 Performance Tuning](./PaddleOCR-VL.en.md#33-performance-tuning).
+Please refer to PaddleOCR-VL Usage Tutorial - 3.3 Performance Tuning (`PaddleOCR-VL.en.md`).
 
 ## 4. Service Deployment
 
@@ -136,16 +136,16 @@ Please refer to [PaddleOCR-VL Usage Tutorial - 3.3 Performance Tuning](./PaddleO
 
 ### 4.1 Manual Deployment
 
-Please complete Section 1. Local Runtime Environment Preparation first, then refer to [PaddleOCR-VL Usage Tutorial - 4.2 Method 2: Manual Deployment](./PaddleOCR-VL.en.md#42-method-2-manual-deployment).
+Please complete Section 1. Local Runtime Environment Preparation first, then refer to PaddleOCR-VL Usage Tutorial - 4.2 Method 2: Manual Deployment (`PaddleOCR-VL.en.md`).
 
 ### 4.2 Client Invocation Methods
 
-Please refer to [PaddleOCR-VL Usage Tutorial - 4.3 Client Invocation Methods](./PaddleOCR-VL.en.md#43-client-side-invocation).
+Please refer to PaddleOCR-VL Usage Tutorial - 4.3 Client Invocation Methods (`PaddleOCR-VL.en.md`).
 
 ### 4.3 Pipeline Configuration Adjustment Instructions
 
-Please refer to [PaddleOCR-VL Usage Tutorial - 4.4 Pipeline Configuration Adjustment Instructions](./PaddleOCR-VL.en.md#44-pipeline-configuration-adjustment-instructions).
+Please refer to PaddleOCR-VL Usage Tutorial - 4.4 Pipeline Configuration Adjustment Instructions (`PaddleOCR-VL.en.md`).
 
 ## 5. Model Fine-Tuning
 
-Please refer to [PaddleOCR-VL Usage Tutorial - 5. Model Fine-Tuning](./PaddleOCR-VL.en.md#5-model-fine-tuning).
+Please refer to PaddleOCR-VL Usage Tutorial - 5. Model Fine-Tuning (`PaddleOCR-VL.en.md`).

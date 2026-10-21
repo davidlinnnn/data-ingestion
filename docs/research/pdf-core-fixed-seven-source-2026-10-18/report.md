@@ -18,9 +18,9 @@
 
 T04 的 0/300 指「未交付」，不是聲稱 300 個 raw 值全算錯。不能移除這張失敗表、接受它的 sibling，或把其他表的正確值拿來攤平錯誤。原 470 數值／23 比較、兩張 collateral 與四組 table math 的分母均保留。T03 的 264 數值／7 比較／3 missing marks 未納入這七次，也仍未解。
 
-[完整評讀](evaluation.json)、[逐點 worksheets](worksheets/)、[原始執行紀錄](../pdf-core-eval-interfaces-2026-10-18/B/live/execution.json)皆已保存。評讀先人工核對來源意義與 scoped bindings，再以 evaluator-only 程式填入每點的實際 Core ref／anchor、raw pair、typed text、rendered text 與比較結果。Markdown 透過 markdown-it 轉 HTML 後讀取表格，不拆 raw pipe，也沒有替換舊 grader。
+完整評讀 (`evaluation.json`)、逐點 worksheets (`worksheets`)、原始執行紀錄 (`docs/research/pdf-core-eval-interfaces-2026-10-18/B/live/execution.json`)皆已保存。評讀先人工核對來源意義與 scoped bindings，再以 evaluator-only 程式填入每點的實際 Core ref／anchor、raw pair、typed text、rendered text 與比較結果。Markdown 透過 markdown-it 轉 HTML 後讀取表格，不拆 raw pipe，也沒有替換舊 grader。
 
-四份已交付文件的原始 text multiset、正文閱讀順序、非目標表格資料、來源 caption ownership 及 native table envelopes 均核對保留。`texts[]` 的儲存順序在部分文件因 reindex 改變，body 閱讀順序並未改變；standalone caption 沒有 native link 也不是來源遺失。見 [preservation checks](non-target-verification.json)。
+四份已交付文件的原始 text multiset、正文閱讀順序、非目標表格資料、來源 caption ownership 及 native table envelopes 均核對保留。`texts[]` 的儲存順序在部分文件因 reindex 改變，body 閱讀順序並未改變；standalone caption 沒有 native link 也不是來源遺失。見 preservation checks (`non-target-verification.json`)。
 
 ## B：設定與增量成本
 
@@ -50,7 +50,7 @@ T04 的 0/300 指「未交付」，不是聲稱 300 個 raw 值全算錯。不�
 
 全頁 OCR 對此 caption 有效，但既有圖框限制仍在；55 頁 conversion success 與結構差異盤點也不等於 55 頁逐字／語意正確率。因此未把全頁 OCR 改為全量預設，未開 C 的 29 個 component OCR／58 個遠端 enrichment jobs。
 
-NCCU screenshot 全圖 literal blocks／UI 關係，以及 timeline 的 45 模型、19 個黃色標籤、完整年／月份軸與確定連線已補入 [evaluator addendum](../pdf-core-c-source-closure-2026-10-18/evaluator-full-image-contracts.json)。不清楚的小 logo 字、無個別連線的精確月份明列 source uncertainty，沒有借外部日期補答案。這是單一 annotator 的兩次來源視覺核對，不宣稱獨立人工 adjudication。
+NCCU screenshot 全圖 literal blocks／UI 關係，以及 timeline 的 45 模型、19 個黃色標籤、完整年／月份軸與確定連線已補入 evaluator addendum (`docs/research/pdf-core-c-source-closure-2026-10-18/evaluator-full-image-contracts.json`)。不清楚的小 logo 字、無個別連線的精確月份明列 source uncertainty，沒有借外部日期補答案。這是單一 annotator 的兩次來源視覺核對，不宣稱獨立人工 adjudication。
 
 ## 配置取捨與停止點
 

@@ -1,6 +1,6 @@
 # G2 official full-page method：來源評分契約
 
-在新推論前凍結；來源限定既有已曝光四份文件、8頁、41個 selected logical units（36既有＋5未執行）。這不是全頁完整 inventory 或獨立 validation。來源 expected、定位與hash見 [contract.json](contract.json)，不傳給模型。
+在新推論前凍結；來源限定既有已曝光四份文件、8頁、41個 selected logical units（36既有＋5未執行）。這不是全頁完整 inventory 或獨立 validation。來源 expected、定位與hash見 `contract.json`，不傳給模型。
 
 ## 分開評估的三層
 

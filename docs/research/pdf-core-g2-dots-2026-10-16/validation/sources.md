@@ -9,13 +9,13 @@
 | Learning Neurosymbolic Generative Models via Program Synthesis (v1) | [arXiv metadata](https://arxiv.org/abs/1901.08565)／[版本 PDF](https://arxiv.org/pdf/1901.08565v1) | `ba060436331579fb145b0077be93e9d016e72ed64d5944ef2af058c198018451` | 13 | 1, 11 |
 | Calculation of prompt diphoton production cross sections at Tevatron and LHC energies (v1) | [arXiv metadata](https://arxiv.org/abs/0704.0001)／[版本 PDF](https://arxiv.org/pdf/0704.0001v1) | `387726add6d106da7920ef836cef6c6edacd9accc5e517f8f2e1797c784a7c17` | 47 | 1, 12 |
 
-選材先依公開 metadata 排隊：1901.08565、2106.09685、0704.0001。逐個先搜尋原作 ID、官方完整標題與檔名；LoRA 因既有 repo 引用 23 筆而排除。接受的兩份都沒有精確 ID／標題／檔名引用，也不屬於 exposure-audit 或六份 holdout 的原作群組。搜尋包含 ignored／hidden metadata，以路徑清單記錄命中，排除 PDF／圖片等 binary、Git 內部檔與本輪新輸出目錄。這只是本次實驗的引用／原作邊界，不保證模型預訓練未見、作者或版型獨立，也不能排除改名或未披露副本。各次檢查與例外在 [manifest](manifest.json)。
+選材先依公開 metadata 排隊：1901.08565、2106.09685、0704.0001。逐個先搜尋原作 ID、官方完整標題與檔名；LoRA 因既有 repo 引用 23 筆而排除。接受的兩份都沒有精確 ID／標題／檔名引用，也不屬於 exposure-audit 或六份 holdout 的原作群組。搜尋包含 ignored／hidden metadata，以路徑清單記錄命中，排除 PDF／圖片等 binary、Git 內部檔與本輪新輸出目錄。這只是本次實驗的引用／原作邊界，不保證模型預訓練未見、作者或版型獨立，也不能排除改名或未披露副本。各次檢查與例外在 manifest (`manifest.json`)。
 
 每份頁數從已固定 bytes 取得，先選物理首頁，再從其餘頁按 `SHA256(lowercase_document_sha256 + ":" + decimal_1_based_page_number)` 的 digest 升冪選第一頁。完整排序已保留。選擇與抽頁先於閱讀 PDF 內容；沒有因內容類型不足、來源難度或模型表現換頁。兩份共 4,008,387 bytes，原始 PDF 未修改。第一輪 sandbox DNS 失敗後，以核准的公開唯讀下載完成同一 URL；沒有改換版本。
 
 ## 逐頁來源標註與分母
 
-[Source contract](source-contract.json) 有 12 個適用正例來源單位：11 個含行內公式的段落／段落片段，以及 1 個獨立 pseudocode block。60 個行內數學 occurrence 是其段落的必要子項，不能再加入分母；另有 1 個行內 code identifier `draw`。普通文字負例固定 10 個，不與正例分母相加沖淡錯誤。
+Source contract (`source-contract.json`) 有 12 個適用正例來源單位：11 個含行內公式的段落／段落片段，以及 1 個獨立 pseudocode block。60 個行內數學 occurrence 是其段落的必要子項，不能再加入分母；另有 1 個行內 code identifier `draw`。普通文字負例固定 10 個，不與正例分母相加沖淡錯誤。
 
 | 文件與頁面 | 適用正例 | 普通文字負例 | 來源特徵 |
 | --- | ---: | ---: | --- |
@@ -32,6 +32,6 @@
 
 ## 核對與隔離
 
-[Verification](verification.json) 核對新 PDF 的 magic／完整 hash／大小、不同原作與 bytes、抽頁排序、所有 unit ID／頁面／source boxes、coverage 計數，以及來源文件與 renders 的 hash。source boxes 只給 evaluator 定位，不能交給模型裁圖。沒有建立大型工具、下載模型或執行 baseline／challenger。
+Verification (`verification.json`) 核對新 PDF 的 magic／完整 hash／大小、不同原作與 bytes、抽頁排序、所有 unit ID／頁面／source boxes、coverage 計數，以及來源文件與 renders 的 hash。source boxes 只給 evaluator 定位，不能交給模型裁圖。沒有建立大型工具、下載模型或執行 baseline／challenger。
 
 本資料不能加入舊 holdout 或修改其規則。若使用這份 validation 選配置或門檻，後續應保留它的 validation／開發曝光身分；兩份資料不能再聲稱是未用於選方法的 holdout。舊規則與資料維持不動。

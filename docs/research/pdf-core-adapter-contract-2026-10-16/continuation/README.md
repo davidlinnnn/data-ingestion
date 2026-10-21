@@ -2,7 +2,7 @@
 
 2026-10-16. The unchanged `src/pdf_processing/continuation.py` policy fails two necessary controls. **Do not implement the mapper or tune this policy as part of A′.** This is a bounded delivery-contract result, not a model-accuracy measurement or a universal claim about Docling.
 
-The 24 inputs, truth and stop threshold were written to [controls.json](controls.json) before running the policy. Its SHA256 is `5b02f864b67e1bb915f28cc05402edd7b79cb2a65259a32225d4d9182f494d33`. [freeze.py](freeze.py) uses only the standard library and package metadata; [run.py](run.py) calls the existing policy once per control, with no rule or threshold changes. Results and identities are in [results.json](results.json).
+The 24 inputs, truth and stop threshold were written to `controls.json` before running the policy. Its SHA256 is `5b02f864b67e1bb915f28cc05402edd7b79cb2a65259a32225d4d9182f494d33`. `freeze.py` uses only the standard library and package metadata; `run.py` calls the existing policy once per control, with no rule or threshold changes. Results and identities are in `results.json`.
 
 | Check | Result | Meaning |
 |---|---|---|
@@ -23,6 +23,6 @@ Runtime: existing `docs/prototypes/pdf-checkpoint-prototype/.venv/bin/python`, D
 
 The runner asserted all eight frozen source identities and the fixture hash both before and after this single run. The unchanged continuation source SHA256 is `791e2ebef036d6f2468fb607162a135eecb3c4eaa056d4e35b1a81bffde49772`; the upstream rule predictor SHA256 is `68e2be8f709e8ed29a44597780d38dbb93deec4841e007b7b61a99b8a0cecf10`. The existing source snapshot SHA256 is `ac24732003ac15e77ec1af8213cb686c174fff3b8983f904020504c96ab14fad`. No historical evidence, production code or existing test was edited.
 
-Two older tests were **not run** because `/private/tmp/t09a-r2-20260914/checkpoints` no longer exists: `Continuation.test_source_continues_into_body` and `Preservation.test_input_content_not_mutated`. No checkpoint was recreated; the 24 per-control input-preservation checks cover only this run's inputs.
+Two older tests were **not run** because `<tmp>/t09a-r2-20260914/checkpoints` no longer exists: `Continuation.test_source_continues_into_body` and `Preservation.test_input_content_not_mutated`. No checkpoint was recreated; the 24 per-control input-preservation checks cover only this run's inputs.
 
 The failure threshold was fixed before execution: any required expected-relation mismatch is material. Both failures exceed it. No second run, policy edit, mapper, model call or Paddle action followed. A broader paragraph discovery/assembly method would exceed the approved reuse-only scope.
