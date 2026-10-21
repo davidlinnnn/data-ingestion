@@ -15,7 +15,7 @@
 
 兩者為既有 DEV 來源，不是未曝光資料。Metadata 與 pilot manifest 一致；此次未重新讀 PDF bytes 核 hash，應由正式執行前檢查完成。
 
-依[四頁計畫](pdf-core-table-html-plan-2026-10-17.md)，T04／T05 尚缺同版 S0，須新增 Standard2.132／Core2.99、Heron、RapidOCR、TableFormer V1 accurate 的各一頁轉換，不可把較舊全文結果當同配置 cached baseline。T01／T02 可重用 [live-registration.json](pdf-core-table-delivery-2026-10-17/live-registration.json) 已登錄來源：
+依[四頁計畫](pdf-core-table-html-plan-2026-10-17.md)，T04／T05 尚缺同版 S0，須新增 Standard2.132／Core2.99、Heron、RapidOCR、TableFormer V1 accurate 的各一頁轉換，不可把較舊全文結果當同配置 cached baseline。T01／T02 可重用 live-registration.json (`pdf-core-table-delivery-2026-10-17/live-registration.json`) 已登錄來源：
 
 | 頁面 | baseline | baseline SHA256 | 144dpi input SHA256 |
 |---|---|---|---|
@@ -35,7 +35,7 @@ Cell 必填 `text` 與四個 start／end offset；minimal 僅對非預設值寫 
 
 **這些是 byte 數，不是實測 token 數。** Native runtime 與 bundled runtime 未安裝 tiktoken；UV cache 中雖有 tiktoken0.13.0／0.12.0 的 Python3.14 package，但沒有查得 o200k vocab cache，且其 model mapping 沒有 `gpt-6-luna`。因此未 import 後自動下載詞表，亦未用其他模型 tokenizer 冒充 Luna token count。`chars/4` 只能作粗略估算，不能據此聲稱32768必定足夠。
 
-合成產生器已保存於 [live.py 的 `budget_fixture()`](pdf-core-direct-cell-2026-10-17/live.py)；`--self-check` 檢查全部 grid occupancy／spans 與上述四種 byte 數，並保存 `budget-preflight.json` 的可重現 payload SHA256。此模式不開啟來源、不載入 adapter／模型、不呼叫 API。
+合成產生器已保存於 live.py 的 `budget_fixture()` (`pdf-core-direct-cell-2026-10-17/live.py`)；`--self-check` 檢查全部 grid occupancy／spans 與上述四種 byte 數，並保存 `budget-preflight.json` 的可重現 payload SHA256。此模式不開啟來源、不載入 adapter／模型、不呼叫 API。
 
 [官方 GPT-6 Luna model page](https://developers.openai.com/api/docs/models/gpt-6-luna) 已實際開啟核對：128,000 max output tokens、1,050,000 context，支持 Chat Completions 與 image input。文件支持的模型上限不代表本帳號權限或每次請求可完成；未呼叫 provider 探測帳號。
 

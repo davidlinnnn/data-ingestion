@@ -8,7 +8,7 @@
 
 這不是把舊 JSON context 的36次推論換名重跑，也不宣稱有新模型突破。新增假說是：**正確的表格關係可由公開 Docling Core 型別承載，且機械映射不需要內容修補。** 舊成功回應使用全頁圖片及指定 Table2 的 prompt，不能視為自動 native inventory 路由已通過；下一階段另外驗這個差別。
 
-同一 Granite Vision4.1 checkpoint 早已做過 CPU timeout 與兩張其他表的 [MLX GPU 實測](paper-pdf-granite-mlx-results-2026-10-11.md)，不能當未試新模型。現版官方 table stage 亦沒有公開 MLX／API engine 接點，詳見[查證](pdf-core-next-table-path-notes-2026-10-17.md)。本輪不重試該 CPU 配置；T02 的 Granite MLX 任務覆蓋保留為次選，不與這輪混跑。
+同一 Granite Vision4.1 checkpoint 早已做過 CPU timeout 與兩張其他表的 MLX GPU 實測 (`paper-pdf-granite-mlx-results-2026-10-11.md`)，不能當未試新模型。現版官方 table stage 亦沒有公開 MLX／API engine 接點，詳見[查證](pdf-core-next-table-path-notes-2026-10-17.md)。本輪不重試該 CPU 配置；T02 的 Granite MLX 任務覆蓋保留為次選，不與這輪混跑。
 
 ## 固定方法與自訂範圍
 

@@ -25,7 +25,7 @@
 
 ## 模型與 runtime 的精確前提
 
-- 既有 snapshot：`docling-project/CodeFormulaV2`，rev `ecedbe111d15c2dc60bfd4a823cbe80127b58af4`；歷史 weight SHA256 `4b04e77af34c4e682a7ab1617628340d658f3c3dcd12456dd2a7fff805cf79d2`，630,993,616 bytes。[既有manifest](pdf-core-g2-round2-2026-10-14/models/codeformula-download.json)。本次只以filesystem stat確認12項檔案存在且大小符合歷史manifest，**未重新讀權重做hash**；實際執行前再核對完整bytes hash。
+- 既有 snapshot：`docling-project/CodeFormulaV2`，rev `ecedbe111d15c2dc60bfd4a823cbe80127b58af4`；歷史 weight SHA256 `4b04e77af34c4e682a7ab1617628340d658f3c3dcd12456dd2a7fff805cf79d2`，630,993,616 bytes。既有manifest (`pdf-core-g2-round2-2026-10-14/models/codeformula-download.json`)。本次只以filesystem stat確認12項檔案存在且大小符合歷史manifest，**未重新讀權重做hash**；實際執行前再核對完整bytes hash。
 - 固定上輪 Standard 2.132/Core2.99/Parse7.22.3/pdfium5.14 runtime，先 mock 檢查完整 converter/enrichment/export。現有 Transformers5.20 跑本checkpoint的實際相容性尚未驗；不能拿舊runtime已成功兩crop當新runtime相容保證。
 - 明確選 `TransformersVlmEngineOptions(device="cpu", torch_dtype="float32", compile_model=False, quantized=False)`，4 intra-op、1 inter-op；不選 `AUTO_INLINE` 讓Mac自動改成未驗MLX。官方Transformers engine支援列表為CPU/CUDA/XPU，沒有MPS；不要把Mac GPU視為這組現成選項。[Engine](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/inference_engines/vlm/transformers_engine.py#L144)
 - 用已存權重與repo命名artifacts目錄，offline、trust_remote_code=False；保留舊runtime、snapshot和oracle，不升級來回追分。CPU有界執行遇相容性阻擋便記錄，不對模型內容推論；機械修正可在推論前完成並重新freeze。

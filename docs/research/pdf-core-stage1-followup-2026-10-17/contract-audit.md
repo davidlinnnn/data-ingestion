@@ -18,7 +18,7 @@
 
 ## 唯一新增的通用規則
 
-[grid-spans-v2-padding 方法](B-padding/method.py)只在**明示 span 的非 anchor 覆蓋位置**，把精確 `""` 視為無內容 padding，轉成既有 strict 格式的 null。模型宣告的 span 是這份新傳輸契約的結構權威；這不是證明 span 符合來源真相，也不是修復原 v1 回應的宣稱。
+grid-spans-v2-padding 方法 (`B-padding/method.py`)只在**明示 span 的非 anchor 覆蓋位置**，把精確 `""` 視為無內容 padding，轉成既有 strict 格式的 null。模型宣告的 span 是這份新傳輸契約的結構權威；這不是證明 span 符合來源真相，也不是修復原 v1 回應的宣稱。
 
 其餘內容、座標、spans、roles、group endpoints、數字及欄位順序均不改。Covered slot 的 `" "`、`"0"`、dash、unknown 或 role 仍拒絕；不矩形、越界、重疊、無主 null、未知欄位及 target inventory 不完整仍拒絕。Section 旁有非空值時會原樣保存，不推成全寬合併格。原 raw 另存 `transport_provider`，canonical supplement 保存 normalized compact 及 `covered_padding` 座標清單。
 
@@ -35,9 +35,9 @@
 
 六個 target 中五個可接合，四頁中三頁完整保存。主分母仍為 470 數值／23 比較；可交付的主案例涵蓋 170 個正確數值與 18 個比較，但**這不是 170／470 的模型準確率**，也不把 collateral 加入主分母。T05 沒有補 section colspan 或 body row flags，沒有改任何數值。表格展示及更細結構分工維持原需求。
 
-[完整 replay 報告](B-padding/results.json)、[實際 T05 Markdown](B-padding/replay/wikiskill-p13/document.md)、[Core](B-padding/replay/wikiskill-p13/document.json)及 [bindings／supplements](B-padding/replay/wikiskill-p13/bindings.json)均保存。三頁均通過 JSON reload、非目標內容／來源 signature 保持；[第二個 Python process 讀回](B-padding/fresh-process-reload.json)亦一致。這不代表 worker checkpoint 或搬移 bundle／GPU 恢復已驗收。
+完整 replay 報告 (`B-padding/results.json`)、實際 T05 Markdown (`B-padding/replay/wikiskill-p13/document.md`)、Core (`B-padding/replay/wikiskill-p13/document.json`)及 bindings／supplements (`B-padding/replay/wikiskill-p13/bindings.json`)均保存。三頁均通過 JSON reload、非目標內容／來源 signature 保持；第二個 Python process 讀回 (`B-padding/fresh-process-reload.json`)亦一致。這不代表 worker checkpoint 或搬移 bundle／GPU 恢復已驗收。
 
-[45 個測試全部通過](B-padding/test-results.json)：新 padding 控制 10 個、既有 evaluator 13 個、runner 22 個。涵蓋 null／empty 等價、raw／baseline 不變、冪等、真空白／literal／precision、多維表頭、分組旁非空值、完整頁面及負例拒絕。測試 log 與 [獨立複核](B-padding/review.md)另存。
+45 個測試全部通過 (`B-padding/test-results.json`)：新 padding 控制 10 個、既有 evaluator 13 個、runner 22 個。涵蓋 null／empty 等價、raw／baseline 不變、冪等、真空白／literal／precision、多維表頭、分組旁非空值、完整頁面及負例拒絕。測試 log 與 [獨立複核](B-padding/review.md)另存。
 
 首次離線 verifier 因 T02 的 oracle-caption 全字串等值 assert 停止：native baseline 已把 `B_m` 渲染為 `B m`。該次產物與程式保留在 `B-padding/precheck-caption-literal-assert/`。正式檢查改為核對 native caption 原樣、原次數保存，並另外保留 source-caption literal mismatch 診斷；沒有對 `B_m` 寫特例修補，也沒有因此宣稱完整公式／code 能力已成立。T05 原 caption 全字串一致，且視覺核對既有 crop 的欄位、兩組 aggregation labels、pairs 與單位未見 material 差異。
 
@@ -49,4 +49,4 @@ T04 不只是 padding 表示問題：五組 category 的起點比 ME／SBERT 資
 
 依原三段計畫，下一個可獨立推進的工作是 **A 的公式／code ownership 與必要漏項的離線 gate**，接續 C 的同版 image keys／座標與來源接合。其他 component 不因 B 的局部改善被視為穩定。完整方法仍有 material 缺口，不進付費整份整合 run；跨頁表格接點亦未解除阻擋。
 
-新 API／模型載入／holdout 讀取均為 0；沒有新模型品質、成本、latency、吞吐、Qwen3 或 vLLM 的主張。原 B 輸出、grader v2、frozen producer、歷史結果及 oracle 均保持不變；完整性與時間界線見 [核對紀錄](contract-audit-verification.json)。
+新 API／模型載入／holdout 讀取均為 0；沒有新模型品質、成本、latency、吞吐、Qwen3 或 vLLM 的主張。原 B 輸出、grader v2、frozen producer、歷史結果及 oracle 均保持不變；完整性與時間界線見 核對紀錄 (`contract-audit-verification.json`)。

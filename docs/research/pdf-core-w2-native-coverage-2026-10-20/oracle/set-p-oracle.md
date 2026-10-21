@@ -9,7 +9,7 @@
 執行：
 
 ```sh
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python docs/research/pdf-core-w2-native-coverage-2026-10-20/oracle/check_p_oracle.py
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python docs/research/pdf-core-w2-native-coverage-2026-10-20/oracle/check_p_oracle.py
 ```
 
 `check_p_oracle.py` 對人工選取、在 source 與 PDF 前 4 頁各唯一的正文 anchor 做定位，保留兩者獨立的序列，內含唯一性與正規化 self-check。查找時移除標點與空白，**這只用來找位置，不能以此判定數值、否定、單位等 Q4 語義正確**。`.txt` 是未經正文清理的 PDFium 字流，保留反例以供主線複核。

@@ -17,6 +17,6 @@
 
 相較前一輪 full-page producer，數值／比較同樣通過；此次 caption 不再重複的原因是先完成的 ownership 政策，不能歸功於 crop 讓模型學會 caption association。此頁結果也不能抵銷同輪其他表格的失敗。
 
-[逐點評分](t05-evaluation.json) 保留全部 observations、比較、paired cells、來源／程式 hashes；[實際 HTML](wikiskill-p13/evaluated-rendered.html) 可檢視渲染結果。[evaluator](evaluate-t05.py) 重用先前 frozen T05 評分函式，另以實際 HTML parser 核對 rendered cells，並有改一個數值、換錯 header binding、HTML entities／nested inline text 三個自我檢查。Frozen method 與六份 response hashes 評讀前後一致。
+逐點評分 (`t05-evaluation.json`) 保留全部 observations、比較、paired cells、來源／程式 hashes；實際 HTML (`wikiskill-p13/evaluated-rendered.html`) 可檢視渲染結果。evaluator (`evaluate-t05.py`) 重用先前 frozen T05 評分函式，另以實際 HTML parser 核對 rendered cells，並有改一個數值、換錯 header binding、HTML entities／nested inline text 三個自我檢查。Frozen method 與六份 response hashes 評讀前後一致。
 
 未取得 unseen 泛化、整份文件或公司 Qwen3／高頻資格；來源定位仍是 whole-table envelope，沒有生成 cell bbox。本評讀未呼叫新模型／API。

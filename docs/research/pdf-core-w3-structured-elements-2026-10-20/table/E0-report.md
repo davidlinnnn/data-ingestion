@@ -29,7 +29,7 @@
 
 這五表共29個確證 tuple 錯誤下界（20 missing＋9 extra），不是完整誤差總數；其他點的未知仍保留。P06 複合表有完整50點來源分母，僅右側17個 Reward tuple 已缺於對應欄，17/50=34%已大於5%，足以FAIL；不把另33點宣稱全對。三個ordinary表各有至少一個原圖確證錯誤即不符零錯規則。
 
-另P13p8 Table2被下方Figure4條圖合併：native tables/1 row15 metric欄2–7至少6個不同cell納入Figure4數字。凍結來源cell只含format/color/multirow命令，沒有未知或產生數字macro；連backbone標籤內數字一起數，共87個numeric token可當保守來源點數上界，因此6/87=至少6.9%已超過5%。這是FAIL_WITH_PARTIAL_ORACLE，沒有把兩個未知model-label候選改成gold。stage由image零推論replay證實：較寬table11勝過table9，picture panels合成picture13後被cross-type overlap刪除，圖表混入表框。見 [P13-chart-contamination.json](P13-chart-contamination.json)。
+另P13p8 Table2被下方Figure4條圖合併：native tables/1 row15 metric欄2–7至少6個不同cell納入Figure4數字。凍結來源cell只含format/color/multirow命令，沒有未知或產生數字macro；連backbone標籤內數字一起數，共87個numeric token可當保守來源點數上界，因此6/87=至少6.9%已超過5%。這是FAIL_WITH_PARTIAL_ORACLE，沒有把兩個未知model-label候選改成gold。stage由image零推論replay證實：較寬table11勝過table9，picture panels合成picture13後被cross-type overlap刪除，圖表混入表框。見 `P13-chart-contamination.json`。
 
 其餘四表的錯誤在 native cells/grid 已存在；表框涵蓋原圖完整表格，但多欄數值被塞到 row-header 或鄰欄。定位到 native table structure／TableFormer 重建出口，無證據宣稱 reading-order／serializer 是這些 tuple 錯配的首因。mapper保留原格位，不能修好這些關聯。
 
@@ -37,6 +37,6 @@ RAW官方逐表export共238個native表，237個完整export字串可在保存Ma
 
 11,095等W2 mapper leaf/item量不當W3表格語義分母。未解析巨集／表頭、無numeric表、multi-value cell語義或唯一對齊不足均保留UNKNOWN。沒有用列數／欄數不符就將每點都算錯；全header壓成一格且無法確定值的對象者也不算全對。
 
-逐表、逐點、rows/cols/header證據與分子／分母見 [E0-results.json](E0-results.json)；原圖與native ref、兩出口片段見 [E0-visual-adjudication.json](E0-visual-adjudication.json)；全部native表出口與span曝光見 [delivery-audit.json](delivery-audit.json)。
+逐表、逐點、rows/cols/header證據與分子／分母見 `E0-results.json`；原圖與native ref、兩出口片段見 `E0-visual-adjudication.json`；全部native表出口與span曝光見 `delivery-audit.json`。
 
-輸入沿R3/V3_B已保存的官方JSON；P10／P20先前raw baseline→Core的79／143個bbox座標clamp另存summary的provenance欄，不視為模型改善。本mapper直接讀JSON、不新增clamp；五個確證失敗在P06／P11／P13，沒有依這兩篇的clamp作裁定。36篇逐篇表（含零來源表也不當PASS）另見 [summary.json](summary.json)。
+輸入沿R3/V3_B已保存的官方JSON；P10／P20先前raw baseline→Core的79／143個bbox座標clamp另存summary的provenance欄，不視為模型改善。本mapper直接讀JSON、不新增clamp；五個確證失敗在P06／P11／P13，沒有依這兩篇的clamp作裁定。36篇逐篇表（含零來源表也不當PASS）另見 `summary.json`。

@@ -4,7 +4,7 @@
 
 ## 1. 等價控制及 6 篇補跑
 
-Sentence-BERT（11 頁）與 P01（28 頁）控制均通過：只遞迴排除 `image` 欄位，DoclingDocument 其他每個值完全相同；Markdown 位元組完全相同；v3 的 metrics、anchors、candidates、pages 四份結果亦逐值相同。證據：[controls-equivalence.json](controls-equivalence.json)。通過後才執行補跑。
+Sentence-BERT（11 頁）與 P01（28 頁）控制均通過：只遞迴排除 `image` 欄位，DoclingDocument 其他每個值完全相同；Markdown 位元組完全相同；v3 的 metrics、anchors、candidates、pages 四份結果亦逐值相同。證據：`controls-equivalence.json`。通過後才執行補跑。
 
 | 論文 | 頁 | 結果 | 程序 wall 秒 | 峰值 RSS GiB | 重試 |
 | --- | --- | --- | --- | --- | --- |
@@ -36,7 +36,7 @@ Sentence-BERT（11 頁）與 P01（28 頁）控制均通過：只遞迴排除 `i
 | general arXiv | 2 | 24 | 0 | 2 | 0 | 0 |
 | general arXiv (article; template uncertain) | 3 | 89 | 1 | 2 | 0 | 6 |
 
-全部 36 篇表：[papers.md](papers.md)。逐候選頁圖、來源理由、輸出理由與共用根因：[adjudication/records.json](adjudication/records.json)、[adjudication/root-groups.json](adjudication/root-groups.json)；額外缺陷亦保留獨立來源。
+全部 36 篇表：[papers.md](papers.md)。逐候選頁圖、來源理由、輸出理由與共用根因：`adjudication/records.json`、`adjudication/root-groups.json`；額外缺陷亦保留獨立來源。
 
 `CLEAN_AFTER_ADJUDICATION` 僅表示所有自動候選都已裁定，且沒有已知阻擋；不是全文逐字驗收。Oracle 是稀疏 anchor：可信正文共 6097 個；長度、唯一性、LaTeX 清理與可對齊範圍仍有限，作者、表格／algorithm、部分 prompt、數學與短句會漏檢。Adam 的 text-layer fallback 還會把跨欄作者、標題與數學組成不實複合句。公式符號的純呈現攤平另列 F13；必要英文條件或對象遺失仍是 F01。
 
@@ -52,11 +52,11 @@ Adam 的部分 display／algorithm 數學確有空 formula 輸出；這些 fallb
 
 **colspan Markdown 重複。** SkillRL P05 p22–24 的 merged cell 在 native table 唯一；官方 serializer 按展開 grid 重複輸出。最小零推論樣本：native 唯一 1、grid 2、Markdown 2、HTML 1 並保留 colspan=2，確認是固定 Markdown 交付行為，歸 #81，沒有修改抽取器或 serializer。
 
-另外兩個實質根因不能被上面四類掩蓋。Adam p12 的英文 Definition 10.1、P16 p25 必要 task IDs 被 layout 標為 formula，官方 reading-order 將文字放入 orig 並清空 text，公式 enrichment 關閉時 Markdown 只剩 placeholder；原字仍可回收，但交付漏必要條件／對象。P10 p9／26、P20 p6／28／48 的部分舊圖中文字則已存在於 PDF 的不可見或裁切 text layer；`get_text_bounded` 的重疊框再次放大重複。P20 p6 的舊頁碼是獨立且位於 clipping rectangle 外的 glyph，漏進 orphan body，不是同一頁碼的 serializer 重複。p48 部分覆蓋機制仍未確定，不能把所有案例都稱為 clip 問題。見 [diagnostics/adam-p12-formula-role.md](diagnostics/adam-p12-formula-role.md)、[adjudication/recovery-helper/source-cell-origin.md](adjudication/recovery-helper/source-cell-origin.md)。
+另外兩個實質根因不能被上面四類掩蓋。Adam p12 的英文 Definition 10.1、P16 p25 必要 task IDs 被 layout 標為 formula，官方 reading-order 將文字放入 orig 並清空 text，公式 enrichment 關閉時 Markdown 只剩 placeholder；原字仍可回收，但交付漏必要條件／對象。P10 p9／26、P20 p6／28／48 的部分舊圖中文字則已存在於 PDF 的不可見或裁切 text layer；`get_text_bounded` 的重疊框再次放大重複。P20 p6 的舊頁碼是獨立且位於 clipping rectangle 外的 glyph，漏進 orphan body，不是同一頁碼的 serializer 重複。p48 部分覆蓋機制仍未確定，不能把所有案例都稱為 clip 問題。見 [diagnostics/adam-p12-formula-role.md](diagnostics/adam-p12-formula-role.md)、`adjudication/recovery-helper/source-cell-origin.md`。
 
 ## 4. 官方選項消融
 
-V1、V2 各 36 篇／715 頁，均使用影像關閉、完全相同凍結 oracle 與原版 v3 分析器。Egret 權重已在本機，使用官方 `LayoutObjectDetectionOptions.from_preset("layout_egret_medium")`，沒有下載模型；其餘 layout 設定與 baseline 逐值核對。模型檔與 preset 證據：[diagnostics/egret-medium-local.json](diagnostics/egret-medium-local.json)。
+V1、V2 各 36 篇／715 頁，均使用影像關閉、完全相同凍結 oracle 與原版 v3 分析器。Egret 權重已在本機，使用官方 `LayoutObjectDetectionOptions.from_preset("layout_egret_medium")`，沒有下載模型；其餘 layout 設定與 baseline 逐值核對。模型檔與 preset 證據：`diagnostics/egret-medium-local.json`。
 
 ### 自動候選與語意事件分開計數
 
@@ -90,13 +90,13 @@ V2 的自動候選刪除／新增為 **88／242**（69 個篇內頁），不是 
 
 **bookmark-only 修好 175、新壞 0**，剩下 79 個層級錯誤、33 個 structural heading 缺項、1 個 role error、2 個 ambiguous；另有 197 個 paragraph command 未被當 heading，已分開揭露，沒有當作正文遺失。按 family 的完整八組表：[heading/family-comparison.md](heading/family-comparison.md)。
 
-使用實際 S0 PyPdfium backend 的官方 PDFium outline extractor、`parsed_pages=None` 重評 36 篇，完整 JSON、level 與 Markdown 都與 B-only 原結果相同，確認可直接用官方 pipeline options 整合。載入 Core 會裁正 P10／P20 共 222 個 bbox 欄位；已在 heading 的 source→Core normalization 單獨記錄，stage 的「只改 level」比較起點是同一份 Core baseline。早期 240 份 stage artifact 未先清除不使用的 image metadata，後來只在本回合目錄移除 image，逐值證實其他欄位及 Markdown 不變；其餘 48 份從一開始就關閉 image。詳見 [heading/verification.json](heading/verification.json)、[heading/pdfium-integration/summary.json](heading/pdfium-integration/summary.json)。
+使用實際 S0 PyPdfium backend 的官方 PDFium outline extractor、`parsed_pages=None` 重評 36 篇，完整 JSON、level 與 Markdown 都與 B-only 原結果相同，確認可直接用官方 pipeline options 整合。載入 Core 會裁正 P10／P20 共 222 個 bbox 欄位；已在 heading 的 source→Core normalization 單獨記錄，stage 的「只改 level」比較起點是同一份 Core baseline。早期 240 份 stage artifact 未先清除不使用的 image metadata，後來只在本回合目錄移除 image，逐值證實其他欄位及 Markdown 不變；其餘 48 份從一開始就關閉 image。詳見 `heading/verification.json`、`heading/pdfium-integration/summary.json`。
 
-另對 Egret 的 36 份保存輸出評估 raw 與 B-only：raw 相對 Heron 是標題修好 0／新壞 1；Egret+B 相對 Egret raw 是 178／0，相對 Heron raw 是 178／1。其中多出的 3 件包含 missing／ambiguous 的匹配轉變，沒有當成額外的語意修復。B-only 不能彌補 Egret 引入的圖說／prompt 正文阻擋；其 1029 個 v3 候選與 Egret raw 逐值相同。見 [heading/V2-bookmarks/summary.json](heading/V2-bookmarks/summary.json)、[comparison/V2-Bonly-candidate-equivalence.json](comparison/V2-Bonly-candidate-equivalence.json)。
+另對 Egret 的 36 份保存輸出評估 raw 與 B-only：raw 相對 Heron 是標題修好 0／新壞 1；Egret+B 相對 Egret raw 是 178／0，相對 Heron raw 是 178／1。其中多出的 3 件包含 missing／ambiguous 的匹配轉變，沒有當成額外的語意修復。B-only 不能彌補 Egret 引入的圖說／prompt 正文阻擋；其 1029 個 v3 候選與 Egret raw 逐值相同。見 `heading/V2-bookmarks/summary.json`、`comparison/V2-Bonly-candidate-equivalence.json`。
 
 ## 5. 建議 Profile 與剩餘阻擋
 
-建議候選設定：[recommended-profile.json](recommended-profile.json)：Heron、separators=True、產圖 False／False，heading enabled=True、bookmarks=True、numbering=False、style=False，其他 baseline 值及所有 enrichment 關閉不變。這個組合的 B-only 後處理已在同一批保存輸出全量驗證，不需要重跑 conversion；凍結 v3 的正文候選亦完全不變。
+建議候選設定：`recommended-profile.json`：Heron、separators=True、產圖 False／False，heading enabled=True、bookmarks=True、numbering=False、style=False，其他 baseline 值及所有 enrichment 關閉不變。這個組合的 B-only 後處理已在同一批保存輸出全量驗證，不需要重跑 conversion；凍結 v3 的正文候選亦完全不變。
 
 V1 的作者收益伴隨 3 個新阻擋；V2 的 task ID／caption 收益也伴隨新正文錯接與 Markdown 遺失。這些結果不足以支持全域替換。沒有對個別文件設例外，沒有調數值參數。
 
@@ -113,8 +113,8 @@ V1 的作者收益伴隨 3 個新阻擋；V2 的 task ID／caption 收益也伴�
 | V1 | 36/36 | 715 | 986.6 | 3547.5 | 1.491/11.857 | 8.784 | 20.943 |
 | V2-official | 36/36 | 715 | 990.2 | 3552.2 | 1.497/13.165 | 8.543 | 20.515 |
 
-實際 80 次 conversion、1685 頁次；程序 wall 合計 2360.9 秒，已量測 conversion＋init CPU 8663.9 秒。每頁 service 為 stage service 時間；pipeline residence 含排隊／重疊，不能逐頁相加當全程 wall。RSS 是採樣的 process tree 峰值，不是單頁專用記憶體；完整每頁 residence、RSS、CPU 在 [resources.json](resources.json)。
+實際 80 次 conversion、1685 頁次；程序 wall 合計 2360.9 秒，已量測 conversion＋init CPU 8663.9 秒。每頁 service 為 stage service 時間；pipeline residence 含排隊／重疊，不能逐頁相加當全程 wall。RSS 是採樣的 process tree 峰值，不是單頁專用記憶體；完整每頁 residence、RSS、CPU 在 `resources.json`。
 
-保留兩個 harness 預檢錯誤：先有 2 筆 options 比較因 set 序列化順序而失敗；另有 36 筆 Egret factory init 因誤用 legacy model constant 而失敗。兩者都在 conversion／模型推論前發生，原日誌完整保留；修正型別／比較方式後才進行上表實際 conversion，沒有重試已開始 conversion 的論文。見 [preflight-correction.json](preflight-correction.json)、[v2-initialization-correction.json](v2-initialization-correction.json)。
+保留兩個 harness 預檢錯誤：先有 2 筆 options 比較因 set 序列化順序而失敗；另有 36 筆 Egret factory init 因誤用 legacy model constant 而失敗。兩者都在 conversion／模型推論前發生，原日誌完整保留；修正型別／比較方式後才進行上表實際 conversion，沒有重試已開始 conversion 的論文。見 `preflight-correction.json`、`v2-initialization-correction.json`。
 
 凍結 v3 SHA256：`915f598207a20e2ede942abedd12dd707e3d3620ff9748edb95e178c801176fa`；oracle seal SHA256：`17c02e47c9e11fabdeb996b2d7327d3326b45feff80baa3125218693cd518c4e`。原始分析器未改；所有新 runner、評分、裁定、設定、圖與報告均在本回合目錄。沒有 API／VLM、沒有新模型下載、沒有開 holdout、沒有碰 R1、沒有 commit／push／GitHub 留言。完成後停止，等待主線下一步。

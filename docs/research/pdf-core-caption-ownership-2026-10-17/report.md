@@ -32,9 +32,9 @@
 使用既有 Docling Core2.99.0 環境執行：
 
 ```sh
-rtk proxy /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-caption-ownership-2026-10-17/verify.py
+rtk proxy <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-caption-ownership-2026-10-17/verify.py
 ```
 
-[registration.json](registration.json) 記錄程式與所有 frozen direct-cell artifacts／共用 helper 的 SHA256；[verification.json](verification.json) 記錄執行後 hashes 與 assertions，前後一致。新輸出為明確標示 provisional 的 document／Markdown／bindings；舊 adapter、gate、實驗 artifacts、production 與 SDK 均未修改。沒有新套件、模型、API、來源 PDF、oracle 或 holdout 讀取。
+`registration.json` 記錄程式與所有 frozen direct-cell artifacts／共用 helper 的 SHA256；`verification.json` 記錄執行後 hashes 與 assertions，前後一致。新輸出為明確標示 provisional 的 document／Markdown／bindings；舊 adapter、gate、實驗 artifacts、production 與 SDK 均未修改。沒有新套件、模型、API、來源 PDF、oracle 或 holdout 讀取。
 
 **建議保留此 ownership 政策作下一個 bounded candidate 的接合規則；缺漏偵測與來源關係的驗證仍需另外量測。** 不值得加入全文字串 dedup、模糊比對或猜測 caption attachment。此結果只消除額外重複的接合行為，不改善 T04 的大量遺漏，也不改變 latency／accuracy 的候選取捨。

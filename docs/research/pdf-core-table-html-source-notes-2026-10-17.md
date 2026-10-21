@@ -6,7 +6,7 @@
 
 `DocumentConverter.convert_string(content, format=InputFormat.HTML)` 是公開入口，將字串包成 DocumentStream 後走正常 conversion。HTML backend 的 `parse_table_data` 直接建立公開 `TableData`／`TableCell`，承載文字、rowspan／colspan、offsets及header flags。因此可先驗「VLM回傳table HTML → 官方HTML backend → 公開Core表格 → stock Markdown」，不用另造一套完整cell座標協定。[Docling2.132 converter](https://github.com/docling-project/docling/blob/v2.132.0/docling/document_converter.py)、[HTML backend](https://github.com/docling-project/docling/blob/v2.132.0/docling/backend/html_backend.py)
 
-本機實際讀取位置為 `/private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/` 下上述檔案；公開網址供重查，未以未讀到的網頁內容增加主張。這是PDF主幹輸出後的研究接合，不是官方PDF pipeline內建API table stage。
+本機實際讀取位置為 `<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/` 下上述檔案；公開網址供重查，未以未讀到的網頁內容增加主張。這是PDF主幹輸出後的研究接合，不是官方PDF pipeline內建API table stage。
 
 研究主代理另已檢查此S0 runtime的 `importlib.find_spec('bs4')` 為False；因此目前不能稱HTML backend已可直接import／執行。本輪若獲准執行，需先在research runtime補齊必要 `format-html` 依賴、保存前後lock，再做零模型gate；不以自製parser繞過官方接點。此處只轉記已觀測的缺件，沒有新增import成功證據。
 
@@ -21,7 +21,7 @@
 
 ## 有界開發覆蓋
 
-依既有[凍結G1登錄](../fixtures/pdf-core-g1-2026-10-14/cases.json)，單頁表格可固定如下四頁；合計470個數值綁定、23項關鍵比較，逐表套原門檻，不以合併分母稀釋失敗。
+依既有凍結G1登錄 (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)，單頁表格可固定如下四頁；合計470個數值綁定、23項關鍵比較，逐表套原門檻，不以合併分母稀釋失敗。
 
 | 案例 | 來源頁 | 數值綁定 | 關鍵比較 |
 |---|---|---:|---:|
@@ -32,4 +32,4 @@
 
 T01／T02已登錄同版S0 baseline與144dpi圖，可核對hash後重用；其餘頁面不能未查證就稱為同版cached。各頁仍需處理全部native table targets，附帶表格不擴大以上oracle分母。
 
-完整五個G1邏輯表共七個來源頁；排除的G1-T03位於paper06 p27–29，另有264數值與7比較。現[mapper](pdf-core-table-delivery-2026-10-17/mapper.py)明確拒絕多頁provenance，故跨頁T03需要獨立gate，不能隱含在本輪HTML表示驗證中宣稱完成。
+完整五個G1邏輯表共七個來源頁；排除的G1-T03位於paper06 p27–29，另有264數值與7比較。現mapper (`pdf-core-table-delivery-2026-10-17/mapper.py`)明確拒絕多頁provenance，故跨頁T03需要獨立gate，不能隱含在本輪HTML表示驗證中宣稱完成。

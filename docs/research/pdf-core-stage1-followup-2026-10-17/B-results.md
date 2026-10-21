@@ -2,7 +2,7 @@
 
 日期：2026-10-17。**六次真實 API 呼叫已完成；精簡協定顯著減少本輪輸出用量，但完整表格交付未通過。保留元件候選，第三段完整配置仍未放行。**
 
-Matt review 後已修正評分器，使用同六筆保存回應完成離線重評；下表結論不變。最新機器報告為 [新版評分](B/rescore-v2/evaluation.json)與[交付／失敗診斷](B/rescore-v2/postrun-review.json)，原報告保留。
+Matt review 後已修正評分器，使用同六筆保存回應完成離線重評；下表結論不變。最新機器報告為 新版評分 (`B/rescore-v2/evaluation.json`)與交付／失敗診斷 (`B/rescore-v2/postrun-review.json`)，原報告保留。
 
 ## 方法與執行
 
@@ -59,11 +59,11 @@ T04 的 1／300 數值錯誤本身落在既有 5% 容忍內，沒有因此改成
 - `B/live-integrity.json`：方法核對、142 個歷史產物未變及 credential pattern scan。
 - `B/evaluation-correction.json`：保存評分器更正理由與舊報告。原候選與 oracle 均未變；T05 的 null header 須依其已宣告 spans 讀取，不能直接當作名為 None 的表頭；ref reindex 後以內容／來源 signature 核對保存，不能以舊 self_ref 判斷。
 
-本次修正關閉 [Matt review](../../reviews/pdf-core-b-script-review-2026-10-17/review.md) 的三項缺陷：T01 計入全部 panels、額外與重複數值及各 panel 表頭；T05 依 supplement 的明示 row-group 區間核對每列，不能從前一 section 默認延伸；paired cell 結構改檢查共同實體格與角色順序，數值錯誤另依既有 ≤5% 與關鍵比較門檻判定。`3.1 / 1.6 → 3.2 / 1.6` 的 1／80 錯誤可以通過；拆成兩格或反轉 Proposed／Accepted 順序仍失敗。舊的 literal-pair 精確比對只留作診斷。
+本次修正關閉 Matt review (`docs/reviews/pdf-core-b-script-review-2026-10-17/review.md`) 的三項缺陷：T01 計入全部 panels、額外與重複數值及各 panel 表頭；T05 依 supplement 的明示 row-group 區間核對每列，不能從前一 section 默認延伸；paired cell 結構改檢查共同實體格與角色順序，數值錯誤另依既有 ≤5% 與關鍵比較門檻判定。`3.1 / 1.6 → 3.2 / 1.6` 的 1／80 錯誤可以通過；拆成兩格或反轉 Proposed／Accepted 順序仍失敗。舊的 literal-pair 精確比對只留作診斷。
 
 複核亦補上 T02 重複 panel 的缺值比較處理，並核對實際 rendered section 標籤，避免 Markdown 的錯誤分組條件被正確 supplement 掩蓋。合法分拆普通表的 rows 至兩個 panels 仍可通過，沒有把多 panel 一律當錯誤。T04／T05 額外 panels 不再被忽略；目前不提供這兩種複雜表的一般多 panel 自動通過路徑，T04 完整 rendered 評分亦待後續方法成立後補齊。
 
-[測試紀錄](B/rescore-v2/test-log.txt)為 **35／35 通過**（13 evaluator、22 runner）；[完整性核對](B/rescore-v2/verification.json)確認 35 個 live 檔案、142 個歷史產物、frozen producer 與原報告未變。重評用量及時間沿用原六次，不是新推論；來源條件仍須人工 review，`content_pass` 不等於 ingest 時可自動證明完整 Canonical Acceptance。[修正後獨立複核](../../reviews/pdf-core-b-script-review-2026-10-17/fix-review.md)與 [diff](B/rescore-v2/changes.diff)另存。中途離線預檢報告亦保留在 `B/evaluator-archive/v2-precheck/`，不作最新結論。
+測試紀錄 (`B/rescore-v2/test-log.txt`)為 **35／35 通過**（13 evaluator、22 runner）；完整性核對 (`B/rescore-v2/verification.json`)確認 35 個 live 檔案、142 個歷史產物、frozen producer 與原報告未變。重評用量及時間沿用原六次，不是新推論；來源條件仍須人工 review，`content_pass` 不等於 ingest 時可自動證明完整 Canonical Acceptance。修正後獨立複核 (`docs/reviews/pdf-core-b-script-review-2026-10-17/fix-review.md`)與 diff (`B/rescore-v2/changes.diff`)另存。中途離線預檢報告亦保留在 `B/evaluator-archive/v2-precheck/`，不作最新結論。
 
 未讀 holdout、未做新本機模型推論、GPU／公司 Qwen3／vLLM 或高頻負載驗證；本次只有已曝光 DEV 的六次元件比較。完整配置與第三段仍未放行。
 

@@ -61,4 +61,4 @@ Paddle 的 crop 合併、跨頁表格／heading 重整，也不能當成通用�
 
 需要這次決定，是因為使用者已要求避免大量自訂後處理並維持 Paddle 暫停；維護私有接點是具體的整合取捨，不能默認成單純調 Docling 參數。本輪只提出可審查方案。**Paddle 建置／實際整合與推論維持暫停，原型也尚未執行。**
 
-[決策與來源核對紀錄](pdf-core-next-method-decision-2026-10-16/decision.json)保存待決狀態與證據身分。本輪不修改舊實驗結果、不建立新 session、不變更 production。
+決策與來源核對紀錄 (`pdf-core-next-method-decision-2026-10-16/decision.json`)保存待決狀態與證據身分。本輪不修改舊實驗結果、不建立新 session、不變更 production。

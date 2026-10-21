@@ -35,7 +35,7 @@ NVIDIA 建議最大輸入為 **寬1664×高2048**，最低建議1024×1280；其
 
 ## 現有 runtime 與 preflight
 
-只讀套件 metadata 得：`/private/tmp/pdf-core-g2-dots-mlx-20261016/venv` 有 docling-slim2.132.0/Core2.99.0/Parse7.22.3、pypdfium2 5.14.0、mlx-vlm0.7.8、mlx0.32.4、Transformers5.20.0、Torch2.14.0、NumPy2.5.4、Pillow12.3.0。`mlx_vlm/models/nemotron_parse/` 靜態存在（config/model/language/vision/processor）；已高於 Docling MLX 最低0.6.17，但**檔案存在不等於模型 load／Metal／prompt／版本組合相容**。不默默安裝或用 Transformers CPU fallback；preflight失敗就記錄未就緒。來源為上述安裝目錄的 dist-info metadata 與 Python 文字，不是 model import。
+只讀套件 metadata 得：`<tmp>/pdf-core-g2-dots-mlx-20261016/venv` 有 docling-slim2.132.0/Core2.99.0/Parse7.22.3、pypdfium2 5.14.0、mlx-vlm0.7.8、mlx0.32.4、Transformers5.20.0、Torch2.14.0、NumPy2.5.4、Pillow12.3.0。`mlx_vlm/models/nemotron_parse/` 靜態存在（config/model/language/vision/processor）；已高於 Docling MLX 最低0.6.17，但**檔案存在不等於模型 load／Metal／prompt／版本組合相容**。不默默安裝或用 Transformers CPU fallback；preflight失敗就記錄未就緒。來源為上述安裝目錄的 dist-info metadata 與 Python 文字，不是 model import。
 
 下一次執行前依序：固定 metadata／processor與tokenizer → 檢查一致的配置、版本及 Metal → 先用公開純 parser 跑固定保真／bbox控制（非模型成績）→ 一次既有開發頁 smoke → 同一設定完成指定開發頁。pure parser 若有內容損失，列為已知交付失敗；只要有效輸入與VLM raw可保存，仍完成有界辨識比較，不把此項或舊續接失敗變成模型全面veto。只有runtime／capture／輸入不能成立才停止C1。smoke算11頁之一，不重跑。processor handler 目前會使用 task prompt 作 decoder seed；轉換卡0.6.12「prompt ignored」敘述不能覆蓋現有0.7.8程式行為，需在 smoke記錄實際 prompt/control tokens；不改 handler。[MLX decoder seed 接線](https://github.com/Blaizzy/mlx-vlm/blob/v0.7.8/mlx_vlm/models/nemotron_parse/language.py#L264)
 

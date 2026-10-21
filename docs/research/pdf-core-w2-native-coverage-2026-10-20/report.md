@@ -6,7 +6,7 @@
 
 ## 1. Set F／Set P 凍結
 
-Set F：**16 篇、164 頁，八個版型 family 各兩篇**，每篇取前 min(12, 原 PDF 頁數)頁。固定版本 PDF／source URL、兩者 SHA256、source 模板行號、PDF 字元幾何與替換理由見 [最終 manifest](corpus/manifest.json) 與 [完整版本表](corpus/README.md)。所有 164 選頁都有 text layer；與來源模板、LaTeX／PDF 及欄位幾何共同確認為 born-digital，未對這些頁做 OCR 實驗。
+Set F：**16 篇、164 頁，八個版型 family 各兩篇**，每篇取前 min(12, 原 PDF 頁數)頁。固定版本 PDF／source URL、兩者 SHA256、source 模板行號、PDF 字元幾何與替換理由見 最終 manifest (`corpus/manifest.json`) 與 完整版本表 (`corpus/README.md`)。所有 164 選頁都有 text layer；與來源模板、LaTeX／PDF 及欄位幾何共同確認為 born-digital，未對這些頁做 OCR 實驗。
 
 | Family | 兩篇／選頁數 |
 |---|---|
@@ -23,15 +23,15 @@ Set F：**16 篇、164 頁，八個版型 family 各兩篇**，每篇取前 min(
 
 沒有只按論文會議名稱分類：LAS 的 arXiv 版本實為單欄、NCF 使用較舊 sig-alternate、SPP 已查版本不符合 LNCS 單欄，均在 conversion 前替換；Scaling Laws 的 nips 衍生樣式也換為一般 article。下載但未選定的候選保留作選擇紀錄，**不屬於 Set F**。
 
-Set P：[登錄清單](set-p.json) 為原 pilot **20 篇、551 頁**，全部 PDF SHA256 與既有 manifest 核對一致；本回合 Set P conversion = **0**。全量範圍合計 **715 頁**。
+Set P：登錄清單 (`set-p.json`) 為原 pilot **20 篇、551 頁**，全部 PDF SHA256 與既有 manifest 核對一致；本回合 Set P conversion = **0**。全量範圍合計 **715 頁**。
 
-最終 F／P 清單、metrics、初版 scorer／runner、兩頁獨立 reference、oracle 預檢及 F 原始 PDF／source 共 43 個檔案，在首個 Docling conversion 前記入 [freeze.json](freeze.json)。原先選樣 manifest-v1 是 conversion 前被替換的候選版本，沒有混入執行分母。
+最終 F／P 清單、metrics、初版 scorer／runner、兩頁獨立 reference、oracle 預檢及 F 原始 PDF／source 共 43 個檔案，在首個 Docling conversion 前記入 `freeze.json`。原先選樣 manifest-v1 是 conversion 前被替換的候選版本，沒有混入執行分母。
 
 ## 2. Oracle 預檢結果與使用規則
 
-Set P 正式抽查：SICA 2504.15228v2（單欄）、Alita 2505.20286v1（單欄）、Memory-R1 2508.19828v5（ACL 雙欄）。同版本 source 均下載成功；**18 個選定正文 anchor 的相對次序與 LaTeX 一致**。證據、source SHA256、定位 offset 與重現程式見 [Set P oracle](oracle/set-p-oracle.md)／[逐 anchor 結果](oracle/set-p-checks.json)。這不是整篇逐句核對。
+Set P 正式抽查：SICA 2504.15228v2（單欄）、Alita 2505.20286v1（單欄）、Memory-R1 2508.19828v5（ACL 雙欄）。同版本 source 均下載成功；**18 個選定正文 anchor 的相對次序與 LaTeX 一致**。證據、source SHA256、定位 offset 與重現程式見 [Set P oracle](oracle/set-p-oracle.md)／逐 anchor 結果 (`oracle/set-p-checks.json`)。這不是整篇逐句核對。
 
-Set F 抽查：BERT p2 的 **10 個正文段落／item、3 個標題**，及 Attention p2 的 **9 個正文段落、3 個標題**，PDFium 正文順序與 LaTeX 一致。Reference 獨立於 Docling 輸出建立；兩頁全部 PDFium 字流組分別有 69／47 組，被正文、標題與頁碼完整分配。詳見 [Set F oracle](corpus/oracle-precheck.md)。
+Set F 抽查：BERT p2 的 **10 個正文段落／item、3 個標題**，及 Attention p2 的 **9 個正文段落、3 個標題**，PDFium 正文順序與 LaTeX 一致。Reference 獨立於 Docling 輸出建立；兩頁全部 PDFium 字流組分別有 69／47 組，被正文、標題與頁碼完整分配。詳見 Set F oracle (`corpus/oracle-precheck.md`)。
 
 已確認的反例／限制：
 
@@ -55,13 +55,13 @@ Set F 抽查：BERT p2 的 **10 個正文段落／item、3 個標題**，及 Att
 - 每頁 wall、實際 process user+system CPU 秒、0.1 秒抽樣 process-tree peak RSS；initialization 與保存成本另列。
 - 每頁／每篇 Q4 四項 YES／NO／UNKNOWN，有原文與 item evidence；**零自動候選不等於語義通過**，沒有整體通過率。
 
-`score.py` 是凍結初版。試跑發現 Core 預設 iterator 排除 furniture layer，初版因此未見 Attention 頁碼。保留初版程式與 `metrics-v1.json`，另以 `score_v2.py` 明確讀取各 layer 及未遍歷文字，僅重評已保存輸出。指標定義與原始 conversion 未改、沒有重跑推論；原因與 hashes 見 [scorer-revision.json](scorer-revision.json)。新版控制涵蓋漏否定、改數值、重複、插欄、混段、註腳混入、標題及真實頁碼回歸。
+`score.py` 是凍結初版。試跑發現 Core 預設 iterator 排除 furniture layer，初版因此未見 Attention 頁碼。保留初版程式與 `metrics-v1.json`，另以 `score_v2.py` 明確讀取各 layer 及未遍歷文字，僅重評已保存輸出。指標定義與原始 conversion 未改、沒有重跑推論；原因與 hashes 見 `scorer-revision.json`。新版控制涵蓋漏否定、改數值、重複、插欄、混段、註腳混入、標題及真實頁碼回歸。
 
 此 runner **只支援凍結 smoke，沒有全量執行入口**。全量前還須將獨立正文 reference／oracle-uncertain 區域擴到所評頁面，並處理跨頁 occurrence 與逐頁時間歸屬；本次手工建立的兩頁 reference 不能冒充全量自動來源評讀器。
 
 ## 4. 兩篇試跑輸出樣本
 
-沿用指定 venv：Docling-slim 2.132.0／Core 2.99.0，StandardPdfPipeline＋PyPdfiumDocumentBackend，Heron revision `8f39ad3c0b4c58e9c2d2c84a38465abf757272d8`、既有 RapidOCR v6 small、TableFormer accurate、CPU4／interop1／batch1。全部 enrichment 關閉，effective options 與 S0 相同（停用 chart 的 supported-engines 集合僅 JSON 列表順序不同）。[有效設定](smoke/effective-options.json)、[版本](smoke/identity.json)、[模型檔 hashes](model-artifacts.json)。
+沿用指定 venv：Docling-slim 2.132.0／Core 2.99.0，StandardPdfPipeline＋PyPdfiumDocumentBackend，Heron revision `8f39ad3c0b4c58e9c2d2c84a38465abf757272d8`、既有 RapidOCR v6 small、TableFormer accurate、CPU4／interop1／batch1。全部 enrichment 關閉，effective options 與 S0 相同（停用 chart 的 supported-engines 集合僅 JSON 列表順序不同）。有效設定 (`smoke/effective-options.json`)、版本 (`smoke/identity.json`)、模型檔 hashes (`model-artifacts.json`)。
 
 保持 S0 的 `do_ocr=True` 與原生頁預設 mode，未開 full-page OCR、未做 OCR 消融。兩個來源頁無 bitmap；保存的 151／71 個 textline cells **from_ocr 全為 false**。此觀察不冒稱有 reader-call tracing。只執行 **2 次 conversion／2 頁、0 retry、0 API／VLM**，持有共用 conversion lock，未併發 Docling。
 
@@ -78,7 +78,7 @@ Set F 抽查：BERT p2 的 **10 個正文段落／item、3 個標題**，及 Att
 | conversion wall 秒／CPU 秒 | 0.5123／0.5001 | 0.2680／0.3941 |
 | conversion 期間 sampled peak tree RSS | 1.434 GiB | 1.437 GiB |
 
-原始輸出：[BERT metrics](smoke/acl_bert/metrics.json)／[Markdown](smoke/acl_bert/document.md)，[Attention metrics](smoke/nips_attention/metrics.json)／[Markdown](smoke/nips_attention/document.md)。機讀彙整：[smoke-summary.json](smoke-summary.json)。
+原始輸出：BERT metrics (`smoke/acl_bert/metrics.json`)／Markdown (`smoke/acl_bert/document.md`)，Attention metrics (`smoke/nips_attention/metrics.json`)／Markdown (`smoke/nips_attention/document.md`)。機讀彙整：`smoke-summary.json`。
 
 人工整頁評讀：[Q4 review](oracle/smoke-q4-review.md)。BERT p2 可見正文未見改義漏／重／錯序／清單污染，但 `2.1`、`2.2` 來源應 level 2，native document JSON 全輸出 level 1、Markdown 都是 `##`。編號仍在，故「結構錯誤」確定，是否構成此用途的改義須主線裁定，不能報全面通過。
 
@@ -117,6 +117,6 @@ Attention 頁碼雖由 `body.children` 可達，`content_layer=furniture`；只�
 3. **嚴格會議資格與 source 條件**：ACL family 目前包含 NAACL BERT；Adam 無 editable body LaTeX。若要求確切 ACL/EMNLP 會議各樣本或全部可用 LaTeX，須另定語料版本；不能默默改本次凍結集合。
 4. **全量資源預算**：上述時間是乾淨正文條件估算；圖表／長篇與評讀成本未測，是否給全量及其資源停止界線由 Claude 決定。本回合不追加測頁，也不自行花剩餘 90 分鐘預算進入全量。
 
-重現僅評讀：`rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python docs/research/pdf-core-w2-native-coverage-2026-10-20/score_v2.py --selfcheck`；`--job acl_bert`／`--job nips_attention` 只重評保存輸出、不推論。`run.py --smoke` 會拒絕覆寫既有 run，沒有隱性重試或全量入口。
+重現僅評讀：`rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python docs/research/pdf-core-w2-native-coverage-2026-10-20/score_v2.py --selfcheck`；`--job acl_bert`／`--job nips_attention` 只重評保存輸出、不推論。`run.py --smoke` 會拒絕覆寫既有 run，沒有隱性重試或全量入口。
 
 未檢查：全量 715 頁、跨頁接合、真實 caption／footnote 分離與下游消費。已知風險是把零字面差異誤當 Q4 通過，以及乾淨單頁成本誤當完整原生論文上限；工作在本檢查點停止。

@@ -65,4 +65,4 @@ GLM-OCR／LightOnOCR 留作較後的內容／latency 比較；若沒有獨立需
 
 ## 可重查的本機來源
 
-本次只讀根目錄：`/private/tmp/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/docling/`。以上 GitHub 固定版路徑對應同名檔案。重要接點為 `document_converter.py`、`document_extractor.py`、`datamodel/pipeline_options.py`、`datamodel/stage_model_specs.py`、`pipeline/vlm_pipeline.py`、`pipeline/base_pipeline.py` 與 `utils/paddleocr_vl_utils.py`。未以 import 方式建立 pipeline 或觸發任何模型初始化。
+本次只讀根目錄：`<tmp>/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/docling/`。以上 GitHub 固定版路徑對應同名檔案。重要接點為 `document_converter.py`、`document_extractor.py`、`datamodel/pipeline_options.py`、`datamodel/stage_model_specs.py`、`pipeline/vlm_pipeline.py`、`pipeline/base_pipeline.py` 與 `utils/paddleocr_vl_utils.py`。未以 import 方式建立 pipeline 或觸發任何模型初始化。

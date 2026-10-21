@@ -10,7 +10,7 @@ hash and live ONNX CPU sessions; `method.json` retains complete options and
 package/model hashes.
 
 The installed Docling 2.102.0 primary source
-[`rapid_ocr_model.py`](../../../prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/docling/models/stages/ocr/rapid_ocr_model.py)
+`rapid_ocr_model.py` (`docs/prototypes/pdf-checkpoint-prototype/.venv/lib/python3.12/site-packages/docling/models/stages/ocr/rapid_ocr_model.py`)
 resolves any language list containing `en` or `english` to `english` (lines
 83–92). This means `["en", "zh-tw"]` is not a bilingual model selection.
 However, in its constructor the selected model-set paths are only applied when

@@ -6,9 +6,9 @@
 
 保留 **StandardPdfPipeline + PyPdfiumDocumentBackend、Heron、use_reading_order_separators=True、官方 bookmark-only heading**。Heron revision `8f39ad3c0b4c58e9c2d2c84a38465abf757272d8`；heading `enabled=True/use_bookmarks=True/use_numbering=False/use_style=False`，其餘數值沿用官方預設。未改動的 `use_font_style=True` 在 `use_style=False` 的關閉規則下不啟用 style heuristic。CPU4、batch1、TableFormer accurate/cell matching 與 RapidOCR v6 small 均沿用 S0；`do_ocr=True` 亦原樣保留，未另做掃描或 OCR 消融。公式、code、picture description/classification、chart 等 enrichment 及遠端服務全部關閉。套件固定 docling-slim 2.132.0／docling-core 2.99.0，沒有下載模型或安裝套件。
 
-V1（separators=False）、V2（Egret）維持不採用。V4 官方預設 ThreadedDoclingParseDocumentBackend 雖完整修好原 26 件中的 **5 件**，但新增 **6 組**經頁圖確認的阻擋，故依「零新增阻擋且至少修好一件」規則 **不採用**。不以機器 anchor 找到率上升取代語義裁定。詳見 [V4 報告](report.md)、[逐事件／135 變動候選裁定](comparison/V4-adjudicated.json)。這是已測官方選項中全域採用的取捨，並非宣稱其他官方版本永遠無解。
+V1（separators=False）、V2（Egret）維持不採用。V4 官方預設 ThreadedDoclingParseDocumentBackend 雖完整修好原 26 件中的 **5 件**，但新增 **6 組**經頁圖確認的阻擋，故依「零新增阻擋且至少修好一件」規則 **不採用**。不以機器 anchor 找到率上升取代語義裁定。詳見 [V4 報告](report.md)、逐事件／135 變動候選裁定 (`comparison/V4-adjudicated.json`)。這是已測官方選項中全域採用的取捨，並非宣稱其他官方版本永遠無解。
 
-**研究時 generate_page_images=False、generate_picture_images=False 只為記憶體安全。正式 Profile 必須開啟這兩項影像輸出，供 F06 使用；記憶體由正式 core 的 group5 分組處理。** 本研究不實作 group5。R3 兩篇影像開關等價控制僅證明該控制樣本的文字、label、結構、閱讀順序、Markdown 與評分未變，不證明圖片功能等價、全語料峰值記憶體相同，亦不是 V4 backend 等價控制。[繼承控制的來源與範圍](controls-equivalence.json)。[effective options](selected-effective-options.json) 是 V4 研究執行的設定；選定 Profile 使用相同 S0/options 組合但 backend 保留 PyPdfium，正式兩項影像開關恢復 True。
+**研究時 generate_page_images=False、generate_picture_images=False 只為記憶體安全。正式 Profile 必須開啟這兩項影像輸出，供 F06 使用；記憶體由正式 core 的 group5 分組處理。** 本研究不實作 group5。R3 兩篇影像開關等價控制僅證明該控制樣本的文字、label、結構、閱讀順序、Markdown 與評分未變，不證明圖片功能等價、全語料峰值記憶體相同，亦不是 V4 backend 等價控制。繼承控制的來源與範圍 (`controls-equivalence.json`)。effective options (`selected-effective-options.json`) 是 V4 研究執行的設定；選定 Profile 使用相同 S0/options 組合但 backend 保留 PyPdfium，正式兩項影像開關恢復 True。
 
 ## F03：bookmark-only 的覆蓋範圍
 
@@ -21,7 +21,7 @@ V1（separators=False）、V2（Egret）維持不採用。V4 官方預設 Thread
 
 無 outline 清單：F-acl_bert, F-acl_sbert, F-cvpr_resnet, F-cvpr_yolo, F-icml_imagetransformer, F-icml_efficientnet, F-iclr_adam, F-lncs_deeplab, P-18-2511.16043v1, P-19-2511.10395v1。Adam 沒有可評結構標題，不能當全對；有 outline 的 Matrix Calculus 亦無可評結構標題。層級錯分布於 14 篇；strict missing 分布 9 篇，role error 1 篇，ambiguous 2 篇，這些篇數可重疊。缺 outline 的 9 篇可評文件全部仍有層級不符。
 
-79 個 level error 包含可能的全篇一致層級偏移，33 個 strict missing 只是凍結唯一匹配規則未對上，不能直接改稱必要文字真漏或 Q4 改義。此處如實列 F03 結構缺口；**沒有把 19 篇有標題候選當成 19 篇 Q4 阻擋，也沒有宣稱其他文件 F03 全文驗收通過**。另有 197 個 paragraph/subparagraph 命令不在此結構分母，與正文是否漏失不同。完整逐篇與定義見 [heading-outline.md](heading-outline.md)、[heading-outline.json](heading-outline.json)。#83 qualification 應保留這項限制；自訂 numbering/style 後處理只能列為可選方案，沒有實作或授權為 Profile。
+79 個 level error 包含可能的全篇一致層級偏移，33 個 strict missing 只是凍結唯一匹配規則未對上，不能直接改稱必要文字真漏或 Q4 改義。此處如實列 F03 結構缺口；**沒有把 19 篇有標題候選當成 19 篇 Q4 阻擋，也沒有宣稱其他文件 F03 全文驗收通過**。另有 197 個 paragraph/subparagraph 命令不在此結構分母，與正文是否漏失不同。完整逐篇與定義見 [heading-outline.md](heading-outline.md)、`heading-outline.json`。#83 qualification 應保留這項限制；自訂 numbering/style 後處理只能列為可選方案，沒有實作或授權為 Profile。
 
 ## 已知阻擋與根因去向
 
@@ -36,7 +36,7 @@ V1（separators=False）、V2（Egret）維持不採用。V4 官方預設 Thread
 | picture children 已有原生文字但出口省略 | 1 | 1 | 1 | NeurIPS/ICLR 1篇/1頁 | #81 |
 | Markdown colspan 展開重複 | 1 | 1 | 3 | NeurIPS/ICLR 1篇/3頁 | #81 |
 
-其中 #81 為 4 件／4 篇／6 頁的出口映射可修證據；#83 為 27 件／11 篇／34 頁，尚無已證實可全域安全採用的官方方案。後者部分事件在拒採的 V1/V2/V4 個別改善或修好，但不能將有新增阻擋的變體當正式解法。native duplication/noise 這一類不全是同一 clipping 機制：部分來源 PDF 有舊／隱藏字流，PyPdfium 合併 bbox 再取字會放大重複；p48 等未完整證明 clipping 根因。重複已在原生 orig／cells，不能全歸給 Markdown serializer。stage 與逐頁證據沿用 R3，加上 [backend 原始碼／五處核對](diagnostics/backend-notes.md)、[新增既有 caption 證據](comparison/newly-discovered-baseline.json)。
+其中 #81 為 4 件／4 篇／6 頁的出口映射可修證據；#83 為 27 件／11 篇／34 頁，尚無已證實可全域安全採用的官方方案。後者部分事件在拒採的 V1/V2/V4 個別改善或修好，但不能將有新增阻擋的變體當正式解法。native duplication/noise 這一類不全是同一 clipping 機制：部分來源 PDF 有舊／隱藏字流，PyPdfium 合併 bbox 再取字會放大重複；p48 等未完整證明 clipping 根因。重複已在原生 orig／cells，不能全歸給 Markdown serializer。stage 與逐頁證據沿用 R3，加上 [backend 原始碼／五處核對](diagnostics/backend-notes.md)、新增既有 caption 證據 (`comparison/newly-discovered-baseline.json`)。
 
 可選自訂方案僅供使用者裁定：float/caption 邊界後處理、跨頁句子保留可追溯續接、頁外／clipping 文字過濾與兩欄順序校正。這些都涉及刪字／重排風險，W2 沒有實作，也不把它們當作已解限制。標題 heuristic 的無退化組合只有本次選定 bookmark-only；不加單篇例外或數值調參。
 
@@ -53,11 +53,11 @@ V1（separators=False）、V2（Egret）維持不採用。V4 官方預設 Thread
 | general arXiv | 2 | 24 | 0 | 2 | 0 | 0 |
 | general arXiv (article; template uncertain) | 3 | 89 | 1 | 2 | 0 | 11 |
 
-Pilot 的 family 使用 R3 已保存的來源／模板判定；Pilot-other/unknown 與 general arXiv（article; template uncertain）明保留不確定性，不硬歸到八個受控 family。[逐篇清單、每類事件與頁](selected-limitations.json) 保存全部 36 篇。
+Pilot 的 family 使用 R3 已保存的來源／模板判定；Pilot-other/unknown 與 general arXiv（article; template uncertain）明保留不確定性，不硬歸到八個受控 family。逐篇清單、每類事件與頁 (`selected-limitations.json`) 保存全部 36 篇。
 
 ## #81 交接：最小匯出原型的證據與邊界
 
-只讀原始 DoclingDocument JSON、零推論，全部 36 篇已套用：[原型與結果](mapper/README.md)、[四案逐 item 證據](mapper/four-case-evidence.json)。產生自訂 mapped.json 及可表達 span／uncertainty 的 MD(raw HTML)/HTML，沒有修改正式 mapper 或原 DoclingDocument。
+只讀原始 DoclingDocument JSON、零推論，全部 36 篇已套用：[原型與結果](mapper/README.md)、四案逐 item 證據 (`mapper/four-case-evidence.json`)。產生自訂 mapped.json 及可表達 span／uncertainty 的 MD(raw HTML)/HTML，沒有修改正式 mapper 或原 DoclingDocument。
 
 |規則|代表事件與可回收資訊|已驗證的修復範圍|
 |---|---|---|
@@ -79,6 +79,6 @@ oracle 為凍結整篇 LaTeX prose anchors（含附錄），caption/footnote 分
 
 ## 稽核與完成範圍
 
-V4 36/715 全成功、單一逐篇 CPU4 worker、零重試、12 GiB RSS／主機可用 4 GiB 守門；pipeline wall 845.98 秒，conversion CPU 3013.78 秒（另初始化 CPU 49.59 秒），峰值 10.99 GiB，取樣最低主機可用 20.29 GiB。[resources.json](resources.json)。36 份 PDF、44 個 frozen oracle 檔案、v3 分析器與註冊 runner/backend source hash 檢查 PASS；[verification.json](verification.json)。只把 dormant supported_engines 集合序列化順序正規化，未忽略有效設定值。
+V4 36/715 全成功、單一逐篇 CPU4 worker、零重試、12 GiB RSS／主機可用 4 GiB 守門；pipeline wall 845.98 秒，conversion CPU 3013.78 秒（另初始化 CPU 49.59 秒），峰值 10.99 GiB，取樣最低主機可用 20.29 GiB。`resources.json`。36 份 PDF、44 個 frozen oracle 檔案、v3 分析器與註冊 runner/backend source hash 檢查 PASS；`verification.json`。只把 dormant supported_engines 集合序列化順序正規化，未忽略有效設定值。
 
 所有產物只在本 round4 新目錄；沒有開 holdout、碰 R1、下載模型、API/VLM、commit、push 或 GitHub 留言。W2 在此停止，W3 與 #81/#83 依上述證據接手；正式交付與任何自訂後處理由使用者裁定。

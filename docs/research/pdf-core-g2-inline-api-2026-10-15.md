@@ -6,7 +6,7 @@
 
 ## 固定輸入與實際方法
 
-[輸入 manifest](pdf-core-g2-inline-api-2026-10-15/inputs/input-manifest.json) SHA256 `c87899f88b96553f9dc856d020adafdea7281938b00fb121a5f358b6a1a75f0d` 引用前輪 **17 張完整 item PNG／19 個 fragments**，以及前輪官方 CPU engine 收到的 **5 張整頁 PNG**。全部 bytes 與尺寸相同，沒有重新裁圖、放大或使用 oracle bbox。所有來源為固定版本公開論文及原創 synthetic controls。完整保留前輪 28 個普通 items 的 gate inventory；這輪沒有新增 inline detector，也未提高其 coverage 證據範圍。[準備與來源限制](pdf-core-g2-inline-api-2026-10-15/inputs/README.md)
+輸入 manifest (`pdf-core-g2-inline-api-2026-10-15/inputs/input-manifest.json`) SHA256 `c87899f88b96553f9dc856d020adafdea7281938b00fb121a5f358b6a1a75f0d` 引用前輪 **17 張完整 item PNG／19 個 fragments**，以及前輪官方 CPU engine 收到的 **5 張整頁 PNG**。全部 bytes 與尺寸相同，沒有重新裁圖、放大或使用 oracle bbox。所有來源為固定版本公開論文及原創 synthetic controls。完整保留前輪 28 個普通 items 的 gate inventory；這輪沒有新增 inline detector，也未提高其 coverage 證據範圍。[準備與來源限制](pdf-core-g2-inline-api-2026-10-15/inputs/README.md)
 
 模型只讀 image 與共用任務 prompt／schema，不讀 producer 原文、正確公式、案例答案或 evaluator。SEAL E13 跨頁段落沿用已由 historical continuation-v3 合成的一個 provider item，模型輸入是兩頁來源 fragments 的拼圖；本輪成功不能冒稱新解決自動跨頁發現。
 
@@ -18,7 +18,7 @@
 | Token cap | 段落 4096、整頁 8192 completion tokens，包含 reasoning；不能等同前輪本機 generated-token cap |
 | 執行路徑 | 兩種輸入都重用既有安全 HTTP client，屬 direct API component；**沒有執行官方 API `VlmPipeline`**，也沒有把 JSON 冒充 DocTags／DoclingDocument |
 
-選擇 JSON segments 是為了直接保留 prose 與重建片段的順序，便於檢查和產生候選 Markdown。與前輪 default DocTags prompt 的差異也包含 schema、prompt、reasoning 及 provider image 處理；same PNG 只能固定送出的視覺輸入，**不是單一 model 因果排名**。Schema 正確不保證內容正確。[本輪 source audit](pdf-core-g2-inline-api-2026-10-15/api-primary.md)／[runner](pdf-core-g2-inline-api-2026-10-15/api/run.py)
+選擇 JSON segments 是為了直接保留 prose 與重建片段的順序，便於檢查和產生候選 Markdown。與前輪 default DocTags prompt 的差異也包含 schema、prompt、reasoning 及 provider image 處理；same PNG 只能固定送出的視覺輸入，**不是單一 model 因果排名**。Schema 正確不保證內容正確。[本輪 source audit](pdf-core-g2-inline-api-2026-10-15/api-primary.md)／runner (`pdf-core-g2-inline-api-2026-10-15/api/run.py`)
 
 官方 API engine 的 source audit 發現安裝版會注入 temperature，而本輪 low reasoning 應省略它；該 helper 另會重編影像、strip content、縮減 response 與映射錯誤。這些留給具名 transport／parser 整合驗證，沒有悄悄修改官方套件或另增不同 reasoning 設定來混算。模型的 image input 與 Structured Outputs 支援已核對[官方模型頁](https://developers.openai.com/api/docs/models/gpt-6-luna)及[官方 API guide](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=chat)，本輪真正可用性則由保存的 responses 證明。
 
@@ -37,7 +37,7 @@ F13 明定所有必要行內公式須交付 LaTeX，不能只以普通文字保�
 
 其他選中 items 也保留失敗：SEAL32 把 `LM_{theta'}` 讀成 `L_{M_{theta'}}`，並產生額外 prose `}`；不能因 E14／E13 成功就批准全部候選。模型回傳的 uncertainty 為空也不證明沒有錯誤。完整原始 responses、解析結果與獨立來源判斷分別保存，沒有用 evaluator 答案修補輸出。
 
-[獨立 review 說明](pdf-core-g2-inline-api-2026-10-15/review/output-review.md)及[機器結果](pdf-core-g2-inline-api-2026-10-15/review/output-review.json)記錄這些來源差異、22 個 in-memory 負例及完整 parsed／reinsertion 核對。E14／E13 的 pass 僅限其固定案例與方法，沒有批准其他 items。
+[獨立 review 說明](pdf-core-g2-inline-api-2026-10-15/review/output-review.md)及機器結果 (`pdf-core-g2-inline-api-2026-10-15/review/output-review.json`)記錄這些來源差異、22 個 in-memory 負例及完整 parsed／reinsertion 核對。E14／E13 的 pass 僅限其固定案例與方法，沒有批准其他 items。
 
 ## Provider 邊界、解析與回填
 
@@ -48,7 +48,7 @@ F13 明定所有必要行內公式須交付 LaTeX，不能只以普通文字保�
 
 本地 postprocessor 驗證 JSON／segments／bbox，產生獨立 Markdown 與補充片段資料，並沿用 exact provider item／document／neighbor hashes、完整 charspan、one compatible block、重複 prose 及 scope 外不變等 guard。原 provider 不變；hidden picture children 的公式亦不能只換 child 便宣稱已交付到主 Markdown。模型輸出、postprocess、候選替換與語義核對是分開的證據。
 
-22 筆皆完成本地 contract validation／render。17 個段落候選中 **11 筆結構套用、6 筆保留原文**：SEAL34 的多 blocks、3 個 hidden formula children，以及 controls 註解／inline code 與原 provider 的 block role 不一致。Role disagreement 需回到來源與 mapper 判斷，不能一律當成模型內容辨識失敗。保留全部原 blocks／uncertainties，不挑第一塊、不補答案、不靜默改 source graph。[解析摘要](pdf-core-g2-inline-api-2026-10-15/parsed/summary.json)／[回填摘要](pdf-core-g2-inline-api-2026-10-15/reinsertion/summary.json)
+22 筆皆完成本地 contract validation／render。17 個段落候選中 **11 筆結構套用、6 筆保留原文**：SEAL34 的多 blocks、3 個 hidden formula children，以及 controls 註解／inline code 與原 provider 的 block role 不一致。Role disagreement 需回到來源與 mapper 判斷，不能一律當成模型內容辨識失敗。保留全部原 blocks／uncertainties，不挑第一塊、不補答案、不靜默改 source graph。解析摘要 (`pdf-core-g2-inline-api-2026-10-15/parsed/summary.json`)／回填摘要 (`pdf-core-g2-inline-api-2026-10-15/reinsertion/summary.json`)
 
 來源定位保留 physical p21／51／3／4／1 與既有 fragment transforms。API bbox 是推論出的 image-pixel 區域，幾何投影與輸出 segment offsets 不代表 glyph 測量或正確的語義對齊；拼圖跨頁的單一 block 必須保留多個原來源 fragments。沒有用 page-1／crop-local box 冒充原 PDF 座標。
 
@@ -69,4 +69,4 @@ F13 明定所有必要行內公式須交付 LaTeX，不能只以普通文字保�
 
 未驗證公司 GPU／vLLM、高頻負載、完整 corpus、官方 API pipeline、正式 Canonical mapper 或恢復。暫用 hosted 成功不能替代地端開源部署條件，結構回填亦不能代替語義 Acceptance。
 
-[整體驗證](pdf-core-g2-inline-api-2026-10-15/validation.json)／[artifact manifest](pdf-core-g2-inline-api-2026-10-15/artifacts.json)核對本輪證據、前八輪 1,517 個 payload、source hashes、local links 及 credential pattern；[API 檢查](pdf-core-g2-inline-api-2026-10-15/api/verification.json)與[回填檢查](pdf-core-g2-inline-api-2026-10-15/reinsertion/verification.json)分別保留其實際範圍。完整證據留在本機，GitHub 僅回寫[結論摘要](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6192058531)與正文指標；[逐字 readback](pdf-core-g2-inline-api-2026-10-15/ticket-update.json)確認 44 個 feature rows 不變、issue 保持 OPEN。
+整體驗證 (`pdf-core-g2-inline-api-2026-10-15/validation.json`)／artifact manifest (`pdf-core-g2-inline-api-2026-10-15/artifacts.json`)核對本輪證據、前八輪 1,517 個 payload、source hashes、local links 及 credential pattern；API 檢查 (`pdf-core-g2-inline-api-2026-10-15/api/verification.json`)與回填檢查 (`pdf-core-g2-inline-api-2026-10-15/reinsertion/verification.json`)分別保留其實際範圍。完整證據留在本機，GitHub 僅回寫[結論摘要](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6192058531)與正文指標；逐字 readback (`pdf-core-g2-inline-api-2026-10-15/ticket-update.json`)確認 44 個 feature rows 不變、issue 保持 OPEN。

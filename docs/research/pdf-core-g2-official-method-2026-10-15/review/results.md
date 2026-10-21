@@ -1,6 +1,6 @@
 # 官方逐頁 API 方法：獨立來源核對
 
-8 次新推論與 4 份官方組裝文件完成後，逐項核對凍結的 41 個 selected logical units。來源真值來自新推論前的 [contract.json](contract.json)，結果與逐項證據見 [results.json](results.json)。沒有重跑、修改 prompt、猜補答案、讀取 holdout 或改寫上一輪評分。
+8 次新推論與 4 份官方組裝文件完成後，逐項核對凍結的 41 個 selected logical units。來源真值來自新推論前的 `contract.json`，結果與逐項證據見 `results.json`。沒有重跑、修改 prompt、猜補答案、讀取 holdout 或改寫上一輪評分。
 
 **此候選不整體採用。** 41 項都找到輸出，但必要行內 LaTeX、跨頁段落、code 保真與來源位置仍有缺口。官方 parser 能接受輸出，不代表符合產品交付要求。
 
@@ -40,6 +40,6 @@ F13 完整 expression／presentation 子項為 4／18：這是逐來源單位的
 
 唯一 `[REDACTED]` 出現在 SEAL p2、41 項以外的 Synthetic Data Generation 段落。既有保密 regex 誤把普通 `task-specific` 的 `sk-specific` 部分視為金鑰格式；官方 parsed document 仍保留實際原字串。這是保存證據邊界的 false positive，沒有列為模型錯誤，也沒有從 parsed 文件回補 raw 檔案。
 
-驗證方式：執行 [assess.py](assess.py) 核對凍結契約、41 個映射、逐項頁面、所有輸出 SHA256、四個正例與關鍵內容觀察。原始 contracts、模型輸出與上一輪 25／5／6 評分不變。
+驗證方式：執行 `assess.py` 核對凍結契約、41 個映射、逐項頁面、所有輸出 SHA256、四個正例與關鍵內容觀察。原始 contracts、模型輸出與上一輪 25／5／6 評分不變。
 
 此結果僅覆蓋已曝光固定 8 頁的 41 個 selected units，不代表全部頁面內容或所有文件型態。公司 Qwen3／GPU、高頻負載與 holdout 尚未驗證；不以等待公司資訊作為這一輪暫用模型比較的停止理由。

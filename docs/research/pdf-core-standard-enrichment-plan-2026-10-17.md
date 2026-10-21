@@ -51,7 +51,7 @@
 
 ## 固定評分、證據與停止條件
 
-評讀沿用原[41 項來源契約](pdf-core-g2-official-method-2026-10-15/review/contract.json)，全部仍是已曝光的開發／回歸資料，沒有新泛化主張。
+評讀沿用原41 項來源契約 (`pdf-core-g2-official-method-2026-10-15/review/contract.json`)，全部仍是已曝光的開發／回歸資料，沒有新泛化主張。
 
 | 問題 | 驗證方式 |
 |---|---|

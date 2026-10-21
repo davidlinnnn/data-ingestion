@@ -1,6 +1,6 @@
 # 單一 Standard 配置：元件選擇與證據界線
 
-2026-10-16。這是 Step 1 的既有證據整理，**不是一次新實驗、已合格配置或新推論授權**。結論沿用 [retro 收斂](../../reviews/pdf-core-retro-closure-2026-10-16.md)：保留一組具名 Standard 基底，但現有元件不能拼接成已滿足所有必含需求的結果。PaddleOCR-VL 建置、整合及新推論維持暫停。
+2026-10-16。這是 Step 1 的既有證據整理，**不是一次新實驗、已合格配置或新推論授權**。結論沿用 retro 收斂 (`docs/reviews/pdf-core-retro-closure-2026-10-16.md`)：保留一組具名 Standard 基底，但現有元件不能拼接成已滿足所有必含需求的結果。PaddleOCR-VL 建置、整合及新推論維持暫停。
 
 本文只負責 layout、table、OCR、圖片分類與 heading；公式／code／圖意等完整配置由本資料夾主文件決定。沒有讀取封存 holdout、執行模型、安裝套件、下載模型或修改既有證據。
 
@@ -35,7 +35,7 @@ RapidOCR 其餘選項沿用已保存的 `producer.json`（preprocess、detector 
 | `ch_ppocr_mobile_v2.0_cls_mobile.onnx` | `e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c` |
 | embedded dictionary，UTF-8 newline joined 18,708 characters | `f7aa897ca828a4c7c9e2739c30f9161a33306d532f020bcdb91dcfb664a5507e` |
 
-Figure classifier 的 revision、weight bytes／hash 以既有 [download.json](../pdf-core-g2-images-2026-10-14/classifier/download.json) 為準；本輪不另建立第二套 model manifest。其餘模型資產含 config／preprocessor 身分見原始 [Standard method](../pdf-core-g2-local-cpu-2026-10-14/runs/skillopt-p8/method.json) 與 [凍結模型／來源清單](../pdf-core-g2-orientation-2026-10-15/baseline/frozen-inputs.json)。
+Figure classifier 的 revision、weight bytes／hash 以既有 download.json (`docs/research/pdf-core-g2-images-2026-10-14/classifier/download.json`) 為準；本輪不另建立第二套 model manifest。其餘模型資產含 config／preprocessor 身分見原始 Standard method (`docs/research/pdf-core-g2-local-cpu-2026-10-14/runs/skillopt-p8/method.json`) 與 凍結模型／來源清單 (`docs/research/pdf-core-g2-orientation-2026-10-15/baseline/frozen-inputs.json`)。
 
 四方向需求另外保留既有 `PP-LCNet_x1_0_doc_ori_onnx@7330ab7039123e46af2dc03154b9969aa412c61d` 的 adapter 證據（weight SHA `af9a0a4f317ff0709ce752067807f819cb15d883f8ecad89f28df1c6ee2d9c92`，不是 PaddleOCR-VL 候選）。它不是 stock Standard 頁面方向 stage。現有實驗僅證明四個受控 raster 變體方向正確與來源逆映射；整合需明確限制掃描頁與 derivative identity，不能為了方向把所有 native／mixed 頁 rasterize。**此頁面路由與全文件組合尚未證明，因此不把四方向標成提案已完整可執行。**
 
@@ -43,16 +43,16 @@ Figure classifier 的 revision、weight bytes／hash 以既有 [download.json](.
 
 | 證據 | 實際版本／執行單位 | 對此提案能支持什麼 |
 |---|---|---|
-| [第一輪](../pdf-core-g2-local-cpu-2026-10-14.md)／[原始 table review](../pdf-core-g2-local-cpu-2026-10-14/table-review.json) | Docling 2.102.0、Core 2.96.0、IBM models 3.15.0、parse 6.2.0；六個單頁 CPU probes | V1 普通表所選關係成功；T02 錯誤已在 producer；所選英文文字完整但閱讀順序錯。不是 2.132／PyPdfium 完整 pipeline。 |
-| [第二輪](../pdf-core-g2-round2-2026-10-14.md)／[V2 review](../pdf-core-g2-round2-2026-10-14/table/review.json) | V2 stage：Docling 2.124.0、Core 2.96.0、IBM models 4.0.3、parse 7.16.0；重用完整 table cluster，非全文件 | V2 的 selected ordinary table 成功，T02 仍錯；是 stack 比較，不是單模型 causal ablation。不支持本次直接換 V2。 |
-| [第三輪](../pdf-core-g2-round3-2026-10-14.md)／[OCR review](../pdf-core-g2-round3-2026-10-14/ocr/selection-review.json) | 固定同一 685×230 panel／detector／classifier，只換 v5 mobile／server recognizer；另有 Granite 元件 probes | v5 mobile 五項 2 項、server 3 項相符，沒有證據作繁中直接替換。Granite 的其他任務結果不變成本配置的補綴輸出。 |
-| [Heading](../pdf-core-g2-heading-2026-10-15.md)／[actual stage results](../pdf-core-g2-heading-2026-10-15/review/output-review.json) | Docling-slim 2.132.0／Core 2.99.0／parse 7.22.3 的 stage replay，輸入為舊 assembled document＋全 28 頁 font cells／outline | 編號與書籤優先處理有用，title／無書籤附錄／semantic parent 仍未完成。不是完整 fresh conversion，也不是新 backend 的 heading 品質。 |
-| [方向／混排](../pdf-core-g2-orientation-2026-10-15.md)／[actual producer](../pdf-core-g2-orientation-2026-10-15/baseline/runs/controls-p7-selective/producer.json) | 舊 Standard 七頁、四方向 direct OCR、四 normalized Standard、兩個 same-input cls-off 診斷 | 支持 selective OCR、實際 v6 CPU providers／dictionary 身分與四方向候選；不支持全域關 classifier 或全文件先 rasterize。 |
-| [分類](../pdf-core-g2-images-2026-10-14/classifier/results.md)／[method](../pdf-core-g2-images-2026-10-14/classifier/method.json) | 舊 2.102／Core 2.96，實際 12 crop calls，同六來源兩種 crop，非 12 個獨立樣本 | 支持 broad family 路由候選；不支持圖意／chart 正確或完整 enrichment lifecycle 已驗。 |
+| [第一輪](../pdf-core-g2-local-cpu-2026-10-14.md)／原始 table review (`docs/research/pdf-core-g2-local-cpu-2026-10-14/table-review.json`) | Docling 2.102.0、Core 2.96.0、IBM models 3.15.0、parse 6.2.0；六個單頁 CPU probes | V1 普通表所選關係成功；T02 錯誤已在 producer；所選英文文字完整但閱讀順序錯。不是 2.132／PyPdfium 完整 pipeline。 |
+| [第二輪](../pdf-core-g2-round2-2026-10-14.md)／V2 review (`docs/research/pdf-core-g2-round2-2026-10-14/table/review.json`) | V2 stage：Docling 2.124.0、Core 2.96.0、IBM models 4.0.3、parse 7.16.0；重用完整 table cluster，非全文件 | V2 的 selected ordinary table 成功，T02 仍錯；是 stack 比較，不是單模型 causal ablation。不支持本次直接換 V2。 |
+| [第三輪](../pdf-core-g2-round3-2026-10-14.md)／OCR review (`docs/research/pdf-core-g2-round3-2026-10-14/ocr/selection-review.json`) | 固定同一 685×230 panel／detector／classifier，只換 v5 mobile／server recognizer；另有 Granite 元件 probes | v5 mobile 五項 2 項、server 3 項相符，沒有證據作繁中直接替換。Granite 的其他任務結果不變成本配置的補綴輸出。 |
+| [Heading](../pdf-core-g2-heading-2026-10-15.md)／actual stage results (`docs/research/pdf-core-g2-heading-2026-10-15/review/output-review.json`) | Docling-slim 2.132.0／Core 2.99.0／parse 7.22.3 的 stage replay，輸入為舊 assembled document＋全 28 頁 font cells／outline | 編號與書籤優先處理有用，title／無書籤附錄／semantic parent 仍未完成。不是完整 fresh conversion，也不是新 backend 的 heading 品質。 |
+| [方向／混排](../pdf-core-g2-orientation-2026-10-15.md)／actual producer (`docs/research/pdf-core-g2-orientation-2026-10-15/baseline/runs/controls-p7-selective/producer.json`) | 舊 Standard 七頁、四方向 direct OCR、四 normalized Standard、兩個 same-input cls-off 診斷 | 支持 selective OCR、實際 v6 CPU providers／dictionary 身分與四方向候選；不支持全域關 classifier 或全文件先 rasterize。 |
+| [分類](../pdf-core-g2-images-2026-10-14/classifier/results.md)／method (`docs/research/pdf-core-g2-images-2026-10-14/classifier/method.json`) | 舊 2.102／Core 2.96，實際 12 crop calls，同六來源兩種 crop，非 12 個獨立樣本 | 支持 broad family 路由候選；不支持圖意／chart 正確或完整 enrichment lifecycle 已驗。 |
 
 ## 已查本機官方實作的接點
 
-本輪唯讀檢查 `/private/tmp/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/` 的已安裝 2.132 官方程式碼；沒有更改或執行 stage constructor。以下為可重查的官方 pinned 同版 source 入口，並非本輪做了網路最新版調查：
+本輪唯讀檢查 `<tmp>/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/` 的已安裝 2.132 官方程式碼；沒有更改或執行 stage constructor。以下為可重查的官方 pinned 同版 source 入口，並非本輪做了網路最新版調查：
 
 - [pipeline_options.py](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/pipeline_options.py)：V1 與 V2 options 分開；新版 layout options；RapidOCR 單語言／明選模型 paths；heading options 與 parsed pages 需求。
 - [stage_model_specs.py](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/stage_model_specs.py)：Heron 預設 Transformers engine；ONNX 使用另一 repo，不能為了 CPU 悄悄改成未測 ONNX 版本。

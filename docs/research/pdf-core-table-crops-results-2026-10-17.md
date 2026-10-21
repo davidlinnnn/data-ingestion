@@ -21,7 +21,7 @@ T05 的 stock Markdown 將 row-section label 平鋪重複到7欄，但群組scop
 
 T04 同頁 Table7 附帶工作經來源高解析圖複核，raw90/90數值可讀；仍有 header缺 end_col_offset_idx、過長row span與錯層 uncertainties。這90點不加進470分母，也不讓其數字正確抵銷結構失敗。T02附帶 Table3 的 schema失敗是欄位位置問題，不宣稱它有數值遺漏或判定模型不會讀該表。
 
-逐項資料：[T01/T02](pdf-core-table-crops-2026-10-17/quality-small.json)、[T04](pdf-core-table-crops-2026-10-17/evaluation-t04.json)、[T05](pdf-core-table-crops-2026-10-17/t05-evaluation.json)、[六項協定診斷](pdf-core-table-crops-2026-10-17/validation-diagnostics.json)、[獨立交付審查](pdf-core-table-crops-2026-10-17/delivery-review.md)。
+逐項資料：T01/T02 (`pdf-core-table-crops-2026-10-17/quality-small.json`)、T04 (`pdf-core-table-crops-2026-10-17/evaluation-t04.json`)、T05 (`pdf-core-table-crops-2026-10-17/t05-evaluation.json`)、六項協定診斷 (`pdf-core-table-crops-2026-10-17/validation-diagnostics.json`)、[獨立交付審查](pdf-core-table-crops-2026-10-17/delivery-review.md)。
 
 ## 成本沒有隨輸入圖面下降
 
@@ -33,7 +33,7 @@ T04 同頁 Table7 附帶工作經來源高解析圖複核，raw90/90數值可讀
 | Completion tokens，含reasoning | 18,930 | 28,800（增52.1%） |
 | 串行 client RTT合計 | 117.13秒 | 210.78秒（本次約1.80倍） |
 
-新請求依序耗時14.93／40.41／15.12／84.26／31.67／24.39秒。全部HTTP200、finish_reason=stop，沒有timeout、token cap截斷或重試。整個live含mapping約210.84秒，peak sampled RSS0.138GiB、最低available13.835GiB，未觸及預設界線。[成本重算](pdf-core-table-crops-2026-10-17/cost-comparison.json)、[原始 observations](pdf-core-table-crops-2026-10-17/live-observations.json)。
+新請求依序耗時14.93／40.41／15.12／84.26／31.67／24.39秒。全部HTTP200、finish_reason=stop，沒有timeout、token cap截斷或重試。整個live含mapping約210.84秒，peak sampled RSS0.138GiB、最低available13.835GiB，未觸及預設界線。成本重算 (`pdf-core-table-crops-2026-10-17/cost-comparison.json`)、原始 observations (`pdf-core-table-crops-2026-10-17/live-observations.json`)。
 
 這是歷史單輪方法對照，沒有控制provider queue，也同時改變了請求粒度及caption處置，不能將時間比值單獨歸因於crop或稱為p95。新T04產生更多內容，其生成成本不能和舊版大量漏值的失敗輸出視作等品質比較。可以確立的是：**減少輸入pixels不保證減少總tokens或總延遲；當模型輸出每格座標／spans，生成工作本身也需要列入設計。** 暫用OpenAI的client時間不是公司Qwen3/vLLM純推論或GPU算力數據。
 
@@ -46,7 +46,7 @@ T04 同頁 Table7 附帶工作經來源高解析圖複核，raw90/90數值可讀
 - 全部六次呼叫完成後才讀oracle／評分，再按每頁原target集合一次mapping，避免ref重編號錯置。單一target不合格則該頁沒有accepted document；raw仍保留。其他三頁無accepted artifacts已獨立確認。
 - Live前審查發現通用credential regex會污染`task-specific`，已改為僅遮罩實際已知credential，補literal反例；保留preflight-v1並記明amendment。六個requests／prompt未變，修正時尚未呼叫API。憑證僅透過隱藏TTY／程序記憶體使用。
 
-[Frozen registration](pdf-core-table-crops-2026-10-17/registration.json)、[preparation checks](pdf-core-table-crops-2026-10-17/preparation-verification.json)、[runner](pdf-core-table-crops-2026-10-17/run.py)。映射成功的T05另經20項機械交付檢查、真正HTML表格渲染與80點來源比較；沒有把schema通過或assert數量當成模型準確率。
+Frozen registration (`pdf-core-table-crops-2026-10-17/registration.json`)、preparation checks (`pdf-core-table-crops-2026-10-17/preparation-verification.json`)、runner (`pdf-core-table-crops-2026-10-17/run.py`)。映射成功的T05另經20項機械交付檢查、真正HTML表格渲染與80點來源比較；沒有把schema通過或assert數量當成模型準確率。
 
 評分程序的兩個修正另留紀錄：T01首次generic grid view遇到重疊即停止、沒有產生分數；之後改成明示ambiguous binding的診斷，不從cell-list順序補欄位。T04 collateral Table7首次低解析人工抄值不可靠，改以288dpi原來源逐點確認，保留原草稿；未修改來源oracle、candidate回應、producer或請求。評分修正沒有帶來新推論。
 

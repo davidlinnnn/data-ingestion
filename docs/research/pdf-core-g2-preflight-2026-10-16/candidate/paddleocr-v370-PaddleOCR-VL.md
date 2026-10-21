@@ -29,15 +29,15 @@ Choose the guide that matches your hardware first.
 | -------------------------------| --------------------------------------------------------------------------------------------------------------------------|
 | x64 CPU                       | Continue with this tutorial. Use the manual installation path in Section 1.2; the NVIDIA-only Docker steps do not apply. |
 | NVIDIA GPU (except Blackwell) | Continue with this tutorial.                                                                                             |
-| NVIDIA Blackwell GPU          | Read [PaddleOCR-VL NVIDIA Blackwell-Architecture GPUs Usage Tutorial](./PaddleOCR-VL-NVIDIA-Blackwell.en.md).            |
-| Apple Silicon                 | Read [PaddleOCR-VL Apple Silicon Usage Tutorial](./PaddleOCR-VL-Apple-Silicon.en.md).                                    |
-| Kunlunxin XPU                 | Read [PaddleOCR-VL Kunlunxin XPU Usage Tutorial](./PaddleOCR-VL-Kunlunxin-XPU.en.md).                                    |
-| Hygon DCU                     | Read [PaddleOCR-VL Hygon DCU Usage Tutorial](./PaddleOCR-VL-Hygon-DCU.en.md).                                            |
-| MetaX GPU                     | Read [PaddleOCR-VL MetaX GPU Usage Tutorial](./PaddleOCR-VL-MetaX-GPU.en.md).                                            |
-| Iluvatar GPU                  | Read [PaddleOCR-VL Iluvatar GPU Usage Tutorial](./PaddleOCR-VL-Iluvatar-GPU.en.md).                                      |
-| Huawei Ascend NPU             | Read [PaddleOCR-VL Huawei Ascend NPU Usage Tutorial](./PaddleOCR-VL-Huawei-Ascend-NPU.en.md).                            |
-| AMD GPU                       | Read [PaddleOCR-VL AMD GPU Usage Tutorial](./PaddleOCR-VL-AMD-GPU.en.md).                                                |
-| Intel Arc GPU                 | Read [PaddleOCR-VL Intel Arc GPU Usage Tutorial](./PaddleOCR-VL-Intel-Arc-GPU.en.md).                                    |
+| NVIDIA Blackwell GPU          | Read PaddleOCR-VL NVIDIA Blackwell-Architecture GPUs Usage Tutorial (`PaddleOCR-VL-NVIDIA-Blackwell.en.md`).            |
+| Apple Silicon                 | Read PaddleOCR-VL Apple Silicon Usage Tutorial (`PaddleOCR-VL-Apple-Silicon.en.md`).                                    |
+| Kunlunxin XPU                 | Read PaddleOCR-VL Kunlunxin XPU Usage Tutorial (`PaddleOCR-VL-Kunlunxin-XPU.en.md`).                                    |
+| Hygon DCU                     | Read PaddleOCR-VL Hygon DCU Usage Tutorial (`PaddleOCR-VL-Hygon-DCU.en.md`).                                            |
+| MetaX GPU                     | Read PaddleOCR-VL MetaX GPU Usage Tutorial (`PaddleOCR-VL-MetaX-GPU.en.md`).                                            |
+| Iluvatar GPU                  | Read PaddleOCR-VL Iluvatar GPU Usage Tutorial (`PaddleOCR-VL-Iluvatar-GPU.en.md`).                                      |
+| Huawei Ascend NPU             | Read PaddleOCR-VL Huawei Ascend NPU Usage Tutorial (`PaddleOCR-VL-Huawei-Ascend-NPU.en.md`).                            |
+| AMD GPU                       | Read PaddleOCR-VL AMD GPU Usage Tutorial (`PaddleOCR-VL-AMD-GPU.en.md`).                                                |
+| Intel Arc GPU                 | Read PaddleOCR-VL Intel Arc GPU Usage Tutorial (`PaddleOCR-VL-Intel-Arc-GPU.en.md`).                                    |
 
 If you just want to first confirm which hardware PaddleOCR-VL can be deployed on, or which inference methods are supported by specific hardware, read the [PaddleOCR-VL Inference Method and Hardware Support Matrix](#inference-device-support-for-paddleocr-vl) before continuing.
 
@@ -1838,7 +1838,7 @@ The parameters supported by this command are as follows:
 - vLLM: [Refer to this document](https://docs.vllm.ai/projects/recipes/en/latest/PaddlePaddle/PaddleOCR-VL.html)
 - SGLang: [Refer to the SGLang official documentation](https://docs.sglang.ai/)
 - FastDeploy: [Refer to this document](https://paddlepaddle.github.io/FastDeploy/best_practices/PaddleOCR-VL-0.9B/)
-- MLX-VLM: [Refer to this document](./PaddleOCR-VL-Apple-Silicon.en.md)
+- MLX-VLM: Refer to this document (`PaddleOCR-VL-Apple-Silicon.en.md`)
 - llama.cpp:
     1. Install llama.cpp by referring to the `Quick start` section in the [llama.cpp github](https://github.com/ggml-org/llama.cpp).
     2. Download the model files in gguf format: [PaddlePaddle/PaddleOCR-VL-1.6-GGUF](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6-GGUF).
@@ -2209,7 +2209,7 @@ The command-line options related to serving are as follows:
 </tbody>
 </table>
 
-If you need to adjust pipeline configurations (such as model path, batch size, deployment device, etc.), you can specify the `--pipeline` parameter as a custom configuration file path. For the correspondence between PaddleOCR pipelines and PaddleX pipeline registration names, as well as how to obtain and modify PaddleX pipeline configuration files, please refer to [PaddleOCR and PaddleX](../paddleocr_and_paddlex.en.md). Furthermore, section 4.1.3 will introduce how to adjust the pipeline configuration based on common requirements.
+If you need to adjust pipeline configurations (such as model path, batch size, deployment device, etc.), you can specify the `--pipeline` parameter as a custom configuration file path. For the correspondence between PaddleOCR pipelines and PaddleX pipeline registration names, as well as how to obtain and modify PaddleX pipeline configuration files, please refer to PaddleOCR and PaddleX (`docs/research/pdf-core-g2-preflight-2026-10-16/paddleocr_and_paddlex.en.md`). Furthermore, section 4.1.3 will introduce how to adjust the pipeline configuration based on common requirements.
 
 ### 4.3 Client-Side Invocation
 

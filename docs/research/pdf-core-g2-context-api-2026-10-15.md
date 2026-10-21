@@ -6,9 +6,9 @@
 
 ## 執行與來源範圍
 
-沿用已固定的candidate1、36張PNG、producer導出的target rectangles／角色及user prompt。暫用使用者指定的 `gpt-6-luna`，direct Chat Completions component、low reasoning、high image detail、strict JSON schema、4096 completion-token cap、`store=false`、不帶temperature；順序執行且每項只有一次attempt。System prompt沿用最初安全client的原文，未沿用較長inline比較prompt；實際HTTP body全部獨立重建核對。因此不能把歷史與本輪差異歸因單一裁圖或context變因。[登記](pdf-core-g2-context-api-2026-10-15/run-registration.json)／[方法](pdf-core-g2-context-api-2026-10-15/api/method.json)
+沿用已固定的candidate1、36張PNG、producer導出的target rectangles／角色及user prompt。暫用使用者指定的 `gpt-6-luna`，direct Chat Completions component、low reasoning、high image detail、strict JSON schema、4096 completion-token cap、`store=false`、不帶temperature；順序執行且每項只有一次attempt。System prompt沿用最初安全client的原文，未沿用較長inline比較prompt；實際HTTP body全部獨立重建核對。因此不能把歷史與本輪差異歸因單一裁圖或context變因。登記 (`pdf-core-g2-context-api-2026-10-15/run-registration.json`)／方法 (`pdf-core-g2-context-api-2026-10-15/api/method.json`)
 
-36次皆HTTP200、`finish_reason=stop`、無refusal，沒有撞completion cap或語意重跑。Runner沿用既有記憶體client，憑證未寫入檔案、命令參數或報告。[獨立API核對](pdf-core-g2-context-api-2026-10-15/api/verification.json)保留影像、prompt、schema、request body、response、usage及唯一request ID的證據。Structured Outputs只約束JSON結構，不能證明原稿忠實；本輪兩筆仍未通過本案parser的typed-segment相容條件。[官方請求欄位](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)
+36次皆HTTP200、`finish_reason=stop`、無refusal，沒有撞completion cap或語意重跑。Runner沿用既有記憶體client，憑證未寫入檔案、命令參數或報告。獨立API核對 (`pdf-core-g2-context-api-2026-10-15/api/verification.json`)保留影像、prompt、schema、request body、response、usage及唯一request ID的證據。Structured Outputs只約束JSON結構，不能證明原稿忠實；本輪兩筆仍未通過本案parser的typed-segment相容條件。[官方請求欄位](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)
 
 本輪準備的36項之外，原selected scope還有五項明確未執行：SEAL四個formula因原生text／charspan不完整，及混合正文／旁側標題的item34。它們是清楚的來源內容但方法未能建立scope，不是來源天生模糊。三個hidden formula children已由三個外層envelope處理，不重複計分。因此要同時保留 **36個已執行target與41個selected logical work units**，不能只看模型願意處理的部分。[未執行清單](pdf-core-g2-context-api-2026-10-15/review-seal-controls/unprepared-scope.md)
 
@@ -22,7 +22,7 @@
 | Controls | 9 | 8 | 1 | 0 | 8 |
 | 合計 | **36** | **25** | **5** | **6** | **34** |
 
-這些是兩組事先固定rubric的原始分類，不是production accuracy。Minor的型別不同，不能全部自動升為完整交付成功；兩組reviewer的full-target flags亦不直接相加當成統一Acceptance指標。文字／code內容、數值及數學意思層面有32／36保留，但這排除了typed segments／source block role的必要交付條件，不能代替完整成功率。[完整分母與分層統計](pdf-core-g2-context-api-2026-10-15/summary.json)
+這些是兩組事先固定rubric的原始分類，不是production accuracy。Minor的型別不同，不能全部自動升為完整交付成功；兩組reviewer的full-target flags亦不直接相加當成統一Acceptance指標。文字／code內容、數值及數學意思層面有32／36保留，但這排除了typed segments／source block role的必要交付條件，不能代替完整成功率。完整分母與分層統計 (`pdf-core-g2-context-api-2026-10-15/summary.json`)
 
 六項material均保留原始回應：
 
@@ -49,13 +49,13 @@ Minor項目為WikiSkill362的數字排版空格、DGM652的印刷換行懸掛縮
 
 ## Parser與回填
 
-沿用凍結的strict parser與candidate1 adapter：34筆完成parse／結構回填，DGM650與controls14保留為兩筆明確parse失敗。原始provider、圖片、模型回應及所有範圍外的序列化literal spans保持不變；23個邊界負例均通過。[Parser結果](pdf-core-g2-context-api-2026-10-15/parsed/summary.json)／[回填結果](pdf-core-g2-context-api-2026-10-15/integration/results.json)
+沿用凍結的strict parser與candidate1 adapter：34筆完成parse／結構回填，DGM650與controls14保留為兩筆明確parse失敗。原始provider、圖片、模型回應及所有範圍外的序列化literal spans保持不變；23個邊界負例均通過。Parser結果 (`pdf-core-g2-context-api-2026-10-15/parsed/summary.json`)／回填結果 (`pdf-core-g2-context-api-2026-10-15/integration/results.json`)
 
 34份結構結果只是working候選，內含SEAL32等來源語義錯誤，不能直接轉成Canonical Knowledge。Source reviewer是在本輪驗證中對照原稿，不是已實作的runtime語義驗收器。本輪沒有把人工oracle審核或review-selected subset偷偷當作production gate。
 
 ## 時間與成本
 
-36次順序請求的client RTT合計 **193.37秒**；median **5.03秒**，樣本p95 **11.00秒**，範圍 **1.92–12.45秒**。Prompt25,720＋completion13,643＝**39,363 tokens**；reasoning7,143已包含在completion，不能再加一次。沒有cached prompt tokens。[Usage與計算](pdf-core-g2-context-api-2026-10-15/usage.json)
+36次順序請求的client RTT合計 **193.37秒**；median **5.03秒**，樣本p95 **11.00秒**，範圍 **1.92–12.45秒**。Prompt25,720＋completion13,643＝**39,363 tokens**；reasoning7,143已包含在completion，不能再加一次。沒有cached prompt tokens。Usage與計算 (`pdf-core-g2-context-api-2026-10-15/usage.json`)
 
 按本日官方標準token費率估算約 **US$0.0094**；這不是已核對帳單，未驗證帳戶tariff、cache-write、地域／service tier加價、稅與credit。[官方模型費率](https://developers.openai.com/api/docs/models/gpt-6-luna)
 
@@ -67,6 +67,6 @@ Minor項目為WikiSkill362的數字排版空格、DGM652的印刷換行懸掛縮
 
 下一步先將這些失敗分成來源角色／typed契約、原生scope與模型語義三層，選一個可跨案例驗證的改善假設登記為第2組配置，保持原36項、五項未執行工作及四個既有正例可對照。一次只改一類，不直接修特定identifier／prime／答案，也不因語意錯誤就放寬拒絕規則。公司候選、GPU、完整Canonical整合與高頻負載仍待驗；holdout維持未啟用。
 
-[整體檢查](pdf-core-g2-context-api-2026-10-15/validation.json)與[artifact manifest](pdf-core-g2-context-api-2026-10-15/artifacts.json)保存本輪證據及前輪未變範圍。
+整體檢查 (`pdf-core-g2-context-api-2026-10-15/validation.json`)與artifact manifest (`pdf-core-g2-context-api-2026-10-15/artifacts.json`)保存本輪證據及前輪未變範圍。
 
-[結論摘要已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6195331080)，本文只加入摘要連結，44個feature rows保持原樣，issue維持OPEN；[寫回紀錄](pdf-core-g2-context-api-2026-10-15/ticket-update.json)保存exact readback及hash。
+[結論摘要已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6195331080)，本文只加入摘要連結，44個feature rows保持原樣，issue維持OPEN；寫回紀錄 (`pdf-core-g2-context-api-2026-10-15/ticket-update.json`)保存exact readback及hash。

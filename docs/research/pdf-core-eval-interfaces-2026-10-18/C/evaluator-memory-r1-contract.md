@@ -1,6 +1,6 @@
 # Memory-R1 Figure 6／7／8：來源限定的 evaluator 契約
 
-2026-10-18。**只建立來源真值，不評 candidate，不提供 producer 路由或 prompt。** [JSON 契約](evaluator-memory-r1-contract.json)的 source SHA、圖例、有限數值分母及比較條件已固定；producer 不得讀取此檔或其中位置／數字。
+2026-10-18。**只建立來源真值，不評 candidate，不提供 producer 路由或 prompt。** JSON 契約 (`evaluator-memory-r1-contract.json`)的 source SHA、圖例、有限數值分母及比較條件已固定；producer 不得讀取此檔或其中位置／數字。
 
 來源為 SRC06 原始 PDF 的實體第 8 頁；先看既有 source-census 頁圖，再以既有 pinned pypdfium2 在本機 4x render 核對。PDF SHA256 `c206af4e792e9550f2aaec8a6c4d9b141d1ddcb587e781d7866870c8f3e4dd4f`；4x render SHA256 `b17540b21cfa8efcd1f7d407ffcb0038e81cce076eab81c9aaecab2f5204c883`。inspection crop／原圖 hash 與座標都只作 evaluator 可重現證據，不是 production bbox。沒有 VLM、API、模型、benchmark GT 或 holdout。
 

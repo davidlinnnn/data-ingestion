@@ -26,13 +26,13 @@
 | EasyOCR | 5／5 | 6／6 | known另發生跨欄 paragraph merge |
 | Tesseract best PSM3（新） | 0／0 | 0／0 | 仍有下述內容缺陷 |
 
-assembled陣列是 predictor 的輸入／tie-break來源，**本來不保證是最終讀序**；不把其輸入排列的反轉數當成前一階段失敗。重播保存的前／後文字、bbox、label、CID、source anchors與merge mapping，見 [order-traces/summary.json](order-traces/summary.json) 及 [best-order-traces/summary.json](best-order-traces/summary.json)。
+assembled陣列是 predictor 的輸入／tie-break來源，**本來不保證是最終讀序**；不把其輸入排列的反轉數當成前一階段失敗。重播保存的前／後文字、bbox、label、CID、source anchors與merge mapping，見 `order-traces/summary.json` 及 `best-order-traces/summary.json`。
 
 ## 唯一新候選：官方 tessdata_best
 
 固定 Docling2.132.0 StandardPdfPipeline、PyPdfium、Heron、CPU4／interop1、float32、compile=False。TesseractCLI5.5.3、DEFAULT OCR mode、PSM3、eng+chi_tra、OCRscale3／pageimagescale2；table／enrichment維持原fast對照設定。
 
-官方best revision：`e12c65a915945e4c28e237a9b52bc4a8f39a0cec`。eng 15,400,601 bytes，chi_tra 12,985,735 bytes；下載內容的Git blob及SHA256皆核對。OSD與TSV原檔完全相同。斷言證明 fast／best options 僅 tessdata 路徑不同，並非此次才啟用繁中。[模型紀錄](model-receipt.json)、[推論前註冊](registration.json)、[固定計畫](plan.md)。
+官方best revision：`e12c65a915945e4c28e237a9b52bc4a8f39a0cec`。eng 15,400,601 bytes，chi_tra 12,985,735 bytes；下載內容的Git blob及SHA256皆核對。OSD與TSV原檔完全相同。斷言證明 fast／best options 僅 tessdata 路徑不同，並非此次才啟用繁中。模型紀錄 (`model-receipt.json`)、推論前註冊 (`registration.json`)、[固定計畫](plan.md)。
 
 | 對照 | 七頁轉換合計 | 初始化 | sampled程序樹RSS峰值 |
 |---|---:|---:|---:|
@@ -54,9 +54,9 @@ assembled陣列是 predictor 的輸入／tie-break來源，**本來不保證是�
 | NDHU p9 | 明顯恢復`※`與登入限定註解；有改善。隱私條款尾句仍缺「提供的資訊」 | 記錄改善與遺漏，沒有宣稱中文全部變好 |
 | NCCU p3 | 恢復「壹」；登入方法／人事服務網／B5A保留 | 改善；原fast枚舉錯字不等於整個標題遺失 |
 
-來源圖、凍結native文字參考、原生DoclingDocument／Markdown互相核對。具體ref與文件雜湊見 [manual-review.json](manual-review.json)。字元覆蓋／混欄／缺段flags不代替語意驗收，未新增字詞修補或事後調整門檻。人工判讀者為執行agent，沒有獨立第二位盲評者。
+來源圖、凍結native文字參考、原生DoclingDocument／Markdown互相核對。具體ref與文件雜湊見 `manual-review.json`。字元覆蓋／混欄／缺段flags不代替語意驗收，未新增字詞修補或事後調整門檻。人工判讀者為執行agent，沒有獨立第二位盲評者。
 
-fast與best在相同八個短OCR區域都出現原生OSD「字數不足」警告；顯式語言模式下，Docling捕捉後保留0°並繼續OCR。這不是模型重試，也沒有當成方向辨識成功；本輪是已知直立頁，沒有驗收旋轉泛化。[OSD對照](OSD-control.json)。
+fast與best在相同八個短OCR區域都出現原生OSD「字數不足」警告；顯式語言模式下，Docling捕捉後保留0°並繼續OCR。這不是模型重試，也沒有當成方向辨識成功；本輪是已知直立頁，沒有驗收旋轉泛化。OSD對照 (`OSD-control.json`)。
 
 ## 流程查核與停止
 
@@ -69,7 +69,7 @@ fast與best在相同八個短OCR區域都出現原生OSD「字數不足」警告
 ## 查閱
 
 - [fast／best／RapidOCR原生對照](http://127.0.0.1:62729/order-tessbest/index.html#acl-p2)：七頁、三組、文字／原生框與讀序／圖文對照，共21份展示。
-- [診斷結果](diagnostics.json)、[runner差異](runner-diff.patch)、[最終查核](final-verification.json)。
-- 零推論查核：`rtk proxy /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-order-tessbest-2026-10-20/verify.py`
+- 診斷結果 (`diagnostics.json`)、runner差異 (`runner-diff.patch`)、最終查核 (`final-verification.json`)。
+- 零推論查核：`rtk proxy <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-order-tessbest-2026-10-20/verify.py`
 
 限制：沒有修復生產pipeline，未驗GPU／VLM、自然噪聲、正式負載或整體code／table／formula能力；正確讀序的小樣本不代表一般化合格。

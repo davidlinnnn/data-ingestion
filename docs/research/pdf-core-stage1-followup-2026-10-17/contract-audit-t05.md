@@ -6,7 +6,7 @@
 
 ## 原 payload 明示了甚麼
 
-輸入為 [content.txt](B/live/wikiskill-p13-table0/content.txt:1)，SHA-256 `49c6f2ebfd6349e770bacd2a682ef0c586fc91e57b71f9fa56b9f73e187afeff`。它是 14×7 的矩形 grid；不是 T04 類型的 ragged header。
+輸入為 content.txt (`B/live/wikiskill-p13-table0/content.txt`)，SHA-256 `49c6f2ebfd6349e770bacd2a682ef0c586fc91e57b71f9fa56b9f73e187afeff`。它是 14×7 的矩形 grid；不是 T04 類型的 ragged header。
 
 | 必要意思 | payload 的現有證據 | 判斷 |
 |---|---|---|
@@ -18,14 +18,14 @@
 | Section 的外觀 | section label 在 c0，其餘六格為 `""`；沒有 section colspan | 不足以唯一證明原圖是單一全寬合併格；也不必為保留分組意思發明全寬合併格 |
 | Caption、單位與來源 | target key 指向原生表；`caption=""`、`conditions=[]` | payload 本身不能證明完整 caption／單位／外部條件或 provenance。必須依既有 native ownership 與同版 baseline 保存、另做來源驗證 |
 
-來源判準以 [G1-T05 契約](../../fixtures/pdf-core-g1-2026-10-14/cases.json:25034)為準：兩組各五行、Proposed / Accepted 的次序及 slash 不是除法，見 [conditions](../../fixtures/pdf-core-g1-2026-10-14/cases.json:25198)；允許語意組件表示，但共同 source-cell identity 與 roles 須保留，見 [cell_component_semantics](../../fixtures/pdf-core-g1-2026-10-14/cases.json:25245)。來源 Category 跨三個原始 header rows，見 [header span](../../fixtures/pdf-core-g1-2026-10-14/cases.json:25228)。本 payload 把 Create 與 Proposed / Accepted 寫在同一第二層 header，不能只因變成兩層就判改義；必須看欄位路徑與角色是否仍完整。原計畫接受忠實可讀 Markdown 與同版補充資料，並未要求複製原圖排版，見[品質界線](../pdf-core-three-stage-plan-2026-10-17.md:40)。
+來源判準以 G1-T05 契約 (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)為準：兩組各五行、Proposed / Accepted 的次序及 slash 不是除法，見 conditions (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)；允許語意組件表示，但共同 source-cell identity 與 roles 須保留，見 cell_component_semantics (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)。來源 Category 跨三個原始 header rows，見 header span (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)。本 payload 把 Create 與 Proposed / Accepted 寫在同一第二層 header，不能只因變成兩層就判改義；必須看欄位路徑與角色是否仍完整。原計畫接受忠實可讀 Markdown 與同版補充資料，並未要求複製原圖排版，見[品質界線](../pdf-core-three-stage-plan-2026-10-17.md)（第 40 行）。
 
 ## 哪些是必要語意，哪些是多重編碼
 
-1. **Covered slot 的 `""` / null 區別是原協定明訂的合法性要求。** [protocol.py:56](B/protocol.py:56) 要求 span 內其他位置必須是 null，[protocol.py:60](B/protocol.py:60) 規定 null 只代表 covered。因此原 payload 沒有合法的原協定映射。唯讀呼叫現有 `Grid.model_validate` 已重現 `covered positions must be null, never duplicate content`；沒有呼叫 map／main 或產生修補版本。被審 protocol SHA-256 為 `73ebe98cee394c4bfe03c21789bb82d515b0be42673c24458b2473983f2311f3`。
-2. **Section span 與分組範圍是不同資訊。** `row_section` 標記 label，[row_groups](B/protocol.py:70) 宣告哪些 row 受 label 管轄；section 的 col_span 則描述 label 本身橫佔哪些 slots。原 payload 的 group scope 已完整，不需要從六個空格推導 colspan。以單格 section label 加六個顯式空白格保留，比補成全寬合併格更忠於已宣告資訊。
-3. **Body row-header flag 不應成為內容完整性的額外零容錯門檻。** 公開 [TableCell](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:20>) 的 `row_header` 預設 False。每行文字仍在名為 Category 的明示欄；保留既有欄／列座標即可讀出行標籤的對應。可以保留已宣告 flag，但不應自動補 flag，也不能據此聲稱已還原原圖的全部版面語意。
-4. **Markdown 不保存精確 spans，也不會自動編碼 row-group scope。** 現有 [MarkdownTableSerializer](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:692>) 將多層 header flatten，body 依 grid 輸出；section 的 `row_section`／body `row_header` 不會使它額外發明分組結構。精確 scope 仍要保存在 [compact_provider supplement](B/protocol.py:133)，並與顯示 label 核對。原已驗 [LiteralTableSerializer](../pdf-core-direct-cell-2026-10-17/adapter.py:146)只處理 literal escaping，沒有必要再加 renderer。
+1. **Covered slot 的 `""` / null 區別是原協定明訂的合法性要求。** protocol.py:56 (`B/protocol.py`) 要求 span 內其他位置必須是 null，protocol.py:60 (`B/protocol.py`) 規定 null 只代表 covered。因此原 payload 沒有合法的原協定映射。唯讀呼叫現有 `Grid.model_validate` 已重現 `covered positions must be null, never duplicate content`；沒有呼叫 map／main 或產生修補版本。被審 protocol SHA-256 為 `73ebe98cee394c4bfe03c21789bb82d515b0be42673c24458b2473983f2311f3`。
+2. **Section span 與分組範圍是不同資訊。** `row_section` 標記 label，row_groups (`B/protocol.py`) 宣告哪些 row 受 label 管轄；section 的 col_span 則描述 label 本身橫佔哪些 slots。原 payload 的 group scope 已完整，不需要從六個空格推導 colspan。以單格 section label 加六個顯式空白格保留，比補成全寬合併格更忠於已宣告資訊。
+3. **Body row-header flag 不應成為內容完整性的額外零容錯門檻。** 公開 TableCell (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:20>`) 的 `row_header` 預設 False。每行文字仍在名為 Category 的明示欄；保留既有欄／列座標即可讀出行標籤的對應。可以保留已宣告 flag，但不應自動補 flag，也不能據此聲稱已還原原圖的全部版面語意。
+4. **Markdown 不保存精確 spans，也不會自動編碼 row-group scope。** 現有 MarkdownTableSerializer (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:692>`) 將多層 header flatten，body 依 grid 輸出；section 的 `row_section`／body `row_header` 不會使它額外發明分組結構。精確 scope 仍要保存在 compact_provider supplement (`B/protocol.py`)，並與顯示 label 核對。原已驗 LiteralTableSerializer (`docs/research/pdf-core-direct-cell-2026-10-17/adapter.py`)只處理 literal escaping，沒有必要再加 renderer。
 
 ## 唯一映射的界線與可反駁的新契約
 
@@ -36,7 +36,7 @@
 - 先驗矩形、span 邊界／互斥、anchor、roles 及明示 scope。declared spans 決定 cell ownership；covered slots 只允許 null 或精確空字串 padding，均不生成第二個 cell。非 covered 的 `""` 仍生成獨立已知空白 cell，非 covered null 拒絕。
 - 非空字串、空白字元、unknown sentinel 或 role 出現在 covered slot，均拒絕；不能當「空」吞掉。保留原 raw payload 與新方法版本，讓 padding 政策可追溯。
 - 只依已宣告 anchors／spans／roles 生成公開 TableCells；不補 section colspan，不推斷 body row flags，不延伸 group endpoint。原始 cell text、pairs、數值、column order 一律不變。
-- 沿用現有來源／caption mapper、公開 Core 與 serializer，將原 `row_groups` 以同版 supplement 保存。公開 [TableData.grid](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:111>) 本身會以後來 cell 覆寫重疊位置，因此不能用「Pydantic 可建構」代替前述不重疊驗證。
+- 沿用現有來源／caption mapper、公開 Core 與 serializer，將原 `row_groups` 以同版 supplement 保存。公開 TableData.grid (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:111>`) 本身會以後來 cell 覆寫重疊位置，因此不能用「Pydantic 可建構」代替前述不重疊驗證。
 
 給定這個新契約，可定義一個確定的機械映射；它不等於證明模型宣告 spans 為真，也未在本審核實際產生／render／reload。新增的維護面應只是一條 covered-padding 邊界規則；若需要猜 header、搬欄或補來源 layout，就停止。
 

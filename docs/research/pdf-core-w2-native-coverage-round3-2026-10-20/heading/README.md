@@ -27,8 +27,8 @@
 | 110 | 232 | 17 |
 | 111 | 232 | 33 |
 
-同一份凍結 oracle 的 IN_SCOPE 評估中，bookmark-only（100）是無新增退化且修好最多的組合。這是候選排序，沒有部署；來源 UNKNOWN／無 oracle 的標題不在此「零退化」範圍。主結構共 467 個：baseline correct177／level error254，100 correct352／level error79，111 correct376／level error55；各組另有 strict missing33／role error1／ambiguous2，不將 missing 視為真正漏內容。完整按家族與失敗轉移見 [results.md](results.md)、[summary.json](summary.json)。
+同一份凍結 oracle 的 IN_SCOPE 評估中，bookmark-only（100）是無新增退化且修好最多的組合。這是候選排序，沒有部署；來源 UNKNOWN／無 oracle 的標題不在此「零退化」範圍。主結構共 467 個：baseline correct177／level error254，100 correct352／level error79，111 correct376／level error55；各組另有 strict missing33／role error1／ambiguous2，不將 missing 視為真正漏內容。完整按家族與失敗轉移見 [results.md](results.md)、`summary.json`。
 
-首批 240 組 stage 僅使用文字／font／outline，但 deepcopy 保留了未使用的 image metadata。依主線指示，僅清除 round3 自有 artifact 的 image 欄、設 None，沒有重跑 stage；已逐檔驗證所有非 image 欄相同與 Markdown bytes 相同，保存 [image-cleanup.json](image-cleanup.json)。後續六篇 48 組則在建立 stage 輸入前清除所有 image 欄。所有 288 組保存結果與 36 個 baseline-imagefree.json 均無非空 image 欄。
+首批 240 組 stage 僅使用文字／font／outline，但 deepcopy 保留了未使用的 image metadata。依主線指示，僅清除 round3 自有 artifact 的 image 欄、設 None，沒有重跑 stage；已逐檔驗證所有非 image 欄相同與 Markdown bytes 相同，保存 `image-cleanup.json`。後續六篇 48 組則在建立 stage 輸入前清除所有 image 欄。所有 288 組保存結果與 36 個 baseline-imagefree.json 均無非空 image 欄。
 
 Core load 的 alias/null normalization 與 stage 差異分開。P10／P20 原始 saved document 含超出頁面邊界的 provenance bbox，Core load 分別 clamp 79／143 個 bbox coordinate 欄位；完整列在各篇 inputs.json 的 source_to_core_normalization_diff。這些不是 heading stage 的修改，但屬輸入資料邊界，不能宣稱原始 raw bbox 逐值未變。

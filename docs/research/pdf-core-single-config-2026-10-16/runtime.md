@@ -23,7 +23,7 @@
 
 選定 extras 的 metadata 檢查也顯示目前缺少 `httpx`、`einops`、`timm`、`peft`、`qwen-vl-utils`、`open-clip-torch` 等依賴，另有 office／CLI 依賴；**不因此全部安裝**。後續僅解析本配置實際需要的 extra／import graph，產生單一相容的完整 lock。`websockets==17.2` 不符 service-client extra 的 `<17`；若不使用該服務客戶端，這不是 PDF／API inference 的必要依賴。未在此任意指定未驗證的 transitive versions。
 
-metadata 來源是 `/private/tmp/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/docling_slim-2.132.0.dist-info/METADATA`；舊環境套件／資產紀錄見 [baseline method](../pdf-core-g2-local-cpu-2026-10-14/runs/nccu-p3-native/method.json)。
+metadata 來源是 `<tmp>/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.12/site-packages/docling_slim-2.132.0.dist-info/METADATA`；舊環境套件／資產紀錄見 baseline method (`docs/research/pdf-core-g2-local-cpu-2026-10-14/runs/nccu-p3-native/method.json`)。
 
 ## 單一 backend 與 heading 的明確取捨
 
@@ -46,7 +46,7 @@ metadata 來源是 `/private/tmp/pdf-core-g2-dots-mlx-20261016/venv/lib/python3.
 | Formula | `do_formula_enrichment=False` 在目前可辯護的基線；不代表需求降級 | 同一官方 stage 只選 `FORMULA` item；不會發現行內公式。既有 formula 缺口不得用開啟 flag 假稱解決，必須在主提案列為阻擋完整配置的必含缺口 |
 | Picture／chart | 同版有 `DocumentPictureClassifierOptions`、`PictureDescriptionVlmEngineOptions`、`ChartExtractionVlmEngineOptions` 及 API engine | 有接口不是完成選型。chart 開啟會自動啟用 classifier；native chart stage 只處理 main classification 為 `bar_chart`／`pie_chart`／`line_chart` 的圖片。diagram／其他圖種沒有因此涵蓋 |
 
-以上模型／接口來源：[layout presets](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/stage_model_specs.py#L1011)、[table stage](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/table_structure/table_structure_model.py#L35)、[OCR options](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/pipeline_options.py#L350)、[code/formula stage](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/code_formula/code_formula_vlm_model.py#L70)、[common enrichment wiring](https://github.com/docling-project/docling/blob/v2.132.0/docling/pipeline/base_pipeline.py#L205)、[chart stage](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/chart_extraction/granite_vision.py#L42)。immutable model bytes 的既有來源為 [baseline method](../pdf-core-g2-local-cpu-2026-10-14/runs/nccu-p3-native/method.json)。
+以上模型／接口來源：[layout presets](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/stage_model_specs.py#L1011)、[table stage](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/table_structure/table_structure_model.py#L35)、[OCR options](https://github.com/docling-project/docling/blob/v2.132.0/docling/datamodel/pipeline_options.py#L350)、[code/formula stage](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/code_formula/code_formula_vlm_model.py#L70)、[common enrichment wiring](https://github.com/docling-project/docling/blob/v2.132.0/docling/pipeline/base_pipeline.py#L205)、[chart stage](https://github.com/docling-project/docling/blob/v2.132.0/docling/models/stages/chart_extraction/granite_vision.py#L42)。immutable model bytes 的既有來源為 baseline method (`docs/research/pdf-core-g2-local-cpu-2026-10-14/runs/nccu-p3-native/method.json`)。
 
 既有 OCR asset SHA-256：
 

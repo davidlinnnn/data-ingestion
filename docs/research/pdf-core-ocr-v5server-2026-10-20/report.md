@@ -20,7 +20,7 @@ Docling2.132.0／Core2.99.0／Parse7.22.3、RapidOCR3.9.2／ONNXRuntime1.24.3；
 | OCR settings | scale3、text_score0.5；det mean/std皆0.5、short-side736／min、thresh0.3、box_thresh0.5、unclip1.6、use_dilation=True；保留RapidOCR預設，未調參 |
 | Batches | Docling OCR／layout／table batch1；**RapidOCR內部cls／rec batch6**，與原配置相同。兩層batch不同，不能由前者推論後者為1 |
 
-實際模型URL與預期hash取自已安裝RapidAI3.9.2官方registry，下載後核對；不是從範例舊檔名猜出模型。版本tag不當作不可變內容識別，實際bytes由SHA鎖定。模型檔位於`/private/tmp/pdf-core-v5server-20261020/`，不重複放進repo。
+實際模型URL與預期hash取自已安裝RapidAI3.9.2官方registry，下載後核對；不是從範例舊檔名猜出模型。版本tag不當作不可變內容識別，實際bytes由SHA鎖定。模型檔位於`<tmp>/pdf-core-v5server-20261020/`，不重複放進repo。
 
 [Docling官方範例](https://docling-project.github.io/docling/_generated/examples/rapidocr_with_custom_models/)、[RapidAI3.9.2官方版本／大小參數用法](https://rapidai.github.io/RapidOCRDocs/v3.9.2/install_usage/rapidocr/how_to_use_ppocrv5/)。範例提供接點依據，不提供本資料集品質保證。
 
@@ -58,6 +58,6 @@ Docling2.132.0／Core2.99.0／Parse7.22.3、RapidOCR3.9.2／ONNXRuntime1.24.3；
 - 若續測這個候選，應先在主機有較充裕可用記憶體或隔離資源的環境，**重新登記同一配置與尚未完成的比較**；不能稱作本次已完成，也不以改圖片尺度／換mobile／放寬護欄默默開新變體。
 - 如能完成七頁，仍須照原準度界線來源評讀；通過才進六頁，失敗即停止。此次未產生任何一般化品質或正式latency／吞吐量結論。
 
-[資源紀錄](V5/execution.json)、[實際模型配置](V5/actual-models.json)、[結果判定](resource-review.json)、[凍結配置](registration.json)、[固定計畫](plan.md)。
+資源紀錄 (`V5/execution.json`)、實際模型配置 (`V5/actual-models.json`)、結果判定 (`resource-review.json`)、凍結配置 (`registration.json`)、[固定計畫](plan.md)。
 
-零推論複核：`rtk proxy /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-ocr-v5server-2026-10-20/verify_resource_stop.py`
+零推論複核：`rtk proxy <tmp>/pdf-core-native-std-20261017/venv/bin/python -B docs/research/pdf-core-ocr-v5server-2026-10-20/verify_resource_stop.py`

@@ -10,7 +10,7 @@ T04 原回應同時給出 ragged grid 與互相矛盾的 category／metric／par
 
 新表示把每個 metric 欄直接綁定一條 header path，把 family／variant／method 以具名 row dimensions 明示，不再要求模型協調一份重複的 header grid／span 宣告。Header node 用 scope ID 與 parent identity 區分同名不同條件；同一 ID 的文字／parent 矛盾會拒絕。Section 用明示 row membership 保存，normalized Markdown 為每列帶出 Section；未猜印刷全寬合併格。
 
-[method.py](method.py)只把這個新表示轉成既有公開 `TableData`，再使用凍結的 public Core mapper 及已驗 literal Markdown serializer。沒有新 renderer、SDK patch、逐表規則或模型呼叫。這是我們的研究整合契約，並非 Docling 官方新 pipeline。
+`method.py`只把這個新表示轉成既有公開 `TableData`，再使用凍結的 public Core mapper 及已驗 literal Markdown serializer。沒有新 renderer、SDK patch、逐表規則或模型呼叫。這是我們的研究整合契約，並非 Docling 官方新 pipeline。
 
 每個資料 cell 保留 raw string、source-cell ID、row／column key 與 normalized anchor。`001.20 / 0` 保持一個 cell，沒有拆成兩個模型輸出；同一 source-cell ID 若在 normalized 位置重複，所有位置與同一 raw text 都明示保存在 supplement，不能以改文字的方式拆格。Header paths／dimensions／group scope 原文亦保存在同版 supplement。Normalized Core 的 unit spans 只描述展示，不宣稱是原印刷格；原影像／native envelope 才是物理證據。模型自行聲稱的 IDs 與 scope 是否忠於來源，仍需獨立來源核對，機械檢查不會替它證明。
 
@@ -31,16 +31,16 @@ T04 原回應同時給出 ragged grid 與互相矛盾的 category／metric／par
 
 ## 已完成的有界控制
 
-- 新 [10 個 unittest](test_method.py)通過；包含 immutable inputs、真實 Markdown／reload、scope 矛盾、missing／foreign／duplicate bindings、group order、unknown vs blank、pair identity，以及 multipage stale source／invalid grid 拒絕。
+- 新 10 個 unittest (`test_method.py`)通過；包含 immutable inputs、真實 Markdown／reload、scope 矛盾、missing／foreign／duplicate bindings、group order、unknown vs blank、pair identity，以及 multipage stale source／invalid grid 拒絕。
 - 既有 B 的 35 個及 padding 的 10 個測試通過。這些 regression 會讀已曝光 DEV 評分資料；本輪明示為 producer 方法設計者兼曝光 DEV reviewer，不能稱 blind review，也沒有回寫任何答案。
-- [保存回放](replay.py)確認 142 個 Stage1、35 個 live 與 166 個 ABC artifact hashes 不變。資料生成／檢查只寫本目錄。
-- 首次新控制有一個 harness assert 用 `out.tables[-1]` 找 non-target，public deletion 改變 storage order 而失敗；已依既有 resolved-source signature 方法改為尋找 RichTableCell table。[precheck](precheck.json)保留，沒有修改候選內容。
+- 保存回放 (`replay.py`)確認 142 個 Stage1、35 個 live 與 166 個 ABC artifact hashes 不變。資料生成／檢查只寫本目錄。
+- 首次新控制有一個 harness assert 用 `out.tables[-1]` 找 non-target，public deletion 改變 storage order 而失敗；已依既有 resolved-source signature 方法改為尋找 RichTableCell table。precheck (`precheck.json`)保留，沒有修改候選內容。
 
-合成物見 [input](synthetic-semantic-input.json)、[Core](synthetic-document.json)、[bindings](synthetic-bindings.json)、[Markdown](synthetic-document.md)、[實際 render](synthetic-rendered.html)。多頁控制另存 [Core](synthetic-multipage-document.json)與 [binding](synthetic-multipage-binding.json)。
+合成物見 input (`synthetic-semantic-input.json`)、Core (`synthetic-document.json`)、bindings (`synthetic-bindings.json`)、[Markdown](synthetic-document.md)、實際 render (`synthetic-rendered.html`)。多頁控制另存 Core (`synthetic-multipage-document.json`)與 binding (`synthetic-multipage-binding.json`)。
 
 ## 下一步的精確有限工作
 
-[七筆輸入 inventory](proposed-input-inventory.json)已備妥：前六筆逐一重用原 crop 的 SHA／size，另加 WikiSkill p22 `#/tables/2` 的 Table 7 原 native crop。後者由 pinned public `TableItem.get_image` 從 cached S0 頁圖取得，沒有 padding 或人工 bbox；與獨立 page-image crop pixel-exact，目視四個 framework 的公式／complexity 都在圖內。E017–E020 只標示 evaluator 來源範圍，沒有輸入公式答案。
+七筆輸入 inventory (`proposed-input-inventory.json`)已備妥：前六筆逐一重用原 crop 的 SHA／size，另加 WikiSkill p22 `#/tables/2` 的 Table 7 原 native crop。後者由 pinned public `TableItem.get_image` 從 cached S0 頁圖取得，沒有 padding 或人工 bbox；與獨立 page-image crop pixel-exact，目視四個 framework 的公式／complexity 都在圖內。E017–E020 只標示 evaluator 來源範圍，沒有輸入公式答案。
 
 值得提出下一輪**最多七次、單一新表示／模型配置、零重試**的比較：原六 target 保護普通表、複雜表、pairs 及兩 collateral，再以一個完整 Table 7 target 驗四組 math 與 row association。保留同頁 all-or-nothing delivery；不得只發佈成功主表、丟掉 collateral 或挑成功 panels。新結果應與原 raw 保存比較，不能回頭改判舊輪。
 

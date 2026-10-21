@@ -17,7 +17,7 @@
 | 記憶體 | 最後一次讀取 available 約15.50 GiB；Metal recommended max 約37.44 GiB，兩者都不是額外獨立VRAM。其他應用與CPU/GPU共用48 GiB |
 | 尚未執行 | 本輪沒有模型GPU推論、MLX安裝或vLLM server執行；小算子通過不能代證整個模型所有算子相容 |
 
-最初沙箱程序回報MPS不可用；主機權限下的小算子測試已排除「硬體無GPU或PyTorch根本不支援MPS」的推論。[實測JSON](pdf-core-g2-local-gpu-feasibility-2026-10-16/host-probe.json)未保存設備序號或UUID。
+最初沙箱程序回報MPS不可用；主機權限下的小算子測試已排除「硬體無GPU或PyTorch根本不支援MPS」的推論。實測JSON (`pdf-core-g2-local-gpu-feasibility-2026-10-16/host-probe.json`)未保存設備序號或UUID。
 
 dots完整BF16權重約6.08GB，因此以48 GiB總容量判斷，**有合理條件開始單模型、單頁、低併發的GPU探測**；這是依權重規模與主機容量的可行性判斷，不是峰值memory或latency保證。當下僅約15.5 GiB可用，長頁、KV cache與其他應用仍可能造成壓力；不自行關閉使用者應用，也不為fit RAM而默默量化或縮小輸入。
 

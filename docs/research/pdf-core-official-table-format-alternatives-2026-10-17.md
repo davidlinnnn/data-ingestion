@@ -32,7 +32,7 @@ Granite Vision 4.1-4B 是官方提供的 OTSL table engine，但其現成 stage 
 ## 不重複已完成的比較
 
 - Granite-Docling-258M full-page／OTSL region、TableFormer V2 已驗，必要數值／綁定有錯；不能重新命名為下一輪新方法。[既有 coverage](pdf-core-g2-official-method-2026-10-15/coverage.md)
-- Granite Vision 4.1-4B CPU 曾逾時，MLX BF16 GPU 在另外兩表已完整完成，但仍有必要數值與增量關係錯誤；不是只有 CPU 不夠快，也不是尚未驗 MLX。[Granite CPU／上游比較](paper-pdf-table-upstream-results-2026-10-11.md)、[MLX 完整結果](paper-pdf-granite-mlx-results-2026-10-11.md)
+- Granite Vision 4.1-4B CPU 曾逾時，MLX BF16 GPU 在另外兩表已完整完成，但仍有必要數值與增量關係錯誤；不是只有 CPU 不夠快，也不是尚未驗 MLX。Granite CPU／上游比較 (`paper-pdf-table-upstream-results-2026-10-11.md`)、MLX 完整結果 (`paper-pdf-granite-mlx-results-2026-10-11.md`)
 - 通用 API＋官方 `VlmPipeline`＋DocTags 的 low／medium 各八頁已驗，內容、位置與 parser 交付仍有缺陷；只換格式或 reasoning flag 不構成全新 producer 假說。[官方方法決策](pdf-core-g2-method-selection-decision-2026-10-15.md)
 
 ## 下一個值得投入的 gate

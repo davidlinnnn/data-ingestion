@@ -38,11 +38,11 @@ Producer／requests 先 freeze，再封存 evaluator 方法與既有 census；�
 | DGM 51 | 模型自報 ambiguous_boundary | 格式合法，但此頁 discovery 不完整；保留 abstention，不加第二次機會 |
 | N014／SEAL 2 普通陰性 | detector 完整框入一段原 ordinary-negative prose | 至少有不必要的額外候選工作；1/27 是此陰性集的覆蓋結果，不是所有內容的 false-positive rate |
 
-檢視了八頁 [overlay 概覽](overlays/overview.png)，並逐一查看上述必要符號的實際 crop。原樣回應、綁定及頁級用量保留於 `live/`；來源-only glyph diagnostics 在 [source-diagnostics.json](source-diagnostics.json)。沒有把同輸入 mock 或 raw response 當成重建成功。
+檢視了八頁 overlay 概覽 (`overlays/overview.png`)，並逐一查看上述必要符號的實際 crop。原樣回應、綁定及頁級用量保留於 `live/`；來源-only glyph diagnostics 在 `source-diagnostics.json`。沒有把同輸入 mock 或 raw response 當成重建成功。
 
 ## 幾何 proxy 的限制
 
-[coverage.json](coverage.json)依既有 2pt tolerance 計算非空白 glyph centers：native envelope 聯集本來即為 44/44 full context；detector 單獨為 35/44，native＋detector 聯集仍為 44/44。舊 41 units 的 0.45 overlap locator 為 41/41；27 negatives 中 1 個被 detector 完整覆蓋。
+`coverage.json`依既有 2pt tolerance 計算非空白 glyph centers：native envelope 聯集本來即為 44/44 full context；detector 單獨為 35/44，native＋detector 聯集仍為 44/44。舊 41 units 的 0.45 overlap locator 為 41/41；27 negatives 中 1 個被 detector 完整覆蓋。
 
 **這不是 44/44 語意準確率，也沒有證明提升了來源覆蓋。** 原 title envelope 可能幾何上包含字形，但 native text 沒有 emit 該字；PDF text layer 也未 emit 圖中全部數學符號。幾何 union 無法偵測這種內容漏失。另一方面，35/44 是完整 context 是否在 detector 框內，不是「9 組公式全錯」；例如只框公式但沒框原 prose，也會不滿分。停止判定依上表的必要符號裁切、abstention 與原有必要意思判準，不另改容忍線。
 

@@ -17,7 +17,7 @@
 | 寫回 | 離線已凍結的同一公開Core mapper；typed panel tables、來源caption、整張表的provenance envelope與manifest；stock Markdown，非內建API table stage |
 | 安全／資源 | 本次使用者直接提供的credential經hidden TTY進程序記憶體；未存檔。API worker每250ms觀測RSS／available；12GiB／8GiB／30min界線均未觸發 |
 
-固定[實際登錄](pdf-core-table-delivery-2026-10-17/live-registration.json)、[runner](pdf-core-table-delivery-2026-10-17/live.py)、[請求結果](pdf-core-table-delivery-2026-10-17/live-observations.json)、[評讀](pdf-core-table-delivery-2026-10-17/live-evaluation.json)均保存；payload可由登錄prompt／schema／image重建並核對body hash，沒有Authorization header或credential。新的API請求不使用舊raw內容。
+固定實際登錄 (`pdf-core-table-delivery-2026-10-17/live-registration.json`)、runner (`pdf-core-table-delivery-2026-10-17/live.py`)、請求結果 (`pdf-core-table-delivery-2026-10-17/live-observations.json`)、評讀 (`pdf-core-table-delivery-2026-10-17/live-evaluation.json`)均保存；payload可由登錄prompt／schema／image重建並核對body hash，沒有Authorization header或credential。新的API請求不使用舊raw內容。
 
 ## 逐來源結果與交付限制
 

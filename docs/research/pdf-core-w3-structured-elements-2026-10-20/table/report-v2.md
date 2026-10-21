@@ -21,4 +21,4 @@
 
 Native欄數與來源不符、數列壓單格的事實並未被當成每個source點都錯。反之，numeric words保留也不能當作每點row/column對象正確。原有5個有明確欄位錯配／圖表污染證據的FAIL維持；全252來源候選仍為RAW與MAPPED各5FAIL、244UNKNOWN、3OOS。175 IN_SCOPE只有14表具完整numeric來源分母，這次補核的是扣除4個既有完整分母FAIL後的10表；另一個FAIL是來源點數上界可證的partial oracle。
 
-逐點候選位置、native cell text／row／col、每個source header的覆蓋或合併證據、source與native序列見 [manual-complete-gold-review-v2.json](manual-complete-gold-review-v2.json)。候選可能同值重複，不擅自指派來源對象。完整逐表v2見 [E0-results-v2.json](E0-results-v2.json)、[summary-v2.json](summary-v2.json)；v1結論／family數值仍見 [report.md](report.md)。
+逐點候選位置、native cell text／row／col、每個source header的覆蓋或合併證據、source與native序列見 `manual-complete-gold-review-v2.json`。候選可能同值重複，不擅自指派來源對象。完整逐表v2見 `E0-results-v2.json`、`summary-v2.json`；v1結論／family數值仍見 [report.md](report.md)。

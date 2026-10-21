@@ -30,7 +30,7 @@
 
 **11 頁 × 3 配置 = 最多 33 個模型處理頁次；每配置 7 個連續範圍／單頁 conversion，共 21 次 conversion 呼叫。** 每頁仍可能有多個 OCR／layout／table 模型工作，另外計數；33 不是模型 forward 或 API 呼叫總數。Controls 首次 smoke 計在這 11 頁中，不另跑一次。沒有未計數的 context。
 
-來源與評分權威：原[41 項 contract](pdf-core-g2-official-method-2026-10-15/review/contract.json)、[G1 cases](../fixtures/pdf-core-g1-2026-10-14/cases.json)。沿用原 PDF 身分與 SHA，執行前核對實際檔案，不從模型輸出重選來源單位。表格 84 點、OCR 5 項、掃描 16 行都是原任務的子項，不能與 41 段落／工作單位合成一個總 accuracy。
+來源與評分權威：原41 項 contract (`pdf-core-g2-official-method-2026-10-15/review/contract.json`)、G1 cases (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)。沿用原 PDF 身分與 SHA，執行前核對實際檔案，不從模型輸出重選來源單位。表格 84 點、OCR 5 項、掃描 16 行都是原任務的子項，不能與 41 段落／工作單位合成一個總 accuracy。
 
 全部都是已曝光開發／回歸來源。舊四個 validation 頁亦已被 DOTS 實測；本輪不重稱 unseen，不自動追加 confirmation。它們連同既有三個 context 頁若將來使用，須另列固定 retest 頁次。六份 holdout 保持未開封。本輪不擴 75 頁、551 頁 pilot 或其他格式測試。
 

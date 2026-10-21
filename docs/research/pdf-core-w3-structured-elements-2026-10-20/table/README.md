@@ -2,7 +2,7 @@
 
 PHASE1 只讀 W2R4 的 36 篇凍結 jobs、R2 的 LaTeX archive／source oracle／PDF text layer。沒有讀取 Docling、conversion、mapper 或其他輸出；沒有 conversion、API、模型、TeX 執行或新套件。
 
-最終來源封存為 v2 [oracle.json](oracle.json) 與 [freeze.json](freeze.json)，程式為 [build_source_oracle.py](build_source_oracle.py)。全域 seal 前仍 source-only 的根檔解析修正保留 [oracle.v1.json](oracle.v1.json)、[freeze.v1.json](freeze.v1.json) 與原 parser；[root-resolution.json](root-resolution.json) 保存原因與雜湊。所有 36 個來源 archive SHA256 都與 R2 凍結下載記錄相符；來源檔案逐檔 SHA、PDF SHA 與 parser SHA 另存 freeze／oracle，不寫舊目錄。
+最終來源封存為 v2 `oracle.json` 與 `freeze.json`，程式為 `build_source_oracle.py`。全域 seal 前仍 source-only 的根檔解析修正保留 `oracle.v1.json`、`freeze.v1.json` 與原 parser；`root-resolution.json` 保存原因與雜湊。所有 36 個來源 archive SHA256 都與 R2 凍結下載記錄相符；來源檔案逐檔 SHA、PDF SHA 與 parser SHA 另存 freeze／oracle，不寫舊目錄。
 
 ## 分母與定位
 
@@ -31,4 +31,4 @@ partial oracle 仍可提供確證阻擋：ordinary 若任一 trusted point 經�
 
 RAW 的官方 Markdown／grid 出口與 MAPPED 的 source-cell 單次交付分開評；mapper 不改 native label、框或偵測。原生已錯的 row／col／數值不能算 mapper 修好。後續只能新增 assessment，不能看到輸出後改此凍結 oracle。
 
-評分口徑來源：[root metrics-preregistration.md](../metrics-preregistration.md)。原始 source oracle 入口：[R2 job-index.json](../../pdf-core-w2-native-coverage-round2-2026-10-20/oracle/job-index.json)；語料：[W2R4 jobs.json](../../pdf-core-w2-native-coverage-round4-2026-10-20/jobs.json)。
+評分口徑來源：[root metrics-preregistration.md](../metrics-preregistration.md)。原始 source oracle 入口：R2 job-index.json (`docs/research/pdf-core-w2-native-coverage-round2-2026-10-20/oracle/job-index.json`)；語料：W2R4 jobs.json (`docs/research/pdf-core-w2-native-coverage-round4-2026-10-20/jobs.json`)。

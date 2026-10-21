@@ -12,7 +12,7 @@ Reviewed the full frozen source image and native original page text against both
 | P02 / P07 | Left survey-outline paragraph / right instruction-following paragraph | Sentence interleaving in text item 2 | Both wordings retained separately | A raw OCR cell 15 already mixes columns |
 | H01 | `2 OVERVIEW` | Retained | **Entire section heading omitted** | B reader 007 receives the readable 210 × 36 px image (width × height), returns null boxes/text/scores; no heading cell exists downstream |
 | P04 first line | `Background. Typically, large language models (LLMs) refer` | `Bs  a    ler` | `Bt ) at  a d, ee` | Both are already wrong in raw OCR; B reader 009 input shows the complete readable source line, but txts[0] is corrupted |
-| Body order | Finish left column through P05, then P06 onward in right column | Invalid interleaving and early right-column content | **P06 immediately follows P01** | Final document fails to restore this part of column order; the subsequent [native ReadingOrder replay](downstream-findings.json) isolates the P01→P06→P02 geometric edges |
+| Body order | Finish left column through P05, then P06 onward in right column | Invalid interleaving and early right-column content | **P06 immediately follows P01** | Final document fails to restore this part of column order; the subsequent native ReadingOrder replay (`downstream-findings.json`) isolates the P01→P06→P02 geometric edges |
 | Page number | `3` | Retained as document furniture; omitted by Markdown export | Missing in cells and document | B reader 001 receives a visible page number, returns null; this is a minor furniture loss |
 
 B P04's corruption is not a new error class: A already corrupts the same first line. A correct body-paragraph count does not make either result acceptable. The destroyed P04 line carries the definition and name of the subject, not merely punctuation or spelling.
@@ -54,6 +54,6 @@ B document order is `P01, P06, P02, P03, P04, P05, P07, P08, P09, P10, P11`. Thi
 
 Keep the defect unacceptable and stop this ablation without further tuning. The experiment establishes that changing the crop intervention can eliminate this page's observed mixing, while the unchanged complete pipeline still fails. It does not justify deploying zero dilation or claim a fixed general method.
 
-Evidence: [frozen reference](reference.json), [A amended score](A/score-schema-amended.json), [B score](B/score.json), [A document](A/document.md), [B document](B/document.md). The adjacent JSON records artifact hashes and each item assessment.
+Evidence: frozen reference (`reference.json`), A amended score (`A/score-schema-amended.json`), B score (`B/score.json`), [A document](A/document.md), [B document](B/document.md). The adjacent JSON records artifact hashes and each item assessment.
 
 No new inference or speculative fix was run. This is one exposed clean raster page; null OCR output alone does not identify which detector/recognizer/filter substep caused the loss, and no generalization or latency SLO is established.

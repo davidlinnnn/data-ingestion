@@ -20,7 +20,7 @@
 | enrichment | 無額外enrichment | formula/code/picture classification/description/chart/heading hierarchy均off | 同S0 |
 | 保留證據 | 公開engine輸入圖/request、公開page VLM raw、typed JSON、stock Markdown | parsed cells、postprocessed layout/table predictions、assembled items、typed JSON、stock Markdown | 同S0 |
 
-輸出images_scale=2；C1輸入也是scale2。Standard layout實際scale1，OCR options scale3；**不能把144dpi輸出當成每個模型的輸入大小**。三組11頁的公開scale2圖像尺寸與像素hash全部一致，見[渲染配對](pdf-core-native-round-2026-10-17/public-render-pairing.json)。完整processor tensor、OCR實際crop與每個forward未捕捉，不補造數據。layout公開predictions已經過postprocessor，沒有私有raw-box hook。
+輸出images_scale=2；C1輸入也是scale2。Standard layout實際scale1，OCR options scale3；**不能把144dpi輸出當成每個模型的輸入大小**。三組11頁的公開scale2圖像尺寸與像素hash全部一致，見渲染配對 (`pdf-core-native-round-2026-10-17/public-render-pairing.json`)。完整processor tensor、OCR實際crop與每個forward未捕捉，不補造數據。layout公開predictions已經過postprocessor，沒有私有raw-box hook。
 
 | 執行觀察 | C1 | S0 | S1 |
 |---|---:|---:|---:|
@@ -32,11 +32,11 @@
 | Metal allocator peak | 3.18GiB | 不適用 | 不適用 |
 | native conversion success | 5/7 | 7/7 | 7/7 |
 
-未觸及資源停止線。Metal和RSS不相加，取樣不是整機峰值；S0較長的初始化受到同次環境與cache狀態影響，不能因此宣稱Egret吞吐較快。這是一輪開發集觀察，**不是冷啟動分布、p95、高頻SLO或公司vLLM效能**。[逐range metrics](pdf-core-native-round-2026-10-17/range-metrics.json)保留每次耗時與狀態。Standard公開table predictions共S0=5、S1=6；不冒充forward/crop次數。C1儲存11個公開頁面請求，但批次失敗後不能證明每頁內部generation均完成。
+未觸及資源停止線。Metal和RSS不相加，取樣不是整機峰值；S0較長的初始化受到同次環境與cache狀態影響，不能因此宣稱Egret吞吐較快。這是一輪開發集觀察，**不是冷啟動分布、p95、高頻SLO或公司vLLM效能**。逐range metrics (`pdf-core-native-round-2026-10-17/range-metrics.json`)保留每次耗時與狀態。Standard公開table predictions共S0=5、S1=6；不冒充forward/crop次數。C1儲存11個公開頁面請求，但批次失敗後不能證明每頁內部generation均完成。
 
 ## 原41項契約
 
-[逐項評讀](pdf-core-native-round-2026-10-17/unit-review.json)固定列出三組各41項、對應typed item、原來源區域、實際文字與provenance。這是**交付狀態分布，不是模型accuracy**；尤其S0/S1刻意不開重建enrichment，未實作與辨識錯誤分開。
+逐項評讀 (`pdf-core-native-round-2026-10-17/unit-review.json`)固定列出三組各41項、對應typed item、原來源區域、實際文字與provenance。這是**交付狀態分布，不是模型accuracy**；尤其S0/S1刻意不開重建enrichment，未實作與辨識錯誤分開。
 
 | 41項交付狀態 | C1 | S0 | S1 |
 |---|---:|---:|---:|
@@ -64,7 +64,7 @@ C1的`stop_reason=unspecified`不是EOS證明。SEALp2有9001 reported tokens（
 
 ## 表格與OCR：分開分母
 
-[三項G1評讀](pdf-core-native-round-2026-10-17/g1-review.json)保持完整Table2六panel／84點／8critical comparisons、NCCU五項、scan16行三個獨立任務，沒有混進41項。
+三項G1評讀 (`pdf-core-native-round-2026-10-17/g1-review.json`)保持完整Table2六panel／84點／8critical comparisons、NCCU五項、scan16行三個獨立任務，沒有混進41項。
 
 | 任務 | C1 | S0 | S1 |
 |---|---|---|---|
@@ -72,20 +72,20 @@ C1的`stop_reason=unspecified`不是EOS證明。SEALp2有9001 reported tokens（
 | G1-O01 screenshot五項 | `壹`執行錯誤，無公開raw，不推論模型圖片OCR能力 | 公開parsed OCR cells有五項，部分系統/連結字形minor；主要Markdown只留picture | breadcrumb變錯文，其餘四項有OCR；仍沒有image-key supplement |
 | G1-O03 scan16行 | 兩段各自文字完整，卻把右欄段落插在兩段之間 | 左右欄字串混入兩個target paragraph | 兩段各自文字恢復，仍插入右欄段落，順序未過 |
 
-**三項完整交付都尚未通過。** Table2已全六panel檢視，84個必要綁定與8比較全列為未證實，沒有用數字命中報準確率；**未完成可安全配對的numeric reading error%裁定，因此不報百分比，也不聲稱84個數字都辨識錯**。即使部分原數字齊全，header/condition/metric綁定與critical比較不能由交付表安全確立，就不滿足原契約；使用者容許≤5%複雜表誤差的規則未被取消或收緊。[S0](pdf-core-native-round-2026-10-17/S0-table-evidence.json)／[S1](pdf-core-native-round-2026-10-17/S1-table-evidence.json)保留完整native grid供查核；C1保留未改raw。
+**三項完整交付都尚未通過。** Table2已全六panel檢視，84個必要綁定與8比較全列為未證實，沒有用數字命中報準確率；**未完成可安全配對的numeric reading error%裁定，因此不報百分比，也不聲稱84個數字都辨識錯**。即使部分原數字齊全，header/condition/metric綁定與critical比較不能由交付表安全確立，就不滿足原契約；使用者容許≤5%複雜表誤差的規則未被取消或收緊。S0 (`pdf-core-native-round-2026-10-17/S0-table-evidence.json`)／S1 (`pdf-core-native-round-2026-10-17/S1-table-evidence.json`)保留完整native grid供查核；C1保留未改raw。
 
 NCCU選定OCR可在public parsed cells出現，但三組都沒有完成與image key關聯、和source Markdown分離的F08交付。C1的no_text_in_pic routing與runtime錯誤也限制外推。scan的16/16可讀文字不等於完整順序通過，右欄插入不能略過。
 
 ## 方法限制與本輪未修補之處
 
-1. **C1相容性缺陷確實存在。** 無模型的[tokenizer重現](pdf-core-native-round-2026-10-17/C1-tokenizer-diagnostic.json)對token64488 `⊂`、57841 `壹`重現MLX BPEStreamingDetokenizer KeyError。不是來源不可讀，也不是Qwen/NVIDIA BF16能力結論；不修改detokenizer、不追加推論。
+1. **C1相容性缺陷確實存在。** 無模型的tokenizer重現 (`pdf-core-native-round-2026-10-17/C1-tokenizer-diagnostic.json`)對token64488 `⊂`、57841 `壹`重現MLX BPEStreamingDetokenizer KeyError。不是來源不可讀，也不是Qwen/NVIDIA BF16能力結論；不修改detokenizer、不追加推論。
 2. **C1 LaTeX table parser依賴不完整。** 未在model前做完整pure-parser smoke，實測才發現缺`pylatexenc`。這是本次前置檢查不足，不能包裝為乾淨的table模型accuracy比較。原raw仍保存，DGM650/652清楚分列dependency-missing；不為修capture重跑模型，也不在本輪另建parser。
-3. **Standard最小安裝的機械問題已在模型前修復。** 第一次完整converter import缺scipy，接著缺rtree；保留[失敗執行](pdf-core-native-round-2026-10-17/preparation-S0-import-error/execution.json)，補齊後全import／依賴check再登錄，兩臂共用80-package runtime。沒有Standard模型推論重跑。原MLX環境未改。
-4. **三頁OCR中間cells不同，不能作純layout因果歸因。** 11頁公開scale2render全相同，八頁retained parsed textline cells完全相同，但SEAL2、NCCU3、scan1不同，包含OCR文字／分行，不只是confidence。它們發生於公開中間表示；未捕捉stage當時input tensor，故不能把scan恢復或NCCU退化單獨歸因到Egret權重。見[逐頁cells配對](pdf-core-native-round-2026-10-17/paired-public-cells.json)。其他八頁也不能聲稱所有內部tensor一致。
+3. **Standard最小安裝的機械問題已在模型前修復。** 第一次完整converter import缺scipy，接著缺rtree；保留失敗執行 (`pdf-core-native-round-2026-10-17/preparation-S0-import-error/execution.json`)，補齊後全import／依賴check再登錄，兩臂共用80-package runtime。沒有Standard模型推論重跑。原MLX環境未改。
+4. **三頁OCR中間cells不同，不能作純layout因果歸因。** 11頁公開scale2render全相同，八頁retained parsed textline cells完全相同，但SEAL2、NCCU3、scan1不同，包含OCR文字／分行，不只是confidence。它們發生於公開中間表示；未捕捉stage當時input tensor，故不能把scan恢復或NCCU退化單獨歸因到Egret權重。見逐頁cells配對 (`pdf-core-native-round-2026-10-17/paired-public-cells.json`)。其他八頁也不能聲稱所有內部tensor一致。
 5. **定位不是只看bbox合法。** 保存123項原來源區域與可得輸出provenance；指定跨頁association可確認，SEAL標題錯歸屬已明記。未完成全部region的獨立精確定位認證，沒有宣稱全頁coverage或source bbox100%正確。
 6. **時間分解與呼叫數有限。** 保存公開range／VLM generation時間、pipeline timings與resource samples；沒有每stage獨立wall-time、所有OCR crop／forward數或完整processor tensor hash。無來源證據的部分不填估值。保存輸出後的評讀腳本曾修正自身JSON escape assertion，未產生舊分數、未改模型輸出或oracle。
 
-[初始登錄](pdf-core-native-round-2026-10-17/registration.json)、[Standard模型前修訂](pdf-core-native-round-2026-10-17/standard-registration-amendment.json)、[C1固定runner](pdf-core-native-round-2026-10-17/run-C1.py)、[Standard runner](pdf-core-native-round-2026-10-17/run.py)、[權重hash](pdf-core-native-round-2026-10-17/weights.json)、[共享OCR/table資產](pdf-core-native-round-2026-10-17/shared-assets.json)、[MLX runtime](pdf-core-native-round-2026-10-17/C1-runtime.json)、[Standard runtime](pdf-core-native-round-2026-10-17/standard-runtime-v2.json)均保存。沒有修改production、既有oracle或舊實驗結果。
+初始登錄 (`pdf-core-native-round-2026-10-17/registration.json`)、Standard模型前修訂 (`pdf-core-native-round-2026-10-17/standard-registration-amendment.json`)、C1固定runner (`pdf-core-native-round-2026-10-17/run-C1.py`)、Standard runner (`pdf-core-native-round-2026-10-17/run.py`)、權重hash (`pdf-core-native-round-2026-10-17/weights.json`)、共享OCR/table資產 (`pdf-core-native-round-2026-10-17/shared-assets.json`)、MLX runtime (`pdf-core-native-round-2026-10-17/C1-runtime.json`)、Standard runtime (`pdf-core-native-round-2026-10-17/standard-runtime-v2.json`)均保存。沒有修改production、既有oracle或舊實驗結果。
 
 ## 去留與下一個決策
 

@@ -32,7 +32,7 @@ Merged-model results. ¹Equal-weight scenario/group average.
 
 Reference scores are officially reported by their developers and may use different evaluation protocols.
 
-![DecisionBench Medium accuracy](assets/medium-accuracy.png)
+DecisionBench Medium accuracy (`assets/medium-accuracy.png`)
 
 Jev-Omni cost uses its recorded input tokens at OpenRouter's Gemma 3 12B input rate ($0.05/M); its classifier generates no output tokens.
 
@@ -49,7 +49,7 @@ pip install -r https://huggingface.co/akhilaaa3/Jev-Omni/resolve/main/requiremen
 # ffmpeg is also required for audio input
 ```
 
-File: [`requirements.txt`](./requirements.txt)
+File: `requirements.txt`
 
 ```python
 from huggingface_hub import snapshot_download
@@ -85,7 +85,7 @@ Best supported at **≤20 options**. The head accepts 256, but quality above 20 
 
 Medium ECE: **0.0400** (10 bins; lower is better). The graph uses five bins for readability.
 
-![DecisionBench Medium calibration](assets/medium-calibration.png)
+DecisionBench Medium calibration (`assets/medium-calibration.png`)
 
 ---
 

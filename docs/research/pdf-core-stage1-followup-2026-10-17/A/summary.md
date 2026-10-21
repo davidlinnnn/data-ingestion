@@ -30,7 +30,7 @@
 比較用入口（不寫檔、不叫模型）：
 
 ```sh
-rtk /private/tmp/pdf-core-native-std-20261017/venv/bin/python -B -m unittest discover -s docs/research/pdf-core-stage1-followup-2026-10-17/A -p test_method.py -v
+rtk <tmp>/pdf-core-native-std-20261017/venv/bin/python -B -m unittest discover -s docs/research/pdf-core-stage1-followup-2026-10-17/A -p test_method.py -v
 ```
 
 `method.py`／`replay.py`／`test_method.py --record` 是首次產生證據的入口，使用 exclusive writes，不能拿來覆寫既有證據。`precheck-*` 保存 development 前版與原因；最終 method／inventory hashes、時間及輸出另見 registration／artifact manifest。

@@ -22,7 +22,7 @@
 
 以原 PDF 的 PDFium textpage char index 與 `get_charbox` 逐字比對保存的 picture provenance bbox，統一為 BOTTOMLEFT PDF points。非空白 Unicode 字元的 ink bbox 至少 50% 面積落在 picture 內即計入；另保存全 bbox containment（≥1−10⁻⁶）字數供敏感度檢查。≥30 門檻只定義本次觀察頻率，不是通過門檻。UTF-16 surrogate pair 合併後仍保留 raw PDFium index，每頁 normalized 字流與整頁 text range 相等才接受。
 
-native children 以 picture graph 遞迴收集 text node，排除 caption／footnote，不使用 Docling 輸出決定 PDFium 字元是否在框內。保存 `text`、`orig`、list marker、各種字數；MD presence 以 NFKD/casefold/alnum 的整個 child text exact substring 判斷。bbox 可能與正文疊合；「已有字」不證明字序、數值、標籤、全字語意都正確，頻率不可直接升格 Q4 結論。將判定改成嚴格全字框 containment 後，≥30 圖框仍為 117，未改變本次總頻率。[程式](picture_text_inventory.py)、[逐圖完整資料](picture-text-original30-with-orig.json)、[統計](original30-summary.json)。
+native children 以 picture graph 遞迴收集 text node，排除 caption／footnote，不使用 Docling 輸出決定 PDFium 字元是否在框內。保存 `text`、`orig`、list marker、各種字數；MD presence 以 NFKD/casefold/alnum 的整個 child text exact substring 判斷。bbox 可能與正文疊合；「已有字」不證明字序、數值、標籤、全字語意都正確，頻率不可直接升格 Q4 結論。將判定改成嚴格全字框 containment 後，≥30 圖框仍為 117，未改變本次總頻率。程式 (`picture_text_inventory.py`)、逐圖完整資料 (`picture-text-original30-with-orig.json`)、統計 (`original30-summary.json`)。
 
 ## Prompt 附錄的責任分流
 
@@ -30,20 +30,20 @@ SICA P07 p12 的 `#/pictures/4`：PDFium 原生字 1,238，native child text／o
 
 本次 ≥30 圖框中沒有「native children 少於 30 字元」案例；這不排除部分字元抽取損失。後續如補跑資料發現無 children／稀疏 children，才列為抽取遺失候選並對原頁核對。
 
-官方預設 `MarkdownPictureSerializer` 序列化 caption、annotation、image 及 chart table，但沒有遍歷普通 picture text children，因此 native graph 保留字、MD 不交付可同時成立。[固定版本官方 source](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:872>)。
+官方預設 `MarkdownPictureSerializer` 序列化 caption、annotation、image 及 chart table，但沒有遍歷普通 picture text children，因此 native graph 保留字、MD 不交付可同時成立。固定版本官方 source (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:872>`)。
 
 ## Colspan 重複：固定版本 serializer 行為
 
-以官方 `DoclingDocument`／`TableData` 建立 2×2 synthetic table：第二列只有一個 colspan=2 的 cell，文字 `Only buy black work shoes below $50.00, size 10.`。沒有模型或 conversion；斷言結果如下：native table_cells 一次、grid 兩次、Markdown 兩次、HTML 一次且保留 `colspan="2"`。native 抽取輸入本來正確，這是 **#81 delivery／serialization**，不歸抽取。[native JSON](synthetic-colspan-native.json)、[Markdown](synthetic-colspan.md)、[HTML](synthetic-colspan.html)、[斷言結果](synthetic-colspan-result.json)、[重現程式](serializer_colspan_check.py)。
+以官方 `DoclingDocument`／`TableData` 建立 2×2 synthetic table：第二列只有一個 colspan=2 的 cell，文字 `Only buy black work shoes below $50.00, size 10.`。沒有模型或 conversion；斷言結果如下：native table_cells 一次、grid 兩次、Markdown 兩次、HTML 一次且保留 `colspan="2"`。native 抽取輸入本來正確，這是 **#81 delivery／serialization**，不歸抽取。native JSON (`synthetic-colspan-native.json`)、[Markdown](synthetic-colspan.md)、HTML (`synthetic-colspan.html`)、斷言結果 (`synthetic-colspan-result.json`)、重現程式 (`serializer_colspan_check.py`)。
 
-原因是官方 grid 將同一 spanning cell 放入每個覆蓋格；Markdown renderer 對每格讀 `.text`，GFM pipe table 無 colspan；HTML renderer 只在 span 的起始座標輸出一次，並加 colspan 屬性。[官方 grid](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:111>)、[官方 Markdown](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:819>)、[官方 HTML](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/html.py:398>)。此證據亦支持 SkillRL P05 p22 的同型 colspan task 重複定位，不能靠移除一份「看起來重複」的文字改 PDF 抽取。
+原因是官方 grid 將同一 spanning cell 放入每個覆蓋格；Markdown renderer 對每格讀 `.text`，GFM pipe table 無 colspan；HTML renderer 只在 span 的起始座標輸出一次，並加 colspan 屬性。官方 grid (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/types/doc/items/table/table_data.py:111>`)、官方 Markdown (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/markdown.py:819>`)、官方 HTML (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling_core/transforms/serializer/html.py:398>`)。此證據亦支持 SkillRL P05 p22 的同型 colspan task 重複定位，不能靠移除一份「看起來重複」的文字改 PDF 抽取。
 
 ## Caption／algorithm stage 證據
 
-沿用同一 S0 保存輸出的 exact zero-inference traces，SHA 與各欄結構／Markdown equality 已逐一核對，未重跑 conversion。[證據索引](caption-algorithm-stage-evidence.json)。ImageTransformer p5、WikiSkill P01 p8、SEAL P17 p4 的 caption／algorithm 原始 layout 就標 text，之後官方 paragraph merges 將它們接進正文；不是預設 MD 單獨造成的問題。P14 p15 caption 獨立成 text，則屬 label 分離問題，不能誇成正文混段。新增六篇的案例待輸出後再評。
+沿用同一 S0 保存輸出的 exact zero-inference traces，SHA 與各欄結構／Markdown equality 已逐一核對，未重跑 conversion。證據索引 (`caption-algorithm-stage-evidence.json`)。ImageTransformer p5、WikiSkill P01 p8、SEAL P17 p4 的 caption／algorithm 原始 layout 就標 text，之後官方 paragraph merges 將它們接進正文；不是預設 MD 單獨造成的問題。P14 p15 caption 獨立成 text，則屬 label 分離問題，不能誇成正文混段。新增六篇的案例待輸出後再評。
 
 ## Egret medium 本機完整性
 
-官方 preset `DOCLING_LAYOUT_EGRET_MEDIUM` 指向 `docling-project/docling-layout-egret-medium`，預設 revision main；本機固定 snapshot 是 `77ede7cc7bed96d853c58f319734803d6ea2ea5c`，artifact 位於 `/private/tmp/pdf-core-native-20261017/artifacts/docling-project--docling-layout-egret-medium`。config、preprocessor、model.safetensors 均存在，模型檔 78,311,396 bytes，SHA256 `e7fc5b9a353826c123c5d03efc230909ac02b93e26293ec7cb4db8978fe9e3af`。只讀 safetensors JSON header 確認 1,009 tensors 的 data_end 符合檔案大小；未載 tensor、未做 runtime 相容性或推論測試。[完整 resolved paths／SHA](egret-medium-local.json)、[官方 preset](</private/tmp/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/datamodel/layout_model_specs.py:94>)。
+官方 preset `DOCLING_LAYOUT_EGRET_MEDIUM` 指向 `docling-project/docling-layout-egret-medium`，預設 revision main；本機固定 snapshot 是 `77ede7cc7bed96d853c58f319734803d6ea2ea5c`，artifact 位於 `<tmp>/pdf-core-native-20261017/artifacts/docling-project--docling-layout-egret-medium`。config、preprocessor、model.safetensors 均存在，模型檔 78,311,396 bytes，SHA256 `e7fc5b9a353826c123c5d03efc230909ac02b93e26293ec7cb4db8978fe9e3af`。只讀 safetensors JSON header 確認 1,009 tensors 的 data_end 符合檔案大小；未載 tensor、未做 runtime 相容性或推論測試。完整 resolved paths／SHA (`egret-medium-local.json`)、官方 preset (`<<tmp>/pdf-core-native-std-20261017/venv/lib/python3.12/site-packages/docling/datamodel/layout_model_specs.py:94>`)。
 
 零下載、零 API／VLM、零 rendering、零 conversion；六篇缺輸出尚未當成零，待主線通知再補統計。

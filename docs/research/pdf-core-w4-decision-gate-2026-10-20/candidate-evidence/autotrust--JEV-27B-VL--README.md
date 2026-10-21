@@ -220,7 +220,7 @@ Same scenes and tasks for every model in the family:
   declares the task complete too early.
 
 Demo code: [JEV-9B `vl/demos/`](https://huggingface.co/autotrust/JEV-9B/tree/main/vl/demos) (set `JEV_URL` to this
-server). Per-episode results: [`reports/demos/`](reports/demos).
+server). Per-episode results: `reports/demos/` (`reports/demos`).
 
 ## New (1 October 2026)
 
@@ -246,7 +246,7 @@ Offline evaluation on [MicroLens-100k](https://github.com/westlake-repl/MicroLen
 platform with the original covers: for 200 users, the video each one actually watched next is hidden among 19 videos other
 users watched within ±3 days (what the feed would have been showing), and every method ranks the 20 candidates.
 
-![zero-shot short-video recommendation](image_recommendation.png)
+zero-shot short-video recommendation (`image_recommendation.png`)
 
 | method | uses interaction logs? | AUC | HR@5 | NDCG@10 |
 |---|---|---:|---:|---:|
@@ -300,7 +300,7 @@ about 300 ms per decision (4× playback).
 error recovery, safe refusal, tool irrelevance), System 1 reaches **73.2%** macro-average accuracy, the top of the paper's
 table (Table 4): Qwen-Plus 70.0, DeepSeek-V3.2 69.6, Inf-ORM-Llama3.1-70B 69.2, Gemini-3-Flash 69.1, GPT-5 68.5.
 
-![Plan-RewardBench](agent_judge_planrb.png)
+Plan-RewardBench (`agent_judge_planrb.png`)
 
 **AgentRewardBench (2025, with screenshots).**
 
@@ -323,7 +323,7 @@ recall**:
 At threshold 0.5: precision 78.4, recall 70.2; AUROC 0.91. All 1,302 judgements in about 4 minutes on one GPU. Code:
 [JEV-27B-DEMO / 10-agent-judge](https://github.com/yuhai-china/JEV-27B-DEMO/tree/master/10-agent-judge).
 
-![agent judge](agent_judge.png)
+agent judge (`agent_judge.png`)
 
 ## Highlight: multimodal judge
 
@@ -342,7 +342,7 @@ accuracy**, above every model on its official leaderboard (26 models, updated Ma
 
 2,494 decisions in 163 seconds on one GPU. Code: [JEV-27B-DEMO / 09-multimodal-judge](https://github.com/yuhai-china/JEV-27B-DEMO/tree/master/09-multimodal-judge).
 
-![multimodal judge](multimodal_judge.png)
+multimodal judge (`multimodal_judge.png`)
 
 On the newer [Multimodal RewardBench 2](https://arxiv.org/abs/2512.16899) (Meta, December 2025), which includes the current
 generation of judges (1,000 expert-annotated pairs per task; other rows from the paper's Table 2):
@@ -362,7 +362,7 @@ generation of judges (1,000 expert-annotated pairs per task; other rows from the
 Text-to-image judging comes within 1.3 points of GPT-5; the four-task average is at the level of GPT-4.1 and Qwen3-VL-32B.
 GPT-5 and Gemini 3 Pro stay ahead, and image editing is the weakest task.
 
-![MMRB2](multimodal_judge_mmrb2.png)
+MMRB2 (`multimodal_judge_mmrb2.png`)
 
 ## Benchmarks
 

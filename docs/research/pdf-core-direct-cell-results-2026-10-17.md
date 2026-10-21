@@ -32,11 +32,11 @@ SkillOpt 附帶 Table3 另經實際144dpi圖片核對：24/24數值、8組 Compo
 | 公開接合 | 公開 TableCell／TableData、插入／刪除／重編號 API；all-or-nothing copy，禁止補值／自動填空格 |
 | 主要 Markdown | 官方 `MarkdownDocSerializer(table_serializer=...)` extension；只對目標 plain cells 的 render 副本做通用 HTML／Markdown escaping，委派 stock table serialization |
 
-完整有效 options 與輸入／request／protocol hashes 見 [live registration](pdf-core-direct-cell-2026-10-17/live-registration.json)。Memory-R1／SkillOpt 核 hash 重用同版 S0；另外兩頁各做一次新 S0，完整 options 比對一致。未把 OpenAI 結果當成公司 Qwen3 的具名模型驗證。
+完整有效 options 與輸入／request／protocol hashes 見 live registration (`pdf-core-direct-cell-2026-10-17/live-registration.json`)。Memory-R1／SkillOpt 核 hash 重用同版 S0；另外兩頁各做一次新 S0，完整 options 比對一致。未把 OpenAI 結果當成公司 Qwen3 的具名模型驗證。
 
 ## A：表示與 serialization gate 通過
 
-[A 結果](pdf-core-direct-cell-2026-10-17/verification.json)：17項正向控制、40項拒絕控制，0模型／API／來源論文／oracle。涵蓋雙列維度、多層及重名 metric headers、rowspan／colspan、row sections、同一 physical cell 的成對值、空白／缺值／零／精度、HTML／Markdown literals 的實際 CommonMark＋table 渲染、合法 corner 雙 header flags。
+A 結果 (`pdf-core-direct-cell-2026-10-17/verification.json`)：17項正向控制、40項拒絕控制，0模型／API／來源論文／oracle。涵蓋雙列維度、多層及重名 metric headers、rowspan／colspan、row sections、同一 physical cell 的成對值、空白／缺值／零／精度、HTML／Markdown literals 的實際 CommonMark＋table 渲染、合法 corner 雙 header flags。
 
 同時驗完整 grid coverage、bounds、overlap、span／offset一致、嚴格型別、漏／重複／未知 target、source caption／provenance／全部 source spans、正文與非目標 rich table、JSON reload及canonical不可變。Rich targets、非caption children、無法完整保留的非預設 target metadata 明確拒絕。只沿用 native whole-table envelope，不生成 panel／cell 位置。
 
@@ -46,7 +46,7 @@ SkillOpt 附帶 Table3 另經實際144dpi圖片核對：24/24數值、8組 Compo
 
 ## B：固定四次請求，失敗原因分開記錄
 
-[觀測](pdf-core-direct-cell-2026-10-17/live-observations.json)為4次 HTTP200、全部 `finish_reason=stop`；一次配置、concurrency1、retry0。依非來源合成33×13／379實體cells的[預檢](pdf-core-direct-cell-preflight-2026-10-17.md)統一凍結 max completion65536、compact JSON、省略預設 flags／unit spans。這是保守 byte 預估，不是精確 tokenizer 保證。
+觀測 (`pdf-core-direct-cell-2026-10-17/live-observations.json`)為4次 HTTP200、全部 `finish_reason=stop`；一次配置、concurrency1、retry0。依非來源合成33×13／379實體cells的[預檢](pdf-core-direct-cell-preflight-2026-10-17.md)統一凍結 max completion65536、compact JSON、省略預設 flags／unit spans。這是保守 byte 預估，不是精確 tokenizer 保證。
 
 | 頁面 | API client 秒數 | Completion tokens（含 reasoning） |
 |---|---:|---:|
@@ -61,7 +61,7 @@ T04 宣告33×13，但只有83個實體 cells，覆蓋154/429 positions；缺275
 
 T05 的 source caption 已在 baseline 正文 TextItem，native table 的 `captions=[]`。目前 mapper 在沒有 native caption link 時採用 provider caption fallback，新增了同一段 caption，導致 canonical／Markdown皆重複。這是**caption ownership／接合缺陷**，不是數字辨識錯誤，也不是 escaping 錯誤。A 的合成 caption 都有 native link，沒有覆蓋此真實情境；不能以 A 通過推論所有 caption assembly 都正確。沒有新增文字 dedup／猜測 attachment 規則來隱藏問題。
 
-三個 mapped 頁面的 graph、typed cells→實際渲染、source spans、來源 envelope、非目標正文／位置、canonical serialization不變、JSON reload皆經[獨立交付審查](pdf-core-direct-cell-2026-10-17/delivery-verification.json)；Wiki caption 失敗另外明列，不被機械項目通過所抵銷。
+三個 mapped 頁面的 graph、typed cells→實際渲染、source spans、來源 envelope、非目標正文／位置、canonical serialization不變、JSON reload皆經獨立交付審查 (`pdf-core-direct-cell-2026-10-17/delivery-verification.json`)；Wiki caption 失敗另外明列，不被機械項目通過所抵銷。
 
 CPU 兩頁峰值取樣 tree RSS 約2.46／2.02GiB；API程序峰值約0.145GiB、最低 available14.81GiB。B執行到最後 API 約170.6秒，未觸及180秒／request、45分鐘、RSS12GiB／available8GiB界線。這是本機有界執行資料，非 production高頻／併發／GPU SLO。
 
@@ -73,4 +73,4 @@ CPU 兩頁峰值取樣 tree RSS 約2.46／2.02GiB；API程序峰值約0.145GiB�
 
 公司具名 Qwen3／CUDA／vLLM、高頻 ingest、跨頁T03、Paddle與6份holdout均未執行。這四頁都是已曝光 DEV；本輪既沒有泛化證據，也未完成code／inline公式／圖片等其他必含功能資格。
 
-可重現評分：[T01／T02](pdf-core-direct-cell-2026-10-17/quality-small.json)、[T04](pdf-core-direct-cell-2026-10-17/evaluation-t04.json)、[T05](pdf-core-direct-cell-2026-10-17/t05-evaluation.json)。所有答案讀取都在四次固定推論完成後，沒有回流至 producer。沒有 SDK／production修改、安裝、模型下載或新的 API 重試；憑證只經隱藏TTY／程序記憶體使用，未寫入研究檔案。
+可重現評分：T01／T02 (`pdf-core-direct-cell-2026-10-17/quality-small.json`)、T04 (`pdf-core-direct-cell-2026-10-17/evaluation-t04.json`)、T05 (`pdf-core-direct-cell-2026-10-17/t05-evaluation.json`)。所有答案讀取都在四次固定推論完成後，沒有回流至 producer。沒有 SDK／production修改、安裝、模型下載或新的 API 重試；憑證只經隱藏TTY／程序記憶體使用，未寫入研究檔案。

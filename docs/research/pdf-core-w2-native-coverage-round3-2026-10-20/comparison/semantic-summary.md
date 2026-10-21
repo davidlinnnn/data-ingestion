@@ -78,6 +78,6 @@ V2 的 3 個完整修好含原 24 件的 2 件（Image Transformer p5、P16 p25�
 | V2 | NEW_BAD | Pilot-other/unknown | caption_splice | P-01-2608.27454v1 | 11,12 | v2-wikiskill-figure3-breaks-pattern-count |
 | V2 | PARTIAL | NeurIPS/ICLR | duplication | P-05-2602.08234v2 | 22,23,24 | skillrl-colspan-markdown-duplicates |
 
-頁圖、完整前後片段與逐 identity 理由：[V2-semantic-all-records.json](V2-semantic-all-records.json)、[V2-semantic-all-groups.json](V2-semantic-all-groups.json)、[V2-all-baseline-group-checks.json](V2-all-baseline-group-checks.json)。V1 詳見 [V1-supplementary-heading-review.md](V1-supplementary-heading-review.md) 與 [V1-supplementary-trace-review.md](V1-supplementary-trace-review.md)。
+頁圖、完整前後片段與逐 identity 理由：`V2-semantic-all-records.json`、`V2-semantic-all-groups.json`、`V2-all-baseline-group-checks.json`。V1 詳見 [V1-supplementary-heading-review.md](V1-supplementary-heading-review.md) 與 [V1-supplementary-trace-review.md](V1-supplementary-trace-review.md)。
 
 這不是 V2 全文逐字驗收，凍結 oracle 對作者、表格、短句、數學與部分框內內容仍有盲點。未把未被自動抓到當成沒有錯誤。建議維持 Heron＋separators=True，採 B-only heading；本輪不做 per-document 例外或額外數值調整。

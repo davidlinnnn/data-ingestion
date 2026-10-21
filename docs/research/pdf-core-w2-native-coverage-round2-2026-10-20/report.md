@@ -27,9 +27,9 @@ caption可信390，找到390，正確caption label 355、圖內文字獨立保�
 
 ## 2. 逐篇及逐頁結果
 
-完整36篇表見[per-paper.md](per-paper.md)／[TSV](per-paper.tsv)，機器與人工合併資料見[combined-papers.json](combined-papers.json)。715頁人工證據狀態見[page-verdicts.json](page-verdicts.json)，每篇`analysis/<id>/pages.json`保存逐頁候選；跨頁anchor可涉及兩頁，不可相加當全篇分母。
+完整36篇表見[per-paper.md](per-paper.md)／TSV (`per-paper.tsv`)，機器與人工合併資料見`combined-papers.json`。715頁人工證據狀態見`page-verdicts.json`，每篇`analysis/<id>/pages.json`保存逐頁候選；跨頁anchor可涉及兩頁，不可相加當全篇分母。
 
-資源失敗為P03、P06、P10、P16、P18、P20（25、29、30、64、18、50頁）。沒有document輸出，不做heading後處理，品質全UNKNOWN。RSS失敗不可解讀為內容漏216頁。原始PDF／來源hash、URL見[jobs.json](jobs.json)及[oracle/source-manifest.json](oracle/source-manifest.json)。P20來源全取得，16篇新下載、4篇沿用已取得bytes；F來源hash全符合凍結。
+資源失敗為P03、P06、P10、P16、P18、P20（25、29、30、64、18、50頁）。沒有document輸出，不做heading後處理，品質全UNKNOWN。RSS失敗不可解讀為內容漏216頁。原始PDF／來源hash、URL見`jobs.json`及`oracle/source-manifest.json`。P20來源全取得，16篇新下載、4篇沿用已取得bytes；F來源hash全符合凍結。
 
 ## 3. 主要失敗類型與stage
 
@@ -45,7 +45,7 @@ caption可信390，找到390，正確caption label 355、圖內文字獨立保�
 | 重複 | 4個anchors，集中P05 | p22 Task只印一次，Markdown colspan2展開兩欄重複；另p23–24 | native table merged-cell到Markdown serialization；非reading-order |
 | 混段告警 | 4候選 | Tacotron2 p2 decoder／post-net自然續欄，屬FP；其他ACM候選仍待語義核對 | oracle段落定位／rank-gap啟發式限制，不全算merge缺陷 |
 
-F13 inline-math另立[inline-math.json](inline-math.json)：全來源有5180個候選位置；已看頁圖確認Attention p2兩次下標攤平（`h_t`→`h t`、`h_{t-1}`→`ht − 1`），歸A分支，不影響F01/F02。2是已確認下限，5180不是錯誤次數，未宣稱完成逐公式語義驗收。
+F13 inline-math另立`inline-math.json`：全來源有5180個候選位置；已看頁圖確認Attention p2兩次下標攤平（`h_t`→`h t`、`h_{t-1}`→`ht − 1`），歸A分支，不影響F01/F02。2是已確認下限，5180不是錯誤次數，未宣稱完成逐公式語義驗收。
 
 ## 4. Oracle抽查與限制
 
@@ -55,13 +55,13 @@ F13 inline-math另立[inline-math.json](inline-math.json)：全來源有5180個�
 
 五個FP：合法跨欄延續（Tacotron）、書目arXiv非家具（BERT）、PDF字流把header/title/author混成一句（Adam）、圖內subcaption被忽略ancestor誤當正文（YOLO）、LaTeX prose誤收附錄標題（BERT）。分析器落實頁邊身分與picture/table ancestor的兩次修正均保留舊版及[analysis-change.md](analysis-change.md)，source oracle與audit選樣沒有改動。
 
-完整20案逐一理由／原頁圖／輸出refs見[audit/results.json](audit/results.json)及[selection.json](audit/selection.json)。另外3個失敗定位追加頁圖見[audit/supplementary.json](audit/supplementary.json)，不併入十加十的FP/FN分母。純字元正規化可掩蓋負號／格式差異，只用作定位；已抽查否定、條件、數值、對象，但稀疏anchors零告警不證明全文無錯。宏、條件編譯、列表／boxed prompt、float、footnote、分段、跨頁與圖中文字仍是主要oracle風險。
+完整20案逐一理由／原頁圖／輸出refs見`audit/results.json`及selection.json (`audit/selection.json`)。另外3個失敗定位追加頁圖見`audit/supplementary.json`，不併入十加十的FP/FN分母。純字元正規化可掩蓋負號／格式差異，只用作定位；已抽查否定、條件、數值、對象，但稀疏anchors零告警不證明全文無錯。宏、條件編譯、列表／boxed prompt、float、footnote、分段、跨頁與圖中文字仍是主要oracle風險。
 
 ## 5. Heading baseline與官方後處理
 
 30個成功輸出全保存official JSON／Markdown；只用現有套件的`HeadingHierarchyModel.assign_heading_levels`，以原PDF native font／outline補輸入，沒有重跑conversion或模型推論。28篇有可評IN_SCOPE headings。381個section/subsection/subsubsection：baseline正確140、level錯212、missing候選27、role錯1、ambiguous1；官方後正確320、level錯32，其餘不變。
 
-199個level error→correct，19個correct→error，原13個仍錯，淨減180。19個退化全是section被下沉；不能直接全面啟用後稱修好。另136個paragraph strict missing中131個有正文prefix，27個structural missing中20個也有正文prefix；它們是run-in／角色／精確匹配限制，不可報成163個內容漏失。共685個level欄位變更，30篇全為level-only、沒有新增heading、沒有重建semantic parent。逐項及五代表頁見[heading/assessment.json](heading/assessment.json)、[heading/transitions.json](heading/transitions.json)與[heading/README.md](heading/README.md)。
+199個level error→correct，19個correct→error，原13個仍錯，淨減180。19個退化全是section被下沉；不能直接全面啟用後稱修好。另136個paragraph strict missing中131個有正文prefix，27個structural missing中20個也有正文prefix；它們是run-in／角色／精確匹配限制，不可報成163個內容漏失。共685個level欄位變更，30篇全為level-only、沒有新增heading、沒有重建semantic parent。逐項及五代表頁見`heading/assessment.json`、`heading/transitions.json`與`heading/README.md`。
 
 ## 6. 耗時與RSS
 
@@ -75,7 +75,7 @@ F13 inline-math另立[inline-math.json](inline-math.json)：全來源有5180個�
 | 已知CPU秒含6次pipeline初始化 | — | ≥2355.492秒；6篇被kill的CPU時間未保存，不能假報完整總和 |
 | 全次最高RSS／最低host available | — | 8.230／20.552 GiB |
 
-Residence是preprocess開始到assemble完成，含queue且可跨頁重疊，不含全篇reading-order；不可相加當全量wall。RSS為0.1秒抽樣的整個worker process tree，非單頁獨占配置量。守門在觀測超8 GiB後kill；實際取樣峰8.230 GiB短暫超額，沒有聲稱全程≤8。主機available未低4 GiB，沒有timeout或預算停止。逐頁與逐篇資料見[resources.json](resources.json)；失敗頁時間沒有假造。
+Residence是preprocess開始到assemble完成，含queue且可跨頁重疊，不含全篇reading-order；不可相加當全量wall。RSS為0.1秒抽樣的整個worker process tree，非單頁獨占配置量。守門在觀測超8 GiB後kill；實際取樣峰8.230 GiB短暫超額，沒有聲稱全程≤8。主機available未低4 GiB，沒有timeout或預算停止。逐頁與逐篇資料見`resources.json`；失敗頁時間沒有假造。
 
 ## 7. 只限官方選項的後續候選（未執行）
 
@@ -86,12 +86,12 @@ Residence是preprocess開始到assemble完成，含queue且可跨頁重疊，不
 | `heading_hierarchy_options`的`use_bookmarks`／`use_numbering`／`use_style`官方開關 | 本輪199改善來源為bookmark144、numbering55；19退化為numbering10、style9。可列bookmark優先、numbering/style消融候選，會犧牲部分改善，不能宣稱通用修正或重建parent。 |
 | `PdfPipelineOptions.use_reading_order_separators=False`（目前True） | 直接對應本輪`ReadingOrderOptions.use_page_separators`，且保存的shape bboxes非空。可驗證幾何separator是否影響predictor；無證據保證可修ResNet／YOLO，也可能傷害正常頁。 |
 
-選項依據是固定安裝版官方原始碼`docling/datamodel/pipeline_options.py`及`standard_pdf_pipeline.py`，精確本機連結見[diagnostics/method.md](diagnostics/method.md)、[resource-failures.md](diagnostics/resource-failures.md)、[heading/README.md](heading/README.md)。本版本未找到可直接停用paragraph merge、修正colspan Markdown重複或預設Markdown圖子文字漏出的public pipeline開關，不把這些誤稱調參即可解決。
+選項依據是固定安裝版官方原始碼`docling/datamodel/pipeline_options.py`及`standard_pdf_pipeline.py`，精確本機連結見[diagnostics/method.md](diagnostics/method.md)、[resource-failures.md](diagnostics/resource-failures.md)、`heading/README.md`。本版本未找到可直接停用paragraph merge、修正colspan Markdown重複或預設Markdown圖子文字漏出的public pipeline開關，不把這些誤稱調參即可解決。
 
 沒有推薦未公開heuristic補丁、OCR實驗、模型升版、VLM／API或掃描資料。原生多欄仍有已證實F01/F02阻擋；資源失敗與oracle盲區也尚未排除，因此本輪不足以宣告第一版profile達到全文Q4。
 
 ## 可重現性與停止點
 
-方法凍結[registration.json](registration.json)、[metrics.md](metrics.md)、runner[run_full.py](run_full.py)、[effective-options.json](effective-options.json)、[runtime-identity.json](runtime-identity.json)、[execution.json](execution.json)。模型離線載入既有artifact；所有enrichment false、remote services false、CPU4、三batch1。失敗未重試。成功篇各有`result.json`、`document.json`、`document.md`、raw layout、private shapes、stage events及timings，diagnostic replay不呼叫backend或learned inference。
+方法凍結`registration.json`、[metrics.md](metrics.md)、runner`run_full.py`、`effective-options.json`、`runtime-identity.json`、`execution.json`。模型離線載入既有artifact；所有enrichment false、remote services false、CPU4、三batch1。失敗未重試。成功篇各有`result.json`、`document.json`、`document.md`、raw layout、private shapes、stage events及timings，diagnostic replay不呼叫backend或learned inference。
 
 研究檔案均在本新目錄，未改既有目錄、Git index、commit、push或GitHub留言；未開holdout／R1資料。已停在主線要求回報檢查點，沒有執行候選修正。

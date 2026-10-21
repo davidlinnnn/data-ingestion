@@ -15,7 +15,7 @@
 | 輸入／參數 | 先凍結明確的文字、label、page、bbox、尺寸、預期連結；以數學轉換轉成 BOTTOMLEFT 座標。演算法、threshold、既有負例均未改動。 |
 | 執行次數 | 一輪固定 24 項控制；原有 11 個可用合成 unittest methods 原樣執行。兩者有覆蓋重疊，不能相加成 35 個獨立樣本。 |
 
-控制與停止條件先寫入 [controls.json](pdf-core-adapter-contract-2026-10-16/continuation/controls.json)，其 SHA-256 在執行前後核對一致。原始結果、runtime／source 身分及逐項不變量見 [results.json](pdf-core-adapter-contract-2026-10-16/continuation/results.json)；執行細節見 [continuation 記錄](pdf-core-adapter-contract-2026-10-16/continuation/README.md)。
+控制與停止條件先寫入 controls.json (`pdf-core-adapter-contract-2026-10-16/continuation/controls.json`)，其 SHA-256 在執行前後核對一致。原始結果、runtime／source 身分及逐項不變量見 results.json (`pdf-core-adapter-contract-2026-10-16/continuation/results.json`)；執行細節見 [continuation 記錄](pdf-core-adapter-contract-2026-10-16/continuation/README.md)。
 
 ## 結果與失敗意義
 
@@ -46,4 +46,4 @@
 
 **本輪結論：收束 A′，不自動換下一模型或擴張後處理。** 現有 Standard 元件仍可作有用基底，但尚無完整合格配置。若未來重開，必須提出能同時保留原正例與避免誤接的不同完整方法，另行決定其維護成本；本輪不替它開新試驗。
 
-[執行範圍及核對紀錄](pdf-core-adapter-contract-2026-10-16/execution.json)記錄本次授權、停止結果、未執行項目與檔案身分；先前 pending 決策文件保留為當時提案，由本記錄承接。
+執行範圍及核對紀錄 (`pdf-core-adapter-contract-2026-10-16/execution.json`)記錄本次授權、停止結果、未執行項目與檔案身分；先前 pending 決策文件保留為當時提案，由本記錄承接。

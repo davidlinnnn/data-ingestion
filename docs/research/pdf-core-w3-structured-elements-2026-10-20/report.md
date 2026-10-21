@@ -10,13 +10,13 @@ E0 使用 W2 採納的 PyPdfium／Heron／separators=True／bookmark-only，重�
 
 全域 source-only oracle 在08:26:05 UTC封存，所有 SHA、原始及修正版分析器保留。Adam 沒有真正 LaTeX；無法建立結構 gold。多列公式的區塊口徑不是逐條數學式口徑。表格巨集／複雜表頭及部分來源頁定位不足，使許多表保持 UNKNOWN；不能因沒有確證錯誤就算 PASS。協議、成本、harness 修正及盲化限制見 [method.md](method.md)。
 
-初始兩篇試跑推估全量約250分鐘，故改用預登錄分層樣本。10:00:08 UTC 用22個實際batch重新外推，當時剩餘enrichment需77–89分鐘，超過整個任務剩餘74.95分鐘，且尚未加conversion／報告成本；按指示停止新增conversion，讓活動P08成功保存後停止parent。[budget-stop.json](budget-stop.json) 保存兩種外推與原始batch SHA。已完成211個gate refs中的84個，127未處理；pilot另有1個非樣本code ref，總實際85 refs。未完成來源不補選、不計模型失敗。
+初始兩篇試跑推估全量約250分鐘，故改用預登錄分層樣本。10:00:08 UTC 用22個實際batch重新外推，當時剩餘enrichment需77–89分鐘，超過整個任務剩餘74.95分鐘，且尚未加conversion／報告成本；按指示停止新增conversion，讓活動P08成功保存後停止parent。`budget-stop.json` 保存兩種外推與原始batch SHA。已完成211個gate refs中的84個，127未處理；pilot另有1個非樣本code ref，總實際85 refs。未完成來源不補選、不計模型失敗。
 
 RAW 與 MAPPED 分開評。MAPPED 只套 W2 的空 text→orig（標角色不確定）、picture children 原生文字獨立交付、合併儲存格單次交付三條規則。非空但錯誤的 E1 model text 不以 orig 救回。
 
 已確認的公式／code／algorithm／逐表／圖片案例，統一索引在 [blocking-list.md](blocking-list.md)，包含來源ID、頁碼、片段與定位stage的原始證據連結。
 
-按 family 的四類完整條件式計數見 [family-summary.md](family-summary.md)／[family-summary.json](family-summary.json)；此處的偵測分數會附來源可定位分母，不能當未知單位不存在。pilot原清單中仍有模板不確定的類別，未硬塞進8個Set F family。
+按 family 的四類完整條件式計數見 [family-summary.md](family-summary.md)／`family-summary.json`；此處的偵測分數會附來源可定位分母，不能當未知單位不存在。pilot原清單中仍有模板不確定的類別，未硬塞進8個Set F family。
 
 ## 公式：可找到角色，重建忠實性未達可全域採用
 
@@ -28,7 +28,7 @@ RAW 與 MAPPED 分開評。MAPPED 只套 W2 的空 text→orig（標角色不確
 
 代表阻擋有 LightGCN p5 根號分母改變次方、YOLO p2 `IOU`變`IO`加聯集符號、Attention p7必要維度下標被截字、ImageTransformer p4 query乘數遺失、EfficientNet p3組合算子變張量積，以及SICA p3美元單位變節號。這些定位在E1重建出口；mapper不以orig覆蓋非空錯式。
 
-逐案清單、頁圖、refs與前後片段見 [formula-code/blocking-cases.json](formula-code/blocking-cases.json)、[formula-code/report.md](formula-code/report.md)、[formula-code/audit50-final-selection.json](formula-code/audit50-final-selection.json)。人工50仍是block口徑；431封存rows與910詞法行段不能當910條獨立公式，未完全達成使用者逐條公式分母。
+逐案清單、頁圖、refs與前後片段見 `formula-code/blocking-cases.json`、[formula-code/report.md](formula-code/report.md)、`formula-code/audit50-final-selection.json`。人工50仍是block口徑；431封存rows與910詞法行段不能當910條獨立公式，未完全達成使用者逐條公式分母。
 
 行內數學來源4571 spans中3751是正文候選，其餘含表格／caption／footnote／macro。固定hash的6個正文上下標樣本都已頁圖確認在E0兩出口攤平；樣本類型包含上下標從屬與索引連成平字。**全語料攤平頻率仍UNKNOWN**，不能用來源span數或6/6外推。沿W2 D3歸inline-math／F13，不自動改判F01/F02。
 
@@ -40,7 +40,7 @@ RAW 與 MAPPED 分開評。MAPPED 只套 W2 的空 text→orig（標角色不確
 
 兩個已知algorithm另補核：E0的P04 p22有38/38編號行、SICA p5有5/5動作文字，完整scope仍UNKNOWN。P04本來就有code424/425，是凍結aligner漏配；其425因另一prompt候選而實際進E1，輸出把`Hash(s) ∈ C`改成`= C`、`e ≥ 2`改成`e > 2`並破壞else分支。這是**1件頁圖確認的靜態Q33邏輯退化**，兩出口皆交付錯active文字，與執行測試區分；不因frozen algorithm gate顯示0就隱藏。SICA的list90未被enrichment處理，不能算E1模型失敗。
 
-逐行漏／extra／縮排／literal／operator候選見 [formula-code/code-line-assessment.json](formula-code/code-line-assessment.json)；裁定見 [formula-code/audit/code-review.md](formula-code/audit/code-review.md)、[formula-code/audit/algorithm-role-review.md](formula-code/audit/algorithm-role-review.md)。未定位／未執行項目保留UNKNOWN或時間停止狀態。
+逐行漏／extra／縮排／literal／operator候選見 `formula-code/code-line-assessment.json`；裁定見 `formula-code/audit/code-review.md`、`formula-code/audit/algorithm-role-review.md`。未定位／未執行項目保留UNKNOWN或時間停止狀態。
 
 ## 表格：已完成
 
@@ -60,7 +60,7 @@ P13 p8 的 Table2 吸收 Figure4 條圖是 layout overlap 抑制造成，與圖�
 
 正向補查10張完整來源表：223個 numeric 值與符號／單位及 multiplicity 都保留，8表 numeric 序列保留、2表移位；但行列標籤關係仍不完整，仍為UNKNOWN。沒有按 gold 把單格數列重排成正確多欄。
 
-RAW expanded-grid 有73表、677次同格額外曝光（包括表頭）；MAPPED 同一 cell ref 單次交付。這些曝光不等於677個錯誤來源資料點，mapper 也未修復上述五表的原生關聯錯誤。逐表清單見 [table-status.md](table-status.md)，完整逐點／row／col／header 證據見 [table/E0-results-v2.json](table/E0-results-v2.json)、[table/report.md](table/report.md)、[table/report-v2.md](table/report-v2.md)。
+RAW expanded-grid 有73表、677次同格額外曝光（包括表頭）；MAPPED 同一 cell ref 單次交付。這些曝光不等於677個錯誤來源資料點，mapper 也未修復上述五表的原生關聯錯誤。逐表清單見 [table-status.md](table-status.md)，完整逐點／row／col／header 證據見 `table/E0-results-v2.json`、[table/report.md](table/report.md)、[table/report-v2.md](table/report-v2.md)。
 
 ## 圖片：已完成
 
@@ -72,7 +72,7 @@ RAW expanded-grid 有73表、677次同格額外曝光（包括表頭）；MAPPED
 
 引用 W2 R3：235個picture框中172個含至少30個PDF原生非空白字元，分布35篇146頁；這172框也都有至少30個native descendant字元。RAW Markdown只有14框的 substantial child 可找到。mapper另交 picture-native-uncertain 文字，不冒充 C 圖片 supplement。這是文字密集框頻率，非圖意理解準度。
 
-詳見 [image/report.md](image/report.md)、[image/family-summary.csv](image/family-summary.csv)、[image/blocking-cases.json](image/blocking-cases.json)、[image/layout-zero-inference-replay.json](image/layout-zero-inference-replay.json)。
+詳見 [image/report.md](image/report.md)、`image/family-summary.csv`、`image/blocking-cases.json`、`image/layout-zero-inference-replay.json`。
 
 ## 耗時、RSS與範圍交叉檢查
 
@@ -84,7 +84,7 @@ RAW expanded-grid 有73表、677次同格額外曝光（包括表頭）；MAPPED
 
 E0歷史含30篇影像開、6篇關，不是新跑的全36影像關閉benchmark。E1成本含harness失敗，兩個未完整supervised attempt（早期中斷與最後成功P08）有censored欄，完整總成本為下界；wall合計不是任務端到端時間。P08在parent暫停後已完成，手動monitor開始時無活動child，0sample不等於0RSS；最後區間連續守門覆蓋亦UNKNOWN。這個資源證據缺口不隱藏。
 
-參見 [resources.json](resources.json)、[harness-repair.json](harness-repair.json)、[verification.json](verification.json)。所有封存source與樣本SHA、36份E0保存JSON／Markdown身分，以及成功E1的effective options／gate均已交叉檢查；`supported_engines`原型是Set，僅此JSON序列順序不影響設定比較。無API／新模型、未開holdout、未改正式pipeline、未commit／push／GitHub留言。
+參見 `resources.json`、`harness-repair.json`、`verification.json`。所有封存source與樣本SHA、36份E0保存JSON／Markdown身分，以及成功E1的effective options／gate均已交叉檢查；`supported_engines`原型是Set，僅此JSON序列順序不影響設定比較。無API／新模型、未開holdout、未改正式pipeline、未commit／push／GitHub留言。
 
 ## 官方選項後續建議
 

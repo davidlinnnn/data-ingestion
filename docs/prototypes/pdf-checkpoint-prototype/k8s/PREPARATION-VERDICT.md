@@ -6,7 +6,7 @@ Checked 2026-09-11. This is new preparation evidence, not a replacement for the
 ## Environment observations
 
 - Working branch: `codex/pdf-checkpoint-prototype`; prior commit/evidence preserved.
-- Docker CLI exists but `/Users/david/.docker/run/docker.sock` does not exist;
+- Docker CLI exists but `~/.docker/run/docker.sock` does not exist;
   `docker info --format '{{.ServerVersion}}'` could not reach a daemon.
 - `kubectl cluster-info --request-timeout=5s` initially hit sandbox restrictions.
   An approved read-only unsandboxed retry confirmed **connection refused** at the

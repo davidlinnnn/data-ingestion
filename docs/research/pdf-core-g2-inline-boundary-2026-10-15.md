@@ -6,7 +6,7 @@
 
 ## 來源規則與六組新輸入
 
-本輪使用 producer 的 parent／child、provenance、stage clusters、native cells、字元範圍及座標關係產生新輸入，沒有將 evaluator 的正確公式、答案或 oracle bbox 放進規則或 prompt。[Source audit](pdf-core-g2-inline-boundary-2026-10-15/boundary-primary.md)與 [20 個固定 source hashes](pdf-core-g2-inline-boundary-2026-10-15/source-audit.json)保留實際證據。
+本輪使用 producer 的 parent／child、provenance、stage clusters、native cells、字元範圍及座標關係產生新輸入，沒有將 evaluator 的正確公式、答案或 oracle bbox 放進規則或 prompt。[Source audit](pdf-core-g2-inline-boundary-2026-10-15/boundary-primary.md)與 20 個固定 source hashes (`pdf-core-g2-inline-boundary-2026-10-15/source-audit.json`)保留實際證據。
 
 | 問題 | 本輪有界修正 |
 | --- | --- |
@@ -17,9 +17,9 @@
 
 SEAL34 的 title cluster 原生 label 仍是 `text`；空間隔離不等於原生自動 caption 分類。Caption／title 角色的模型判斷另記來源。歷史 continuation-v3 保留上游 inline joins 的分支允許左右框只要垂直重疊，造成高正文框吸入右 title；本輪未改動該歷史檔案，也未宣稱已修正通用 reading order。
 
-[輸入 manifest](pdf-core-g2-inline-boundary-2026-10-15/inputs/input-manifest.json) SHA256 `9cbaf2d1e31dc8fca9820c75f5c7b14d3a08f4bf8909698e39f3f6466856e22b` 固定 **6 張 PNG、7 個來源 fragments**。Reviewer 逐圖確認括號／分數線／brace、七行 code、正文與續句完整。SEAL body 兩片的 padding 有 **5px 垂直來源重疊**：第一片只露出下一行的微小 glyph fringe，第二片有完整續句，沒有整詞／整行重複；不能稱其 pixel-disjoint。所有 transforms 與拼圖位置保留。
+輸入 manifest (`pdf-core-g2-inline-boundary-2026-10-15/inputs/input-manifest.json`) SHA256 `9cbaf2d1e31dc8fca9820c75f5c7b14d3a08f4bf8909698e39f3f6466856e22b` 固定 **6 張 PNG、7 個來源 fragments**。Reviewer 逐圖確認括號／分數線／brace、七行 code、正文與續句完整。SEAL body 兩片的 padding 有 **5px 垂直來源重疊**：第一片只露出下一行的微小 glyph fringe，第二片有完整續句，沒有整詞／整行重複；不能稱其 pixel-disjoint。所有 transforms 與拼圖位置保留。
 
-沿用暫用 `gpt-6-luna`、low reasoning、Strict JSON segments、high image detail、`store=false`、4096 completion-token cap、單次 attempt／順序執行。System prompt／schema 與前輪相同，user prompt 改為完整 context／多來源 blocks。這同時改動來源 pixels 與 context prompt，是方法比較，不是只改裁圖的單一變因實驗。仍為 direct API component，沒有跑官方 API `VlmPipeline`。[Runner](pdf-core-g2-inline-boundary-2026-10-15/api/run.py)
+沿用暫用 `gpt-6-luna`、low reasoning、Strict JSON segments、high image detail、`store=false`、4096 completion-token cap、單次 attempt／順序執行。System prompt／schema 與前輪相同，user prompt 改為完整 context／多來源 blocks。這同時改動來源 pixels 與 context prompt，是方法比較，不是只改裁圖的單一變因實驗。仍為 direct API component，沒有跑官方 API `VlmPipeline`。Runner (`pdf-core-g2-inline-boundary-2026-10-15/api/run.py`)
 
 ## 模型輸出與獨立品質判斷
 
@@ -58,16 +58,16 @@ SEAL34 的模型正文被拒絕後，另建立 **native-only 邊界候選**：�
 
 這17筆是回歸資料，已知正例／失敗也參與本輪分析，**不是未見 holdout**。下一次方法選擇前應先固定跨來源 holdout 與必要能力回歸集，同時報告來源品質、成功交付覆蓋與拒絕率；不能只以已接受輸出的精度掩蓋大量 abstention，也不能把舊檔 hash 不變當成新規則不會退化的證據。
 
-[Shadow 回歸說明](pdf-core-g2-inline-boundary-2026-10-15/regression/README.md)／[完整結果](pdf-core-g2-inline-boundary-2026-10-15/regression/results.json)亦保留分母：17筆 first-block 診斷為13 pass／4 abstain；其中16筆 single-root eligible為13／3，1筆多root本來即不適用。前輪11筆結構套用若加上此guard，只會保留8筆；其中2筆拒絕為已知正例，不能把coverage下降報成品質提升。六個小測驗也記錄Greek、單字母、operator等未受此guard保護的邊界。
+[Shadow 回歸說明](pdf-core-g2-inline-boundary-2026-10-15/regression/README.md)／完整結果 (`pdf-core-g2-inline-boundary-2026-10-15/regression/results.json`)亦保留分母：17筆 first-block 診斷為13 pass／4 abstain；其中16筆 single-root eligible為13／3，1筆多root本來即不適用。前輪11筆結構套用若加上此guard，只會保留8筆；其中2筆拒絕為已知正例，不能把coverage下降報成品質提升。六個小測驗也記錄Greek、單字母、operator等未受此guard保護的邊界。
 
 ## 執行範圍與後續
 
-六次皆 HTTP200、`finish_reason=stop`、無 refusal、單次 attempt；request body／source PNG／runner→template→client chain 與 20 個 source hashes核對通過。[API verification](pdf-core-g2-inline-boundary-2026-10-15/api/verification.json)。合計 client RTT **30.60 秒**，每次 **2.91–8.20 秒**；prompt 4,387＋completion 2,418＝**6,805 tokens**（reasoning 1,439 包含在 completion）。沒有 raw EOS/token IDs，沒有量到 remote GPU／RAM；HTTP timeout／shared lock 也不是高頻 ingest 或 server cancellation 的證據。
+六次皆 HTTP200、`finish_reason=stop`、無 refusal、單次 attempt；request body／source PNG／runner→template→client chain 與 20 個 source hashes核對通過。API verification (`pdf-core-g2-inline-boundary-2026-10-15/api/verification.json`)。合計 client RTT **30.60 秒**，每次 **2.91–8.20 秒**；prompt 4,387＋completion 2,418＝**6,805 tokens**（reasoning 1,439 包含在 completion）。沒有 raw EOS/token IDs，沒有量到 remote GPU／RAM；HTTP timeout／shared lock 也不是高頻 ingest 或 server cancellation 的證據。
 
 本輪提供完整 source context 與有來源計帳的 working boundary adapter 的局部證據；剩餘數學／漏字錯誤及回歸退化均保留。接續先固定跨來源 holdout 與回歸範圍，再評估原生文字／位置作為有不確定性的錨點，以及公式候選的來源對齊，之後才進行完整 Docling／Canonical 整合與公司候選驗證。
 
 未驗證通用 boundary detector、完整 corpus、正式 mapper／恢復、公司 GPU／vLLM 或高頻負載；目前 working 結果不能自動視為已接受的 Canonical Knowledge。
 
-[獨立品質核對](pdf-core-g2-inline-boundary-2026-10-15/review/output-review.md)／[21 個負例與計帳結果](pdf-core-g2-inline-boundary-2026-10-15/review/output-review.json)保留六組輸入／輸出、原生812字元的邊界計帳及未改動的旁支。後續[整體驗證](pdf-core-g2-inline-boundary-2026-10-15/validation.json)與[artifact manifest](pdf-core-g2-inline-boundary-2026-10-15/artifacts.json)亦核對前九輪1,717個payload、local links及credential pattern。所有模型失敗與回歸退化保留，本輪沒有正式profile採用。
+[獨立品質核對](pdf-core-g2-inline-boundary-2026-10-15/review/output-review.md)／21 個負例與計帳結果 (`pdf-core-g2-inline-boundary-2026-10-15/review/output-review.json`)保留六組輸入／輸出、原生812字元的邊界計帳及未改動的旁支。後續整體驗證 (`pdf-core-g2-inline-boundary-2026-10-15/validation.json`)與artifact manifest (`pdf-core-g2-inline-boundary-2026-10-15/artifacts.json`)亦核對前九輪1,717個payload、local links及credential pattern。所有模型失敗與回歸退化保留，本輪沒有正式profile採用。
 
-[結論摘要已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6192739352)，本文只加入摘要連結，44 個 feature rows 均保持原樣，issue 維持 OPEN；[寫回核對紀錄](pdf-core-g2-inline-boundary-2026-10-15/ticket-update.json)保存摘要與本文的 exact readback／hash。完整來源、runtime 及 artifact 證據留在本機報告。
+[結論摘要已寫回 #84](https://github.com/davidlinnnn/data-ingestion/issues/84#issuecomment-6192739352)，本文只加入摘要連結，44 個 feature rows 均保持原樣，issue 維持 OPEN；寫回核對紀錄 (`pdf-core-g2-inline-boundary-2026-10-15/ticket-update.json`)保存摘要與本文的 exact readback／hash。完整來源、runtime 及 artifact 證據留在本機報告。

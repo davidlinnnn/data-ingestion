@@ -14,7 +14,7 @@ Baseline p23 原本已把右 panel checks 插到左 InputPrompt／Query 之間�
 
 ## 隔離 stage 的證據
 
-Baseline 與 V1 的 assembled unit、全部 parsed pages、全部 layout predictions **逐欄完全相等**。變動不是新的 OCR／layout 框或文字來源。對同一批保存結果以各自實際 reading-order options 重播官方 ReadingOrderModel，texts/groups/body/furniture/tables、pictures（除後附 image）與原結果相等，Markdown bytes 亦相等；兩份都是零模型推論。stage calls／CID／provenance／source SHA 保存於 [V1-supplementary-trace-review.json](V1-supplementary-trace-review.json)。
+Baseline 與 V1 的 assembled unit、全部 parsed pages、全部 layout predictions **逐欄完全相等**。變動不是新的 OCR／layout 框或文字來源。對同一批保存結果以各自實際 reading-order options 重播官方 ReadingOrderModel，texts/groups/body/furniture/tables、pictures（除後附 image）與原結果相等，Markdown bytes 亦相等；兩份都是零模型推論。stage calls／CID／provenance／source SHA 保存於 `V1-supplementary-trace-review.json`。
 
 因此 p23／p24 的回歸定位在 **reading-order predictor 的 separator 條件改變，並影響後續 paragraph merge／跨頁接合**。既有頁外 bbox export clamp warnings 仍出現，沒有在本次 review 改框；不能把 Core-load 警告當作這次上游推論變更。
 
@@ -22,6 +22,6 @@ Baseline 與 V1 的 assembled unit、全部 parsed pages、全部 layout predict
 
 沒有。兩頁全部 native text／orig／provenance 與 parsed-page 資料對 baseline **完全相等**；`Experiment Results`／`Synergy of Memory and TTS`、`WebArena44` 等夾入正文的來源仍在。
 
-先前零推論已確認這些污染來自原 PDF 嵌入圖的裁剪字流，再被 PyPdfium 對重疊 text rect 的 `get_text_bounded` 重讀放大，早於 layout／reading order／serializer。V1 關閉 separators 沒有移除該 backend 來源，故不能報成修復。[來源與 bounded-cell 證據](../adjudication/recovery-helper/source-cell-origin.md)。
+先前零推論已確認這些污染來自原 PDF 嵌入圖的裁剪字流，再被 PyPdfium 對重疊 text rect 的 `get_text_bounded` 重讀放大，早於 layout／reading order／serializer。V1 關閉 separators 沒有移除該 backend 來源，故不能報成修復。來源與 bounded-cell 證據 (`docs/research/pdf-core-w2-native-coverage-round3-2026-10-20/adjudication/recovery-helper/source-cell-origin.md`)。
 
 本報告只裁定 P10 全文差異；未新增 conversion、未修問題，也不宣告 V1 全語料合格。

@@ -10,7 +10,7 @@
 | G1-C12，p7 | 五個 native blocks，包含繁中／英文同句；另有來源衍生 screenshot、原圖說。native 前後段各一次，圖內 OCR 屬同版圖片，不能冒充 native 原文。 |
 | G1-C13，p8 | p7 的全頁 raster 版本，無文字層；核對完整可見的十個 ordered blocks，不能借用 p7 native layer 宣稱 OCR 成功。 |
 
-來源 PDF、六張 frozen render 與 oracle SHA 都保留。獨立視覺／文字層檢查見 [source review](pdf-core-g2-orientation-2026-10-15/review/source-review.md) 及 [source checks](pdf-core-g2-orientation-2026-10-15/review/source-check.json)。沒有新增 CER／IoU 品質門檻，也沒有把模型錯誤改列來源模糊。
+來源 PDF、六張 frozen render 與 oracle SHA 都保留。獨立視覺／文字層檢查見 [source review](pdf-core-g2-orientation-2026-10-15/review/source-review.md) 及 source checks (`pdf-core-g2-orientation-2026-10-15/review/source-check.json`)。沒有新增 CER／IoU 品質門檻，也沒有把模型錯誤改列來源模糊。
 
 本輪分開保留四個比較接點：
 
@@ -19,7 +19,7 @@
 3. **四次 normalized Standard**：把分類器轉正的影像製成具名 derivative raster PDF，再接回同一 Standard／OCR 設定，確認 layout／order 的實際交付。原始 provider result 的 origin 保持 derivative SHA；另用 review wrapper 保存原 SRC05 page、inverse matrix、quadrilateral／envelope，不竄改 raw result 假裝直接處理原檔。[衍生來源與映射](pdf-core-g2-orientation-2026-10-15/normalized/README.md)
 4. **兩次行級分類診斷**：以 p7 selective screenshot crop 與 p8 full-page 的相同已保存 input bytes，另測 per-call `use_cls=False`；模型／config／detector boxes 與 scores 全部相同，只隔離行級分類的影響，不直接改正式 profile。[Same-input 對照](pdf-core-g2-orientation-2026-10-15/line-cls/README.md)
 
-`PP-LCNet_x1_0_doc_ori_onnx` 來自 [PaddlePaddle 官方 repository](https://huggingface.co/PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx/tree/7330ab7039123e46af2dc03154b9969aa412c61d)，revision `7330ab7039123e46af2dc03154b9969aa412c61d`，Apache-2.0；weight 6,788,069 bytes，SHA 與 config 另存，並與[官方 LFS metadata](pdf-core-g2-orientation-2026-10-15/orientation-model-integrity.json)一致。使用既有 ONNX Runtime，沒有安裝 Paddle 或修改 baseline 環境／模型快取。Docling 的 OCR `use_cls` 是行級 0／180 分類，不能當成此四方向頁面模型；這次四方向路徑是明確的 adapter 候選，沒有宣稱 Docling 原生已接好此 stage。[官方模型 config](https://huggingface.co/PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx/blob/7330ab7039123e46af2dc03154b9969aa412c61d/inference.yml)
+`PP-LCNet_x1_0_doc_ori_onnx` 來自 [PaddlePaddle 官方 repository](https://huggingface.co/PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx/tree/7330ab7039123e46af2dc03154b9969aa412c61d)，revision `7330ab7039123e46af2dc03154b9969aa412c61d`，Apache-2.0；weight 6,788,069 bytes，SHA 與 config 另存，並與官方 LFS metadata (`pdf-core-g2-orientation-2026-10-15/orientation-model-integrity.json`)一致。使用既有 ONNX Runtime，沒有安裝 Paddle 或修改 baseline 環境／模型快取。Docling 的 OCR `use_cls` 是行級 0／180 分類，不能當成此四方向頁面模型；這次四方向路徑是明確的 adapter 候選，沒有宣稱 Docling 原生已接好此 stage。[官方模型 config](https://huggingface.co/PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx/blob/7330ab7039123e46af2dc03154b9969aa412c61d/inference.yml)
 
 ## 方向、文字與閱讀順序的結果
 
@@ -31,7 +31,7 @@
 
 方向判斷由模型原始四分數 argmax 產生，沒有額外 softmax、confidence 門檻或 oracle fallback。四張轉正 PNG 的 SHA 完全相同，證明這組受控回轉的一致性；不把 winning score 約 0.92 當作語意品質保證，也不外推模糊、彎曲、斜拍、手寫或不同真實文件。
 
-Standard baseline 與方向候選都輸出 216 dpi 尺寸，但 **像素 bytes 並非相同**：Docling backend 先以 4.5 倍 render 再 resize 至 3 倍，方向候選直接 PDFium scale3；normalized Standard 又經 derivative raster PDF 的 render。這是明確的 model／method／input transformation 比較，不能將文字變化全部歸因於單一方向 flag。[Render rounding 說明](pdf-core-g2-orientation-2026-10-15/baseline/coordinate-note.md)、[獨立 pixel／tensor 檢查](pdf-core-g2-orientation-2026-10-15/review/pixel-check.json)
+Standard baseline 與方向候選都輸出 216 dpi 尺寸，但 **像素 bytes 並非相同**：Docling backend 先以 4.5 倍 render 再 resize 至 3 倍，方向候選直接 PDFium scale3；normalized Standard 又經 derivative raster PDF 的 render。這是明確的 model／method／input transformation 比較，不能將文字變化全部歸因於單一方向 flag。[Render rounding 說明](pdf-core-g2-orientation-2026-10-15/baseline/coordinate-note.md)、獨立 pixel／tensor 檢查 (`pdf-core-g2-orientation-2026-10-15/review/pixel-check.json`)
 
 ## native／scan 混合與圖片交付
 
@@ -39,13 +39,13 @@ C12 selective OCR 保留原生五個 blocks，包括 `請確認 GPU worker 在 r
 
 兩個 C12 baseline 的 screenshot 都只有 3/5 literal 文字 blocks 完全吻合：breadcrumb 有繁簡字差異，長操作指示在 raw recognizer 成空字串；二方向 classifier 對該行輸出 180。C13 raster 控制在 raw provider／document 條目只有 7/10 literal blocks 吻合，混排 native line 的 raster 版本也出現 `OpenAl`；document traversal 的 caption 又排在圖內文字 children 前。Main Markdown 只呈現 4/10 完全吻合的可見 blocks，圖片 placeholder 沒有呈現圖中文字。不放寬繁簡／引號／關鍵條件要求來計為整體通過。
 
-相同 pixels 的 `use_cls=False` 對照讓兩個長操作指示都重新出現；十五個 raw recognition slots 中只有這兩項由空字串改成句子，detector 輸出完全一致。P7 圖片 filtered texts 從 4→5，p8 全頁從 9→10；p7 的繁體指示文字恢復，但引號改成 curly quotes，literal 比較仍 3/5。P8 指示把 `連結` 寫成 `連结`，`OpenAl-compatible` 也沒有修好，literal blocks 仍 7/10。引號／中性空白允許變化的文字診斷另列於獨立 review，沒有改寫原輸出或 oracle，breadcrumb 字形缺口始終保留。這定位了特定漏句的 line-classifier 影響，沒有把「找回句子」當成文字完全正確，也不支持所有文件一律關閉 classifier。[診斷結果與完整性](pdf-core-g2-orientation-2026-10-15/line-cls/comparison.json)
+相同 pixels 的 `use_cls=False` 對照讓兩個長操作指示都重新出現；十五個 raw recognition slots 中只有這兩項由空字串改成句子，detector 輸出完全一致。P7 圖片 filtered texts 從 4→5，p8 全頁從 9→10；p7 的繁體指示文字恢復，但引號改成 curly quotes，literal 比較仍 3/5。P8 指示把 `連結` 寫成 `連结`，`OpenAl-compatible` 也沒有修好，literal blocks 仍 7/10。引號／中性空白允許變化的文字診斷另列於獨立 review，沒有改寫原輸出或 oracle，breadcrumb 字形缺口始終保留。這定位了特定漏句的 line-classifier 影響，沒有把「找回句子」當成文字完全正確，也不支持所有文件一律關閉 classifier。診斷結果與完整性 (`pdf-core-g2-orientation-2026-10-15/line-cls/comparison.json`)
 
 Stock Docling 結構已有圖片 children 與原 caption reference；image OCR、caption／picture 的歸屬可從保存的結構核對。原 caption 在 Markdown 保留一次，沒有把 screenshot OCR 塞進 native prose。但 stock Markdown 仍只有 `<!-- image -->`，不是能讓 projection 取同版圖片補充內容的穩定 image key。這一部分需要 Canonical mapper／Markdown delivery 的接點；不能說「Markdown 沒顯示 OCR」就等同辨識沒跑，也不能說「raw OCR 有文字」就等同已完整交付。
 
 ## 來源位置與可恢復輸入
 
-方向候選保存完整頁尺寸、原 physical page／source SHA、predicted corrective angle、原圖至 normalized raster 的 3×3 matrix 及 inverse；OCR 每個 polygon 都映回原始物理頁 PDF points。採 continuous raster edges，pixel sample center 另明示，不混用 `W−x` 與 pixel-index 的 `W−1−x`。獨立檢查通過 936 個 raw／filtered polygons、四角變換、像素精確回轉與 tensor／原分數一致性。[每頁映射範例](pdf-core-g2-orientation-2026-10-15/orientation/runs/p4/source-mapping.json)、[saved evidence checks](pdf-core-g2-orientation-2026-10-15/orientation/verification.json)
+方向候選保存完整頁尺寸、原 physical page／source SHA、predicted corrective angle、原圖至 normalized raster 的 3×3 matrix 及 inverse；OCR 每個 polygon 都映回原始物理頁 PDF points。採 continuous raster edges，pixel sample center 另明示，不混用 `W−x` 與 pixel-index 的 `W−1−x`。獨立檢查通過 936 個 raw／filtered polygons、四角變換、像素精確回轉與 tensor／原分數一致性。每頁映射範例 (`pdf-core-g2-orientation-2026-10-15/orientation/runs/p4/source-mapping.json`)、saved evidence checks (`pdf-core-g2-orientation-2026-10-15/orientation/verification.json`)
 
 Normalized Standard 的 raw result 保持 derivative identity、normalized page images／尺寸與內部 provenance 一致。另存 wrapper 把 normalized PDF top-left points 映至原始 source top-left points，保留原 page 尺寸與 item refs／內容／順序；不是已完成的 Canonical document adapter。對原 stock OCR crop 的 mapping 則保留 backend rounding／resampling 限制，沒有杜撰像素精度。持久化 raw stage 輸入／輸出支持重建證據，但本輪沒有執行 Pod 替換、完整 retry／recovery 或 Acceptance。
 
@@ -64,6 +64,6 @@ CPU4／batch1、actual ONNX providers、Torch CPU options、模型／dictionary�
 
 **保留官方四方向小模型作候選；保留 selective OCR 作混合頁比較起點。** 尚未解決多欄閱讀順序、必要 image OCR 文字保真、raster 混排字形與同版 image reference 交付；沒有以平均行數或高 score 掩蓋缺口。這也不代表所有文件都應關閉 line classifier，仍需看有無可靠頁面正向化與實際旋轉文字。
 
-獨立逐案例與反例檢查見 [output review](pdf-core-g2-orientation-2026-10-15/review/output-review.md)／[JSON](pdf-core-g2-orientation-2026-10-15/review/output-review.json)。G1 與前六輪 606 個 payload 不變，原環境／模型快取與 production code 保留；本輪只新增研究與有界 runner，未 commit／push。完整性與資料清單見 [validation](pdf-core-g2-orientation-2026-10-15/validation.json)／[artifacts](pdf-core-g2-orientation-2026-10-15/artifacts.json)。
+獨立逐案例與反例檢查見 [output review](pdf-core-g2-orientation-2026-10-15/review/output-review.md)／JSON (`pdf-core-g2-orientation-2026-10-15/review/output-review.json`)。G1 與前六輪 606 個 payload 不變，原環境／模型快取與 production code 保留；本輪只新增研究與有界 runner，未 commit／push。完整性與資料清單見 validation (`pdf-core-g2-orientation-2026-10-15/validation.json`)／artifacts (`pdf-core-g2-orientation-2026-10-15/artifacts.json`)。
 
 接續 G2 仍有 inline formula／code 偵測及回填、其他完整表格／來源與方法組合，也保留上一輪 title／無書籤附錄／章節 parent 缺口。完整文件 holdout、公司 GPU／vLLM、高頻 ingest、Canonical Acceptance／delivery 與完整 pilot 未於本輪通過。

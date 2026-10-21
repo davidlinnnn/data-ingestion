@@ -14,7 +14,7 @@ tags:
 - safetensors
 ---
 
-![d3-edge: Decision 3.0](assets/banner.png)
+d3-edge: Decision 3.0 (`assets/banner.png`)
 
 # d3-edge
 
@@ -206,7 +206,7 @@ EOF
 
 **On one AMD Instinct MI325X, vLLM Semantic Router serves d3-edge at 861 requests/s with p99 under 1 s, 6.1× AutoModel** (one-question text, with batching, now the default), and with one request per forward, the former default, it gave AutoModel's answers byte for byte when both used the same kernel settings.
 
-![Serving throughput of d3-edge on one AMD Instinct MI325X: AutoModel, the package server and vLLM Semantic Router Engine mode](assets/serving-throughput.png)
+Serving throughput of d3-edge on one AMD Instinct MI325X: AutoModel, the package server and vLLM Semantic Router Engine mode (`assets/serving-throughput.png`)
 
 AutoModel runs in your own process, one call at a time (the Quickstart code); the package server is its `python d3_server.py`; Engine mode is `vllm-sr serve -e`, measured with one request per forward (*exact* in the chart, the former default) and with batching. In vLLM Semantic Router from main (its next development package and release), Engine mode batches concurrent requests by default and takes vLLM-style [engine arguments](https://github.com/vllm-project/semantic-router/blob/main/website/docs/model-runtime/engine-args.md): `--max-num-batched-tokens`, `--max-num-seqs`, `--batch-window-ms` and `--dtype`.
 
@@ -264,9 +264,9 @@ Requests per second on one GPU, closed loop with up to 64 clients (p99 under 1 s
 
 d3-edge is not on the official text board's Pareto frontier: Crivo-150M scores 22.2 with 0.15 billion parameters. Among the eight entries within 0.75 to 1.33 times its size, d3-edge ranks second, behind jiwo 0.8B v2 at 25.6. The other five Decision 3.0 models are on the frontier.
 
-![Jev Decision Index against model size](assets/index-pareto.png)
+Jev Decision Index against model size (`assets/index-pareto.png`)
 
-![Jev Decision Index by area: d3-edge and Decision 2.0 (0.6B)](assets/index-areas.png)
+Jev Decision Index by area: d3-edge and Decision 2.0 (0.6B) (`assets/index-areas.png`)
 
 ### Images: Jev Decision Index vision board 0.3.2
 
@@ -311,7 +311,7 @@ Multiple-choice video question answering (three options per question, chance 33.
 
 ## License
 
-Apache-2.0 ([LICENSE](LICENSE)). Built on [Qwen/Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B) (Apache-2.0).
+Apache-2.0 (`LICENSE`). Built on [Qwen/Qwen3.5-0.8B](https://huggingface.co/Qwen/Qwen3.5-0.8B) (Apache-2.0).
 
 ## Citation
 

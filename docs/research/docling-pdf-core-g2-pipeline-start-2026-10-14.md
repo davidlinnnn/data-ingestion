@@ -67,9 +67,9 @@
 | 圖片分類 | DocumentFigureClassifier-v2.5 可取得時先做 CPU smoke | 分類未知／no-text 不得省略必含圖意工作；保存 filter 與未送模型的必要圖片 |
 | 圖意／chart／行內內容 | 暫用 OpenAI `gpt-6-luna`／官方 Chat endpoint 已確認；OCR／公式／order／table、圖意／chart及inline已有有界API比較；inline段落局部成功，整頁／其他items及交付仍有缺口 | 公司 self-hosted Qwen3／vLLM 與其他適用地端候選仍各自比較；task prompt、輸出 parser、token／timeout、解析／回填與來源關係必須固定 |
 
-**三種 table 路徑不可混稱**：TableFormer 是專用 table stage；官方 `GraniteVisionTableStructureModel` 是 Granite Vision 的 table crop→OTSL→cells 路徑；Granite-Docling 的整頁 `VlmPipeline` 是另一個主 producer。若以 Granite-Docling 只轉 table crop，要另固定實際 DocTags／HTML／OTSL 輸出與對應 adapter，不能把三種語法任意互換，也不是只改 TableFormer flag。逐層核對「原模型輸出→Docling TableData→Canonical mapper→Markdown」；原始數字存在不等於關係保留。[官方 table remedies source audit](paper-pdf-docling-official-table-remedies-2026-10-11.md)
+**三種 table 路徑不可混稱**：TableFormer 是專用 table stage；官方 `GraniteVisionTableStructureModel` 是 Granite Vision 的 table crop→OTSL→cells 路徑；Granite-Docling 的整頁 `VlmPipeline` 是另一個主 producer。若以 Granite-Docling 只轉 table crop，要另固定實際 DocTags／HTML／OTSL 輸出與對應 adapter，不能把三種語法任意互換，也不是只改 TableFormer flag。逐層核對「原模型輸出→Docling TableData→Canonical mapper→Markdown」；原始數字存在不等於關係保留。官方 table remedies source audit (`paper-pdf-docling-official-table-remedies-2026-10-11.md`)
 
-已有 CPU TableFormer V2、Granite／MLX 的局部歷史失敗，先核對來源 hash／版本再重用其範圍，不因新 G2 命名重跑無效實驗，也不冒充 G1 新版來源已驗證。[既有 V2 結果](paper-pdf-table-v2-results-2026-10-11.md)
+已有 CPU TableFormer V2、Granite／MLX 的局部歷史失敗，先核對來源 hash／版本再重用其範圍，不因新 G2 命名重跑無效實驗，也不冒充 G1 新版來源已驗證。既有 V2 結果 (`paper-pdf-table-v2-results-2026-10-11.md`)
 
 ## API、GPU 與時間的驗證位置
 
@@ -81,7 +81,7 @@ API 先做最小任務 smoke：正確完整 endpoint／model ID、image payload�
 
 ## 執行範圍與產出
 
-G1 的 57 個紀錄不是 57 份 PDF。G2 使用 31 個既有來源 + 13 個受控正向案例所對應的頁面／區域；跨頁／reading order 需要上下文時保留相鄰頁或完整必要範圍。11 個契約負例中可在任務接口核對的部分先做 task mock／adapter smoke；真正持久性、完整 handoff 與恢復留待 G3，不能以 mock 充當通過。兩個負載情境留給 G4。先做代表小樣本排除不適用候選，再擴至其任務相關案例；不做所有模型 × 所有案例的笛卡兒積。[G1 registry](../fixtures/pdf-core-g1-2026-10-14/cases.json)
+G1 的 57 個紀錄不是 57 份 PDF。G2 使用 31 個既有來源 + 13 個受控正向案例所對應的頁面／區域；跨頁／reading order 需要上下文時保留相鄰頁或完整必要範圍。11 個契約負例中可在任務接口核對的部分先做 task mock／adapter smoke；真正持久性、完整 handoff 與恢復留待 G3，不能以 mock 充當通過。兩個負載情境留給 G4。先做代表小樣本排除不適用候選，再擴至其任務相關案例；不做所有模型 × 所有案例的笛卡兒積。G1 registry (`docs/fixtures/pdf-core-g1-2026-10-14/cases.json`)
 
 每個實驗交付固定配置、原始 provider／回應／圖像、來源對照結果、失敗所屬層、stage latency／資源及「保留／淘汰／需補強」理由。通過門檻沿用需求；G1 真實來源／holdout 缺口保持可見。G2 結束應能提出 **一個可送 G3 整合的候選配置，及各任務的證據與未解缺口**，而不是宣告正式 production profile 或全部需求達標。
 
