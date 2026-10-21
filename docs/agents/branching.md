@@ -26,6 +26,16 @@ Branch names carry the ticket number:
 
 Leave out `<issue>-` only when the work has no ticket.
 
+## Parallel agent sessions
+
+Several agent sessions often run at once on this repo. Sessions that share one working tree overwrite each other's uncommitted files and share one git index.
+
+- Start each session that edits files inside its own task worktree (`cd ~/work/data-ingestion-<task>`), so its working directory, loaded instructions and `git status` all describe that task.
+- One editing session per worktree. A session never edits files in another session's worktree.
+- Use the main checkout only for reading, coordination and tracker work.
+- Commit to the task branch locally as soon as a change is coherent; uncommitted files are the easiest work to lose. Push only when ready to publish.
+- Update the task branch from `origin/dev` before committing a change to shared files such as `CONTEXT.md`, and keep those changes small.
+
 ## Committing and pushing
 
 - Commit a curated set. Large outputs, model weights and third-party documents (papers, page images) stay out of git; record their hashes in a manifest file instead.
