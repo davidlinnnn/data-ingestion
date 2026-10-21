@@ -6,7 +6,7 @@ This repo is **public**: every push publishes.
 
 - `dev` is the integration branch. Start every task from `origin/dev`, and merge it back into `dev` by pull request.
 - `main` is the GitHub default branch, but it is an older snapshot that lags `dev`. Read the current design and evidence from `dev`.
-- The main checkout (`~/work/data-ingestion`) holds other people's uncommitted work. Do your work in a task worktree.
+- The main checkout (`~/work/data-ingestion`) stays clean on `dev` as the home base. Do task work in a task worktree.
 
 ## One task, one branch, one worktree
 
@@ -29,7 +29,7 @@ Leave out `<issue>-` only when the work has no ticket.
 ## Committing and pushing
 
 - Commit a curated set. Large outputs, model weights and third-party documents (papers, page images) stay out of git; record their hashes in a manifest file instead.
-- Scan the diff for secrets before every push.
+- Run `scripts/check-docs` before every push: secrets in the branch's commits, local paths and emails in added lines, and links and anchors in changed Markdown. The `docs-checks` workflow runs the same script on every pull request.
 
 ## Merging
 

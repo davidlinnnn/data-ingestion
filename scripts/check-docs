@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Pre-push and CI checks for this public repo, over what the branch changes relative to BASE.
+#   check-docs [BASE]    (default origin/dev)
+# 1. gitleaks: secrets in the branch's commits.
+# 2. check-publish: local paths, emails and secrets in added lines.
+# 3. lychee: relative links and #anchors in changed Markdown files (offline).
+# Legacy content outside the diff is not checked.
+set -u
+BASE=${1:-origin/dev}
+cd "$(git rev-parse --show-toplevel)" || exit 2
+git rev-parse --verify -q "$BASE" >/dev/null || { echo "unknown base: $BASE" >&2; exit 2; }
+status=0
+step() { echo "== $1"; }
+
+step "gitleaks ($BASE..HEAD)"
+if command -v gitleaks >/dev/null; then
+  gitleaks git --no-banner --redact --log-opts "$BASE..HEAD" . || status=1
+else
+  echo "gitleaks not installed; skipped locally (CI runs it)"
+fi
+
+step "check-publish (added lines; its own patterns excluded)"
+git diff "$BASE...HEAD" -U0 --no-color -- . ':(exclude)scripts/check-publish' | grep -E '^\+' | grep -vE '^\+\+\+ ' \
+  | scripts/check-publish --no-placeholders - || status=1
+
+step "lychee (changed Markdown)"
+files=()
+while IFS= read -r f; do files+=("$f"); done < <(git diff --name-only --diff-filter=ACMR "$BASE...HEAD" -- '*.md')
+if [ ${#files[@]} -eq 0 ]; then
+  echo "no Markdown changes"
+elif command -v lychee >/dev/null; then
+  lychee --offline --include-fragments --no-progress "${files[@]}" || status=1
+else
+  echo "lychee not installed; skipped locally (CI runs it)"
+fi
+
+[ $status -eq 0 ] && echo "== all checks passed" || echo "== checks FAILED"
+exit $status
