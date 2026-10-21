@@ -104,7 +104,7 @@ Deletion, dispatch, limits and validation. Its rules are modelled in the
 storage product and grant mechanism remain open.
 
 [PDF processing workflow v2](knowledge-platform-processing-workflow-v2.md)
-records the #91 decisions (Q1–Q28): the stage graph, Activity and per-item
+records the #91 decisions (Q1–Q32): the stage graph, Activity and per-item
 durability units, the two failure tiers, Enrichment Methods and their status
 rule, the Processing Result handed to Canonical, admission integration and the
 V1–V6 validation work. Inference call rules and capacity remain with #93.

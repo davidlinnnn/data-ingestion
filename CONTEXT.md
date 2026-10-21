@@ -135,8 +135,8 @@ Reusable derived understanding associated with canonical knowledge, such as OCR
 reconstruction or image interpretation, with attributable producers and evidence.
 
 **Enrichment Method**:
-A versioned component of a Processing Profile that produces one kind of Enrichment
-for a declared scope from its actual inputs.
+A versioned component of a Processing Profile that produces one or more kinds of
+Enrichment for a declared scope from its actual inputs.
 _Avoid_: enrichment plugin, per-Source enrichment option
 
 **Picture Interpretation**:
@@ -151,8 +151,9 @@ _Avoid_: generated caption
 
 **Document Summary**:
 Enrichment interpreting a whole Document into a short summary whose statements
-each cite their supporting Source Evidence. It is distinct from a summary or
-abstract present in the source itself.
+are expected to cite their supporting Source Evidence; a statement without
+support is recorded as such. It is distinct from a summary or abstract present
+in the source itself.
 _Avoid_: abstract
 
 **Document Category**:
