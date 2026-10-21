@@ -100,7 +100,9 @@ representation with attributable evidence and processing origin.
 **Processing Profile**:
 A named, versioned specification of the processing capabilities and completion
 requirements for preparing a canonical result for a declared supported use.
-_Avoid_: caller-defined feature switches, Canonical Acceptance
+It is platform-owned and format-specific; method changes, including Enrichment
+Methods, enter Canonical Knowledge only through a newly adopted version.
+_Avoid_: profile (alone), caller-defined feature switches, Canonical Acceptance
 
 **Knowledge Profile**:
 A Source-level setting naming the Projection Types whose products that Source's
@@ -131,6 +133,32 @@ _Avoid_: processing completion, projection publication, verification of source t
 **Enrichment**:
 Reusable derived understanding associated with canonical knowledge, such as OCR
 reconstruction or image interpretation, with attributable producers and evidence.
+
+**Enrichment Method**:
+A versioned component of a Processing Profile that produces one kind of Enrichment
+for a declared scope from its actual inputs.
+_Avoid_: enrichment plugin, per-Source enrichment option
+
+**Picture Interpretation**:
+Enrichment generated from a picture, such as a caption, description, figure type
+or chart values, each attributable to its producing method.
+_Avoid_: image caption (ambiguous with Source Caption)
+
+**Source Caption**:
+Caption text present in captured source content and associated with a picture.
+It is source content, not Enrichment.
+_Avoid_: generated caption
+
+**Document Summary**:
+Enrichment interpreting a whole Document into a short summary whose statements
+each cite their supporting Source Evidence. It is distinct from a summary or
+abstract present in the source itself.
+_Avoid_: abstract
+
+**Document Category**:
+Enrichment assigning a Document to platform-defined categories of document type,
+paper type and topic. It never serves as an access or governance input.
+_Avoid_: classification (reserved for access-policy classification)
 
 **Source Reference**:
 An explicit reference present in captured source content, such as an attachment
