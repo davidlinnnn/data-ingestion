@@ -31,33 +31,64 @@ system, including adoption of proposed corrections or improvements.
 The party accountable for an agent's behavior and adoption of changes to its
 skills, memory, prompts, tools, or other operating methods.
 
+**Tenant**:
+A logical boundary for one organization or data-source owner using the
+Knowledge Platform, currently bound one-to-one to a deployment. It is not part
+of resource authorization policy: no grant or relation crosses it. If tenants
+later share a deployment, tenant isolation is enforced in addition to resource
+authorization.
+_Avoid_: Resource, Corpus, access grant
+
 ## Knowledge and its use
 
 **Source**:
 A configured and governed external acquisition boundary through which the
-Knowledge Platform discovers Assets.
-_Avoid_: Asset, individual document
+Knowledge Platform discovers Documents.
+In practice, a Source is typically one Data Owner knowledge-management
+application, which submits Documents and manages its Resources and their
+relationships within its scope. An application needing different restrictions
+or projections registers multiple Sources. A Source bounds admission, not
+consumption: reading across Sources is limited only by Resource readers.
+_Avoid_: Document, end user
 
-**Asset**:
+**Document**:
 A logical knowledge object discovered through a Source, such as an SOP or a
 business record, whose content can change over time. Its identity is distinct
-from its name, physical location, and current file bytes.
-_Avoid_: Source, current file bytes, filename, storage location
+from its name, physical location, and current file bytes. A Source identifies
+each Document by its own stable identifier; after deletion, that identifier
+denotes a new Document. Records before 2026-10-21 call it Asset.
+_Avoid_: Asset, file, Source, current file bytes, filename, storage location
+
+**Source Metadata**:
+Key-value information a Source attaches to a Document for its own use. The
+platform stores it and returns it only to that Source; it does not interpret,
+index or disclose it.
+_Avoid_: catalog metadata, filterable attribute, access policy
 
 **Corpus**:
-A platform-managed logical collection of Assets that defines a reusable knowledge
-scope for multiple projections, such as Wiki and Retrieval. An Asset may belong
-to multiple Corpora without membership granting additional access.
+A platform-managed logical collection of Documents that defines a reusable knowledge
+scope for multiple projections, such as Wiki and Retrieval. A Document may belong
+to multiple Corpora; membership alone does not grant access. Explicit authorization
+may target a Corpus as a Resource, subject to current governance.
+In v1, precomputed products are materialized within one Resource (ADR-0007);
+whether Corpus remains a separate entity is open in #55.
 _Avoid_: ingestion batch, Source, Published View, access grant
 
 **Source Revision**:
-A captured observation of an Asset's main document and required dependencies at a
+A captured observation of a Document's main file and required dependencies at a
 particular source version or observation point. Its identity alone does not establish
 its order relative to other observations.
 _Avoid_: current source state, processing request
 
+**Batch**:
+A group of Documents submitted together and tracked through upload, aggregate
+progress and per-item outcomes. Each item retains its own source identity, governance
+relationships and result. Grouping does not determine Corpus membership or grant
+access.
+_Avoid_: Corpus, Resource, parser execution group
+
 **Capture Package**:
-The finite set of captured source artifacts comprising a main document and its
+The finite set of captured source artifacts comprising a main file and its
 explicitly declared dependencies required for interpretation. Attachment identity
 is scoped to the package; equal bytes across packages do not merge that identity.
 _Avoid_: ingestion batch, arbitrary collection of hyperlinks
@@ -65,6 +96,17 @@ _Avoid_: ingestion batch, arbitrary collection of hyperlinks
 **Canonicalization**:
 The interpretation and normalization of source observations into a reusable
 representation with attributable evidence and processing origin.
+
+**Processing Profile**:
+A named, versioned specification of the processing capabilities and completion
+requirements for preparing a canonical result for a declared supported use.
+_Avoid_: caller-defined feature switches, Canonical Acceptance
+
+**Knowledge Profile**:
+A Source-level setting naming the Projection Types whose products that Source's
+Documents go into, and therefore the projections Context Readiness waits for. It
+contains no method versions, readers or grouping.
+_Avoid_: Processing Profile, Corpus, access grant
 
 **Canonical Knowledge**:
 The governed, versioned representation of source-derived content and structure
@@ -80,7 +122,7 @@ result requires a new candidate and acceptance.
 
 **Canonical Acceptance**:
 In the initial document scope, a traceable determination that a complete candidate
-from one Asset's Capture Package meets the applicable, versioned representation,
+from one Document's Capture Package meets the applicable, versioned representation,
 evidence, quality, and governance criteria for agreed reuse as Canonical Knowledge.
 Explicitly permitted limitations may accompany acceptance, which remains subject
 to current access and lifecycle controls.
@@ -113,7 +155,7 @@ The transformation of declared canonical knowledge inputs into a projection
 product using an attributable method.
 
 **Materialization Input Snapshot**:
-The fixed set of Assets and exact Canonical Revisions selected as inputs to a
+The fixed set of Documents and exact Canonical Revisions selected as inputs to a
 particular Materialization. Its references remain subject to current governance
 and lifecycle controls.
 _Avoid_: live corpus membership, latest revisions, access grant
@@ -138,6 +180,20 @@ method can be traced.
 The boundary through which an authorized External Consumer observes a Published
 View and its permitted evidence, version, and availability information.
 
+**Projection Status Report**:
+A pipeline owner's report, in the platform's common status format, of a
+projection pipeline's attempt progress and outcome and of which revisions its
+published products serve. The owner remains authoritative; the platform does not
+interpret owner-defined stages, error reasons or method manifests.
+_Avoid_: Published View Version, platform-defined pipeline stages
+
+**Context Readiness**:
+What agents can currently read of a Document through the projections its Knowledge
+Profile requires: the latest Source Revision, an older one, none yet, or nothing
+because of deletion or withdrawal. Who must act is reported separately. It neither gates
+publication nor grants access.
+_Avoid_: Canonical Acceptance, projection input readiness, publication approval, access grant
+
 **Projection Definition Owner**:
 The party accountable for a projection's meaning and adoption of changes to its
 definition or method.
@@ -148,13 +204,43 @@ replacement.
 
 ## Governance
 
+**tSSO**:
+The company's user-authentication authority, whose tokens establish user identity
+for resource authorization.
+_Avoid_: resource authorization decision, GAM
+
+**GAM**:
+The company's central resource-authorization service, governing relationships
+between resources and users identified through tSSO and providing request-time
+authorization decisions.
+_Avoid_: user-authentication provider, tSSO
+
+**GAM-compatible Authorization**:
+An alternative resource-authorization mechanism using tSSO user identity and
+conforming to the agreed GAM authorization meanings and supported scope.
+_Avoid_: separate user identity system, API-shape compatibility alone
+
+**Resource Service**:
+The platform capability through which authorized maintainers manage resources,
+their relationships and authorization-target bindings within a declared scope,
+when the platform's built-in authorization is used. With GAM, maintainers manage
+these relationships directly in GAM.
+Knowledge-domain ownership and applicable policy authority remain distinct.
+_Avoid_: new content/lifecycle authority, grant from registration alone
+
+**Resource**:
+A declared authorization target or scope, defined by an authorized owner, to
+which document bindings and access policies apply. A Corpus may itself serve
+this role; binding or membership alone grants no user access.
+_Avoid_: mandatory Workspace entity, source-authorization override
+
 **Source Policy Authority**:
 The party entitled to define or change source access policy, held by the Source
 Owner or an explicitly authorized delegate. Its authority is distinct from
 submission permission and platform operation.
 
 **Source Authorization Binding**:
-The attributable association between an Asset and the authoritative policy or
+The attributable association between a Document and the authoritative policy or
 authorization target governing its access. The binding is not itself an access grant.
 
 **Source Authorization Ceiling**:
@@ -172,6 +258,12 @@ existence, relationships, citations, summaries, and retrieval representations.
 **Fail-Closed Governance**:
 The absence of disclosure when the platform cannot establish that the relevant
 access is permitted.
+
+**Source Deletion**:
+A Source's attributable statement that a Document no longer exists at the
+source. It stops disclosure of that Document; it is neither governance
+withdrawal nor Custody Purge, and omission from a submission never implies it.
+_Avoid_: withdrawal, Custody Purge, omission from a batch
 
 **Custody Purge**:
 Destruction that makes the affected retained information unrecoverable in

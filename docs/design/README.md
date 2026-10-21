@@ -94,6 +94,21 @@ design owners. Targets may be revised and revalidated for production; confirmed 
 governance contracts retain their authority. This is design confirmation, not measured
 platform capability or implementation readiness.
 
+[Knowledge Platform admission design notes](knowledge-platform-admission.md)
+record the #31 admission decisions (rounds 1–5) and their reasons, including the
+direct-upload direction and Valet Key principle. The
+[admission specification](knowledge-platform-admission-spec.md) states the
+current contract for implementers: API, admission rules, status, Source
+Deletion, dispatch, limits and validation. Its rules are modelled in the
+[admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html). The
+storage product and grant mechanism remain open.
+
+[Internal product strategy](knowledge-platform-internal-product-strategy.md)
+records the confirmed 2026-10-17 internal product direction, owner handoffs and
+company identity/authorization requirements (tSSO, GAM or GAM-compatible, data-owner
+Resource management). Read it with the governance research it cites; it adds no
+MVP gate and selects no provider.
+
 ## Earlier direction and candidate history
 
 The [HLD](../../HLD.md) and [Architecture Baseline](../../ARCHITECTURE-BASELINE.md)

@@ -553,6 +553,12 @@ Processing 提供必要 producer 輸出；Canonical integration 負責 mapping�
 | V10 重送／競爭候選 | K1→C1 的接受結果重送；同 S1/M1 的新 K2→C2；C1 合格／不合格兩種情況。 | 重送仍 C1；不同候選不要求合併；無明確取代依據保留合格 C1，不能用完成時間或已失格 C1 解決衝突。 | Q24，P01/P07/P10，Canonical／Admission／Custody。 |
 | V11 條件式能力 | 當實際用途觸發 C03–C05，固定 x²、fail 內 stop、A 子章節的正例與改義負例；C06–C08 僅在採納具體用途後加入對應案例。 | 保存必要意思；反例不得通過。未選用途／未執行標為未評估，不能列為已支援，也不要求現在啟用全部功能。 | Q23，Canonical 定預期，Processing 選方法／證據。 |
 
+> **2026-10-20 補充（[#31 第三輪](knowledge-platform-admission.md#current-canonical-revision-r1a-r1d-r1e)，R1e）：**
+> 推送模型下，V08 的來源先後由 admission 排序決定（round 2 Q6b／Q6c）：帶
+> `source_version` 時，較舊的捕獲以 stale 拒收；未帶時以 finalization 順序為準。
+> 「未知先後保留衝突」不再於受理時發生，admission 也不定義 platform-state
+> 前置條件。V10 的「保留既有選定」適用於同一 Source Revision、同一採用版本的重跑。
+
 V01–V03 另做一次共用 Wiki／Retrieval 的概念檢查：同一固定輸入能支持第 4 節問答、
 跨來源主題／連結及證據追溯。Wiki/RAG 執行、生成品質與發布測試交 Projection，
 本票不新增 consumer prototype。若真實來源／方法暴露影響本票決策的未知，先依 Q14
