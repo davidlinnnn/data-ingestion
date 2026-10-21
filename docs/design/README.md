@@ -103,6 +103,12 @@ Deletion, dispatch, limits and validation. Its rules are modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html). The
 storage product and grant mechanism remain open.
 
+[PDF processing workflow v2](knowledge-platform-processing-workflow-v2.md)
+records the #91 decisions (Q1–Q28): the stage graph, Activity and per-item
+durability units, the two failure tiers, Enrichment Methods and their status
+rule, the Processing Result handed to Canonical, admission integration and the
+V1–V6 validation work. Inference call rules and capacity remain with #93.
+
 [Internal product strategy](knowledge-platform-internal-product-strategy.md)
 records the confirmed 2026-10-17 internal product direction, owner handoffs and
 company identity/authorization requirements (tSSO, GAM or GAM-compatible, data-owner
