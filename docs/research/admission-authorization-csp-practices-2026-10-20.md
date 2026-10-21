@@ -1,6 +1,6 @@
 # Admission 授權、可見性與憑證範圍的業界實務
 
-**研究日期：2026-10-19 至 2026-10-20（Asia/Taipei）。狀態：作為 #31 第一輪 grilling Q3、第二輪 Q4–Q7 與第三輪 Q8 的決策依據；決議另記於 [admission 設計筆記](../design/knowledge-platform-admission.md)。**
+**研究日期：2026-10-19 至 2026-10-21（Asia/Taipei）。狀態：作為 #31 第一輪 grilling Q3、第二輪 Q4–Q7、第三輪 Q8 與第四、五輪 Q9–Q10 的決策依據；決議另記於 [admission 設計筆記](../design/knowledge-platform-admission.md)。**
 
 背景：[Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31)
 在討論文件提交時，平台如何決定文件的讀者範圍（Resource binding）、提交與管理權限是否分開、錯誤回應如何避免洩漏存在性，以及 tenant／Source 是否由憑證推導。
@@ -203,6 +203,42 @@ CSP 的 index、data store、connection 或 shared drive 不視為本平台 Sour
 | 處理方式（R6f） | §16 | 類似 Bedrock `SMART_PARSING`，由處理線依文件內容決定功能，Source 不選處理方式 |
 | 元件紀錄（R0b） | §16 | Vertex 修改 parser 只影響新文件，且不逐份記錄方法；本平台每次執行記錄實際元件，才能界定重刷範圍 |
 | ADR-0007 衍生產品讀者 | §15 | 查詢時針對個人生成（Glean 式 RAG）天生只用可讀內容；事先生成的產品取最嚴格者，本平台規定讀者不超過輸入讀者交集，v1 以單一 Resource 生成 |
+
+## 17. 文件識別、刪除、批次與 metadata
+
+| 來源 | 事實 |
+|---|---|
+| [Amazon Bedrock: CustomDocumentIdentifier](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_CustomDocumentIdentifier.html)、[Add documents directly](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-direct-ingestion-add.html) | 自訂 data source 的文件由呼叫端指定 `id`（1–2048 字元）；以相同識別碼再次寫入時覆寫原文件 |
+| [Amazon Bedrock: IngestKnowledgeBaseDocuments](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_IngestKnowledgeBaseDocuments.html)、[KnowledgeBaseDocumentDetail](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_KnowledgeBaseDocumentDetail.html) | `PUT` 批次寫入，帶 `clientToken`，非同步回 `202` 與逐份 `documentDetails`；狀態含 `METADATA_PARTIALLY_INDEXED`、`METADATA_UPDATE_FAILED`、`DELETING`、`DELETE_IN_PROGRESS`；沒有獨立的 batch 資源 |
+| [Amazon Kendra: BatchPutDocument](https://docs.aws.amazon.com/kendra/latest/APIReference/API_BatchPutDocument.html)、[可用性變更](https://docs.aws.amazon.com/kendra/latest/dg/kendra-availability-change.html) | 每份文件由呼叫端給 `Id`；非同步，失敗列在 `FailedDocuments`；Kendra 已不開放新客戶 |
+| [Azure AI Search: Load an index](https://learn.microsoft.com/en-us/azure/search/search-how-to-load-search-index)、[What is an index](https://learn.microsoft.com/en-us/azure/search/search-what-is-an-index) | 每份文件以 key 欄位唯一識別；動作有 `upload`、`merge`、`mergeOrUpload`、`delete`；部分成功時逐份回傳 key、狀態與 status code（`207`） |
+| [Microsoft Graph: Create externalItem](https://learn.microsoft.com/en-us/graph/api/externalconnectors-externalconnection-put-items) | `PUT /external/connections/{id}/items/{item-id}`，item ID 由連接器指定；同 ID 再寫入即更新 |
+| [Google Cloud Search: indexing.datasources.items](https://developers.google.com/workspace/cloud-search/docs/reference/rest/v1/indexing.datasources.items) | Item 名稱為 `datasources/{sourceId}/items/{itemId}`；`version` 以字典序比較，小於或等於目前版本的寫入或刪除不生效 |
+| [Discovery Engine: ReconciliationMode](https://docs.cloud.google.com/generative-ai-app-builder/docs/reference/rest/v1/ReconciliationMode)、[ImportDocumentsRequest](https://docs.cloud.google.com/python/docs/reference/discoveryengine/latest/google.cloud.discoveryengine_v1.types.ImportDocumentsRequest) | `INCREMENTAL`（預設）只新增或更新；`FULL`「Calculates diff and replaces the entire document dataset. Existing documents may be deleted if they are not present in the source location.」匯入是帶成功／失敗計數的長時間作業 |
+| [Vertex AI RAG Engine: RagFile](https://docs.cloud.google.com/python/docs/reference/aiplatform/latest/google.cloud.aiplatform_v1.types.RagFile)、[ragCorpora.delete](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/reference/rest/v1/projects.locations.ragCorpora/delete) | RagFile 的 `name` 由服務產生（output only），呼叫端只給 `display_name`；刪除仍有檔案的 corpus 需帶 `force` |
+| [Amazon S3: DeleteBucket](https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucket.html) | Bucket 內所有物件刪除後才能刪除 bucket |
+| [Kubernetes: Object names and IDs](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) | 同一種資源的名稱可在刪除後重用；UID 由系統產生，用來區分同名物件的不同存在期間 |
+| [AIP-133](https://google.aip.dev/133)、[AIP-148](https://google.aip.dev/148) | 建立時可由呼叫端指定 `{resource}_id`；`uid` 由系統產生（UUID4），output only，用來區分刪除後重建的同名資源 |
+| [RFC 7643 §3.1](https://datatracker.ietf.org/doc/html/rfc7643#section-3.1) | SCIM 的 `id` 由服務提供者產生；`externalId` 是客戶端自己的識別碼 |
+| [AIP-136](https://google.aip.dev/136)、[AIP-158](https://google.aip.dev/158)、[AIP-193](https://google.aip.dev/193) | 自訂方法用冒號語法、應優先採用標準方法；分頁用 `page_size`、`page_token`、`next_page_token`；錯誤以 `ErrorInfo` 的 `reason`、`domain`、`metadata` 表示 |
+| [Stripe: Idempotent requests](https://docs.stripe.com/api/idempotent_requests)、[Metadata](https://docs.stripe.com/metadata) | Idempotency key 至少保留 24 小時，相同 key 不同參數回錯誤，驗證失敗或並行衝突的結果不保存；metadata 最多 50 個 key，key 40 字元、value 500 字元；Stripe 不使用 metadata（例如不據以核准或拒絕交易），也不應存放敏感資料 |
+| [Amazon S3: Object metadata](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html)、[Kubernetes: Annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) | S3 使用者自訂 metadata 上限 2 KB；Kubernetes 區分可查詢的 labels 與不供篩選、供工具自用的 annotations |
+
+## 第四、五輪設計推論
+
+以下為本平台設計判斷，對應 #31 第四輪（Q9）與第五輪（Q10）。
+
+| 決策 | 依據 | 本平台選擇 |
+|---|---|---|
+| 文件識別（Q9.2a） | §17 Bedrock、Graph、Cloud Search、K8s、AIP-148、SCIM | 呼叫端指定 `document_id`（同 Bedrock、Graph 的 item ID），平台產生 `document_uid`（同 K8s UID、AIP-148）；刪除後重建得到新的 `document_uid`。命名對齊 AIP-133 的 `{resource}_id` 與 SCIM `id`／`externalId` 的分工，避免 key 由誰產生的混淆 |
+| 不推斷取代、不做 FULL 對帳（Q9.2c） | §17 Discovery Engine | `FULL` 模式會因來源缺少文件而刪除；本平台只接受明確刪除，app 以列表自行對帳，避免漏送一批就刪除文件 |
+| Batch 資源（Q9.1b） | §17 Bedrock、Kendra、Discovery Engine | CSP 多半沒有 batch 物件或只有長時間作業；本平台需要上傳期間的狀態與逐份結果，因此保留一個 `batch` 資源，合併上傳 session |
+| 逐份結果與部分成功（Q9.1b） | §17 Azure AI Search | 與 `207` 逐份結果相同，本平台在 `202` 中逐份回報結果 |
+| 版本排序（Q10.1b、Q10.1c） | §17 Cloud Search | 與 `version` 比較相同，較舊版本不生效；本平台再允許以同版號取代被判壞檔的版本，並為沒有版本號的手動上傳提供 `arrival` 排序 |
+| 刪除非空 Resource（Q9.5） | §17 S3、Vertex | 採 S3 的保守做法：非空即 `409`，不提供 `force`，避免一次刪除整個知識範圍 |
+| Source Metadata（Q9.2d） | §17 Stripe、S3、K8s | 採 Stripe 的上限與「平台不解讀」原則、K8s annotations 的「不供篩選」定位；8 KB 總量介於 S3 與 Stripe 之間 |
+| Idempotency（Q9.8） | §17 Stripe | Key 保留 24 小時，只用在建立 batch；finalize 本身就是冪等 |
+| 錯誤與子路徑（Q9.1c） | §17 AIP-136、AIP-193 | 錯誤用 AIP-193；`/finalize`、`/grants` 採一般子路徑而非冒號語法，方便一般 HTTP 工具與閘道設定 |
 
 ## 未查證或未採用
 
