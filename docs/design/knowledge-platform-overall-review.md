@@ -116,8 +116,8 @@ The processing seam is verified in local code: `PDFProcessing` initializes
 `canonical_accepted=False` and can return `status='failed'` after catching an
 Activity error. A Temporal execution can therefore complete normally without a
 successful processing business result. Consumers must inspect that result and
-resolve checked artifact references. See [workflow code](../../src/pdf_processing/processing_workflow.py)
-and the [internal handoff contract](../../src/pdf_processing/README.md#typed-content-and-source-evidence-t06).
+resolve checked artifact references. See [workflow code](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/processing_workflow.py)
+and the [internal handoff contract](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/README.md#typed-content-and-source-evidence-t06).
 
 Resolve a Materialization Input Snapshot at a defined selection boundary and
 retain exact references; do not hold a database transaction open throughout

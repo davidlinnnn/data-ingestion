@@ -22,7 +22,7 @@ runner (`run.py`) 共執行三次圖片 OCR；不下載模型、不裝套件、�
 
 資源資料見 `summary.json`。每個 child 180 秒、0.25 秒採樣、process-tree RSS 超過 6 GiB 軟停止；單一 worker 依序執行。數字是本機一次觀察，包含冷暖 cache 差異，不是穩定 latency、容量或 SLO。最初一次在保存含 `Path` 的 resolved config 時失敗，發生於推論前；失敗 summary (`startup-failure-summary.json`) 與 child log 原樣保留，修正序列化後的三次推論均正常完成。
 
-完整 PictureItem crop 重用既有 [圖片 OCR seam](../../../../src/pdf_processing/ocr.py)：核對 PDF／parsed result SHA、單頁 provenance、座標原點、原頁 cached pixels 及 PictureItem cached crop 完整性後才重繪。三次的 `source-mapping.json` 保存原頁 bbox、原始 embedded pixel mapping、crop 尺度／rounding 與來源雜湊。`picture-scale3` 的原頁 bbox 為 `[62.582893,242.548553,509.465088,569.274719]`，top-left PDF points，涵蓋中央五項，並未把 b4 裁掉。
+完整 PictureItem crop 重用既有 [圖片 OCR seam](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/ocr.py)：核對 PDF／parsed result SHA、單頁 provenance、座標原點、原頁 cached pixels 及 PictureItem cached crop 完整性後才重繪。三次的 `source-mapping.json` 保存原頁 bbox、原始 embedded pixel mapping、crop 尺度／rounding 與來源雜湊。`picture-scale3` 的原頁 bbox 為 `[62.582893,242.548553,509.465088,569.274719]`，top-left PDF points，涵蓋中央五項，並未把 b4 裁掉。
 
 ## 逐位置結論
 

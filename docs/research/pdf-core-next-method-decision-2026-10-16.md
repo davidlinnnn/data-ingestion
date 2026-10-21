@@ -36,7 +36,7 @@ Paddle 的 crop 合併、跨頁表格／heading 重整，也不能當成通用�
 | raw 與來源 | 明確 raw、block ID、來源頁、bbox、頁尺寸及座標系；缺少、重複或歧義即拒絕。不得用文字相似度、oracle 答案或人工指定連結掩蓋缺口。 |
 | capture hook | 只設計一個版本固定、instance-scoped 的保存接點；本階段不安裝 Paddle 或聲稱已驗證即時 capture。若需要更多私有攔截或 vendor patch，停止這個方案。 |
 | 映射與輸出 | 映成可工作的 Docling 型別／來源資訊，保存 source fragments，圖片 OCR／描述與來源 Markdown 分開。code／公式／正文的必要 literal 與關係須在主要交付中保留；sidecar 保存原文不能抵銷主要 Markdown 改壞內容。不得把 native label、額外 backticks 或單一 JSON item 新增成產品門檻。 |
-| continuation | 重用 [既有 policy](../../src/pdf_processing/continuation.py) 的 `predict_merges()`，不改演算法、閾值或既有負例。它是有界幾何 policy，不是通用跨頁理解；既有 title 吸入風險保留評分。若缺必要 metadata 或既有規則不能通過必要控制，就停止，不另造 assembler。 |
+| continuation | 重用 [既有 policy](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/continuation.py) 的 `predict_merges()`，不改演算法、閾值或既有負例。它是有界幾何 policy，不是通用跨頁理解；既有 title 吸入風險保留評分。若缺必要 metadata 或既有規則不能通過必要控制，就停止，不另造 assembler。 |
 | 資料與真值 | 使用預先寫明真值的合成 contract 和既有保留輸出；不讀新 PDF、不讀 holdout、不重寫舊 oracle／評分。合成 raw 只能證明接點；既有錯誤 raw 須仍呈現錯誤，不算被修好。 |
 | runtime／變更範圍 | 使用既有 `docs/prototypes/pdf-checkpoint-prototype/.venv`（Docling 2.102.0／Core 2.96.0／IBM models 3.15.0，僅 metadata 已核對）；不跨 runtime 拼類別、不新增依賴、不建環境。程式只放研究原型目錄，不改 production 或 Canonical Acceptance。這不代表 Step 1 擬議的 2.132 配置已可執行。 |
 | 投入 | **一次設計、最多 2 小時；0 模型載入、0 推論、0 安裝／建環境。** 逾時或突破上述邊界，保留失敗後停止，不換另一模型或追加 preflight 追進度。 |

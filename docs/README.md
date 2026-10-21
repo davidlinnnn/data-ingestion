@@ -12,7 +12,7 @@ and independent spike review. Decision authority remains in GitHub Issues.
 | [Domain glossary](../CONTEXT.md) | Current domain meanings |
 | [HLD](../HLD.md), [Architecture Baseline](../ARCHITECTURE-BASELINE.md), [direction review brief](reviews/architecture-direction-review.md) | Earlier supporting direction package; separate review outcomes remain pending |
 | [Knowledge Loop](diagrams/knowledge-loop.md) | Conceptual overview with future experience boundaries |
-| [PDF internal contract](../src/pdf_processing/README.md) | Independent implementation evidence; not the public platform contract |
+| [PDF internal contract](https://github.com/davidlinnnn/data-ingestion/blob/archive/pdf-core-v1/src/pdf_processing/README.md) | Retired v1 implementation evidence (tag `archive/pdf-core-v1`); not the public platform contract |
 
 The [active wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52)
 is the index for detailed decisions, PDF integration, pilot coexistence/migration,
