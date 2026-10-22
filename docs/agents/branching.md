@@ -39,7 +39,7 @@ Several agent sessions often run at once on this repo. Sessions that share one w
 ## Committing and pushing
 
 - Commit a curated set. Large outputs, model weights and third-party documents (papers, page images) stay out of git; record their hashes in a manifest file instead.
-- Run `scripts/check-docs` before every push: secrets in the branch's commits, local paths and emails in added lines, and links and anchors in changed Markdown. The `docs-checks` workflow runs the same script on every pull request.
+- Run `scripts/check-docs` before every push: whether the branch contains the latest `origin/dev`, secrets in the branch's commits, local paths and emails in added lines, and links and anchors in changed Markdown. The `docs-checks` workflow runs the same script on every pull request.
 
 ## Merging
 
