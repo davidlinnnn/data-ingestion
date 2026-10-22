@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Pre-push and CI checks for this public repo, over what the branch changes relative to BASE.
 #   check-docs [BASE]    (default origin/dev)
+# 0. up to date: the branch contains BASE, so it carries what parallel sessions merged.
 # 1. gitleaks: secrets in the branch's commits.
 # 2. check-publish: local paths, emails and secrets in added lines.
 # 3. lychee: relative links and #anchors in changed Markdown files (offline).
@@ -8,9 +9,21 @@
 set -u
 BASE=${1:-origin/dev}
 cd "$(git rev-parse --show-toplevel)" || exit 2
+# Outside CI, refresh BASE first so check 0 sees merges from parallel sessions.
+if [ -z "${CI:-}" ] && [[ $BASE == origin/* ]]; then
+  git fetch -q origin "${BASE#origin/}" || echo "fetch failed; checking against the local $BASE" >&2
+fi
 git rev-parse --verify -q "$BASE" >/dev/null || { echo "unknown base: $BASE" >&2; exit 2; }
 status=0
 step() { echo "== $1"; }
+
+step "up to date with $BASE"
+if git merge-base --is-ancestor "$BASE" HEAD; then
+  echo "branch contains $BASE"
+else
+  echo "branch is behind $BASE: update it from $BASE, resolve any conflicts, and re-run"
+  status=1
+fi
 
 step "gitleaks ($BASE..HEAD)"
 if command -v gitleaks >/dev/null; then
