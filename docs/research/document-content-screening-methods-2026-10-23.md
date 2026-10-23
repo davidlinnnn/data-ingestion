@@ -8,7 +8,7 @@
 |---|---|
 | 1. PDF 檔案本身的主動內容／parser 攻擊面 | PDFiD + pdf-parser 的結構訊號，與 ClamAV 的 malware signatures 互補；兩者都不能替代解析隔離。 |
 | 2. 人看不到、agent 讀得到的文字 | Docling geometry／rendering-mode 檢查，加額外樣式擷取、render/OCR 差異與 Unicode properties；不能假設 Docling 有真實字色與字級。 |
-| 3. 可見惡意指令或程式碼 | Prompt Guard 2 86M／22M 與自建 YARA 規則 baseline；Azure Prompt Shields 僅列 DEV 比較。中文 document injection 的有效性仍 UNKNOWN。 |
+| 3. 可見惡意指令或程式碼 | Prompt Guard 2 86M／22M 與自建 YARA 規則 baseline，加上 d3-mini 自訂判準（2026-10-23 補充）；Azure Prompt Shields 僅列 DEV 比較。中文 document injection 的有效性仍 UNKNOWN。 |
 | 4. 色情、暴力內容 | 文字量 Qwen3Guard-Gen 0.6B／4B，圖片量 ShieldGemma 2 4B；Azure Content Safety 作 DEV taxonomy／結果比較。三者類別與分數不能互換。 |
 
 **工作筆記／問題拆解：**第 1 類保護自己的 parser／worker；第 2 類辨識視覺與機器讀值落差；第 3 類判斷可見文字是否企圖改寫 agent 行為，並區分文件中的程式碼與實際執行；第 4 類依內容 taxonomy 辨識文字和圖片。每個候選均檢查 on-prem、繁／簡中與英文、長文件、圖片、授權、延遲／硬體、分數／門檻。這四類可重疊，不能用一個「safe」布林值抹平。
@@ -100,6 +100,23 @@ B3 以 Unicode 18.0.0 UCD／UTS #39（查閱當日版本）為規格依據，**�
 | NotInject／InjecGuard，論文 v3（2025-03-30） | 339 個 benign samples，刻意包含 attack trigger words，測 over-defense；適合 hard negatives 的設計。 | 當時受測的 Deepset、Fmops、PromptGuard、ProtectAIv2 有明顯 over-defense；例如 ProtectAIv2 over-defense accuracy 56.64%。這是**當時版本與資料集**，不能移植為 Prompt Guard 2 的 FPR；NotInject 亦不是長 PDF benchmark。 [paper §3、5][S39] |
 | LLMail-Inject，論文 v1（2025-06-11） | adaptive email-borne injection，含 retrieval、外洩／工具呼叫目標；可取設計作文件片段壓力測試。 | Table 3 在「已觸發指定 tool call 的攻擊子集」上，Prompt Shield v2 recall 為 phase 1 **0.678**、phase 2 **0.487**；不是所有提交或今日 API 的 recall。作者指出目標有限、部分標籤依賴 LLM，不建議直接以該資料訓練。 [paper §4.5、6][S40] |
 | CrackedPDFs，**v2**（2026-08-02） | 29,322 個 generated PDF、paired benign-confounder controls、按來源切分；專門保留文件結構，連結第 2／3 類。 | 2,919 份 held-out test 的 hybrid F1 **0.960**；v2 把 973+973 balanced subset 的 **95.9% classification accuracy** 與 **100% paired score ordering** 分清楚，不能引用舊摘要混稱。作者明說未證明 broad real-world robustness／cross-family generalization；本案繁中覆蓋 UNKNOWN。 [v2 abstract][S41] |
+
+### 補充：d3 決策模型（自訂判準型 judge）
+
+d3 是 vLLM Semantic Router 的 Decision 3.0 系列（0.6B 至 27B，Apache-2.0，可地端部署）。它不是專用安全分類器：由平台自己寫問題與選項定義，模型對每個選項回傳機率、不生成文字。#84 已用它產生 enrichment 的佐證分數，見 [W4b 報告](pdf-core-w4b-d3-2026-10-20/report.md)。
+
+| 面向 | 狀況 |
+|---|---|
+| 長文件 | d3-nano 上下文 262,144 tokens，不需要像 C1 切成 512 tokens |
+| 圖片 | 支援，同一模型可問文字與圖片題 |
+| 自訂判準 | 可直接把政策寫成判準，例如區分「指示 AI 讀者行事」與「討論攻擊」 |
+| 公開安全評估 | 模型卡只有 Hateful Memes moderation（d3 43.9、d3-lite 11.8、d3-edge 6.8）；沒有 prompt injection 評估 |
+| 自身可被影響 | 它讀取整段不可信內容；小規模試跑中，一段繁中「對分類器下指令」的句子讓 nano 的判斷從 0.952 掉到 0.479 並改選 `neither`，mini 不受影響 |
+| `confidence` 欄位 | HF 套件路徑是 1 − normalized entropy，vLLM 端點是 max(p) × label_mass；判斷一律讀 `probabilities`／`noul` |
+
+試跑（24 段合成短文，nano 與 mini，本機 MPS）：mini 全部判對，nano 錯一段；這不是 FP/FN 量測。細節見 [d3 probe 報告](document-content-screening-methods-2026-10-23/d3-probe/report.md) 與 [Part A](document-content-screening-methods-2026-10-23/d3-probe/part-a.md)。
+
+**推薦：d3-mini 列入 #106 第三類候選，與 C1 在同一份資料上比較；測試集加入針對分類器本身的指令（含中文與改寫變體）。**d3 也可在同一次呼叫中加問品質題，作為不擋件的 tag；是否合併由 #108 決定。第四類的公開證據偏弱，只作對照。
 
 AgentDojo 是 runtime agents 在 untrusted tool data 上的任務／攻擊環境，可提醒量測要區分 utility、detector error 與 attack success；完整 runtime 防禦評估由 Agent Platform 負責，非本票範圍。[作者論文 v3][S42]
 
