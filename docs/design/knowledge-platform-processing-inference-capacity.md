@@ -302,14 +302,24 @@ Notes:
 ## 9. Validation work (Q13, Q15)
 
 V7–V9 extend workflow v2's V1–V6 and belong to #80; Codex executes them
-during implementation so the measurements exercise the real code. V7's kill
-mechanism is additionally probed with a throwaway prototype during this
-ticket (prototype branch linked from the ticket). V10 is the company VLM
-probe, owned by the user.
+during implementation so the measurements exercise the real code. V10 is the
+company VLM probe, owned by the user.
+
+V7's kill mechanism was pre-validated on 2026-10-23 with a throwaway
+prototype (branch `prototype/93-v7-dead-socket`,
+`prototype/v7_dead_socket/REPORT.md`): against three misbehaving local
+servers (accept-then-silent, headers-then-stall, 10 s slow-drip) with httpx
+client timeouts disabled, all 18 wrapped attempts terminated within
+deadline + 1 s (max 5.005 s on a 5 s deadline) with receipts 23/23 matched
+and no leaked tasks or connections, while the unwrapped baselines still hung
+at 60 s — reproducing the #84 failure mode. Caveats carried into V7's fixed
+cases: the drip-defeats-resetting-read-timeout combination was not exercised,
+and `asyncio.wait_for` is cooperative, so cancellation-resistant cleanup
+paths remain for the real-code regression test.
 
 | # | Owner | Check | Fixed case | Pass | Stop or fallback |
 |---|---|---|---|---|---|
-| V7 | #80 | Dead-socket forced termination (the #84 30-minute hang as a regression test) | Mock service accepts the connection and never responds (and a stall-mid-body variant) | Force-closed within deadline + 5 s; receipts complete; retries follow the matrix; item ends `failed`/`SERVICE_UNAVAILABLE`; document completes | Cannot be killed → switch HTTP client or add process-level isolation |
+| V7 | #80 | Dead-socket forced termination (the #84 30-minute hang as a regression test) | Mock service accepts the connection and never responds; a stall-mid-body variant; **and a slow-drip variant with the client read timeout longer than the drip interval**, so only the wrapper's total deadline can fire (the one combination the prototype left unproven) | Force-closed within deadline + 5 s; receipts complete; retries follow the matrix; item ends `failed`/`SERVICE_UNAVAILABLE`; document completes | Cannot be killed → switch HTTP client or add process-level isolation |
 | V8 | #80 | Multi-document concurrency, backpressure and freshness | 5 documents submitted simultaneously; mock VLM at 3 s latency; pilot-shaped deployment (3 normal CPU workers) | Effective concurrency never exceeds the configured ceiling (28); queue-age metrics emitted; no cross-document starvation; **each document searchable within 10 minutes** (DEV chain) | Caps not enforced → fix pool configuration; freshness miss → scale normal tier to 5 workers (pre-agreed) |
 | V9 | #80 | Receipt overhead | One document, 30 requests | Added latency p95 < 100 ms per request | Over budget → batch receipt writes |
 | V10 | user (research pack 1-B/1-C) | Company VLM facts and grade probe | 1-A fact list; T1–T10 crops; 1-C strict-JSON, logprobs, 5-serial + 5-concurrent latency; thinking on/off recorded separately | Pilot 50k TPM attainable; strict JSON schema usable (or JSON mode + validator fallback); latency consistent with t_vlm = 3 s; grade comparison goes to #83 | TPM unattainable → renegotiate c and budgets; schema unsupported → prompt-constrained JSON + validator; grade below bar → #83 blocks PROD adoption (not this ticket) |
