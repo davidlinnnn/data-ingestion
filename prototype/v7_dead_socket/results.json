@@ -1,0 +1,551 @@
+{
+  "python": "3.11.15",
+  "platform": "macOS-26.4-arm64-arm-64bit",
+  "deadline": 5,
+  "versions": {
+    "httpx": "0.28.1",
+    "httpcore": "1.0.9",
+    "anyio": "4.12.1",
+    "h11": "0.16.0",
+    "certifi": "2026.7.22",
+    "idna": "3.11",
+    "typing_extensions": "4.15.0"
+  },
+  "smoke": [
+    {
+      "scenario": "A",
+      "killed_at_seconds": 3.016414707992226,
+      "outcome": "curl_exit_28",
+      "firing_layer": "curl_max_time",
+      "stdout": "",
+      "stderr": "curl: (28) Operation timed out after 3005 milliseconds with 0 bytes received\n"
+    },
+    {
+      "scenario": "B",
+      "killed_at_seconds": 3.026011874899268,
+      "outcome": "curl_exit_28",
+      "firing_layer": "curl_max_time",
+      "stdout": "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: application/octet-stream\r\n\r\npart",
+      "stderr": "curl: (28) Operation timed out after 3006 milliseconds with 4 bytes received\n"
+    },
+    {
+      "scenario": "C",
+      "killed_at_seconds": 3.0246377498842776,
+      "outcome": "curl_exit_28",
+      "firing_layer": "curl_max_time",
+      "stdout": "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: application/octet-stream\r\n\r\n",
+      "stderr": "curl: (28) Operation timed out after 3006 milliseconds with 0 bytes received\n"
+    }
+  ],
+  "matrix1": {
+    "rows": [
+      {
+        "scenario": "A",
+        "attempt": 1,
+        "killed_at_seconds": 5.00330025004223,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "A",
+        "attempt": 2,
+        "killed_at_seconds": 5.003749790834263,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "A",
+        "attempt": 3,
+        "killed_at_seconds": 5.004312708973885,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "B",
+        "attempt": 1,
+        "killed_at_seconds": 5.005062124924734,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "B",
+        "attempt": 2,
+        "killed_at_seconds": 5.003889125073329,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "B",
+        "attempt": 3,
+        "killed_at_seconds": 5.004160417011008,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "C",
+        "attempt": 1,
+        "killed_at_seconds": 5.003238500095904,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "C",
+        "attempt": 2,
+        "killed_at_seconds": 5.002513083163649,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "C",
+        "attempt": 3,
+        "killed_at_seconds": 5.004797791130841,
+        "outcome": "DEADLINE_EXCEEDED",
+        "firing_layer": "wrapper",
+        "task_cancelled": true,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      }
+    ],
+    "items": {
+      "A": "SERVICE_UNAVAILABLE",
+      "B": "SERVICE_UNAVAILABLE",
+      "C": "SERVICE_UNAVAILABLE"
+    }
+  },
+  "matrix2": {
+    "rows": [
+      {
+        "scenario": "A",
+        "attempt": 1,
+        "killed_at_seconds": 60.00715462514199,
+        "outcome": "STILL_HANGING_AT_60S",
+        "firing_layer": "outer_watchdog_SIGKILL",
+        "exit_code": -9,
+        "stdout": "",
+        "stderr": "",
+        "observed_hanging_seconds": 60.00264750001952
+      },
+      {
+        "scenario": "C",
+        "attempt": 1,
+        "killed_at_seconds": 60.00965412496589,
+        "outcome": "STILL_HANGING_AT_60S",
+        "firing_layer": "outer_watchdog_SIGKILL",
+        "exit_code": -9,
+        "stdout": "",
+        "stderr": "",
+        "observed_hanging_seconds": 60.00184845807962
+      }
+    ]
+  },
+  "matrix3": {
+    "rows": [
+      {
+        "scenario": "A",
+        "attempt": 1,
+        "killed_at_seconds": 3.0075644578319043,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "A",
+        "attempt": 2,
+        "killed_at_seconds": 3.0097532919608057,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "A",
+        "attempt": 3,
+        "killed_at_seconds": 3.0081587079912424,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "B",
+        "attempt": 1,
+        "killed_at_seconds": 3.0106355829630047,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "B",
+        "attempt": 2,
+        "killed_at_seconds": 3.0112265420611948,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "B",
+        "attempt": 3,
+        "killed_at_seconds": 3.0107430829666555,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "C",
+        "attempt": 1,
+        "killed_at_seconds": 3.012297875015065,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "C",
+        "attempt": 2,
+        "killed_at_seconds": 3.0097992080263793,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      },
+      {
+        "scenario": "C",
+        "attempt": 3,
+        "killed_at_seconds": 3.010874040890485,
+        "outcome": "ReadTimeout",
+        "firing_layer": "client",
+        "task_cancelled": false,
+        "transport_closed": true,
+        "socket_fd_closed": true,
+        "pool_empty": true,
+        "closed_before_explicit_aclose": true,
+        "within_deadline_plus_1": true
+      }
+    ],
+    "items": {
+      "A": "SERVICE_UNAVAILABLE",
+      "B": "SERVICE_UNAVAILABLE",
+      "C": "SERVICE_UNAVAILABLE"
+    }
+  },
+  "server_connections": [
+    {
+      "scenario": "A",
+      "accepted": 1503043.304940958,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503046.311414916
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503046.332855208,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503046.333049083
+      ],
+      "transport_closed": true,
+      "closed": 1503049.339739916
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503049.359896791,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503052.3671805
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503052.407528208,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503057.404845666
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503057.919847166,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503062.9191265
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503063.935540166,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503068.935007791
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503070.951273291,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503070.952456416
+      ],
+      "transport_closed": true,
+      "closed": 1503075.951845875
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503076.465908166,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503076.46707275
+      ],
+      "transport_closed": true,
+      "closed": 1503081.46617775
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503082.481788708,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503082.482853333
+      ],
+      "transport_closed": true,
+      "closed": 1503087.48179175
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503089.49770025,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503094.498594708
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503095.009750875,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503100.010606833
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503101.023978375,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503106.02751025
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503108.120138583,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503168.124701833
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503168.212357375,
+      "eof": true,
+      "body_bytes": 5,
+      "body_times": [
+        1503178.214742375,
+        1503188.217135083,
+        1503198.21949375,
+        1503208.220934166,
+        1503218.222846875
+      ],
+      "transport_closed": true,
+      "closed": 1503228.22147125
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503228.229470083,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503231.23606125
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503231.750185208,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503234.757591208
+    },
+    {
+      "scenario": "A",
+      "accepted": 1503235.7714715,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503238.777733125
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503240.791562833,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503240.793269583
+      ],
+      "transport_closed": true,
+      "closed": 1503243.800375416
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503244.314007583,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503244.315550958
+      ],
+      "transport_closed": true,
+      "closed": 1503247.321960416
+    },
+    {
+      "scenario": "B",
+      "accepted": 1503248.336696791,
+      "eof": true,
+      "body_bytes": 4,
+      "body_times": [
+        1503248.33915775
+      ],
+      "transport_closed": true,
+      "closed": 1503251.343077166
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503253.36032325,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503256.370510666
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503256.88224475,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503259.891330583
+    },
+    {
+      "scenario": "C",
+      "accepted": 1503260.9084875,
+      "eof": true,
+      "body_bytes": 0,
+      "body_times": [],
+      "transport_closed": true,
+      "closed": 1503263.91590575
+    }
+  ],
+  "receipts_count": 23,
+  "requests_sent": 23,
+  "pending_tasks_at_exit": 0,
+  "all_server_transports_closed": true
+}
