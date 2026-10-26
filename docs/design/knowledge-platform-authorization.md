@@ -30,6 +30,7 @@ is built on SpiceDB (user, 2026-10-26).
 | Placement of the authz API and its data in the deployment, configuration format | #78 |
 | GAM verification, GAM adapter, migration between providers | #86 (outside the map, gates a GAM production release) |
 | Human UI | #79 (post-MVP) |
+| Implementation: I-A provider and authz API, I-B Resource Service API, F-1 post-MVP SpiceDB migration | #113, #114, #115 |
 
 ## 2. Decisions
 
@@ -52,7 +53,7 @@ is built on SpiceDB (user, 2026-10-26).
 | Q15 | A maintainer may list the catalog fields of the Documents in its Resource and **evict** a Document. An evicted Document belongs to no Resource and gets no processing request; disclosure stops on the E2 path; its Source binds it again by rebind or by its next submission (E3). Rebind requires the Document's Source to hold `place` on both the current and the new Resource, as #31 decided. |
 | Q16 | Service-account credentials are registered by the platform operator in deployment configuration and delivered out of band. Each belongs to one Source; decisions use `source:<id>` as subject and records also keep the credential ID. A Source may hold several credentials for overlapping rotation; removal from configuration revokes. Agent clients register the same way as `client:<id>`. No mandatory expiry in the pilot. |
 | Q17 | The GAM requirements list G1–G12 (§9) goes to #86; GAM values stay parameters. |
-| Q18 | Implementation tickets I-A (provider, authz API, conformance suite) and I-B (Resource Service API, blocked by I-A); follow-up F-1 (post-MVP SpiceDB migration, outside the map). #96 is re-blocked from this ticket to I-A. |
+| Q18 | Implementation tickets I-A (#113: provider, authz API, conformance suite) and I-B (#114: Resource Service API, blocked by I-A); follow-up F-1 (#115: post-MVP SpiceDB migration, outside the map). #96 is re-blocked from this ticket to I-A. |
 | Q19 | Validation owners as in §10. |
 | Q20 | Outputs: this document, ADR-0008, `CONTEXT.md` terms (Resource Maintainer, Resource Contributor, Resource Reader, Eviction, Authorization Decision) and the handoffs in §11. |
 | E1 | (review F1) Delegation rule: a delegated request is allowed only when `check(user, action, resource)` is `allow` **and** the actor is a client registered as a delegate in platform configuration. The client's own `reader` relations play no part in a delegated request; they apply only when the client reads under its own identity. |
