@@ -19,3 +19,7 @@ Public repo. Before creating a branch or worktree, committing, pushing, merging 
 ### Wayfinder map
 
 The Knowledge Platform design map is issue #52. Before creating or editing the map or one of its tickets, apply the `wayfinder` skill's rules: each ticket asks one question sized to one session, the map is an index of one-line gists with links, and tickets are referred to by name. Map mechanics: `docs/agents/issue-tracker.md`; the map's long-form notes: `docs/design/knowledge-platform-map-notes.md`.
+
+### Language
+
+Reply in the language of the prompt. ADRs and `CONTEXT.md` are written in English. Issue comments, commit messages and PR descriptions may be written in English, even where older issue comments are in Traditional Chinese.
