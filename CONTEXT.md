@@ -66,12 +66,11 @@ index or disclose it.
 _Avoid_: catalog metadata, filterable attribute, access policy
 
 **Corpus**:
-A platform-managed logical collection of Documents that defines a reusable knowledge
-scope for multiple projections, such as Wiki and Retrieval. A Document may belong
-to multiple Corpora; membership alone does not grant access. Explicit authorization
-may target a Corpus as a Resource, subject to current governance.
-In v1, precomputed products are materialized within one Resource (ADR-0007);
-whether Corpus remains a separate entity is open in #55.
+The reusable knowledge scope that projections, such as Wiki and Retrieval,
+consume. In v1 it is the Resource: there is no separate Corpus entity or
+membership, and a Document belongs to exactly one Resource (#55). The term may
+return as its own entity when a knowledge scope must differ from an
+authorization scope.
 _Avoid_: ingestion batch, Source, Published View, access grant
 
 **Source Revision**:
@@ -83,7 +82,7 @@ _Avoid_: current source state, processing request
 **Batch**:
 A group of Documents submitted together and tracked through upload, aggregate
 progress and per-item outcomes. Each item retains its own source identity, governance
-relationships and result. Grouping does not determine Corpus membership or grant
+relationships and result. Grouping does not determine Resource binding or grant
 access.
 _Avoid_: Corpus, Resource, parser execution group
 
@@ -205,9 +204,26 @@ publication lifecycle.
 A distinguishable publication of a Published View whose inputs and producing
 method can be traced.
 
+**Build**:
+One complete, independently built instance of a Published View's data,
+produced by a single compatible line of its method. Document changes and
+compatible method changes update it in place; an incompatible method change,
+a change of storage or layout, or a repair produces a new Build that replaces
+it at a switch, and a retained earlier Build can be switched back to. It is a
+logical unit: its owner maps it to one or more physical search indexes or
+collections, or shares one with other Builds.
+_Avoid_: generation, index or collection (physical storage that implements a Build), alias (the pointer that selects the serving Build), software build
+
 **Governed Published Interface**:
 The boundary through which an authorized External Consumer observes a Published
 View and its permitted evidence, version, and availability information.
+
+**Change Feed**:
+The platform's ordered, replayable record of the changes projections must act
+on: changes to a Document's current revision, including withdrawal, deletions,
+and changes to which products a Document, or every Document of a Source,
+belongs in. Its entries identify what changed without carrying content.
+_Avoid_: notification, event bus, work queue
 
 **Projection Status Report**:
 A pipeline owner's report, in the platform's common status format, of a
@@ -259,19 +275,21 @@ _Avoid_: new content/lifecycle authority, grant from registration alone
 
 **Resource**:
 A declared authorization target or scope, defined by its Resource Maintainer, to
-which document bindings and access policies apply. A Corpus may itself serve
-this role; binding or membership alone grants no user access.
+which document bindings and access policies apply. In v1 it is also the Corpus,
+and a Source binds Documents only to Resources it created; binding alone grants
+no user access.
 _Avoid_: mandatory Workspace entity, source-authorization override
 
 **Resource Maintainer**:
-The Source accountable for a Resource. It manages the Resource's readers and
-contributors, may list and evict the Documents placed in it, and may delete it
-when empty. Maintaining a Resource grants no read access.
+The Source accountable for a Resource. It manages the Resource's readers, is the
+only Source that places Documents in it, and may delete it when empty.
+Maintaining a Resource grants no read access.
 _Avoid_: owner, reader
 
 **Resource Contributor**:
 A Source that a Resource Maintainer has permitted to place Documents into that
-Resource. The grant confers no read access.
+Resource. The grant confers no read access. Not offered in v1 (#55): only a
+Resource's maintainer places Documents in it.
 _Avoid_: reader, maintainer
 
 **Resource Reader**:
@@ -282,7 +300,8 @@ _Avoid_: member, grant from Corpus membership
 **Eviction**:
 A Resource Maintainer's removal of a Document from its Resource. The Document is
 left without a Resource, its disclosure stops as after Source Deletion, and its
-Source may bind it again.
+Source may bind it again. Not offered in v1 (#55), where a Resource holds only
+its maintainer's Documents.
 _Avoid_: Source Deletion, withdrawal, Custody Purge
 
 **Authorization Decision**:

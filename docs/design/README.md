@@ -115,6 +115,12 @@ binding held by the platform, the `check` and `list_resources` interface, the
 pilot PostgreSQL provider with a post-MVP move to SpiceDB, the pilot Resource
 Service API, credential issuance and the GAM requirements list for #86.
 
+[Canonical consumption and publication](knowledge-platform-canonical-consumption.md)
+records the #55 decisions (A–E, G1–G9, J1, K1–K2): the Change Feed, the inclusion
+rule and readiness, rebind and cross-Source copies, Builds and commit-by-commit
+publication, serving facts with registration before write, snapshot-then-stream
+repair and the deletion predicate, with simulation evidence for each rule.
+
 [Internal product strategy](knowledge-platform-internal-product-strategy.md)
 records the confirmed 2026-10-17 internal product direction, owner handoffs and
 company identity/authorization requirements (tSSO, GAM or GAM-compatible, data-owner

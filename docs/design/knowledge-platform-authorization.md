@@ -18,14 +18,28 @@ requirement in §9 for
 blocks the pilot, which uses the built-in provider. One GAM fact is known: GAM
 is built on SpiceDB (user, 2026-10-26).
 
+Amended on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55) (ruling J1): there
+is no cross-Source placement in v1. A Source binds Documents only to Resources it
+created, and a Document binds to exactly one Resource, so in v1
+`place = maintainer`. A placed Document would have two owners, its Source for
+content and lifecycle and the Resource's maintainer for readers, and cross-Source
+Document copies cover the need. Deferred, each addable later as an additive
+change: the `contributor` relation and its endpoints; eviction, meaning the
+`:evict` operation, its E2 and E3 consequences and the spec amendment for a
+Document without a binding; and the maintainer's listing of other Sources'
+Documents, the exception to #31's visibility rule. Rebind stays: the Document's
+Source moves it between two Resources it created. The affected places below are
+marked; see the [#55 design record](knowledge-platform-canonical-consumption.md).
+
 ## 1. Scope and owners
 
 | Topic | Owner |
 |---|---|
 | Decision interface, authorization model, pilot provider, Resource Service, credential issuance details, GAM requirements list | this document |
-| How each enforcement point uses decisions: reuse bounds, revocation, withdrawal and eviction effects, protected observations, decision and change-record retention and disclosure, delegation proof | #56 |
+| How each enforcement point uses decisions: reuse bounds, revocation, withdrawal and eviction (deferred in v1, #55) effects, protected observations, decision and change-record retention and disclosure, delegation proof | #56 |
 | Admission's use of decisions, submission binding, Source registration fields | #31 (closed), [admission specification](knowledge-platform-admission-spec.md) |
-| Product removal after rebind or eviction | #55 |
+| Product removal after rebind or eviction (deferred in v1) | #55 |
 | Consumer access, search filtering, client registration use | #76 |
 | Placement of the authz API and its data in the deployment, configuration format | #78 |
 | GAM verification, GAM adapter, migration between providers | #86 (outside the map, gates a GAM production release) |
@@ -39,7 +53,7 @@ is built on SpiceDB (user, 2026-10-26).
 | Q1 | The authorization engine holds **Resource-level relations only**. The Document→Resource binding stays in the platform's admission record in every provider mode; a PEP looks up the binding, then asks the PDP about the Resource. No document tuples are written to any engine. Per-document exceptions, if ever needed, are an extension. Closes the #56 open point on who writes document→resource relations into GAM under path 1: nobody; the platform holds them. [ADR-0008](../adr/0008-resource-level-authorization-relations.md). |
 | Q2 | Outcomes are `allow`, `deny` and `unavailable`. A Resource that does not exist or is not visible yields `deny`, never `unavailable`, and the caller is never told why. `unavailable` means only that no trustworthy decision could be made (error, timeout). Each decision carries `decision_id`, `outcome`, `evaluated_at`, `valid_until`, `decided_by` (provider and model version), the request (subject, actor, action, resource), `trace_id`, and for a deny an operator-only `reason` (E4). The provider persists nothing; each PEP records the fields it needs in its own record, as admission already does. Retention and disclosure belong to #56. |
 | Q3 | Subjects: `user` (tSSO `sub`), `source` (the Source a service-account credential belongs to), `client` (an agent or consumer application's own identity). A delegated request carries `subject=user` and `actor=client` and follows the E1 rule, so a client never widens the user's access. Platform-internal workloads are authorized by deployment configuration and are outside this model. No groups in v1; adding a group type later is an additive schema change. |
-| Q4 | Resource relations `maintainer` (source), `contributor` (source), `reader` (user, client). Permissions: `place = maintainer + contributor`, `read = reader`, `manage = maintainer`. A maintainer is not a reader. In v1 the maintainer is the Source that created the Resource, written automatically at creation. |
+| Q4 | Resource relations `maintainer` (source), `contributor` (source), `reader` (user, client). Permissions: `place = maintainer + contributor`, `read = reader`, `manage = maintainer`. A maintainer is not a reader. In v1 the maintainer is the Source that created the Resource, written automatically at creation. Superseded on 2026-10-26 by #55: v1 has no `contributor` relation, and `place = maintainer`. |
 | Q5 | Flat Resources in v1: no hierarchy, no intersection, one Resource per Document. #31's `resources[1..N]` stays limited to one; no combination rule (union or intersection) exists, and relaxing the limit needs a new decision. Hierarchy is an additive later change; its intended semantics are recorded in §3.3 but not adopted. |
 | Q6 | Wiki and Retrieval products are not object types. A product inherits its Resource's readers (ADR-0007); `read` on a Resource covers all its published products. Projections may narrow, never widen. |
 | Q7 | Tenant takes no part in decisions. Tenant is bound one-to-one to a deployment, so each deployment has one authorization store. The cross-tenant check stays the PEP's structural check before any decision (admission Q3.1 step 1). Isolation for a shared multi-tenant deployment is decided with #78 when one is chosen. |
@@ -49,16 +63,16 @@ is built on SpiceDB (user, 2026-10-26).
 | Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. |
 | Q12 | The PDP is exposed as an internal **authz API** in the platform API deployment, backed by the admission database. Admission calls it in-process; projection PEPs call it over the network (#55 Q1: projections never connect to the platform database). Only registered PEP service identities may call it. A failed or timed-out query yields `unavailable`. |
 | Q13 | Resource lifecycle API: create, list, get, delete (§6.1). `resource_id` is platform-generated and opaque; `name` is display text. The default Resource stays a Source registration field (spec §2). API only with curl examples; no CLI before #79. |
-| Q14 | Relation management: readers and contributors only; the maintainer is fixed in v1 and a transfer is an operator procedure. Subject IDs are opaque and not checked against any directory. Writes are idempotent, effective on commit, and return a change record. |
-| Q15 | A maintainer may list the catalog fields of the Documents in its Resource and **evict** a Document. An evicted Document belongs to no Resource and gets no processing request; disclosure stops on the E2 path; its Source binds it again by rebind or by its next submission (E3). Rebind requires the Document's Source to hold `place` on both the current and the new Resource, as #31 decided. |
+| Q14 | Relation management: readers and contributors only; the maintainer is fixed in v1 and a transfer is an operator procedure. Subject IDs are opaque and not checked against any directory. Writes are idempotent, effective on commit, and return a change record. Superseded on 2026-10-26 by #55: readers only in v1; contributors are deferred. |
+| Q15 | A maintainer may list the catalog fields of the Documents in its Resource and **evict** a Document. An evicted Document belongs to no Resource and gets no processing request; disclosure stops on the E2 path; its Source binds it again by rebind or by its next submission (E3). Rebind requires the Document's Source to hold `place` on both the current and the new Resource, as #31 decided. Superseded on 2026-10-26 by #55: the listing and eviction are deferred; rebind stays, and in v1 `place` on both means the Source created both. |
 | Q16 | Service-account credentials are registered by the platform operator in deployment configuration and delivered out of band. Each belongs to one Source; decisions use `source:<id>` as subject and records also keep the credential ID. A Source may hold several credentials for overlapping rotation; removal from configuration revokes. Agent clients register the same way as `client:<id>`. No mandatory expiry in the pilot. |
 | Q17 | The GAM requirements list G1–G12 (§9) goes to #86; GAM values stay parameters. |
 | Q18 | Implementation tickets I-A (#113: provider, authz API, conformance suite) and I-B (#114: Resource Service API, blocked by I-A); follow-up F-1 (#115: post-MVP SpiceDB migration, outside the map). #96 is re-blocked from this ticket to I-A. |
 | Q19 | Validation owners as in §10. |
 | Q20 | Outputs: this document, ADR-0008, `CONTEXT.md` terms (Resource Maintainer, Resource Contributor, Resource Reader, Eviction, Authorization Decision) and the handoffs in §11. |
 | E1 | (review F1) Delegation rule: a delegated request is allowed only when `check(user, action, resource)` is `allow` **and** the actor is a client registered as a delegate in platform configuration. The client's own `reader` relations play no part in a delegated request; they apply only when the client reads under its own identity. |
-| E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. |
-| E3 | (review F3) Spec §6.1 amendment for a Document without a binding (§6.3). Eviction does not stop the Document's Source from placing it again while it still holds `place`; durable removal is: revoke the contributor, then evict. |
+| E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. Eviction is deferred in v1 by #55 (2026-10-26); the disclosure stop for a rebind stays. |
+| E3 | (review F3) Spec §6.1 amendment for a Document without a binding (§6.3). Eviction does not stop the Document's Source from placing it again while it still holds `place`; durable removal is: revoke the contributor, then evict. Deferred in v1 by #55 (2026-10-26) together with eviction and contributors. |
 | E4 | (review F4) A deny's operator-only `reason` is `resource_not_found` or `no_relation`. Admission derives its other internal reasons: other tenant from its structural check, revoked from a placement that passed at declaration and failed at finalization. A GAM adapter derives `resource_not_found` from the platform's own `resource` records. |
 | E5 | (review F8) I-A does not run the conformance suite against SpiceDB; F-1 does. |
 
@@ -76,14 +90,17 @@ definition source {}
 
 definition resource {
     relation maintainer: source
-    relation contributor: source
     relation reader: user | client
 
     permission manage = maintainer
-    permission place  = maintainer + contributor
+    permission place  = maintainer
     permission read   = reader
 }
 ```
+
+Amended on 2026-10-26 by #55: the v1 schema has no `relation contributor:
+source`, and `place` is `maintainer` alone instead of `maintainer + contributor`.
+Adding the contributor relation back later is an additive schema change.
 
 ### 3.2 Actions used by enforcement points
 
@@ -91,11 +108,11 @@ definition resource {
 |---|---|---|
 | `place` | source | Admission declaration and finalization (spec §6.1 rule 5, §6.2 rule 2); rebind, on both Resources; Resource list/get visibility |
 | `read` | user, client (or user with actor client) | Document and product reads, search filtering via `list_resources`, agent access |
-| `manage` | source | Resource deletion, relation changes, document listing and eviction |
+| `manage` | source | Resource deletion, relation changes; document listing and eviction are deferred in v1 (#55) |
 
 Evaluation order at a read PEP: the structural tenant check; resolve the
 Document's current binding from the admission record or the serving-time block
-(E2), never from an index-time copy; no binding (evicted) or a deleted or
+(E2), never from an index-time copy; no binding (evicted; not in v1) or a deleted or
 withdrawn Document → no disclosure, without asking the PDP; otherwise
 `check(read)` on the bound Resource. Platform withdrawal, Source Deletion and
 enterprise restrictions are applied by the PEP in addition to the decision
@@ -116,7 +133,6 @@ audience that needs its own reader set is one flat Resource:
 
 ```text
 resource:res_01#maintainer@source:rd_papers
-resource:res_01#contributor@source:nlp_lab_tool
 resource:res_01#reader@user:alice
 resource:res_03#maintainer@source:rd_papers
 resource:res_03#reader@user:alice
@@ -127,7 +143,10 @@ resource:res_03#reader@user:carol
 - A paper for the whole division goes into `res_03`, not into both team
   Resources, because a Document belongs to exactly one Resource (#31) and a
   product's readers are its Resource's readers (ADR-0007).
-- `nlp_lab_tool` may place into `res_01` but reads nothing by that grant.
+- Only `rd_papers` places into these Resources. Another Source, such as an NLP
+  lab tool, places into Resources it created; the example's earlier
+  `contributor` tuple for it was removed on 2026-10-26 by #55, and a
+  cross-Source Document copy covers sharing.
 - `list_resources(user:alice, read)` returns `res_01, res_03`; search filters
   on `resource_id IN (res_01, res_03)`.
 
@@ -200,7 +219,7 @@ tenant check rejects it first (Q7).
   committed at 10:00 hides the Resource, including Documents added at 10:01,
   from the next query. A check racing the revocation's commit may return either
   outcome, and that decision cannot be reused.
-- A change of a Document's binding (eviction, rebind) is not a relation change:
+- A change of a Document's binding (rebind; eviction is deferred in v1) is not a relation change:
   search indexes hold a copy of `resource_id`, so disclosure stops on the E2
   path, not on the next decision.
 - A provider with caches (GAM) must meet the same guarantee through a freshness
@@ -229,7 +248,7 @@ Logical records; the physical schema belongs to I-A.
 | Record | Key fields | Notes |
 |---|---|---|
 | `resource` | `resource_id`, `tenant_id`, `name`, `created_by_source`, `created_at` | Platform-generated opaque ID |
-| `relation` | (`resource_id`, `relation`, `subject_type`, `subject_id`) | Unique; `relation` in maintainer, contributor, reader |
+| `relation` | (`resource_id`, `relation`, `subject_type`, `subject_id`) | Unique; `relation` in maintainer, reader (contributor deferred in v1, #55) |
 | `relation_change` | `change_id`, `resource_id`, `op`, `relation`, `subject`, `actor_source_id`, `actor_credential_id`, `at` | One per effective write, including Resource creation and deletion |
 
 A check is one indexed lookup; `list_resources` is one indexed scan by subject.
@@ -266,8 +285,9 @@ it, and follow the admission visibility rules: what the caller may not see
 returns `404`; an insufficient permission of the caller's own credential returns
 `403`. A Resource the caller sees (it holds `place`) but may not manage, for
 example a contributor calling a `manage` endpoint, returns `403`: this is the
-"visible but not permitted" error #31 reserved for future relations. Every
-write endpoint requires a `manage_relations` credential.
+"visible but not permitted" error #31 reserved for future relations. With
+`place = maintainer` in v1 (#55) this case does not arise until contributors
+are added. Every write endpoint requires a `manage_relations` credential.
 
 ### 6.1 Resources
 
@@ -292,7 +312,7 @@ write endpoint requires a `manage_relations` credential.
 | Operation | Endpoint | Requires |
 |---|---|---|
 | Grant or remove a reader | `PUT` / `DELETE /v1/resources/{id}/readers/{user:… or client:…}` | `manage` |
-| Grant or remove a contributor | `PUT` / `DELETE /v1/resources/{id}/contributors/{source_id}` | `manage` |
+| Grant or remove a contributor (deferred in v1, #55) | `PUT` / `DELETE /v1/resources/{id}/contributors/{source_id}` | `manage` |
 | Read relations | `GET /v1/resources/{id}/relations` | `manage` |
 
 - Writes are idempotent: a repeated `PUT` or a `DELETE` of an absent relation
@@ -304,10 +324,16 @@ write endpoint requires a `manage_relations` credential.
 
 ### 6.3 Documents in a Resource
 
+Superseded on 2026-10-26 by #55: v1 offers only Rebind. List and Evict, the
+listing exception, the scenario table and the spec amendment for a Document
+without a binding are deferred, because in v1 a Resource holds only its
+maintainer's Documents and no Document loses its binding. They stay here as the
+starting point for the later additive change.
+
 | Operation | Endpoint | Requires | Effect |
 |---|---|---|---|
-| List | `GET /v1/resources/{id}/documents` | `manage` | Catalog fields only: `document_uid`, `source_id`, `document_id`, `title`, placed time; never Source Metadata |
-| Evict | `POST /v1/resources/{id}/documents/{document_uid}:evict` | `manage` | The Document's binding is removed; no processing request; disclosure stops on the E2 path; a change record names the Document |
+| List (deferred in v1) | `GET /v1/resources/{id}/documents` | `manage` | Catalog fields only: `document_uid`, `source_id`, `document_id`, `title`, placed time; never Source Metadata |
+| Evict (deferred in v1) | `POST /v1/resources/{id}/documents/{document_uid}:evict` | `manage` | The Document's binding is removed; no processing request; disclosure stops on the E2 path; a change record names the Document |
 | Rebind | `POST /v1/documents/{document_id}:rebind {resource_id}` | Caller is the Document's Source with `place` on the current and the new Resource | Binding moves; no processing request; the old Resource's disclosure stops on the E2 path; #55 schedules missing projection work |
 
 The document listing is a deliberate exception to #31's rule that a Source sees
@@ -325,7 +351,8 @@ neither can interleave with a finalization of the same Document.
 | M wants to read D | Denied: a maintainer is not a reader; M sees catalog fields only |
 
 An evicted Document appears in status with `resource_id: null` and readiness
-`not_ready`. Admission needs this amendment, handed to #31 and #96 (E3):
+`not_ready`. Admission needs this amendment, handed to #31 and #96 (E3), only
+once eviction is added; it is not needed in v1 (#55):
 
 - Spec §3: `document.resource_id` may be null after eviction.
 - Spec §6.1 rule 4: for an existing Document without a binding, item
@@ -351,7 +378,7 @@ curl -X PUT "$KP/v1/resources/res_01/readers/user:alice" \
   -H "Authorization: Bearer $MANAGE_TOKEN"
 # 201 {"change_id": "chg_…"}; repeating it returns 200 with no change record
 
-# Evict a Document placed by another Source
+# Evict a Document placed by another Source (deferred in v1 by #55)
 curl -X POST "$KP/v1/resources/res_01/documents/doc_9b2e…:evict" \
   -H "Authorization: Bearer $MANAGE_TOKEN"
 # 200 {"change_id": "chg_…"}
@@ -389,7 +416,7 @@ Initial values, not SLOs; I-A revises them after measurement.
 
 | # | Requirement | Why | Parameter or check |
 |---|---|---|---|
-| G1 | GAM can express or map the §3.1 model: `resource` with maintainer, contributor, reader; subjects user, source, client. `parent` inheritance, asked in the #31 checklist on #86, is no longer required in v1 | Semantic-level compatibility | Compare against the schema file |
+| G1 | GAM can express or map the §3.1 model: `resource` with maintainer, reader; subjects user, source, client. `parent` inheritance, asked in the #31 checklist on #86, is no longer required in v1; nor, since #55 on 2026-10-26, is `contributor`, which a later additive change would add | Semantic-level compatibility | Compare against the schema file |
 | G2 | Service identities (Source, client) can be subjects, not only tSSO users | Placement checks use the Source; delegation checks the client | #31 checklist on #86 |
 | G3 | A check distinguishes deny from error | Q2: an error must never read as deny or allow | p99 latency ≤ `authz_timeout` |
 | G4 | Lists the Resources a subject can read (LookupResources or equivalent), paginated | Search filtering; the Zanzibar paper defines no such API | Limit ≥ the largest number of Resources one user can read |
@@ -407,10 +434,10 @@ Initial values, not SLOs; I-A revises them after measurement.
 | Check | Owner |
 |---|---|
 | Decision correctness: every permission, deny cases, delegation, `unavailable`, `list_resources` paging, revocation on the next call | I-A conformance suite |
-| Resource API permissions, `404`/`403`/`409`, idempotent writes, change records, evict and rebind | I-B |
+| Resource API permissions, `404`/`403`/`409`, idempotent writes, change records, rebind (evict deferred in v1, #55) | I-B |
 | Admission `503 AUTHZ_UNAVAILABLE` and the two placement checks | #99 |
 | Search filtering on `list_resources` | #76 with #55 |
-| End-to-end time from a revocation, eviction or rebind commit to no disclosure, including products | #56 (with #55 for products) |
+| End-to-end time from a revocation or rebind commit (eviction deferred in v1) to no disclosure, including products | #56 (with #55 for products) |
 | GAM G1–G12 | #86 |
 | SpiceDB provider parity | F-1 |
 
@@ -418,13 +445,13 @@ Initial values, not SLOs; I-A revises them after measurement.
 
 | To | What |
 |---|---|
-| #31 / #96 | The spec §3 and §6.1 amendment of §6.3 (E3), the Resource API endpoints of §6, the operator-only deny `reason` and the derivation of the other internal reasons (E4); #96 is blocked by I-A |
-| #56 | Decision reuse maximum; delegation proof and the E1 rule; retention and disclosure of decisions, operator-only reasons and change records; the E2 disclosure stop after eviction and rebind with its 1-minute and 10-minute initial targets; the maintainer document listing as a disclosure exception (§6.3); the PEP evaluation order (§3.2); no per-Document reader exceptions in v1, so ADR-0007's precondition holds; the Q8 refinement of the path-3 reconsideration conditions |
-| #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2) |
+| #31 / #96 | The spec §3 and §6.1 amendment of §6.3 (E3; deferred in v1 with eviction, #55), the Resource API endpoints of §6, the operator-only deny `reason` and the derivation of the other internal reasons (E4); #96 is blocked by I-A |
+| #56 | Decision reuse maximum; delegation proof and the E1 rule; retention and disclosure of decisions, operator-only reasons and change records; the E2 disclosure stop after rebind (and eviction, deferred in v1 by #55) with its 1-minute and 10-minute initial targets; the maintainer document listing as a disclosure exception (§6.3; deferred in v1); the PEP evaluation order (§3.2); no per-Document reader exceptions in v1, so ADR-0007's precondition holds; the Q8 refinement of the path-3 reconsideration conditions |
+| #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2). In v1 only rebind applies; #55 deferred eviction |
 | #76 | `list_resources` for search, client registration and the E1 delegation rule, the `actor` field; search must not treat its index copy of `resource_id` as authority (E2) |
 | #78 | authz API placement in the platform API deployment, authz schema in the admission database, serving read availability bounded by the platform API deployment and admission database (§4.3), credential configuration and the default-Resource onboarding order (§6.1), F-1 operational facts (§5.3) |
 | #86 | G1–G12, the conformance suite, tuple format |
-| #87 | Aspects 1 (identity and delegation), 2 (access control, fail-closed), 11 (knowledge poisoning: contributor grants, `place` not inherited, eviction) and 14 (decision and change records) |
+| #87 | Aspects 1 (identity and delegation), 2 (access control, fail-closed), 11 (knowledge poisoning: contributor grants, `place` not inherited, eviction; in v1, after #55, only that a Source places solely into Resources it created) and 14 (decision and change records) |
 
 ## Sources
 

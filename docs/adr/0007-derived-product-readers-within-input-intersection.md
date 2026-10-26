@@ -35,10 +35,24 @@ reliable, and per-audience variants reduce to Resource-scoped materialization.
 
 Confirmed on 2026-10-20 during the
 [admission design grilling](https://github.com/davidlinnnn/data-ingestion/issues/31).
-Whether the platform keeps a Corpus entity distinct from Resource is being decided
-in [#55](https://github.com/davidlinnnn/data-ingestion/issues/55), with the
-preliminary recommendation that a Resource serves as the Corpus in v1. Binding
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55) decided on
+2026-10-26 that the Resource is the Corpus in v1, with no separate Corpus entity
+or membership. Binding
 change propagation and any future declassification authority belong to
 [#56](https://github.com/davidlinnnn/data-ingestion/issues/56). This refines
 [ADR-0006](0006-fixed-inputs-independent-projection-publication.md) without
 changing independent projection publication.
+
+Amended on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55). A Source binds
+Documents only to Resources it created, so the precondition of no differing source
+ceilings among Sources that submit into the same Resource holds in v1. A Document
+may instead be copied into another Source: the copy is a new Document of the
+destination Source that references the original's accepted Canonical Revision, and
+its readers are the destination Resource's readers intersected with the original's.
+A Resource containing copies therefore no longer has every input carrying exactly
+its readers, and Resource-scoped materialization alone no longer guarantees the
+intersection. A precomputed product that includes a copy supplies it with a
+per-page check at query time: a page is served only to users who can read all of
+its sources, including each copy's original. See the
+[#55 design record](../design/knowledge-platform-canonical-consumption.md).
