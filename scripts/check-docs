@@ -16,6 +16,8 @@ fi
 git rev-parse --verify -q "$BASE" >/dev/null || { echo "unknown base: $BASE" >&2; exit 2; }
 status=0
 step() { echo "== $1"; }
+# A missing tool fails the run: pushing publishes, so CI on the PR is too late to catch a secret.
+missing() { echo "$1 not installed: brew install $1 (CI pins its version in .github/workflows/docs-checks.yml)"; status=1; }
 
 step "up to date with $BASE"
 if git merge-base --is-ancestor "$BASE" HEAD; then
@@ -29,7 +31,7 @@ step "gitleaks ($BASE..HEAD)"
 if command -v gitleaks >/dev/null; then
   gitleaks git --no-banner --redact --log-opts "$BASE..HEAD" . || status=1
 else
-  echo "gitleaks not installed; skipped locally (CI runs it)"
+  missing gitleaks
 fi
 
 step "check-publish (added lines; its own patterns excluded)"
@@ -44,7 +46,7 @@ if [ ${#files[@]} -eq 0 ]; then
 elif command -v lychee >/dev/null; then
   lychee --offline --include-fragments --no-progress "${files[@]}" || status=1
 else
-  echo "lychee not installed; skipped locally (CI runs it)"
+  missing lychee
 fi
 
 [ $status -eq 0 ] && echo "== all checks passed" || echo "== checks FAILED"
