@@ -109,6 +109,12 @@ durability units, the two failure tiers, Enrichment Methods and their status
 rule, the Processing Result handed to Canonical, admission integration and the
 V1–V6 validation work. Inference call rules and capacity remain with #93.
 
+[Authorization: decision interface, model and pilot provider](knowledge-platform-authorization.md)
+records the #85 decisions (Q1–Q20): Resource-level relations with the document
+binding held by the platform, the `check` and `list_resources` interface, the
+pilot PostgreSQL provider with a post-MVP move to SpiceDB, the pilot Resource
+Service API, credential issuance and the GAM requirements list for #86.
+
 [Internal product strategy](knowledge-platform-internal-product-strategy.md)
 records the confirmed 2026-10-17 internal product direction, owner handoffs and
 company identity/authorization requirements (tSSO, GAM or GAM-compatible, data-owner

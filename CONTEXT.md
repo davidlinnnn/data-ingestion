@@ -258,10 +258,38 @@ Knowledge-domain ownership and applicable policy authority remain distinct.
 _Avoid_: new content/lifecycle authority, grant from registration alone
 
 **Resource**:
-A declared authorization target or scope, defined by an authorized owner, to
+A declared authorization target or scope, defined by its Resource Maintainer, to
 which document bindings and access policies apply. A Corpus may itself serve
 this role; binding or membership alone grants no user access.
 _Avoid_: mandatory Workspace entity, source-authorization override
+
+**Resource Maintainer**:
+The Source accountable for a Resource. It manages the Resource's readers and
+contributors, may list and evict the Documents placed in it, and may delete it
+when empty. Maintaining a Resource grants no read access.
+_Avoid_: owner, reader
+
+**Resource Contributor**:
+A Source that a Resource Maintainer has permitted to place Documents into that
+Resource. The grant confers no read access.
+_Avoid_: reader, maintainer
+
+**Resource Reader**:
+A user or client permitted to read a Resource's Documents and their published
+products.
+_Avoid_: member, grant from Corpus membership
+
+**Eviction**:
+A Resource Maintainer's removal of a Document from its Resource. The Document is
+left without a Resource, its disclosure stops as after Source Deletion, and its
+Source may bind it again.
+_Avoid_: Source Deletion, withdrawal, Custody Purge
+
+**Authorization Decision**:
+The answer to whether a subject may perform an action on a Resource: allow,
+deny or unavailable, with when it was evaluated and how long it may be reused.
+Unavailable never counts as allow.
+_Avoid_: access grant, cached permission
 
 **Source Policy Authority**:
 The party entitled to define or change source access policy, held by the Source
