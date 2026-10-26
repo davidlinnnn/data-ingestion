@@ -1,0 +1,1345 @@
+0023 action withdraw ['d6', False]
+0023 feed 1 current_revision_changed d6
+0024 action profile ['s1', 'wiki', True]
+0024 feed 2 source_profile_changed s1
+0024 deliver wiki feed=1 current_revision_changed d6
+0024 deliver wiki feed=2 source_profile_changed s1
+0026 deliver retrieval feed=1 current_revision_changed d6
+0026 deliver retrieval feed=2 source_profile_changed s1
+0027 read wiki-0 trigger=d6 source=d4 desired=('r0', 5)
+0027 read wiki-0 trigger=d6 source=d6 desired=('r0', 7)
+0027 read wiki-0 trigger=d1 source=d1 desired=('r0', 2)
+0027 read wiki-0 trigger=d1 source=d3 desired=('r0', 4)
+0028 fact ('wiki-0', 'd4', 'r0') pending rev=5 v=5
+0028 register wiki-0 ('d4', 'r0') rev=5 v=5 pending
+0028 fact ('wiki-0', 'd6', 'r0') pending rev=7 v=6
+0028 register wiki-0 ('d6', 'r0') rev=7 v=6 pending
+0028 register accepted wiki-0 #1 write_delay=15
+0029 action source_update ['d4']
+0029 feed 3 current_revision_changed d4
+0029 read retrieval-0 trigger=d6 source=d6 desired=('r0', 7)
+0029 read retrieval-0 trigger=d1 source=d1 desired=('r0', 2)
+0029 read retrieval-0 trigger=d3 source=d3 desired=('r0', 4)
+0030 action delete ['d0']
+0030 feed 4 current_revision_changed d0
+0030 feed 5 document_deleted d0
+0030 fact ('wiki-0', 'd1', 'r0') pending rev=2 v=7
+0030 register wiki-0 ('d1', 'r0') rev=2 v=7 pending
+0030 fact ('wiki-0', 'd3', 'r0') pending rev=4 v=8
+0030 register wiki-0 ('d3', 'r0') rev=4 v=8 pending
+0030 register accepted wiki-0 #2 write_delay=28
+0033 deliver retrieval feed=3 current_revision_changed d4
+0033 deliver wiki feed=3 current_revision_changed d4
+0034 snapshot 1 wiki-0 reason=heartbeat watermark=8 entries=4
+0034 read wiki-0 trigger=d5 source=d5 desired=('r0', 6)
+0034 read wiki-0 trigger=d5 source=d7 desired=('r0', 8)
+0034 read retrieval-0 trigger=d5 source=d5 desired=('r0', 6)
+0034 read retrieval-0 trigger=d7 source=d7 desired=('r0', 8)
+0034 read retrieval-0 trigger=d4 source=d4 desired=('r0', 9)
+0035 deliver retrieval feed=4 current_revision_changed d0
+0035 deliver retrieval feed=5 document_deleted d0
+0036 fact ('wiki-0', 'd5', 'r0') pending rev=6 v=9
+0036 register wiki-0 ('d5', 'r0') rev=6 v=9 pending
+0036 fact ('wiki-0', 'd7', 'r0') pending rev=8 v=10
+0036 register wiki-0 ('d7', 'r0') rev=8 v=10 pending
+0036 register accepted wiki-0 #6 write_delay=6
+0037 deliver wiki feed=4 current_revision_changed d0
+0038 read retrieval-0 trigger=d0 source=d0 desired=None
+0040 read wiki-0 trigger=d0 source=d0 desired=None
+0040 read wiki-0 trigger=d0 source=d2 desired=('r0', 3)
+0041 action source_update ['d6']
+0041 feed 6 current_revision_changed d6
+0041 action source_update ['d1']
+0041 feed 7 current_revision_changed d1
+0041 deliver wiki feed=5 document_deleted d0
+0041 deliver wiki feed=6 current_revision_changed d6
+0041 deliver wiki feed=7 current_revision_changed d1
+0042 fact ('wiki-0', 'd2', 'r0') included rev=3 v=2
+0042 store write wiki-0 page=d5+d7 ('d5', 'r0') rev=6 v=9
+0042 store write wiki-0 page=d5+d7 ('d7', 'r0') rev=8 v=10
+0042 outbox wiki-0 ('d5', 'r0') included=True v=9
+0042 outbox wiki-0 ('d7', 'r0') included=True v=10
+0043 LANDING wiki-0 ('d4', 'r0') S2=False S3=True valid_at_check=True
+0043 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=5 v=5
+0043 LANDING wiki-0 ('d6', 'r0') S2=False S3=True valid_at_check=True
+0043 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=7 v=6
+0043 outbox wiki-0 ('d4', 'r0') included=True v=5
+0043 outbox wiki-0 ('d6', 'r0') included=True v=6
+0044 action source_update ['d7']
+0044 feed 8 current_revision_changed d7
+0044 store remove retrieval-0 ('d0', 'r0') v=9
+0044 outbox retrieval-0 ('d0', 'r0') included=False v=9
+0044 read wiki-0 trigger=d6 source=d4 desired=('r0', 9)
+0044 read wiki-0 trigger=d6 source=d6 desired=('r0', 10)
+0044 read wiki-0 trigger=d7 source=d5 desired=('r0', 6)
+0044 read wiki-0 trigger=d7 source=d7 desired=('r0', 12)
+0045 deliver wiki feed=8 current_revision_changed d7
+0047 fact ('wiki-0', 'd2', 'r0') pending rev=3 v=11
+0047 register wiki-0 ('d2', 'r0') rev=3 v=11 pending
+0047 register accepted wiki-0 #11 write_delay=5
+0047 fact ('wiki-0', 'd4', 'r0') pending rev=9 v=12
+0047 register wiki-0 ('d4', 'r0') rev=9 v=12 pending
+0047 fact ('wiki-0', 'd6', 'r0') pending rev=10 v=13
+0047 register wiki-0 ('d6', 'r0') rev=10 v=13 pending
+0047 register accepted wiki-0 #12 write_delay=6
+0048 action method_refresh ['d4']
+0048 feed 9 current_revision_changed d4
+0048 action build ['wiki']
+0048 bootstrap wiki-1 start=9
+0048 deliver retrieval feed=6 current_revision_changed d6
+0048 deliver retrieval feed=7 current_revision_changed d1
+0048 deliver retrieval feed=8 current_revision_changed d7
+0048 deliver retrieval feed=9 current_revision_changed d4
+0048 fact ('wiki-0', 'd5', 'r0') pending rev=6 v=14
+0048 register wiki-0 ('d5', 'r0') rev=6 v=14 pending
+0048 fact ('wiki-0', 'd7', 'r0') pending rev=12 v=15
+0048 register wiki-0 ('d7', 'r0') rev=12 v=15 pending
+0048 register accepted wiki-0 #13 write_delay=5
+0050 action rollback ['d7']
+0050 feed 10 current_revision_changed d7
+0051 snapshot 2 retrieval-0 reason=heartbeat watermark=9 entries=7
+0051 read retrieval-0 trigger=d6 source=d6 desired=('r0', 10)
+0051 read retrieval-0 trigger=d1 source=d1 desired=('r0', 11)
+0051 read retrieval-0 trigger=d7 source=d7 desired=('r0', 8)
+0052 store remove wiki-0 ('d0', 'r0') v=16
+0052 store write wiki-0 page=d0+d2 ('d2', 'r0') rev=3 v=11
+0052 outbox wiki-0 ('d0', 'r0') included=False v=16
+0052 outbox wiki-0 ('d2', 'r0') included=True v=11
+0052 deliver wiki feed=9 current_revision_changed d4
+0052 deliver wiki feed=10 current_revision_changed d7
+0053 LANDING wiki-0 ('d4', 'r0') S2=False S3=True valid_at_check=True
+0053 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=9 v=12
+0053 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=10 v=13
+0053 outbox wiki-0 ('d4', 'r0') included=True v=12
+0053 outbox wiki-0 ('d6', 'r0') included=True v=13
+0053 store write FAILED after register wiki-0 #13 retry
+0053 attempt failed retrieval-0 #14 retry
+0053 fact ('retrieval-0', 'd1', 'r0') pending rev=11 v=10
+0053 register retrieval-0 ('d1', 'r0') rev=11 v=10 pending
+0053 register accepted retrieval-0 #15 write_delay=6
+0053 read wiki-0 trigger=d7 source=d5 desired=('r0', 6)
+0053 read wiki-0 trigger=d7 source=d7 desired=('r0', 8)
+0053 read wiki-0 trigger=d4 source=d4 desired=('r0', 13)
+0053 read wiki-0 trigger=d4 source=d6 desired=('r0', 10)
+0053 read wiki-0 trigger=d0 source=d0 desired=None
+0053 read wiki-0 trigger=d0 source=d2 desired=('r0', 3)
+0053 read retrieval-0 trigger=d6 source=d6 desired=('r0', 10)
+0054 action source_update ['d5']
+0054 feed 11 current_revision_changed d5
+0055 action method_refresh ['d6']
+0055 feed 12 current_revision_changed d6
+0055 deliver retrieval feed=10 current_revision_changed d7
+0055 fact ('wiki-0', 'd2', 'r0') pending rev=3 v=17
+0055 register wiki-0 ('d2', 'r0') rev=3 v=17 pending
+0055 register accepted wiki-0 #19 write_delay=1
+0056 action build ['retrieval']
+0056 bootstrap retrieval-1 start=12
+0056 action method_refresh ['d6']
+0056 feed 13 current_revision_changed d6
+0056 deliver wiki feed=11 current_revision_changed d5
+0056 deliver wiki feed=12 current_revision_changed d6
+0056 store write wiki-0 page=d0+d2 ('d2', 'r0') rev=3 v=17
+0056 outbox wiki-0 ('d2', 'r0') included=True v=17
+0057 register REJECT wiki-0 ('d5', 'r0') rev=6 current=14
+0057 fact ('wiki-0', 'd7', 'r0') pending rev=8 v=19
+0057 register wiki-0 ('d7', 'r0') rev=8 v=19 pending
+0057 superseded page/uid wiki-0 #17
+0057 fact ('wiki-0', 'd4', 'r0') pending rev=13 v=20
+0057 register wiki-0 ('d4', 'r0') rev=13 v=20 pending
+0057 register REJECT wiki-0 ('d6', 'r0') rev=10 current=16
+0057 superseded page/uid wiki-0 #18
+0057 read wiki-0 trigger=d5 source=d5 desired=('r0', 14)
+0057 read wiki-0 trigger=d5 source=d7 desired=('r0', 8)
+0057 read wiki-0 trigger=d6 source=d4 desired=('r0', 13)
+0057 read wiki-0 trigger=d6 source=d6 desired=('r0', 16)
+0057 read wiki-1 trigger=d0 source=d0 desired=None
+0057 read wiki-1 trigger=d0 source=d2 desired=('r0', 3)
+0058 LANDING wiki-0 ('d1', 'r0') S2=False S3=True valid_at_check=True
+0058 store write wiki-0 page=d1+d3 ('d1', 'r0') rev=2 v=7
+0058 store write wiki-0 page=d1+d3 ('d3', 'r0') rev=4 v=8
+0058 outbox wiki-0 ('d1', 'r0') included=True v=7
+0058 outbox wiki-0 ('d3', 'r0') included=True v=8
+0058 register REJECT retrieval-0 ('d6', 'r0') rev=10 current=16
+0058 superseded page/uid retrieval-0 #20
+0058 read retrieval-0 trigger=d7 source=d7 desired=('r0', 8)
+0058 read retrieval-1 trigger=d5 source=d5 desired=('r0', 14)
+0058 fact ('wiki-0', 'd4', 'r0') pending rev=13 v=22
+0058 register wiki-0 ('d4', 'r0') rev=13 v=22 pending
+0058 fact ('wiki-0', 'd6', 'r0') pending rev=16 v=23
+0058 register wiki-0 ('d6', 'r0') rev=16 v=23 pending
+0058 register accepted wiki-0 #22 write_delay=3
+0059 fact ('wiki-0', 'd0', 'r0') included rev=1 v=1
+0059 store write retrieval-0 page=d1 ('d1', 'r0') rev=11 v=10
+0059 outbox retrieval-0 ('d1', 'r0') included=True v=10
+0060 read wiki-0 trigger=d1 source=d1 desired=('r0', 11)
+0060 read wiki-0 trigger=d1 source=d3 desired=('r0', 4)
+0061 action withdraw ['d1', True]
+0061 feed 14 current_revision_changed d1
+0061 deliver retrieval feed=11 current_revision_changed d5
+0061 deliver retrieval feed=12 current_revision_changed d6
+0061 deliver retrieval feed=13 current_revision_changed d6
+0061 deliver retrieval feed=14 current_revision_changed d1
+0061 deliver wiki feed=13 current_revision_changed d6
+0061 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=13 v=22
+0061 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=16 v=23
+0061 outbox wiki-0 ('d4', 'r0') included=True v=22
+0061 outbox wiki-0 ('d6', 'r0') included=True v=23
+0061 read retrieval-0 trigger=d6 source=d6 desired=('r0', 16)
+0061 read retrieval-0 trigger=d1 source=d1 desired=None
+0061 read retrieval-1 trigger=d0 source=d0 desired=None
+0062 fact ('retrieval-0', 'd3', 'r0') included rev=4 v=4
+0062 read wiki-0 trigger=d6 source=d4 desired=('r0', 13)
+0062 read wiki-0 trigger=d6 source=d6 desired=('r0', 16)
+0063 action method_refresh ['d7']
+0063 feed 15 current_revision_changed d7
+0063 fact ('wiki-0', 'd5', 'r0') pending rev=14 v=24
+0063 register wiki-0 ('d5', 'r0') rev=14 v=24 pending
+0063 register REJECT wiki-0 ('d7', 'r0') rev=8 current=17
+0063 superseded page/uid wiki-0 #21
+0063 fact ('wiki-0', 'd3', 'r0') included rev=4 v=8
+0064 deliver wiki feed=14 current_revision_changed d1
+0064 deliver wiki feed=15 current_revision_changed d7
+0065 action source_update ['d5']
+0065 feed 16 current_revision_changed d5
+0065 action source_update ['d3']
+0065 feed 17 current_revision_changed d3
+0065 fact ('wiki-1', 'd2', 'r0') pending rev=3 v=1
+0065 register wiki-1 ('d2', 'r0') rev=3 v=1 pending
+0065 register accepted wiki-1 #23 write_delay=5
+0065 fact ('retrieval-0', 'd6', 'r0') pending rev=16 v=12
+0065 register retrieval-0 ('d6', 'r0') rev=16 v=12 pending
+0065 register accepted retrieval-0 #27 write_delay=4
+0065 deliver retrieval feed=15 current_revision_changed d7
+0065 deliver retrieval feed=16 current_revision_changed d5
+0065 deliver retrieval feed=17 current_revision_changed d3
+0066 action method_refresh ['d5']
+0066 feed 18 current_revision_changed d5
+0066 store remove retrieval-0 ('d1', 'r0') v=13
+0066 outbox retrieval-0 ('d1', 'r0') included=False v=13
+0066 enumerated wiki-1
+0066 read wiki-0 trigger=d7 source=d5 desired=('r0', 20)
+0066 read wiki-0 trigger=d7 source=d7 desired=('r0', 17)
+0067 fact ('retrieval-0', 'd4', 'r0') included rev=5 v=5
+0067 register REJECT retrieval-1 ('d5', 'r0') rev=14 current=20
+0067 superseded page/uid retrieval-1 #25
+0067 fact ('wiki-0', 'd4', 'r0') included rev=13 v=22
+0068 snapshot 3 wiki-1 reason=heartbeat watermark=1 entries=0
+0068 register REJECT wiki-0 ('d1', 'r0') rev=11 current=None
+0068 register REJECT wiki-0 ('d3', 'r0') rev=4 current=19
+0068 superseded page/uid wiki-0 #26
+0068 read retrieval-0 trigger=d5 source=d5 desired=('r0', 20)
+0068 read retrieval-1 trigger=d1 source=d1 desired=None
+0069 action rollback ['d4']
+0069 feed 19 current_revision_changed d4
+0069 fact ('wiki-0', 'd1', 'r0') removed rev=None v=8
+0069 sweep tombstone ('wiki-0', 'd1', 'r0') v=8
+0069 snapshot 1 end
+0069 store write retrieval-0 page=d6 ('d6', 'r0') rev=16 v=12
+0069 outbox retrieval-0 ('d6', 'r0') included=True v=12
+0069 fact ('retrieval-0', 'd1', 'r0') removed rev=None v=13
+0069 attempt failed retrieval-0 #32 retry
+0070 store write wiki-1 page=d0+d2 ('d2', 'r0') rev=3 v=1
+0070 outbox wiki-1 ('d2', 'r0') included=True v=1
+0070 fact ('wiki-0', 'd5', 'r0') pending rev=20 v=28
+0070 register wiki-0 ('d5', 'r0') rev=20 v=28 pending
+0070 fact ('wiki-0', 'd7', 'r0') pending rev=17 v=29
+0070 register wiki-0 ('d7', 'r0') rev=17 v=29 pending
+0070 register accepted wiki-0 #31 write_delay=3
+0071 fact ('retrieval-0', 'd2', 'r0') included rev=3 v=3
+0071 deliver wiki feed=16 current_revision_changed d5
+0071 enumerated retrieval-1
+0071 read wiki-0 trigger=d1 source=d1 desired=None
+0071 read wiki-0 trigger=d1 source=d3 desired=('r0', 19)
+0071 read wiki-1 trigger=d2 source=d0 desired=None
+0071 read wiki-1 trigger=d2 source=d2 desired=('r0', 3)
+0071 read retrieval-0 trigger=d5 source=d5 desired=('r0', 20)
+0071 read retrieval-1 trigger=d6 source=d6 desired=('r0', 16)
+0071 read retrieval-1 trigger=d2 source=d2 desired=('r0', 3)
+0072 action rebind ['d2', 'r1']
+0072 feed 20 inclusion_changed d2
+0072 deliver retrieval feed=18 current_revision_changed d5
+0072 deliver retrieval feed=19 current_revision_changed d4
+0073 store write wiki-0 page=d5+d7 ('d5', 'r0') rev=20 v=28
+0073 store write wiki-0 page=d5+d7 ('d7', 'r0') rev=17 v=29
+0073 outbox wiki-0 ('d5', 'r0') included=True v=28
+0073 outbox wiki-0 ('d7', 'r0') included=True v=29
+0073 register REJECT retrieval-1 ('d2', 'r0') rev=3 current=3
+0073 superseded page/uid retrieval-1 #38
+0074 deliver wiki feed=17 current_revision_changed d3
+0074 read wiki-0 trigger=d5 source=d5 desired=('r0', 20)
+0074 read wiki-0 trigger=d5 source=d7 desired=('r0', 17)
+0075 fact ('retrieval-0', 'd5', 'r0') pending rev=20 v=14
+0075 register retrieval-0 ('d5', 'r0') rev=20 v=14 pending
+0075 register accepted retrieval-0 #36 write_delay=33
+0076 action withdraw ['d5', False]
+0076 feed 21 current_revision_changed d5
+0076 register REJECT wiki-1 ('d2', 'r0') rev=3 current=3
+0076 superseded page/uid wiki-1 #35
+0076 deliver retrieval feed=20 inclusion_changed d2
+0076 deliver retrieval feed=21 current_revision_changed d5
+0077 read retrieval-0 trigger=d2 source=d2 desired=('r1', 3)
+0078 deliver wiki feed=18 current_revision_changed d5
+0078 fact ('wiki-0', 'd7', 'r0') included rev=17 v=29
+0079 action profile ['s0', 'wiki', False]
+0079 feed 22 source_profile_changed s0
+0080 fact ('retrieval-0', 'd7', 'r0') included rev=8 v=8
+0080 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=9
+0080 sweep tombstone ('retrieval-0', 'd0', 'r0') v=9
+0080 snapshot 2 end
+0080 fact ('wiki-0', 'd6', 'r0') included rev=16 v=23
+0080 fact ('retrieval-1', 'd6', 'r0') pending rev=16 v=3
+0080 register retrieval-1 ('d6', 'r0') rev=16 v=3 pending
+0080 register accepted retrieval-1 #37 write_delay=2
+0080 fact ('wiki-0', 'd5', 'r0') pending rev=20 v=30
+0080 register wiki-0 ('d5', 'r0') rev=20 v=30 pending
+0080 fact ('wiki-0', 'd7', 'r0') pending rev=17 v=31
+0080 register wiki-0 ('d7', 'r0') rev=17 v=31 pending
+0080 register accepted wiki-0 #39 write_delay=3
+0080 deliver wiki feed=19 current_revision_changed d4
+0080 deliver wiki feed=20 inclusion_changed d2
+0082 store write retrieval-1 page=d6 ('d6', 'r0') rev=16 v=3
+0082 outbox retrieval-1 ('d6', 'r0') included=True v=3
+0082 deliver wiki feed=21 current_revision_changed d5
+0082 deliver wiki feed=22 source_profile_changed s0
+0083 deliver retrieval feed=22 source_profile_changed s0
+0083 store write FAILED after register wiki-0 #39 retry
+0083 read wiki-0 trigger=d5 source=d5 desired=('r0', 20)
+0083 read wiki-0 trigger=d5 source=d7 desired=('r0', 17)
+0083 read wiki-0 trigger=d2 source=d0 desired=None
+0083 read wiki-0 trigger=d2 source=d2 desired=None
+0084 fact ('wiki-1', 'd2', 'r0') removed rev=None v=1
+0084 sweep tombstone ('wiki-1', 'd2', 'r0') v=1
+0084 snapshot 3 end
+0084 fact ('retrieval-0', 'd6', 'r0') included rev=16 v=12
+0085 fact ('retrieval-0', 'd1', 'r0') removed rev=None v=13
+0085 snapshot 4 retrieval-0 reason=heartbeat watermark=14 entries=6
+0085 snapshot 5 wiki-0 reason=heartbeat watermark=31 entries=7
+0085 snapshot 6 wiki-1 reason=heartbeat watermark=2 entries=1
+0085 fact ('retrieval-0', 'd2', 'r1') pending rev=3 v=15
+0085 register retrieval-0 ('d2', 'r1') rev=3 v=15 pending
+0085 register accepted retrieval-0 #40 write_delay=3
+0085 read retrieval-0 trigger=d3 source=d3 desired=('r0', 19)
+0085 read retrieval-0 trigger=d0 source=d0 desired=None
+0086 action rollback ['d6']
+0086 feed 23 current_revision_changed d6
+0086 action rollback ['d7']
+0086 feed 24 current_revision_changed d7
+0086 action source_update ['d1']
+0086 feed 25 current_revision_changed d1
+0087 fact ('wiki-0', 'd5', 'r0') pending rev=20 v=32
+0087 register wiki-0 ('d5', 'r0') rev=20 v=32 pending
+0087 register REJECT wiki-0 ('d7', 'r0') rev=17 current=8
+0087 superseded page/uid wiki-0 #41
+0087 fact ('retrieval-0', 'd3', 'r0') included rev=4 v=4
+0087 deliver wiki feed=23 current_revision_changed d6
+0087 deliver wiki feed=24 current_revision_changed d7
+0087 deliver wiki feed=25 current_revision_changed d1
+0088 store remove retrieval-0 ('d2', 'r0') v=16
+0088 store write retrieval-0 page=d2 ('d2', 'r1') rev=3 v=15
+0088 outbox retrieval-0 ('d2', 'r0') included=False v=16
+0088 outbox retrieval-0 ('d2', 'r1') included=True v=15
+0088 read retrieval-0 trigger=d2 source=d2 desired=('r1', 3)
+0088 read retrieval-1 trigger=d0 source=d0 desired=None
+0089 store remove wiki-0 ('d2', 'r0') v=34
+0089 outbox wiki-0 ('d2', 'r0') included=False v=34
+0089 fact ('wiki-0', 'd6', 'r0') included rev=16 v=23
+0089 fact ('wiki-0', 'd3', 'r0') included rev=4 v=8
+0089 fact ('retrieval-0', 'd3', 'r0') pending rev=19 v=17
+0089 register retrieval-0 ('d3', 'r0') rev=19 v=17 pending
+0089 register accepted retrieval-0 #43 write_delay=6
+0090 action rollback ['d5']
+0090 feed 26 current_revision_changed d5
+0090 read wiki-0 trigger=d2 source=d0 desired=None
+0090 read wiki-0 trigger=d2 source=d2 desired=None
+0090 read wiki-0 trigger=d7 source=d5 desired=('r0', 18)
+0090 read wiki-0 trigger=d7 source=d7 desired=('r0', 8)
+0090 fact ('retrieval-0', 'd2', 'r1') included rev=3 v=15
+0092 action delete ['d0']
+0092 feed 27 current_revision_changed d0
+0092 feed 28 document_deleted d0
+0092 fact ('wiki-1', 'd2', 'r0') included rev=3 v=1
+0092 deliver retrieval feed=23 current_revision_changed d6
+0092 read retrieval-0 trigger=d6 source=d6 desired=('r0', 15)
+0092 deliver wiki feed=26 current_revision_changed d5
+0092 deliver wiki feed=27 current_revision_changed d0
+0093 fact ('wiki-0', 'd5', 'r0') pending rev=18 v=35
+0093 register wiki-0 ('d5', 'r0') rev=18 v=35 pending
+0093 fact ('wiki-0', 'd7', 'r0') pending rev=8 v=36
+0093 register wiki-0 ('d7', 'r0') rev=8 v=36 pending
+0093 register accepted wiki-0 #48 write_delay=6
+0094 fact ('retrieval-0', 'd6', 'r0') included rev=16 v=12
+0094 fact ('retrieval-0', 'd7', 'r0') included rev=8 v=8
+0094 fact ('wiki-1', 'd2', 'r0') included rev=3 v=1
+0094 deliver wiki feed=28 document_deleted d0
+0095 feed 29 current_revision_changed d6
+0095 store write retrieval-0 page=d3 ('d3', 'r0') rev=19 v=17
+0095 outbox retrieval-0 ('d3', 'r0') included=True v=17
+0096 fact ('wiki-1', 'd2', 'r0') included rev=3 v=1
+0096 fact ('retrieval-0', 'd6', 'r0') included rev=16 v=12
+0096 fact ('wiki-0', 'd2', 'r0') included rev=3 v=17
+0096 deliver wiki feed=29 current_revision_changed d6
+0097 fact ('wiki-0', 'd4', 'r0') included rev=13 v=22
+0097 read retrieval-1 trigger=d3 source=d3 desired=('r0', 19)
+0097 read retrieval-1 trigger=d2 source=d2 desired=('r1', 3)
+0098 deliver retrieval feed=24 current_revision_changed d7
+0098 fact ('wiki-0', 'd2', 'r0') removed rev=None v=34
+0098 read wiki-0 trigger=d0 source=d0 desired=None
+0098 read wiki-0 trigger=d0 source=d2 desired=None
+0098 attempt failed retrieval-1 #50 retry
+0099 store write wiki-0 page=d5+d7 ('d5', 'r0') rev=18 v=35
+0099 store write wiki-0 page=d5+d7 ('d7', 'r0') rev=8 v=36
+0099 outbox wiki-0 ('d5', 'r0') included=True v=35
+0099 outbox wiki-0 ('d7', 'r0') included=True v=36
+0099 attempt failed wiki-0 #52 retry
+0100 action rollback ['d5']
+0100 feed 30 current_revision_changed d5
+0100 liveness_loss wiki until=155
+0100 snapshot 6 end
+0100 read retrieval-1 trigger=d3 source=d3 desired=('r0', 19)
+0101 fact ('retrieval-1', 'd2', 'r1') pending rev=3 v=4
+0101 register retrieval-1 ('d2', 'r1') rev=3 v=4 pending
+0101 register accepted retrieval-1 #51 write_delay=3
+0102 snapshot 7 retrieval-1 reason=heartbeat watermark=4 entries=1
+0102 fact ('retrieval-0', 'd2', 'r0') removed rev=None v=16
+0103 action withdraw ['d1', False]
+0103 feed 31 current_revision_changed d1
+0103 deliver retrieval feed=25 current_revision_changed d1
+0104 store write retrieval-1 page=d2 ('d2', 'r1') rev=3 v=4
+0104 outbox retrieval-1 ('d2', 'r1') included=True v=4
+0104 read retrieval-0 trigger=d1 source=d1 desired=('r0', 21)
+0107 fact ('wiki-0', 'd2', 'r0') removed rev=None v=34
+0107 attempt failed retrieval-0 #54 retry
+0108 store write retrieval-0 page=d5 ('d5', 'r0') rev=20 v=14
+0108 outbox retrieval-0 ('d5', 'r0') included=True v=14
+0109 attempt failed retrieval-1 #53 retry
+0109 read retrieval-0 trigger=d5 source=d5 desired=('r0', 20)
+0109 read retrieval-0 trigger=d1 source=d1 desired=('r0', 21)
+0109 read retrieval-1 trigger=d3 source=d3 desired=('r0', 19)
+0110 fact ('retrieval-0', 'd4', 'r0') pending rev=9 v=18
+0110 register retrieval-0 ('d4', 'r0') rev=9 v=18 pending
+0110 register accepted retrieval-0 #9 write_delay=1
+0110 deliver retrieval feed=26 current_revision_changed d5
+0110 deliver retrieval feed=27 current_revision_changed d0
+0110 fact ('retrieval-0', 'd1', 'r0') pending rev=21 v=19
+0110 register retrieval-0 ('d1', 'r0') rev=21 v=19 pending
+0110 register accepted retrieval-0 #56 write_delay=5
+0110 fact ('retrieval-1', 'd3', 'r0') pending rev=19 v=5
+0110 register retrieval-1 ('d3', 'r0') rev=19 v=5 pending
+0110 register accepted retrieval-1 #57 write_delay=3
+0111 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=14
+0111 sweep tombstone ('retrieval-0', 'd0', 'r0') v=14
+0111 fact ('retrieval-0', 'd5', 'r0') removed rev=None v=14
+0111 sweep tombstone ('retrieval-0', 'd5', 'r0') v=14
+0111 snapshot 4 end
+0111 store write retrieval-0 page=d4 ('d4', 'r0') rev=9 v=18
+0111 outbox retrieval-0 ('d4', 'r0') included=True v=18
+0112 read retrieval-0 trigger=d4 source=d4 desired=('r0', 9)
+0112 read retrieval-0 trigger=d0 source=d0 desired=None
+0113 store write retrieval-1 page=d3 ('d3', 'r0') rev=19 v=5
+0113 outbox retrieval-1 ('d3', 'r0') included=True v=5
+0114 fact ('retrieval-1', 'd6', 'r0') included rev=16 v=3
+0115 store write retrieval-0 page=d1 ('d1', 'r0') rev=21 v=19
+0115 outbox retrieval-0 ('d1', 'r0') included=True v=19
+0115 read retrieval-1 trigger=d1 source=d1 desired=('r0', 21)
+0115 read retrieval-1 trigger=d0 source=d0 desired=None
+0116 deliver retrieval feed=28 document_deleted d0
+0117 fact ('wiki-0', 'd2', 'r0') removed rev=None v=34
+0117 fact ('retrieval-1', 'd1', 'r0') pending rev=21 v=6
+0117 register retrieval-1 ('d1', 'r0') rev=21 v=6 pending
+0117 register accepted retrieval-1 #60 write_delay=5
+0118 read retrieval-0 trigger=d5 source=d5 desired=('r0', 20)
+0118 read retrieval-0 trigger=d0 source=d0 desired=None
+0119 fact ('retrieval-0', 'd2', 'r1') included rev=3 v=15
+0119 fact ('retrieval-0', 'd3', 'r0') included rev=19 v=17
+0119 snapshot 8 retrieval-0 reason=heartbeat watermark=19 entries=7
+0119 attempt failed retrieval-0 #58 retry
+0120 action method_refresh ['d1']
+0120 feed 32 current_revision_changed d1
+0120 fact ('retrieval-1', 'd6', 'r0') included rev=16 v=3
+0120 fact ('retrieval-0', 'd1', 'r0') included rev=21 v=19
+0121 deliver retrieval feed=29 current_revision_changed d6
+0121 deliver retrieval feed=30 current_revision_changed d5
+0121 fact ('retrieval-1', 'd3', 'r0') included rev=19 v=5
+0121 read retrieval-0 trigger=d4 source=d4 desired=('r0', 9)
+0122 fact ('wiki-0', 'd4', 'r0') included rev=13 v=22
+0122 fact ('wiki-0', 'd0', 'r0') removed rev=None v=31
+0122 sweep tombstone ('wiki-0', 'd0', 'r0') v=31
+0122 fact ('wiki-0', 'd1', 'r0') removed rev=None v=31
+0122 sweep tombstone ('wiki-0', 'd1', 'r0') v=31
+0122 snapshot 5 end
+0122 fact ('retrieval-0', 'd5', 'r0') included rev=20 v=14
+0122 LANDING retrieval-1 ('d1', 'r0') S2=False S3=True valid_at_check=True
+0122 store write retrieval-1 page=d1 ('d1', 'r0') rev=21 v=6
+0122 outbox retrieval-1 ('d1', 'r0') included=True v=6
+0123 fact ('retrieval-0', 'd2', 'r0') removed rev=None v=16
+0123 fact ('retrieval-0', 'd4', 'r0') included rev=9 v=18
+0123 read retrieval-0 trigger=d7 source=d7 desired=('r0', 8)
+0123 read retrieval-0 trigger=d5 source=d5 desired=('r0', 20)
+0126 fact ('retrieval-0', 'd2', 'r1') included rev=3 v=15
+0127 fact ('retrieval-1', 'd2', 'r1') included rev=3 v=4
+0127 deliver retrieval feed=31 current_revision_changed d1
+0127 deliver retrieval feed=32 current_revision_changed d1
+0127 fact ('retrieval-1', 'd1', 'r0') included rev=21 v=6
+0127 fact ('retrieval-1', 'd1', 'r0') included rev=21 v=6
+0128 attempt failed retrieval-0 #66 retry
+0128 read retrieval-0 trigger=d5 source=d5 desired=('r0', 20)
+0128 read retrieval-0 trigger=d1 source=d1 desired=('r0', 22)
+0128 read retrieval-1 trigger=d0 source=d0 desired=None
+0129 fact ('retrieval-0', 'd2', 'r1') included rev=3 v=15
+0129 fact ('retrieval-0', 'd3', 'r0') included rev=19 v=17
+0130 action source_update ['d7']
+0130 feed 33 current_revision_changed d7
+0130 fact ('retrieval-0', 'd3', 'r0') included rev=19 v=17
+0132 fact ('retrieval-0', 'd6', 'r0') included rev=16 v=12
+0132 read retrieval-1 trigger=d7 source=d7 desired=('r0', 23)
+0133 register REJECT retrieval-0 ('d6', 'r0') rev=15 current=15
+0133 superseded page/uid retrieval-0 #49
+0133 deliver retrieval feed=33 current_revision_changed d7
+0134 SDK deadline retrieval-0 v=9 snapshot path
+0134 fact ('retrieval-0', 'd4', 'r0') included rev=9 v=18
+0134 fact ('retrieval-0', 'd1', 'r0') pending rev=22 v=21
+0134 register retrieval-0 ('d1', 'r0') rev=22 v=21 pending
+0134 register accepted retrieval-0 #68 write_delay=5
+0135 read retrieval-0 trigger=d6 source=d6 desired=None
+0136 fact ('retrieval-0', 'd5', 'r0') included rev=20 v=14
+0137 fact ('retrieval-1', 'd6', 'r0') included rev=16 v=3
+0137 snapshot 7 end
+0137 fact ('retrieval-1', 'd2', 'r1') included rev=3 v=4
+0139 store write retrieval-0 page=d1 ('d1', 'r0') rev=22 v=21
+0139 outbox retrieval-0 ('d1', 'r0') included=True v=21
+0140 read retrieval-1 trigger=d5 source=d5 desired=('r0', 20)
+0140 read retrieval-1 trigger=d1 source=d1 desired=('r0', 22)
+0141 fact ('retrieval-1', 'd6', 'r0') included rev=16 v=3
+0141 fact ('retrieval-1', 'd3', 'r0') included rev=19 v=5
+0141 fact ('retrieval-1', 'd7', 'r0') pending rev=23 v=7
+0141 register retrieval-1 ('d7', 'r0') rev=23 v=7 pending
+0141 register accepted retrieval-1 #70 write_delay=1
+0142 SDK deadline wiki-0 v=16 snapshot path
+0142 snapshot 9 wiki-0 reason=sdk_giveup watermark=36 entries=6
+0142 store write retrieval-1 page=d7 ('d7', 'r0') rev=23 v=7
+0142 outbox retrieval-1 ('d7', 'r0') included=True v=7
+0143 fact ('retrieval-1', 'd5', 'r0') pending rev=20 v=8
+0143 register retrieval-1 ('d5', 'r0') rev=20 v=8 pending
+0143 register accepted retrieval-1 #72 write_delay=3
+0143 read retrieval-0 trigger=d7 source=d7 desired=('r0', 23)
+0145 action profile ['s0', 'wiki', True]
+0145 feed 34 source_profile_changed s0
+0145 action rebind ['d4', 'r0']
+0145 feed 35 inclusion_changed d4
+0146 store write retrieval-1 page=d5 ('d5', 'r0') rev=20 v=8
+0146 outbox retrieval-1 ('d5', 'r0') included=True v=8
+0147 deliver retrieval feed=34 source_profile_changed s0
+0147 deliver retrieval feed=35 inclusion_changed d4
+0148 action withdraw ['d1', False]
+0148 feed 36 current_revision_changed d1
+0148 fact ('retrieval-0', 'd5', 'r0') included rev=20 v=14
+0148 fact ('retrieval-1', 'd1', 'r0') pending rev=22 v=9
+0148 register retrieval-1 ('d1', 'r0') rev=22 v=9 pending
+0148 register accepted retrieval-1 #73 write_delay=3
+0148 fact ('wiki-0', 'd3', 'r0') included rev=4 v=8
+0149 fact ('retrieval-0', 'd7', 'r0') pending rev=23 v=22
+0149 register retrieval-0 ('d7', 'r0') rev=23 v=22 pending
+0149 register accepted retrieval-0 #74 write_delay=6
+0151 deliver retrieval feed=36 current_revision_changed d1
+0151 store write retrieval-1 page=d1 ('d1', 'r0') rev=22 v=9
+0151 outbox retrieval-1 ('d1', 'r0') included=True v=9
+0153 read retrieval-0 trigger=d1 source=d1 desired=('r0', 22)
+0155 recover wiki
+0155 ENFORCED d0 true
+0155 deliver wiki feed=30 current_revision_changed d5
+0155 deliver wiki feed=31 current_revision_changed d1
+0155 register REJECT wiki-0 ('d4', 'r0') rev=13 current=9
+0155 register REJECT wiki-0 ('d6', 'r0') rev=16 current=15
+0155 superseded page/uid wiki-0 #30
+0155 fact ('wiki-0', 'd3', 'r0') pending rev=19 v=39
+0155 register wiki-0 ('d3', 'r0') rev=19 v=39 pending
+0155 register accepted wiki-0 #34 write_delay=39
+0155 store write FAILED after register retrieval-0 #74 retry
+0157 fact ('retrieval-1', 'd1', 'r0') included rev=22 v=9
+0157 read retrieval-0 trigger=d4 source=d4 desired=('r0', 9)
+0157 read retrieval-0 trigger=d7 source=d7 desired=('r0', 23)
+0157 read retrieval-1 trigger=d1 source=d1 desired=('r0', 22)
+0157 read wiki-0 trigger=d6 source=d4 desired=('r0', 9)
+0157 read wiki-0 trigger=d6 source=d6 desired=None
+0157 read wiki-0 trigger=d0 source=d0 desired=None
+0157 read wiki-0 trigger=d0 source=d2 desired=('r1', 3)
+0157 read wiki-0 trigger=d5 source=d5 desired=('r0', 20)
+0157 read wiki-0 trigger=d5 source=d7 desired=('r0', 23)
+0159 deliver wiki feed=32 current_revision_changed d1
+0159 deliver wiki feed=33 current_revision_changed d7
+0159 fact ('wiki-0', 'd5', 'r0') pending rev=20 v=40
+0159 register wiki-0 ('d5', 'r0') rev=20 v=40 pending
+0159 fact ('wiki-0', 'd7', 'r0') pending rev=23 v=41
+0159 register wiki-0 ('d7', 'r0') rev=23 v=41 pending
+0159 register accepted wiki-0 #81 write_delay=4
+0160 fact ('retrieval-0', 'd1', 'r0') included rev=22 v=21
+0162 fact ('wiki-0', 'd4', 'r0') included rev=13 v=22
+0163 store write wiki-0 page=d5+d7 ('d5', 'r0') rev=20 v=40
+0163 store write wiki-0 page=d5+d7 ('d7', 'r0') rev=23 v=41
+0163 outbox wiki-0 ('d5', 'r0') included=True v=40
+0163 outbox wiki-0 ('d7', 'r0') included=True v=41
+0164 read retrieval-1 trigger=d4 source=d4 desired=('r0', 9)
+0165 feed 37 current_revision_changed d6
+0165 fact ('retrieval-0', 'd7', 'r0') pending rev=23 v=23
+0165 register retrieval-0 ('d7', 'r0') rev=23 v=23 pending
+0165 register accepted retrieval-0 #77 write_delay=5
+0165 deliver wiki feed=34 source_profile_changed s0
+0166 fact ('retrieval-1', 'd7', 'r0') included rev=23 v=7
+0166 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=19
+0166 sweep tombstone ('retrieval-0', 'd0', 'r0') v=19
+0166 snapshot 8 end
+0166 read wiki-0 trigger=d7 source=d5 desired=('r0', 20)
+0166 read wiki-0 trigger=d7 source=d7 desired=('r0', 23)
+0168 deliver wiki feed=35 inclusion_changed d4
+0168 deliver wiki feed=36 current_revision_changed d1
+0169 action rebind ['d2', 'r0']
+0169 feed 38 inclusion_changed d2
+0169 fact ('retrieval-0', 'd1', 'r0') included rev=22 v=21
+0169 fact ('retrieval-1', 'd5', 'r0') included rev=20 v=8
+0170 snapshot 10 retrieval-0 reason=heartbeat watermark=23 entries=7
+0170 deliver retrieval feed=37 current_revision_changed d6
+0170 deliver retrieval feed=38 inclusion_changed d2
+0170 store write FAILED after register retrieval-0 #77 retry
+0170 fact ('wiki-0', 'd5', 'r0') included rev=20 v=40
+0171 action withdraw ['d1', False]
+0171 feed 39 current_revision_changed d1
+0171 deliver wiki feed=37 current_revision_changed d6
+0171 fact ('retrieval-0', 'd1', 'r0') included rev=22 v=21
+0171 read retrieval-0 trigger=d7 source=d7 desired=('r0', 23)
+0171 read retrieval-0 trigger=d2 source=d2 desired=('r0', 3)
+0172 fact ('retrieval-1', 'd4', 'r0') pending rev=9 v=10
+0172 register retrieval-1 ('d4', 'r0') rev=9 v=10 pending
+0172 register accepted retrieval-1 #82 write_delay=32
+0172 fact ('retrieval-0', 'd5', 'r0') included rev=20 v=14
+0174 fact ('wiki-0', 'd6', 'r0') included rev=16 v=23
+0174 fact ('wiki-0', 'd0', 'r0') removed rev=None v=36
+0174 sweep tombstone ('wiki-0', 'd0', 'r0') v=36
+0174 fact ('wiki-0', 'd2', 'r0') removed rev=None v=36
+0174 sweep tombstone ('wiki-0', 'd2', 'r0') v=36
+0174 fact ('wiki-0', 'd1', 'r0') removed rev=None v=36
+0174 sweep tombstone ('wiki-0', 'd1', 'r0') v=36
+0174 snapshot 9 end
+0176 fact ('retrieval-0', 'd3', 'r0') included rev=19 v=17
+0176 deliver wiki feed=38 inclusion_changed d2
+0177 deliver retrieval feed=39 current_revision_changed d1
+0177 fact ('retrieval-0', 'd2', 'r0') pending rev=3 v=24
+0177 register retrieval-0 ('d2', 'r0') rev=3 v=24 pending
+0177 register accepted retrieval-0 #85 write_delay=6
+0178 read retrieval-0 trigger=d1 source=d1 desired=('r0', 22)
+0181 fact ('retrieval-0', 'd4', 'r0') included rev=9 v=18
+0181 deliver wiki feed=39 current_revision_changed d1
+0183 fact ('wiki-0', 'd5', 'r0') included rev=20 v=40
+0183 store write FAILED after register retrieval-0 #85 retry
+0184 read retrieval-0 trigger=d2 source=d2 desired=('r0', 3)
+0184 read retrieval-1 trigger=d1 source=d1 desired=('r0', 22)
+0185 fact ('retrieval-0', 'd6', 'r0') included rev=16 v=12
+0187 action rollback ['d6']
+0187 feed 40 current_revision_changed d6
+0187 snapshot 11 wiki-0 reason=heartbeat watermark=41 entries=6
+0187 snapshot 12 retrieval-1 reason=heartbeat watermark=10 entries=6
+0188 attempt failed retrieval-1 #88 retry
+0188 deliver retrieval feed=40 current_revision_changed d6
+0190 read retrieval-1 trigger=d1 source=d1 desired=('r0', 22)
+0191 register REJECT wiki-0 ('d2', 'r1') rev=3 current=3
+0191 superseded page/uid wiki-0 #80
+0191 fact ('retrieval-0', 'd2', 'r1') included rev=3 v=15
+0191 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=23
+0191 sweep tombstone ('retrieval-0', 'd0', 'r0') v=23
+0191 fact ('retrieval-0', 'd7', 'r0') removed rev=None v=23
+0191 sweep tombstone ('retrieval-0', 'd7', 'r0') v=23
+0191 snapshot 10 end
+0191 fact ('retrieval-0', 'd2', 'r0') pending rev=3 v=25
+0191 register retrieval-0 ('d2', 'r0') rev=3 v=25 pending
+0191 register accepted retrieval-0 #87 write_delay=2
+0191 fact ('retrieval-1', 'd2', 'r1') included rev=3 v=4
+0192 fact ('wiki-0', 'd7', 'r0') included rev=23 v=41
+0192 fact ('wiki-0', 'd7', 'r0') included rev=23 v=41
+0192 read wiki-0 trigger=d2 source=d0 desired=None
+0192 read wiki-0 trigger=d2 source=d2 desired=('r0', 3)
+0193 action switch ['retrieval']
+0193 serving retrieval-1
+0193 store remove retrieval-0 ('d2', 'r1') v=26
+0193 store write retrieval-0 page=d2 ('d2', 'r0') rev=3 v=25
+0193 outbox retrieval-0 ('d2', 'r1') included=False v=26
+0193 outbox retrieval-0 ('d2', 'r0') included=True v=25
+0193 fact ('wiki-0', 'd2', 'r0') pending rev=3 v=43
+0193 register wiki-0 ('d2', 'r0') rev=3 v=43 pending
+0193 register accepted wiki-0 #90 write_delay=3
+0194 store write FAILED after register wiki-0 #34 retry
+0194 deliver wiki feed=40 current_revision_changed d6
+0194 fact ('retrieval-1', 'd5', 'r0') included rev=20 v=8
+0194 fact ('wiki-0', 'd6', 'r0') included rev=16 v=23
+0194 read retrieval-1 trigger=d2 source=d2 desired=('r0', 3)
+0195 action delete ['d3']
+0195 feed 41 current_revision_changed d3
+0195 feed 42 document_deleted d3
+0196 store write wiki-0 page=d0+d2 ('d2', 'r0') rev=3 v=43
+0196 outbox wiki-0 ('d2', 'r0') included=True v=43
+0197 action rollback ['d4']
+0197 feed 43 current_revision_changed d4
+0197 read wiki-0 trigger=d1 source=d1 desired=('r0', 22)
+0197 read wiki-0 trigger=d1 source=d3 desired=None
+0197 read wiki-1 trigger=d2 source=d0 desired=None
+0197 read wiki-1 trigger=d2 source=d2 desired=('r0', 3)
+0198 fact ('retrieval-1', 'd1', 'r0') included rev=22 v=9
+0198 deliver wiki feed=41 current_revision_changed d3
+0198 deliver wiki feed=42 document_deleted d3
+0201 fact ('wiki-0', 'd5', 'r0') included rev=20 v=40
+0201 deliver retrieval feed=41 current_revision_changed d3
+0201 deliver retrieval feed=42 document_deleted d3
+0201 deliver retrieval feed=43 current_revision_changed d4
+0203 fact ('wiki-0', 'd7', 'r0') included rev=23 v=41
+0204 store write FAILED after register retrieval-1 #82 retry
+0204 snapshot 13 retrieval-0 reason=heartbeat watermark=26 entries=7
+0204 fact ('wiki-1', 'd2', 'r0') pending rev=3 v=3
+0204 register wiki-1 ('d2', 'r0') rev=3 v=3 pending
+0204 register accepted wiki-1 #93 write_delay=3
+0204 deliver wiki feed=43 current_revision_changed d4
+0204 read retrieval-0 trigger=d3 source=d3 desired=None
+0204 read retrieval-0 trigger=d4 source=d4 desired=('r0', 13)
+0205 fact ('wiki-0', 'd7', 'r0') included rev=23 v=41
+0206 action switch ['wiki']
+0206 serving wiki-1
+0206 attempt failed retrieval-0 #95 retry
+0207 action source_update ['d7']
+0207 feed 44 current_revision_changed d7
+0207 store write wiki-1 page=d0+d2 ('d2', 'r0') rev=3 v=3
+0207 outbox wiki-1 ('d2', 'r0') included=True v=3
+0207 store remove retrieval-0 ('d3', 'r0') v=27
+0207 outbox retrieval-0 ('d3', 'r0') included=False v=27
+0208 store remove retrieval-0 ('d6', 'r0') v=28
+0208 outbox retrieval-0 ('d6', 'r0') included=False v=28
+0208 read retrieval-0 trigger=d6 source=d6 desired=('r0', 16)
+0208 read retrieval-0 trigger=d4 source=d4 desired=('r0', 13)
+0208 read retrieval-1 trigger=d3 source=d3 desired=None
+0209 deliver wiki feed=44 current_revision_changed d7
+0210 fact ('retrieval-1', 'd7', 'r0') included rev=23 v=7
+0210 deliver retrieval feed=44 current_revision_changed d7
+0210 read wiki-1 trigger=d0 source=d0 desired=None
+0210 read wiki-1 trigger=d0 source=d2 desired=('r0', 3)
+0210 fact ('retrieval-0', 'd6', 'r0') pending rev=16 v=29
+0210 register retrieval-0 ('d6', 'r0') rev=16 v=29 pending
+0210 register accepted retrieval-0 #96 write_delay=1
+0210 store remove retrieval-1 ('d3', 'r0') v=11
+0210 outbox retrieval-1 ('d3', 'r0') included=False v=11
+0211 action withdraw ['d3', True]
+0211 feed 45 current_revision_changed d3
+0211 action rollback ['d6']
+0211 feed 46 current_revision_changed d6
+0211 fact ('wiki-0', 'd4', 'r0') included rev=13 v=22
+0211 fact ('retrieval-0', 'd2', 'r0') included rev=3 v=25
+0211 fact ('retrieval-0', 'd4', 'r0') included rev=9 v=18
+0211 fact ('wiki-1', 'd2', 'r0') included rev=3 v=3
+0211 LANDING retrieval-0 ('d6', 'r0') S2=False S3=True valid_at_check=True
+0211 store write retrieval-0 page=d6 ('d6', 'r0') rev=16 v=29
+0211 outbox retrieval-0 ('d6', 'r0') included=True v=29
+0213 fact ('retrieval-0', 'd1', 'r0') included rev=22 v=21
+0213 read retrieval-1 trigger=d6 source=d6 desired=('r0', 15)
+0214 fact ('retrieval-1', 'd3', 'r0') included rev=19 v=5
+0214 fact ('retrieval-0', 'd2', 'r0') included rev=3 v=25
+0215 action source_update ['d5']
+0215 feed 47 current_revision_changed d5
+0215 fact ('retrieval-0', 'd3', 'r0') included rev=19 v=17
+0215 fact ('retrieval-0', 'd4', 'r0') pending rev=13 v=30
+0215 register retrieval-0 ('d4', 'r0') rev=13 v=30 pending
+0215 register accepted retrieval-0 #97 write_delay=32
+0216 fact ('retrieval-1', 'd6', 'r0') included rev=16 v=3
+0216 fact ('retrieval-1', 'd4', 'r0') removed rev=None v=10
+0216 sweep tombstone ('retrieval-1', 'd4', 'r0') v=10
+0216 snapshot 12 end
+0216 fact ('retrieval-1', 'd3', 'r0') removed rev=None v=11
+0217 deliver retrieval feed=45 current_revision_changed d3
+0217 deliver wiki feed=45 current_revision_changed d3
+0217 deliver wiki feed=46 current_revision_changed d6
+0217 deliver wiki feed=47 current_revision_changed d5
+0219 fact ('wiki-0', 'd5', 'r0') included rev=20 v=40
+0219 fact ('wiki-0', 'd0', 'r0') removed rev=None v=41
+0219 sweep tombstone ('wiki-0', 'd0', 'r0') v=41
+0219 fact ('wiki-0', 'd1', 'r0') removed rev=None v=41
+0219 sweep tombstone ('wiki-0', 'd1', 'r0') v=41
+0219 fact ('wiki-0', 'd3', 'r0') removed rev=None v=41
+0219 sweep tombstone ('wiki-0', 'd3', 'r0') v=41
+0219 snapshot 11 end
+0219 read retrieval-0 trigger=d3 source=d3 desired=None
+0220 fact ('retrieval-1', 'd6', 'r0') pending rev=15 v=12
+0220 register retrieval-1 ('d6', 'r0') rev=15 v=12 pending
+0220 register accepted retrieval-1 #100 write_delay=17
+0220 deliver retrieval feed=46 current_revision_changed d6
+0220 deliver retrieval feed=47 current_revision_changed d5
+0221 register REJECT retrieval-0 ('d7', 'r0') rev=23 current=24
+0221 superseded page/uid retrieval-0 #84
+0221 snapshot 14 wiki-0 reason=heartbeat watermark=43 entries=7
+0221 snapshot 15 retrieval-1 reason=heartbeat watermark=12 entries=5
+0223 fact ('retrieval-0', 'd2', 'r1') removed rev=None v=26
+0223 fact ('retrieval-0', 'd5', 'r0') included rev=20 v=14
+0223 read retrieval-0 trigger=d7 source=d7 desired=('r0', 24)
+0223 read retrieval-0 trigger=d5 source=d5 desired=('r0', 25)
+0224 register REJECT wiki-0 ('d5', 'r0') rev=20 current=25
+0224 register REJECT wiki-0 ('d7', 'r0') rev=23 current=24
+0224 superseded page/uid wiki-0 #83
+0224 fact ('retrieval-0', 'd5', 'r0') pending rev=25 v=32
+0224 register retrieval-0 ('d5', 'r0') rev=25 v=32 pending
+0224 register accepted retrieval-0 #103 write_delay=3
+0225 fact ('retrieval-1', 'd2', 'r1') included rev=3 v=4
+0227 read wiki-0 trigger=d7 source=d5 desired=('r0', 25)
+0227 read wiki-0 trigger=d7 source=d7 desired=('r0', 24)
+0227 store write retrieval-0 page=d5 ('d5', 'r0') rev=25 v=32
+0227 outbox retrieval-0 ('d5', 'r0') included=True v=32
+0227 read retrieval-1 trigger=d3 source=d3 desired=None
+0227 read retrieval-1 trigger=d5 source=d5 desired=('r0', 25)
+0228 fact ('wiki-0', 'd6', 'r0') included rev=16 v=23
+0229 fact ('retrieval-0', 'd3', 'r0') removed rev=None v=27
+0229 ENFORCED d3 true
+0229 VIOLATION S1 {"stores": ["wiki-0"], "uid": "d3"}
+0229 fact ('retrieval-0', 'd5', 'r0') included rev=25 v=32
+0231 fact ('retrieval-0', 'd7', 'r0') pending rev=24 v=33
+0231 register retrieval-0 ('d7', 'r0') rev=24 v=33 pending
+0231 register accepted retrieval-0 #102 write_delay=3
+0231 attempt failed wiki-0 #104 retry
+0232 fact ('retrieval-0', 'd2', 'r1') removed rev=None v=26
+0233 read wiki-0 trigger=d7 source=d5 desired=('r0', 25)
+0233 read wiki-0 trigger=d7 source=d7 desired=('r0', 24)
+0234 fact ('wiki-0', 'd4', 'r0') included rev=13 v=22
+0234 fact ('retrieval-1', 'd1', 'r0') included rev=22 v=9
+0234 store write retrieval-0 page=d7 ('d7', 'r0') rev=24 v=33
+0234 outbox retrieval-0 ('d7', 'r0') included=True v=33
+0235 action source_update ['d4']
+0235 feed 48 current_revision_changed d4
+0235 action rollback ['d2']
+0235 feed 49 current_revision_changed d2
+0235 fact ('wiki-0', 'd5', 'r0') pending rev=25 v=46
+0235 register wiki-0 ('d5', 'r0') rev=25 v=46 pending
+0235 fact ('wiki-0', 'd7', 'r0') pending rev=24 v=47
+0235 register wiki-0 ('d7', 'r0') rev=24 v=47 pending
+0235 register accepted wiki-0 #107 write_delay=2
+0235 read retrieval-1 trigger=d7 source=d7 desired=('r0', 24)
+0236 fact ('retrieval-0', 'd3', 'r0') removed rev=None v=27
+0236 deliver retrieval feed=48 current_revision_changed d4
+0236 deliver retrieval feed=49 current_revision_changed d2
+0237 register REJECT wiki-0 ('d4', 'r0') rev=9 current=26
+0237 superseded page/uid wiki-0 #79
+0237 store write retrieval-1 page=d6 ('d6', 'r0') rev=15 v=12
+0237 outbox retrieval-1 ('d6', 'r0') included=True v=12
+0237 store write wiki-0 page=d5+d7 ('d5', 'r0') rev=25 v=46
+0237 store write wiki-0 page=d5+d7 ('d7', 'r0') rev=24 v=47
+0237 outbox wiki-0 ('d5', 'r0') included=True v=46
+0237 outbox wiki-0 ('d7', 'r0') included=True v=47
+0238 action withdraw ['d3', True]
+0238 feed 50 current_revision_changed d3
+0238 fact ('wiki-0', 'd2', 'r0') included rev=3 v=43
+0238 read retrieval-0 trigger=d6 source=d6 desired=('r0', 15)
+0239 read wiki-0 trigger=d6 source=d4 desired=('r0', 26)
+0239 read wiki-0 trigger=d6 source=d6 desired=('r0', 15)
+0239 read wiki-0 trigger=d5 source=d5 desired=('r0', 25)
+0239 read wiki-0 trigger=d5 source=d7 desired=('r0', 24)
+0241 deliver wiki feed=48 current_revision_changed d4
+0242 fact ('retrieval-1', 'd7', 'r0') pending rev=24 v=13
+0242 register retrieval-1 ('d7', 'r0') rev=24 v=13 pending
+0242 register accepted retrieval-1 #108 write_delay=3
+0242 attempt failed wiki-0 #111 retry
+0242 deliver wiki feed=49 current_revision_changed d2
+0243 fact ('wiki-0', 'd1', 'r0') pending rev=22 v=49
+0243 register wiki-0 ('d1', 'r0') rev=22 v=49 pending
+0243 register accepted wiki-0 #92 write_delay=1
+0243 fact ('retrieval-0', 'd7', 'r0') included rev=24 v=33
+0243 deliver retrieval feed=50 current_revision_changed d3
+0243 fact ('retrieval-0', 'd6', 'r0') pending rev=15 v=34
+0243 register retrieval-0 ('d6', 'r0') rev=15 v=34 pending
+0243 register accepted retrieval-0 #109 write_delay=2
+0244 fact ('retrieval-1', 'd6', 'r0') included rev=15 v=12
+0244 fact ('wiki-0', 'd7', 'r0') included rev=24 v=47
+0244 deliver wiki feed=50 current_revision_changed d3
+0244 store remove wiki-0 ('d3', 'r0') v=50
+0244 store write wiki-0 page=d1+d3 ('d1', 'r0') rev=22 v=49
+0244 outbox wiki-0 ('d3', 'r0') included=False v=50
+0244 outbox wiki-0 ('d1', 'r0') included=True v=49
+0244 read retrieval-0 trigger=d3 source=d3 desired=None
+0245 crash retrieval epoch=1 unsent reports lost
+0245 fact ('wiki-1', 'd2', 'r0') pending rev=3 v=4
+0245 register wiki-1 ('d2', 'r0') rev=3 v=4 pending
+0245 register accepted wiki-1 #99 write_delay=3
+0245 store write retrieval-1 page=d7 ('d7', 'r0') rev=24 v=13
+0245 outbox retrieval-1 ('d7', 'r0') included=True v=13
+0245 read wiki-0 trigger=d3 source=d1 desired=('r0', 22)
+0245 read wiki-0 trigger=d3 source=d3 desired=None
+0245 read wiki-0 trigger=d5 source=d5 desired=('r0', 25)
+0245 read wiki-0 trigger=d5 source=d7 desired=('r0', 24)
+0245 store write retrieval-0 page=d6 ('d6', 'r0') rev=15 v=34
+0245 outbox retrieval-0 ('d6', 'r0') included=True v=34
+0246 fact ('wiki-0', 'd5', 'r0') included rev=25 v=46
+0247 store write FAILED after register retrieval-0 #97 retry
+0247 fact ('wiki-0', 'd2', 'r0') included rev=3 v=43
+0247 backfill complete retrieval s1 profile_seq=2
+0247 read retrieval-0 trigger=d4 source=d4 desired=('r0', 26)
+0247 read retrieval-1 trigger=d6 source=d6 desired=('r0', 15)
+0248 fact ('wiki-0', 'd4', 'r0') pending rev=26 v=51
+0248 register wiki-0 ('d4', 'r0') rev=26 v=51 pending
+0248 fact ('wiki-0', 'd6', 'r0') pending rev=15 v=52
+0248 register wiki-0 ('d6', 'r0') rev=15 v=52 pending
+0248 register accepted wiki-0 #110 write_delay=3
+0248 fact ('wiki-0', 'd5', 'r0') included rev=25 v=46
+0248 store write wiki-1 page=d0+d2 ('d2', 'r0') rev=3 v=4
+0248 outbox wiki-1 ('d2', 'r0') included=True v=4
+0249 fact ('retrieval-0', 'd5', 'r0') included rev=25 v=32
+0249 fact ('wiki-0', 'd5', 'r0') pending rev=25 v=53
+0249 register wiki-0 ('d5', 'r0') rev=25 v=53 pending
+0249 fact ('wiki-0', 'd7', 'r0') pending rev=24 v=54
+0249 register wiki-0 ('d7', 'r0') rev=24 v=54 pending
+0249 register accepted wiki-0 #114 write_delay=3
+0249 fact ('wiki-0', 'd3', 'r0') removed rev=None v=50
+0250 crash wiki epoch=1 unsent reports lost
+0250 fact ('wiki-0', 'd1', 'r0') pending rev=22 v=55
+0250 register wiki-0 ('d1', 'r0') rev=22 v=55 pending
+0250 register accepted wiki-0 #113 write_delay=1
+0250 read retrieval-1 trigger=d3 source=d3 desired=None
+0251 fact ('retrieval-1', 'd2', 'r0') pending rev=3 v=14
+0251 register retrieval-1 ('d2', 'r0') rev=3 v=14 pending
+0251 register accepted retrieval-1 #91 write_delay=3
+0251 store write FAILED after register wiki-0 #110 retry
+0251 read wiki-0 trigger=d6 source=d4 desired=('r0', 26)
+0251 read wiki-0 trigger=d6 source=d6 desired=('r0', 15)
+0251 read wiki-0 trigger=d2 source=d0 desired=None
+0251 read wiki-0 trigger=d2 source=d2 desired=('r0', 3)
+0251 store write wiki-0 page=d1+d3 ('d1', 'r0') rev=22 v=55
+0251 outbox wiki-0 ('d1', 'r0') included=True v=55
+0252 fact ('retrieval-1', 'd3', 'r0') removed rev=None v=11
+0252 DROP unsent/crashed report wiki-1 v=4
+0252 store write wiki-0 page=d5+d7 ('d5', 'r0') rev=25 v=53
+0252 store write wiki-0 page=d5+d7 ('d7', 'r0') rev=24 v=54
+0252 outbox wiki-0 ('d5', 'r0') included=True v=53
+0252 outbox wiki-0 ('d7', 'r0') included=True v=54
+0252 read wiki-1 trigger=d5 source=d5 desired=('r0', 25)
+0252 read wiki-1 trigger=d5 source=d7 desired=('r0', 24)
+0252 read wiki-1 trigger=d1 source=d1 desired=('r0', 22)
+0252 read wiki-1 trigger=d1 source=d3 desired=None
+0254 fact ('wiki-0', 'd0', 'r0') removed rev=None v=43
+0254 sweep tombstone ('wiki-0', 'd0', 'r0') v=43
+0254 snapshot 14 end
+0254 store remove retrieval-1 ('d2', 'r1') v=15
+0254 store write retrieval-1 page=d2 ('d2', 'r0') rev=3 v=14
+0254 outbox retrieval-1 ('d2', 'r1') included=False v=15
+0254 outbox retrieval-1 ('d2', 'r0') included=True v=14
+0255 snapshot 16 wiki-0 reason=heartbeat watermark=55 entries=6
+0256 fact ('retrieval-1', 'd5', 'r0') included rev=20 v=8
+0256 fact ('retrieval-1', 'd4', 'r0') removed rev=None v=12
+0256 sweep tombstone ('retrieval-1', 'd4', 'r0') v=12
+0256 snapshot 15 end
+0256 fact ('retrieval-0', 'd4', 'r0') pending rev=26 v=35
+0256 register retrieval-0 ('d4', 'r0') rev=26 v=35 pending
+0256 register accepted retrieval-0 #115 write_delay=34
+0256 fact ('wiki-0', 'd2', 'r0') pending rev=3 v=56
+0256 register wiki-0 ('d2', 'r0') rev=3 v=56 pending
+0256 register accepted wiki-0 #119 write_delay=1
+0256 attempt failed wiki-1 #120 retry
+0256 read retrieval-0 trigger=d2 source=d2 desired=('r0', 3)
+0257 action method_refresh ['d1']
+0257 feed 51 current_revision_changed d1
+0257 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=26
+0257 sweep tombstone ('retrieval-0', 'd0', 'r0') v=26
+0257 snapshot 13 end
+0257 store write wiki-0 page=d0+d2 ('d2', 'r0') rev=3 v=56
+0257 outbox wiki-0 ('d2', 'r0') included=True v=56
+0258 fact ('retrieval-1', 'd7', 'r0') included rev=24 v=13
+0258 deliver retrieval feed=51 current_revision_changed d1
+0259 fact ('wiki-0', 'd4', 'r0') pending rev=26 v=57
+0259 register wiki-0 ('d4', 'r0') rev=26 v=57 pending
+0259 fact ('wiki-0', 'd6', 'r0') pending rev=15 v=58
+0259 register wiki-0 ('d6', 'r0') rev=15 v=58 pending
+0259 register accepted wiki-0 #118 write_delay=3
+0259 read wiki-1 trigger=d5 source=d5 desired=('r0', 25)
+0259 read wiki-1 trigger=d5 source=d7 desired=('r0', 24)
+0259 read wiki-1 trigger=d2 source=d0 desired=None
+0259 read wiki-1 trigger=d2 source=d2 desired=('r0', 3)
+0260 action switch_back ['retrieval']
+0260 serving retrieval-0
+0260 backfill complete wiki s1 profile_seq=2
+0260 fact ('wiki-1', 'd5', 'r0') pending rev=25 v=5
+0260 register wiki-1 ('d5', 'r0') rev=25 v=5 pending
+0260 fact ('wiki-1', 'd7', 'r0') pending rev=24 v=6
+0260 register wiki-1 ('d7', 'r0') rev=24 v=6 pending
+0260 register accepted wiki-1 #123 write_delay=3
+0261 fact ('wiki-0', 'd3', 'r0') removed rev=None v=50
+0261 read retrieval-0 trigger=d1 source=d1 desired=('r0', 27)
+0261 read retrieval-1 trigger=d2 source=d2 desired=('r0', 3)
+0262 deliver wiki feed=51 current_revision_changed d1
+0262 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=26 v=57
+0262 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=15 v=58
+0262 outbox wiki-0 ('d4', 'r0') included=True v=57
+0262 outbox wiki-0 ('d6', 'r0') included=True v=58
+0262 fact ('wiki-1', 'd2', 'r0') pending rev=3 v=7
+0262 register wiki-1 ('d2', 'r0') rev=3 v=7 pending
+0262 register accepted wiki-1 #124 write_delay=3
+0262 fact ('wiki-0', 'd2', 'r0') included rev=3 v=56
+0263 action switch_back ['wiki']
+0263 serving wiki-0
+0263 fact ('retrieval-1', 'd5', 'r0') pending rev=25 v=16
+0263 register retrieval-1 ('d5', 'r0') rev=25 v=16 pending
+0263 register accepted retrieval-1 #106 write_delay=4
+0263 fact ('retrieval-0', 'd5', 'r0') included rev=25 v=32
+0263 store write FAILED after register wiki-1 #123 retry
+0263 read wiki-0 trigger=d4 source=d4 desired=('r0', 26)
+0263 read wiki-0 trigger=d4 source=d6 desired=('r0', 15)
+0263 read wiki-1 trigger=d5 source=d5 desired=('r0', 25)
+0263 read wiki-1 trigger=d5 source=d7 desired=('r0', 24)
+0264 fact ('wiki-0', 'd1', 'r0') included rev=22 v=55
+0264 fact ('retrieval-1', 'd2', 'r1') removed rev=None v=15
+0264 fact ('retrieval-0', 'd1', 'r0') pending rev=27 v=36
+0264 register retrieval-0 ('d1', 'r0') rev=27 v=36 pending
+0264 register accepted retrieval-0 #125 write_delay=2
+0265 action withdraw ['d4', False]
+0265 feed 52 current_revision_changed d4
+0265 fact ('wiki-0', 'd7', 'r0') included rev=24 v=54
+0265 store write wiki-1 page=d0+d2 ('d2', 'r0') rev=3 v=7
+0265 outbox wiki-1 ('d2', 'r0') included=True v=7
+0266 action withdraw ['d2', True]
+0266 feed 53 current_revision_changed d2
+0266 store write FAILED after register retrieval-0 #125 retry
+0267 fact ('wiki-0', 'd1', 'r0') included rev=22 v=55
+0267 fact ('retrieval-1', 'd2', 'r1') removed rev=None v=15
+0267 store write retrieval-1 page=d5 ('d5', 'r0') rev=25 v=16
+0267 outbox retrieval-1 ('d5', 'r0') included=True v=16
+0267 read retrieval-0 trigger=d1 source=d1 desired=('r0', 27)
+0268 fact ('wiki-0', 'd1', 'r0') included rev=22 v=55
+0268 deliver wiki feed=52 current_revision_changed d4
+0268 deliver wiki feed=53 current_revision_changed d2
+0268 fact ('wiki-0', 'd4', 'r0') included rev=26 v=57
+0269 action rollback ['d3']
+0269 feed 54 current_revision_changed d3
+0269 fact ('wiki-0', 'd6', 'r0') included rev=15 v=58
+0269 deliver retrieval feed=52 current_revision_changed d4
+0269 deliver retrieval feed=53 current_revision_changed d2
+0269 deliver retrieval feed=54 current_revision_changed d3
+0269 read wiki-0 trigger=d2 source=d0 desired=None
+0269 read wiki-0 trigger=d2 source=d2 desired=None
+0270 fact ('retrieval-1', 'd6', 'r0') included rev=15 v=12
+0271 fact ('retrieval-1', 'd7', 'r0') included rev=24 v=13
+0271 fact ('wiki-0', 'd5', 'r0') included rev=25 v=53
+0271 fact ('retrieval-1', 'd2', 'r1') removed rev=None v=15
+0271 fact ('wiki-0', 'd7', 'r0') included rev=24 v=54
+0271 fact ('wiki-1', 'd5', 'r0') pending rev=25 v=8
+0271 register wiki-1 ('d5', 'r0') rev=25 v=8 pending
+0271 fact ('wiki-1', 'd7', 'r0') pending rev=24 v=9
+0271 register wiki-1 ('d7', 'r0') rev=24 v=9 pending
+0271 register accepted wiki-1 #128 write_delay=4
+0272 snapshot 17 retrieval-0 reason=heartbeat watermark=36 entries=6
+0272 snapshot 18 wiki-1 reason=heartbeat watermark=9 entries=1
+0272 fact ('wiki-0', 'd4', 'r0') pending rev=26 v=59
+0272 register wiki-0 ('d4', 'r0') rev=26 v=59 pending
+0272 fact ('wiki-0', 'd6', 'r0') pending rev=15 v=60
+0272 register wiki-0 ('d6', 'r0') rev=15 v=60 pending
+0272 register accepted wiki-0 #127 write_delay=4
+0272 read retrieval-0 trigger=d2 source=d2 desired=None
+0274 fact ('wiki-1', 'd2', 'r0') included rev=3 v=7
+0274 store remove wiki-0 ('d2', 'r0') v=61
+0274 outbox wiki-0 ('d2', 'r0') included=False v=61
+0275 fact ('wiki-0', 'd5', 'r0') included rev=25 v=53
+0275 store write FAILED after register wiki-1 #128 retry
+0275 read wiki-1 trigger=d5 source=d5 desired=('r0', 25)
+0275 read wiki-1 trigger=d5 source=d7 desired=('r0', 24)
+0275 read wiki-1 trigger=d2 source=d0 desired=None
+0275 read wiki-1 trigger=d2 source=d2 desired=None
+0276 fact ('retrieval-1', 'd2', 'r0') included rev=3 v=14
+0276 deliver wiki feed=54 current_revision_changed d3
+0276 fact ('retrieval-0', 'd5', 'r0') included rev=25 v=32
+0276 store write FAILED after register wiki-0 #127 retry
+0277 fact ('wiki-0', 'd5', 'r0') included rev=25 v=53
+0277 fact ('wiki-0', 'd0', 'r0') removed rev=None v=55
+0277 sweep tombstone ('wiki-0', 'd0', 'r0') v=55
+0277 snapshot 16 end
+0278 store remove retrieval-0 ('d2', 'r0') v=37
+0278 outbox retrieval-0 ('d2', 'r0') included=False v=37
+0278 read wiki-0 trigger=d4 source=d4 desired=('r0', 26)
+0278 read wiki-0 trigger=d4 source=d6 desired=('r0', 15)
+0279 fact ('wiki-0', 'd7', 'r0') included rev=24 v=54
+0279 read retrieval-1 trigger=d2 source=d2 desired=None
+0279 fact ('wiki-0', 'd4', 'r0') pending rev=26 v=62
+0279 register wiki-0 ('d4', 'r0') rev=26 v=62 pending
+0279 fact ('wiki-0', 'd6', 'r0') pending rev=15 v=63
+0279 register wiki-0 ('d6', 'r0') rev=15 v=63 pending
+0279 register accepted wiki-0 #134 write_delay=6
+0281 fact ('wiki-1', 'd5', 'r0') pending rev=25 v=10
+0281 register wiki-1 ('d5', 'r0') rev=25 v=10 pending
+0281 fact ('wiki-1', 'd7', 'r0') pending rev=24 v=11
+0281 register wiki-1 ('d7', 'r0') rev=24 v=11 pending
+0281 register accepted wiki-1 #132 write_delay=2
+0281 fact ('retrieval-0', 'd2', 'r0') removed rev=None v=37
+0282 store remove wiki-1 ('d2', 'r0') v=12
+0282 outbox wiki-1 ('d2', 'r0') included=False v=12
+0282 store remove retrieval-1 ('d2', 'r0') v=17
+0282 outbox retrieval-1 ('d2', 'r0') included=False v=17
+0283 fact ('wiki-1', 'd2', 'r0') included rev=3 v=7
+0283 store write wiki-1 page=d5+d7 ('d5', 'r0') rev=25 v=10
+0283 store write wiki-1 page=d5+d7 ('d7', 'r0') rev=24 v=11
+0283 outbox wiki-1 ('d5', 'r0') included=True v=10
+0283 outbox wiki-1 ('d7', 'r0') included=True v=11
+0284 fact ('retrieval-1', 'd7', 'r0') included rev=24 v=13
+0285 DROP unsent/crashed report retrieval-0 v=29
+0285 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=26 v=62
+0285 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=15 v=63
+0285 outbox wiki-0 ('d4', 'r0') included=True v=62
+0285 outbox wiki-0 ('d6', 'r0') included=True v=63
+0285 read wiki-1 trigger=d7 source=d5 desired=('r0', 25)
+0285 read wiki-1 trigger=d7 source=d7 desired=('r0', 24)
+0285 read wiki-1 trigger=d6 source=d4 desired=('r0', 26)
+0285 read wiki-1 trigger=d6 source=d6 desired=('r0', 15)
+0286 fact ('wiki-0', 'd1', 'r0') included rev=22 v=55
+0288 attempt failed wiki-1 #136 retry
+0289 snapshot 19 wiki-0 reason=heartbeat watermark=63 entries=5
+0289 snapshot 20 retrieval-1 reason=heartbeat watermark=17 entries=4
+0290 store write retrieval-0 page=d4 ('d4', 'r0') rev=26 v=35
+0290 outbox retrieval-0 ('d4', 'r0') included=True v=35
+0290 fact ('wiki-1', 'd7', 'r0') included rev=24 v=11
+0290 read wiki-1 trigger=d7 source=d5 desired=('r0', 25)
+0290 read wiki-1 trigger=d7 source=d7 desired=('r0', 24)
+0291 fact ('wiki-0', 'd2', 'r0') included rev=3 v=56
+0291 fact ('wiki-1', 'd4', 'r0') pending rev=26 v=13
+0291 register wiki-1 ('d4', 'r0') rev=26 v=13 pending
+0291 fact ('wiki-1', 'd6', 'r0') pending rev=15 v=14
+0291 register wiki-1 ('d6', 'r0') rev=15 v=14 pending
+0291 register accepted wiki-1 #137 write_delay=34
+0291 read retrieval-0 trigger=d4 source=d4 desired=('r0', 26)
+0294 fact ('wiki-1', 'd2', 'r0') included rev=3 v=7
+0294 snapshot 18 end
+0294 fact ('wiki-0', 'd7', 'r0') included rev=24 v=54
+0294 fact ('wiki-1', 'd5', 'r0') pending rev=25 v=15
+0294 register wiki-1 ('d5', 'r0') rev=25 v=15 pending
+0294 fact ('wiki-1', 'd7', 'r0') pending rev=24 v=16
+0294 register wiki-1 ('d7', 'r0') rev=24 v=16 pending
+0294 register accepted wiki-1 #138 write_delay=40
+0295 fact ('wiki-0', 'd4', 'r0') included rev=26 v=62
+0295 fact ('retrieval-0', 'd4', 'r0') included rev=26 v=35
+0296 fact ('wiki-0', 'd5', 'r0') included rev=25 v=53
+0297 fact ('wiki-0', 'd2', 'r0') removed rev=None v=61
+0297 fact ('retrieval-0', 'd4', 'r0') included rev=26 v=35
+0298 fact ('wiki-0', 'd6', 'r0') included rev=15 v=63
+0299 action withdraw ['d1', False]
+0299 feed 55 current_revision_changed d1
+0300 read retrieval-1 trigger=d4 source=d4 desired=('r0', 26)
+0302 fact ('retrieval-0', 'd6', 'r0') included rev=15 v=34
+0302 fact ('wiki-0', 'd4', 'r0') included rev=26 v=62
+0302 fact ('retrieval-0', 'd4', 'r0') included rev=26 v=35
+0304 deliver wiki feed=55 current_revision_changed d1
+0304 fact ('retrieval-1', 'd4', 'r0') pending rev=26 v=18
+0304 register retrieval-1 ('d4', 'r0') rev=26 v=18 pending
+0304 register accepted retrieval-1 #140 write_delay=6
+0305 deliver retrieval feed=55 current_revision_changed d1
+0306 snapshot 21 wiki-1 reason=heartbeat watermark=16 entries=2
+0307 register REJECT wiki-1 ('d1', 'r0') rev=22 current=27
+0307 superseded page/uid wiki-1 #121
+0308 fact ('wiki-0', 'd6', 'r0') included rev=15 v=63
+0308 fact ('retrieval-1', 'd6', 'r0') included rev=15 v=12
+0309 read wiki-0 trigger=d1 source=d1 desired=('r0', 27)
+0309 read wiki-0 trigger=d1 source=d3 desired=None
+0310 store write retrieval-1 page=d4 ('d4', 'r0') rev=26 v=18
+0310 outbox retrieval-1 ('d4', 'r0') included=True v=18
+0311 fact ('wiki-0', 'd2', 'r0') removed rev=None v=61
+0311 fact ('retrieval-0', 'd7', 'r0') included rev=24 v=33
+0311 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=36
+0311 sweep tombstone ('retrieval-0', 'd0', 'r0') v=36
+0311 fact ('retrieval-0', 'd1', 'r0') removed rev=None v=36
+0311 sweep tombstone ('retrieval-0', 'd1', 'r0') v=36
+0311 fact ('retrieval-0', 'd3', 'r0') removed rev=None v=36
+0311 sweep tombstone ('retrieval-0', 'd3', 'r0') v=36
+0311 fact ('retrieval-0', 'd2', 'r1') removed rev=None v=36
+0311 sweep tombstone ('retrieval-0', 'd2', 'r1') v=36
+0311 snapshot 17 end
+0312 read retrieval-0 trigger=d3 source=d3 desired=None
+0312 read retrieval-0 trigger=d0 source=d0 desired=None
+0312 read retrieval-0 trigger=d2 source=d2 desired=None
+0313 fact ('retrieval-0', 'd2', 'r0') removed rev=None v=37
+0314 fact ('retrieval-1', 'd5', 'r0') included rev=25 v=16
+0316 read retrieval-0 trigger=d4 source=d4 desired=('r0', 26)
+0316 read retrieval-0 trigger=d6 source=d6 desired=('r0', 15)
+0316 read retrieval-1 trigger=d2 source=d2 desired=None
+0318 fact ('retrieval-1', 'd7', 'r0') included rev=24 v=13
+0318 fact ('wiki-0', 'd1', 'r0') pending rev=27 v=64
+0318 register wiki-0 ('d1', 'r0') rev=27 v=64 pending
+0318 register accepted wiki-0 #141 write_delay=5
+0319 fact ('retrieval-1', 'd2', 'r0') removed rev=None v=17
+0319 fact ('wiki-0', 'd0', 'r0') removed rev=None v=63
+0319 sweep tombstone ('wiki-0', 'd0', 'r0') v=63
+0319 fact ('wiki-0', 'd3', 'r0') removed rev=None v=63
+0319 sweep tombstone ('wiki-0', 'd3', 'r0') v=63
+0319 snapshot 19 end
+0320 attempt failed retrieval-1 #147 retry
+0321 read retrieval-1 trigger=d3 source=d3 desired=None
+0321 read retrieval-1 trigger=d0 source=d0 desired=None
+0321 read retrieval-1 trigger=d2 source=d2 desired=None
+0321 read retrieval-1 trigger=d4 source=d4 desired=('r0', 26)
+0321 read retrieval-1 trigger=d6 source=d6 desired=('r0', 15)
+0323 snapshot 22 retrieval-0 reason=heartbeat watermark=37 entries=5
+0323 snapshot 23 wiki-0 reason=heartbeat watermark=64 entries=5
+0323 store write FAILED after register wiki-0 #141 retry
+0325 store write wiki-1 page=d4+d6 ('d4', 'r0') rev=26 v=13
+0325 store write wiki-1 page=d4+d6 ('d6', 'r0') rev=15 v=14
+0325 outbox wiki-1 ('d4', 'r0') included=True v=13
+0325 outbox wiki-1 ('d6', 'r0') included=True v=14
+0325 read wiki-0 trigger=d1 source=d1 desired=('r0', 27)
+0325 read wiki-0 trigger=d1 source=d3 desired=None
+0325 read wiki-1 trigger=d4 source=d4 desired=('r0', 26)
+0325 read wiki-1 trigger=d4 source=d6 desired=('r0', 15)
+0326 fact ('wiki-1', 'd2', 'r0') removed rev=None v=16
+0326 sweep tombstone ('wiki-1', 'd2', 'r0') v=16
+0326 fact ('wiki-1', 'd5', 'r0') removed rev=None v=16
+0326 sweep tombstone ('wiki-1', 'd5', 'r0') v=16
+0326 fact ('wiki-1', 'd7', 'r0') removed rev=None v=16
+0326 sweep tombstone ('wiki-1', 'd7', 'r0') v=16
+0326 fact ('wiki-1', 'd4', 'r0') removed rev=None v=16
+0326 sweep tombstone ('wiki-1', 'd4', 'r0') v=16
+0326 fact ('wiki-1', 'd6', 'r0') removed rev=None v=16
+0326 sweep tombstone ('wiki-1', 'd6', 'r0') v=16
+0326 snapshot 21 end
+0326 fact ('retrieval-1', 'd1', 'r0') included rev=22 v=9
+0326 fact ('retrieval-1', 'd2', 'r1') removed rev=None v=17
+0326 sweep tombstone ('retrieval-1', 'd2', 'r1') v=17
+0326 fact ('retrieval-1', 'd3', 'r0') removed rev=None v=17
+0326 sweep tombstone ('retrieval-1', 'd3', 'r0') v=17
+0326 snapshot 20 end
+0327 fact ('wiki-1', 'd4', 'r0') pending rev=26 v=18
+0327 register wiki-1 ('d4', 'r0') rev=26 v=18 pending
+0327 fact ('wiki-1', 'd6', 'r0') pending rev=15 v=19
+0327 register wiki-1 ('d6', 'r0') rev=15 v=19 pending
+0327 register accepted wiki-1 #154 write_delay=2
+0328 fact ('wiki-0', 'd6', 'r0') included rev=15 v=63
+0329 store write wiki-1 page=d4+d6 ('d4', 'r0') rev=26 v=18
+0329 store write wiki-1 page=d4+d6 ('d6', 'r0') rev=15 v=19
+0329 outbox wiki-1 ('d4', 'r0') included=True v=18
+0329 outbox wiki-1 ('d6', 'r0') included=True v=19
+0331 fact ('wiki-0', 'd1', 'r0') pending rev=27 v=65
+0331 register wiki-0 ('d1', 'r0') rev=27 v=65 pending
+0331 register accepted wiki-0 #153 write_delay=3
+0331 read wiki-0 trigger=d0 source=d0 desired=None
+0331 read wiki-0 trigger=d0 source=d2 desired=None
+0332 fact ('retrieval-0', 'd4', 'r0') included rev=26 v=35
+0333 backfill complete retrieval s0 profile_seq=34
+0333 fact ('wiki-1', 'd4', 'r0') included rev=26 v=18
+0333 read wiki-0 trigger=d4 source=d4 desired=('r0', 26)
+0333 read wiki-0 trigger=d4 source=d6 desired=('r0', 15)
+0334 store write wiki-1 page=d5+d7 ('d5', 'r0') rev=25 v=15
+0334 store write wiki-1 page=d5+d7 ('d7', 'r0') rev=24 v=16
+0334 outbox wiki-1 ('d5', 'r0') included=True v=15
+0334 outbox wiki-1 ('d7', 'r0') included=True v=16
+0334 fact ('wiki-1', 'd6', 'r0') included rev=15 v=19
+0334 store write wiki-0 page=d1+d3 ('d1', 'r0') rev=27 v=65
+0334 outbox wiki-0 ('d1', 'r0') included=True v=65
+0335 SDK deadline retrieval-0 v=34 snapshot path
+0335 fact ('wiki-1', 'd6', 'r0') included rev=15 v=19
+0335 read wiki-0 trigger=d3 source=d1 desired=('r0', 27)
+0335 read wiki-0 trigger=d3 source=d3 desired=None
+0336 fact ('retrieval-0', 'd5', 'r0') included rev=25 v=32
+0336 fact ('wiki-0', 'd4', 'r0') included rev=26 v=62
+0337 fact ('retrieval-1', 'd4', 'r0') included rev=26 v=18
+0337 fact ('wiki-0', 'd4', 'r0') pending rev=26 v=66
+0337 register wiki-0 ('d4', 'r0') rev=26 v=66 pending
+0337 fact ('wiki-0', 'd6', 'r0') pending rev=15 v=67
+0337 register wiki-0 ('d6', 'r0') rev=15 v=67 pending
+0337 register accepted wiki-0 #156 write_delay=2
+0337 read wiki-0 trigger=d2 source=d0 desired=None
+0337 read wiki-0 trigger=d2 source=d2 desired=None
+0338 fact ('wiki-0', 'd1', 'r0') included rev=27 v=65
+0339 fact ('retrieval-1', 'd5', 'r0') included rev=25 v=16
+0339 fact ('wiki-0', 'd1', 'r0') included rev=27 v=65
+0339 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=26 v=66
+0339 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=15 v=67
+0339 outbox wiki-0 ('d4', 'r0') included=True v=66
+0339 outbox wiki-0 ('d6', 'r0') included=True v=67
+0340 snapshot 24 wiki-1 reason=heartbeat watermark=19 entries=4
+0341 read wiki-0 trigger=d6 source=d4 desired=('r0', 26)
+0341 read wiki-0 trigger=d6 source=d6 desired=('r0', 15)
+0341 read wiki-1 trigger=d0 source=d0 desired=None
+0341 read wiki-1 trigger=d0 source=d2 desired=None
+0343 attempt failed wiki-0 #159 retry
+0344 read wiki-0 trigger=d6 source=d4 desired=('r0', 26)
+0344 read wiki-0 trigger=d6 source=d6 desired=('r0', 15)
+0345 fact ('wiki-0', 'd7', 'r0') included rev=24 v=54
+0346 fact ('retrieval-1', 'd5', 'r0') included rev=25 v=16
+0347 action retire ['retrieval']
+0347 retire retrieval-1
+0347 fact ('retrieval-0', 'd1', 'r0') pending rev=27 v=38
+0347 register retrieval-0 ('d1', 'r0') rev=27 v=38 pending
+0347 register accepted retrieval-0 #129 write_delay=1
+0347 fact ('wiki-0', 'd1', 'r0') included rev=27 v=65
+0348 read wiki-1 trigger=d2 source=d0 desired=None
+0348 read wiki-1 trigger=d2 source=d2 desired=None
+0348 store write retrieval-0 page=d1 ('d1', 'r0') rev=27 v=38
+0348 outbox retrieval-0 ('d1', 'r0') included=True v=38
+0350 action retire ['wiki']
+0350 retire wiki-1
+0350 fact ('wiki-0', 'd4', 'r0') pending rev=26 v=68
+0350 register wiki-0 ('d4', 'r0') rev=26 v=68 pending
+0350 fact ('wiki-0', 'd6', 'r0') pending rev=15 v=69
+0350 register wiki-0 ('d6', 'r0') rev=15 v=69 pending
+0350 register accepted wiki-0 #161 write_delay=1
+0351 read retrieval-0 trigger=d1 source=d1 desired=('r0', 27)
+0351 store write wiki-0 page=d4+d6 ('d4', 'r0') rev=26 v=68
+0351 store write wiki-0 page=d4+d6 ('d6', 'r0') rev=15 v=69
+0351 outbox wiki-0 ('d4', 'r0') included=True v=68
+0351 outbox wiki-0 ('d6', 'r0') included=True v=69
+0352 fact ('wiki-0', 'd5', 'r0') included rev=25 v=53
+0352 fact ('wiki-0', 'd0', 'r0') removed rev=None v=64
+0352 sweep tombstone ('wiki-0', 'd0', 'r0') v=64
+0352 fact ('wiki-0', 'd2', 'r0') removed rev=None v=64
+0352 sweep tombstone ('wiki-0', 'd2', 'r0') v=64
+0352 fact ('wiki-0', 'd3', 'r0') removed rev=None v=64
+0352 sweep tombstone ('wiki-0', 'd3', 'r0') v=64
+0352 snapshot 23 end
+0355 fact ('retrieval-0', 'd6', 'r0') included rev=15 v=34
+0355 backfill complete wiki s0 profile_seq=34
+0361 snapshot 24 end
+0367 fact ('retrieval-0', 'd7', 'r0') included rev=24 v=33
+0367 fact ('retrieval-0', 'd0', 'r0') removed rev=None v=37
+0367 sweep tombstone ('retrieval-0', 'd0', 'r0') v=37
+0367 fact ('retrieval-0', 'd2', 'r0') removed rev=None v=37
+0367 sweep tombstone ('retrieval-0', 'd2', 'r0') v=37
+0367 fact ('retrieval-0', 'd3', 'r0') removed rev=None v=37
+0367 sweep tombstone ('retrieval-0', 'd3', 'r0') v=37
+0367 fact ('retrieval-0', 'd2', 'r1') removed rev=None v=37
+0367 sweep tombstone ('retrieval-0', 'd2', 'r1') v=37
+0367 snapshot 22 end
+0373 fact ('wiki-0', 'd4', 'r0') included rev=26 v=68
+0374 fact ('retrieval-0', 'd1', 'r0') included rev=27 v=38
+0379 attempt failed wiki-0 #157 retry
+0381 read wiki-0 trigger=d3 source=d1 desired=('r0', 27)
+0381 read wiki-0 trigger=d3 source=d3 desired=None
+0385 fact ('wiki-0', 'd6', 'r0') included rev=15 v=69
+0389 fact ('retrieval-0', 'd6', 'r0') included rev=15 v=34
+0403 fact ('wiki-0', 'd7', 'r0') included rev=24 v=54
+0408 fact ('retrieval-0', 'd7', 'r0') included rev=24 v=33
+0436 attempt failed wiki-0 #164 retry
+0439 read wiki-0 trigger=d3 source=d1 desired=('r0', 27)
+0439 read wiki-0 trigger=d3 source=d3 desired=None
+0469 fact ('wiki-0', 'd1', 'r0') pending rev=27 v=70
+0469 register wiki-0 ('d1', 'r0') rev=27 v=70 pending
+0469 register accepted wiki-0 #165 write_delay=2
+0471 store write wiki-0 page=d1+d3 ('d1', 'r0') rev=27 v=70
+0471 outbox wiki-0 ('d1', 'r0') included=True v=70
+0472 tombstone expired ('wiki-0', 'd0', 'r0') v=64
+0472 tombstone expired ('wiki-0', 'd2', 'r0') v=64
+0472 tombstone expired ('wiki-0', 'd3', 'r0') v=64
+0487 tombstone expired ('retrieval-0', 'd0', 'r0') v=37
+0487 tombstone expired ('retrieval-0', 'd2', 'r0') v=37
+0487 tombstone expired ('retrieval-0', 'd3', 'r0') v=37
+0487 tombstone expired ('retrieval-0', 'd2', 'r1') v=37
+0487 fact ('wiki-0', 'd1', 'r0') included rev=27 v=70
+0499 fact ('wiki-0', 'd1', 'r0') included rev=27 v=70
+0500 rewind retrieval-0 before={('d1', 'r0'): 27, ('d4', 'r0'): 26, ('d5', 'r0'): 25, ('d6', 'r0'): 15, ('d7', 'r0'): 24} after={('d1', 'r0'): 22, ('d2', 'r0'): 3, ('d3', 'r0'): 19, ('d4', 'r0'): 9, ('d5', 'r0'): 20, ('d6', 'r0'): 16, ('d2', 'r1'): 3} store unaffected
+0500 silent drift retrieval-0: no runbook or enforcement gate
+0500 FLIP-BACK d3 enforcement true->false
+0500 VIOLATION S1_flipback {"reason": "fact-based enforcement reversal", "uid": "d3"}
+0500 tombstone expired ('retrieval-0', 'd0', 'r0') v=23
+0500 tombstone expired ('retrieval-0', 'd7', 'r0') v=23
+0500 fact ('wiki-0', 'd1', 'r0') included rev=27 v=70
+0510 snapshot 25 retrieval-0 reason=heartbeat watermark=38 entries=5
+0515 fact ('retrieval-0', 'd6', 'r0') included rev=15 v=34
+0519 fact ('retrieval-0', 'd5', 'r0') included rev=25 v=32
+0528 fact ('retrieval-0', 'd7', 'r0') included rev=24 v=33
+0535 fact ('retrieval-0', 'd1', 'r0') included rev=27 v=38
+0569 fact ('retrieval-0', 'd4', 'r0') included rev=26 v=35
+0569 fact ('retrieval-0', 'd2', 'r0') removed rev=None v=38
+0569 sweep tombstone ('retrieval-0', 'd2', 'r0') v=38
+0569 fact ('retrieval-0', 'd3', 'r0') removed rev=None v=38
+0569 sweep tombstone ('retrieval-0', 'd3', 'r0') v=38
+0569 fact ('retrieval-0', 'd2', 'r1') removed rev=None v=38
+0569 sweep tombstone ('retrieval-0', 'd2', 'r1') v=38
+0569 snapshot 25 end
+0569 ENFORCED d3 true
