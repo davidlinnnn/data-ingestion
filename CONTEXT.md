@@ -258,7 +258,7 @@ Knowledge-domain ownership and applicable policy authority remain distinct.
 _Avoid_: new content/lifecycle authority, grant from registration alone
 
 **Resource**:
-A declared authorization target or scope, defined by an authorized owner, to
+A declared authorization target or scope, defined by its Resource Maintainer, to
 which document bindings and access policies apply. A Corpus may itself serve
 this role; binding or membership alone grants no user access.
 _Avoid_: mandatory Workspace entity, source-authorization override
@@ -281,8 +281,8 @@ _Avoid_: member, grant from Corpus membership
 
 **Eviction**:
 A Resource Maintainer's removal of a Document from its Resource. The Document is
-left without a Resource and is readable by no one until its Source binds it
-again.
+left without a Resource, its disclosure stops as after Source Deletion, and its
+Source may bind it again.
 _Avoid_: Source Deletion, withdrawal, Custody Purge
 
 **Authorization Decision**:

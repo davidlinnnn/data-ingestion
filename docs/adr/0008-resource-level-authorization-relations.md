@@ -3,7 +3,8 @@
 The authorization engine, built-in or company GAM, holds only relations on
 Resources: who maintains, contributes to and reads each Resource. Which Resource
 a Document belongs to stays in the platform's admission record, set by
-submission and changed only through the Resource API's rebind and eviction. An
+submission, changed only through the Resource API's rebind and eviction, and
+re-established by submission after an eviction. An
 enforcement point first resolves the Document's binding, then asks the decision
 interface about that Resource.
 
