@@ -4,7 +4,10 @@ The authorization engine, built-in or company GAM, holds only relations on
 Resources: who maintains, contributes to and reads each Resource. Which Resource
 a Document belongs to stays in the platform's admission record, set by
 submission, changed only through the Resource API's rebind and eviction, and
-re-established by submission after an eviction. An
+re-established by submission after an eviction. Eviction and the contributor
+relation are deferred in v1 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55), leaving rebind
+as the only change. An
 enforcement point first resolves the Document's binding, then asks the decision
 interface about that Resource.
 

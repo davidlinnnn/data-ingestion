@@ -179,6 +179,13 @@ Each item is checked in order:
   rejected at the finalization re-check. A revocation after `202` does not undo
   admission: it blocks later submissions, documents already placed remain until
   R's maintainer removes them, and reads follow current policy.
+- Superseded on 2026-10-26 by
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): in v1 S may
+  place documents only into Resources created under S. The maintainer's grant to
+  another Source, the revocation case above and the maintainer's removal of
+  placed documents (eviction) are deferred; a placed document would have two
+  owners, and cross-Source Document copies cover the need. See the
+  [#55 design record](knowledge-platform-canonical-consumption.md).
 - Multiple audiences in v1: for a union, the Source creates one Resource whose
   readers cover both audiences; for an intersection, a Resource representing the
   intersection. Appearing in several knowledge scopes is not supported in v1,
@@ -186,7 +193,10 @@ Each item is checked in order:
   ([ADR-0007](../adr/0007-derived-product-readers-within-input-intersection.md);
   revised on 2026-10-20 from the earlier Corpus-membership suggestion). Uploading
   the same document twice is discouraged; if used, the copies are distinct Assets
-  managed independently.
+  managed independently. Amended on 2026-10-26 by
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): the platform
+  can copy a Document into another Source without reprocessing; the copy is a new
+  Document of that Source, and its readers stay within the original's.
 
 ### Authorization availability and error visibility (Q3.6, Q3.7, Q3.7a)
 
@@ -397,7 +407,10 @@ projections: [retrieval, llm-wiki]   # Projection Types whose products the Sourc
 - Which canonical data each projection consumes, and how it groups them, belongs
   to #55 under #58 Q9 and ADR-0007. #55 also decides the mixed case where one
   Source submits into another Source's Resource and their profiles differ; that
-  document's readiness follows its own Source's profile.
+  document's readiness follows its own Source's profile. Resolved on 2026-10-26
+  by [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): the mixed
+  case does not arise in v1, because a Source places documents only into
+  Resources it created.
 - A Source is an admission boundary, not a consumption boundary. Search and
   reading across Sources are limited only by Resource readers. The physical
   index layout belongs to the Retrieval owner and #55; a Source is not a
@@ -508,6 +521,10 @@ Source Revision or the current serving state and clear when superseded.
   Projections publish independently; only governance withdrawal blocks access.
   Consumers that need consistency filter at serving time (`min_readiness`, #76
   with #55). Coordinated cross-projection cutover is deferred.
+  Superseded on 2026-10-26 by
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): `min_readiness`
+  is a freshness filter within a single projection, not a cross-projection
+  readiness condition; its naming and presentation belong to #76.
 - **Rebind (R7c):** only serving within the document's current Resource counts.
   Until the new Resource's products include the document, readiness is
   `not_ready` or `ready_stale`. Removal from the previous Resource follows the
@@ -568,6 +585,14 @@ Source Revision or the current serving state and clear when superseded.
 | Authority | Owners are authoritative. The platform keeps the latest state and bounded history, and can request a full resynchronization of serving facts |
 | Interpretation | The platform interprets `state`, `retryable`, timing and serving facts. It does not interpret stages, error reasons or manifests |
 
+Superseded on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55): serving facts are
+no longer a full inclusion list once per product version. Projections report
+per-commit deltas of inclusion facts keyed by (projection, Build, `document_uid`,
+`resource_id`) with a Build-wide monotonic `fact_version`, plus repair snapshots
+on request. See the
+[#55 design record](knowledge-platform-canonical-consumption.md).
+
 ### Error block (Q8.4)
 
 Failed reports carry an error block modeled on AIP-193 `ErrorInfo`: `domain`
@@ -610,7 +635,9 @@ entries onto the admission branch.
   #56.
 - Whether the platform keeps a Corpus entity distinct from Resource belongs to
   #55. The preliminary recommendation is that a Resource serves as the Corpus in
-  v1, while Materialization Input Snapshots remain.
+  v1, while Materialization Input Snapshots remain. Confirmed on 2026-10-26 by
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): the Resource is
+  the Corpus in v1, with no separate Corpus entity or membership.
 
 ### Superseded during round 3
 
@@ -716,7 +743,8 @@ records the decisions and their reasons. Rounds 1–3 call the logical object
   request is `received`, then `applied` (serving is blocked, by #56), then
   `enforced` (the required projections' serving facts no longer include the
   document; #31 judges this). Custody Purge is separate (#56, #57). Targets and
-  the purge timing are in Q10.4–Q10.8.
+  the purge timing are in Q10.4–Q10.8. The meaning of `enforced` is refined by
+  #55; see Q10.6.
 - Readiness becomes `deleted` once deletion is applied. It is distinct from
   governance `withdrawn`, stays visible for 30 days and then returns `404`.
 - Late processing results never restore a deleted document. Items declared
@@ -733,7 +761,9 @@ records the decisions and their reasons. Rounds 1–3 call the logical object
 - In v1 a Resource is the Corpus. A rebind through the Resource API creates no
   processing request; #55 schedules any missing projection work.
 - Deleting a non-empty Resource returns `409 RESOURCE_NOT_EMPTY`; there is no
-  force option. Revisit if #55 separates Corpus from Resource.
+  force option. Revisit if #55 separates Corpus from Resource. On 2026-10-26
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55) kept them one
+  in v1.
 
 ### Failure attention (Q9.6)
 
@@ -858,6 +888,13 @@ It first found one more gap (Q10.1h); after the fix every step passes.
 | 21 | Agent result | `source_id`, `document_id`, `document_uid`, `title`, `source_url` | 18 |
 | 22 | After 30 days | Request and batch `404`; the document remains; a deleted document `404` | 19 |
 
+Scenario 20 is superseded on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55): an added
+projection does not count for readiness until its owner reports the Source's
+backfill complete, and the document keeps its previous readiness meanwhile;
+`serving[]` shows the projection as `building`. See the
+[#55 design record](knowledge-platform-canonical-consumption.md).
+
 ### Deletion follow-up (Q10.3–Q10.8)
 
 - **Q10.3:** the user confirmed on 2026-10-21 that applications must be able to
@@ -887,7 +924,11 @@ It first found one more gap (Q10.1h); after the fix every step passes.
   handoff channel with its `document_uid`, and each projection reports when it
   has finished; #31 judges `enforced` from those reports and the serving facts.
   The one-minute target covers the document's own content; derived products are
-  covered by the ten-minute target.
+  covered by the ten-minute target. Superseded on 2026-10-26 by
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): a document is
+  `enforced` when no non-retired Build of any projection holds an included or
+  pending serving fact for it; there is no per-projection completion report and
+  no `delete_request_id` sent to projections.
 - **Q10.7:** when deletion is applied, `title`, `source_url` and `metadata` are
   cleared, because a title can itself be sensitive. The `deleted` record keeps
   only identifiers, times and request IDs.

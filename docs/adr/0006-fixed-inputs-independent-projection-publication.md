@@ -17,3 +17,10 @@ Retrospectively recorded on 2026-10-09; no new design decision is made here.
 Snapshot resolution, publication units, switching and enforcement mechanisms remain
 with the existing downstream owners. [ADR-0002](0002-canonical-source-relationships-and-projection-citations.md)
 separately records source relationships and product citations.
+
+Amended on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55): in v1 the
+Resource is the Corpus, with no separate Corpus entity or membership, and each
+Document belongs to exactly one Resource. "Corpora" above therefore reads as
+Resources in v1; fixed inputs and independent publication are unchanged. See the
+[#55 design record](../design/knowledge-platform-canonical-consumption.md).

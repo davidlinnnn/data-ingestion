@@ -40,6 +40,17 @@ adds a design requirement and supersedes the earlier cross-projection aggregatio
 deferral. Implementation phasing remains open. These later decisions preserve the
 overall layer ownership and independent-publication baseline.
 
+**Confirmed amendment — 2026-10-26:** [#55](https://github.com/davidlinnnn/data-ingestion/issues/55)
+makes the Resource the Corpus in v1: there is no separate Corpus entity or
+membership, and each Document belongs to exactly one Resource, created by its own
+Source. The Shared Corpus, membership and membership-removal rows below read in
+v1 as Resources and Resource binding; multiple Corpus membership is not offered.
+Moving a Document out of a Resource (rebind) is no longer an ordinary update:
+it has deletion's priority and targets and old publications do not remain
+(#55 B2, #31 R7c), superseding the membership-removal row and the "Member
+removed from Corpus A" scenario below.
+See the [#55 design record](knowledge-platform-canonical-consumption.md).
+
 ## Confirmed design inputs
 
 | Decision record | Confirmed constraint |
@@ -47,7 +58,7 @@ overall layer ownership and independent-publication baseline.
 | [Starting charter](https://github.com/davidlinnnn/data-ingestion/issues/52) | Controlled captured-file inputs first; PDF/Markdown/PPTX representation design; Wiki first, Retrieval as a reuse check; independent projection workflows; Kubernetes and shared Temporal; separate direction review |
 | [Canonical Acceptance](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5761731359) | Explicit rules automate ordinary acceptance; exceptions requiring judgment involve a human; processing completion, canonical acceptance, and publication have distinct meanings |
 | [Shared Corpus](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843462731) | Platform-managed knowledge collections can be reused by multiple projections |
-| [Membership and fixed inputs](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843489434) | Explicit membership first; an Asset can belong to multiple Corpora; each Materialization fixes its actual Asset/Canonical Revision inputs without obtaining a lasting access grant |
+| [Membership and fixed inputs](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843489434) | Explicit membership first; an Asset can belong to multiple Corpora; each Materialization fixes its actual Asset/Canonical Revision inputs without obtaining a lasting access grant. Superseded on 2026-10-26 by [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): in v1 a Document belongs to exactly one Resource, which is its Corpus |
 | [Batch, completeness, and updates](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843539018) | Admitted documents have independent outcomes; projections require complete inputs by default and explicitly opt into partial coverage; projections own automatic/explicit-trigger update behavior |
 | [Membership removal versus withdrawal](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843568717) | Ordinary member removal triggers normal updating; authorized eligible old publications may remain during replacement; urgent stop-disclosure intent uses explicit withdrawal |
 | [Version availability and selection](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843634273) | Eligible old canonical results remain usable with visible freshness gaps; projections select latest eligible accepted results, captured-source targets, or exact revisions, then use fixed materialization inputs |

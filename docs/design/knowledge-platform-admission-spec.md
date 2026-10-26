@@ -267,6 +267,11 @@ describes the stages.
    or granted) → `RESOURCE_NOT_FOUND`; a new document with neither `resources`
    nor a default → `RESOURCE_REQUIRED`. An unavailable decision service fails the
    whole request with `503`.
+   Superseded on 2026-10-26 by
+   [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): in v1 a Source
+   may place documents only into Resources it created; the contributor grant is
+   deferred. See the
+   [#55 design record](knowledge-platform-canonical-consumption.md).
 6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION` or
    `VERSION_CONFLICT`.
 7. Same content (§6.4) → `queued` with the active request, a new retry request,
@@ -336,6 +341,15 @@ the document's current Resource counts. First match:
 | `ready_stale` | All serve a revision, at least one older than the latest |
 | `ready` | All serve the latest Source Revision |
 
+Superseded on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55): the scalar
+readiness counts only projections whose backfill for the Source has completed. A
+newly added projection does not count until its owner reports "backfill of Source
+S complete at `profile_seq` P"; until then the document keeps its previous
+readiness. `serving[]` (§5.6) carries each projection's state: `ready`,
+`building` or `stale`. See the
+[#55 design record](knowledge-platform-canonical-consumption.md).
+
 ### 7.2 Attention
 
 | Kind | Action owner | When |
@@ -357,6 +371,13 @@ status reporting contract (registered pipeline IDs, attempt reports ordered by
 `attempt_id` and `seq`, AIP-193-style error blocks, serving facts per published
 product version). The transport is chosen with #55's handoff channel in I3.
 
+Superseded on 2026-10-26 by
+[#55](https://github.com/davidlinnnn/data-ingestion/issues/55): instead of a full
+inclusion list per product version, projections report per-commit deltas of
+inclusion facts keyed by (projection, Build, `document_uid`, `resource_id`) with a
+Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
+[#55 design record](knowledge-platform-canonical-consumption.md).
+
 ## 8. Source Deletion
 
 | Stage | Meaning | Who | Target |
@@ -367,6 +388,13 @@ product version). The transport is chosen with #55's handoff channel in I3.
 
 - The deletion reaches projections through the #55 handoff channel, carrying
   `document_uid`; each projection reports when it has finished.
+  Superseded on 2026-10-26 by
+  [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): a document is
+  `enforced` when no non-retired Build of any projection holds an included or
+  pending serving fact for it; there is no per-projection completion report and
+  no `delete_request_id` sent to projections. This also replaces "Every required projection"
+  and "from their reports" in the `enforced` row above. See the
+  [#55 design record](knowledge-platform-canonical-consumption.md).
 - When deletion is applied, `title`, `source_url` and `metadata` are cleared;
   the `deleted` record keeps only identifiers, times and request IDs.
 - Items of earlier batches finalized after `applied` → `DOCUMENT_DELETED`.
