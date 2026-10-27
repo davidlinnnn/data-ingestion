@@ -3,15 +3,16 @@
 #   check-publish [--no-placeholders] FILE...    ("-" reads stdin)
 # Run it on every body passed to `gh ... --body-file` before posting.
 # scripts/check-docs runs it on the added lines of a branch diff.
-# Exit 1 and print file:line: rule: text for each hit.
+# Exit 1 and print file:line: rule: text for each hit; print "check-publish: ok" when clean.
 set -u
 
 placeholders=1
 if [ "${1:-}" = "--no-placeholders" ]; then placeholders=0; shift; fi
 [ $# -gt 0 ] || { echo "usage: check-publish [--no-placeholders] FILE..." >&2; exit 2; }
 
-# Draft placeholders are written {UPPER_CASE} or {#N}; route templates such as {document_id} stay allowed.
-PLACEHOLDER='\{([A-Z][A-Z0-9_]*|#[0-9]+)\}'
+# Draft placeholders are written {UPPER_CASE} or {#N}, N a number or an UPPER_CASE name such as {#COPY_TICKET};
+# route templates such as {document_id} stay allowed.
+PLACEHOLDER='\{([A-Z][A-Z0-9_]*|#[0-9A-Z_]+)\}'
 LOCAL_PATH='(/Users/[^/[:space:]]+/|/home/[^/[:space:]]+/|/private/(tmp|var)/|/var/folders/)'
 EMAIL='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
 EMAIL_OK='(noreply@anthropic\.com|@users\.noreply\.github\.com|@example\.(com|org|net))'
@@ -31,4 +32,5 @@ for f in "$@"; do
   report email "$name" "$(printf '%s\n' "$text" | grep -noE "$EMAIL" | grep -vE ":[^:]*$EMAIL_OK$")"
   report secret "$name" "$(printf '%s\n' "$text" | grep -nE "$SECRET")"
 done
+[ $status -eq 0 ] && echo "check-publish: ok"
 exit $status

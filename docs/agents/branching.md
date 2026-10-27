@@ -43,6 +43,7 @@ Several agent sessions often run at once on this repo. Sessions that share one w
 
 ## Merging
 
+- Before merging a design record, create every ticket it hands work to, implementation and map tickets alike, and cite each by number. Until a ticket exists, write it as a placeholder such as `{#COPY_TICKET}`: `scripts/check-docs` refuses unfilled placeholders in `docs/design/` and `docs/adr/`.
 - Squash-merge into `dev` by default.
 - Use a merge commit when another open branch is built on top of this one. Squashing would make that branch conflict with `dev`.
 
