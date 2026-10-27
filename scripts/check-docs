@@ -3,8 +3,10 @@
 #   check-docs [BASE]    (default origin/dev)
 # 0. up to date: the branch contains BASE, so it carries what parallel sessions merged.
 # 1. gitleaks: secrets in the branch's commits.
-# 2. check-publish: local paths, emails and secrets in added lines.
+# 2. check-publish: local paths, emails and secrets in added lines; in design records and ADRs
+#    also unfilled placeholders, such as a {#NAME} for a ticket not yet created.
 # 3. lychee: relative links and #anchors in changed Markdown files (offline).
+# 4. ADR numbers: no two ADRs share a number, e.g. after a parallel session merged one.
 # Legacy content outside the diff is not checked.
 set -u
 BASE=${1:-origin/dev}
@@ -34,8 +36,10 @@ else
   missing gitleaks
 fi
 
-step "check-publish (added lines; its own patterns excluded)"
-git diff "$BASE...HEAD" -U0 --no-color -- . ':(exclude)scripts/check-publish' | grep -E '^\+' | grep -vE '^\+\+\+ ' \
+added() { git diff "$BASE...HEAD" -U0 --no-color -- "$@" | grep -E '^\+' | grep -vE '^\+\+\+ '; }
+step "check-publish (added lines; placeholders refused in docs/design and docs/adr; its own patterns excluded)"
+added docs/design docs/adr | scripts/check-publish - || status=1
+added . ':(exclude)scripts/check-publish' ':(exclude)docs/design' ':(exclude)docs/adr' \
   | scripts/check-publish --no-placeholders - || status=1
 
 step "lychee (changed Markdown)"
@@ -47,6 +51,15 @@ elif command -v lychee >/dev/null; then
   lychee --offline --include-fragments --no-progress "${files[@]}" || status=1
 else
   missing lychee
+fi
+
+step "ADR numbers unique"
+dups=$(ls docs/adr | grep -oE '^[0-9]{4}' | sort | uniq -d)
+if [ -n "$dups" ]; then
+  echo "duplicate ADR numbers: $dups; renumber the ADR this branch adds"
+  status=1
+else
+  echo "no duplicates"
 fi
 
 [ $status -eq 0 ] && echo "== all checks passed" || echo "== checks FAILED"
