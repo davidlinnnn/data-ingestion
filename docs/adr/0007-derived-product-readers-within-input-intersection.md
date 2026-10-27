@@ -17,7 +17,7 @@ rebound to another Resource or withdrawn, the products whose Materialization
 Input Snapshot includes it are rebuilt or withdrawn.
 
 This relies on every input in a Resource having exactly that Resource's readers:
-no per-document reader exceptions (still open in #56) and no differing source
+no per-document reader exceptions (not supported in v1; see [ADR-0008](0008-resource-level-authorization-relations.md)) and no differing source
 ceilings among Sources that submit into the same Resource. If either is
 introduced, Resource-scoped materialization no longer guarantees the intersection
 and must be re-evaluated. When a rebind narrows an input's audience, removing it

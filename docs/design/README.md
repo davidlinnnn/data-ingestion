@@ -121,6 +121,14 @@ rule and readiness, rebind and cross-Source copies, Builds and commit-by-commit
 publication, serving facts with registration before write, snapshot-then-stream
 repair and the deletion predicate, with simulation evidence for each rule.
 
+[Data-security governance](knowledge-platform-data-security.md) records the #87
+decisions (rounds A–G): the company classification mapped with no classification
+attribute in v1, on-prem-only processing egress with a registered egress list,
+derived data as sensitive as its inputs, privileged access, encryption and
+isolation principles, record/warn/gate detection modes, the P0→P1→P2 identity
+path and the Agent Platform data obligations, and the manager-facing Platform
+Security Baseline v1.
+
 [Internal product strategy](knowledge-platform-internal-product-strategy.md)
 records the confirmed 2026-10-17 internal product direction, owner handoffs and
 company identity/authorization requirements (tSSO, GAM or GAM-compatible, data-owner

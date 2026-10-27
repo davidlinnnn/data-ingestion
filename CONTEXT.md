@@ -335,6 +335,12 @@ existence, relationships, citations, summaries, and retrieval representations.
 The absence of disclosure when the platform cannot establish that the relevant
 access is permitted.
 
+**Platform Security Baseline**:
+The versioned statement of the data-security guarantees the platform currently
+provides, and of whether each detection control records, warns or gates. It is
+the acceptance criteria for platform security and tightens over time.
+_Avoid_: AI policy, authorization policy, Effective Access Policy
+
 **Source Deletion**:
 A Source's attributable statement that a Document no longer exists at the
 source. It stops disclosure of that Document; it is neither governance
