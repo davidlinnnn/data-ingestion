@@ -1,6 +1,6 @@
 # Knowledge Platform 資料安全治理面向
 
-**日期：2026-10-20，更新 2026-10-21（Asia/Taipei）。狀態：討論用框架，不是已確認的決策、新增 MVP gate 或技術選型。** 後續討論與決議由 [#87](https://github.com/davidlinnnn/data-ingestion/issues/87) 承接；持續更新的面向表格在 #87 的 Overview，本文是 2026-10-21 的快照。
+**日期：2026-10-20，更新 2026-10-21（Asia/Taipei）。狀態：討論用框架，不是已確認的決策、新增 MVP gate 或技術選型。** 後續討論與決議由 [#87](https://github.com/davidlinnnn/data-ingestion/issues/87) 承接；持續更新的面向表格在 #87 的 Overview，本文是 2026-10-21 的快照。**2026-10-27：#87 已定案，決策與 16 面向的處置見[資料安全治理設計](../design/knowledge-platform-data-security.md)。**
 
 Knowledge Platform 管「哪些資料、以誰的身分、在什麼條件下被釋出」；Agent Platform 管「agent 拿到資料後做了什麼」。15 個資料安全面向中，4 項已有 ticket 推進，7 項只部分涵蓋，4 項目前沒有負責的 ticket。
 
