@@ -58,7 +58,7 @@ long-polling on the same endpoint comes first. The upgrade is additive: a relay
 publishes from the existing feed table, with no schema change and no change to
 consumer logic.
 
-Implementation guards carried to the implementation tickets: the feed is ordered
+Implementation guards carried to the implementation tickets (the feed and its read API: [#126](https://github.com/davidlinnnn/data-ingestion/issues/126); the projection side: [#127](https://github.com/davidlinnnn/data-ingestion/issues/127)): the feed is ordered
 and paged by transaction ID and then sequence, and never returns entries from
 transactions at or above the snapshot xmin. A sequence-only cursor is unsafe even
 with that filter, because a transaction can take a lower sequence value and

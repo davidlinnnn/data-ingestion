@@ -94,7 +94,7 @@ TypeScript).
 |---|---|
 | E1 | Contract obligations: (1) enrichment-derived content carries its status (all `unverified` in the first version) and a Canonical location reference back to the source image or table; (2) table-level status reaches results, and the Wiki generates no table-dependent comparisons or conclusions; (3) document-level known limitations reach citations; (4) original and generated content are distinguished. Owners verify quality offline with #32 shared cases, #54 Q4 representative questions and #82 table cases; code, formula, table and image each have a consumer check. |
 | E2 | Physical layout is not part of the contract; the contract holds the PEP filtering semantics and #56 conformance. |
-| E3 | Scale horizon: 1 million active Documents; 10,000 updates a day near term, 100,000 later (to #88). |
+| E3 | Scale horizon: 10 million active Documents (the ceiling confirmed on #88; this record first said 1 million, corrected 2026-10-27); 10,000 updates a day near term, 100,000 later (to #88). |
 | E4 | `min_readiness` is single-projection freshness (supersedes admission.md's cross-projection meaning; review m6): results carry `document_uid`, the served Source Revision and its time, and a stale flag; projections support a `latest_only` pre-filter. Naming and presentation belong to #76; cross-projection consistency rests on exact-revision citation (ADR-0003). |
 
 ### Validation and final rulings
@@ -380,6 +380,8 @@ about protocol logic, not performance or scale (#88).
 
 | To | What |
 |---|---|
+| #126 | The Change Feed itself and the governed read API (§2 A1–A8, §3): the feed table and its ordering, the per-projection cursor, the Document state read, bootstrap enumeration, the in-transaction event-append function that #97, #98, #114 and #56 call, and the `source_profile_changed` producer. Added 2026-10-27: the record first left these with no implementation ticket |
+| #127 | The projection side (§2 A7, A9, §4, §5) as a consumer SDK and a conceptual reference projection: single logical reader, `reconcile_doc`, registration before write, repair views, heartbeat, Build lifecycle, the pre-filtered query path, and the projection owner's checklist. Added 2026-10-27 |
 | #97 | Readiness backfill rule and `serving[]`; registration with the B5 check in the same step (K1); serving facts with `pending`, fresh confirmation versions, tombstones and the expiry fence; `PENDING_MAX`; snapshot-then-stream repair (lifetime, expiry fence, atomic replacement); count and digest heartbeat; `processing_failed` suppression; Build states and gate re-run on `serving`; list shapes. Acceptance: SC15, SC19, SC20u, SC21, SC22, SC23, SC24, NC2 |
 | #98 | C3 with `pending`; the B5 check at registration (K1); rebind move-out; R-c; the lost-writes suspension (K2); R-a; enforcement timeout alerts with reasons. Acceptance: SC15, SC16, SC20r |
 | #56 | Resource-scoped block for rebind; copy blocks along lineage; withdrawal and reinstatement recorded in the admission database in the feed's transaction; withdrawal may use C3; conformance for B5 (with R-b, SC18) and the per-page copy check; Wiki derived-content deletion target flag |
