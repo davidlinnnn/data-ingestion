@@ -70,7 +70,7 @@ def store(bucket: str) -> S3ObjectStore:
 def worker(bucket: str, name: str) -> subprocess.Popen:
     log = open(LOGS / f"worker-{name}.log", "w")
     return subprocess.Popen(
-        [*CLI, "worker", "--pool", "cpu", "--tier", "normal", "--profile", PROFILE,
+        [*CLI, "worker", "--pool", "cpu", "--profile", PROFILE,
          "--build-id", "seamb-r1"],
         env=env(bucket), stdout=log, stderr=subprocess.STDOUT, cwd=REPO,
     )  # fmt: skip

@@ -21,7 +21,7 @@ from kp_processing.ports.status_reporter import (
 )
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
-from kp_processing.workflow import WORKFLOW, task_queue
+from kp_processing.workflow import CPU_QUEUE, WORKFLOW
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_parse import seven_pages
@@ -38,10 +38,10 @@ async def client():
 
 
 async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, str]:
-    worker = await make_worker(client, ports, runtime, "normal")
+    worker = await make_worker(client, ports, runtime)
     async with worker:
         handle = await client.start_workflow(
-            WORKFLOW, start, id=start["request_id"], task_queue=task_queue("cpu", "normal")
+            WORKFLOW, start, id=start["request_id"], task_queue=CPU_QUEUE
         )
         outcome = await handle.result()
     return outcome, handle.result_run_id or ""
@@ -206,7 +206,7 @@ async def test_starting_the_same_request_twice_counts_as_success(
     monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
     start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
-    async with await make_worker(client, ports, runtime, "normal"):
+    async with await make_worker(client, ports, runtime):
         assert await start_request(start, wait=True) == 0
         assert await start_request(start, wait=False) == 0
 
@@ -215,6 +215,20 @@ async def test_starting_the_same_request_twice_counts_as_success(
     assert f"{start['request_id']} already started" in out
     runs = [w async for w in client.list_workflows(f"WorkflowId = '{start['request_id']}'")]
     assert len(runs) == 1
+
+
+@pytest.mark.parametrize("admission, key", [("normal", 2), ("low", 4)])
+async def test_admission_priority_sets_the_temporal_priority_key(
+    client, monkeypatch, ports, admission, key
+):
+    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+    start["priority"] = admission
+
+    assert await start_request(start, wait=False) == 0
+
+    described = await client.get_workflow_handle(start["request_id"]).describe()
+    assert described.raw_description.workflow_execution_info.priority.priority_key == key
 
 
 async def _resolved(value):

@@ -33,7 +33,7 @@ from kp_processing.stages import (
     prepare,
     report,
 )
-from kp_processing.workflow import FAILURE_TYPE, PaperPdfWorkflow, task_queue
+from kp_processing.workflow import CPU_QUEUE, FAILURE_TYPE, PaperPdfWorkflow
 
 T = TypeVar("T")
 
@@ -48,6 +48,10 @@ class Activities:
         try:
             return await body(input, self.ports, self.runtime)
         except ProcessingFailure as failure:
+            activity.logger.warning(
+                "%s: %s (cause %s) %s", failure.reason, failure.message, failure.cause,
+                failure.metadata,
+            )  # fmt: skip
             raise ApplicationError(
                 failure.message, failure.details(), type=FAILURE_TYPE, non_retryable=True
             ) from failure
@@ -110,12 +114,12 @@ async def check_write_once(store: ObjectStore) -> None:
         )
 
 
-async def make_worker(client: Client, ports: Ports, runtime: Runtime, tier: str) -> Worker:
-    """The CPU pool worker of one tier: the workflow and every Activity of #131."""
+async def make_worker(client: Client, ports: Ports, runtime: Runtime) -> Worker:
+    """The CPU pool worker: the workflow and every Activity of #131."""
     await check_write_once(ports.store)
     return Worker(
         client,
-        task_queue=task_queue("cpu", tier),
+        task_queue=CPU_QUEUE,
         workflows=[PaperPdfWorkflow],
         activities=Activities(ports, runtime).all(),
     )

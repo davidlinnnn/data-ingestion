@@ -1,7 +1,14 @@
+import logging
+
 import pytest
+from temporalio.exceptions import ApplicationError
+from temporalio.testing import ActivityEnvironment
 
 from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.worker import WriteOnceUnsupported, check_write_once
+from kp_processing.stages import PrepareInput
+from kp_processing.worker import Activities, WriteOnceUnsupported, check_write_once
+from tests.pdfs import Page, paper, write_pdf
+from tests.stages.conftest import start_input
 
 
 class OverwritingStore(DictObjectStore):
@@ -28,3 +35,17 @@ async def test_every_start_up_probes_a_fresh_key():
     await check_write_once(store)
 
     assert len(store.objects) == 2
+
+
+async def test_a_rejected_source_is_logged_with_its_reason_and_limits(ports, runtime, caplog):
+    pages = paper(1)
+    pages.append(Page(lines=["Poster"], size=(2384, 3370)))  # A0
+    start = await start_input(ports, write_pdf(pages))
+
+    with pytest.raises(ApplicationError), caplog.at_level(logging.WARNING):
+        await ActivityEnvironment().run(
+            Activities(ports, runtime).prepare, PrepareInput(start, "r")
+        )
+
+    assert "PIXEL_LIMIT_EXCEEDED" in caplog.text
+    assert "'page': '2'" in caplog.text

@@ -10,7 +10,7 @@ from datetime import timedelta
 from typing import Any, TypeVar
 
 from temporalio import workflow
-from temporalio.common import RetryPolicy
+from temporalio.common import Priority, RetryPolicy
 from temporalio.exceptions import ActivityError, ApplicationError
 
 with workflow.unsafe.imports_passed_through():
@@ -34,14 +34,15 @@ STAGES_VERSION = "1"
 FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingFailure.details()
 
 
-def tier(priority: Any) -> str:
-    """Admission priority low runs on the bulk tier, anything else on normal."""
-    return "bulk" if priority == "low" else "normal"
+# The task queues are named after the worker pool that serves them (cpu, vlm, summary) and
+# are shared by every pipeline; this workflow and its Activities run on the CPU queue.
+CPU_QUEUE = "cpu"
 
 
-def task_queue(pool: str, tier: str) -> str:
-    """One of the six queues {cpu, vlm, summary} x {normal, bulk}, e.g. paper-pdf-cpu-normal."""
-    return f"{WORKFLOW}-{pool}-{tier}"
+def priority(admission_priority: Any) -> Priority:
+    """Admission priority low waits behind normal on the shared queues. Temporal priority keys
+    run 1 (first) to 5; Activities inherit the workflow's."""
+    return Priority(priority_key=4 if admission_priority == "low" else 2)
 
 
 _STORAGE_RETRY = RetryPolicy(
@@ -71,7 +72,6 @@ class PaperPdfWorkflow:
         """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}."""
         info = workflow.info()
         self._start = start
-        self._queue = task_queue("cpu", tier(start.get("priority")))
         stage: Stage = "prepare"
         inventory: Registered | None = None
         try:
@@ -128,7 +128,7 @@ class PaperPdfWorkflow:
 
     async def _call(self, name: str, arg: Any, result_type: type[T], options: dict[str, Any]) -> T:
         return await workflow.execute_activity(
-            name, arg, result_type=result_type, task_queue=self._queue, **options
+            name, arg, result_type=result_type, task_queue=CPU_QUEUE, **options
         )
 
     def _report(
@@ -170,7 +170,7 @@ class PaperPdfWorkflow:
             self._delivered = await workflow.execute_activity(
                 "report",
                 report,
-                task_queue=self._queue,
+                task_queue=CPU_QUEUE,
                 start_to_close_timeout=timedelta(minutes=5),
                 retry_policy=RetryPolicy(maximum_attempts=3),
                 result_type=bool,

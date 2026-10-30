@@ -22,7 +22,7 @@ from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
 from kp_processing.stages import Ports, Runtime
-from kp_processing.workflow import WORKFLOW, task_queue, tier
+from kp_processing.workflow import CPU_QUEUE, WORKFLOW, priority
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -31,7 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     `<id>@<version>  module_digest=<hex>  components=<c1>,<c2>,...` (components empty when
     none). A ProfileError prints to stderr and exits 1.
 
-    `kp-processing worker --pool cpu --tier normal|bulk [--profile PATH] [--build-id ID]`: run
+    `kp-processing worker --pool cpu [--profile PATH] [--build-id ID]`: run
     a worker until interrupted; it refuses to start on a store without write-once.
 
     `kp-processing start-request START.json [--wait]`: start the workflow for an admission
@@ -44,7 +44,6 @@ def main(argv: list[str] | None = None) -> int:
     profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker = commands.add_parser("worker")
     worker.add_argument("--pool", choices=["cpu"], required=True)
-    worker.add_argument("--tier", choices=["normal", "bulk"], required=True)
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker.add_argument("--build-id", default="dev")
     start = commands.add_parser("start-request")
@@ -53,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "worker":
-        return asyncio.run(run_worker(args.profile, args.tier, args.build_id))
+        return asyncio.run(run_worker(args.profile, args.build_id))
     if args.command == "start-request":
         return asyncio.run(start_request(json.loads(args.start_input.read_text()), args.wait))
     try:
@@ -76,14 +75,14 @@ async def connect() -> Client:
     )
 
 
-async def run_worker(profile_path: Path, tier: str, build_id: str) -> int:
+async def run_worker(profile_path: Path, build_id: str) -> int:
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
 
     runtime = Runtime(profile=load_profile(profile_path), build_id=build_id)
     async with httpx.AsyncClient(timeout=10) as http:
         reporter = HttpStatusReporter(http, os.environ["KP_ADMISSION_URL"])
         worker = await make_worker(await connect(), Ports(S3ObjectStore.from_env(), reporter),
-                                   runtime, tier)  # fmt: skip
+                                   runtime)  # fmt: skip
         print(f"worker {runtime.profile.profile} build {build_id} on {worker.task_queue}")
         await worker.run()
     return 0
@@ -97,7 +96,8 @@ async def start_request(start: dict[str, Any], wait: bool) -> int:
             WORKFLOW,
             start,
             id=request_id,
-            task_queue=task_queue("cpu", tier(start.get("priority"))),
+            task_queue=CPU_QUEUE,
+            priority=priority(start.get("priority")),
             id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
         )
         print(f"started {request_id}")
