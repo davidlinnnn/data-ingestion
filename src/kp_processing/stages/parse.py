@@ -16,7 +16,38 @@ picture_id is the DoclingDocument self_ref ("#/pictures/0"); bbox is the picture
 provenance box as docling dumps it ({l, t, r, b, coord_origin}, PDF points).
 """
 
-from kp_processing.stages import AssembleInput, GroupInput, GroupRef, Ports, Registered, Runtime
+import asyncio
+from dataclasses import asdict
+
+from kp_processing.identity import reuse_key
+from kp_processing.methods.docling_parse import pipeline
+from kp_processing.methods.docling_parse.serialization import (
+    Group,
+    PageImage,
+    assembly_json,
+    group_json,
+    restore_page,
+)
+from kp_processing.ports.object_store import ObjectNotFound
+from kp_processing.stages import (
+    AssembleInput,
+    GroupInput,
+    GroupRef,
+    Ports,
+    ProcessingFailure,
+    Registered,
+    Runtime,
+    sha256,
+)
+
+
+def _incomplete() -> ProcessingFailure:
+    return ProcessingFailure(
+        "platform",
+        "integrity",
+        "NATIVE_COVERAGE_INCOMPLETE",
+        "Registered groups are incomplete or inconsistent",
+    )
 
 
 async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupRef:
@@ -29,7 +60,54 @@ async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupR
     integrity, SOURCE_DIGEST_MISMATCH). A docling failure on any page of the group raises
     ProcessingFailure(platform, method, NATIVE_PARSE_FAILED).
     """
-    raise NotImplementedError
+    method = runtime.profile.methods["docling-parse"]
+    first, last = input.pages
+    key = reuse_key(
+        input.document_uid,
+        method.ref,
+        method.components,
+        method.module_digest,
+        [input.source_sha256, f"pages:{first}-{last}"],
+    )
+    prefix = f"documents/{input.document_uid}/items/{key}"
+    ref = f"{prefix}/group.json"
+    if await ports.store.head(ref) is not None:
+        return GroupRef(input.pages, ref, sha256(await ports.store.get(ref)), True)
+    data = await ports.store.get(input.source_key)
+    if sha256(data) != input.source_sha256:
+        raise ProcessingFailure(
+            "platform",
+            "integrity",
+            "SOURCE_DIGEST_MISMATCH",
+            "Source bytes differ from declared digest",
+        )
+    try:
+        count, captured = await asyncio.to_thread(pipeline.parse_group, data, input.pages)
+    except Exception as exc:
+        raise ProcessingFailure(
+            "platform", "method", "NATIVE_PARSE_FAILED", "PDF group conversion failed"
+        ) from exc
+    images = []
+    for page, png in captured:
+        digest = sha256(png)
+        image_ref = f"{prefix}/pages/{digest}.png"
+        await ports.store.put_if_absent(image_ref, png)
+        images.append(PageImage(page=page.page_no, ref=image_ref, sha256=digest))
+    body = group_json(
+        Group(
+            schema="docling-parse-group/v1",
+            pages=(first, last),
+            source_sha256=input.source_sha256,
+            page_count=count,
+            source_name="paper.pdf",
+            page_results=[page for page, _ in captured],
+            page_images=images,
+        )
+    )
+    created = await ports.store.put_if_absent(ref, body)
+    if not created:
+        body = await ports.store.get(ref)
+    return GroupRef(input.pages, ref, sha256(body), not created)
 
 
 async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> Registered:
@@ -41,4 +119,81 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
     cover pages 1..N contiguously, raise ProcessingFailure(platform, integrity,
     NATIVE_COVERAGE_INCOMPLETE).
     """
-    raise NotImplementedError
+    method = runtime.profile.methods["docling-parse"]
+    key = reuse_key(
+        input.document_uid,
+        method.ref,
+        method.components,
+        method.module_digest,
+        [group.digest for group in input.groups],
+    )
+    prefix = f"documents/{input.document_uid}/items/{key}"
+    ref = f"{prefix}/assembly.json"
+    if await ports.store.head(ref) is not None:
+        return Registered(ref, sha256(await ports.store.get(ref)), True)
+    groups = []
+    pages = []
+    next_page = 1
+    count = None
+    for registered in input.groups:
+        try:
+            data = await ports.store.get(registered.ref)
+        except ObjectNotFound as exc:
+            raise _incomplete() from exc
+        if sha256(data) != registered.digest:
+            raise _incomplete()
+        try:
+            group = Group.model_validate_json(data)
+            first, last = group.pages
+            if (
+                list(group.pages) != registered.pages
+                or first != next_page
+                or last < first
+                or group.source_sha256 != input.source_sha256
+                or (count is not None and group.page_count != count)
+                or last > group.page_count
+                or len(group.page_results) != last - first + 1
+                or any(
+                    page.page_no != first + index for index, page in enumerate(group.page_results)
+                )
+                or [image.page for image in group.page_images]
+                != [page.page_no for page in group.page_results]
+            ):
+                raise ValueError("Invalid group coverage")
+        except (ValueError, TypeError) as exc:
+            raise _incomplete() from exc
+        for saved, image in zip(group.page_results, group.page_images, strict=True):
+            try:
+                png = await ports.store.get(image.ref)
+            except ObjectNotFound as exc:
+                raise _incomplete() from exc
+            if sha256(png) != image.sha256:
+                raise _incomplete()
+            try:
+                pages.append(await asyncio.to_thread(restore_page, saved, png))
+            except (ValueError, TypeError, OSError) as exc:
+                raise _incomplete() from exc
+        groups.append(group)
+        count = group.page_count
+        next_page = last + 1
+    if count is None or next_page != count + 1:
+        raise _incomplete()
+    document, pictures = await asyncio.to_thread(pipeline.assemble, groups, pages)
+    picture_refs = []
+    for picture, png in pictures:
+        digest = sha256(png)
+        image_ref = f"{prefix}/pictures/{digest}.png"
+        await ports.store.put_if_absent(image_ref, png)
+        picture_refs.append({**picture, "ref": image_ref, "sha256": digest})
+    body = assembly_json(
+        [
+            {key: value for key, value in asdict(group).items() if key != "reused"}
+            for group in input.groups
+        ],
+        picture_refs,
+        document,
+    )
+    created = await ports.store.put_if_absent(ref, body)
+    if not created:
+        body = await ports.store.get(ref)
+    return Registered(ref, sha256(body), not created)

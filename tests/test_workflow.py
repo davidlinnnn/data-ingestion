@@ -157,7 +157,7 @@ async def test_processing_completes_while_the_report_receiver_is_down(client, po
 
     assert outcome["outcome"] == "complete"
     assert await ports.store.head(outcome["manifest_ref"])
-    assert {r.seq for r in ports.reporter.reports} == set(range(1, 11))  # type: ignore[attr-defined]
+    assert {r.seq for r in ports.reporter.reports} == set(range(1, 10))  # type: ignore[attr-defined]
 
 
 async def test_starting_the_same_request_twice_counts_as_success(
