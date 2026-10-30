@@ -14,8 +14,10 @@ if [ "${1:-}" = "--no-placeholders" ]; then placeholders=0; shift; fi
 # route templates such as {document_id} stay allowed.
 PLACEHOLDER='\{([A-Z][A-Z0-9_]*|#[0-9A-Z_]+)\}'
 LOCAL_PATH='(/Users/[^/[:space:]]+/|/home/[^/[:space:]]+/|/private/(tmp|var)/|/var/folders/)'
-EMAIL='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
-EMAIL_OK='(noreply@anthropic\.com|@users\.noreply\.github\.com|@example\.(com|org|net))'
+# The local part starts alphanumeric, so a diff's leading "+" before a decorator (+@pytest.fixture) is no email;
+# Processing Profile files are named <profile>@<n>.yaml.
+EMAIL='[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+EMAIL_OK='(noreply@anthropic\.com|@users\.noreply\.github\.com|@example\.(com|org|net)|@[0-9]+\.ya?ml)'
 SECRET='(^|[^A-Za-z0-9_-])(AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
 
 status=0
