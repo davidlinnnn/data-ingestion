@@ -30,6 +30,14 @@ differs from the worker's profile. Even if every check were bypassed, the
 package digest keeps stale items from being reused; only their labels would be
 wrong.
 
+While a profile file says `released: false` it is a draft: #80 builds paper-pdf@1
+over several tickets, and version labels on results from a draft carry no
+promise. The CI checks bind only profile files whose base-branch version says
+`released: true`, and the methods those files list. Setting it is the release
+act, in its own commit once the profile's acceptance passes; from then on the
+immutability check forbids any change to the file, including setting it back.
+The package digest keeps reuse correct for drafts too.
+
 The trade-off, confirmed on 2026-10-30 after several simplification rounds in the
 #80 grilling: hashing weights, lock files or installed versions would catch a
 silently swapped model or a library upgrade without a version bump, but a lock

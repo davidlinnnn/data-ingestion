@@ -7,7 +7,8 @@ provisional one HttpStatusReporter sends:
 
 Per (request_id, attempt_id) a report's seq must exceed the last stored one (gaps are
 fine). A repeat of the last report is accepted again; anything else out of order gets
-409 with the current position {"attempt_id", "seq"}.
+409 with the current position {"attempt_id", "seq"}. Ordering across attempts is not
+modelled: run IDs are not orderable, and the rule is an open question for #97.
 
     python -m tools.fake_admission.server [--port 8081] [--log reports.jsonl]
 """
