@@ -1,5 +1,7 @@
 """Method identity: package source digest and the reuse key (ADR-0010)."""
 
+import hashlib
+import json
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -13,7 +15,16 @@ def module_digest(package_dir: Path) -> str:
     Bytecode is excluded: `__pycache__` directories and `*.pyc` / `*.pyo` files.
     Independent of the directory's location, mtimes and permissions.
     """
-    raise NotImplementedError
+    digest = hashlib.sha256()
+    for path in sorted(package_dir.rglob("*"), key=lambda p: p.relative_to(package_dir).as_posix()):
+        relative = path.relative_to(package_dir)
+        if "__pycache__" in relative.parts or path.suffix in {".pyc", ".pyo"}:
+            continue
+        if path.is_file():
+            for value in (relative.as_posix().encode("utf-8"), path.read_bytes()):
+                digest.update(len(value).to_bytes(8, "big"))
+                digest.update(value)
+    return digest.hexdigest()
 
 
 def reuse_key(
@@ -26,4 +37,5 @@ def reuse_key(
     """Hex sha256 of the five parts, encoded unambiguously (compact JSON array of
     [document_uid, method_ref, [components...], module_digest, [input_digests...]]).
     Order of components and input_digests is significant as given."""
-    raise NotImplementedError
+    parts = [document_uid, method_ref, list(components), module_digest, list(input_digests)]
+    return hashlib.sha256(json.dumps(parts, separators=(",", ":")).encode("utf-8")).hexdigest()

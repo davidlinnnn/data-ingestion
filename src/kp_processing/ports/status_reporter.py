@@ -63,7 +63,8 @@ class RecordingStatusReporter:
         self.reports: list[StatusReport] = []
 
     async def report(self, report: StatusReport) -> ReportOutcome:
-        raise NotImplementedError
+        self.reports.append(report)
+        return ReportOutcome(delivered=True)
 
 
 class HttpStatusReporter:
@@ -78,4 +79,19 @@ class HttpStatusReporter:
         self.base_url = base_url.rstrip("/")
 
     async def report(self, report: StatusReport) -> ReportOutcome:
-        raise NotImplementedError
+        try:
+            response = await self.client.post(
+                f"{self.base_url}/v1/requests/{report.request_id}/status-reports",
+                json=report.to_json(),
+            )
+            if response.is_success:
+                return ReportOutcome(delivered=True)
+            if response.status_code == 409:
+                body = response.json()
+                attempt_id, seq = body["attempt_id"], body["seq"]
+                if not isinstance(attempt_id, str) or type(seq) is not int:
+                    raise ValueError("invalid 409 position")
+                return ReportOutcome(delivered=False, position=Position(attempt_id, seq))
+            return ReportOutcome(delivered=False, error=f"HTTP {response.status_code}")
+        except Exception as exc:
+            return ReportOutcome(delivered=False, error=f"{type(exc).__name__}: {exc}")
