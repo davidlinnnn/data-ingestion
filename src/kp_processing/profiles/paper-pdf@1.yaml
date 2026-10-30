@@ -1,0 +1,53 @@
+# Processing Profile paper-pdf@1 (#80, ADR-0010). Once released, this file is immutable:
+# any change to a method, a component or the method set is a new paper-pdf@N file.
+# While `released` is false the profile is a draft under construction and may change.
+profile: paper-pdf@1
+released: false
+status_rule: v1
+
+methods:
+  docling-parse@1:
+    components:
+      - docling-slim@2.132.0
+      - layout-heron@8f39ad3c
+      - tableformer-accurate@v1
+      - rapidocr-ppocrv6-small
+  picture-ocr@1:
+    components:
+      - rapidocr-ppocrv6-small
+  picture-interpretation@1:
+    components:
+      - company-vlm/Qwen3.8-27B
+  formula@1:
+    components:
+      - company-vlm/Qwen3.8-27B
+  code@1:
+    components:
+      - company-vlm/Qwen3.8-27B
+  table-status@1:
+    components: []
+  document-summary@1:
+    components:
+      - summary-api/v1
+
+# #84 U1: position-class defects of the native parse; text is complete. Copied into every result.
+limitations:
+  - code: READING_ORDER_DEFECTS
+    detail: Reading order can be wrong on some layouts, such as the first page of CVPR-style papers or author order.
+  - code: CAPTION_INTERRUPTS_BODY
+    detail: A figure or table caption can be placed inside a body paragraph.
+
+# #93 §7 initial parameters. Never part of a reuse key.
+runtime:
+  vlm_request_deadline_s: {connect: 5, total: 60}
+  summary_request_deadline_s: 120
+  heartbeat_interval_s: 15
+  heartbeat_timeout_s: {vlm: 90, summary: 150}
+  external_start_to_close_slack_s: 300
+  retry: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
+  vlm_concurrency_per_document: 4
+  request_cap: {per_item: 3, extra: 20}
+  enrichment_stage_budget_s: {p50: 120, hard: 240}
+  parse_group_pages: 5
+  memory_guard_gib: 4
+  receipt_retention_days: 30

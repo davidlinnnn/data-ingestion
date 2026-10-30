@@ -12,6 +12,10 @@ The five canonical roles use matching label strings: `needs-triage`, `needs-info
 
 Single-context: one `CONTEXT.md` at the repo root, plus `docs/adr/`. See `docs/agents/domain.md`.
 
+### Code
+
+Before writing or reviewing code, read `CODING_STANDARDS.md`.
+
 ### Branches and worktrees
 
 Public repo. Before creating a branch or worktree, committing, pushing, merging or deleting a branch, read `docs/agents/branching.md`.

@@ -7,6 +7,7 @@
 #    also unfilled placeholders, such as a {#NAME} for a ticket not yet created.
 # 3. lychee: relative links and #anchors in changed Markdown files (offline).
 # 4. ADR numbers: no two ADRs share a number, e.g. after a parallel session merged one.
+# 5. method versions: released Processing Profiles and their methods' VERSION (ADR-0010).
 # Legacy content outside the diff is not checked.
 set -u
 BASE=${1:-origin/dev}
@@ -17,30 +18,32 @@ if [ -z "${CI:-}" ] && [[ $BASE == origin/* ]]; then
 fi
 git rev-parse --verify -q "$BASE" >/dev/null || { echo "unknown base: $BASE" >&2; exit 2; }
 status=0
-step() { echo "== $1"; }
+failed=()
+step() { current=${1%% (*}; echo "== $1"; }
+fail() { status=1; failed+=("$current"); }
 # A missing tool fails the run: pushing publishes, so CI on the PR is too late to catch a secret.
-missing() { echo "$1 not installed: brew install $1 (CI pins its version in .github/workflows/docs-checks.yml)"; status=1; }
+missing() { echo "$1 not installed: brew install $1 (CI pins its version in .github/workflows/docs-checks.yml)"; fail; }
 
 step "up to date with $BASE"
 if git merge-base --is-ancestor "$BASE" HEAD; then
   echo "branch contains $BASE"
 else
   echo "branch is behind $BASE: update it from $BASE, resolve any conflicts, and re-run"
-  status=1
+  fail
 fi
 
 step "gitleaks ($BASE..HEAD)"
 if command -v gitleaks >/dev/null; then
-  gitleaks git --no-banner --redact --log-opts "$BASE..HEAD" . || status=1
+  gitleaks git --no-banner --redact --log-opts "$BASE..HEAD" . || fail
 else
   missing gitleaks
 fi
 
 added() { git diff "$BASE...HEAD" -U0 --no-color -- "$@" | grep -E '^\+' | grep -vE '^\+\+\+ '; }
 step "check-publish (added lines; placeholders refused in docs/design and docs/adr; its own patterns excluded)"
-added docs/design docs/adr | scripts/check-publish - || status=1
+added docs/design docs/adr | scripts/check-publish - || fail
 added . ':(exclude)scripts/check-publish' ':(exclude)docs/design' ':(exclude)docs/adr' \
-  | scripts/check-publish --no-placeholders - || status=1
+  | scripts/check-publish --no-placeholders - || fail
 
 step "lychee (changed Markdown)"
 files=()
@@ -48,7 +51,7 @@ while IFS= read -r f; do files+=("$f"); done < <(git diff --name-only --diff-fil
 if [ ${#files[@]} -eq 0 ]; then
   echo "no Markdown changes"
 elif command -v lychee >/dev/null; then
-  lychee --offline --include-fragments --no-progress "${files[@]}" || status=1
+  lychee --offline --include-fragments --no-progress "${files[@]}" || fail
 else
   missing lychee
 fi
@@ -57,10 +60,18 @@ step "ADR numbers unique"
 dups=$(ls docs/adr | grep -oE '^[0-9]{4}' | sort | uniq -d)
 if [ -n "$dups" ]; then
   echo "duplicate ADR numbers: $dups; renumber the ADR this branch adds"
-  status=1
+  fail
 else
   echo "no duplicates"
 fi
 
-[ $status -eq 0 ] && echo "== all checks passed" || echo "== checks FAILED"
+step "method versions and released profiles"
+if command -v uv >/dev/null; then
+  scripts/check-method-versions "$BASE" || fail
+else
+  missing uv
+fi
+
+[ $status -eq 0 ] && echo "== all checks passed" ||
+  echo "== checks FAILED: $(printf '%s\n' "${failed[@]}" | awk '!seen[$0]++' | paste -sd, -)"
 exit $status

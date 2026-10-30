@@ -1,0 +1,100 @@
+#!/usr/bin/env -S uv run python
+"""Download the pinned local model weights and write their sha256 manifest.
+
+    scripts/fetch-models [--check]
+
+Weights go to $DOCLING_ARTIFACTS_PATH (default ~/models/docling), laid out the way
+docling looks them up there. The manifest, keyed by the component strings that
+Processing Profiles declare, is committed; the weights are not. --check only
+verifies the files on disk against the committed manifest.
+"""
+
+import hashlib
+import json
+import os
+import shutil
+import sys
+import urllib.request
+from pathlib import Path
+
+from huggingface_hub import snapshot_download
+
+MANIFEST = Path(__file__).resolve().parent.parent / "src/kp_processing/model-manifest.json"
+RAPIDOCR = "https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.9.2/onnx"
+
+# component string -> where its files come from
+COMPONENTS = {
+    "layout-heron@8f39ad3c": {
+        "hf": "docling-project/docling-layout-heron",
+        "revision": "8f39ad3c0b4c58e9c2d2c84a38465abf757272d8",
+        "patterns": None,
+    },
+    "tableformer-accurate@v1": {
+        "hf": "docling-project/docling-models",
+        "revision": "fc0f2d45e2218ea24bce5045f58a389aed16dc23",  # tag v2.3.0
+        "patterns": ["model_artifacts/tableformer/accurate/*"],
+    },
+    "rapidocr-ppocrv6-small": {
+        "urls": {
+            "RapidOcr/PP-OCRv6_det_small.onnx": f"{RAPIDOCR}/PP-OCRv6/det/PP-OCRv6_det_small.onnx",
+            "RapidOcr/PP-OCRv6_rec_small.onnx": f"{RAPIDOCR}/PP-OCRv6/rec/PP-OCRv6_rec_small.onnx",
+            "RapidOcr/ch_ppocr_mobile_v2.0_cls_mobile.onnx": (
+                f"{RAPIDOCR}/PP-OCRv4/cls/ch_ppocr_mobile_v2.0_cls_mobile.onnx"
+            ),
+        },
+    },
+}
+
+
+def sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def fetch(root: Path, spec: dict) -> list[Path]:
+    if "hf" in spec:
+        local = root / spec["hf"].replace("/", "--")
+        snapshot_download(
+            spec["hf"], revision=spec["revision"], local_dir=local, allow_patterns=spec["patterns"]
+        )
+        return [p for p in local.rglob("*") if p.is_file() and ".cache" not in p.parts]
+    paths = []
+    for rel, url in spec["urls"].items():
+        dest = root / rel
+        if not dest.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_suffix(".part")
+            with urllib.request.urlopen(url, timeout=60) as r, tmp.open("wb") as f:
+                shutil.copyfileobj(r, f)
+            tmp.rename(dest)
+        paths.append(dest)
+    return paths
+
+
+def main() -> int:
+    root = Path(os.environ.get("DOCLING_ARTIFACTS_PATH", Path.home() / "models/docling"))
+    if sys.argv[1:] == ["--check"]:
+        bad = [
+            f"{rel}: {'missing' if not (root / rel).exists() else 'sha256 mismatch'}"
+            for files in json.loads(MANIFEST.read_text()).values()
+            for rel, digest in files["files"].items()
+            if not (root / rel).exists() or sha256(root / rel) != digest
+        ]
+        print("\n".join(bad) or f"all model files match the manifest under {root}")
+        return 1 if bad else 0
+    manifest = {}
+    for component, spec in COMPONENTS.items():
+        files = {str(p.relative_to(root)): sha256(p) for p in sorted(fetch(root, spec))}
+        source = f"hf:{spec['hf']}@{spec['revision']}" if "hf" in spec else "url"
+        manifest[component] = {"source": source, "files": files}
+        print(f"{component}: {len(files)} files")
+    MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
+    print(f"weights under {root}; manifest written to {MANIFEST.name}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

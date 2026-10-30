@@ -1,0 +1,90 @@
+#!/usr/bin/env -S uv run python
+"""Upload the fixed paper corpus to the stand-in custody and write workflow start inputs.
+
+    scripts/seed-corpus MANIFEST OUT_DIR
+
+MANIFEST is the corpus manifest.json (papers next to it); its sha256 and page counts are
+the source of truth, and each file is checked against them before upload. Every paper goes
+to custody/{sha256} in the object store named by KP_S3_* (see tests/s3/compose.yaml).
+OUT_DIR, which must lie outside the repo because the papers are third-party documents,
+receives one admission-spec §10 start input per paper and index.json (request_id, file,
+sha256, pages). IDs are derived from the sha256, so reruns produce the same inputs.
+"""
+
+import asyncio
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+
+from botocore.exceptions import ClientError
+
+from kp_processing.ports.object_store import S3ObjectStore
+
+REPO = Path(__file__).resolve().parent.parent
+
+
+async def seed(manifest_path: Path, out: Path) -> int:
+    store = S3ObjectStore.from_env()
+    try:
+        store.client.head_bucket(Bucket=store.bucket)
+    except ClientError:
+        store.client.create_bucket(Bucket=store.bucket)
+    index = []
+    for paper in json.loads(manifest_path.read_text())["papers"]:
+        data = (manifest_path.parent / paper["file"]).read_bytes()
+        sha = hashlib.sha256(data).hexdigest()
+        if sha != paper["sha256"] or len(data) != paper["bytes"]:
+            print(f"{paper['file']}: does not match the manifest", file=sys.stderr)
+            return 1
+        await store.put_if_absent(f"custody/{sha}", data)
+        request_id = f"req_seed_{paper['index']:02d}_{sha[:8]}"
+        start_input = {
+            "request_id": request_id,
+            "document_uid": f"doc_{sha[:16]}",
+            "source_revision_id": "srv_1",
+            "files": [
+                {
+                    "path": paper["file"],
+                    "role": "main",
+                    "custody_ref": f"s3://{os.environ['KP_S3_BUCKET']}/custody/{sha}",
+                    "sha256": sha,
+                    "size": len(data),
+                    "media_type": "application/pdf",
+                }
+            ],
+            "adopted_version": "paper-pdf@1",
+            "adoption_sequence": 1,
+            "initiator": "source",
+            "priority": "normal",
+            "trace_id": sha[:16],
+        }
+        (out / f"{request_id}.json").write_text(json.dumps(start_input, indent=2) + "\n")
+        index.append(
+            {
+                "request_id": request_id,
+                "file": paper["file"],
+                "sha256": sha,
+                "pages": paper["pages"],
+            }
+        )
+    (out / "index.json").write_text(json.dumps(index, indent=2) + "\n")
+    print(f"{len(index)} papers in custody; start inputs in {out}")
+    return 0
+
+
+def main() -> int:
+    if len(sys.argv) != 3:
+        print(__doc__, file=sys.stderr)
+        return 2
+    manifest, out = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+    if out.is_relative_to(REPO):
+        print(f"{out} is inside the repo; third-party inputs stay outside it", file=sys.stderr)
+        return 2
+    out.mkdir(parents=True, exist_ok=True)
+    return asyncio.run(seed(manifest, out))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

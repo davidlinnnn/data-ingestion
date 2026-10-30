@@ -103,6 +103,20 @@ It is platform-owned and format-specific; method changes, including Enrichment
 Methods, enter Canonical Knowledge only through a newly adopted version.
 _Avoid_: profile (alone), caller-defined feature switches, Canonical Acceptance
 
+**Processing Result**:
+The complete durable output of one processing request for one Source Revision
+under one Processing Profile version: the native extraction evidence, every
+Enrichment item with its Enrichment Status, and the limitations the profile
+declares or the document shows. Its registration is the handoff point to
+Canonical Acceptance and custody; a registered result is not yet accepted.
+_Avoid_: Canonical Revision, checkpoint, processing completion as acceptance
+
+**Enrichment Status**:
+The outcome a versioned status rule assigns to one Enrichment item when
+processing finalizes: `failed`, `disputed`, `unverified` or `verified`.
+Canonical keeps it unchanged and consumers check it before relying on the item.
+_Avoid_: quality acceptance, verification of source truth
+
 **Knowledge Profile**:
 A Source-level setting naming the Projection Types whose products that Source's
 Documents go into, and therefore the projections Context Readiness waits for. It

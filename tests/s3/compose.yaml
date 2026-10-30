@@ -1,0 +1,19 @@
+# Local stand-in for the S3-compatible object store (#57 undecided), for tests marked `s3`.
+# RustFS, since MinIO no longer publishes public images. Runs outside the Codex sandbox:
+#   docker compose -f tests/s3/compose.yaml up -d --wait
+#   env KP_S3_ENDPOINT=http://127.0.0.1:9100 KP_S3_BUCKET=kp-dev \
+#       AWS_ACCESS_KEY_ID=kpdev AWS_SECRET_ACCESS_KEY=kpdev-secret .venv/bin/pytest -m s3
+# The tests and scripts/seed-corpus create the bucket. Dev-only credentials; nothing here
+# is a secret.
+name: kp-s3
+services:
+  rustfs:
+    image: rustfs/rustfs:1.0.4@sha256:ed9210d6411d77ffceb70d94b964a3cb7d225983368bc25bebe01e995293dcc2
+    environment:
+      RUSTFS_ACCESS_KEY: kpdev
+      RUSTFS_SECRET_KEY: kpdev-secret
+    ports: ["127.0.0.1:9100:9000"]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:9000/health"]
+      interval: 2s
+      retries: 30
