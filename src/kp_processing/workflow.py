@@ -34,13 +34,15 @@ STAGES_VERSION = "1"
 FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingFailure.details()
 
 
-def task_queue(pool: str, priority: Any) -> str:
-    """One of the six queues {cpu, vlm, summary} x {normal, bulk}; admission priority low runs
-    on bulk, anything else on normal."""
-    return f"{WORKFLOW}-{pool}-{'bulk' if priority == 'low' else 'normal'}"
+def tier(priority: Any) -> str:
+    """Admission priority low runs on the bulk tier, anything else on normal."""
+    return "bulk" if priority == "low" else "normal"
 
 
-TASK_QUEUES = [task_queue(pool, p) for pool in ("cpu", "vlm", "summary") for p in ("normal", "low")]
+def task_queue(pool: str, tier: str) -> str:
+    """One of the six queues {cpu, vlm, summary} x {normal, bulk}, e.g. paper-pdf-cpu-normal."""
+    return f"{WORKFLOW}-{pool}-{tier}"
+
 
 _STORAGE_RETRY = RetryPolicy(
     initial_interval=timedelta(seconds=2),
@@ -62,13 +64,14 @@ class PaperPdfWorkflow:
     def __init__(self) -> None:
         self._seq = 0
         self._sending: asyncio.Future[None] | None = None
+        self._delivered = True  # whether the last report sent reached the receiver
 
     @workflow.run
     async def run(self, start: dict[str, Any]) -> dict[str, Any]:
         """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}."""
         info = workflow.info()
         self._start = start
-        self._queue = task_queue("cpu", start.get("priority"))
+        self._queue = task_queue("cpu", tier(start.get("priority")))
         stage: Stage = "prepare"
         inventory: Registered | None = None
         try:
@@ -160,16 +163,20 @@ class PaperPdfWorkflow:
     async def _send(self, previous: asyncio.Future[None] | None, report: StatusReport) -> None:
         if previous:
             await previous
+        if not self._delivered and report.seq < self._seq:
+            return  # receiver unreachable: skip to the newest report instead of a budget each
         try:
             # The Activity spends the report budget itself; Temporal retries only lost workers.
-            await workflow.execute_activity(
+            self._delivered = await workflow.execute_activity(
                 "report",
                 report,
                 task_queue=self._queue,
                 start_to_close_timeout=timedelta(minutes=5),
                 retry_policy=RetryPolicy(maximum_attempts=3),
+                result_type=bool,
             )
         except ActivityError:
+            self._delivered = False
             workflow.logger.warning("status report seq %s abandoned", report.seq)
 
 

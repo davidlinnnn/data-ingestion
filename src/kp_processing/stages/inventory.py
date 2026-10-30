@@ -2,7 +2,15 @@
 
 import json
 
-from kp_processing.stages import InventoryInput, Ports, Registered, Runtime, sha256
+from kp_processing.stages import (
+    InventoryInput,
+    Ports,
+    Registered,
+    Runtime,
+    register,
+    registered,
+    sha256,
+)
 
 
 async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Registered:
@@ -18,8 +26,8 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Register
     profile = runtime.profile.profile
     key = sha256(f"{profile}|{input.assembly.digest}".encode())
     ref = f"documents/{input.document_uid}/items/{key}/inventory.json"
-    if await ports.store.head(ref) is not None:
-        return Registered(ref, sha256(await ports.store.get(ref)), True)
+    if existing := await registered(ports.store, ref):
+        return existing
     body = json.dumps(
         {
             "schema": "pdf-inventory/v1",
@@ -31,7 +39,4 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Register
         sort_keys=True,
         separators=(",", ":"),
     ).encode()
-    created = await ports.store.put_if_absent(ref, body)
-    if not created:
-        body = await ports.store.get(ref)
-    return Registered(ref, sha256(body), not created)
+    return await register(ports.store, ref, body)

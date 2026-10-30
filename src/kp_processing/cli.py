@@ -22,7 +22,7 @@ from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
 from kp_processing.stages import Ports, Runtime
-from kp_processing.workflow import WORKFLOW, task_queue
+from kp_processing.workflow import WORKFLOW, task_queue, tier
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     profile = commands.add_parser("profile")
     profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker = commands.add_parser("worker")
-    worker.add_argument("--pool", choices=["cpu"], required=True)  # io arrives with #133
+    worker.add_argument("--pool", choices=["cpu"], required=True)
     worker.add_argument("--tier", choices=["normal", "bulk"], required=True)
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker.add_argument("--build-id", default="dev")
@@ -97,7 +97,7 @@ async def start_request(start: dict[str, Any], wait: bool) -> int:
             WORKFLOW,
             start,
             id=request_id,
-            task_queue=task_queue("cpu", start.get("priority")),
+            task_queue=task_queue("cpu", tier(start.get("priority"))),
             id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
         )
         print(f"started {request_id}")

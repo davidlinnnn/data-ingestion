@@ -115,7 +115,7 @@ async def make_worker(client: Client, ports: Ports, runtime: Runtime, tier: str)
     await check_write_once(ports.store)
     return Worker(
         client,
-        task_queue=task_queue("cpu", "low" if tier == "bulk" else "normal"),
+        task_queue=task_queue("cpu", tier),
         workflows=[PaperPdfWorkflow],
         activities=Activities(ports, runtime).all(),
     )

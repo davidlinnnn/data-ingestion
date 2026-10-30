@@ -129,6 +129,21 @@ class Registered:
     reused: bool
 
 
+async def registered(store: ObjectStore, ref: str) -> Registered | None:
+    """The object already registered at ref (reused=True), or None."""
+    if await store.head(ref) is None:
+        return None
+    return Registered(ref, sha256(await store.get(ref)), True)
+
+
+async def register(store: ObjectStore, ref: str, body: bytes) -> Registered:
+    """Write once. When another writer won, its object is returned with reused=True."""
+    created = await store.put_if_absent(ref, body)
+    if not created:
+        body = await store.get(ref)
+    return Registered(ref, sha256(body), not created)
+
+
 @dataclass(frozen=True)
 class AssembleInput:
     document_uid: str

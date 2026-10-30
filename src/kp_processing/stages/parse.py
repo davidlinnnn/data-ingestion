@@ -37,6 +37,8 @@ from kp_processing.stages import (
     ProcessingFailure,
     Registered,
     Runtime,
+    register,
+    registered,
     sha256,
 )
 
@@ -71,8 +73,8 @@ async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupR
     )
     prefix = f"documents/{input.document_uid}/items/{key}"
     ref = f"{prefix}/group.json"
-    if await ports.store.head(ref) is not None:
-        return GroupRef(input.pages, ref, sha256(await ports.store.get(ref)), True)
+    if existing := await registered(ports.store, ref):
+        return GroupRef(input.pages, existing.ref, existing.digest, existing.reused)
     data = await ports.store.get(input.source_key)
     if sha256(data) != input.source_sha256:
         raise ProcessingFailure(
@@ -104,10 +106,8 @@ async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupR
             page_images=images,
         )
     )
-    created = await ports.store.put_if_absent(ref, body)
-    if not created:
-        body = await ports.store.get(ref)
-    return GroupRef(input.pages, ref, sha256(body), not created)
+    group = await register(ports.store, ref, body)
+    return GroupRef(input.pages, group.ref, group.digest, group.reused)
 
 
 async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> Registered:
@@ -129,24 +129,24 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
     )
     prefix = f"documents/{input.document_uid}/items/{key}"
     ref = f"{prefix}/assembly.json"
-    if await ports.store.head(ref) is not None:
-        return Registered(ref, sha256(await ports.store.get(ref)), True)
+    if existing := await registered(ports.store, ref):
+        return existing
     groups = []
     pages = []
     next_page = 1
     count = None
-    for registered in input.groups:
+    for group_ref in input.groups:
         try:
-            data = await ports.store.get(registered.ref)
+            data = await ports.store.get(group_ref.ref)
         except ObjectNotFound as exc:
             raise _incomplete() from exc
-        if sha256(data) != registered.digest:
+        if sha256(data) != group_ref.digest:
             raise _incomplete()
         try:
             group = Group.model_validate_json(data)
             first, last = group.pages
             if (
-                list(group.pages) != registered.pages
+                list(group.pages) != group_ref.pages
                 or first != next_page
                 or last < first
                 or group.source_sha256 != input.source_sha256
@@ -193,7 +193,4 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
         picture_refs,
         document,
     )
-    created = await ports.store.put_if_absent(ref, body)
-    if not created:
-        body = await ports.store.get(ref)
-    return Registered(ref, sha256(body), not created)
+    return await register(ports.store, ref, body)

@@ -22,8 +22,8 @@ from kp_processing.ports.status_reporter import (
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
 from kp_processing.workflow import WORKFLOW, task_queue
-from tests.pdfs import encrypt, paper, write_pdf
-from tests.stages.conftest import start_input
+from tests.pdfs import Page, encrypt, paper, write_pdf
+from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_parse import seven_pages
 
 pytestmark = pytest.mark.network
@@ -126,6 +126,40 @@ async def test_an_unprocessable_source_ends_with_a_failure_report(client, ports,
     assert reports[-1].message == failure["error"]["message"]
 
 
+def _poster() -> bytes:
+    pages = paper(1)
+    pages.append(Page(lines=["Poster"], size=(5000, 4001)))
+    return write_pdf(pages)
+
+
+@pytest.mark.parametrize(
+    "pdf, limits, reason",
+    [
+        (lambda: write_pdf(paper(2))[:300], {}, "CORRUPT_PDF"),
+        (lambda: write_pdf(paper(65)), {}, "PAGE_LIMIT_EXCEEDED"),
+        (lambda: write_pdf(paper(2)), {"max_bytes": 100}, "SIZE_LIMIT_EXCEEDED"),
+        (_poster, {}, "PIXEL_LIMIT_EXCEEDED"),
+    ],
+)
+async def test_every_source_rejection_ends_with_a_source_failure_report(
+    client, ports, runtime, pdf, limits, reason
+):
+    preflight = {**runtime.profile.runtime["preflight"], **limits}
+    start = await start_input(ports, pdf(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, with_runtime(runtime, preflight=preflight), start)
+
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert (failure["cause"], failure["stage"], failure["error"]["reason"]) == (
+        "source", "prepare", reason,
+    )  # fmt: skip
+    assert failure["error"]["retryable"] is False
+    last = ports.reporter.reports[-1]  # type: ignore[attr-defined]
+    assert (last.state, last.error, last.manifest_ref) == (
+        "failed", failure["error"], outcome["manifest_ref"],
+    )  # fmt: skip
+
+
 async def test_an_adopted_version_other_than_the_worker_profile_fails_integrity(
     client, ports, runtime
 ):
@@ -157,7 +191,13 @@ async def test_processing_completes_while_the_report_receiver_is_down(client, po
 
     assert outcome["outcome"] == "complete"
     assert await ports.store.head(outcome["manifest_ref"])
-    assert {r.seq for r in ports.reporter.reports} == set(range(1, 10))  # type: ignore[attr-defined]
+    attempted = ports.reporter.reports  # type: ignore[attr-defined]
+    # Superseded reports are skipped while the receiver is down; first and last are tried.
+    assert attempted[0].seq == 1
+    assert (attempted[-1].seq, attempted[-1].stage, attempted[-1].state) == (
+        9, "finalize", "succeeded",
+    )  # fmt: skip
+    assert len(attempted) < 9
 
 
 async def test_starting_the_same_request_twice_counts_as_success(
