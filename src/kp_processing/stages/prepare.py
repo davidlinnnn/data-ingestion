@@ -59,7 +59,7 @@ def _source_key(start: dict[str, Any]) -> str:
     return ref.path[1:]
 
 
-def _check_limit(reason: str, actual: int | float, limit: int) -> None:
+def _check_limit(reason: str, actual: int | float, limit: int, **facts: str) -> None:
     if actual > limit:
         raise ProcessingFailure(
             "source",
@@ -69,6 +69,7 @@ def _check_limit(reason: str, actual: int | float, limit: int) -> None:
             metadata={
                 "limit": str(limit),
                 "actual": str(int(actual)) if actual == int(actual) else str(actual),
+                **facts,
             },
         )
 
@@ -85,7 +86,12 @@ def _preflight(data: bytes, limits: dict[str, Any]) -> tuple[int, list[int]]:
                 with closing(document[index]) as page:
                     width, height = page.get_size()
                     pixels = width * height * IMAGES_SCALE**2  # as rendered, not in points
-                    _check_limit("PIXEL_LIMIT_EXCEEDED", pixels, limits["max_page_pixels"])
+                    _check_limit(
+                        "PIXEL_LIMIT_EXCEEDED",
+                        pixels,
+                        limits["max_page_pixels"],
+                        page=str(index + 1),
+                    )
                     with closing(page.get_textpage()) as text:
                         if text.count_chars() == 0:
                             no_text.append(index + 1)
@@ -117,7 +123,8 @@ async def run(input: PrepareInput, ports: Ports, runtime: Runtime) -> Plan:
     7. Every page, rendered at the parser's images scale (points x IMAGES_SCALE squared), has
        at most preflight.max_page_pixels -> else source, source, PIXEL_LIMIT_EXCEEDED.
 
-    Source failures are not retryable; metadata carries "limit" and "actual" for 3, 6 and 7.
+    Source failures are not retryable; metadata carries "limit" and "actual" for 3, 6 and 7,
+    and "page" (1-based) for 7.
     On success, splits the pages into groups of runtime parse_group_pages, lists the pages
     whose text layer has no characters, writes the plan as JSON to
     requests/{request_id}/attempts/{run_id}/plan.json (write-once) and returns it.

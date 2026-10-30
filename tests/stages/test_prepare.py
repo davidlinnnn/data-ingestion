@@ -100,7 +100,7 @@ async def test_too_many_pixels_on_a_page_is_a_source_failure(ports, runtime):
     err = await failure(ports, runtime, start)
 
     assert (err.cause, err.reason) == ("source", "PIXEL_LIMIT_EXCEEDED")
-    assert err.metadata == {"limit": "20000000", "actual": "32136320"}
+    assert err.metadata == {"limit": "20000000", "actual": "32136320", "page": "2"}
 
 
 async def test_adopted_version_other_than_the_worker_profile_is_an_integrity_failure(
