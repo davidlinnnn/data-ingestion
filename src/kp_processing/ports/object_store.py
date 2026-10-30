@@ -79,7 +79,7 @@ class S3ObjectStore:
     """S3 API adapter (boto3; calls run in a worker thread). put_if_absent uses a
     conditional put (If-None-Match: *); 412 PreconditionFailed means another writer won.
     A 409 ConditionalRequestConflict (a concurrent conditional write in flight) is retried.
-    Tested only against MinIO, never against a mocked boto3."""
+    Tested only against a real S3 server (tests/s3/compose.yaml), never a mocked boto3."""
 
     def __init__(self, client: Any, bucket: str) -> None:
         self.client = client

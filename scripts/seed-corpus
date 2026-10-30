@@ -5,7 +5,7 @@
 
 MANIFEST is the corpus manifest.json (papers next to it); its sha256 and page counts are
 the source of truth, and each file is checked against them before upload. Every paper goes
-to custody/{sha256} in the object store named by KP_S3_* (see tests/minio/compose.yaml).
+to custody/{sha256} in the object store named by KP_S3_* (see tests/s3/compose.yaml).
 OUT_DIR, which must lie outside the repo because the papers are third-party documents,
 receives one admission-spec §10 start input per paper and index.json (request_id, file,
 sha256, pages). IDs are derived from the sha256, so reruns produce the same inputs.
@@ -18,6 +18,8 @@ import os
 import sys
 from pathlib import Path
 
+from botocore.exceptions import ClientError
+
 from kp_processing.ports.object_store import S3ObjectStore
 
 REPO = Path(__file__).resolve().parent.parent
@@ -25,6 +27,10 @@ REPO = Path(__file__).resolve().parent.parent
 
 async def seed(manifest_path: Path, out: Path) -> int:
     store = S3ObjectStore.from_env()
+    try:
+        store.client.head_bucket(Bucket=store.bucket)
+    except ClientError:
+        store.client.create_bucket(Bucket=store.bucket)
     index = []
     for paper in json.loads(manifest_path.read_text())["papers"]:
         data = (manifest_path.parent / paper["file"]).read_bytes()

@@ -1,0 +1,41 @@
+# Runs ruff, pyright and the whole pytest suite on every pull request, including the tests
+# the Codex sandbox cannot run: the S3 contract against tests/s3/compose.yaml (marker `s3`)
+# and the local-socket tests (marker `network`).
+name: code-checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  code-checks:
+    runs-on: ubuntu-latest
+    env:
+      KP_S3_ENDPOINT: http://127.0.0.1:9100
+      KP_S3_BUCKET: kp-dev
+      AWS_ACCESS_KEY_ID: kpdev
+      AWS_SECRET_ACCESS_KEY: kpdev-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.14"
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+
+      - name: Type check
+        run: uv run pyright
+
+      - name: Start the S3 stand-in
+        run: docker compose -f tests/s3/compose.yaml up -d --wait
+
+      - name: Tests
+        run: uv run pytest

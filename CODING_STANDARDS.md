@@ -20,8 +20,8 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
   adapter pass one shared contract test.
 - Tests observe behaviour at a seam: given inputs and port state, assert what was
   registered, returned or reported. Exercise the real library (docling, RapidOCR, boto3
-  against MinIO) or swap a whole port for its fake.
-- Mark tests that need Docker or a local socket (`minio`, `network`), so the Codex
+  against the S3 stand-in) or swap a whole port for its fake.
+- Mark tests that need Docker or a local socket (`s3`, `network`), so the Codex
   sandbox can deselect them.
 
 ## Comments and contracts

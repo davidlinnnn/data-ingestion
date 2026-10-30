@@ -1,4 +1,4 @@
-"""One contract, two implementations. The S3 run needs the MinIO from tests/minio/compose.yaml
+"""One contract, two implementations. The S3 run needs the stand-in from tests/s3/compose.yaml
 and KP_S3_* set (see that file); it is skipped otherwise, e.g. inside the Codex sandbox."""
 
 import asyncio
@@ -6,6 +6,7 @@ import os
 import uuid
 
 import pytest
+from botocore.exceptions import ClientError
 
 from kp_processing.ports.object_store import (
     DictObjectStore,
@@ -15,13 +16,18 @@ from kp_processing.ports.object_store import (
 )
 
 
-@pytest.fixture(params=["dict", pytest.param("s3", marks=pytest.mark.minio)])
+@pytest.fixture(params=["dict", pytest.param("s3", marks=pytest.mark.s3)])
 def store(request) -> ObjectStore:
     if request.param == "dict":
         return DictObjectStore()
     if not os.environ.get("KP_S3_ENDPOINT"):
-        pytest.skip("KP_S3_ENDPOINT not set; start tests/minio/compose.yaml")
-    return S3ObjectStore.from_env()
+        pytest.skip("KP_S3_ENDPOINT not set; start tests/s3/compose.yaml")
+    store = S3ObjectStore.from_env()
+    try:
+        store.client.head_bucket(Bucket=store.bucket)
+    except ClientError:
+        store.client.create_bucket(Bucket=store.bucket)
+    return store
 
 
 @pytest.fixture
