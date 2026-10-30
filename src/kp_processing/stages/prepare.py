@@ -11,6 +11,7 @@ import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
 from docling.utils.locks import pypdfium2_lock
 
+from kp_processing.methods.docling_parse.pipeline import IMAGES_SCALE
 from kp_processing.ports.object_store import ObjectNotFound
 from kp_processing.stages import Plan, Ports, PrepareInput, ProcessingFailure, Runtime, sha256
 
@@ -83,7 +84,8 @@ def _preflight(data: bytes, limits: dict[str, Any]) -> tuple[int, list[int]]:
             for index in range(count):
                 with closing(document[index]) as page:
                     width, height = page.get_size()
-                    _check_limit("PIXEL_LIMIT_EXCEEDED", width * height, limits["max_page_pixels"])
+                    pixels = width * height * IMAGES_SCALE**2  # as rendered, not in points
+                    _check_limit("PIXEL_LIMIT_EXCEEDED", pixels, limits["max_page_pixels"])
                     with closing(page.get_textpage()) as text:
                         if text.count_chars() == 0:
                             no_text.append(index + 1)
@@ -112,8 +114,8 @@ async def run(input: PrepareInput, ports: Ports, runtime: Runtime) -> Plan:
     5. The PDF opens without a password -> else source, source, PASSWORD_REQUIRED; it opens
        at all and has at least one page -> else source, source, CORRUPT_PDF.
     6. Page count at most preflight.max_pages -> else source, source, PAGE_LIMIT_EXCEEDED.
-    7. Every page's width x height in points (72 dpi pixels) is at most
-       preflight.max_page_pixels -> else source, source, PIXEL_LIMIT_EXCEEDED.
+    7. Every page, rendered at the parser's images scale (points x IMAGES_SCALE squared), has
+       at most preflight.max_page_pixels -> else source, source, PIXEL_LIMIT_EXCEEDED.
 
     Source failures are not retryable; metadata carries "limit" and "actual" for 3, 6 and 7.
     On success, splits the pages into groups of runtime parse_group_pages, lists the pages

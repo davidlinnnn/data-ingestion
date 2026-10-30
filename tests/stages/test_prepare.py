@@ -94,13 +94,13 @@ async def test_too_large_a_file_is_a_source_failure(ports, runtime):
 
 async def test_too_many_pixels_on_a_page_is_a_source_failure(ports, runtime):
     pages = paper(2)
-    pages[1] = Page(lines=["Poster"], size=(5000, 4001))  # 20,005,000 > 20,000,000
+    pages[1] = Page(lines=["Poster"], size=(2384, 3370))  # A0: 8,034,080 points, 4x rendered
     start = await start_input(ports, write_pdf(pages))
 
     err = await failure(ports, runtime, start)
 
     assert (err.cause, err.reason) == ("source", "PIXEL_LIMIT_EXCEEDED")
-    assert err.metadata == {"limit": "20000000", "actual": "20005000"}
+    assert err.metadata == {"limit": "20000000", "actual": "32136320"}
 
 
 async def test_adopted_version_other_than_the_worker_profile_is_an_integrity_failure(

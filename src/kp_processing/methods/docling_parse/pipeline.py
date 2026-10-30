@@ -37,6 +37,7 @@ from kp_processing.methods.docling_parse.serialization import (
     png_bytes,
 )
 
+IMAGES_SCALE = 2.0  # page and picture images are rendered at 144 dpi
 _lock = threading.Lock()
 _converter: DocumentConverter | None = None
 
@@ -54,7 +55,7 @@ def options() -> ThreadedPdfPipelineOptions:
         ),
         generate_page_images=True,
         generate_picture_images=True,
-        images_scale=2.0,
+        images_scale=IMAGES_SCALE,
         accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CPU),
     )
 
