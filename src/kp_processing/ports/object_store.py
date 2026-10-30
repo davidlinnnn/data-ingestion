@@ -1,5 +1,6 @@
-"""ObjectStore port over the S3 API (#129 物件儲存與登錄). One real adapter (S3) and an
-in-process fake; both must pass tests/ports/test_object_store_contract.py."""
+"""ObjectStore port over the S3 API (#129, object storage and registration). One real
+adapter (S3) and an in-process fake; both must pass
+tests/ports/test_object_store_contract.py."""
 
 import asyncio
 import os

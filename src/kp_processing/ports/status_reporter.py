@@ -1,5 +1,5 @@
-"""StatusReporter port: the sending side of the #31 round-3 status contract (#129 Admission
-整合). The report fields are fixed; the HTTP wrapping is provisional until #97."""
+"""StatusReporter port: the sending side of the #31 round-3 status contract (#129, admission
+integration). The report fields are fixed; the HTTP wrapping is provisional until #97."""
 
 from dataclasses import asdict, dataclass
 from typing import Any, Literal, Protocol
