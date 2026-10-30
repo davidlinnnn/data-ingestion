@@ -14,6 +14,13 @@ class ObjectNotFound(KeyError):
     pass
 
 
+def _is(exc: ClientError, status: int, *codes: str) -> bool:
+    code = exc.response.get("Error", {}).get("Code")
+    return code in {str(status), *codes} or (
+        exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") == status
+    )
+
+
 class ObjectStore(Protocol):
     async def put_if_absent(self, key: str, data: bytes) -> bool:
         """Write once. True when this call created the object; False when the key already
@@ -104,13 +111,9 @@ class S3ObjectStore:
                 )
                 return True
             except ClientError as exc:
-                code = exc.response.get("Error", {}).get("Code")
-                status = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-                if code in {"412", "PreconditionFailed"} or status == 412:
+                if _is(exc, 412, "PreconditionFailed"):
                     return False
-                if (
-                    code not in {"409", "ConditionalRequestConflict"} and status != 409
-                ) or retries == 5:
+                if not _is(exc, 409, "ConditionalRequestConflict") or retries == 5:
                     raise
                 await asyncio.sleep(0.1 * 2**retries)
                 retries += 1
@@ -130,9 +133,7 @@ class S3ObjectStore:
         try:
             return await asyncio.to_thread(read)
         except ClientError as exc:
-            code = exc.response.get("Error", {}).get("Code")
-            status = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-            if code in {"404", "NoSuchKey", "NotFound"} or status == 404:
+            if _is(exc, 404, "NoSuchKey", "NotFound"):
                 raise ObjectNotFound(key) from exc
             raise
 
@@ -141,9 +142,7 @@ class S3ObjectStore:
             response = await asyncio.to_thread(self.client.head_object, Bucket=self.bucket, Key=key)
             return response["ContentLength"]
         except ClientError as exc:
-            code = exc.response.get("Error", {}).get("Code")
-            status = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-            if code in {"404", "NoSuchKey", "NotFound"} or status == 404:
+            if _is(exc, 404, "NoSuchKey", "NotFound"):
                 return None
             raise
 

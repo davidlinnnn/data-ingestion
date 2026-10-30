@@ -34,6 +34,8 @@ def test_reinstalling_elsewhere_with_bytecode_keeps_the_digest(package, tmp_path
     (reinstalled / "__pycache__").mkdir()
     (reinstalled / "__pycache__" / "__init__.cpython-312.pyc").write_bytes(b"\x00bytecode")
     (reinstalled / "prompts" / "stale.pyo").write_bytes(b"\x00")
+    (reinstalled / ".DS_Store").write_bytes(b"\x00")
+    (reinstalled / "prompts" / ".system.txt.swp").write_bytes(b"\x00")
 
     assert module_digest(reinstalled) == module_digest(package)
 

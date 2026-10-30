@@ -63,7 +63,7 @@ def test_a_method_without_a_package_refuses_to_load(tmp_path):
 
 
 def test_a_malformed_method_key_refuses_to_load(tmp_path):
-    with pytest.raises(ProfileError):
+    with pytest.raises(ProfileError, match="expected <id>@<int>"):
         load_profile(variant(tmp_path, "formula@1:", "formula:"))
 
 

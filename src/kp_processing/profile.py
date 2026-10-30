@@ -1,6 +1,7 @@
 """Processing Profile: a released, immutable yaml file shipped with the worker (ADR-0010)."""
 
 import importlib
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -59,10 +60,10 @@ def load_profile(path: Path) -> Profile:
                 raise ProfileError(f"{path}: missing required key {key}")
         methods: dict[str, Method] = {}
         for ref, entry in data["methods"].items():
-            method_id, version_text = ref.split("@")
-            version = int(version_text)
-            if not method_id or not method_id.replace("-", "_").isidentifier():
+            match = re.fullmatch(r"([a-z][a-z0-9-]*)@(\d+)", str(ref))
+            if not match:
                 raise ProfileError(f"{path}: malformed method key {ref!r}; expected <id>@<int>")
+            method_id, version = match.group(1), int(match.group(2))
             if method_id in methods:
                 raise ProfileError(f"{path}: duplicate method ID {method_id}")
             package_name = f"kp_processing.methods.{method_id.replace('-', '_')}"

@@ -12,13 +12,16 @@ def module_digest(package_dir: Path) -> str:
     Covers every file under package_dir, walked recursively, in sorted order of its
     POSIX path relative to package_dir; each file contributes its relative path and its
     bytes, framed so that moving bytes between a path and content changes the digest.
-    Bytecode is excluded: `__pycache__` directories and `*.pyc` / `*.pyo` files.
+    Bytecode (`__pycache__`, `*.pyc`, `*.pyo`) and hidden files or directories are excluded.
     Independent of the directory's location, mtimes and permissions.
     """
     digest = hashlib.sha256()
     for path in sorted(package_dir.rglob("*"), key=lambda p: p.relative_to(package_dir).as_posix()):
         relative = path.relative_to(package_dir)
-        if "__pycache__" in relative.parts or path.suffix in {".pyc", ".pyo"}:
+        # Hidden files (.DS_Store, editor swap files) are never part of the shipped package.
+        if any(part.startswith(".") or part == "__pycache__" for part in relative.parts) or (
+            path.suffix in {".pyc", ".pyo"}
+        ):
             continue
         if path.is_file():
             for value in (relative.as_posix().encode("utf-8"), path.read_bytes()):
