@@ -7,6 +7,7 @@
 #    also unfilled placeholders, such as a {#NAME} for a ticket not yet created.
 # 3. lychee: relative links and #anchors in changed Markdown files (offline).
 # 4. ADR numbers: no two ADRs share a number, e.g. after a parallel session merged one.
+# 5. method versions: released Processing Profiles and their methods' VERSION (ADR-0010).
 # Legacy content outside the diff is not checked.
 set -u
 BASE=${1:-origin/dev}
@@ -60,6 +61,13 @@ if [ -n "$dups" ]; then
   status=1
 else
   echo "no duplicates"
+fi
+
+step "method versions and released profiles"
+if command -v uv >/dev/null; then
+  scripts/check-method-versions "$BASE" || status=1
+else
+  missing uv
 fi
 
 [ $status -eq 0 ] && echo "== all checks passed" || echo "== checks FAILED"

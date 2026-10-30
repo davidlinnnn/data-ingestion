@@ -1,0 +1,73 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pyyaml==6.0.3"]
+# ///
+"""Keep Processing Profile version labels honest (ADR-0010), over what the branch changes.
+
+    check-method-versions [BASE]    (default origin/dev)
+
+A profile counts as released when its file at the merge base says `released: true`.
+1. A change under the package of a method that a released profile lists needs a higher
+   VERSION in that package's __init__.py in the same diff.
+2. A released profile file is never modified, renamed or deleted; new profile files pass.
+"""
+
+import re
+import subprocess
+import sys
+
+import yaml
+
+PROFILES = "src/kp_processing/profiles/"
+METHODS = "src/kp_processing/methods/"
+
+
+def git(*args: str) -> str:
+    return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
+
+
+def version(rev: str, package: str) -> int | None:
+    try:
+        text = git("show", f"{rev}:{METHODS}{package}/__init__.py")
+    except subprocess.CalledProcessError:
+        return None
+    m = re.search(r"^VERSION\s*=\s*(\d+)\s*$", text, re.M)
+    return int(m.group(1)) if m else None
+
+
+def main() -> int:
+    base = git("merge-base", sys.argv[1] if len(sys.argv) > 1 else "origin/dev", "HEAD").strip()
+    released: dict[str, list[str]] = {}  # profile path -> method ids
+    for path in git("ls-tree", "--name-only", base, PROFILES).split():
+        if path.endswith(".yaml"):
+            doc = yaml.safe_load(git("show", f"{base}:{path}"))
+            if doc.get("released") is True:
+                released[path] = [ref.rsplit("@", 1)[0] for ref in doc["methods"]]
+
+    changes = [
+        line.split("\t", 1)
+        for line in git("diff", "--name-status", "--no-renames", f"{base}...HEAD").splitlines()
+    ]
+    errors = [
+        f"{path}: released profile {'deleted' if status == 'D' else 'modified'}; "
+        "add a new profile version instead"
+        for status, path in changes
+        if path in released
+    ]
+    changed = {path for _, path in changes}
+    for package in sorted({m.replace("-", "_") for ids in released.values() for m in ids}):
+        if any(p.startswith(f"{METHODS}{package}/") for p in changed):
+            old, new = version(base, package), version("HEAD", package)
+            if old is not None and (new is None or new <= old):
+                errors.append(
+                    f"{METHODS}{package}/: changed without raising VERSION (still {new}); "
+                    "a released profile lists this method"
+                )
+
+    print("\n".join(errors) or f"method versions ok ({len(released)} released profiles)")
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

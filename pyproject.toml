@@ -48,6 +48,7 @@ explicit = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "minio: needs the Docker MinIO from tests/minio/compose.yaml (runs outside the Codex sandbox)",
     "network: needs a local network listener (runs outside the Codex sandbox)",
