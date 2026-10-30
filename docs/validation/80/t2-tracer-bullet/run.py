@@ -49,7 +49,7 @@ BASE_ENV = {
     "HF_HUB_OFFLINE": "1",
 }
 CLI = [str(REPO / ".venv/bin/kp-processing")]
-PROFILE = str(REPO / "tests/profiles/paper-pdf@1-dev.yaml")
+PROFILE = str(REPO / "tests/profiles/paper-pdf-dev.yaml")
 LOGS = Path(os.environ.get("SEAMB_LOGS", "/tmp")) / f"seamb-{RUN}"
 
 

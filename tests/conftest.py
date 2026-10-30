@@ -7,7 +7,7 @@ from kp_processing.ports.status_reporter import RecordingStatusReporter
 from kp_processing.profile import load_profile
 from kp_processing.stages import Ports, Runtime
 
-DEV_PROFILE = Path(__file__).parent / "profiles" / "paper-pdf@1-dev.yaml"
+DEV_PROFILE = Path(__file__).parent / "profiles" / "paper-pdf-dev.yaml"
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@
 Run 2026-10-31 on macOS arm64 (CPU only) with [run.py](run.py): Temporal CLI 1.9.1 dev
 server (Server 1.32.0), the RustFS S3 stand-in from `tests/s3/compose.yaml`,
 `tools/fake_admission`, and `kp-processing worker --pool cpu --tier normal` subprocesses on
-the DEV profile (`tests/profiles/paper-pdf@1-dev.yaml`: `docling-parse@1` only). Paper:
+the DEV profile (`tests/profiles/paper-pdf-dev.yaml`: `docling-parse@1` only). Paper:
 corpus index 2, `02-2603.02766v1.pdf`, 22 pages, sha256 `61cc0e44…a615` (third-party; not in
 git). Raw numbers: [evidence.json](evidence.json).
 
