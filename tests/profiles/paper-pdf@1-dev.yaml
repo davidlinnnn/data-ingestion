@@ -1,0 +1,25 @@
+# DEV profile for tests and local runs (#129): paper-pdf@1 with only the native parse, so a
+# paper runs end to end before the enrichment methods exist (#131). Not a released profile.
+profile: paper-pdf@1
+released: false
+status_rule: v1
+
+methods:
+  docling-parse@1:
+    components:
+      - docling-slim@2.132.0
+      - layout-heron@8f39ad3c
+      - tableformer-accurate@v1
+      - rapidocr-ppocrv6-small
+
+limitations:
+  - code: READING_ORDER_DEFECTS
+    detail: Reading order can be wrong on some layouts, such as the first page of CVPR-style papers or author order.
+  - code: CAPTION_INTERRUPTS_BODY
+    detail: A figure or table caption can be placed inside a body paragraph.
+
+runtime:
+  heartbeat_interval_s: 15
+  parse_group_pages: 5
+  preflight: {max_pages: 64, max_bytes: 104857600, max_page_pixels: 20000000}
+  status_report_budget_s: 5
