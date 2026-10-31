@@ -6,14 +6,13 @@ sandbox)."""
 import contextlib
 import dataclasses
 import json
-import shutil
 import uuid
 
 import pytest
 from temporalio.client import Client
-from temporalio.testing import WorkflowEnvironment
 
 from kp_processing.cli import start_request
+from kp_processing.ports.clock import SystemClock
 from kp_processing.ports.status_reporter import (
     Progress,
     RecordingStatusReporter,
@@ -28,14 +27,6 @@ from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_parse import seven_pages
 
 pytestmark = pytest.mark.network
-
-
-@pytest.fixture
-async def client():
-    async with await WorkflowEnvironment.start_local(
-        dev_server_existing_path=shutil.which("temporal")
-    ) as env:
-        yield env.client
 
 
 @contextlib.asynccontextmanager
@@ -194,7 +185,8 @@ class DownReporter(RecordingStatusReporter):
 
 
 async def test_processing_completes_while_the_report_receiver_is_down(client, ports, runtime):
-    ports = dataclasses.replace(ports, reporter=DownReporter())
+    # Skipping depends on reports piling up while one spends its budget in real time.
+    ports = dataclasses.replace(ports, reporter=DownReporter(), clock=SystemClock())
     start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
     outcome, _ = await process(client, ports, runtime, start)

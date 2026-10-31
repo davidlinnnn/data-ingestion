@@ -9,7 +9,7 @@ from kp_processing.stages import FailureInput, FinalizeInput, Ports, Runtime
 
 
 async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
-    """Write requests/{request_id}/result.json (overwriting) and return its key:
+    """Write requests/{request_id}/result.json once (a retry keeps the first) and return its key:
 
     schema       "pdf-processing-result/v1"
     request      request_id, document_uid, source_revision_id, adopted_version,
@@ -92,12 +92,15 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         "limitations": limitations,
     }
     ref = f"requests/{input.start['request_id']}/result.json"
-    await ports.store.put(ref, json.dumps(result, sort_keys=True, separators=(",", ":")).encode())
+    # Write-once: a retried finalize keeps the result already registered.
+    await ports.store.put_if_absent(
+        ref, json.dumps(result, sort_keys=True, separators=(",", ":")).encode()
+    )
     return ref
 
 
 async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> str:
-    """Write requests/{request_id}/failure.json (overwriting) and return its key:
+    """Write requests/{request_id}/failure.json once (a retry keeps the first) and return its key:
 
     schema         "pdf-processing-failure/v1"
     request        request_id, document_uid, source_revision_id (null when absent)
@@ -119,5 +122,7 @@ async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> st
     if input.inventory_ref is not None:
         report["inventory_ref"] = input.inventory_ref
     ref = f"requests/{input.request_id}/failure.json"
-    await ports.store.put(ref, json.dumps(report, sort_keys=True, separators=(",", ":")).encode())
+    await ports.store.put_if_absent(
+        ref, json.dumps(report, sort_keys=True, separators=(",", ":")).encode()
+    )
     return ref

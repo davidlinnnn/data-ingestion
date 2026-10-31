@@ -1,9 +1,8 @@
 """Capture completed pages and assemble registered evidence with the stock document assembler."""
 
 import io
-import os
 import threading
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from typing import Any
 
 from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
@@ -30,6 +29,7 @@ from docling.models.stages.reading_order.readingorder_model import (
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline, ThreadedItem
 from docling_core.types.doc.document import DoclingDocument
 
+from kp_processing import weights
 from kp_processing.methods.docling_parse import IMAGES_SCALE
 from kp_processing.methods.docling_parse.serialization import (
     Group,
@@ -44,9 +44,7 @@ _converter: DocumentConverter | None = None
 
 def options() -> ThreadedPdfPipelineOptions:
     return ThreadedPdfPipelineOptions(
-        artifacts_path=Path(
-            os.environ.get("DOCLING_ARTIFACTS_PATH", Path.home() / "models/docling")
-        ).expanduser(),
+        artifacts_path=weights.root(),
         do_ocr=False,
         do_table_structure=True,
         use_reading_order_separators=True,

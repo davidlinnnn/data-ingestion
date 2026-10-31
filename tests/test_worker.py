@@ -6,7 +6,13 @@ from temporalio.testing import ActivityEnvironment
 
 from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.stages import PrepareInput
-from kp_processing.worker import Orchestration, WriteOnceUnsupported, check_write_once
+from kp_processing.weights import WeightsMismatch
+from kp_processing.worker import (
+    Orchestration,
+    WriteOnceUnsupported,
+    check_write_once,
+    make_worker,
+)
 from tests.pdfs import Page, paper, write_pdf
 from tests.stages.conftest import start_input
 
@@ -49,3 +55,14 @@ async def test_a_rejected_source_is_logged_with_its_reason_and_limits(ports, run
 
     assert "PIXEL_LIMIT_EXCEEDED" in caplog.text
     assert "'page': '2'" in caplog.text
+
+
+@pytest.mark.network
+async def test_only_the_inference_worker_checks_the_model_weights(
+    client, ports, runtime, monkeypatch, tmp_path
+):
+    monkeypatch.setenv("DOCLING_ARTIFACTS_PATH", str(tmp_path))  # no weights here
+
+    await make_worker(client, ports, runtime, "orchestration")
+    with pytest.raises(WeightsMismatch, match="layout-heron@8f39ad3c: .* missing"):
+        await make_worker(client, ports, runtime, "inference")

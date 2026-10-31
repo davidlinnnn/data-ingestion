@@ -17,6 +17,7 @@ from temporalio.client import Client
 from temporalio.exceptions import ApplicationError
 from temporalio.worker import Worker
 
+from kp_processing import weights
 from kp_processing.ports.object_store import ObjectStore
 from kp_processing.ports.status_reporter import StatusReport
 from kp_processing.stages import (
@@ -137,11 +138,14 @@ async def check_write_once(store: ObjectStore) -> None:
 async def make_worker(
     client: Client, ports: Ports, runtime: Runtime, queue: Queue, shutdown_grace_s: float = 0
 ) -> Worker:
-    """The worker of one task queue. On shutdown, running Activities get shutdown_grace_s to
-    finish before they are cancelled and retried elsewhere."""
+    """The worker of one task queue. The inference worker refuses to start when its profile's
+    model weights differ from the manifest. On shutdown, running Activities get
+    shutdown_grace_s to finish before they are cancelled and retried elsewhere."""
     await check_write_once(ports.store)
     grace = timedelta(seconds=shutdown_grace_s)
     if queue == "inference":
+        components = [c for method in runtime.profile.methods.values() for c in method.components]
+        await asyncio.to_thread(weights.verify, components, weights.root())
         # One slot: the worker polls only when its parser is free, so waiting work stays in
         # Temporal, visible as backlog, open to other workers and ordered by priority.
         return Worker(
