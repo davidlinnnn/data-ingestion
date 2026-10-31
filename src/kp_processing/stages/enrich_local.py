@@ -1,6 +1,5 @@
 """local enrichment: the item-scope methods that run on the inference worker (#132)."""
 
-import asyncio
 import json
 
 from kp_processing.identity import reuse_key
@@ -11,6 +10,7 @@ from kp_processing.stages import (
     Ports,
     ProcessingFailure,
     Runtime,
+    in_thread,
     read_verified,
     register,
     registered,
@@ -97,7 +97,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
             inputs.append(data)
         package = method.package
         try:
-            output = await asyncio.to_thread(package.run, item, inputs)
+            output = await in_thread(package.run, item, inputs)
         except MethodUnavailable as exc:
             raise ProcessingFailure(
                 "platform",

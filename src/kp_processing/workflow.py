@@ -51,24 +51,42 @@ def priority(admission_priority: Any) -> Priority:
     return Priority(priority_key=4 if admission_priority == "low" else 2)
 
 
-_STORAGE_RETRY = RetryPolicy(
-    initial_interval=timedelta(seconds=2),
-    maximum_interval=timedelta(seconds=30),
-    maximum_attempts=5,
-    non_retryable_error_types=[FAILURE_TYPE],
-)
-_SHORT = {
+# prepare runs before the plan exists, and register_failure may too: they take these options.
+_BOOTSTRAP = {
     "task_queue": ORCHESTRATION_QUEUE,
     "start_to_close_timeout": timedelta(minutes=2),
-    "retry_policy": _STORAGE_RETRY,
+    "retry_policy": RetryPolicy(
+        initial_interval=timedelta(seconds=2),
+        maximum_interval=timedelta(seconds=30),
+        maximum_attempts=5,
+        non_retryable_error_types=[FAILURE_TYPE],
+    ),
 }
-# Heartbeats every runtime heartbeat_interval_s (15 s); a killed worker is noticed after 60 s.
-_INFERENCE = {
-    "task_queue": INFERENCE_QUEUE,
-    "start_to_close_timeout": timedelta(minutes=15),
-    "heartbeat_timeout": timedelta(seconds=60),
-    "retry_policy": RetryPolicy(maximum_attempts=3, non_retryable_error_types=[FAILURE_TYPE]),
-}
+
+
+def activity_options(runtime: dict[str, Any]) -> dict[Queue, dict[str, Any]]:
+    """execute_activity options per task queue from the profile's runtime section:
+    start_to_close_s.<queue>, activity_retry.<queue> ({initial_s, multiplier, cap_s,
+    max_attempts}; ProcessingFailure never retried) and, for inference,
+    heartbeat_timeout_s.inference."""
+    options: dict[Queue, dict[str, Any]] = {}
+    for queue in ("orchestration", "inference"):
+        retry = runtime["activity_retry"][queue]
+        options[queue] = {
+            "task_queue": queue,
+            "start_to_close_timeout": timedelta(seconds=runtime["start_to_close_s"][queue]),
+            "retry_policy": RetryPolicy(
+                initial_interval=timedelta(seconds=retry["initial_s"]),
+                backoff_coefficient=retry["multiplier"],
+                maximum_interval=timedelta(seconds=retry["cap_s"]),
+                maximum_attempts=retry["max_attempts"],
+                non_retryable_error_types=[FAILURE_TYPE],
+            ),
+        }
+    options["inference"]["heartbeat_timeout"] = timedelta(
+        seconds=runtime["heartbeat_timeout_s"]["inference"]
+    )
+    return options
 
 
 @workflow.defn(name=WORKFLOW)
@@ -85,10 +103,13 @@ class PaperPdfWorkflow:
         self._start = start
         stage: Stage = "prepare"
         inventory: InventoryRef | None = None
+        short = _BOOTSTRAP
         try:
             self._report("prepare", "running")
-            plan = await self._call("prepare", PrepareInput(start, info.run_id), Plan, _SHORT)
+            plan = await self._call("prepare", PrepareInput(start, info.run_id), Plan, short)
             self._report("prepare", "succeeded")
+            options = activity_options(plan.runtime)
+            short, inference = options["orchestration"], options["inference"]
 
             stage = "parse"
             uid = start["document_uid"]
@@ -97,30 +118,30 @@ class PaperPdfWorkflow:
             groups: list[GroupRef] = []
             for group_pages in plan.groups:
                 group_input = GroupInput(uid, plan.source_key, plan.source_sha256, group_pages)
-                groups.append(await self._call("parse_group", group_input, GroupRef, _INFERENCE))
+                groups.append(await self._call("parse_group", group_input, GroupRef, inference))
                 pages = Progress(group_pages[1], plan.page_count, "pages")
                 self._report("parse", "running", pages)
             assemble_input = AssembleInput(uid, plan.source_key, plan.source_sha256, groups)
-            assembly = await self._call("assemble", assemble_input, Registered, _INFERENCE)
+            assembly = await self._call("assemble", assemble_input, Registered, inference)
             self._report("parse", "succeeded", pages)
 
             stage = "enrich"
             inventory_input = InventoryInput(
                 uid, plan.source_key, plan.source_sha256, groups, assembly
             )
-            inventory = await self._call("inventory", inventory_input, InventoryRef, _SHORT)
+            inventory = await self._call("inventory", inventory_input, InventoryRef, short)
             self._report("enrich", "running", Progress(0, inventory.items, "items"))
             # #108 screening goes here, before any enrichment; the VLM and summary
             # Activities (#133, #134) run beside the local one.
             outcomes = await self._call(
-                "enrich_local", EnrichInput(uid, inventory), list[OutcomeRef], _INFERENCE
+                "enrich_local", EnrichInput(uid, inventory), list[OutcomeRef], inference
             )
             self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))
 
             stage = "finalize"
             self._report("finalize", "running")
             finalize_input = FinalizeInput(start, plan, groups, assembly, inventory, outcomes)
-            ref = await self._call("finalize", finalize_input, str, _SHORT)
+            ref = await self._call("finalize", finalize_input, str, short)
             self._report("finalize", "succeeded", manifest_ref=ref)
             outcome = {"outcome": "complete", "manifest_ref": ref}
         except ActivityError as err:
@@ -134,7 +155,7 @@ class PaperPdfWorkflow:
                 info.workflow_id, start, stage, details["cause"], error,
                 inventory.ref if inventory else None,
             )  # fmt: skip
-            ref = await self._call("register_failure", failure, str, _SHORT)
+            ref = await self._call("register_failure", failure, str, short)
             self._report(stage, "failed", manifest_ref=ref, error=error)
             outcome = {"outcome": "failed", "manifest_ref": ref}
         if self._sending:

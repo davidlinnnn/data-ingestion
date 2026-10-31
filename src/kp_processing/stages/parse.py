@@ -16,7 +16,6 @@ picture_id is the DoclingDocument self_ref ("#/pictures/0"); bbox is the picture
 provenance box as docling dumps it ({l, t, r, b, coord_origin}, PDF points).
 """
 
-import asyncio
 from dataclasses import asdict
 
 from kp_processing.identity import reuse_key
@@ -36,6 +35,7 @@ from kp_processing.stages import (
     ProcessingFailure,
     Registered,
     Runtime,
+    in_thread,
     read_verified,
     register,
     registered,
@@ -84,7 +84,7 @@ async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupR
             "Source bytes differ from declared digest",
         )
     try:
-        count, captured = await asyncio.to_thread(pipeline.parse_group, data, input.pages)
+        count, captured = await in_thread(pipeline.parse_group, data, input.pages)
     except Exception as exc:
         raise ProcessingFailure(
             "platform", "method", "NATIVE_PARSE_FAILED", "PDF group conversion failed"
@@ -160,7 +160,7 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
         for saved, image in zip(group.page_results, group.page_images, strict=True):
             png = await read_verified(ports.store, image.ref, image.sha256, _incomplete)
             try:
-                pages.append(await asyncio.to_thread(restore_page, saved, png))
+                pages.append(await in_thread(restore_page, saved, png))
             except (ValueError, TypeError, OSError) as exc:
                 raise _incomplete() from exc
         groups.append(group)
@@ -168,7 +168,7 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
         next_page = last + 1
     if count is None or next_page != count + 1:
         raise _incomplete()
-    document, pictures = await asyncio.to_thread(pipeline.assemble, groups, pages)
+    document, pictures = await in_thread(pipeline.assemble, groups, pages)
     picture_refs = []
     for picture, png in pictures:
         digest = sha256(png)

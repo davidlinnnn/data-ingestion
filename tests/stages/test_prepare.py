@@ -29,6 +29,7 @@ async def test_plan_groups_pages_by_five_and_is_frozen_in_the_attempt_scratch(po
     assert plan.groups == [[1, 5], [6, 10], [11, 12]]
     assert plan.no_text_layer_pages == []
     assert plan.ref == "requests/req_1/attempts/run_1/plan.json"
+    assert plan.runtime == runtime.profile.runtime
     frozen = json.loads(await ports.store.get(plan.ref))
     assert frozen["groups"] == [[1, 5], [6, 10], [11, 12]]
     assert frozen["source_sha256"] == sha

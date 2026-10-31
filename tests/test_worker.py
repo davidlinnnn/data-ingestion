@@ -1,12 +1,15 @@
+import asyncio
 import dataclasses
 import logging
+import threading
 
 import pytest
 from temporalio.exceptions import ApplicationError
 from temporalio.testing import ActivityEnvironment
 
+from kp_processing.methods.docling_parse import pipeline
 from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.stages import EnrichInput, PrepareInput
+from kp_processing.stages import EnrichInput, GroupInput, PrepareInput, sha256
 from kp_processing.weights import WeightsMismatch
 from kp_processing.worker import (
     Inference,
@@ -76,6 +79,33 @@ async def test_the_enrich_local_activity_heartbeats_after_every_item(ports, runt
     )
 
     assert len(beats) == 1 + len(outcomes) == 5
+
+
+async def test_a_cancelled_parse_frees_the_slot_only_after_the_docling_thread_ends(
+    ports, runtime, monkeypatch
+):
+    started, release = threading.Event(), threading.Event()
+
+    def parse_group(data, pages):
+        started.set()
+        release.wait(10)
+        raise RuntimeError("docling gave up")
+
+    monkeypatch.setattr(pipeline, "parse_group", parse_group)
+    await ports.store.put_if_absent("source.pdf", b"%PDF")
+    group = GroupInput("doc_1", "source.pdf", sha256(b"%PDF"), [1, 1])
+    environment = ActivityEnvironment()
+    activity = asyncio.create_task(environment.run(Inference(ports, runtime).parse_group, group))
+    assert await asyncio.to_thread(started.wait, 10)
+
+    environment.cancel()
+    await asyncio.sleep(0.5)
+    still_running = not activity.done()
+    release.set()
+
+    assert still_running
+    with pytest.raises(asyncio.CancelledError):
+        await activity
 
 
 @pytest.mark.network

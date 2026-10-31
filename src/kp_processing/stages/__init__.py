@@ -15,6 +15,8 @@ registers one outcome record per item under documents/{document_uid}/items/{key}
 finalize applies the profile's status rule to the outcome records.
 """
 
+import asyncio
+import contextlib
 import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -112,6 +114,9 @@ class Plan:
     groups: list[list[int]]  # [first, last], 1-based inclusive, in page order
     no_text_layer_pages: list[int]
     ref: str  # requests/{request_id}/attempts/{run_id}/plan.json
+    # The profile's runtime section, frozen into workflow history by this Activity's result;
+    # the workflow takes the later Activities' options from it.
+    runtime: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -150,6 +155,35 @@ async def register(store: ObjectStore, ref: str, body: bytes) -> Registered:
     if not created:
         body = await store.get(ref)
     return Registered(ref, sha256(body), not created)
+
+
+def item_prefix(document_uid: str, key: str) -> str:
+    """documents/{document_uid}/items/{key}: where one registered item's objects live."""
+    return f"documents/{document_uid}/items/{key}"
+
+
+async def register_item(
+    store: ObjectStore, prefix: str, record: str, body: bytes, files: dict[str, bytes]
+) -> Registered:
+    """Put each file at {prefix}/{name} (first write wins), then register {prefix}/{record}
+    write-once and last, so that the record's presence means the item is complete."""
+    for name, data in files.items():
+        await store.put_if_absent(f"{prefix}/{name}", data)
+    return await register(store, f"{prefix}/{record}", body)
+
+
+async def in_thread[T](function: Callable[..., T], *args: Any) -> T:
+    """asyncio.to_thread that, when cancelled, waits for the thread to end before raising
+    CancelledError: a thread cannot be stopped, and the worker must not free the slot of a
+    parser that still runs."""
+    future = asyncio.ensure_future(asyncio.to_thread(function, *args))
+    try:
+        return await asyncio.shield(future)
+    except asyncio.CancelledError:
+        while not future.done():
+            with contextlib.suppress(asyncio.CancelledError):
+                await asyncio.wait({future})
+        raise
 
 
 async def read_verified(

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from kp_processing.identity import module_digest
+from kp_processing.identity import module_digest, reuse_key
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
 
 PAPER_PDF_1 = PROFILES_DIR / "paper-pdf@1.yaml"
@@ -70,3 +70,16 @@ def test_a_malformed_method_key_refuses_to_load(tmp_path):
 def test_a_missing_required_section_refuses_to_load(tmp_path):
     with pytest.raises(ProfileError, match="runtime"):
         load_profile(variant(tmp_path, "\nruntime:", "\nruntime_renamed:"))
+
+
+def test_a_missing_runtime_key_that_the_code_reads_refuses_to_load(tmp_path):
+    with pytest.raises(ProfileError, match="heartbeat_timeout_s.inference"):
+        load_profile(variant(tmp_path, "{inference: 60, vlm: 90", "{vlm: 90"))
+
+
+def test_a_method_reuse_key_binds_its_identity():
+    method = load_profile(PAPER_PDF_1).methods["picture-ocr"]
+
+    assert method.reuse_key("doc_1", ["a", "b"]) == reuse_key(
+        "doc_1", "picture-ocr@1", method.components, method.module_digest, ["a", "b"]
+    )
