@@ -24,7 +24,7 @@ with workflow.unsafe.imports_passed_through():
         GroupRef,
         InventoryInput,
         InventoryRef,
-        Outcome,
+        OutcomeRef,
         Plan,
         PrepareInput,
         Registered,
@@ -113,7 +113,7 @@ class PaperPdfWorkflow:
             # #108 screening goes here, before any enrichment; the VLM and summary
             # Activities (#133, #134) run beside the local one.
             outcomes = await self._call(
-                "enrich_local", EnrichInput(uid, inventory), list[Outcome], _INFERENCE
+                "enrich_local", EnrichInput(uid, inventory), list[OutcomeRef], _INFERENCE
             )
             self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))
 

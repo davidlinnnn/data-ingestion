@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 
 from kp_processing.identity import module_digest
+from kp_processing.methods import package_name
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
 
@@ -66,12 +67,11 @@ def load_profile(path: Path) -> Profile:
             method_id, version = match.group(1), int(match.group(2))
             if method_id in methods:
                 raise ProfileError(f"{path}: duplicate method ID {method_id}")
-            package_name = f"kp_processing.methods.{method_id.replace('-', '_')}"
             try:
-                package = importlib.import_module(package_name)
+                package = importlib.import_module(package_name(method_id))
             except ImportError as exc:
                 raise ProfileError(
-                    f"{path}: cannot import method {ref} ({package_name}): {exc}"
+                    f"{path}: cannot import method {ref} ({package_name(method_id)}): {exc}"
                 ) from exc
             if getattr(package, "ID", None) != method_id:
                 raise ProfileError(f"{path}: {ref} package ID differs from {method_id}")

@@ -217,7 +217,7 @@ async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runt
     by_id = await records(ports, input.outcomes)
     origins = {item_id.split(":")[0]: r["origin"] for item_id, r in by_id.items()}
     assert origins == {"picture-ocr": "reconstruction", "code": "reconstruction",
-                       "table-status": None}  # fmt: skip
+                       "table-status": "reconstruction"}  # fmt: skip
     assert [r["outcome"] for r in by_id.values()] == ["success", "no_text", "success", "success"]
 
 
@@ -232,6 +232,17 @@ async def test_a_second_run_reuses_every_item_without_calling_rapidocr(ports, ru
     assert len(calls) == 2
     assert again == [dataclasses.replace(o, reused=True) for o in first.outcomes]
     assert ports.store.objects == objects  # type: ignore[attr-defined]
+
+
+async def test_every_item_run_or_reused_sends_a_heartbeat(ports, runtime):
+    beats = []
+    ports = dataclasses.replace(ports, heartbeat=lambda: beats.append(1))
+    first = await enriched(ports, runtime, enriched_paper())
+    assert len(beats) == len(first.outcomes) == 4
+
+    await enrich_local.run(EnrichInput("doc_1", first.inventory), ports, runtime)
+
+    assert len(beats) == 8
 
 
 async def test_an_undecodable_picture_is_a_failed_item_and_the_document_completes(ports, runtime):

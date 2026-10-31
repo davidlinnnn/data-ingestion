@@ -1,10 +1,35 @@
 """Enrichment Method packages. Each declares ID and VERSION; everything that shapes a
 method's output (code, prompts, schemas, constants) lives inside its package, because
 the package's source digest enters the reuse key (ADR-0010). The package name is the
-method ID with dashes as underscores."""
+method ID with dashes as underscores.
+
+An item-scope method package also declares:
+
+    TARGET   (collection, label): its enrichment targets are the docling document's nodes in
+             that collection ("pictures", "texts", "tables"), only those with that label
+             unless label is None
+    INPUTS   the kinds of its inputs, in order, from "source" (the source PDF), "assembly"
+             (assembly.json), "picture_image" (the target's registered picture image),
+             "page_image" (the image of the target's page)
+    ORIGIN   "reconstruction" or "interpretation"
+    run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput, inputs in INPUTS order
+"""
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, TypedDict
+
+
+def package_name(method_id: str) -> str:
+    return f"kp_processing.methods.{method_id.replace('-', '_')}"
+
+
+class InventoryItem(TypedDict):
+    item_id: str  # "<method id>:<target_ref>"
+    method: str
+    target_ref: str  # docling self_ref, e.g. "#/pictures/0"
+    page: int  # the target's first provenance entry
+    bbox: dict[str, Any]  # its docling bbox: l, t, r, b, coord_origin
+    input_refs: list[dict[str, str]]  # [{"ref", "sha256"}] in the method's INPUTS order
 
 
 class MethodUnavailable(Exception):

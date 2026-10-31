@@ -6,15 +6,20 @@ import io
 import json
 import re
 import unicodedata
+from typing import cast
 
+import pypdfium2 as pdfium
 from PIL import Image
 
+from kp_processing.methods import InventoryItem, code
 from tests.stages.test_enrich_local import (
     CODE,
     PICTURE_WORDS,
     TABLE,
     enriched,
     enriched_paper,
+    items_of,
+    native,
     records,
 )
 
@@ -47,6 +52,21 @@ async def test_code_keeps_every_character_line_and_indent(ports, runtime):
 
     assert listing["content"] == "\n".join(CODE)  # character error rate 0
     assert listing["signals"] == {"indent_quantized": True}
+
+
+async def test_code_reads_a_top_left_box_like_its_bottom_left_twin(ports, runtime):
+    pdf = enriched_paper()
+    input = await native(ports, runtime, pdf)
+    (item,) = [i for i in await items_of(ports, input.inventory) if i["method"] == "code"]
+    assert item["bbox"]["coord_origin"] == "BOTTOMLEFT"
+    with pdfium.PdfDocument(pdf) as document:
+        height = document[item["page"] - 1].get_height()
+    box = item["bbox"]
+    flipped = {**box, "t": height - box["t"], "b": height - box["b"], "coord_origin": "TOPLEFT"}
+
+    output = code.run(cast(InventoryItem, {**item, "bbox": flipped}), [pdf])
+
+    assert output.content == "\n".join(CODE)
 
 
 async def test_table_status_delivers_every_cell_with_html_and_a_crop(ports, runtime):

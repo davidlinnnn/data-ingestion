@@ -16,11 +16,12 @@ finalize applies the profile's status rule to the outcome records.
 """
 
 import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
 
 from kp_processing.ports.clock import Clock, SystemClock
-from kp_processing.ports.object_store import ObjectStore
+from kp_processing.ports.object_store import ObjectNotFound, ObjectStore
 from kp_processing.ports.status_reporter import StatusReporter
 from kp_processing.profile import Profile
 
@@ -36,6 +37,7 @@ class Ports:
     store: ObjectStore
     reporter: StatusReporter
     clock: Clock = SystemClock()
+    heartbeat: Callable[[], None] = lambda: None  # called after each completed item
 
 
 @dataclass(frozen=True)
@@ -150,6 +152,19 @@ async def register(store: ObjectStore, ref: str, body: bytes) -> Registered:
     return Registered(ref, sha256(body), not created)
 
 
+async def read_verified(
+    store: ObjectStore, ref: str, digest: str, failure: Callable[[], ProcessingFailure]
+) -> bytes:
+    """The object at ref; raises failure() when it is missing or its sha256 is not digest."""
+    try:
+        data = await store.get(ref)
+    except ObjectNotFound as exc:
+        raise failure() from exc
+    if sha256(data) != digest:
+        raise failure()
+    return data
+
+
 @dataclass(frozen=True)
 class AssembleInput:
     document_uid: str
@@ -182,7 +197,7 @@ class EnrichInput:
 
 
 @dataclass(frozen=True)
-class Outcome:
+class OutcomeRef:
     item_id: str  # the inventory item this outcome record answers
     ref: str  # key of the registered outcome.json
     digest: str  # sha256 of its bytes
@@ -196,7 +211,7 @@ class FinalizeInput:
     groups: list[GroupRef]
     assembly: Registered
     inventory: InventoryRef
-    outcomes: list[Outcome]  # from every enrichment Activity, in any order
+    outcomes: list[OutcomeRef]  # from every enrichment Activity, in any order
 
 
 @dataclass(frozen=True)

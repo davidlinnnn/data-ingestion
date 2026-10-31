@@ -1,19 +1,20 @@
 """table-status: delivers a table's native grid and HTML with a crop for review; status only,
-no model call (v2 §4; the dual cell-matching signal stays with #82)."""
+no model call (v2 §4)."""
 
 import io
 import json
 from functools import lru_cache
-from typing import Any
 
 from docling_core.types.doc.document import DoclingDocument
 from PIL import Image
 
-from kp_processing.methods import MethodOutput
+from kp_processing.methods import InventoryItem, MethodOutput
 
 ID = "table-status"
 VERSION = 1
-ORIGIN = None  # neither reconstruction nor interpretation: the content is the native grid
+ORIGIN = "reconstruction"
+TARGET = ("tables", None)
+INPUTS = ("assembly", "page_image")
 
 
 @lru_cache(maxsize=1)
@@ -21,9 +22,8 @@ def _document(assembly: bytes) -> DoclingDocument:
     return DoclingDocument.model_validate(json.loads(assembly)["document"])
 
 
-def run(item: dict[str, Any], inputs: list[bytes]) -> MethodOutput:
-    """inputs = [assembly.json, page image PNG of item["page"]]. The table is the assembly
-    document's node at item["target_ref"].
+def run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput:
+    """The table is the assembly document's node at item["target_ref"].
 
     success  content = {"html": the table's docling HTML export,
                         "grid": {"num_rows", "num_cols", "cells": [{"row", "col", "row_span",

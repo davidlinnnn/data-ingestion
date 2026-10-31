@@ -6,14 +6,13 @@ import importlib.metadata
 import json
 import platform
 
-from kp_processing.ports.object_store import ObjectNotFound
 from kp_processing.stages import (
     FailureInput,
     FinalizeInput,
     Ports,
     ProcessingFailure,
     Runtime,
-    sha256,
+    read_verified,
 )
 
 CONTENT_INLINE_MAX = 16384  # bytes of compact JSON; larger content stays in the outcome record
@@ -46,10 +45,10 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         target_refs [target_ref], input_refs [the item's input refs], content (the record's
         content when its compact JSON is at most CONTENT_INLINE_MAX bytes, else null: read
         result_ref), evidence_refs, status, status_reason (from the rule), signals,
-        provider_artifact_ref, reused (from the Outcome)
+        provider_artifact_ref, reused (from the OutcomeRef)
 
-    An inventory item without an Outcome, or whose outcome record is missing or differs from
-    the Outcome's digest, raises ProcessingFailure(platform, integrity,
+    An inventory item without an OutcomeRef, or whose outcome record is missing or differs
+    from the OutcomeRef's digest, raises ProcessingFailure(platform, integrity,
     OUTCOME_RECORD_MISSING, metadata {"item_id"}). A status rule that does not exist raises
     ProcessingFailure(platform, configuration, STATUS_RULE_UNKNOWN).
     """
@@ -68,23 +67,20 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     enrichments = []
     counts: dict[str, dict[str, int]] = {}
     for item in inventory["items"]:
-        missing = ProcessingFailure(
-            "platform",
-            "integrity",
-            "OUTCOME_RECORD_MISSING",
-            "Enrichment outcome record is missing or differs from its declared digest",
-            metadata={"item_id": item["item_id"]},
-        )
+
+        def missing(item_id: str = item["item_id"]) -> ProcessingFailure:
+            return ProcessingFailure(
+                "platform",
+                "integrity",
+                "OUTCOME_RECORD_MISSING",
+                "Enrichment outcome record is missing or differs from its declared digest",
+                metadata={"item_id": item_id},
+            )
+
         outcome = outcomes.get(item["item_id"])
         if outcome is None:
-            raise missing
-        try:
-            data = await ports.store.get(outcome.ref)
-        except ObjectNotFound as exc:
-            raise missing from exc
-        if sha256(data) != outcome.digest:
-            raise missing
-        record = json.loads(data)
+            raise missing()
+        record = json.loads(await read_verified(ports.store, outcome.ref, outcome.digest, missing))
         status, reason = rule.assign(record)
         content = record["content"]
         if (

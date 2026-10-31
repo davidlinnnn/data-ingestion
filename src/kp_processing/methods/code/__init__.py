@@ -1,5 +1,5 @@
 """code: a code block reconstructed from the native text layer, with indentation recovered
-from character x coordinates (#84 F14: native CER median 3.7%, all from spacing)."""
+from character x coordinates."""
 
 from contextlib import closing
 from statistics import median
@@ -8,21 +8,19 @@ from typing import Any
 import pypdfium2 as pdfium
 from docling.utils.locks import pypdfium2_lock
 
-from kp_processing.methods import MethodOutput
+from kp_processing.methods import InventoryItem, MethodOutput
 
 ID = "code"
 VERSION = 1
 ORIGIN = "reconstruction"
+TARGET = ("texts", "code")
+INPUTS = ("source",)
 
 
-def run(item: dict[str, Any], inputs: list[bytes]) -> MethodOutput:
-    """inputs = [source PDF]. Reads the characters of page item["page"] with PDFium whose tight
-    box centre lies inside item["bbox"] (PDF points, BOTTOMLEFT origin as docling dumps it),
-    groups them into lines and recovers indentation, after #84's extract_native.py and
-    metrics.py native_char_lines (research commit 2524a1a5,
-    pdf-core-w3b-2026-10-20/code-native-v4-utf16), with one change: every x position, width and
-    gap below uses the loose (advance) character box, not the tight ink box. Ink gaps put
-    spurious spaces between narrow glyphs such as "):", the source of #84's spacing errors.
+def run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput:
+    """Reads the characters of page item["page"] with PDFium whose tight box centre lies
+    inside item["bbox"] (PDF points), groups them into lines and recovers indentation. Every
+    x position, width and gap below uses the loose (advance) character box.
 
     - a character joins a line when the vertical centres differ by at most 0.3 x the smaller
       line height; lines run top to bottom, characters left to right;
@@ -37,13 +35,15 @@ def run(item: dict[str, Any], inputs: list[bytes]) -> MethodOutput:
 
     success  content = lines joined with "\\n", each indented with spaces, trailing whitespace
              stripped per line, no trailing newline
-    failed   reason NO_TEXT_LAYER when no character lies inside the box; the VLM fallback for
-             such blocks arrives with #133
+    failed   reason NO_TEXT_LAYER when no character lies inside the box
     No files, no evidence."""
     box = item["bbox"]
     characters = []
     with pypdfium2_lock, pdfium.PdfDocument(inputs[0]) as document:
         with closing(document[item["page"] - 1]) as page, closing(page.get_textpage()) as text:
+            if box["coord_origin"] == "TOPLEFT":
+                height = page.get_height()
+                box = {**box, "t": height - box["t"], "b": height - box["b"]}
             for index in range(text.count_chars()):
                 glyph = text.get_text_range(index, 1)
                 if glyph in ("", "\r", "\n", "\r\n"):
@@ -56,6 +56,7 @@ def run(item: dict[str, Any], inputs: list[bytes]) -> MethodOutput:
                     characters.append(
                         {
                             "text": glyph,
+                            # Tight ink boxes would put spurious spaces between glyphs like "):".
                             "bbox": text.get_charbox(index, loose=True),
                             "index": index,
                         }

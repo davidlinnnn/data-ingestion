@@ -9,6 +9,7 @@ the only one that loads it."""
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
+from dataclasses import replace
 from datetime import timedelta
 from typing import Any, TypeVar
 
@@ -29,7 +30,7 @@ from kp_processing.stages import (
     GroupRef,
     InventoryInput,
     InventoryRef,
-    Outcome,
+    OutcomeRef,
     Plan,
     Ports,
     PrepareInput,
@@ -54,7 +55,7 @@ T = TypeVar("T")
 
 class _Activities:
     def __init__(self, ports: Ports, runtime: Runtime) -> None:
-        self.ports = ports
+        self.ports = replace(ports, heartbeat=activity.heartbeat)
         self.runtime = runtime
 
     async def _run(self, body: Callable[..., Awaitable[T]], input: Any) -> T:
@@ -121,7 +122,7 @@ class Inference(_Activities):
         return await self._run(self.parse.run_assemble, input)
 
     @activity.defn(name="enrich_local")
-    async def enrich_local(self, input: EnrichInput) -> list[Outcome]:
+    async def enrich_local(self, input: EnrichInput) -> list[OutcomeRef]:
         return await self._run(self.enrich_local_stage.run, input)
 
     def all(self) -> list[Callable[..., Any]]:

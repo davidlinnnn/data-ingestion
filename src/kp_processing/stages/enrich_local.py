@@ -5,26 +5,26 @@ import importlib
 import json
 
 from kp_processing.identity import reuse_key
-from kp_processing.methods import MethodUnavailable
-from kp_processing.ports.object_store import ObjectNotFound
+from kp_processing.methods import InventoryItem, MethodUnavailable, package_name
 from kp_processing.stages import (
     EnrichInput,
-    Outcome,
+    OutcomeRef,
     Ports,
     ProcessingFailure,
     Runtime,
+    read_verified,
     register,
     registered,
-    sha256,
 )
 
 # Methods this Activity runs; inventory items of other methods belong to other Activities.
 METHODS = ("picture-ocr", "code", "table-status")
 
 
-async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcome]:
+async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
     """Run every inventory item of METHODS, in inventory order, and register one outcome
-    record per item. Returns one Outcome per such item, in inventory order.
+    record per item; ports.heartbeat() after each item. Returns one OutcomeRef per such item,
+    in inventory order.
 
     Per item, with method = runtime.profile.methods[item["method"]]:
       key = reuse_key(document_uid, method.ref, method.components, method.module_digest,
@@ -33,8 +33,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
       prefix = documents/{document_uid}/items/{key}
     When {prefix}/outcome.json exists, it is returned with reused=True and the method does
     not run. Otherwise each input ref is read and verified at most once per call; repeated
-    refs must declare the same sha256. The
-    method package's run(item, inputs) runs off the event loop; its files are registered as
+    refs must declare the same sha256. The method package's run(item, inputs) runs off the
+    event loop; its files are registered as
     {prefix}/{name}; then {prefix}/outcome.json is registered last, write-once:
 
         {"schema": "enrichment-outcome/v1",
@@ -54,6 +54,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     inventory = json.loads(await ports.store.get(input.inventory.ref))
     verified: dict[str, tuple[bytes, str]] = {}
     outcomes = []
+    item: InventoryItem
     for item in inventory["items"]:
         if item["method"] not in METHODS:
             continue
@@ -73,34 +74,30 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
         prefix = f"documents/{input.document_uid}/items/{key}"
         ref = f"{prefix}/outcome.json"
         if existing := await registered(ports.store, ref):
-            outcomes.append(Outcome(item["item_id"], existing.ref, existing.digest, True))
+            outcomes.append(OutcomeRef(item["item_id"], existing.ref, existing.digest, True))
+            ports.heartbeat()
             continue
-        inputs = []
-        for source in item["input_refs"]:
-            invalid = ProcessingFailure(
+
+        def invalid(item_id: str = item["item_id"]) -> ProcessingFailure:
+            return ProcessingFailure(
                 "platform",
                 "integrity",
                 "INPUT_DIGEST_MISMATCH",
                 "Enrichment input is missing or differs from its declared digest",
-                metadata={"item_id": item["item_id"]},
+                metadata={"item_id": item_id},
             )
+
+        inputs = []
+        for source in item["input_refs"]:
             if source["ref"] not in verified:
-                try:
-                    data = await ports.store.get(source["ref"])
-                except ObjectNotFound as exc:
-                    raise invalid from exc
-                digest = sha256(data)
-                if digest != source["sha256"]:
-                    raise invalid
-                verified[source["ref"]] = (data, digest)
+                data = await read_verified(ports.store, source["ref"], source["sha256"], invalid)
+                verified[source["ref"]] = (data, source["sha256"])
             data, digest = verified[source["ref"]]
             if digest != source["sha256"]:
-                raise invalid
+                raise invalid()
             inputs.append(data)
         try:
-            package = importlib.import_module(
-                f"kp_processing.methods.{method.id.replace('-', '_')}"
-            )
+            package = importlib.import_module(package_name(method.id))
             output = await asyncio.to_thread(package.run, item, inputs)
         except MethodUnavailable as exc:
             raise ProcessingFailure(
@@ -144,5 +141,6 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
             separators=(",", ":"),
         ).encode()
         result = await register(ports.store, ref, body)
-        outcomes.append(Outcome(item["item_id"], result.ref, result.digest, result.reused))
+        outcomes.append(OutcomeRef(item["item_id"], result.ref, result.digest, result.reused))
+        ports.heartbeat()
     return outcomes
