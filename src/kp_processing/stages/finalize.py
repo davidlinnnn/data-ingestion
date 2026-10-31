@@ -1,11 +1,21 @@
 """finalize: register the Processing Result, or the failure report (#129, Processing Result
 and failure report)."""
 
+import importlib
 import importlib.metadata
 import json
 import platform
 
-from kp_processing.stages import FailureInput, FinalizeInput, Ports, Runtime
+from kp_processing.stages import (
+    FailureInput,
+    FinalizeInput,
+    Ports,
+    ProcessingFailure,
+    Runtime,
+    read_verified,
+)
+
+CONTENT_INLINE_MAX = 16384  # bytes of compact JSON; larger content stays in the outcome record
 
 
 async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
@@ -20,14 +30,86 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     native       assembly_ref, page_groups[{pages, ref}], page_images[{page, ref, sha256}]
                  in page order (read from the group objects), picture_images[{picture_id,
                  page, bbox, ref, sha256}] (read from the assembly object)
-    inventory    ref, counts{<method_id>: {unverified, disputed, failed, no_text}}
-                 ({} while the inventory has no items)
-    enrichments  []
+    inventory    ref, counts{<method_id>: {unverified, disputed, failed, no_text}} for each
+                 method with inventory items; buckets are disjoint, an item whose outcome is
+                 no_text counts under no_text only
+    enrichments  one per inventory item, in inventory order (see below)
     limitations  the profile's [{code, scope: "profile", detail}], then, when the plan
                  lists any, {code: "NO_TEXT_LAYER_PAGES", scope: "document",
                  detail: "no text layer on pages 3, 5"}
+
+    Each enrichment joins an inventory item with its outcome record and applies the status
+    rule kp_processing.status_rules.<profile status_rule>:
+
+        item_id, result_ref (the outcome record), method_ref, scope, origin (from the record),
+        target_refs [target_ref], input_refs [the item's input refs], content (the record's
+        content when its compact JSON is at most CONTENT_INLINE_MAX bytes, else null: read
+        result_ref), evidence_refs, status, status_reason (from the rule), signals,
+        provider_artifact_ref, reused (from the OutcomeRef)
+
+    An inventory item without an OutcomeRef, or whose outcome record is missing or differs
+    from the OutcomeRef's digest, raises ProcessingFailure(platform, integrity,
+    OUTCOME_RECORD_MISSING, metadata {"item_id"}). A status rule that does not exist raises
+    ProcessingFailure(platform, configuration, STATUS_RULE_UNKNOWN).
     """
     profile = runtime.profile
+    rule_name = f"kp_processing.status_rules.{profile.status_rule}"
+    try:
+        rule = importlib.import_module(rule_name)
+    except ModuleNotFoundError as exc:
+        if exc.name != rule_name:
+            raise
+        raise ProcessingFailure(
+            "platform", "configuration", "STATUS_RULE_UNKNOWN", "Unknown Enrichment Status rule"
+        ) from exc
+    inventory = json.loads(await ports.store.get(input.inventory.ref))
+    outcomes = {outcome.item_id: outcome for outcome in input.outcomes}
+    enrichments = []
+    counts: dict[str, dict[str, int]] = {}
+    for item in inventory["items"]:
+
+        def missing(item_id: str = item["item_id"]) -> ProcessingFailure:
+            return ProcessingFailure(
+                "platform",
+                "integrity",
+                "OUTCOME_RECORD_MISSING",
+                "Enrichment outcome record is missing or differs from its declared digest",
+                metadata={"item_id": item_id},
+            )
+
+        outcome = outcomes.get(item["item_id"])
+        if outcome is None:
+            raise missing()
+        record = json.loads(await read_verified(ports.store, outcome.ref, outcome.digest, missing))
+        status, reason = rule.assign(record)
+        content = record["content"]
+        if (
+            len(json.dumps(content, sort_keys=True, separators=(",", ":")).encode())
+            > CONTENT_INLINE_MAX
+        ):
+            content = None
+        enrichments.append(
+            {
+                "item_id": item["item_id"],
+                "result_ref": outcome.ref,
+                "method_ref": record["method_ref"],
+                "scope": record["scope"],
+                "origin": record["origin"],
+                "target_refs": [item["target_ref"]],
+                "input_refs": [source["ref"] for source in item["input_refs"]],
+                "content": content,
+                "evidence_refs": record["evidence_refs"],
+                "status": status,
+                "status_reason": reason,
+                "signals": record["signals"],
+                "provider_artifact_ref": record["provider_artifact_ref"],
+                "reused": outcome.reused,
+            }
+        )
+        method_counts = counts.setdefault(
+            item["method"], {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
+        )
+        method_counts["no_text" if record["outcome"] == "no_text" else status] += 1
     request = {
         key: input.start[key]
         for key in (
@@ -87,8 +169,8 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
             "page_images": page_images,
             "picture_images": assembly["picture_images"],
         },
-        "inventory": {"ref": input.inventory.ref, "counts": {}},
-        "enrichments": [],
+        "inventory": {"ref": input.inventory.ref, "counts": counts},
+        "enrichments": enrichments,
         "limitations": limitations,
     }
     ref = f"requests/{input.start['request_id']}/result.json"

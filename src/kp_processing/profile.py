@@ -2,8 +2,9 @@
 
 import importlib
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import yaml
@@ -23,6 +24,7 @@ class Method:
     version: int  # 1
     components: tuple[str, ...]  # declared order, e.g. ("docling-slim@2.132.0", ...)
     module_digest: str  # hex sha256 of the method package, computed when the profile loads
+    package: ModuleType = field(compare=False, repr=False)  # kp_processing.methods.<id>
 
     @property
     def ref(self) -> str:
@@ -84,6 +86,7 @@ def load_profile(path: Path) -> Profile:
                 version=version,
                 components=tuple(entry["components"]),
                 module_digest=module_digest(Path(package.__file__).parent),
+                package=package,
             )
         return Profile(
             profile=data["profile"],

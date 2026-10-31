@@ -49,7 +49,11 @@ async def test_a_losing_json_writer_returns_the_registered_winner(ports, runtime
     assembly = await parse.run_assemble(
         AssembleInput("doc_1", plan.source_key, plan.source_sha256, groups), ports, runtime
     )
-    registered = await inventory.run(InventoryInput("doc_1", assembly), ports, runtime)
+    registered = await inventory.run(
+        InventoryInput("doc_1", plan.source_key, plan.source_sha256, groups, assembly),
+        ports,
+        runtime,
+    )
 
     for item in [*groups, assembly, registered]:
         assert item.reused is True

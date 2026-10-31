@@ -28,7 +28,6 @@ from kp_processing.methods.docling_parse.serialization import (
     group_json,
     restore_page,
 )
-from kp_processing.ports.object_store import ObjectNotFound
 from kp_processing.stages import (
     AssembleInput,
     GroupInput,
@@ -37,6 +36,7 @@ from kp_processing.stages import (
     ProcessingFailure,
     Registered,
     Runtime,
+    read_verified,
     register,
     registered,
     sha256,
@@ -136,12 +136,7 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
     next_page = 1
     count = None
     for group_ref in input.groups:
-        try:
-            data = await ports.store.get(group_ref.ref)
-        except ObjectNotFound as exc:
-            raise _incomplete() from exc
-        if sha256(data) != group_ref.digest:
-            raise _incomplete()
+        data = await read_verified(ports.store, group_ref.ref, group_ref.digest, _incomplete)
         try:
             group = Group.model_validate_json(data)
             first, last = group.pages
@@ -163,12 +158,7 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
         except (ValueError, TypeError) as exc:
             raise _incomplete() from exc
         for saved, image in zip(group.page_results, group.page_images, strict=True):
-            try:
-                png = await ports.store.get(image.ref)
-            except ObjectNotFound as exc:
-                raise _incomplete() from exc
-            if sha256(png) != image.sha256:
-                raise _incomplete()
+            png = await read_verified(ports.store, image.ref, image.sha256, _incomplete)
             try:
                 pages.append(await asyncio.to_thread(restore_page, saved, png))
             except (ValueError, TypeError, OSError) as exc:

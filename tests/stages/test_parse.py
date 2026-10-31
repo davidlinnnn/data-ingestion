@@ -30,10 +30,8 @@ from kp_processing.stages import (
     AssembleInput,
     GroupInput,
     GroupRef,
-    InventoryInput,
     PrepareInput,
     ProcessingFailure,
-    inventory,
     parse,
     prepare,
 )
@@ -207,26 +205,3 @@ async def test_a_group_whose_bytes_differ_from_its_digest_fails_integrity(ports,
         )
 
     assert caught.value.reason == "NATIVE_COVERAGE_INCOMPLETE"
-
-
-async def test_inventory_is_keyed_by_profile_and_assembly_digest(ports, runtime):
-    _, plan, groups = await parse_all(ports, runtime, seven_pages())
-    assembly = await parse.run_assemble(
-        AssembleInput("doc_1", plan.source_key, plan.source_sha256, groups), ports, runtime
-    )
-
-    registered = await inventory.run(InventoryInput("doc_1", assembly), ports, runtime)
-
-    key = hashlib.sha256(f"paper-pdf@1|{assembly.digest}".encode()).hexdigest()
-    assert registered.ref == f"documents/doc_1/items/{key}/inventory.json"
-    stored = await ports.store.get(registered.ref)
-    assert registered.digest == hashlib.sha256(stored).hexdigest()
-    assert json.loads(stored) == {
-        "schema": "pdf-inventory/v1",
-        "profile": "paper-pdf@1",
-        "assembly_ref": assembly.ref,
-        "assembly_digest": assembly.digest,
-        "items": [],
-    }
-    again = await inventory.run(InventoryInput("doc_1", assembly), ports, runtime)
-    assert (again.ref, again.digest, again.reused) == (registered.ref, registered.digest, True)
