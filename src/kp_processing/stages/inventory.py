@@ -2,6 +2,7 @@
 
 import json
 
+from kp_processing.identity import canonical_json
 from kp_processing.methods import InventoryItem
 from kp_processing.stages import (
     InventoryInput,
@@ -9,6 +10,7 @@ from kp_processing.stages import (
     Ports,
     Runtime,
     in_thread,
+    item_prefix,
     register,
     registered,
     sha256,
@@ -29,13 +31,11 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
     order; input_refs follow the package's INPUTS. Write-once; reused=True when it already
     existed.
     """
-    profile = runtime.profile.profile
+    profile = runtime.profile.id
     item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
     identity = [[m.ref, m.module_digest] for m in item_methods]
-    key = sha256(
-        json.dumps([profile, input.assembly.digest, identity], separators=(",", ":")).encode()
-    )
-    ref = f"documents/{input.document_uid}/items/{key}/inventory.json"
+    key = sha256(canonical_json([profile, input.assembly.digest, identity]))
+    ref = f"{item_prefix(input.document_uid, key)}/inventory.json"
     if existing := await registered(ports.store, ref):
         body = json.loads(await ports.store.get(existing.ref))
         return InventoryRef(existing.ref, existing.digest, True, len(body["items"]))
@@ -80,7 +80,7 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
                     "input_refs": [source(kind, target_ref, page) for kind in package.INPUTS],
                 }
             )
-    data = json.dumps(
+    data = canonical_json(
         {
             "schema": "pdf-inventory/v1",
             "profile": profile,
@@ -88,9 +88,7 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
             "assembly_digest": input.assembly.digest,
             "items": items,
         },
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode()
+    )
     result = await register(ports.store, ref, data)
     count = len(items)
     if result.reused:

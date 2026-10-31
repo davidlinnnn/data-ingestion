@@ -20,7 +20,7 @@ def variant(tmp_path: Path, old: str, new: str) -> Path:
 def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
     p = load_profile(PAPER_PDF_1)
 
-    assert p.profile == "paper-pdf@1"
+    assert p.id == "paper-pdf@1"
     assert p.status_rule == "v1"
     assert [m.ref for m in p.methods.values()] == [
         "docling-parse@1",

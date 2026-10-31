@@ -4,6 +4,13 @@ import hashlib
 import json
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
+
+
+def canonical_json(value: Any) -> bytes:
+    """UTF-8 JSON with sorted keys, no whitespace and no NaN or infinity: the bytes of every
+    registered JSON object outside the method packages."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
 
 
 def module_digest(package_dir: Path) -> str:

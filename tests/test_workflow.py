@@ -48,6 +48,23 @@ async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, s
     return outcome, handle.result_run_id or ""
 
 
+async def test_a_non_object_start_input_fails_prepare(client, ports, runtime):
+    request_id = f"req_{uuid.uuid4().hex[:8]}"
+    async with workers(client, ports, runtime):
+        outcome = await client.execute_workflow(
+            WORKFLOW, [1, 2], id=request_id, task_queue=ORCHESTRATION_QUEUE
+        )
+
+    ref = f"requests/{request_id}/failure.json"
+    assert outcome == {"outcome": "failed", "manifest_ref": ref}
+    failure = json.loads(await ports.store.get(ref))
+    assert failure["error"]["reason"] == "INVALID_START_INPUT"
+    last = ports.reporter.reports[-1]  # type: ignore[attr-defined]
+    assert (last.stage, last.state, last.error, last.manifest_ref) == (
+        "prepare", "failed", failure["error"], ref,
+    )  # fmt: skip
+
+
 def shape(reports: list[StatusReport]) -> list[tuple]:
     return [(r.seq, r.stage, r.state, r.progress) for r in reports]
 

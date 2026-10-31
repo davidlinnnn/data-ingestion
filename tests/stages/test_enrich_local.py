@@ -9,6 +9,7 @@ import pytest
 
 from kp_processing.identity import reuse_key
 from kp_processing.methods import code, picture_ocr
+from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.stages import (
     AssembleInput,
     EnrichInput,
@@ -203,6 +204,25 @@ async def test_a_method_added_to_the_draft_profile_gets_a_new_inventory_and_reus
 
 
 # --- local enrichment ----------------------------------------------------------------------
+
+
+async def test_enrichment_files_exist_before_the_outcome_is_registered(ports, runtime):
+    checked = []
+
+    class CheckingStore(DictObjectStore):
+        async def put_if_absent(self, key: str, data: bytes) -> bool:
+            if key.endswith("/outcome.json"):
+                record = json.loads(data)
+                refs = record["evidence_refs"] + [record["provider_artifact_ref"]]
+                for ref in refs:
+                    if ref:
+                        assert await self.head(ref) is not None
+                        checked.append(ref)
+            return await super().put_if_absent(key, data)
+
+    await enriched(dataclasses.replace(ports, store=CheckingStore()), runtime, enriched_paper())
+
+    assert checked
 
 
 async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runtime):

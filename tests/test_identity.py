@@ -5,8 +5,20 @@ from typing import Any
 
 import pytest
 
-from kp_processing.identity import module_digest, reuse_key
+from kp_processing.identity import canonical_json, module_digest, reuse_key
 from kp_processing.profile import PROFILES_DIR, load_profile
+
+
+def test_canonical_json_preserves_compact_sorted_json_bytes():
+    assert canonical_json({"z": [None, True, 1.5, {"b": 2, "a": 1}], "a": "é"}) == (
+        b'{"a":"\\u00e9","z":[null,true,1.5,{"a":1,"b":2}]}'
+    )
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_canonical_json_rejects_nonfinite_numbers(value):
+    with pytest.raises(ValueError):
+        canonical_json({"value": value})
 
 
 @pytest.fixture

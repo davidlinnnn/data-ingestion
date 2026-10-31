@@ -17,13 +17,13 @@ import argparse
 import json
 import re
 import threading
+from dataclasses import fields
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-FIELDS = {
-    "request_id", "attempt_id", "seq", "stages_version", "stage", "state", "progress",
-    "message", "method_version", "manifest_ref", "observed_at", "error",
-}  # fmt: skip
+from kp_processing.ports.status_reporter import StatusReport
+
+FIELDS = {field.name for field in fields(StatusReport)}
 PATH = re.compile(r"^/v1/requests/([^/]+)/status-reports$")
 
 

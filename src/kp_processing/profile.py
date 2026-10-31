@@ -63,8 +63,8 @@ class Limitation:
 
 
 @dataclass(frozen=True)
-class Profile:
-    profile: str  # "paper-pdf@1"
+class ProcessingProfile:
+    id: str  # "paper-pdf@1"
     released: bool
     status_rule: str
     methods: dict[str, Method]  # keyed by method id, in file order
@@ -72,7 +72,7 @@ class Profile:
     runtime: dict[str, Any]  # has every REQUIRED_RUNTIME key; never enters a reuse key
 
 
-def load_profile(path: Path) -> Profile:
+def load_profile(path: Path) -> ProcessingProfile:
     """Load a profile yaml and check it against the method packages.
 
     Raises ProfileError when a required key (profile, status_rule, methods, limitations,
@@ -120,8 +120,8 @@ def load_profile(path: Path) -> Profile:
                 module_digest=module_digest(Path(package.__file__).parent),
                 package=package,
             )
-        return Profile(
-            profile=data["profile"],
+        return ProcessingProfile(
+            id=data["profile"],
             released=data.get("released", False),
             status_rule=data["status_rule"],
             methods=methods,

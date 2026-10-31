@@ -10,6 +10,7 @@ import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
 from docling.utils.locks import pypdfium2_lock
 
+from kp_processing.identity import canonical_json
 from kp_processing.methods.docling_parse import IMAGES_SCALE
 from kp_processing.ports.object_store import ObjectNotFound
 from kp_processing.stages import (
@@ -23,7 +24,7 @@ from kp_processing.stages import (
 )
 
 
-def _source_key(start: dict[str, Any]) -> str:
+def _source_key(start: Any, custody_bucket: str) -> str:
     invalid = ProcessingFailure(
         "platform", "configuration", "INVALID_START_INPUT", "Invalid workflow start input"
     )
@@ -61,7 +62,14 @@ def _source_key(start: dict[str, Any]) -> str:
         ref = urlsplit(file["custody_ref"])
     except ValueError as exc:
         raise invalid from exc
-    if ref.scheme != "s3" or not ref.netloc or not ref.path[1:] or ref.query or ref.fragment:
+    if (
+        ref.scheme != "s3"
+        or ref.netloc != custody_bucket
+        or not ref.netloc
+        or not ref.path[1:]
+        or ref.query
+        or ref.fragment
+    ):
         raise invalid
     return ref.path[1:]
 
@@ -116,9 +124,9 @@ async def run(input: PrepareInput, ports: Ports, runtime: Runtime) -> Plan:
 
     1. The start input has every admission spec §10 field with its JSON type, priority is
        normal or low, and files holds exactly one entry with role main and media_type
-       application/pdf whose custody_ref is s3://{bucket}/{key}
+       application/pdf whose custody_ref is s3://{runtime.custody_bucket}/{key}
        -> platform, configuration, INVALID_START_INPUT.
-    2. adopted_version equals runtime.profile.profile
+    2. adopted_version equals runtime.profile.id
        -> platform, integrity, ADOPTED_VERSION_MISMATCH.
     3. The declared size is at most runtime preflight.max_bytes
        -> source, source, SIZE_LIMIT_EXCEEDED.
@@ -137,8 +145,8 @@ async def run(input: PrepareInput, ports: Ports, runtime: Runtime) -> Plan:
     as JSON to requests/{request_id}/attempts/{run_id}/plan.json (write-once) and returns it.
     """
     start = input.start
-    key = _source_key(start)
-    if start["adopted_version"] != runtime.profile.profile:
+    key = _source_key(start, runtime.custody_bucket)
+    if start["adopted_version"] != runtime.profile.id:
         raise ProcessingFailure(
             "platform",
             "integrity",
@@ -174,7 +182,7 @@ async def run(input: PrepareInput, ports: Ports, runtime: Runtime) -> Plan:
         runtime=runtime.profile.runtime,
         ref=f"requests/{start['request_id']}/attempts/{input.run_id}/plan.json",
     )
-    encoded = json.dumps(asdict(plan), sort_keys=True, separators=(",", ":")).encode()
+    encoded = canonical_json(asdict(plan))
     if not await ports.store.put_if_absent(plan.ref, encoded):
         return Plan(**json.loads(await ports.store.get(plan.ref)))
     return plan

@@ -27,6 +27,7 @@ with workflow.unsafe.imports_passed_through():
         OutcomeRef,
         Plan,
         PrepareInput,
+        ProcessingFailure,
         Registered,
         error_block,
     )
@@ -97,8 +98,9 @@ class PaperPdfWorkflow:
         self._delivered = True  # whether the last report sent reached the receiver
 
     @workflow.run
-    async def run(self, start: dict[str, Any]) -> dict[str, Any]:
+    async def run(self, start: Any) -> dict[str, Any]:
         """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}."""
+        # admission may send anything; prepare validates
         info = workflow.info()
         self._start = start
         stage: Stage = "prepare"
@@ -177,7 +179,7 @@ class PaperPdfWorkflow:
         queue it behind the previous one so that reports leave in seq order."""
         info = workflow.info()
         self._seq += 1
-        version = self._start.get("adopted_version")
+        version = self._start.get("adopted_version") if isinstance(self._start, dict) else None
         report = StatusReport(
             request_id=info.workflow_id,
             attempt_id=info.run_id,
@@ -219,14 +221,14 @@ def _failure_details(err: ActivityError) -> dict[str, Any]:
     if isinstance(cause, ApplicationError) and cause.type == FAILURE_TYPE and cause.details:
         return cause.details[0]
     # Retries exhausted, timeouts and bugs: a platform failure that a redispatch may cure.
-    return {
-        "cause": "platform",
-        "category": "platform",
-        "reason": "PLATFORM_ERROR",
-        "message": str(cause or err),
-        "retryable": True,
-        "metadata": {"activity": err.activity_type or ""},
-    }
+    return ProcessingFailure(
+        "platform",
+        "platform",
+        "PLATFORM_ERROR",
+        str(cause or err),
+        retryable=True,
+        metadata={"activity": err.activity_type or ""},
+    ).details()
 
 
 def _rfc3339(moment: Any) -> str:

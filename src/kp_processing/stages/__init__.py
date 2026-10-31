@@ -25,7 +25,7 @@ from typing import Any, Literal
 from kp_processing.ports.clock import Clock, SystemClock
 from kp_processing.ports.object_store import ObjectNotFound, ObjectStore
 from kp_processing.ports.status_reporter import StatusReporter
-from kp_processing.profile import Profile
+from kp_processing.profile import ProcessingProfile
 
 Cause = Literal["source", "platform"]
 # v2 §6: configuration, method and integrity fail the document even on one item; source
@@ -44,7 +44,9 @@ class Ports:
 
 @dataclass(frozen=True)
 class Runtime:
-    profile: Profile  # the worker's Processing Profile, loaded at start
+    profile: ProcessingProfile  # the worker's Processing Profile, loaded at start
+    # The bucket ports.store reads; until #57 decides custody, custody_ref must name it.
+    custody_bucket: str
     build_id: str  # the worker build, e.g. "1-r1"; recorded in runtime_identity
 
 
@@ -102,7 +104,7 @@ def sha256(data: bytes) -> str:
 
 @dataclass(frozen=True)
 class PrepareInput:
-    start: dict[str, Any]  # admission spec §10 start input, as received
+    start: Any  # admission may send anything; prepare validates
     run_id: str  # Temporal run ID; names the attempt's scratch prefix
 
 
@@ -251,7 +253,7 @@ class FinalizeInput:
 @dataclass(frozen=True)
 class FailureInput:
     request_id: str  # the workflow ID; the start input may be too malformed to hold it
-    start: dict[str, Any]
+    start: Any  # admission may send anything; prepare validates
     stage: Literal["prepare", "parse", "enrich", "finalize"]
     cause: Cause
     error: dict[str, Any]  # error_block()
