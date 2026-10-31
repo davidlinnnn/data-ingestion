@@ -8,6 +8,11 @@ Object keys (#129, object storage and registration):
 
     documents/{document_uid}/items/{key}/...         registered, write-once, shared across requests
     requests/{request_id}/attempts/{run_id}/plan.json the frozen group plan of one attempt
+    requests/{request_id}/attempts/{run_id}/receipts/{item_id}/{attempt}.json
+                                                      external request receipts (#133)
+    requests/{request_id}/attempts/{run_id}/outcomes/{key}/outcome.json
+                                                      outcome records that must not be reused
+    documents/{document_uid}/service-unavailable/{request_id}  redrive marker (empty)
     requests/{request_id}/result.json | failure.json  the Processing Result or failure report
 
 Enrichment (#132): inventory lists one item per enrichment target; an enrichment Activity
@@ -22,10 +27,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from kp_processing.identity import canonical_json
+from kp_processing.methods import InventoryItem, MethodOutput, MethodUnavailable
 from kp_processing.ports.clock import Clock, SystemClock
+from kp_processing.ports.inference import InferenceTransport
 from kp_processing.ports.object_store import ObjectNotFound, ObjectStore
 from kp_processing.ports.status_reporter import StatusReporter
-from kp_processing.profile import ProcessingProfile
+from kp_processing.profile import Method, ProcessingProfile
 
 Cause = Literal["source", "platform"]
 # v2 §6: configuration, method and integrity fail the document even on one item; source
@@ -40,6 +48,7 @@ class Ports:
     reporter: StatusReporter
     clock: Clock = SystemClock()
     heartbeat: Callable[[], None] = lambda: None  # called after each completed item
+    vlm: InferenceTransport | None = None  # only the vlm worker has one
 
 
 @dataclass(frozen=True)
@@ -230,6 +239,8 @@ class InventoryRef:
 class EnrichInput:
     document_uid: str
     inventory: InventoryRef
+    request_id: str  # with run_id, names the attempt's scratch prefix (receipts)
+    run_id: str
 
 
 @dataclass(frozen=True)
@@ -238,6 +249,117 @@ class OutcomeRef:
     ref: str  # key of the registered outcome.json
     digest: str  # sha256 of its bytes
     reused: bool  # True when it was registered before this call
+
+
+def method_failure(item_id: str, error: Exception) -> ProcessingFailure:
+    """A method's exception as the document failure: MethodUnavailable is configuration /
+    METHOD_UNAVAILABLE, anything else method / METHOD_ERROR."""
+    if isinstance(error, MethodUnavailable):
+        return ProcessingFailure(
+            "platform",
+            "configuration",
+            "METHOD_UNAVAILABLE",
+            str(error),
+            metadata={"item_id": item_id},
+        )
+    return ProcessingFailure(
+        "platform",
+        "method",
+        "METHOD_ERROR",
+        "Enrichment method failed",
+        metadata={"item_id": item_id},
+    )
+
+
+def enrichment_key(document_uid: str, item: InventoryItem, method: Method) -> str:
+    """The item's reuse key, including its ordered inputs and target geometry."""
+    target = canonical_json({key: item[key] for key in ("target_ref", "page", "bbox")}).decode(
+        "utf-8"
+    )
+    return method.reuse_key(document_uid, [*(ref["sha256"] for ref in item["input_refs"]), target])
+
+
+async def enrichment_inputs(
+    store: ObjectStore,
+    item: InventoryItem,
+    verified: dict[str, tuple[bytes, str]],
+    lock: asyncio.Lock,
+) -> list[bytes]:
+    """Read each ref once per call; missing bytes or conflicting digests fail integrity."""
+
+    def invalid() -> ProcessingFailure:
+        return ProcessingFailure(
+            "platform",
+            "integrity",
+            "INPUT_DIGEST_MISMATCH",
+            "Enrichment input is missing or differs from its declared digest",
+            metadata={"item_id": item["item_id"]},
+        )
+
+    inputs = []
+    async with lock:
+        for source in item["input_refs"]:
+            if source["ref"] not in verified:
+                data = await read_verified(store, source["ref"], source["sha256"], invalid)
+                verified[source["ref"]] = (data, source["sha256"])
+            data, digest = verified[source["ref"]]
+            if digest != source["sha256"]:
+                raise invalid()
+            inputs.append(data)
+    return inputs
+
+
+def enrichment_body(method: Method, prefix: str, output: MethodOutput) -> bytes:
+    """The enrichment-outcome/v1 bytes, with each declared field's outcome when present."""
+    record = {
+        "schema": "enrichment-outcome/v1",
+        "method_ref": {
+            "id": method.id,
+            "version": method.version,
+            "digest": method.module_digest,
+        },
+        "scope": "item",
+        "origin": method.package.ORIGIN,
+        "outcome": output.outcome,
+        "reason": output.reason,
+        "content": output.content,
+        "evidence_refs": [f"{prefix}/{name}" for name in output.evidence],
+        "provider_artifact_ref": (
+            f"{prefix}/{output.provider_artifact}" if output.provider_artifact else None
+        ),
+        "signals": output.signals,
+        "contradictions": output.contradictions,
+    }
+    if hasattr(method.package, "FIELDS"):
+        fields = {}
+        for name in method.package.FIELDS:
+            field = (
+                MethodOutput(outcome="failed", reason=output.reason)
+                if output.outcome == "failed"
+                else output.fields[name]
+            )
+            fields[name] = {
+                "outcome": field.outcome,
+                "reason": field.reason,
+                "content": field.content,
+                "signals": field.signals,
+                "contradictions": field.contradictions,
+            }
+        record["fields"] = fields
+    return canonical_json(record)
+
+
+async def register_enrichment(
+    store: ObjectStore,
+    item_id: str,
+    method: Method,
+    prefix: str,
+    output: MethodOutput,
+) -> OutcomeRef:
+    """Register the item's files before its outcome; return the first writer's record."""
+    body = enrichment_body(method, prefix, output)
+    result = await register_item(store, prefix, "outcome.json", body, output.files)
+    return OutcomeRef(item_id, result.ref, result.digest, result.reused)
 
 
 @dataclass(frozen=True)

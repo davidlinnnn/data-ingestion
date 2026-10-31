@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-Ef6Pahp5GOG4uvaInZ6h8BKV3bsiY",
+  "object": "chat.completion",
+  "created": 1793464802,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"Workflow diagram of SkillOpt’s batch-level skill optimization and epoch-wise slow/meta update process.\",\"description\":\"A flowchart shows a fixed agent using a trainable skill document to produce a rollout batch from the training split. The rollouts are divided into minibatches, which optimizer models use to propose add, delete, or replace edits. A batch-level merge deduplicates and resolves conflicts; edits are ranked and clipped under a scheduled budget, then applied to form a candidate skill. A validation gate accepts the candidate as the current skill or sends rejected edits to a buffer, while the best validated skill is recorded. A lower epoch-wise update loop compares previous and current skills, summarizes improvements, regressions, persistent failures, and stable successes, and uses reflection and a meta-skill optimizer for slow updates to future model calls. The test split is shown as locked until the final report.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3307,
+    "completion_tokens": 301,
+    "total_tokens": 3608,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 99,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

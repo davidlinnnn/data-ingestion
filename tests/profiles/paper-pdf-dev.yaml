@@ -1,6 +1,6 @@
-# DEV profile for tests and local runs (#129): paper-pdf@1 with the native parse and the local
-# enrichment methods (#132); the VLM and summary methods join with #133 and #134. The VLM
-# component is the DEV reference model. Not a released profile.
+# DEV profile for tests and local runs (#129): paper-pdf@1 with the native parse, the local
+# enrichment methods (#132) and the VLM methods (#133); the summary method joins with #134. The
+# VLM component is the DEV reference model. Not a released profile.
 profile: paper-pdf@1
 released: false
 status_rule: v1
@@ -15,6 +15,12 @@ methods:
   picture-ocr@1:
     components:
       - rapidocr-ppocrv6-small
+  picture-interpretation@1:
+    components:
+      - openai/gpt-6-luna
+  formula@1:
+    components:
+      - openai/gpt-6-luna
   code@1:
     components:
       - openai/gpt-6-luna
@@ -26,14 +32,25 @@ limitations:
     detail: Reading order can be wrong on some layouts, such as the first page of CVPR-style papers or author order.
   - code: CAPTION_INTERRUPTS_BODY
     detail: A figure or table caption can be placed inside a body paragraph.
+  - code: INLINE_MATH_NOT_RECONSTRUCTED
+    detail: Math inside body paragraphs keeps the text layer's characters; it is not rebuilt as LaTeX, so sub- and superscripts can be flattened.
+  - code: INLINE_CODE_NOT_RECONSTRUCTED
+    detail: Short code inside body paragraphs keeps the text layer's characters; only code blocks are rebuilt.
 
 runtime:
+  vlm_request_deadline_s: {connect: 5, total: 60}
   heartbeat_interval_s: 15
-  heartbeat_timeout_s: {inference: 60}
+  heartbeat_timeout_s: {inference: 60, vlm: 90}
   start_to_close_s: {orchestration: 120, inference: 900}
   activity_retry:
     orchestration: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 5}
     inference: {initial_s: 1, multiplier: 2, cap_s: 100, max_attempts: 3}
+    vlm: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
+  external_start_to_close_slack_s: 300
+  retry: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
+  vlm_concurrency_per_document: 4
+  request_cap: {per_item: 3, extra: 20}
+  enrichment_stage_budget_s: {p50: 120, hard: 240}
   parse_group_pages: 5
   preflight: {max_pages: 64, max_bytes: 104857600, max_page_pixels: 20000000}
   status_report_budget_s: 1
