@@ -1,6 +1,7 @@
 """InferenceTransport port: one OpenAI-compatible chat-completions service, such as the company
 VLM or the DEV reference model (#129, inference adapter; #93 §3.2)."""
 
+import asyncio
 import inspect
 import json
 from collections.abc import Awaitable, Callable
@@ -77,7 +78,42 @@ class OpenAIChat:
         self.total_s = total_s
 
     async def complete(self, request: dict[str, Any]) -> Completion:
-        raise NotImplementedError
+        try:
+            async with asyncio.timeout(self.total_s):
+                async with self.client.stream(
+                    "POST",
+                    f"{self.base_url}/chat/completions",
+                    json={**request, "model": self.model},
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    timeout=httpx.Timeout(self.total_s, connect=self.connect_s),
+                ) as response:
+                    body = await response.aread()
+                    status = response.status_code
+        except (TimeoutError, httpx.TimeoutException) as exc:
+            raise ServiceUnavailable("TIMEOUT") from exc
+        except httpx.TransportError as exc:
+            raise ServiceUnavailable("CONNECTION") from exc
+        if status == 429:
+            raise ServiceUnavailable("HTTP_429")
+        if 500 <= status < 600:
+            raise ServiceUnavailable("HTTP_5XX")
+        if not 200 <= status < 300:
+            raise RequestRejected(status)
+        try:
+            data = json.loads(body)
+            message = data["choices"][0]["message"]
+            if not isinstance(message, dict):
+                raise ValueError("Missing response message")
+            return Completion(
+                message.get("content"),
+                message.get("refusal"),
+                data.get("model", ""),
+                data.get("system_fingerprint"),
+                data.get("usage", {}),
+                body,
+            )
+        except (ValueError, KeyError, IndexError, TypeError) as exc:
+            raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
 
 
 class FakeInference:

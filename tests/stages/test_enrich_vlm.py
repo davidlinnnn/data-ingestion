@@ -306,6 +306,20 @@ async def test_a_formula_without_a_text_layer_has_nothing_to_contradict(ports, r
     assert output.signals == {"native_text": ""}
 
 
+@pytest.mark.parametrize(
+    ("native", "latex", "expected"),
+    [
+        ("a ≤ 2b", r"a \leq 2b", False),
+        ("a ≥ 2 ≠ b", r"a \ge 2 \ne b", False),
+        ("x ≈ 0.5 − y", r"x \approx 0.5 - y \tag{2.1a}", False),
+        ("a ≤ 2b", "a < 2b", True),
+        ("αβ", r"\alpha\beta = 1", False),  # nothing to compare on the native side
+    ],
+)
+def test_text_layer_signs_compare_like_their_latex_commands(native, latex, expected):
+    assert formula.mismatch(native, latex) is expected
+
+
 def test_the_model_is_the_shared_vlm_component(runtime):
     assert enrich_vlm.model(runtime.profile) == "gpt-6-luna"
 
@@ -609,6 +623,27 @@ async def test_a_redrive_sends_again_instead_of_reusing_the_failure(ports, runti
     assert record["outcome"] == "success"
 
 
+async def test_a_redrive_registers_its_own_answer_not_the_failed_attempts(ports, runtime):
+    input = await native(ports, runtime, one_picture_paper())
+    down = dataclasses.replace(ports, vlm=answers("BAD", unavailable(), unavailable()))
+    (failed,) = await run_vlm(down, runtime, input.inventory)
+    failed_record = (await records(ports, [failed]))[failed.item_id]
+
+    (outcome,) = await run_vlm(ports, runtime, input.inventory, "req_2", "run_2")
+
+    assert failed_record["provider_artifact_ref"].startswith(
+        "requests/req_1/attempts/run_1/outcomes/"
+    )
+    # The last Completion of the failed chain was the invalid one; the timeouts brought none.
+    assert await ports.store.get(failed_record["provider_artifact_ref"]) == (
+        completion("{not json").body
+    )
+    record = (await records(ports, [outcome]))[outcome.item_id]
+    (request,) = ports.vlm.requests
+    assert record["provider_artifact_ref"].startswith("documents/doc_1/items/")
+    assert await ports.store.get(record["provider_artifact_ref"]) == canned(request).body
+
+
 async def test_a_document_without_service_failures_leaves_no_marker(ports, runtime):
     input = await native(ports, runtime, one_picture_paper())
 
@@ -712,6 +747,7 @@ async def test_v9_receipts_add_under_100_ms_per_request_at_p95(ports, runtime, v
     assert len(per_request) == 30
     assert all(len(calls) >= 2 for calls in timing.per_item.values())  # written, completed
     p95 = statistics.quantiles(per_request, n=20)[-1]
+    print(f"V9 p95 receipt overhead {p95 * 1000:.1f} ms over {len(per_request)} requests")
     assert 0 < p95 < 0.1
 
 

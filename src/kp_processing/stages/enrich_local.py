@@ -1,8 +1,8 @@
 """local enrichment: the item-scope methods that run on the inference worker (#132)."""
 
+import asyncio
 import json
 
-from kp_processing.identity import canonical_json
 from kp_processing.methods import InventoryItem, MethodUnavailable
 from kp_processing.stages import (
     EnrichInput,
@@ -10,10 +10,11 @@ from kp_processing.stages import (
     Ports,
     ProcessingFailure,
     Runtime,
+    enrichment_inputs,
+    enrichment_key,
     in_thread,
     item_prefix,
-    read_verified,
-    register_item,
+    register_enrichment,
     registered,
 )
 
@@ -53,19 +54,14 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     """
     inventory = json.loads(await ports.store.get(input.inventory.ref))
     verified: dict[str, tuple[bytes, str]] = {}
+    lock = asyncio.Lock()
     outcomes = []
     item: InventoryItem
     for item in inventory["items"]:
         if item["method"] not in METHODS:
             continue
         method = runtime.profile.methods[item["method"]]
-        target = canonical_json({key: item[key] for key in ("target_ref", "page", "bbox")}).decode(
-            "utf-8"
-        )
-        key = method.reuse_key(
-            input.document_uid,
-            [*(ref["sha256"] for ref in item["input_refs"]), target],
-        )
+        key = enrichment_key(input.document_uid, item, method)
         prefix = item_prefix(input.document_uid, key)
         ref = f"{prefix}/outcome.json"
         if existing := await registered(ports.store, ref):
@@ -73,24 +69,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
             ports.heartbeat()
             continue
 
-        def invalid(item_id: str = item["item_id"]) -> ProcessingFailure:
-            return ProcessingFailure(
-                "platform",
-                "integrity",
-                "INPUT_DIGEST_MISMATCH",
-                "Enrichment input is missing or differs from its declared digest",
-                metadata={"item_id": item_id},
-            )
-
-        inputs = []
-        for source in item["input_refs"]:
-            if source["ref"] not in verified:
-                data = await read_verified(ports.store, source["ref"], source["sha256"], invalid)
-                verified[source["ref"]] = (data, source["sha256"])
-            data, digest = verified[source["ref"]]
-            if digest != source["sha256"]:
-                raise invalid()
-            inputs.append(data)
+        inputs = await enrichment_inputs(ports.store, item, verified, lock)
         package = method.package
         try:
             output = await in_thread(package.run, item, inputs)
@@ -110,28 +89,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                 "Enrichment method failed",
                 metadata={"item_id": item["item_id"]},
             ) from exc
-        body = canonical_json(
-            {
-                "schema": "enrichment-outcome/v1",
-                "method_ref": {
-                    "id": method.id,
-                    "version": method.version,
-                    "digest": method.module_digest,
-                },
-                "scope": "item",
-                "origin": package.ORIGIN,
-                "outcome": output.outcome,
-                "reason": output.reason,
-                "content": output.content,
-                "evidence_refs": [f"{prefix}/{name}" for name in output.evidence],
-                "provider_artifact_ref": (
-                    f"{prefix}/{output.provider_artifact}" if output.provider_artifact else None
-                ),
-                "signals": output.signals,
-                "contradictions": output.contradictions,
-            },
+        outcomes.append(
+            await register_enrichment(ports.store, item["item_id"], method, prefix, output)
         )
-        result = await register_item(ports.store, prefix, "outcome.json", body, output.files)
-        outcomes.append(OutcomeRef(item["item_id"], result.ref, result.digest, result.reused))
         ports.heartbeat()
     return outcomes
