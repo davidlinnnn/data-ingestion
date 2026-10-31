@@ -1,10 +1,9 @@
 """inventory: the enrichment inventory bound to one assembly (#129)."""
 
 import asyncio
-import importlib
 import json
 
-from kp_processing.methods import InventoryItem, package_name
+from kp_processing.methods import InventoryItem
 from kp_processing.stages import (
     InventoryInput,
     InventoryRef,
@@ -56,8 +55,8 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
         raise ValueError(f"Unknown input kind {kind}")
 
     items: list[InventoryItem] = []
-    for method_id in runtime.profile.methods:
-        package = importlib.import_module(package_name(method_id))
+    for method_id, method in runtime.profile.methods.items():
+        package = method.package
         if not hasattr(package, "TARGET"):
             continue
         collection, label = package.TARGET

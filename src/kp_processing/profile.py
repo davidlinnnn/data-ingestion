@@ -2,14 +2,14 @@
 
 import importlib
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import yaml
 
 from kp_processing.identity import module_digest
-from kp_processing.methods import package_name
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
 
@@ -24,6 +24,7 @@ class Method:
     version: int  # 1
     components: tuple[str, ...]  # declared order, e.g. ("docling-slim@2.132.0", ...)
     module_digest: str  # hex sha256 of the method package, computed when the profile loads
+    package: ModuleType = field(compare=False, repr=False)  # kp_processing.methods.<id>
 
     @property
     def ref(self) -> str:
@@ -67,11 +68,12 @@ def load_profile(path: Path) -> Profile:
             method_id, version = match.group(1), int(match.group(2))
             if method_id in methods:
                 raise ProfileError(f"{path}: duplicate method ID {method_id}")
+            package_name = f"kp_processing.methods.{method_id.replace('-', '_')}"
             try:
-                package = importlib.import_module(package_name(method_id))
+                package = importlib.import_module(package_name)
             except ImportError as exc:
                 raise ProfileError(
-                    f"{path}: cannot import method {ref} ({package_name(method_id)}): {exc}"
+                    f"{path}: cannot import method {ref} ({package_name}): {exc}"
                 ) from exc
             if getattr(package, "ID", None) != method_id:
                 raise ProfileError(f"{path}: {ref} package ID differs from {method_id}")
@@ -84,6 +86,7 @@ def load_profile(path: Path) -> Profile:
                 version=version,
                 components=tuple(entry["components"]),
                 module_digest=module_digest(Path(package.__file__).parent),
+                package=package,
             )
         return Profile(
             profile=data["profile"],

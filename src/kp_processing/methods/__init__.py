@@ -19,10 +19,6 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, TypedDict
 
 
-def package_name(method_id: str) -> str:
-    return f"kp_processing.methods.{method_id.replace('-', '_')}"
-
-
 class InventoryItem(TypedDict):
     item_id: str  # "<method id>:<target_ref>"
     method: str

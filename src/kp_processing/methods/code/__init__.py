@@ -62,6 +62,7 @@ def run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput:
                         }
                     )
     if not characters:
+        # shortcut: no VLM fallback for a block without a text layer, until #133 adds one.
         return MethodOutput(outcome="failed", reason="NO_TEXT_LAYER")
 
     lines: list[dict[str, Any]] = []
