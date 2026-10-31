@@ -43,3 +43,5 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
   broken measurement fails instead of passing. Convert external timestamps with an
   explicit UTC zone.
 - Pair a "never happens" claim with a negative control that shows the measurement can see it.
+- Cache the expensive pipeline output of a corpus run, keyed by input and method digests, and
+  score one document before the whole corpus, so a scorer fix reruns only the scoring.
