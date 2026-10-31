@@ -92,7 +92,7 @@ async def test_the_request_carries_the_model_and_the_key():
 
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append(request)
-        return httpx.Response(200, json=response_body())
+        return httpx.Response(200, content=json.dumps(response_body()).encode())
 
     answer = await adapter(httpx.MockTransport(handler)).complete(REQUEST)
 
