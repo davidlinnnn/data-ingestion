@@ -66,15 +66,20 @@ async def test_the_processing_result_describes_request_profile_and_native_eviden
     assert native_part["picture_images"] == assembly["picture_images"]
     assert native_part["picture_images"]
 
-    # seven_pages has two pictures and neither holds text.
+    # seven_pages has two pictures and neither holds text. Docling also reads the eleven-line
+    # paragraphs of some pages as tables; each native table becomes a table-status item.
+    tables = len(assembly["document"]["tables"])
+    zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
     assert result["inventory"] == {
         "ref": input.inventory.ref,
-        "counts": {"picture-ocr": {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 2}},
+        "counts": {"picture-ocr": {**zero, "no_text": 2}}
+        | ({"table-status": {**zero, "unverified": tables}} if tables else {}),
     }
-    assert [(e["status"], e["status_reason"], e["content"]) for e in result["enrichments"]] == [
+    assert [(e["status"], e["status_reason"], e["content"]) for e in result["enrichments"][:2]] == [
         ("unverified", "NO_TEXT", ""),
         ("unverified", "NO_TEXT", ""),
     ]
+    assert len(result["enrichments"]) == 2 + tables
     assert result["limitations"] == [
         {"code": "READING_ORDER_DEFECTS", "scope": "profile",
          "detail": runtime.profile.limitations[0].detail},

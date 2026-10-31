@@ -12,4 +12,8 @@ def assign(outcome: dict[str, Any]) -> tuple[Status, str | None]:
     disputed    otherwise, when contradictions is non-empty; reason = its first entry
     unverified  otherwise; reason "NO_TEXT" for outcome "no_text", else None
     """
-    raise NotImplementedError
+    if outcome["outcome"] == "failed":
+        return "failed", outcome["reason"]
+    if outcome["contradictions"]:
+        return "disputed", outcome["contradictions"][0]
+    return "unverified", "NO_TEXT" if outcome["outcome"] == "no_text" else None

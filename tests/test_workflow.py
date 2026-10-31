@@ -61,16 +61,20 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
     assert outcome == {"outcome": "complete", "manifest_ref": ref}
     result = json.loads(await ports.store.get(ref))
     assert result["outcome"] == "complete"
-    # Two pictures without text: picture-ocr items that ran on the inference worker.
-    assert [(e["item_id"], e["status"], e["status_reason"]) for e in result["enrichments"]] == [
+    # Two pictures without text, and the paragraphs docling reads as tables: items that ran on
+    # the inference worker.
+    enrichments = result["enrichments"]
+    assert [(e["item_id"], e["status"], e["status_reason"]) for e in enrichments[:2]] == [
         ("picture-ocr:#/pictures/0", "unverified", "NO_TEXT"),
         ("picture-ocr:#/pictures/1", "unverified", "NO_TEXT"),
     ]
+    assert {e["item_id"].split(":")[0] for e in enrichments[2:]} <= {"table-status"}
     assert {"code": "NO_TEXT_LAYER_PAGES", "scope": "document",
             "detail": "no text layer on pages 6"} in result["limitations"]  # fmt: skip
 
     reports = ports.reporter.reports  # type: ignore[attr-defined]
-    pages, items = (lambda n: Progress(n, 7, "pages")), (lambda n: Progress(n, 2, "items"))
+    total = len(enrichments)
+    pages, items = (lambda n: Progress(n, 7, "pages")), (lambda n: Progress(n, total, "items"))
     assert shape(reports) == [
         (1, "prepare", "running", None),
         (2, "prepare", "succeeded", None),
@@ -79,7 +83,7 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
         (5, "parse", "running", pages(7)),
         (6, "parse", "succeeded", pages(7)),
         (7, "enrich", "running", items(0)),
-        (8, "enrich", "succeeded", items(2)),
+        (8, "enrich", "succeeded", items(total)),
         (9, "finalize", "running", None),
         (10, "finalize", "succeeded", None),
     ]
