@@ -1,6 +1,7 @@
 # Runs ruff, pyright and the whole pytest suite on every pull request, including the tests
 # the Codex sandbox cannot run: the S3 contract against tests/s3/compose.yaml (marker `s3`)
-# and the local-socket tests (marker `network`).
+# and the local-socket tests (marker `network`, which download the Temporal dev server).
+# The docling tests need the pinned weights, fetched once per manifest and verified against it.
 name: code-checks
 
 on:
@@ -34,8 +35,19 @@ jobs:
       - name: Type check
         run: uv run pyright
 
+      - name: Cache model weights
+        uses: actions/cache@v4
+        with:
+          path: ~/models/docling
+          key: models-${{ hashFiles('src/kp_processing/model-manifest.json') }}
+
+      - name: Fetch model weights
+        run: uv run scripts/fetch-models && git diff --exit-code src/kp_processing/model-manifest.json
+
       - name: Start the S3 stand-in
         run: docker compose -f tests/s3/compose.yaml up -d --wait
 
       - name: Tests
         run: uv run pytest
+        env:
+          HF_HUB_OFFLINE: "1"
