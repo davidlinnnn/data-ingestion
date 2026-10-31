@@ -32,6 +32,10 @@ jobs:
       - name: Lint and format
         run: uv run ruff check . && uv run ruff format --check .
 
+      # docs/ is excluded above; validation scripts still get the bug rules.
+      - name: Lint validation scripts
+        run: uv run ruff check --select F,B docs/validation
+
       - name: Type check
         run: uv run pyright
 
