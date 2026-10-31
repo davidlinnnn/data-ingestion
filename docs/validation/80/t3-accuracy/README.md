@@ -5,13 +5,14 @@ outside git (it quotes third-party papers). Thirteen pilot papers ran through th
 in process (prepare, parse, assemble, inventory, enrich_local) on the DEV profile
 (`tests/profiles/paper-pdf-dev.yaml`); method digests are in [evidence.json](evidence.json).
 Bars were set before the run (user ruling 2026-10-31): synthetic samples exact, corpus not below
-#84. The synthetic layer runs in CI: `tests/stages/test_accuracy.py`.
+#84. Each bar also requires the full sample (358 items in 18 images, 13 units, 15 tables), so a
+broken measurement fails. The synthetic layer runs in CI: `tests/stages/test_accuracy.py`.
 
 | Method | Sample | Result | #84 baseline | Bar | Pass |
 |---|---|---|---|---|---|
-| picture-ocr | 18 images, 358 expected text items (#84 image gold, pilot papers 01, 03, 10, 11, 17); every image matched an inventory item | 304 literal matches | 304 (round 4, same items) | ≥ baseline | yes |
-| code | 13 units comparable on a fixed source region (#84 code oracle; 10 pilot, 3 W2) | raw CER median 0.18 % (max 10.2 %); operator sequence exact 13/13, number sequence exact 13/13 | CER median 3.65 %; numbers exact 11/13 | median ≤ 3.7 %, no exact sequence lost | yes |
-| table-status | 15 tables with a decided #84 E0 verdict (6 PASS, 9 FAIL) | 15/15 matched by page and box, every cell identical | the adjudicated E0 output | cell-identical | yes |
+| picture-ocr | 18 images, 358 expected text items (#84 image gold, pilot papers 01, 03, 10, 11, 17); every image matched an inventory item | 304 literal matches | 304 (round 4, same items) | full sample, ≥ baseline | yes |
+| code | 13 units comparable on a fixed source region (#84 code oracle; 10 pilot, 3 W2) | raw CER median 0.18 % (max 10.2 %); operator sequence exact 13/13, number sequence exact 13/13 | CER median 3.65 %; numbers exact 11/13 | full sample, 0 ≤ median ≤ 3.7 %, no exact sequence lost | yes |
+| table-status | 15 tables with a decided #84 E0 verdict (6 PASS, 9 FAIL) | 15/15 matched by page and box, every cell identical | the adjudicated E0 output | full sample, cell-identical | yes |
 
 How each is scored:
 

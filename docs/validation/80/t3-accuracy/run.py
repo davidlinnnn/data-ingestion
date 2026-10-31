@@ -136,6 +136,10 @@ def best(items: list[dict], method: str, page: int, target) -> tuple[dict | None
     return (item, overlap) if overlap >= 0.5 else (None, overlap)
 
 
+# Sample sizes of the #84 gold this script scores; a smaller sample means a broken measurement.
+OCR_ITEMS, OCR_IMAGES, CODE_UNITS, TABLES = 358, 18, 13, 15
+
+
 def score_ocr(archive: Path, papers: dict[str, dict]) -> dict:
     scorer = load(archive / OCR_GOLD / "round4-local-ocr/score_ocr_v2.py", "score_ocr_v2")
     evaluator = archive / OCR_GOLD / "round2/evaluator"
@@ -164,7 +168,10 @@ def score_ocr(archive: Path, papers: dict[str, dict]) -> dict:
     unmatched = sorted({r["image_index"] for r in rows if r["item_id"] is None})
     return {"items": len(rows), "images": len(images), "unmatched_images": unmatched,
             "literal_pass": ours, "baseline_literal_pass": base,
-            "bar": "literal_pass >= baseline_literal_pass", "pass": ours >= base,
+            "bar": f"{OCR_ITEMS} items in {OCR_IMAGES} images, all matched, and "
+                   "baseline_literal_pass <= literal_pass <= items",
+            "pass": (len(rows), len(images), unmatched) == (OCR_ITEMS, OCR_IMAGES, [])
+                    and base <= ours <= len(rows),
             "rows": rows}  # fmt: skip
 
 
@@ -216,8 +223,10 @@ def score_code(archive: Path, papers: dict[str, dict], pdfs: dict[str, bytes]) -
             "operators_exact": sum(r["operators_exact"] for r in rows),
             "numbers_exact": sum(r["numbers_exact"] for r in rows),
             "baseline_numbers_exact": sum(r["baseline_numbers_exact"] for r in rows),
-            "bar": "cer_median <= 0.037 and operators/numbers exact on every unit #84 had exact",
-            "pass": median is not None and median <= 0.037 and all(
+            "bar": f"{CODE_UNITS} units, 0 <= cer_median <= 0.037 and operators/numbers exact on "
+                   "every unit #84 had exact",
+            "pass": len(cers) == len(rows) == CODE_UNITS and median is not None
+                    and 0 <= median <= 0.037 and all(
                 r["operators_exact"] and (r["numbers_exact"] or not r["baseline_numbers_exact"])
                 for r in rows),
             "rows": rows}  # fmt: skip
@@ -264,8 +273,9 @@ def score_tables(archive: Path, papers: dict[str, dict]) -> dict:
     return {"tables": len(rows), "identical": identical,
             "pass_84": sum(r["verdict_84"] == "PASS" for r in rows),
             "fail_84": sum(r["verdict_84"] == "FAIL" for r in rows),
-            "bar": "every decided table matched and cell-identical to the adjudicated E0 output",
-            "pass": identical == len(rows), "rows": rows}  # fmt: skip
+            "bar": f"all {TABLES} decided tables matched and cell-identical to the adjudicated "
+                   "E0 output",
+            "pass": identical == len(rows) == TABLES, "rows": rows}  # fmt: skip
 
 
 async def main(archive: Path, cache: Path | None) -> None:

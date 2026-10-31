@@ -6,10 +6,11 @@ enrichment.
 Same stack as #131's t2-tracer-bullet/run.py, whose helpers it reuses: the S3 stand-in
 (tests/s3/compose.yaml, port 9100), a Temporal dev server (port 7244), fake_admission (port
 8091), and one kp-processing worker subprocess per task queue on the DEV profile. INDEX defaults
-to 20, chosen after the #132 corpus census as the paper with the most pictures (22).
+to 20, the paper with the most pictures (22) in census.json (census.py).
 
 Cases:
-  A  uninterrupted run in a fresh bucket
+  A  uninterrupted run in a fresh bucket; the objects it adds under documents/ are the
+     negative control for C's listing
   C  a new request for the same document: every item, enrichment included, is reused and no
      object is added under documents/
 
@@ -105,6 +106,7 @@ async def main(manifest: Path, index: int) -> int:
         await store.put_if_absent(f"custody/{sha}", data)
         workers = t2.workers_for(bucket, "t3")
 
+        empty = set(await store.list_prefix(f"documents/{uid}/"))
         a = t2.start_input(sha, data, bucket, f"req_{t2.RUN}_a")
         begin = time.monotonic()
         code, out = t2.start_request(bucket, a)
@@ -118,6 +120,14 @@ async def main(manifest: Path, index: int) -> int:
                          "enrich_local_reused": await enrich_local_reuse(client, a["request_id"]),
                          "result": summary(result_a)}  # fmt: skip
         before = set(await store.list_prefix(f"documents/{uid}/"))
+        reused_a = evidence["A"]["enrich_local_reused"]
+        evidence["A"]["objects_added_under_documents"] = len(before - empty)
+        evidence["A"]["pass"] = (
+            code == 0
+            and len(reused_a) == len(result_a["enrichments"]) > 0
+            and not any(reused_a)
+            and len(before - empty) > len(reused_a)
+        )
 
         c = t2.start_input(sha, data, bucket, f"req_{t2.RUN}_c")
         begin = time.monotonic()
@@ -132,6 +142,15 @@ async def main(manifest: Path, index: int) -> int:
                                               result_c["enrichments"]] ==
                                              [(e["item_id"], e["status"]) for e in
                                               result_a["enrichments"]]}  # fmt: skip
+        reused_c = evidence["C"]["enrich_local_reused"]
+        evidence["C"]["pass"] = (
+            code == 0
+            and len(reused_c) == len(reused_a)
+            and all(reused_c)
+            and evidence["C"]["objects_added_under_documents"] == []
+            and evidence["C"]["enrichments_reused"]
+            and evidence["C"]["statuses_equal_A"]
+        )
     finally:
         for process in [*workers, admission, temporal]:
             process.terminate()
