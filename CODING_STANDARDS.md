@@ -36,6 +36,13 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 - A worker's Activity slots match what its process can run at once. Work that holds a
   process-wide resource (a model, a lock, a GPU) gets its own task queue and a worker with
   that many slots, so waiting work stays visible in Temporal as backlog.
+- Blocking work in an Activity runs through `stages.in_thread`: a cancelled Activity keeps its
+  slot until the thread ends, so one worker never runs two parsers.
+- Workflow code takes its parameters from Activity results, which Temporal records in history
+  (prepare's `Plan.runtime`), not from module state that a later build could change.
+- A worker hears of an Activity timeout or cancel only through a heartbeat response, throttled
+  to 0.8 x the heartbeat timeout. A test of cancellation on a real worker sets a heartbeat
+  timeout, and runs a negative control to show it can see the failure.
 
 ## Validation evidence
 
