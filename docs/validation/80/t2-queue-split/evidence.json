@@ -1,0 +1,120 @@
+{
+  "run": "999714",
+  "papers": {
+    "1": {
+      "file": "01-2608.27454v1.pdf",
+      "sha256": "65afc6e12f6f707483fe1b79a97ab67c03abf4b4992f82fde03eb7b8d9ad4a69",
+      "pages": 28
+    },
+    "2": {
+      "file": "02-2603.02766v1.pdf",
+      "sha256": "61cc0e44c3489a82435ce1b3c9e8d7db5cd21798e18c8c204b0f99b124baa615",
+      "pages": 22
+    },
+    "3": {
+      "file": "03-2603.25158v5.pdf",
+      "sha256": "9f3f43101583a993b9a82905d790fb2dd57c60b37897187a0706c047bd0b58b0",
+      "pages": 25
+    },
+    "4": {
+      "file": "04-2605.23904v2.pdf",
+      "sha256": "87f7f0f323b1671e9202b3ebb1596e909e507c71ecd1b360b0075a5ee1727fe3",
+      "pages": 27
+    }
+  },
+  "temporal": "temporal version 1.9.1 (Server 1.32.0, UI 2.54.1)",
+  "S1_S4": {
+    "samples": 157,
+    "max_started": 1,
+    "samples_with_one_running_and_one_waiting": 147,
+    "max_backlog": 2,
+    "outcomes": [
+      "complete"
+    ],
+    "prepare_seconds_after_start": {
+      "req_999714_s1_1": 0.08,
+      "req_999714_s1_2": 0.11,
+      "req_999714_s1_3": 0.14
+    },
+    "S1": {
+      "a_at_most_one_started": true,
+      "b_waits_in_temporal": true,
+      "c_backlog_visible": true,
+      "d_all_complete": true
+    },
+    "S4": {
+      "prepare_within_5s": true
+    }
+  },
+  "S2": {
+    "max_started_per_worker": 1,
+    "max_started_total": 2,
+    "inference_runs_per_worker": {
+      "inference-1": 12,
+      "inference-2": 14
+    },
+    "outcomes": [
+      "complete"
+    ],
+    "S2": {
+      "a_one_per_worker_two_total": true,
+      "b_both_workers_ran": true,
+      "c_all_complete": true
+    }
+  },
+  "S3": {
+    "bulk_started_while_normal_waited": [],
+    "normal_waits_s": [
+      0.87,
+      4.01,
+      5.43,
+      1.16,
+      2.82,
+      2.03,
+      1.03
+    ],
+    "longest_bulk_inference_s": 5.48,
+    "normal_done_before_last_bulk_s": 20.52,
+    "outcomes": [
+      "complete"
+    ],
+    "S3": {
+      "a_no_bulk_overtakes_waiting_normal": true,
+      "b_normal_before_last_bulk": true,
+      "c_wait_within_one_bulk_group": true
+    }
+  },
+  "S5a": {
+    "activity": "3",
+    "attempt_that_completed": 1,
+    "completed_on": "leaving",
+    "exit_after_sigterm_s": 2.4,
+    "exit_after_its_group_done_s": 0.04,
+    "retry_started_after_sigterm_s": -0.03,
+    "started_by_leaving_after_sigterm": 0,
+    "outcome": "complete",
+    "native_equals_uninterrupted": true,
+    "S5a": {
+      "group_completed_on_attempt_1_by_leaving": true,
+      "no_new_work_after_sigterm": true,
+      "exits_once_group_done": true,
+      "paper_completes": true
+    }
+  },
+  "S5b": {
+    "activity": "3",
+    "attempt_that_completed": 2,
+    "completed_on": "staying",
+    "exit_after_sigterm_s": 0.09,
+    "exit_after_its_group_done_s": null,
+    "retry_started_after_sigterm_s": 1.07,
+    "started_by_leaving_after_sigterm": 0,
+    "outcome": "complete",
+    "native_equals_uninterrupted": true,
+    "S5b": {
+      "exits_within_5s": true,
+      "retried_on_other_worker_within_10s": true,
+      "paper_completes_and_equals_uninterrupted": true
+    }
+  }
+}

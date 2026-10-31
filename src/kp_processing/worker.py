@@ -1,10 +1,15 @@
 """Temporal wrappers around the stage bodies, and worker start-up (#131). A wrapper adds only
 heartbeats, cancellation and the runtime; ProcessingFailure crosses Temporal as a
-non-retryable ApplicationError whose details the workflow turns into the failure report."""
+non-retryable ApplicationError whose details the workflow turns into the failure report.
+
+One worker serves one task queue, so each queue scales as its own deployment: orchestration
+runs the workflow and the light Activities, inference runs docling one call at a time and is
+the only one that loads it."""
 
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
+from datetime import timedelta
 from typing import Any, TypeVar
 
 from temporalio import activity
@@ -29,16 +34,21 @@ from kp_processing.stages import (
     Runtime,
     finalize,
     inventory,
-    parse,
     prepare,
     report,
 )
-from kp_processing.workflow import CPU_QUEUE, FAILURE_TYPE, PaperPdfWorkflow
+from kp_processing.workflow import (
+    FAILURE_TYPE,
+    INFERENCE_QUEUE,
+    ORCHESTRATION_QUEUE,
+    PaperPdfWorkflow,
+    Queue,
+)
 
 T = TypeVar("T")
 
 
-class Activities:
+class _Activities:
     def __init__(self, ports: Ports, runtime: Runtime) -> None:
         self.ports = ports
         self.runtime = runtime
@@ -63,17 +73,11 @@ class Activities:
             activity.heartbeat()
             await asyncio.sleep(self.runtime.profile.runtime["heartbeat_interval_s"])
 
+
+class Orchestration(_Activities):
     @activity.defn(name="prepare")
     async def prepare(self, input: PrepareInput) -> Plan:
         return await self._run(prepare.run, input)
-
-    @activity.defn(name="parse_group")
-    async def parse_group(self, input: GroupInput) -> GroupRef:
-        return await self._run(parse.run_group, input)
-
-    @activity.defn(name="assemble")
-    async def assemble(self, input: AssembleInput) -> Registered:
-        return await self._run(parse.run_assemble, input)
 
     @activity.defn(name="inventory")
     async def inventory(self, input: InventoryInput) -> Registered:
@@ -92,10 +96,26 @@ class Activities:
         return await self._run(report.run, input)
 
     def all(self) -> list[Callable[..., Any]]:
-        return [
-            self.prepare, self.parse_group, self.assemble, self.inventory, self.finalize,
-            self.register_failure, self.report,
-        ]  # fmt: skip
+        return [self.prepare, self.inventory, self.finalize, self.register_failure, self.report]
+
+
+class Inference(_Activities):
+    def __init__(self, ports: Ports, runtime: Runtime) -> None:
+        super().__init__(ports, runtime)
+        from kp_processing.stages import parse  # loads docling; orchestration stays light
+
+        self.parse = parse
+
+    @activity.defn(name="parse_group")
+    async def parse_group(self, input: GroupInput) -> GroupRef:
+        return await self._run(self.parse.run_group, input)
+
+    @activity.defn(name="assemble")
+    async def assemble(self, input: AssembleInput) -> Registered:
+        return await self._run(self.parse.run_assemble, input)
+
+    def all(self) -> list[Callable[..., Any]]:
+        return [self.parse_group, self.assemble]
 
 
 class WriteOnceUnsupported(RuntimeError):
@@ -114,12 +134,27 @@ async def check_write_once(store: ObjectStore) -> None:
         )
 
 
-async def make_worker(client: Client, ports: Ports, runtime: Runtime) -> Worker:
-    """The CPU pool worker: the workflow and every Activity of #131."""
+async def make_worker(
+    client: Client, ports: Ports, runtime: Runtime, queue: Queue, shutdown_grace_s: float = 0
+) -> Worker:
+    """The worker of one task queue. On shutdown, running Activities get shutdown_grace_s to
+    finish before they are cancelled and retried elsewhere."""
     await check_write_once(ports.store)
+    grace = timedelta(seconds=shutdown_grace_s)
+    if queue == "inference":
+        # One slot: the worker polls only when its parser is free, so waiting work stays in
+        # Temporal, visible as backlog, open to other workers and ordered by priority.
+        return Worker(
+            client,
+            task_queue=INFERENCE_QUEUE,
+            activities=Inference(ports, runtime).all(),
+            max_concurrent_activities=1,
+            graceful_shutdown_timeout=grace,
+        )
     return Worker(
         client,
-        task_queue=CPU_QUEUE,
+        task_queue=ORCHESTRATION_QUEUE,
         workflows=[PaperPdfWorkflow],
-        activities=Activities(ports, runtime).all(),
+        activities=Orchestration(ports, runtime).all(),
+        graceful_shutdown_timeout=grace,
     )

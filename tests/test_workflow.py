@@ -3,6 +3,7 @@ in-process store and reporter fakes. Uses the local `temporal` CLI when installe
 the SDK downloads the dev server; either way it binds a local port (outside the Codex
 sandbox)."""
 
+import contextlib
 import dataclasses
 import json
 import shutil
@@ -21,7 +22,7 @@ from kp_processing.ports.status_reporter import (
 )
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
-from kp_processing.workflow import CPU_QUEUE, WORKFLOW
+from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_parse import seven_pages
@@ -37,11 +38,20 @@ async def client():
         yield env.client
 
 
+@contextlib.asynccontextmanager
+async def workers(client: Client, ports: Ports, runtime):
+    """One worker per task queue, as the deployments run them."""
+    async with (
+        await make_worker(client, ports, runtime, "orchestration"),
+        await make_worker(client, ports, runtime, "inference"),
+    ):
+        yield
+
+
 async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, str]:
-    worker = await make_worker(client, ports, runtime)
-    async with worker:
+    async with workers(client, ports, runtime):
         handle = await client.start_workflow(
-            WORKFLOW, start, id=start["request_id"], task_queue=CPU_QUEUE
+            WORKFLOW, start, id=start["request_id"], task_queue=ORCHESTRATION_QUEUE
         )
         outcome = await handle.result()
     return outcome, handle.result_run_id or ""
@@ -206,7 +216,7 @@ async def test_starting_the_same_request_twice_counts_as_success(
     monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
     start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
-    async with await make_worker(client, ports, runtime):
+    async with workers(client, ports, runtime):
         assert await start_request(start, wait=True) == 0
         assert await start_request(start, wait=False) == 0
 

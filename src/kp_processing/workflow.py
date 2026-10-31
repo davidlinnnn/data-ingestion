@@ -7,7 +7,7 @@ sandbox re-imports, stays free of docling.
 
 import asyncio
 from datetime import timedelta
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 from temporalio import workflow
 from temporalio.common import Priority, RetryPolicy
@@ -34,9 +34,12 @@ STAGES_VERSION = "1"
 FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingFailure.details()
 
 
-# The task queues are named after the worker pool that serves them (cpu, vlm, summary) and
-# are shared by every pipeline; this workflow and its Activities run on the CPU queue.
-CPU_QUEUE = "cpu"
+# Task queues are named after what their workers can run and are shared by every pipeline:
+# the workflow and light Activities on orchestration, docling on inference (one call per
+# worker), the external enrichment services on vlm and summary.
+ORCHESTRATION_QUEUE = "orchestration"
+INFERENCE_QUEUE = "inference"
+Queue = Literal["orchestration", "inference"]
 
 
 def priority(admission_priority: Any) -> Priority:
@@ -51,9 +54,14 @@ _STORAGE_RETRY = RetryPolicy(
     maximum_attempts=5,
     non_retryable_error_types=[FAILURE_TYPE],
 )
-_SHORT = {"start_to_close_timeout": timedelta(minutes=2), "retry_policy": _STORAGE_RETRY}
+_SHORT = {
+    "task_queue": ORCHESTRATION_QUEUE,
+    "start_to_close_timeout": timedelta(minutes=2),
+    "retry_policy": _STORAGE_RETRY,
+}
 # Heartbeats every runtime heartbeat_interval_s (15 s); a killed worker is noticed after 60 s.
 _INFERENCE = {
+    "task_queue": INFERENCE_QUEUE,
     "start_to_close_timeout": timedelta(minutes=15),
     "heartbeat_timeout": timedelta(seconds=60),
     "retry_policy": RetryPolicy(maximum_attempts=3, non_retryable_error_types=[FAILURE_TYPE]),
@@ -127,9 +135,7 @@ class PaperPdfWorkflow:
         return outcome
 
     async def _call(self, name: str, arg: Any, result_type: type[T], options: dict[str, Any]) -> T:
-        return await workflow.execute_activity(
-            name, arg, result_type=result_type, task_queue=CPU_QUEUE, **options
-        )
+        return await workflow.execute_activity(name, arg, result_type=result_type, **options)
 
     def _report(
         self,
@@ -170,7 +176,7 @@ class PaperPdfWorkflow:
             self._delivered = await workflow.execute_activity(
                 "report",
                 report,
-                task_queue=CPU_QUEUE,
+                task_queue=ORCHESTRATION_QUEUE,
                 start_to_close_timeout=timedelta(minutes=5),
                 retry_policy=RetryPolicy(maximum_attempts=3),
                 result_type=bool,

@@ -11,7 +11,7 @@ import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
 from docling.utils.locks import pypdfium2_lock
 
-from kp_processing.methods.docling_parse.pipeline import IMAGES_SCALE
+from kp_processing.methods.docling_parse import IMAGES_SCALE
 from kp_processing.ports.object_store import ObjectNotFound
 from kp_processing.stages import Plan, Ports, PrepareInput, ProcessingFailure, Runtime, sha256
 

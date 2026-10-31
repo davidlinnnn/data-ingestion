@@ -6,7 +6,7 @@ from temporalio.testing import ActivityEnvironment
 
 from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.stages import PrepareInput
-from kp_processing.worker import Activities, WriteOnceUnsupported, check_write_once
+from kp_processing.worker import Orchestration, WriteOnceUnsupported, check_write_once
 from tests.pdfs import Page, paper, write_pdf
 from tests.stages.conftest import start_input
 
@@ -44,7 +44,7 @@ async def test_a_rejected_source_is_logged_with_its_reason_and_limits(ports, run
 
     with pytest.raises(ApplicationError), caplog.at_level(logging.WARNING):
         await ActivityEnvironment().run(
-            Activities(ports, runtime).prepare, PrepareInput(start, "r")
+            Orchestration(ports, runtime).prepare, PrepareInput(start, "r")
         )
 
     assert "PIXEL_LIMIT_EXCEEDED" in caplog.text

@@ -30,6 +30,7 @@ from docling.models.stages.reading_order.readingorder_model import (
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline, ThreadedItem
 from docling_core.types.doc.document import DoclingDocument
 
+from kp_processing.methods.docling_parse import IMAGES_SCALE
 from kp_processing.methods.docling_parse.serialization import (
     Group,
     SavedPage,
@@ -37,7 +38,6 @@ from kp_processing.methods.docling_parse.serialization import (
     png_bytes,
 )
 
-IMAGES_SCALE = 2.0  # page and picture images are rendered at 144 dpi
 _lock = threading.Lock()
 _converter: DocumentConverter | None = None
 

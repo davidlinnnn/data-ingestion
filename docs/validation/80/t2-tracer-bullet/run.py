@@ -9,8 +9,8 @@ case's result and received reports next to this file. The paper itself stays out
 
 Cases:
   A  uninterrupted run in a fresh bucket
-  B  the same paper in another fresh bucket; the worker is killed (SIGKILL) once two groups
-     are registered and restarted; the result must equal A's
+  B  the same paper in another fresh bucket; the inference worker is killed (SIGKILL) once two
+     groups are registered and restarted; the result must equal A's
   C  a new request for B's document: every registered item is reused
   D  the start input of A again: counts as success, nothing reruns
   E  the report receiver is down: processing still completes
@@ -67,13 +67,18 @@ def store(bucket: str) -> S3ObjectStore:
     return s
 
 
-def worker(bucket: str, name: str) -> subprocess.Popen:
-    log = open(LOGS / f"worker-{name}.log", "w")
+def worker(bucket: str, name: str, queue: str) -> subprocess.Popen:
+    log = open(LOGS / f"worker-{name}-{queue}.log", "w")
     return subprocess.Popen(
-        [*CLI, "worker", "--pool", "cpu", "--profile", PROFILE,
+        [*CLI, "worker", "--queue", queue, "--profile", PROFILE,
          "--build-id", "seamb-r1"],
         env=env(bucket), stdout=log, stderr=subprocess.STDOUT, cwd=REPO,
     )  # fmt: skip
+
+
+def workers_for(bucket: str, name: str) -> list[subprocess.Popen]:
+    """One process per task queue; the inference one last."""
+    return [worker(bucket, name, q) for q in ("orchestration", "inference")]
 
 
 def start_input(sha: str, data: bytes, bucket: str, request_id: str, **overrides) -> dict:
@@ -177,7 +182,7 @@ async def main(manifest: Path, index: int) -> int:
         sa, sb = store(bucket_a), store(bucket_b)
         for s in (sa, sb):
             await s.put_if_absent(f"custody/{sha}", data)
-        workers.append(worker(bucket_a, "a"))
+        workers += workers_for(bucket_a, "a")
         a = start_input(sha, data, bucket_a, f"req_{RUN}_a")
         begin = time.monotonic()
         code, out = start_request(bucket_a, a)
@@ -188,12 +193,13 @@ async def main(manifest: Path, index: int) -> int:
         evidence["A"]["activities"] = await activity_history(client, a["request_id"])
         (HERE / "result-A.json").write_text(json.dumps(result_a, indent=2) + "\n")
         (HERE / "reports-A.json").write_text(json.dumps(await reports(a["request_id"]), indent=2) + "\n")
-        # Both buckets' workers share one task queue, so only one may run at a time.
-        workers[-1].terminate()
-        workers.pop().wait()
+        # Both buckets' workers share the task queues, so only one set may run at a time.
+        while workers:
+            workers[-1].terminate()
+            workers.pop().wait()
 
         # B: kill the worker once two groups are registered, then restart it
-        workers.append(worker(bucket_b, "b1"))
+        workers += workers_for(bucket_b, "b1")
         b = start_input(sha, data, bucket_b, f"req_{RUN}_b")
         begin = time.monotonic()
         code, _ = start_request(bucket_b, b, wait=False)
@@ -201,7 +207,8 @@ async def main(manifest: Path, index: int) -> int:
         workers[-1].send_signal(signal.SIGKILL)
         workers[-1].wait()
         groups_at_kill = sum(k.endswith("/group.json") for k in await sb.list_prefix(f"documents/{uid}/items/"))
-        workers.append(worker(bucket_b, "b2"))
+        workers.pop()
+        workers.append(worker(bucket_b, "b2", "inference"))
         code, out = start_request(bucket_b, b)
         result_b = json.loads(await sb.get(f"requests/{b['request_id']}/result.json"))
         evidence["B"] = {
