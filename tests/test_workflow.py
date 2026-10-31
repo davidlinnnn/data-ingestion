@@ -35,6 +35,7 @@ async def workers(client: Client, ports: Ports, runtime):
     async with (
         await make_worker(client, ports, runtime, "orchestration"),
         await make_worker(client, ports, runtime, "inference"),
+        await make_worker(client, ports, runtime, "vlm"),
     ):
         yield
 
@@ -78,19 +79,24 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
     assert outcome == {"outcome": "complete", "manifest_ref": ref}
     result = json.loads(await ports.store.get(ref))
     assert result["outcome"] == "complete"
-    # Two pictures without text, and the paragraphs docling reads as tables: items that ran on
-    # the inference worker.
+    # Two pictures without text, OCR'd on the inference worker and interpreted on the vlm
+    # worker, and the paragraphs docling reads as tables.
     enrichments = result["enrichments"]
     assert [(e["item_id"], e["status"], e["status_reason"]) for e in enrichments[:2]] == [
         ("picture-ocr:#/pictures/0", "unverified", "NO_TEXT"),
         ("picture-ocr:#/pictures/1", "unverified", "NO_TEXT"),
     ]
-    assert {e["item_id"].split(":")[0] for e in enrichments[2:]} <= {"table-status"}
+    assert [e["item_id"] for e in enrichments[2:10]] == [
+        f"picture-interpretation:#/pictures/{n}/{field}"
+        for n in (0, 1)
+        for field in ("caption", "chart_values", "description", "figure_type")
+    ]
+    assert {e["item_id"].split(":")[0] for e in enrichments[10:]} <= {"table-status"}
     assert {"code": "NO_TEXT_LAYER_PAGES", "scope": "document",
             "detail": "no text layer on pages 6"} in result["limitations"]  # fmt: skip
 
     reports = ports.reporter.reports  # type: ignore[attr-defined]
-    total = len(enrichments)
+    total = len(json.loads(await ports.store.get(result["inventory"]["ref"]))["items"])
     pages, items = (lambda n: Progress(n, 7, "pages")), (lambda n: Progress(n, total, "items"))
     assert shape(reports) == [
         (1, "prepare", "running", None),
@@ -265,14 +271,19 @@ async def _resolved(value):
 async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports, runtime):
     runtime = with_runtime(
         runtime,
-        heartbeat_timeout_s={"inference": 61},
+        heartbeat_timeout_s={"inference": 61, "vlm": 91},
         start_to_close_s={"orchestration": 121, "inference": 901},
         activity_retry={
             "orchestration": {"initial_s": 3, "multiplier": 2, "cap_s": 31, "max_attempts": 6},
             "inference": {"initial_s": 2, "multiplier": 3, "cap_s": 99, "max_attempts": 2},
+            "vlm": {"initial_s": 4, "multiplier": 2, "cap_s": 29, "max_attempts": 7},
         },
+        vlm_request_deadline_s={"connect": 5, "total": 61},
+        external_start_to_close_slack_s=301,
     )
-    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+    # One picture: a picture-ocr and a picture-interpretation item.
+    pdf = write_pdf(paper(1, picture_on=(1,)))
+    start = await start_input(ports, pdf, request_id=f"req_{uuid.uuid4().hex[:8]}")
 
     outcome, _ = await process(client, ports, runtime, start)
 
@@ -295,6 +306,13 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert finalize.retry_policy.maximum_attempts == 6
     assert finalize.retry_policy.initial_interval.seconds == 3
     assert list(finalize.retry_policy.non_retryable_error_types) == ["ProcessingFailure"]
+    vlm = scheduled["enrich_vlm"]
+    assert vlm.task_queue.name == "vlm"
+    # ceil(2 items / 4) x 61 s deadline x 3 attempts + 301 s slack (#93 §3.2)
+    assert vlm.start_to_close_timeout.seconds == 1 * 61 * 3 + 301
+    assert vlm.heartbeat_timeout.seconds == 91
+    assert vlm.retry_policy.maximum_attempts == 7
+    assert vlm.retry_policy.initial_interval.seconds == 4
 
 
 async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
