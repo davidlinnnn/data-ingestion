@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Claude Code PreToolUse hook on Bash: run check-publish on every file a gh command posts with
+# --body-file, and block the call (exit 2) when a file fails or does not exist yet.
+cmd=$(jq -r '.tool_input.command // empty')
+case "$cmd" in *gh\ *--body-file*) ;; *) exit 0 ;; esac
+dir=$(dirname "$0")
+status=0
+while IFS= read -r f; do
+  [ -n "$f" ] && [ "$f" != "-" ] || continue
+  if [ ! -f "$f" ]; then
+    echo "check-publish-hook: $f does not exist; write the body first, then post it in a separate command" >&2
+    status=2
+  elif ! "$dir/check-publish" "$f" >&2; then
+    status=2
+  fi
+done < <(printf '%s\n' "$cmd" | grep -oE -- "--body-file[= ]+(\"[^\"]*\"|'[^']*'|[^[:space:];&|]+)" | sed -E "s/^--body-file[= ]+//; s/^[\"']//; s/[\"']$//")
+exit $status

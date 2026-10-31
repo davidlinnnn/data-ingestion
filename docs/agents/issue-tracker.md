@@ -8,7 +8,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Before any write with a body** (create, comment, edit, close comment): write the body to a file, mark draft placeholders as `{UPPER_CASE}` or `{#N}` (N a number or an UPPER_CASE name, such as `{#COPY_TICKET}`), and run `scripts/check-publish <file>`. Post with `--body-file` once it passes; it refuses unfilled placeholders, local paths, emails and secrets.
+- **Before any write with a body** (create, comment, edit, close comment): write the body to a file, mark draft placeholders as `{UPPER_CASE}` or `{#N}` (N a number or an UPPER_CASE name, such as `{#COPY_TICKET}`), and run `scripts/check-publish <file>`. Post with `--body-file` once it passes; it refuses unfilled placeholders, local paths, host names, emails and secrets. `scripts/check-publish-hook` enforces this as a Claude Code PreToolUse hook on Bash; since `.claude/settings.json` is per-checkout, register it once in user settings with the command `f="$(git rev-parse --show-toplevel 2>/dev/null)/scripts/check-publish-hook"; [ ! -x "$f" ] || "$f"`.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
 

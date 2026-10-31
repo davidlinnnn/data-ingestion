@@ -170,7 +170,7 @@ async def s1_s4(stack: Stack) -> dict:
     stack.stop_workers()
     counts = started_counts(samples)
     waiting_while_running = sum(
-        1 for s, c in zip(samples, counts)
+        1 for s, c in zip(samples, counts, strict=True)
         if sum(c.values()) == 1 and any(a["state"] == "SCHEDULED" for a in s["acts"])
     )  # fmt: skip
     prepare_s = {}

@@ -18,6 +18,10 @@ LOCAL_PATH='(/Users/[^/[:space:]]+/|/home/[^/[:space:]]+/|/private/(tmp|var)/|/v
 # Processing Profile files are named <profile>@<n>.yaml.
 EMAIL='[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
 EMAIL_OK='(noreply@anthropic\.com|@users\.noreply\.github\.com|@example\.(com|org|net)|@[0-9]+\.ya?ml)'
+# mDNS host names (*.local; settings.local.json stays allowed) and this machine's short name,
+# both printed by default worker identities (pid@host).
+HOST='[A-Za-z0-9-]+\.local([^A-Za-z0-9.]|$)'
+host=$(hostname -s 2>/dev/null)
 SECRET='(^|[^A-Za-z0-9_-])(AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
 
 status=0
@@ -32,6 +36,8 @@ for f in "$@"; do
   [ $placeholders -eq 1 ] && report placeholder "$name" "$(printf '%s\n' "$text" | grep -nE "$PLACEHOLDER")"
   report local-path "$name" "$(printf '%s\n' "$text" | grep -nE "$LOCAL_PATH")"
   report email "$name" "$(printf '%s\n' "$text" | grep -noE "$EMAIL" | grep -vE ":[^:]*$EMAIL_OK$")"
+  report hostname "$name" "$(printf '%s\n' "$text" | grep -nE "$HOST")"
+  [ ${#host} -ge 4 ] && report hostname "$name" "$(printf '%s\n' "$text" | grep -niF -- "$host")"
   report secret "$name" "$(printf '%s\n' "$text" | grep -nE "$SECRET")"
 done
 [ $status -eq 0 ] && echo "check-publish: ok"

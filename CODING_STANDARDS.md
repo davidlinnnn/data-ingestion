@@ -30,3 +30,16 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 - A contract (docstring, port, schema) states obligations and observable semantics only.
   The spec names the extension points that are required, such as #108's insertion
   points; everything else waits for a ticket that asks for it.
+
+## Temporal workers
+
+- A worker's Activity slots match what its process can run at once. Work that holds a
+  process-wide resource (a model, a lock, a GPU) gets its own task queue and a worker with
+  that many slots, so waiting work stays visible in Temporal as backlog.
+
+## Validation evidence
+
+- Check each acceptance criterion as a range with a lower bound (0 <= t <= limit), so a
+  broken measurement fails instead of passing. Convert external timestamps with an
+  explicit UTC zone.
+- Pair a "never happens" claim with a negative control that shows the measurement can see it.
