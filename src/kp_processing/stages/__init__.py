@@ -9,6 +9,10 @@ Object keys (#129, object storage and registration):
     documents/{document_uid}/items/{key}/...         registered, write-once, shared across requests
     requests/{request_id}/attempts/{run_id}/plan.json the frozen group plan of one attempt
     requests/{request_id}/result.json | failure.json  the Processing Result or failure report
+
+Enrichment (#132): inventory lists one item per enrichment target; an enrichment Activity
+registers one outcome record per item under documents/{document_uid}/items/{key}/, and
+finalize applies the profile's status rule to the outcome records.
 """
 
 import hashlib
@@ -157,7 +161,32 @@ class AssembleInput:
 @dataclass(frozen=True)
 class InventoryInput:
     document_uid: str
+    source_key: str
+    source_sha256: str
+    groups: list[GroupRef]  # every group of the plan, in page order (for page images)
     assembly: Registered
+
+
+@dataclass(frozen=True)
+class InventoryRef:
+    ref: str  # key of the registered inventory.json
+    digest: str
+    reused: bool
+    items: int  # number of enrichment items it lists
+
+
+@dataclass(frozen=True)
+class EnrichInput:
+    document_uid: str
+    inventory: InventoryRef
+
+
+@dataclass(frozen=True)
+class Outcome:
+    item_id: str  # the inventory item this outcome record answers
+    ref: str  # key of the registered outcome.json
+    digest: str  # sha256 of its bytes
+    reused: bool  # True when it was registered before this call
 
 
 @dataclass(frozen=True)
@@ -166,7 +195,8 @@ class FinalizeInput:
     plan: Plan
     groups: list[GroupRef]
     assembly: Registered
-    inventory: Registered
+    inventory: InventoryRef
+    outcomes: list[Outcome]  # from every enrichment Activity, in any order
 
 
 @dataclass(frozen=True)

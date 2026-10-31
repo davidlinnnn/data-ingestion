@@ -7,6 +7,8 @@ import platform
 
 from kp_processing.stages import FailureInput, FinalizeInput, Ports, Runtime
 
+CONTENT_INLINE_MAX = 16384  # bytes of compact JSON; larger content stays in the outcome record
+
 
 async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     """Write requests/{request_id}/result.json once (a retry keeps the first) and return its key:
@@ -20,12 +22,27 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     native       assembly_ref, page_groups[{pages, ref}], page_images[{page, ref, sha256}]
                  in page order (read from the group objects), picture_images[{picture_id,
                  page, bbox, ref, sha256}] (read from the assembly object)
-    inventory    ref, counts{<method_id>: {unverified, disputed, failed, no_text}}
-                 ({} while the inventory has no items)
-    enrichments  []
+    inventory    ref, counts{<method_id>: {unverified, disputed, failed, no_text}} for each
+                 method with inventory items; buckets are disjoint, an item whose outcome is
+                 no_text counts under no_text only
+    enrichments  one per inventory item, in inventory order (see below)
     limitations  the profile's [{code, scope: "profile", detail}], then, when the plan
                  lists any, {code: "NO_TEXT_LAYER_PAGES", scope: "document",
                  detail: "no text layer on pages 3, 5"}
+
+    Each enrichment joins an inventory item with its outcome record and applies the status
+    rule kp_processing.status_rules.<profile status_rule>:
+
+        item_id, result_ref (the outcome record), method_ref, scope, origin (from the record),
+        target_refs [target_ref], input_refs [the item's input refs], content (the record's
+        content when its compact JSON is at most CONTENT_INLINE_MAX bytes, else null: read
+        result_ref), evidence_refs, status, status_reason (from the rule), signals,
+        provider_artifact_ref, reused (from the Outcome)
+
+    An inventory item without an Outcome, or whose outcome record is missing or differs from
+    the Outcome's digest, raises ProcessingFailure(platform, integrity,
+    OUTCOME_RECORD_MISSING, metadata {"item_id"}). A status rule that does not exist raises
+    ProcessingFailure(platform, configuration, STATUS_RULE_UNKNOWN).
     """
     profile = runtime.profile
     request = {

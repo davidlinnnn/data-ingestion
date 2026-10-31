@@ -22,11 +22,14 @@ from kp_processing.ports.object_store import ObjectStore
 from kp_processing.ports.status_reporter import StatusReport
 from kp_processing.stages import (
     AssembleInput,
+    EnrichInput,
     FailureInput,
     FinalizeInput,
     GroupInput,
     GroupRef,
     InventoryInput,
+    InventoryRef,
+    Outcome,
     Plan,
     Ports,
     PrepareInput,
@@ -81,7 +84,7 @@ class Orchestration(_Activities):
         return await self._run(prepare.run, input)
 
     @activity.defn(name="inventory")
-    async def inventory(self, input: InventoryInput) -> Registered:
+    async def inventory(self, input: InventoryInput) -> InventoryRef:
         return await self._run(inventory.run, input)
 
     @activity.defn(name="finalize")
@@ -103,9 +106,11 @@ class Orchestration(_Activities):
 class Inference(_Activities):
     def __init__(self, ports: Ports, runtime: Runtime) -> None:
         super().__init__(ports, runtime)
-        from kp_processing.stages import parse  # loads docling; orchestration stays light
+        # Load docling and RapidOCR here, so that the orchestration worker stays light.
+        from kp_processing.stages import enrich_local, parse
 
         self.parse = parse
+        self.enrich_local_stage = enrich_local
 
     @activity.defn(name="parse_group")
     async def parse_group(self, input: GroupInput) -> GroupRef:
@@ -115,8 +120,12 @@ class Inference(_Activities):
     async def assemble(self, input: AssembleInput) -> Registered:
         return await self._run(self.parse.run_assemble, input)
 
+    @activity.defn(name="enrich_local")
+    async def enrich_local(self, input: EnrichInput) -> list[Outcome]:
+        return await self._run(self.enrich_local_stage.run, input)
+
     def all(self) -> list[Callable[..., Any]]:
-        return [self.parse_group, self.assemble]
+        return [self.parse_group, self.assemble, self.enrich_local]
 
 
 class WriteOnceUnsupported(RuntimeError):

@@ -1,8 +1,8 @@
-"""The paper-pdf workflow: the stage graph of #129 as code, without enrichment yet (#131).
+"""The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132).
 
-prepare -> parse group x N (in order) -> assemble -> inventory -> finalize, reporting the four
-admission stages. Activities are addressed by name so that this module, which the workflow
-sandbox re-imports, stays free of docling.
+prepare -> parse group x N (in order) -> assemble -> inventory -> local enrichment -> finalize,
+reporting the four admission stages. Activities are addressed by name so that this module,
+which the workflow sandbox re-imports, stays free of docling.
 """
 
 import asyncio
@@ -17,11 +17,14 @@ with workflow.unsafe.imports_passed_through():
     from kp_processing.ports.status_reporter import Progress, Stage, State, StatusReport
     from kp_processing.stages import (
         AssembleInput,
+        EnrichInput,
         FailureInput,
         FinalizeInput,
         GroupInput,
         GroupRef,
         InventoryInput,
+        InventoryRef,
+        Outcome,
         Plan,
         PrepareInput,
         Registered,
@@ -81,7 +84,7 @@ class PaperPdfWorkflow:
         info = workflow.info()
         self._start = start
         stage: Stage = "prepare"
-        inventory: Registered | None = None
+        inventory: InventoryRef | None = None
         try:
             self._report("prepare", "running")
             plan = await self._call("prepare", PrepareInput(start, info.run_id), Plan, _SHORT)
@@ -102,17 +105,21 @@ class PaperPdfWorkflow:
             self._report("parse", "succeeded", pages)
 
             stage = "enrich"
-            items = Progress(0, 0, "items")
-            self._report("enrich", "running", items)
-            inventory = await self._call(
-                "inventory", InventoryInput(uid, assembly), Registered, _SHORT
+            inventory_input = InventoryInput(
+                uid, plan.source_key, plan.source_sha256, groups, assembly
             )
-            # #108 screening and the enrichment Activities (#132-#134) go here.
-            self._report("enrich", "succeeded", items)
+            inventory = await self._call("inventory", inventory_input, InventoryRef, _SHORT)
+            self._report("enrich", "running", Progress(0, inventory.items, "items"))
+            # #108 screening goes here, before any enrichment; the VLM and summary
+            # Activities (#133, #134) run beside the local one.
+            outcomes = await self._call(
+                "enrich_local", EnrichInput(uid, inventory), list[Outcome], _INFERENCE
+            )
+            self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))
 
             stage = "finalize"
             self._report("finalize", "running")
-            finalize_input = FinalizeInput(start, plan, groups, assembly, inventory)
+            finalize_input = FinalizeInput(start, plan, groups, assembly, inventory, outcomes)
             ref = await self._call("finalize", finalize_input, str, _SHORT)
             self._report("finalize", "succeeded", manifest_ref=ref)
             outcome = {"outcome": "complete", "manifest_ref": ref}

@@ -1,5 +1,6 @@
-# DEV profile for tests and local runs (#129): paper-pdf@1 with only the native parse, so a
-# paper runs end to end before the enrichment methods exist (#131). Not a released profile.
+# DEV profile for tests and local runs (#129): paper-pdf@1 with the native parse and the local
+# enrichment methods (#132); the VLM and summary methods join with #133 and #134. The VLM
+# component is the DEV reference model. Not a released profile.
 profile: paper-pdf@1
 released: false
 status_rule: v1
@@ -11,6 +12,14 @@ methods:
       - layout-heron@8f39ad3c
       - tableformer-accurate@v1
       - rapidocr-ppocrv6-small
+  picture-ocr@1:
+    components:
+      - rapidocr-ppocrv6-small
+  code@1:
+    components:
+      - openai/gpt-6-luna
+  table-status@1:
+    components: []
 
 limitations:
   - code: READING_ORDER_DEFECTS
