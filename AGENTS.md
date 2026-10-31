@@ -16,6 +16,10 @@ Single-context: one `CONTEXT.md` at the repo root, plus `docs/adr/`. See `docs/a
 
 Before writing or reviewing code, read `CODING_STANDARDS.md`.
 
+Implementing a ticket follows the `implement` flow: `tdd` at the spec's seams, `codebase-design` on every new interface, two-axis `code-review` before the pull request. `/mattpocock-skills:implement` loads only when the user types it.
+
+`scripts/check` mirrors CI's lint and type checks; `scripts/check --all` adds the S3 stand-in and the whole test suite. Enable it as the pre-commit hook once per clone: `git config core.hooksPath scripts/git-hooks`.
+
 ### Branches and worktrees
 
 Public repo. Before creating a branch or worktree, committing, pushing, merging or deleting a branch, read `docs/agents/branching.md`.
