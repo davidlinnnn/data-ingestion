@@ -6,6 +6,7 @@ import importlib.metadata
 import json
 import platform
 
+from kp_processing.identity import canonical_json
 from kp_processing.stages import (
     FailureInput,
     FinalizeInput,
@@ -83,10 +84,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         record = json.loads(await read_verified(ports.store, outcome.ref, outcome.digest, missing))
         status, reason = rule.assign(record)
         content = record["content"]
-        if (
-            len(json.dumps(content, sort_keys=True, separators=(",", ":")).encode())
-            > CONTENT_INLINE_MAX
-        ):
+        if len(canonical_json(content)) > CONTENT_INLINE_MAX:
             content = None
         enrichments.append(
             {
@@ -145,7 +143,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         "schema": "pdf-processing-result/v1",
         "request": request,
         "profile": {
-            "id": profile.profile,
+            "id": profile.id,
             "status_rule": profile.status_rule,
             "methods": [
                 {
@@ -175,9 +173,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     }
     ref = f"requests/{input.start['request_id']}/result.json"
     # Write-once: a retried finalize keeps the result already registered.
-    await ports.store.put_if_absent(
-        ref, json.dumps(result, sort_keys=True, separators=(",", ":")).encode()
-    )
+    await ports.store.put_if_absent(ref, canonical_json(result))
     return ref
 
 
@@ -204,7 +200,5 @@ async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> st
     if input.inventory_ref is not None:
         report["inventory_ref"] = input.inventory_ref
     ref = f"requests/{input.request_id}/failure.json"
-    await ports.store.put_if_absent(
-        ref, json.dumps(report, sort_keys=True, separators=(",", ":")).encode()
-    )
+    await ports.store.put_if_absent(ref, canonical_json(report))
     return ref

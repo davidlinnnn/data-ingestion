@@ -1,14 +1,16 @@
 """inventory: the enrichment inventory bound to one assembly (#129)."""
 
-import asyncio
 import json
 
+from kp_processing.identity import canonical_json
 from kp_processing.methods import InventoryItem
 from kp_processing.stages import (
     InventoryInput,
     InventoryRef,
     Ports,
     Runtime,
+    in_thread,
+    item_prefix,
     register,
     registered,
     sha256,
@@ -16,8 +18,10 @@ from kp_processing.stages import (
 
 
 async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> InventoryRef:
-    """Register documents/{document_uid}/items/{key}/inventory.json, where
-    key = sha256 of "<profile id>|<assembly digest>":
+    """Register documents/{document_uid}/items/{key}/inventory.json, where key = sha256 of
+    the compact JSON [profile id, assembly digest, [[method ref, module digest] of each
+    item-scope method in profile order]], so that a method added to a draft profile or
+    changed in place yields a new inventory:
 
         {"schema": "pdf-inventory/v1", "profile": "<profile id>",
          "assembly_ref": "...", "assembly_digest": "...", "items": [...]}
@@ -27,14 +31,16 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
     order; input_refs follow the package's INPUTS. Write-once; reused=True when it already
     existed.
     """
-    profile = runtime.profile.profile
-    key = sha256(f"{profile}|{input.assembly.digest}".encode())
-    ref = f"documents/{input.document_uid}/items/{key}/inventory.json"
+    profile = runtime.profile.id
+    item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
+    method_identities = [[m.ref, m.module_digest] for m in item_methods]
+    key = sha256(canonical_json([profile, input.assembly.digest, method_identities]))
+    ref = f"{item_prefix(input.document_uid, key)}/inventory.json"
     if existing := await registered(ports.store, ref):
         body = json.loads(await ports.store.get(existing.ref))
         return InventoryRef(existing.ref, existing.digest, True, len(body["items"]))
 
-    assembly = await asyncio.to_thread(json.loads, await ports.store.get(input.assembly.ref))
+    assembly = await in_thread(json.loads, await ports.store.get(input.assembly.ref))
     document = assembly["document"]
     pictures = {picture["picture_id"]: picture for picture in assembly["picture_images"]}
     page_images = {}
@@ -55,10 +61,8 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
         raise ValueError(f"Unknown input kind {kind}")
 
     items: list[InventoryItem] = []
-    for method_id, method in runtime.profile.methods.items():
-        package = method.package
-        if not hasattr(package, "TARGET"):
-            continue
+    for method in item_methods:
+        method_id, package = method.id, method.package
         collection, label = package.TARGET
         for target in document[collection]:
             if label is not None and target["label"] != label:
@@ -76,7 +80,7 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
                     "input_refs": [source(kind, target_ref, page) for kind in package.INPUTS],
                 }
             )
-    data = json.dumps(
+    data = canonical_json(
         {
             "schema": "pdf-inventory/v1",
             "profile": profile,
@@ -84,9 +88,7 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
             "assembly_digest": input.assembly.digest,
             "items": items,
         },
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode()
+    )
     result = await register(ports.store, ref, data)
     count = len(items)
     if result.reused:

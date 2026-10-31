@@ -4,6 +4,13 @@ import hashlib
 import json
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
+
+
+def canonical_json(value: Any) -> bytes:
+    """UTF-8 JSON with sorted keys, no whitespace and no NaN or infinity: the bytes of every
+    registered JSON object outside the method packages."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
 
 
 def module_digest(package_dir: Path) -> str:
@@ -41,4 +48,4 @@ def reuse_key(
     [document_uid, method_ref, [components...], module_digest, [input_digests...]]).
     Order of components and input_digests is significant as given."""
     parts = [document_uid, method_ref, list(components), module_digest, list(input_digests)]
-    return hashlib.sha256(json.dumps(parts, separators=(",", ":")).encode("utf-8")).hexdigest()
+    return hashlib.sha256(canonical_json(parts)).hexdigest()

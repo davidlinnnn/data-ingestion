@@ -42,8 +42,14 @@ runtime:
   vlm_request_deadline_s: {connect: 5, total: 60}
   summary_request_deadline_s: 120
   heartbeat_interval_s: 15
-  heartbeat_timeout_s: {vlm: 90, summary: 150}
+  heartbeat_timeout_s: {inference: 60, vlm: 90, summary: 150}
+  # Temporal Activity options per task queue; the workflow reads them from the plan.
+  start_to_close_s: {orchestration: 120, inference: 900}
+  activity_retry:
+    orchestration: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 5}
+    inference: {initial_s: 1, multiplier: 2, cap_s: 100, max_attempts: 3}
   external_start_to_close_slack_s: 300
+  # #93 §3.4 retry of each external request inside an Activity; read from #133.
   retry: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
   vlm_concurrency_per_document: 4
   request_cap: {per_item: 3, extra: 20}

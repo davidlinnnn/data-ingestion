@@ -20,7 +20,7 @@ def variant(tmp_path: Path, old: str, new: str) -> Path:
 def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
     p = load_profile(PAPER_PDF_1)
 
-    assert p.profile == "paper-pdf@1"
+    assert p.id == "paper-pdf@1"
     assert p.status_rule == "v1"
     assert [m.ref for m in p.methods.values()] == [
         "docling-parse@1",
@@ -70,3 +70,13 @@ def test_a_malformed_method_key_refuses_to_load(tmp_path):
 def test_a_missing_required_section_refuses_to_load(tmp_path):
     with pytest.raises(ProfileError, match="runtime"):
         load_profile(variant(tmp_path, "\nruntime:", "\nruntime_renamed:"))
+
+
+def test_a_missing_runtime_key_that_the_code_reads_refuses_to_load(tmp_path):
+    with pytest.raises(ProfileError, match="heartbeat_timeout_s.inference"):
+        load_profile(variant(tmp_path, "{inference: 60, vlm: 90", "{vlm: 90"))
+
+
+def test_a_runtime_key_that_is_not_a_number_refuses_to_load(tmp_path):
+    with pytest.raises(ProfileError, match="start_to_close_s.inference is not a number"):
+        load_profile(variant(tmp_path, "inference: 900}", 'inference: "900"}'))

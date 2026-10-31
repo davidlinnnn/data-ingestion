@@ -29,6 +29,7 @@ async def test_plan_groups_pages_by_five_and_is_frozen_in_the_attempt_scratch(po
     assert plan.groups == [[1, 5], [6, 10], [11, 12]]
     assert plan.no_text_layer_pages == []
     assert plan.ref == "requests/req_1/attempts/run_1/plan.json"
+    assert plan.runtime == runtime.profile.runtime
     frozen = json.loads(await ports.store.get(plan.ref))
     assert frozen["groups"] == [[1, 5], [6, 10], [11, 12]]
     assert frozen["source_sha256"] == sha
@@ -141,6 +142,30 @@ async def test_a_missing_field_is_a_configuration_failure(ports, runtime):
     err = await failure(ports, runtime, start)
 
     assert err.reason == "INVALID_START_INPUT"
+
+
+@pytest.mark.parametrize("start", [[1, 2], "invalid"])
+async def test_a_non_object_start_input_is_a_configuration_failure(ports, runtime, start):
+    err = await failure(ports, runtime, start)
+
+    assert (err.cause, err.category, err.reason) == (
+        "platform", "configuration", "INVALID_START_INPUT",
+    )  # fmt: skip
+
+
+async def test_a_custody_bucket_other_than_the_store_bucket_is_a_configuration_failure(
+    ports, runtime
+):
+    start = await start_input(ports, write_pdf(paper(2)))
+    start["files"][0]["custody_ref"] = start["files"][0]["custody_ref"].replace(
+        "s3://kp-dev/", "s3://other-bucket/"
+    )
+
+    err = await failure(ports, runtime, start)
+
+    assert (err.cause, err.category, err.reason) == (
+        "platform", "configuration", "INVALID_START_INPUT",
+    )  # fmt: skip
 
 
 async def test_source_bytes_that_do_not_match_the_declared_sha256_are_an_integrity_failure(

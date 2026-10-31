@@ -29,6 +29,11 @@ limitations:
 
 runtime:
   heartbeat_interval_s: 15
+  heartbeat_timeout_s: {inference: 60}
+  start_to_close_s: {orchestration: 120, inference: 900}
+  activity_retry:
+    orchestration: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 5}
+    inference: {initial_s: 1, multiplier: 2, cap_s: 100, max_attempts: 3}
   parse_group_pages: 5
   preflight: {max_pages: 64, max_bytes: 104857600, max_page_pixels: 20000000}
   status_report_budget_s: 1

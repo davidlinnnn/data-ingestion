@@ -1,9 +1,8 @@
 """local enrichment: the item-scope methods that run on the inference worker (#132)."""
 
-import asyncio
 import json
 
-from kp_processing.identity import reuse_key
+from kp_processing.identity import canonical_json
 from kp_processing.methods import InventoryItem, MethodUnavailable
 from kp_processing.stages import (
     EnrichInput,
@@ -11,8 +10,10 @@ from kp_processing.stages import (
     Ports,
     ProcessingFailure,
     Runtime,
+    in_thread,
+    item_prefix,
     read_verified,
-    register,
+    register_item,
     registered,
 )
 
@@ -58,19 +59,14 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
         if item["method"] not in METHODS:
             continue
         method = runtime.profile.methods[item["method"]]
-        target = json.dumps(
-            {key: item[key] for key in ("target_ref", "page", "bbox")},
-            sort_keys=True,
-            separators=(",", ":"),
+        target = canonical_json({key: item[key] for key in ("target_ref", "page", "bbox")}).decode(
+            "utf-8"
         )
-        key = reuse_key(
+        key = method.reuse_key(
             input.document_uid,
-            method.ref,
-            method.components,
-            method.module_digest,
             [*(ref["sha256"] for ref in item["input_refs"]), target],
         )
-        prefix = f"documents/{input.document_uid}/items/{key}"
+        prefix = item_prefix(input.document_uid, key)
         ref = f"{prefix}/outcome.json"
         if existing := await registered(ports.store, ref):
             outcomes.append(OutcomeRef(item["item_id"], existing.ref, existing.digest, True))
@@ -97,7 +93,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
             inputs.append(data)
         package = method.package
         try:
-            output = await asyncio.to_thread(package.run, item, inputs)
+            output = await in_thread(package.run, item, inputs)
         except MethodUnavailable as exc:
             raise ProcessingFailure(
                 "platform",
@@ -114,9 +110,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                 "Enrichment method failed",
                 metadata={"item_id": item["item_id"]},
             ) from exc
-        for name, data in output.files.items():
-            await ports.store.put_if_absent(f"{prefix}/{name}", data)
-        body = json.dumps(
+        body = canonical_json(
             {
                 "schema": "enrichment-outcome/v1",
                 "method_ref": {
@@ -136,10 +130,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                 "signals": output.signals,
                 "contradictions": output.contradictions,
             },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode()
-        result = await register(ports.store, ref, body)
+        )
+        result = await register_item(ports.store, prefix, "outcome.json", body, output.files)
         outcomes.append(OutcomeRef(item["item_id"], result.ref, result.digest, result.reused))
         ports.heartbeat()
     return outcomes

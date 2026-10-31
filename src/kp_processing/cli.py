@@ -1,4 +1,4 @@
-"""kp-processing command line. A later ticket adds `list-service-unavailable`.
+"""kp-processing command line.
 
 Connections come from the environment: TEMPORAL_ADDRESS (default localhost:7233),
 TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
@@ -92,13 +92,16 @@ async def run_worker(
         return 2
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
 
-    runtime = Runtime(profile=load_profile(profile_path), build_id=build_id)
+    store = S3ObjectStore.from_env()
+    runtime = Runtime(
+        profile=load_profile(profile_path), build_id=build_id, custody_bucket=store.bucket
+    )
     async with httpx.AsyncClient(timeout=10) as http:
         # Only orchestration Activities send status reports.
         reporter = HttpStatusReporter(http, admission or "")
-        worker = await make_worker(await connect(), Ports(S3ObjectStore.from_env(), reporter),
+        worker = await make_worker(await connect(), Ports(store, reporter),
                                    runtime, queue, shutdown_grace_s)  # fmt: skip
-        print(f"worker {runtime.profile.profile} build {build_id} on {worker.task_queue}",
+        print(f"worker {runtime.profile.id} build {build_id} on {worker.task_queue}",
               flush=True)  # fmt: skip
         stop = asyncio.Event()
         for sig in (signal.SIGTERM, signal.SIGINT):

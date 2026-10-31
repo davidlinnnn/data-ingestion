@@ -1,6 +1,7 @@
 import json
 
 import httpx
+import pytest
 
 from kp_processing.ports.status_reporter import (
     HttpStatusReporter,
@@ -33,6 +34,43 @@ def report(seq: int = 1, **overrides) -> StatusReport:
 
 def reporter(handler) -> HttpStatusReporter:
     return HttpStatusReporter(httpx.AsyncClient(transport=httpx.MockTransport(handler)), BASE)
+
+
+@pytest.fixture(params=["recording", "http"])
+async def status_reporter(request):
+    if request.param == "recording":
+        fake = RecordingStatusReporter()
+        yield fake, lambda: [r.to_json() for r in fake.reports]
+    else:
+        received = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            received.append(json.loads(request.content))
+            return httpx.Response(202)
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            yield HttpStatusReporter(client, BASE), lambda: received
+
+
+async def test_a_report_is_delivered(status_reporter):
+    sender, received = status_reporter
+
+    outcome = await sender.report(report())
+
+    assert outcome.delivered
+    assert outcome.error is None
+    assert received() == [report().to_json()]
+
+
+async def test_reports_in_seq_order_are_each_delivered(status_reporter):
+    sender, received = status_reporter
+
+    for seq in (1, 2, 3):
+        outcome = await sender.report(report(seq))
+        assert outcome.delivered
+        assert outcome.error is None
+
+    assert received() == [report(seq).to_json() for seq in (1, 2, 3)]
 
 
 def test_report_json_has_the_round_3_fields():

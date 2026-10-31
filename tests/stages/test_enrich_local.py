@@ -9,6 +9,7 @@ import pytest
 
 from kp_processing.identity import reuse_key
 from kp_processing.methods import code, picture_ocr
+from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.stages import (
     AssembleInput,
     EnrichInput,
@@ -115,7 +116,10 @@ async def test_inventory_lists_one_item_per_target_with_its_input_refs(ports, ru
 
     stored = await ports.store.get(input.inventory.ref)
     body = json.loads(stored)
-    key = hashlib.sha256(f"paper-pdf@1|{input.assembly.digest}".encode()).hexdigest()
+    item_methods = [runtime.profile.methods[m] for m in enrich_local.METHODS]
+    identity = [[m.ref, m.module_digest] for m in item_methods]
+    key_input = json.dumps(["paper-pdf@1", input.assembly.digest, identity], separators=(",", ":"))
+    key = hashlib.sha256(key_input.encode()).hexdigest()
     assert input.inventory.ref == f"documents/doc_1/items/{key}/inventory.json"
     assert input.inventory.digest == hashlib.sha256(stored).hexdigest()
     assert (body["assembly_ref"], body["assembly_digest"]) == (
@@ -176,7 +180,49 @@ async def test_inventory_is_registered_once(ports, runtime):
     assert again == dataclasses.replace(input.inventory, reused=True)
 
 
+async def test_a_method_added_to_the_draft_profile_gets_a_new_inventory_and_reuses_the_rest(
+    ports, runtime
+):
+    methods = {k: v for k, v in runtime.profile.methods.items() if k != "code"}
+    without_code = dataclasses.replace(
+        runtime, profile=dataclasses.replace(runtime.profile, methods=methods)
+    )
+    before = await enriched(ports, without_code, enriched_paper())
+
+    after = await enriched(ports, runtime, enriched_paper())
+
+    assert after.assembly.reused
+    assert after.inventory.ref != before.inventory.ref
+    assert not after.inventory.reused
+    reused = {o.item_id: o.reused for o in after.outcomes}
+    assert reused == {
+        "picture-ocr:#/pictures/0": True,
+        "picture-ocr:#/pictures/1": True,
+        next(i for i in reused if i.startswith("code:")): False,
+        "table-status:#/tables/0": True,
+    }
+
+
 # --- local enrichment ----------------------------------------------------------------------
+
+
+async def test_enrichment_files_exist_before_the_outcome_is_registered(ports, runtime):
+    checked = []
+
+    class CheckingStore(DictObjectStore):
+        async def put_if_absent(self, key: str, data: bytes) -> bool:
+            if key.endswith("/outcome.json"):
+                record = json.loads(data)
+                refs = record["evidence_refs"] + [record["provider_artifact_ref"]]
+                for ref in refs:
+                    if ref:
+                        assert await self.head(ref) is not None
+                        checked.append(ref)
+            return await super().put_if_absent(key, data)
+
+    await enriched(dataclasses.replace(ports, store=CheckingStore()), runtime, enriched_paper())
+
+    assert checked
 
 
 async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runtime):

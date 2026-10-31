@@ -48,6 +48,23 @@ async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, s
     return outcome, handle.result_run_id or ""
 
 
+async def test_a_non_object_start_input_fails_prepare(client, ports, runtime):
+    request_id = f"req_{uuid.uuid4().hex[:8]}"
+    async with workers(client, ports, runtime):
+        outcome = await client.execute_workflow(
+            WORKFLOW, [1, 2], id=request_id, task_queue=ORCHESTRATION_QUEUE
+        )
+
+    ref = f"requests/{request_id}/failure.json"
+    assert outcome == {"outcome": "failed", "manifest_ref": ref}
+    failure = json.loads(await ports.store.get(ref))
+    assert failure["error"]["reason"] == "INVALID_START_INPUT"
+    last = ports.reporter.reports[-1]  # type: ignore[attr-defined]
+    assert (last.stage, last.state, last.error, last.manifest_ref) == (
+        "prepare", "failed", failure["error"], ref,
+    )  # fmt: skip
+
+
 def shape(reports: list[StatusReport]) -> list[tuple]:
     return [(r.seq, r.stage, r.state, r.progress) for r in reports]
 
@@ -243,3 +260,62 @@ async def test_admission_priority_sets_the_temporal_priority_key(
 
 async def _resolved(value):
     return value
+
+
+async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports, runtime):
+    runtime = with_runtime(
+        runtime,
+        heartbeat_timeout_s={"inference": 61},
+        start_to_close_s={"orchestration": 121, "inference": 901},
+        activity_retry={
+            "orchestration": {"initial_s": 3, "multiplier": 2, "cap_s": 31, "max_attempts": 6},
+            "inference": {"initial_s": 2, "multiplier": 3, "cap_s": 99, "max_attempts": 2},
+        },
+    )
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    history = await client.get_workflow_handle(start["request_id"]).fetch_history()
+    scheduled = {
+        e.activity_task_scheduled_event_attributes.activity_type.name: (
+            e.activity_task_scheduled_event_attributes
+        )
+        for e in history.events
+        if e.HasField("activity_task_scheduled_event_attributes")
+    }
+    parse_group, finalize = scheduled["parse_group"], scheduled["finalize"]
+    assert parse_group.start_to_close_timeout.seconds == 901
+    assert parse_group.heartbeat_timeout.seconds == 61
+    assert parse_group.retry_policy.maximum_attempts == 2
+    assert parse_group.retry_policy.backoff_coefficient == 3
+    assert parse_group.retry_policy.maximum_interval.seconds == 99
+    assert finalize.start_to_close_timeout.seconds == 121
+    assert finalize.retry_policy.maximum_attempts == 6
+    assert finalize.retry_policy.initial_interval.seconds == 3
+    assert list(finalize.retry_policy.non_retryable_error_types) == ["ProcessingFailure"]
+
+
+async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
+    client, ports, runtime, monkeypatch
+):
+    async def broken(input, ports, runtime):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr("kp_processing.stages.inventory.run", broken)
+    retry = {"initial_s": 1, "multiplier": 2, "cap_s": 1, "max_attempts": 1}
+    runtime = with_runtime(
+        runtime,
+        activity_retry={**runtime.profile.runtime["activity_retry"], "orchestration": retry},
+    )
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "failed"
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert (failure["cause"], failure["stage"]) == ("platform", "enrich")
+    error = failure["error"]
+    assert (error["reason"], error["retryable"]) == ("PLATFORM_ERROR", True)
+    assert error["metadata"] == {"category": "platform", "activity": "inventory"}

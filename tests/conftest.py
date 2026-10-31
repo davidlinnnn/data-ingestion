@@ -29,4 +29,4 @@ async def client():
 
 @pytest.fixture
 def runtime() -> Runtime:
-    return Runtime(profile=load_profile(DEV_PROFILE), build_id="test-r1")
+    return Runtime(profile=load_profile(DEV_PROFILE), build_id="test-r1", custody_bucket="kp-dev")
