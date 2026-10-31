@@ -3,7 +3,8 @@
 Connections come from the environment: TEMPORAL_ADDRESS (default localhost:7233),
 TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
 KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), which only the
-orchestration worker needs.
+orchestration worker needs; KP_VLM_BASE_URL and KP_VLM_API_KEY, the OpenAI-compatible VLM
+endpoint, which only the vlm worker needs (the model comes from the profile).
 """
 
 import argparse
@@ -20,10 +21,11 @@ from temporalio.client import Client, WorkflowFailureError
 from temporalio.common import WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
+from kp_processing.ports.inference import OpenAIChat
 from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
-from kp_processing.stages import Ports, Runtime
+from kp_processing.stages import Ports, Runtime, finalize
 from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, Queue, priority
 
 
@@ -33,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
     `<id>@<version>  module_digest=<hex>  components=<c1>,<c2>,...` (components empty when
     none). A ProfileError prints to stderr and exits 1.
 
-    `kp-processing worker --queue orchestration|inference [--profile PATH] [--build-id ID]
+    `kp-processing worker --queue orchestration|inference|vlm [--profile PATH] [--build-id ID]
     [--shutdown-grace-s S]`: serve one task queue until SIGTERM or SIGINT, then stop polling
     and give running Activities S seconds (default 0) to finish before they are cancelled and
     retried elsewhere; keep S below the pod's termination grace period. It refuses to start
@@ -42,19 +44,24 @@ def main(argv: list[str] | None = None) -> int:
     `kp-processing start-request START.json [--wait]`: start the workflow for an admission
     spec §10 start input, with the workflow ID set to its request_id. Starting a request
     that already exists counts as success. --wait prints the workflow's outcome.
+
+    `kp-processing list-service-unavailable`: one JSON line {"document_uid", "request_id"}
+    per redrive marker, for #98's redrive; it does not check that the request is still its
+    document's current revision.
     """
     parser = argparse.ArgumentParser(prog="kp-processing")
     commands = parser.add_subparsers(dest="command", required=True)
     profile = commands.add_parser("profile")
     profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker = commands.add_parser("worker")
-    worker.add_argument("--queue", choices=["orchestration", "inference"], required=True)
+    worker.add_argument("--queue", choices=["orchestration", "inference", "vlm"], required=True)
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker.add_argument("--build-id", default="dev")
     worker.add_argument("--shutdown-grace-s", type=float, default=0)
     start = commands.add_parser("start-request")
     start.add_argument("start_input", type=Path)
     start.add_argument("--wait", action="store_true")
+    commands.add_parser("list-service-unavailable")
     args = parser.parse_args(argv)
 
     if args.command == "worker":
@@ -63,6 +70,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "start-request":
         return asyncio.run(start_request(json.loads(args.start_input.read_text()), args.wait))
+    if args.command == "list-service-unavailable":
+        for marker in asyncio.run(finalize.service_unavailable(S3ObjectStore.from_env())):
+            print(json.dumps(marker))
+        return 0
     try:
         loaded = load_profile(args.path)
     except ProfileError as exc:
@@ -90,16 +101,26 @@ async def run_worker(
     if queue == "orchestration" and not admission:
         print("KP_ADMISSION_URL is required for the orchestration worker", file=sys.stderr)
         return 2
+    vlm_url, vlm_key = os.environ.get("KP_VLM_BASE_URL"), os.environ.get("KP_VLM_API_KEY", "")
+    if queue == "vlm" and not vlm_url:
+        print("KP_VLM_BASE_URL is required for the vlm worker", file=sys.stderr)
+        return 2
+    from kp_processing.stages import enrich_vlm
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
 
     store = S3ObjectStore.from_env()
     runtime = Runtime(
         profile=load_profile(profile_path), build_id=build_id, custody_bucket=store.bucket
     )
-    async with httpx.AsyncClient(timeout=10) as http:
-        # Only orchestration Activities send status reports.
+    async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as vlm_http:
+        # Only orchestration Activities send status reports, only vlm ones VLM requests.
         reporter = HttpStatusReporter(http, admission or "")
-        worker = await make_worker(await connect(), Ports(store, reporter),
+        vlm = None
+        if queue == "vlm":
+            deadline = runtime.profile.runtime["vlm_request_deadline_s"]
+            vlm = OpenAIChat(vlm_http, vlm_url or "", vlm_key, enrich_vlm.model(runtime.profile),
+                             deadline["connect"], deadline["total"])  # fmt: skip
+        worker = await make_worker(await connect(), Ports(store, reporter, vlm=vlm),
                                    runtime, queue, shutdown_grace_s)  # fmt: skip
         print(f"worker {runtime.profile.id} build {build_id} on {worker.task_queue}",
               flush=True)  # fmt: skip

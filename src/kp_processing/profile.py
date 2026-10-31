@@ -18,13 +18,22 @@ PROFILES_DIR = Path(__file__).parent / "profiles"
 REQUIRED_RUNTIME = (
     "heartbeat_interval_s",
     "heartbeat_timeout_s.inference",
+    "heartbeat_timeout_s.vlm",
     "start_to_close_s.orchestration",
     "start_to_close_s.inference",
     *(
         f"activity_retry.{queue}.{key}"
-        for queue in ("orchestration", "inference")
+        for queue in ("orchestration", "inference", "vlm")
         for key in ("initial_s", "multiplier", "cap_s", "max_attempts")
     ),
+    "external_start_to_close_slack_s",
+    "vlm_request_deadline_s.connect",
+    "vlm_request_deadline_s.total",
+    *(f"retry.{key}" for key in ("initial_s", "multiplier", "cap_s", "max_attempts")),
+    "vlm_concurrency_per_document",
+    "request_cap.per_item",
+    "request_cap.extra",
+    "enrichment_stage_budget_s.hard",
     "parse_group_pages",
     "preflight.max_pages",
     "preflight.max_bytes",

@@ -18,7 +18,7 @@ from kp_processing.stages import (
 )
 
 # Methods this Activity runs; inventory items of other methods belong to other Activities.
-METHODS = ("picture-ocr", "code", "table-status")
+METHODS = ("picture-ocr", "table-status")
 
 
 async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:

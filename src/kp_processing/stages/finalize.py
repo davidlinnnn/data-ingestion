@@ -7,6 +7,7 @@ import json
 import platform
 
 from kp_processing.identity import canonical_json
+from kp_processing.ports.object_store import ObjectStore
 from kp_processing.stages import (
     FailureInput,
     FinalizeInput,
@@ -47,6 +48,15 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         content when its compact JSON is at most CONTENT_INLINE_MAX bytes, else null: read
         result_ref), evidence_refs, status, status_reason (from the rule), signals,
         provider_artifact_ref, reused (from the OutcomeRef)
+
+    An outcome record with "fields" yields one enrichment per field instead, in the record's
+    key order: item_id "<item_id>/<field>", content, signals, status and status_reason from
+    the field's entry (the rule applied to it), the rest from the record; counts count
+    enrichments.
+
+    When any enrichment has status_reason SERVICE_UNAVAILABLE, the redrive marker
+    documents/{document_uid}/service-unavailable/{request_id} (empty) is written first,
+    write-once (#129; listed by service_unavailable()).
 
     An inventory item without an OutcomeRef, or whose outcome record is missing or differs
     from the OutcomeRef's digest, raises ProcessingFailure(platform, integrity,
@@ -202,3 +212,9 @@ async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> st
     ref = f"requests/{input.request_id}/failure.json"
     await ports.store.put_if_absent(ref, canonical_json(report))
     return ref
+
+
+async def service_unavailable(store: ObjectStore) -> list[dict[str, str]]:
+    """Every redrive marker as {"document_uid", "request_id"}, sorted. Whether the request is
+    still its document's current revision is for #98 to decide, not this list."""
+    raise NotImplementedError

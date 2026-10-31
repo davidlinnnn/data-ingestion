@@ -8,6 +8,11 @@ Object keys (#129, object storage and registration):
 
     documents/{document_uid}/items/{key}/...         registered, write-once, shared across requests
     requests/{request_id}/attempts/{run_id}/plan.json the frozen group plan of one attempt
+    requests/{request_id}/attempts/{run_id}/receipts/{item_id}/{attempt}.json
+                                                      external request receipts (#133)
+    requests/{request_id}/attempts/{run_id}/outcomes/{key}/outcome.json
+                                                      outcome records that must not be reused
+    documents/{document_uid}/service-unavailable/{request_id}  redrive marker (empty)
     requests/{request_id}/result.json | failure.json  the Processing Result or failure report
 
 Enrichment (#132): inventory lists one item per enrichment target; an enrichment Activity
@@ -23,6 +28,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from kp_processing.ports.clock import Clock, SystemClock
+from kp_processing.ports.inference import InferenceTransport
 from kp_processing.ports.object_store import ObjectNotFound, ObjectStore
 from kp_processing.ports.status_reporter import StatusReporter
 from kp_processing.profile import ProcessingProfile
@@ -40,6 +46,7 @@ class Ports:
     reporter: StatusReporter
     clock: Clock = SystemClock()
     heartbeat: Callable[[], None] = lambda: None  # called after each completed item
+    vlm: InferenceTransport | None = None  # only the vlm worker has one
 
 
 @dataclass(frozen=True)
@@ -230,6 +237,8 @@ class InventoryRef:
 class EnrichInput:
     document_uid: str
     inventory: InventoryRef
+    request_id: str  # with run_id, names the attempt's scratch prefix (receipts)
+    run_id: str
 
 
 @dataclass(frozen=True)

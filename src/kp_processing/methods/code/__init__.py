@@ -14,7 +14,25 @@ ID = "code"
 VERSION = 1
 ORIGIN = "reconstruction"
 TARGET = ("texts", "code")
-INPUTS = ("source",)
+INPUTS = ("source", "page_image")
+
+
+def request(item: InventoryItem, inputs: list[bytes]) -> dict[str, Any] | MethodOutput:
+    """run(item, inputs) when the box has a text layer. Otherwise the VLM request: a system
+    prompt (untrusted source content; answer only in the schema; the code verbatim with its
+    indentation) and one user message with the crop of the page image (inputs[1]) to
+    item["bbox"] as a PNG data URL, detail "high"; response_format the strict json_schema named
+    ID for {"code": string}."""
+    raise NotImplementedError
+
+
+def parse(item: InventoryItem, inputs: list[bytes], content: str) -> MethodOutput:
+    """The VLM fallback's answer. InvalidOutput("EMPTY_OUTPUT") when content or code is blank;
+    InvalidOutput("SCHEMA_INVALID") when content is not JSON matching the schema. Otherwise
+    success, content = the code with trailing whitespace stripped per line and no trailing
+    newline, files {"crop.png": the crop sent}, evidence ["crop.png"], signals
+    {"vlm_fallback": True}."""
+    raise NotImplementedError
 
 
 def run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput:
@@ -62,7 +80,6 @@ def run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput:
                         }
                     )
     if not characters:
-        # shortcut: no VLM fallback for a block without a text layer, until #133 adds one.
         return MethodOutput(outcome="failed", reason="NO_TEXT_LAYER")
 
     lines: list[dict[str, Any]] = []
