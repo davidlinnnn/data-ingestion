@@ -2,11 +2,14 @@
 failure mapping and its in-code deadline (V7: the #84 dead-socket hang as a regression test)."""
 
 import asyncio
+import base64
+import io
 import json
 import time
 
 import httpx
 import pytest
+from PIL import Image
 
 from kp_processing.ports.inference import (
     FakeInference,
@@ -17,8 +20,24 @@ from kp_processing.ports.inference import (
 )
 
 BASE = "http://vlm.test/v1"
+
+
+def synthetic_png() -> str:
+    buffer = io.BytesIO()
+    Image.new("RGB", (4, 4), "white").save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
 REQUEST = {
-    "messages": [{"role": "user", "content": "hi"}],
+    "messages": [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Transcribe the formula."},
+                {"type": "image_url", "image_url": {"url": synthetic_png(), "detail": "high"}},
+            ],
+        }
+    ],
     "response_format": {"type": "json_object"},
 }
 

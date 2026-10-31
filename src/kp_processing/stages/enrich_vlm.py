@@ -23,6 +23,7 @@ from kp_processing.stages import (
     enrichment_key,
     in_thread,
     item_prefix,
+    method_failure,
     register_enrichment,
     registered,
     sha256,
@@ -48,24 +49,6 @@ def model(profile: ProcessingProfile) -> str:
     if not provider or not separator or not name:
         raise ValueError("VLM component must name a provider and model")
     return name
-
-
-def _method_failure(item_id: str, error: Exception) -> ProcessingFailure:
-    if isinstance(error, MethodUnavailable):
-        return ProcessingFailure(
-            "platform",
-            "configuration",
-            "METHOD_UNAVAILABLE",
-            str(error),
-            metadata={"item_id": item_id},
-        )
-    return ProcessingFailure(
-        "platform",
-        "method",
-        "METHOD_ERROR",
-        "Enrichment method failed",
-        metadata={"item_id": item_id},
-    )
 
 
 async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
@@ -174,7 +157,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
             try:
                 request = await in_thread(package.request, item, inputs)
             except Exception as exc:
-                raise _method_failure(item_id, exc) from exc
+                raise method_failure(item_id, exc) from exc
             if isinstance(request, MethodOutput):
                 output = request
             else:
@@ -221,6 +204,10 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                         "sent_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                     }
                     receipt_ref = f"{receipt_prefix}{item_id}/{number}.json"
+                    if ports.vlm is None:
+                        raise method_failure(
+                            item_id, MethodUnavailable("VLM transport is not configured")
+                        )
                     async with cap_lock:
                         if ports.clock.monotonic() - started > budget:
                             break
@@ -244,14 +231,10 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                                 metadata={"item_id": item_id},
                             )
                         used += 1
-                    if ports.clock.monotonic() - started > budget:
-                        break
                     attempts += 1
                     answer: Completion | None = None
                     send_started = time.perf_counter()
                     try:
-                        if ports.vlm is None:
-                            raise MethodUnavailable("VLM transport is not configured")
                         answer = await ports.vlm.complete(request)
                     except ServiceUnavailable as exc:
                         last_result, last_reason = "unavailable", exc.reason
@@ -265,7 +248,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                             metadata={"item_id": item_id, "status": str(exc.status)},
                         ) from exc
                     except MethodUnavailable as exc:
-                        raise _method_failure(item_id, exc) from exc
+                        raise method_failure(item_id, exc) from exc
                     latency_ms = (time.perf_counter() - send_started) * 1000
                     if answer is not None:
                         last_completion = answer
@@ -280,7 +263,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                                 last_result, last_reason = "invalid", exc.reason
                                 invalid += 1
                             except Exception as exc:
-                                raise _method_failure(item_id, exc) from exc
+                                raise method_failure(item_id, exc) from exc
                             else:
                                 last_result, last_reason = "ok", None
                     receipt.update(

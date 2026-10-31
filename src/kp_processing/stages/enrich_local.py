@@ -3,17 +3,17 @@
 import asyncio
 import json
 
-from kp_processing.methods import InventoryItem, MethodUnavailable
+from kp_processing.methods import InventoryItem
 from kp_processing.stages import (
     EnrichInput,
     OutcomeRef,
     Ports,
-    ProcessingFailure,
     Runtime,
     enrichment_inputs,
     enrichment_key,
     in_thread,
     item_prefix,
+    method_failure,
     register_enrichment,
     registered,
 )
@@ -73,22 +73,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
         package = method.package
         try:
             output = await in_thread(package.run, item, inputs)
-        except MethodUnavailable as exc:
-            raise ProcessingFailure(
-                "platform",
-                "configuration",
-                "METHOD_UNAVAILABLE",
-                str(exc),
-                metadata={"item_id": item["item_id"]},
-            ) from exc
         except Exception as exc:
-            raise ProcessingFailure(
-                "platform",
-                "method",
-                "METHOD_ERROR",
-                "Enrichment method failed",
-                metadata={"item_id": item["item_id"]},
-            ) from exc
+            raise method_failure(item["item_id"], exc) from exc
         outcomes.append(
             await register_enrichment(ports.store, item["item_id"], method, prefix, output)
         )

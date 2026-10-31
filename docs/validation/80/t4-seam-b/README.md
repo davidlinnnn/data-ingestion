@@ -10,7 +10,7 @@ public corpus papers may be sent to the provider.
 
 | # | Scenario | Acceptance criteria |
 |---|---|---|
-| F | A local stand-in answers every request with the canned answer after 3 s; fresh bucket. Runs first: if it fails or needs more than 150 requests, nothing is sent to the real model | exit 0; every receipt ok; every latency >= 3 s; enrichment counts per method equal R's |
+| F | A local stand-in answers every request with the canned answer after 3 s; fresh bucket. Runs first: if it fails or needs more than 150 requests, nothing is sent to the real model | exit 0; every receipt ok; every latency 3–4 s; enrichment counts per method equal R's |
 | R | The real model (`https://api.openai.com/v1`); fresh bucket | exit 0; outcome `complete`; no incomplete receipt; 0 < requests <= the request cap (`3 x items + 20`) |
 | C | A second request for the same document, same bucket as R | exit 0; no VLM request; nothing new under `documents/`; every enrichment reused; statuses equal R's |
 

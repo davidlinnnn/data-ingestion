@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from kp_processing.identity import canonical_json
-from kp_processing.methods import InventoryItem, MethodOutput
+from kp_processing.methods import InventoryItem, MethodOutput, MethodUnavailable
 from kp_processing.ports.clock import Clock, SystemClock
 from kp_processing.ports.inference import InferenceTransport
 from kp_processing.ports.object_store import ObjectNotFound, ObjectStore
@@ -249,6 +249,26 @@ class OutcomeRef:
     ref: str  # key of the registered outcome.json
     digest: str  # sha256 of its bytes
     reused: bool  # True when it was registered before this call
+
+
+def method_failure(item_id: str, error: Exception) -> ProcessingFailure:
+    """A method's exception as the document failure: MethodUnavailable is configuration /
+    METHOD_UNAVAILABLE, anything else method / METHOD_ERROR."""
+    if isinstance(error, MethodUnavailable):
+        return ProcessingFailure(
+            "platform",
+            "configuration",
+            "METHOD_UNAVAILABLE",
+            str(error),
+            metadata={"item_id": item_id},
+        )
+    return ProcessingFailure(
+        "platform",
+        "method",
+        "METHOD_ERROR",
+        "Enrichment method failed",
+        metadata={"item_id": item_id},
+    )
 
 
 def enrichment_key(document_uid: str, item: InventoryItem, method: Method) -> str:

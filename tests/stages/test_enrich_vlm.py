@@ -538,6 +538,18 @@ async def test_a_rejected_request_fails_the_document(ports, runtime):
     assert failure.metadata == {"item_id": "picture-interpretation:#/pictures/0", "status": "401"}
 
 
+async def test_a_worker_without_a_transport_fails_before_any_receipt(ports, runtime):
+    input = await native(ports, runtime, one_picture_paper())
+    ports = dataclasses.replace(ports, vlm=None)
+
+    with pytest.raises(ProcessingFailure) as caught:
+        await run_vlm(ports, runtime, input.inventory)
+
+    failure = caught.value
+    assert (failure.category, failure.reason) == ("configuration", "METHOD_UNAVAILABLE")
+    assert await receipts(ports, "picture-interpretation:#/pictures/0") == []
+
+
 # --- reuse, concurrency, heartbeat -----------------------------------------------------------
 
 

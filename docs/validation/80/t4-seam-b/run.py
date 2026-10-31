@@ -257,6 +257,7 @@ async def main(manifest: Path, index: int) -> int:
             and len(result_f["enrichments"]) == len(result_r["enrichments"])
             and evidence["F"]["receipts"]["results"]["ok"] == len(sent_f)
             and 3000 <= evidence["F"]["receipts"]["latency_ms"]["min"]
+            and evidence["F"]["receipts"]["latency_ms"]["max"] <= 4000
         )  # fmt: skip
     finally:
         for process in [*workers, admission, temporal]:
