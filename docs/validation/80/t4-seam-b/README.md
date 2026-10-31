@@ -41,20 +41,40 @@ All three pass; details in `evidence.json`.
 
 ## Fixtures
 
-`run.py` saves each provider response from R to
-`tests/fixtures/vlm/<method>/<params_digest>.json`: the full response JSON only, never an image
-or a request body. `tests/stages/test_enrich_vlm.py` feeds them to schema parsing and the status
-rule. The company VLM's fixtures are re-recorded on the company network.
+`run.py` (paper 20) and `record.py` (the other 19 papers, one real run each) save each
+registered provider response to `tests/fixtures/vlm/<method>/<params_digest>.json`: the full
+response JSON only, never an image or a request body. `tests/stages/test_enrich_vlm.py` feeds
+them to schema parsing and the status rule. The company VLM's fixtures are re-recorded on the
+company network.
+
+`record.py` results (`recorded.json`, 2026-11-01): all 19 documents complete. There were 357
+requests: 345 ok, 9 invalid and 3 unavailable. They used 450,604 prompt tokens and 173,646
+completion tokens, about US$0.13. With R's US$0.03, DEV spend this ticket is about US$0.16.
+The run saved 347 fixtures (with R's 38: 163 picture-interpretation and 222 formula).
+
+- Paper 14: the model did not answer one picture within 60 s, three times. The picture's
+  4 fields ended `failed`/`SERVICE_UNAVAILABLE`, the document completed, and the redrive
+  marker was written and listed. The provider may still bill the cut requests; their tokens
+  are unknown and not in the estimate.
+- Paper 16: the model answered `{"latex": ""}` 9 times. The retry recovered 7; 2 formulas ended
+  `failed`/`EMPTY_OUTPUT`. Both empty answers are fixtures.
+- Statuses over the 19 papers: formula 197 unverified, 7 disputed, 2 failed;
+  picture-interpretation 564 unverified fields, 4 failed; code 144 unverified.
 
 ## Known limits
 
-- The slowest response (53.5 s) came close to the 60 s total deadline. A long figure on a
-  slower day may time out and be retried.
-- Only one paper was recorded. It has no page without a text layer, so the code fallback has
-  no real-response fixture.
+- Response latency reaches the 60 s total deadline (R's slowest was 53.5 s; paper 14 hit it
+  three times on one picture).
+- Every corpus code block has a text layer, so the code fallback has no real-response fixture.
 
 ## Run
 
 ```sh
 env HF_HUB_OFFLINE=1 OPENAI_API_KEY=... .venv/bin/python docs/validation/80/t4-seam-b/run.py <corpus manifest> 20
+```
+
+Recording the rest of the corpus:
+
+```sh
+env HF_HUB_OFFLINE=1 OPENAI_API_KEY=... .venv/bin/python docs/validation/80/t4-seam-b/record.py <corpus manifest>
 ```

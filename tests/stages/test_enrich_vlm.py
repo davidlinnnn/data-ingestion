@@ -20,7 +20,13 @@ import httpx
 import pytest
 from PIL import Image
 
-from kp_processing.methods import InventoryItem, code, formula, picture_interpretation
+from kp_processing.methods import (
+    InvalidOutput,
+    InventoryItem,
+    code,
+    formula,
+    picture_interpretation,
+)
 from kp_processing.ports.clock import FakeClock
 from kp_processing.ports.inference import (
     Completion,
@@ -817,5 +823,10 @@ async def test_recorded_formulas_parse_and_follow_the_status_rule(ports, runtime
 
     for content in contents:
         latex = json.loads(content)["latex"]
+        if not latex.strip():  # the model sometimes answers {"latex": ""} (corpus paper 16)
+            with pytest.raises(InvalidOutput) as caught:
+                formula.parse(blank, inputs, content)
+            assert caught.value.reason == "EMPTY_OUTPUT"
+            continue
         empty = formula.parse(blank, inputs, content)
         assert (empty.outcome, empty.content, empty.contradictions) == ("success", latex, [])

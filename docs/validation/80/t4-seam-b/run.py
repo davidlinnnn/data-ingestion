@@ -100,7 +100,7 @@ def receipt_summary(sent: list[dict]) -> dict:
         "incomplete": sum("result" not in r for r in sent),
         "latency_ms": {"min": latencies[0], "median": latencies[len(latencies) // 2],
                        "max": latencies[-1]} if latencies else None,
-        "tokens": {k: sum(r.get("usage", {}).get(k, 0) for r in sent)
+        "tokens": {k: sum((r.get("usage") or {}).get(k, 0) for r in sent)
                    for k in ("prompt_tokens", "completion_tokens")},
         "models": sorted({r.get("model") for r in sent} - {None}),
         "system_fingerprints": sorted({str(r.get("system_fingerprint")) for r in sent}),
