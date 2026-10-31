@@ -58,6 +58,12 @@ class Method:
     def ref(self) -> str:
         return f"{self.id}@{self.version}"
 
+    @property
+    def calls_vlm(self) -> bool:
+        """True when the package declares request and parse: its items run in the VLM
+        Activity; an item-scope package that declares only run runs in the local one."""
+        return hasattr(self.package, "request")
+
     def reuse_key(self, document_uid: str, input_digests: Sequence[str]) -> str:
         """The reuse key of one of this method's items (identity.reuse_key)."""
         return reuse_key(document_uid, self.ref, self.components, self.module_digest, input_digests)

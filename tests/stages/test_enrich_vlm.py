@@ -64,6 +64,7 @@ from tests.vlm import CANNED, canned, images, schema_name
 BODY = [f"Line {i} of the method section describes the approach in plain prose." for i in range(4)]
 EQUATION = "                    L = 2 x + 3 y - 7 = 0                    (1)"
 EMPTY_BOX = {"l": 300.0, "t": 780.0, "r": 500.0, "b": 760.0, "coord_origin": "BOTTOMLEFT"}
+VLM_METHODS = ("picture-interpretation", "formula", "code")
 
 
 def one_picture_paper() -> bytes:
@@ -132,7 +133,7 @@ async def receipts(ports, item_id: str, request_id="req_1", run_id="run_1") -> l
 
 
 async def vlm_items(ports, inv: InventoryRef) -> list[dict]:
-    return [i for i in await items_of(ports, inv) if i["method"] in enrich_vlm.METHODS]
+    return [i for i in await items_of(ports, inv) if i["method"] in VLM_METHODS]
 
 
 async def clones(ports, inv: InventoryRef, count: int) -> InventoryRef:
@@ -325,6 +326,15 @@ async def test_a_formula_without_a_text_layer_has_nothing_to_contradict(ports, r
 )
 def test_text_layer_signs_compare_like_their_latex_commands(native, latex, expected):
     assert formula.mismatch(native, latex) is expected
+
+
+def test_a_method_runs_where_its_package_shape_says(runtime):
+    # A new method needs only its package and a profile entry: request/parse means the VLM
+    # Activity, run means the local one.
+    item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
+
+    assert {m.id for m in item_methods if m.calls_vlm} == set(VLM_METHODS)
+    assert {m.id for m in item_methods if not m.calls_vlm} == {"picture-ocr", "table-status"}
 
 
 def test_the_model_is_the_shared_vlm_component(runtime):

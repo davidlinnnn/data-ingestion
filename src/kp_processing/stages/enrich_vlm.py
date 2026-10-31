@@ -29,18 +29,16 @@ from kp_processing.stages import (
     sha256,
 )
 
-# Methods this Activity runs; inventory items of other methods belong to other Activities.
-METHODS = ("picture-interpretation", "formula", "code")
-
 
 def model(profile: ProcessingProfile) -> str:
     """The VLM model the profile names: the text after the first "/" of the one component that
-    every METHODS entry of the profile lists, e.g. "gpt-6-luna" for "openai/gpt-6-luna".
+    every item-scope method that calls the VLM lists, e.g. "gpt-6-luna" for "openai/gpt-6-luna".
     Raises ValueError when those methods do not all list exactly that one component."""
     components = []
-    for name in METHODS:
-        method = profile.methods.get(name)
-        if method is None or len(method.components) != 1:
+    for method in profile.methods.values():
+        if not (hasattr(method.package, "TARGET") and method.calls_vlm):
+            continue
+        if len(method.components) != 1:
             raise ValueError("VLM methods must each list one shared component")
         components.append(method.components[0])
     if len(set(components)) != 1:
@@ -52,9 +50,10 @@ def model(profile: ProcessingProfile) -> str:
 
 
 async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
-    """Run every inventory item of METHODS, at most runtime vlm_concurrency_per_document items
-    at once, and record one outcome per item; ports.heartbeat() after each item. Returns one
-    OutcomeRef per such item, in inventory order. Parameters below are runtime keys.
+    """Run every inventory item of a method that calls the VLM (Method.calls_vlm), at most runtime
+    vlm_concurrency_per_document items at once, and record one outcome per item; ports.heartbeat()
+    after each item. Returns one OutcomeRef per such item, in inventory order. Parameters below are
+    runtime keys.
 
     Per item, the reuse key, the prefix documents/{document_uid}/items/{key}, the reuse of an
     already registered {prefix}/outcome.json (nothing is sent) and the reading of inputs are
@@ -303,7 +302,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     try:
         async with asyncio.TaskGroup() as group:
             for item in inventory["items"]:
-                if item["method"] in METHODS:
+                if runtime.profile.methods[item["method"]].calls_vlm:
                     tasks.append(group.create_task(process(item)))
     except* ProcessingFailure as failures:
         raise failures.exceptions[0] from None

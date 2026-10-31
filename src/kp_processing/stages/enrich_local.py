@@ -18,14 +18,11 @@ from kp_processing.stages import (
     registered,
 )
 
-# Methods this Activity runs; inventory items of other methods belong to other Activities.
-METHODS = ("picture-ocr", "table-status")
-
 
 async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
-    """Run every inventory item of METHODS, in inventory order, and register one outcome
-    record per item; ports.heartbeat() after each item. Returns one OutcomeRef per such item,
-    in inventory order.
+    """Run every inventory item of a method that runs locally (not Method.calls_vlm), in inventory
+    order, and register one outcome record per item; ports.heartbeat() after each item. Returns one
+    OutcomeRef per such item, in inventory order.
 
     Per item, with method = runtime.profile.methods[item["method"]]:
       key = reuse_key(document_uid, method.ref, method.components, method.module_digest,
@@ -58,9 +55,9 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     outcomes = []
     item: InventoryItem
     for item in inventory["items"]:
-        if item["method"] not in METHODS:
-            continue
         method = runtime.profile.methods[item["method"]]
+        if method.calls_vlm:
+            continue
         key = enrichment_key(input.document_uid, item, method)
         prefix = item_prefix(input.document_uid, key)
         ref = f"{prefix}/outcome.json"

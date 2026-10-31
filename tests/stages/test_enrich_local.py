@@ -26,6 +26,7 @@ from kp_processing.stages import (
 from tests.pdfs import Page, write_pdf
 from tests.stages.test_parse import parse_all
 
+LOCAL_METHODS = ("picture-ocr", "table-status")
 PICTURE_WORDS = ["Encoder", "Attention x4", "Decoder 512", "Loss: 0.031"]
 CODE = [
     "def fib(n):",
@@ -88,7 +89,7 @@ async def enriched(ports, runtime, pdf: bytes, request_id: str = "req_1") -> Fin
 async def local_only(ports, inv: InventoryRef) -> InventoryRef:
     """The inventory without the items of other Activities."""
     items = await items_of(ports, inv)
-    return await with_items(ports, inv, [i for i in items if i["method"] in enrich_local.METHODS])
+    return await with_items(ports, inv, [i for i in items if i["method"] in LOCAL_METHODS])
 
 
 async def items_of(ports, inv: InventoryRef) -> list[dict]:
@@ -311,7 +312,7 @@ async def test_a_second_run_reuses_every_item_without_calling_rapidocr(ports, ru
     again = await enrich_local.run(enrich_input(first.inventory), ports, runtime)
 
     assert len(calls) == 2
-    local = [o for o in first.outcomes if o.item_id.split(":")[0] in enrich_local.METHODS]
+    local = [o for o in first.outcomes if o.item_id.split(":")[0] in LOCAL_METHODS]
     assert again == [dataclasses.replace(o, reused=True) for o in local]
     assert ports.store.objects == objects  # type: ignore[attr-defined]
 

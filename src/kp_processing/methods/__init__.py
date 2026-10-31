@@ -14,7 +14,8 @@ An item-scope method package also declares:
     ORIGIN   "reconstruction" or "interpretation"
     run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput, inputs in INPUTS order
 
-A method that calls the VLM (kp_processing.stages.enrich_vlm.METHODS) declares instead of run:
+A method that calls the VLM declares instead (or as well, as code does for its native path),
+and its items then run in the VLM Activity (Method.calls_vlm):
 
     request(item, inputs) -> dict | MethodOutput
              the chat-completions request body without "model": messages carrying the images

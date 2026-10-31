@@ -87,6 +87,8 @@ async def test_the_processing_result_describes_request_profile_and_native_eviden
          "detail": runtime.profile.limitations[0].detail},
         {"code": "CAPTION_INTERRUPTS_BODY", "scope": "profile",
          "detail": runtime.profile.limitations[1].detail},
+        {"code": "INLINE_MATH_NOT_RECONSTRUCTED", "scope": "profile",
+         "detail": runtime.profile.limitations[2].detail},
         {"code": "NO_TEXT_LAYER_PAGES", "scope": "document", "detail": "no text layer on pages 6"},
     ]  # fmt: skip
 
