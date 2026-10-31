@@ -2,7 +2,8 @@
 
 Connections come from the environment: TEMPORAL_ADDRESS (default localhost:7233),
 TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
-KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97).
+KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), which only the
+orchestration worker needs.
 """
 
 import argparse
@@ -85,11 +86,16 @@ async def connect() -> Client:
 async def run_worker(
     queue: Queue, profile_path: Path, build_id: str, shutdown_grace_s: float
 ) -> int:
+    admission = os.environ.get("KP_ADMISSION_URL")
+    if queue == "orchestration" and not admission:
+        print("KP_ADMISSION_URL is required for the orchestration worker", file=sys.stderr)
+        return 2
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
 
     runtime = Runtime(profile=load_profile(profile_path), build_id=build_id)
     async with httpx.AsyncClient(timeout=10) as http:
-        reporter = HttpStatusReporter(http, os.environ["KP_ADMISSION_URL"])
+        # Only orchestration Activities send status reports.
+        reporter = HttpStatusReporter(http, admission or "")
         worker = await make_worker(await connect(), Ports(S3ObjectStore.from_env(), reporter),
                                    runtime, queue, shutdown_grace_s)  # fmt: skip
         print(f"worker {runtime.profile.profile} build {build_id} on {worker.task_queue}",

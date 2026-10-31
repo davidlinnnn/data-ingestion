@@ -30,3 +30,10 @@ def test_a_bad_profile_exits_1_with_the_reason_on_stderr(tmp_path, capsys):
     captured = capsys.readouterr()
     assert captured.out == ""
     assert "code" in captured.err
+
+
+def test_the_orchestration_worker_needs_the_admission_url(monkeypatch, capsys):
+    monkeypatch.delenv("KP_ADMISSION_URL", raising=False)
+
+    assert main(["worker", "--queue", "orchestration"]) == 2
+    assert "KP_ADMISSION_URL" in capsys.readouterr().err

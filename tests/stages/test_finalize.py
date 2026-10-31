@@ -141,3 +141,27 @@ async def test_a_failure_report_names_the_inventory_and_survives_a_malformed_sta
         "request_id": "req_9", "document_uid": None, "source_revision_id": None,
     }  # fmt: skip
     assert report["inventory_ref"] == "inv/ref"
+
+
+async def test_a_retried_finalize_keeps_the_result_already_registered(ports, runtime):
+    input = await native(ports, runtime)
+    await ports.store.put_if_absent("requests/req_1/result.json", b"first")
+
+    ref = await finalize.run(input, ports, runtime)
+
+    assert await ports.store.get(ref) == b"first"
+
+
+async def test_a_retried_failure_report_keeps_the_first(ports, runtime):
+    error = error_block(
+        {"cause": "source", "category": "source", "reason": "CORRUPT_PDF",
+         "message": "m", "retryable": False, "metadata": {}},
+        occurred_at="2026-10-31T00:00:00Z",
+        support_ref="s",
+    )  # fmt: skip
+    failure = FailureInput("req_9", {}, "prepare", "source", error, None)
+    await ports.store.put_if_absent("requests/req_9/failure.json", b"first")
+
+    ref = await finalize.run_failure(failure, ports, runtime)
+
+    assert await ports.store.get(ref) == b"first"

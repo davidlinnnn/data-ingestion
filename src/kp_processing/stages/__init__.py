@@ -15,6 +15,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from kp_processing.ports.clock import Clock, SystemClock
 from kp_processing.ports.object_store import ObjectStore
 from kp_processing.ports.status_reporter import StatusReporter
 from kp_processing.profile import Profile
@@ -30,6 +31,7 @@ ERROR_DOMAIN = "kp-processing"
 class Ports:
     store: ObjectStore
     reporter: StatusReporter
+    clock: Clock = SystemClock()
 
 
 @dataclass(frozen=True)

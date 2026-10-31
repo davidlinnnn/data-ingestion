@@ -53,3 +53,14 @@ async def test_an_out_of_order_answer_is_final(ports, runtime):
 
     assert await report.run(a_report(seq=3), ports_with(ports, reporter), runtime) is False
     assert reporter.calls == 1
+
+
+async def test_retries_back_off_doubling_up_to_10_s_within_the_budget(ports, runtime):
+    reporter = Scripted(ReportOutcome(delivered=False, error="ConnectError"))
+    budget = with_runtime(runtime, status_report_budget_s=20)
+
+    delivered = await report.run(a_report(seq=1), ports_with(ports, reporter), budget)
+
+    assert delivered is False
+    assert ports.clock.sleeps == [1, 2, 4, 8, 5]  # the last one ends at the budget
+    assert reporter.calls == 6

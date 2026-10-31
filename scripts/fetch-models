@@ -9,9 +9,7 @@ Processing Profiles declare, is committed; the weights are not. --check only
 verifies the files on disk against the committed manifest.
 """
 
-import hashlib
 import json
-import os
 import shutil
 import sys
 import urllib.request
@@ -19,7 +17,8 @@ from pathlib import Path
 
 from huggingface_hub import snapshot_download
 
-MANIFEST = Path(__file__).resolve().parent.parent / "src/kp_processing/model-manifest.json"
+from kp_processing.weights import MANIFEST, problems, root, sha256
+
 RAPIDOCR = "https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.9.2/onnx"
 
 # component string -> where its files come from
@@ -46,14 +45,6 @@ COMPONENTS = {
 }
 
 
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def fetch(root: Path, spec: dict) -> list[Path]:
     if "hf" in spec:
         local = root / spec["hf"].replace("/", "--")
@@ -75,24 +66,19 @@ def fetch(root: Path, spec: dict) -> list[Path]:
 
 
 def main() -> int:
-    root = Path(os.environ.get("DOCLING_ARTIFACTS_PATH", Path.home() / "models/docling"))
+    models = root()
     if sys.argv[1:] == ["--check"]:
-        bad = [
-            f"{rel}: {'missing' if not (root / rel).exists() else 'sha256 mismatch'}"
-            for files in json.loads(MANIFEST.read_text()).values()
-            for rel, digest in files["files"].items()
-            if not (root / rel).exists() or sha256(root / rel) != digest
-        ]
-        print("\n".join(bad) or f"all model files match the manifest under {root}")
+        bad = problems(json.loads(MANIFEST.read_text()), models)
+        print("\n".join(bad) or f"all model files match the manifest under {models}")
         return 1 if bad else 0
     manifest = {}
     for component, spec in COMPONENTS.items():
-        files = {str(p.relative_to(root)): sha256(p) for p in sorted(fetch(root, spec))}
+        files = {str(p.relative_to(models)): sha256(p) for p in sorted(fetch(models, spec))}
         source = f"hf:{spec['hf']}@{spec['revision']}" if "hf" in spec else "url"
         manifest[component] = {"source": source, "files": files}
         print(f"{component}: {len(files)} files")
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
-    print(f"weights under {root}; manifest written to {MANIFEST.name}")
+    print(f"weights under {models}; manifest written to {MANIFEST.name}")
     return 0
 
 
