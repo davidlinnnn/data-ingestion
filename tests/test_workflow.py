@@ -295,3 +295,27 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert finalize.retry_policy.maximum_attempts == 6
     assert finalize.retry_policy.initial_interval.seconds == 3
     assert list(finalize.retry_policy.non_retryable_error_types) == ["ProcessingFailure"]
+
+
+async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
+    client, ports, runtime, monkeypatch
+):
+    async def broken(input, ports, runtime):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr("kp_processing.stages.inventory.run", broken)
+    retry = {"initial_s": 1, "multiplier": 2, "cap_s": 1, "max_attempts": 1}
+    runtime = with_runtime(
+        runtime,
+        activity_retry={**runtime.profile.runtime["activity_retry"], "orchestration": retry},
+    )
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "failed"
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert (failure["cause"], failure["stage"]) == ("platform", "enrich")
+    error = failure["error"]
+    assert (error["reason"], error["retryable"]) == ("PLATFORM_ERROR", True)
+    assert error["metadata"] == {"category": "platform", "activity": "inventory"}

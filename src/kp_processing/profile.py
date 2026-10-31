@@ -10,11 +10,11 @@ from typing import Any
 
 import yaml
 
-from kp_processing import identity
-from kp_processing.identity import module_digest
+from kp_processing.identity import module_digest, reuse_key
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
-# The runtime keys the code reads, as dotted paths; a profile without one does not load.
+# The runtime keys the code reads, as dotted paths, each a number; else the profile does not
+# load. Workflow code reads some of them, where a bad value would retry the task forever.
 REQUIRED_RUNTIME = (
     "heartbeat_interval_s",
     "heartbeat_timeout_s.inference",
@@ -51,9 +51,7 @@ class Method:
 
     def reuse_key(self, document_uid: str, input_digests: Sequence[str]) -> str:
         """The reuse key of one of this method's items (identity.reuse_key)."""
-        return identity.reuse_key(
-            document_uid, self.ref, self.components, self.module_digest, input_digests
-        )
+        return reuse_key(document_uid, self.ref, self.components, self.module_digest, input_digests)
 
 
 @dataclass(frozen=True)
@@ -78,7 +76,8 @@ def load_profile(path: Path) -> ProcessingProfile:
     Raises ProfileError when a required key (profile, status_rule, methods, limitations,
     runtime) is missing, a methods key is not `<id>@<int>`, a method's package
     (kp_processing.methods.<id with _>) does not exist, or the package's ID or VERSION
-    differs from the listed `<id>@<version>`, or runtime lacks a REQUIRED_RUNTIME key.
+    differs from the listed `<id>@<version>`, or a REQUIRED_RUNTIME key is missing or not a
+    number.
     `released` defaults to False.
     """
     try:
@@ -92,6 +91,8 @@ def load_profile(path: Path) -> ProcessingProfile:
                 if not isinstance(section, dict) or part not in section:
                     raise ProfileError(f"{path}: missing runtime key {dotted}")
                 section = section[part]
+            if type(section) not in (int, float):
+                raise ProfileError(f"{path}: runtime key {dotted} is not a number")
         methods: dict[str, Method] = {}
         for ref, entry in data["methods"].items():
             match = re.fullmatch(r"([a-z][a-z0-9-]*)@(\d+)", str(ref))

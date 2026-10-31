@@ -48,4 +48,4 @@ def reuse_key(
     [document_uid, method_ref, [components...], module_digest, [input_digests...]]).
     Order of components and input_digests is significant as given."""
     parts = [document_uid, method_ref, list(components), module_digest, list(input_digests)]
-    return hashlib.sha256(json.dumps(parts, separators=(",", ":")).encode("utf-8")).hexdigest()
+    return hashlib.sha256(canonical_json(parts)).hexdigest()

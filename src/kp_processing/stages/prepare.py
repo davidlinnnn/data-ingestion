@@ -65,7 +65,6 @@ def _source_key(start: Any, custody_bucket: str) -> str:
     if (
         ref.scheme != "s3"
         or ref.netloc != custody_bucket
-        or not ref.netloc
         or not ref.path[1:]
         or ref.query
         or ref.fragment

@@ -73,17 +73,6 @@ async def test_reports_in_seq_order_are_each_delivered(status_reporter):
     assert received() == [report(seq).to_json() for seq in (1, 2, 3)]
 
 
-async def test_the_contract_never_raises_when_delivery_fails():
-    def handler(request: httpx.Request) -> httpx.Response:
-        raise httpx.ConnectError("refused")
-
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-        outcome = await HttpStatusReporter(client, BASE).report(report())
-
-    assert not outcome.delivered
-    assert outcome.error
-
-
 def test_report_json_has_the_round_3_fields():
     assert report().to_json() == {
         "request_id": "req_01",

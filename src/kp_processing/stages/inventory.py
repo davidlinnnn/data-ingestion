@@ -33,8 +33,8 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
     """
     profile = runtime.profile.id
     item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
-    identity = [[m.ref, m.module_digest] for m in item_methods]
-    key = sha256(canonical_json([profile, input.assembly.digest, identity]))
+    method_identities = [[m.ref, m.module_digest] for m in item_methods]
+    key = sha256(canonical_json([profile, input.assembly.digest, method_identities]))
     ref = f"{item_prefix(input.document_uid, key)}/inventory.json"
     if existing := await registered(ports.store, ref):
         body = json.loads(await ports.store.get(existing.ref))

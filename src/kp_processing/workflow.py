@@ -100,18 +100,19 @@ class PaperPdfWorkflow:
     @workflow.run
     async def run(self, start: Any) -> dict[str, Any]:
         """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}."""
-        # admission may send anything; prepare validates
         info = workflow.info()
         self._start = start
         stage: Stage = "prepare"
         inventory: InventoryRef | None = None
-        short = _BOOTSTRAP
+        orchestration = _BOOTSTRAP
         try:
             self._report("prepare", "running")
-            plan = await self._call("prepare", PrepareInput(start, info.run_id), Plan, short)
+            plan = await self._call(
+                "prepare", PrepareInput(start, info.run_id), Plan, orchestration
+            )
             self._report("prepare", "succeeded")
             options = activity_options(plan.runtime)
-            short, inference = options["orchestration"], options["inference"]
+            orchestration, inference = options["orchestration"], options["inference"]
 
             stage = "parse"
             uid = start["document_uid"]
@@ -131,7 +132,7 @@ class PaperPdfWorkflow:
             inventory_input = InventoryInput(
                 uid, plan.source_key, plan.source_sha256, groups, assembly
             )
-            inventory = await self._call("inventory", inventory_input, InventoryRef, short)
+            inventory = await self._call("inventory", inventory_input, InventoryRef, orchestration)
             self._report("enrich", "running", Progress(0, inventory.items, "items"))
             # #108 screening goes here, before any enrichment; the VLM and summary
             # Activities (#133, #134) run beside the local one.
@@ -143,7 +144,7 @@ class PaperPdfWorkflow:
             stage = "finalize"
             self._report("finalize", "running")
             finalize_input = FinalizeInput(start, plan, groups, assembly, inventory, outcomes)
-            ref = await self._call("finalize", finalize_input, str, short)
+            ref = await self._call("finalize", finalize_input, str, orchestration)
             self._report("finalize", "succeeded", manifest_ref=ref)
             outcome = {"outcome": "complete", "manifest_ref": ref}
         except ActivityError as err:
@@ -157,7 +158,7 @@ class PaperPdfWorkflow:
                 info.workflow_id, start, stage, details["cause"], error,
                 inventory.ref if inventory else None,
             )  # fmt: skip
-            ref = await self._call("register_failure", failure, str, short)
+            ref = await self._call("register_failure", failure, str, orchestration)
             self._report(stage, "failed", manifest_ref=ref, error=error)
             outcome = {"outcome": "failed", "manifest_ref": ref}
         if self._sending:
