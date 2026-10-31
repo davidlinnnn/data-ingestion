@@ -13,6 +13,7 @@ import re
 import statistics
 import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -769,3 +770,40 @@ async def test_an_exception_inside_a_vlm_method_is_a_method_failure(ports, runti
         "METHOD_ERROR",
     )
     assert failure.metadata["item_id"].startswith("code:#/texts/")
+
+
+RECORDED = Path(__file__).parents[1] / "fixtures" / "vlm"
+
+
+def recorded(method: str) -> list[str]:
+    """The message content of each response gpt-6-luna gave on the public corpus (t4-seam-b)."""
+    return [json.loads(path.read_bytes())["choices"][0]["message"]["content"]
+            for path in sorted((RECORDED / method).glob("*.json"))]  # fmt: skip
+
+
+def test_recorded_picture_interpretations_parse_field_by_field():
+    contents = recorded("picture-interpretation")
+    assert contents
+
+    for content in contents:
+        output = picture_interpretation.parse({}, [], content)  # type: ignore[typeddict-item]
+
+        assert output.outcome == "success"
+        assert tuple(output.fields) == picture_interpretation.FIELDS
+        assert output.content["figure_type"] in picture_interpretation.FIGURE_TYPES
+        for field in output.fields.values():
+            assert (field.outcome, field.reason) in {("success", None), ("failed", "EMPTY_OUTPUT")}
+
+
+async def test_recorded_formulas_parse_and_follow_the_status_rule(ports, runtime):
+    contents = recorded("formula")
+    assert contents
+    input = await native(ports, runtime, formula_paper())
+    item = next(i for i in await items_of(ports, input.inventory) if i["method"] == "formula")
+    inputs = [await ports.store.get(source["ref"]) for source in item["input_refs"]]
+    blank: InventoryItem = {**item, "bbox": EMPTY_BOX}  # type: ignore[typeddict-item]
+
+    for content in contents:
+        latex = json.loads(content)["latex"]
+        empty = formula.parse(blank, inputs, content)
+        assert (empty.outcome, empty.content, empty.contradictions) == ("success", latex, [])
