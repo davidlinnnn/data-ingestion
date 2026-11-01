@@ -41,6 +41,8 @@ def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
     assert [lim.code for lim in p.limitations] == [
         "READING_ORDER_DEFECTS",
         "CAPTION_INTERRUPTS_BODY",
+        "INLINE_MATH_NOT_RECONSTRUCTED",
+        "INLINE_CODE_NOT_RECONSTRUCTED",
     ]
     assert p.runtime["vlm_concurrency_per_document"] == 4
 

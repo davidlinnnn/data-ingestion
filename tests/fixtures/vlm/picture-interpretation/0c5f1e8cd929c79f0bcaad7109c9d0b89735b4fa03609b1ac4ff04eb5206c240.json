@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfE2zoCc0l7sKmcuN2z8OpQG0IPz0",
+  "object": "chat.completion",
+  "created": 1793494153,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"Diagram of how persistent Wiki records and observed patterns inform the creation and refinement of an active skill.\",\"description\":\"A two-column process diagram. The left column is headed “Persistent Wiki Layer (wiki/)” with a lightbulb-over-books icon, and the right is “Active Skill Layer (skills/)” with a folder icon. In the Wiki column, the top box, “skill-impact.md,” records a diff for Iteration 0: creating “goal-directed-action” is marked REJECTED; the diff shows “-/dev/null,” “+ goal-directed-action/SKILL.md,” “+ # Goal-Directed Action,” and an ellipsis. Iteration 1 creation of “break-repetition-loop” and Iteration 4 update of it are both marked ACCEPTED. Below, “logs.md” records Iteration 0 creation of take-examine-move-loop.md (train: 00, 02) and rejection of skill “goal-directed-action” (val score = 0.72); Iteration 1 records errors re-occurring (train: 01, 02), “Use-Examine Loop (NEW)” in train: 30, 31, fresh evidence appended to take-examine-move-loop.md, and acceptance of skill “break-repetition-loop” (val score = 0.78). The lower “patterns” box contains take-examine-move-loop.md, describing an agent taking an item, examining it, putting it back, and repeating; its evidence lists Iteration 0 train 00, 02; Iteration 1 train 01; and Iterations 2–4 train 02 persisting, with 00/01 showing recovery from loops. It also contains multi-operation-loop.md, describing cycles of actions on the same item without checking completion; evidence lists Iteration 2 train 22, 24 and Iterations 3–4 train 24 persisting. In the Active Skill column, a green container titled “break-repetition-loop” holds PURPOSE.md and SKILL.md. PURPOSE.md says the skill was created as break-repetition-loop; the previous goal-directed-action attempt was rejected for being too abstract, and this version is more concise and uses concrete action patterns. SKILL.md says to apply the skill whenever the agent is about to repeat an action. Its first rule, “Never Return an Item to Its Origin Location,” contrasts a failing example (take clock from desk → examine → move clock to desk) with a successful one (take clock → go to shelf → move clock to shelf). A second rule says agents that take items and perform operations often get stuck repeating the same operation, and prescribes each operation type once per item. An anti-pattern is “Take → Operate → Move → Take (INFINITE CYCLE)”; the fix is to complete take → operate → move once and not repeat. A separate “other-skill” bar with an ellipsis appears below the container. Colored arrows connect the Wiki records to the active skill: a red arrow from the rejected Iteration 0 proposal to PURPOSE.md is labeled “Prior Rejection History Explains Skill Rationale”; green arrows from the accepted Iteration 1 and Iteration 4 entries to SKILL.md are labeled “Accepted Proposed Skill Update”; a blue arrow from patterns toward logs.md is labeled “Evolution Log Chronologically Records Patterns and Decisions”; and orange arrows from patterns toward rules in SKILL.md are labeled “Documented Patterns Motivate the Skill Update Proposals at Iterations 1 and 4.”\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3606,
+    "completion_tokens": 2671,
+    "total_tokens": 6277,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1904,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

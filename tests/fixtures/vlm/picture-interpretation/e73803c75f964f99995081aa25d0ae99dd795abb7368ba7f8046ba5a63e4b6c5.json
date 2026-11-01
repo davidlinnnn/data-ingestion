@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfENA0XAUzJK3NDpyKYoigMRLbHth",
+  "object": "chat.completion",
+  "created": 1793495404,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"VERA’s environment-verification and co-evolution workflow, with round-by-round evaluation scores for two benchmarks.\",\"description\":\"A composite workflow diagram with two line charts on the right. Across the top, “VERA Verifiable Environment Scaling” contrasts a hard-to-verify environment synthesis setup with a VERA pipeline. In the synthesis setup, an LLM and Docker lead toward a black box; “no replay” and a red X mark the path as “hard to verify.” A right-pointing VERA arrow leads to a pipeline: an LLM and Auto Rubrics use a long-horizon trajectory split into S1 (80), S2 (64), S3 (30), …, Sx (72); an Agent Judge* checks context and workspace; Re-Play uses Docker; a green check leads to a multicolored staged “Verified Env.”; a second green check leads to “Scaling,” shown with rising bars and scaling-related icons.\\n\\nBelow, “VERA Co-Evolve Agent Training” shows an Agent and a Co-Evolved Agent, each accompanied by small agent/tool icons, feeding rightward into Benchmarking; the first path is labeled “SFT cold start.” Benchmarking contains another long-horizon trajectory split into S1 (80), S2 (64), S3 (30), …, Sx (72), an Agent Judge*, and “stage-wise scores.” A downward arrow leads to “Attribution*,” containing a Domain-Shift Detector above LLM Report and Harness Report. The LLM Report points down to a Verified Env. trajectory with a target stage highlighted in green; the Harness Report points down to “Harness Evolving.” The green “LLM Evolving” box contains Reward Verifier*, Stage-Wise Rollout, and Rubric-as-Rewards. A leftward “next-round data” connection returns from the verified-environment side to the LLM-evolving side, and a “next-round harness” loop returns from Harness Evolving to LLM Evolving. Harness Evolving contains skill add (green plus), skill merge, skill remove (red delete icon), and Harness Verifier*. A dotted vertical divider separates the workflow from the charts. A note above the workflow says “* Driven by GPT-5.6-Sol with Codex.”\\n\\nThe upper chart plots eval score against rounds R0–R5, with a dashed green SFT baseline near 10 and a solid green VERA-CoWork-9B series. The series rises from about 10 at R0 to 27 at R1, dips to 23 at R2, then rises to 28 at R3 and 30 at R4 before ending near 27 at R5. Point labels are init at R0, S3 at R1, S4 at R2, S5 at R3, S5 at R4 (marked with a yellow star), and S2 at R5. A green plus icon marks “early_stop”; “stage_tracker” and “plan_tracker” labels appear near the later rounds.\\n\\nThe lower chart plots eval score against R0–R5 on a 25–40 scale, with a dashed coral SFT baseline near 34 and a solid coral VERA-Med-9B series. It begins near 34 at R0, rises to about 35 at R1 and R2, drops to about 28 at R3, recovers to about 35 at R4, and ends near 38 at R5. Labels are init at R0, S3 at R1, S5 at R2, S5 at R3, S2 at R4, and S3 at R5; the R5 point has a yellow star. A green plus marks “early_stop,” a red icon marks “hotline,” and a “fallback” box has a left-pointing arrow toward the low R3 point. In both charts the VERA series is compared with a horizontal SFT baseline; the upper series improves overall, while the lower series has a pronounced R3 dip followed by recovery.\",\"figure_type\":\"diagram\",\"chart_values\":[{\"series\":\"SFT (upper chart)\",\"category\":\"upper chart, R0\",\"x\":\"R0\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"SFT (upper chart)\",\"category\":\"upper chart, R1\",\"x\":\"R1\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"SFT (upper chart)\",\"category\":\"upper chart, R2\",\"x\":\"R2\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"SFT (upper chart)\",\"category\":\"upper chart, R3\",\"x\":\"R3\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"SFT (upper chart)\",\"category\":\"upper chart, R4\",\"x\":\"R4\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"SFT (upper chart)\",\"category\":\"upper chart, R5\",\"x\":\"R5\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"VERA-CoWork-9B\",\"category\":\"upper chart, R0\",\"x\":\"R0\",\"value\":10,\"value_status\":\"estimated\"},{\"series\":\"VERA-CoWork-9B\",\"category\":\"upper chart, R1\",\"x\":\"R1\",\"value\":27,\"value_status\":\"estimated\"},{\"series\":\"VERA-CoWork-9B\",\"category\":\"upper chart, R2\",\"x\":\"R2\",\"value\":23,\"value_status\":\"estimated\"},{\"series\":\"VERA-CoWork-9B\",\"category\":\"upper chart, R3\",\"x\":\"R3\",\"value\":28,\"value_status\":\"estimated\"},{\"series\":\"VERA-CoWork-9B\",\"category\":\"upper chart, R4\",\"x\":\"R4\",\"value\":30,\"value_status\":\"estimated\"},{\"series\":\"VERA-CoWork-9B\",\"category\":\"upper chart, R5\",\"x\":\"R5\",\"value\":27,\"value_status\":\"estimated\"},{\"series\":\"SFT (lower chart)\",\"category\":\"lower chart, R0\",\"x\":\"R0\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"SFT (lower chart)\",\"category\":\"lower chart, R1\",\"x\":\"R1\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"SFT (lower chart)\",\"category\":\"lower chart, R2\",\"x\":\"R2\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"SFT (lower chart)\",\"category\":\"lower chart, R3\",\"x\":\"R3\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"SFT (lower chart)\",\"category\":\"lower chart, R4\",\"x\":\"R4\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"SFT (lower chart)\",\"category\":\"lower chart, R5\",\"x\":\"R5\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"VERA-Med-9B\",\"category\":\"lower chart, R0\",\"x\":\"R0\",\"value\":34,\"value_status\":\"estimated\"},{\"series\":\"VERA-Med-9B\",\"category\":\"lower chart, R1\",\"x\":\"R1\",\"value\":35,\"value_status\":\"estimated\"},{\"series\":\"VERA-Med-9B\",\"category\":\"lower chart, R2\",\"x\":\"R2\",\"value\":35,\"value_status\":\"estimated\"},{\"series\":\"VERA-Med-9B\",\"category\":\"lower chart, R3\",\"x\":\"R3\",\"value\":28,\"value_status\":\"estimated\"},{\"series\":\"VERA-Med-9B\",\"category\":\"lower chart, R4\",\"x\":\"R4\",\"value\":35,\"value_status\":\"estimated\"},{\"series\":\"VERA-Med-9B\",\"category\":\"lower chart, R5\",\"x\":\"R5\",\"value\":38,\"value_status\":\"estimated\"}]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3462,
+    "completion_tokens": 4487,
+    "total_tokens": 7949,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2837,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

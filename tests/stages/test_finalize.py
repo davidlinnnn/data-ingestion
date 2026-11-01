@@ -66,25 +66,31 @@ async def test_the_processing_result_describes_request_profile_and_native_eviden
     assert native_part["picture_images"] == assembly["picture_images"]
     assert native_part["picture_images"]
 
-    # seven_pages has two pictures and neither holds text. Docling also reads the eleven-line
-    # paragraphs of some pages as tables; each native table becomes a table-status item.
+    # seven_pages has two pictures and neither holds text; each is also interpreted, four
+    # field enrichments apiece. Docling also reads the eleven-line paragraphs of some pages as
+    # tables; each native table becomes a table-status item.
     tables = len(assembly["document"]["tables"])
     zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
     assert result["inventory"] == {
         "ref": input.inventory.ref,
-        "counts": {"picture-ocr": {**zero, "no_text": 2}}
+        "counts": {"picture-ocr": {**zero, "no_text": 2},
+                   "picture-interpretation": {**zero, "unverified": 8}}
         | ({"table-status": {**zero, "unverified": tables}} if tables else {}),
-    }
+    }  # fmt: skip
     assert [(e["status"], e["status_reason"], e["content"]) for e in result["enrichments"][:2]] == [
         ("unverified", "NO_TEXT", ""),
         ("unverified", "NO_TEXT", ""),
     ]
-    assert len(result["enrichments"]) == 2 + tables
+    assert len(result["enrichments"]) == 2 + 8 + tables
     assert result["limitations"] == [
         {"code": "READING_ORDER_DEFECTS", "scope": "profile",
          "detail": runtime.profile.limitations[0].detail},
         {"code": "CAPTION_INTERRUPTS_BODY", "scope": "profile",
          "detail": runtime.profile.limitations[1].detail},
+        {"code": "INLINE_MATH_NOT_RECONSTRUCTED", "scope": "profile",
+         "detail": runtime.profile.limitations[2].detail},
+        {"code": "INLINE_CODE_NOT_RECONSTRUCTED", "scope": "profile",
+         "detail": runtime.profile.limitations[3].detail},
         {"code": "NO_TEXT_LAYER_PAGES", "scope": "document", "detail": "no text layer on pages 6"},
     ]  # fmt: skip
 
@@ -181,11 +187,12 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
     result = json.loads(await ports.store.get(await finalize.run(input, ports, runtime)))
 
     items = json.loads(await ports.store.get(input.inventory.ref))["items"]
-    enrichments = result["enrichments"]
-    assert [e["item_id"] for e in enrichments] == [i["item_id"] for i in items]
-    for item, outcome, enrichment in zip(items, input.outcomes, enrichments, strict=True):
+    outcomes = {o.item_id: o for o in input.outcomes}
+    expected = []
+    for item in items:
+        outcome = outcomes[item["item_id"]]
         record = json.loads(await ports.store.get(outcome.ref))
-        assert enrichment == {
+        common = {
             "item_id": item["item_id"],
             "result_ref": outcome.ref,
             "method_ref": record["method_ref"],
@@ -195,21 +202,32 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
             "input_refs": [r["ref"] for r in item["input_refs"]],
             "content": record["content"],
             "evidence_refs": record["evidence_refs"],
-            "status": enrichment["status"],
-            "status_reason": enrichment["status_reason"],
             "signals": record["signals"],
             "provider_artifact_ref": record["provider_artifact_ref"],
             "reused": False,
         }
+        if "fields" not in record:
+            expected.append(common)
+        for name, field in record.get("fields", {}).items():  # one enrichment per field
+            expected.append({**common, "item_id": f"{item['item_id']}/{name}",
+                             "content": field["content"], "signals": field["signals"]})  # fmt: skip
+    enrichments = result["enrichments"]
+    assert [{k: v for k, v in e.items() if k not in ("status", "status_reason")}
+            for e in enrichments] == expected  # fmt: skip
+    pictures = [f"picture-interpretation:#/pictures/{n}/{field}" for n in (0, 1)
+                for field in ("caption", "chart_values", "description", "figure_type")]  # fmt: skip
+    assert [e["item_id"] for e in enrichments][2:10] == pictures
     assert [(e["status"], e["status_reason"]) for e in enrichments] == [
         ("unverified", None),
         ("unverified", "NO_TEXT"),
+        *[("unverified", None)] * 8,
         ("unverified", None),
         ("unverified", None),
     ]
     zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
     assert result["inventory"]["counts"] == {
         "picture-ocr": {**zero, "unverified": 1, "no_text": 1},
+        "picture-interpretation": {**zero, "unverified": 8},
         "code": {**zero, "unverified": 1},
         "table-status": {**zero, "unverified": 1},
     }
@@ -286,5 +304,5 @@ async def test_large_content_stays_in_the_outcome_record(ports, runtime, monkeyp
     contents = {e["item_id"].split(":")[0]: e["content"] for e in result["enrichments"]}
     assert contents["table-status"] is None  # HTML and grid exceed 40 bytes
     assert contents["code"] is None
-    table = result["enrichments"][3]
+    table = next(e for e in result["enrichments"] if e["item_id"].startswith("table-status:"))
     assert json.loads(await ports.store.get(table["result_ref"]))["content"]["html"]

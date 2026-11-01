@@ -1,0 +1,50 @@
+{
+  "label": "p03-2ba321285bd4",
+  "model": "claude-opus-5-5",
+  "stop_reason": "end_turn",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 4075,
+    "output_tokens": 8517,
+    "output_tokens_details": {
+      "thinking_tokens": 7301
+    },
+    "service_tier": "standard",
+    "speed": "standard"
+  },
+  "text": "{\"caption\":\"Trace2Skill pipeline diagram: an agent rolling out with a skill produces success and error traces. Separate success (A⁺) and error (A⁻) analysts turn each trace into an addition or edit patch, and all patches are merged into one evolved skill.\",\"description\":\"A left-to-right flow diagram in three stages. All arrows are unlabeled.\\n\\nStage 1, rollout: At far left, a blue-purple hexagonal logo (the LLM agent; it resembles the Qwen logo) is shown 'x', meaning combined with, a black crossed wrench-and-screwdriver icon (a skill). It is labeled in italics 'Rollout Using Skills'. One arrow points right into a dashed rounded box labeled 'Traces' below it. The Traces box stacks three cards:\\n(1) A green card titled 'Success Trace', marked with a magenta τ⁺ and a green circled check mark. Text: 'Agent successfully matched rows across two sheets.'\\n(2) A red card titled 'Error Trace', marked τ⁻ with a red circled X. Text: '\\\"MEDIAN(IF(xxx))\\\" returned None in recalc.py'.\\n(3) A second red 'Error Trace' card, marked τ⁻ with a red circled X. Text: '\\\"recalc.py\\\" can't handle excel array formulas.'\\nOnly the success trace carries a check mark; both error traces carry X marks.\\n\\nStage 2, patch proposal: Each card has its own arrow pointing right to a separate copy of the hexagonal agent logo, drawn in parallel. The copy fed by the success trace is labeled A⁺ (success analyst); the two fed by error traces are labeled A⁻ (error analysts). Each analyst then sends an arrow right to one patch card inside a dashed rounded box labeled 'Patches' above it.\\n- Patch1 (green card) has a gray 'Addition' tag with a document-plus icon and the green title 'Patch1: add new pattern from success trace'. Lines: '+ Cast ID columns to str', '+ Cast numeric columns to float before', '+ Cross-sheet row matching to prevent silent type-mismatch failures.'\\n- Patch2 (red card) has an 'Addition' tag and the title 'Patch2: add new warning from error trace'. Lines: '+ Array formulas silently fail in LibreOffice', '+ Pre-calculate in Python and write the result as a literal value instead.'\\n- Patch3 (red card) has a gray 'Edition' tag with a pencil-on-page icon and the title 'Patch3: Deepening existing rules from error trace'. Lines: '— Use formulas, not hardcoded values.\\\"', '— Same rule, now with explicit text-function', '+ Add warning against auto-applying .strip'.\\nThe '+' and '—' prefixes act as diff-style markers for added versus removed or revised skill lines. Addition patches add new content; the Edition patch revises existing rules.\\n\\nStage 3, merge: Arrows from all three patches converge on another hexagonal agent logo labeled in italics 'Merge Patches'. Patch1's line runs right then down into it, Patch2's arrow goes straight right, and Patch3's line runs right then up. A final arrow points right to a crossed wrench-and-screwdriver icon topped by a gold crown, labeled in bold 'Evolved Skill': the single consolidated, improved skill.\\n\\nColor coding: green marks the success trajectory and its patch; red marks the error trajectories and their patches.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+  "parsed": {
+    "outcome": "success",
+    "content": {
+      "caption": "Trace2Skill pipeline diagram: an agent rolling out with a skill produces success and error traces. Separate success (A⁺) and error (A⁻) analysts turn each trace into an addition or edit patch, and all patches are merged into one evolved skill.",
+      "description": "A left-to-right flow diagram in three stages. All arrows are unlabeled.\n\nStage 1, rollout: At far left, a blue-purple hexagonal logo (the LLM agent; it resembles the Qwen logo) is shown 'x', meaning combined with, a black crossed wrench-and-screwdriver icon (a skill). It is labeled in italics 'Rollout Using Skills'. One arrow points right into a dashed rounded box labeled 'Traces' below it. The Traces box stacks three cards:\n(1) A green card titled 'Success Trace', marked with a magenta τ⁺ and a green circled check mark. Text: 'Agent successfully matched rows across two sheets.'\n(2) A red card titled 'Error Trace', marked τ⁻ with a red circled X. Text: '\"MEDIAN(IF(xxx))\" returned None in recalc.py'.\n(3) A second red 'Error Trace' card, marked τ⁻ with a red circled X. Text: '\"recalc.py\" can't handle excel array formulas.'\nOnly the success trace carries a check mark; both error traces carry X marks.\n\nStage 2, patch proposal: Each card has its own arrow pointing right to a separate copy of the hexagonal agent logo, drawn in parallel. The copy fed by the success trace is labeled A⁺ (success analyst); the two fed by error traces are labeled A⁻ (error analysts). Each analyst then sends an arrow right to one patch card inside a dashed rounded box labeled 'Patches' above it.\n- Patch1 (green card) has a gray 'Addition' tag with a document-plus icon and the green title 'Patch1: add new pattern from success trace'. Lines: '+ Cast ID columns to str', '+ Cast numeric columns to float before', '+ Cross-sheet row matching to prevent silent type-mismatch failures.'\n- Patch2 (red card) has an 'Addition' tag and the title 'Patch2: add new warning from error trace'. Lines: '+ Array formulas silently fail in LibreOffice', '+ Pre-calculate in Python and write the result as a literal value instead.'\n- Patch3 (red card) has a gray 'Edition' tag with a pencil-on-page icon and the title 'Patch3: Deepening existing rules from error trace'. Lines: '— Use formulas, not hardcoded values.\"', '— Same rule, now with explicit text-function', '+ Add warning against auto-applying .strip'.\nThe '+' and '—' prefixes act as diff-style markers for added versus removed or revised skill lines. Addition patches add new content; the Edition patch revises existing rules.\n\nStage 3, merge: Arrows from all three patches converge on another hexagonal agent logo labeled in italics 'Merge Patches'. Patch1's line runs right then down into it, Patch2's arrow goes straight right, and Patch3's line runs right then up. A final arrow points right to a crossed wrench-and-screwdriver icon topped by a gold crown, labeled in bold 'Evolved Skill': the single consolidated, improved skill.\n\nColor coding: green marks the success trajectory and its patch; red marks the error trajectories and their patches.",
+      "figure_type": "diagram",
+      "chart_values": []
+    },
+    "contradictions": [],
+    "fields": {
+      "caption": [
+        "success",
+        null
+      ],
+      "description": [
+        "success",
+        null
+      ],
+      "figure_type": [
+        "success",
+        null
+      ],
+      "chart_values": [
+        "success",
+        null
+      ]
+    }
+  }
+}

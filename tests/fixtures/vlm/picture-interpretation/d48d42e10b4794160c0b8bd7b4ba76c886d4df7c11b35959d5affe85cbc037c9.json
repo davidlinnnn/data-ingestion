@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfER5izEqe3ZiRdOsMy82NWnOC9Wq",
+  "object": "chat.completion",
+  "created": 1793495647,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"A two-part agent-training diagram links curriculum-generated tasks to tool-assisted answers and majority voting, while a self-consistency filter feeds a second executor update loop.\",\"description\":\"The upper pale-green loop starts with a Curriculum Agent, illustrated as a character beside a symbol-covered board. A right-pointing arrow leads to a task box containing x₁, an ellipsis, and xᵢ, then another arrow leads to an Executor Agent. The executor produces multiple response sequences: a top example with a blue Model Response block and a purple Final Answer block, and a lower example with blue Model Response, green Tool Calling, orange Tool Response, and purple Final Answer blocks. Braced labels identify the responses as {y₁,₁, …, y₁,ₘ} and {yᵢ,₁, …, yᵢ,ₘ}, with an ellipsis between examples. The legend identifies blue as Model Response, green as Tool Calling, orange as Tool Response, and purple as Final Answer. In the upper example, a green arrow points down from the tool call to the Environment and an orange arrow points back up from the Environment to the tool response. The response sequences feed a right-pointing Majority Voting arrow, which leads to a stack of outputs labeled ŷ₁, an ellipsis, and ŷᵢ. A return line across the top, labeled “Policy Update by GRPO,” runs from the output side back toward the Curriculum Agent.\\n\\nBelow, a data-filtering path leads into a pale-blue executor loop. A downward arrow from the Curriculum Agent leads toward a stack labeled “Data”; a diagonal arrow from the upper Executor Agent also points toward the filtering area. A right-pointing arrow labeled “Self-Consistency” and p(x) connects Data to a second stack labeled “Filtered Data.” The filtered data points right to a second Executor Agent. Beneath the filtering path, a yellow warning-triangle symbol marks “Ambiguity Signal”; its line joins the lower feedback path and points up into the lower Executor Agent. The lower executor produces response sequences in outlined boxes, including a tool-use example with blue, green, orange, and purple blocks and a plain-response example with blue and purple blocks; the displayed response labels include {yᵢ,₁, …, yᵢ,ₘ}, with an ellipsis between examples. Here the green Tool Calling arrow points upward from the lower response toward the Environment, and the orange Tool Response arrow points downward from the Environment to the response. A right-pointing Majority Voting arrow leads to another ŷ₁, …, ŷᵢ output stack. The bottom return line, labeled “Policy Update by ADPO,” loops from the output side back up into the lower Executor Agent. Far left, a pale-blue downward arrow runs past small character illustrations holding boards. Between the loops, a small blue owl-like figure and a pale character are joined by a green right-pointing arrow; a pale-green diagonal arrow points from the lower Executor Agent toward the blue figure.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3213,
+    "completion_tokens": 3512,
+    "total_tokens": 6725,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2828,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

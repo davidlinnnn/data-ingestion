@@ -36,6 +36,10 @@ limitations:
     detail: Reading order can be wrong on some layouts, such as the first page of CVPR-style papers or author order.
   - code: CAPTION_INTERRUPTS_BODY
     detail: A figure or table caption can be placed inside a body paragraph.
+  - code: INLINE_MATH_NOT_RECONSTRUCTED
+    detail: Math inside body paragraphs keeps the text layer's characters; it is not rebuilt as LaTeX, so sub- and superscripts can be flattened.
+  - code: INLINE_CODE_NOT_RECONSTRUCTED
+    detail: Short code inside body paragraphs keeps the text layer's characters; only code blocks are rebuilt.
 
 # #93 §7 initial parameters. Never part of a reuse key.
 runtime:
@@ -48,8 +52,11 @@ runtime:
   activity_retry:
     orchestration: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 5}
     inference: {initial_s: 1, multiplier: 2, cap_s: 100, max_attempts: 3}
+    # Receipts cap each item's sends, so a retried vlm Activity never re-bills past them.
+    vlm: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
+  # vlm start-to-close = ceil(items / concurrency) x deadline total x retry attempts + slack.
   external_start_to_close_slack_s: 300
-  # #93 §3.4 retry of each external request inside an Activity; read from #133.
+  # #93 §3.4 retry of each external request inside an Activity.
   retry: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
   vlm_concurrency_per_document: 4
   request_cap: {per_item: 3, extra: 20}

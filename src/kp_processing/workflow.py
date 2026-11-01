@@ -1,11 +1,14 @@
-"""The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132).
+"""The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132)
+and VLM enrichment (#133).
 
-prepare -> parse group x N (in order) -> assemble -> inventory -> local enrichment -> finalize,
+prepare -> parse group x N (in order) -> assemble -> inventory -> {local, VLM} enrichment ->
+finalize,
 reporting the four admission stages. Activities are addressed by name so that this module,
 which the workflow sandbox re-imports, stays free of docling.
 """
 
 import asyncio
+import math
 from datetime import timedelta
 from typing import Any, Literal, TypeVar
 
@@ -43,7 +46,8 @@ FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingF
 # worker), the external enrichment services on vlm and summary.
 ORCHESTRATION_QUEUE = "orchestration"
 INFERENCE_QUEUE = "inference"
-Queue = Literal["orchestration", "inference"]
+VLM_QUEUE = "vlm"
+Queue = Literal["orchestration", "inference", "vlm"]
 
 
 def priority(admission_priority: Any) -> Priority:
@@ -65,17 +69,26 @@ _BOOTSTRAP = {
 }
 
 
-def activity_options(runtime: dict[str, Any]) -> dict[Queue, dict[str, Any]]:
+def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dict[str, Any]]:
     """execute_activity options per task queue from the profile's runtime section:
-    start_to_close_s.<queue>, activity_retry.<queue> ({initial_s, multiplier, cap_s,
-    max_attempts}; ProcessingFailure never retried) and, for inference,
-    heartbeat_timeout_s.inference."""
+    activity_retry.<queue> ({initial_s, multiplier, cap_s, max_attempts}; ProcessingFailure
+    never retried); start_to_close_s.<queue>, except vlm's backstop for a document of `items`
+    inventory items (#93 §3.2): ceil(items / vlm_concurrency_per_document) x
+    vlm_request_deadline_s.total x retry.max_attempts + external_start_to_close_slack_s; and
+    heartbeat_timeout_s.<queue> for inference and vlm."""
+    vlm_s = (
+        math.ceil(items / runtime["vlm_concurrency_per_document"])
+        * runtime["vlm_request_deadline_s"]["total"]
+        * runtime["retry"]["max_attempts"]
+        + runtime["external_start_to_close_slack_s"]
+    )
     options: dict[Queue, dict[str, Any]] = {}
-    for queue in ("orchestration", "inference"):
+    for queue in ("orchestration", "inference", "vlm"):
         retry = runtime["activity_retry"][queue]
+        seconds = vlm_s if queue == "vlm" else runtime["start_to_close_s"][queue]
         options[queue] = {
             "task_queue": queue,
-            "start_to_close_timeout": timedelta(seconds=runtime["start_to_close_s"][queue]),
+            "start_to_close_timeout": timedelta(seconds=seconds),
             "retry_policy": RetryPolicy(
                 initial_interval=timedelta(seconds=retry["initial_s"]),
                 backoff_coefficient=retry["multiplier"],
@@ -84,9 +97,10 @@ def activity_options(runtime: dict[str, Any]) -> dict[Queue, dict[str, Any]]:
                 non_retryable_error_types=[FAILURE_TYPE],
             ),
         }
-    options["inference"]["heartbeat_timeout"] = timedelta(
-        seconds=runtime["heartbeat_timeout_s"]["inference"]
-    )
+        if queue != "orchestration":
+            options[queue]["heartbeat_timeout"] = timedelta(
+                seconds=runtime["heartbeat_timeout_s"][queue]
+            )
     return options
 
 
@@ -134,11 +148,15 @@ class PaperPdfWorkflow:
             )
             inventory = await self._call("inventory", inventory_input, InventoryRef, orchestration)
             self._report("enrich", "running", Progress(0, inventory.items, "items"))
-            # #108 screening goes here, before any enrichment; the VLM and summary
-            # Activities (#133, #134) run beside the local one.
-            outcomes = await self._call(
-                "enrich_local", EnrichInput(uid, inventory), list[OutcomeRef], inference
+            # #108 screening goes here, before any enrichment; the summary Activity (#134)
+            # joins the two below.
+            enrich_input = EnrichInput(uid, inventory, info.workflow_id, info.run_id)
+            vlm = activity_options(plan.runtime, inventory.items)["vlm"]
+            local, external = await asyncio.gather(
+                self._call("enrich_local", enrich_input, list[OutcomeRef], inference),
+                self._call("enrich_vlm", enrich_input, list[OutcomeRef], vlm),
             )
+            outcomes = local + external
             self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))
 
             stage = "finalize"

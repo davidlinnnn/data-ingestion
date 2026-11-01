@@ -1,0 +1,30 @@
+{
+  "label": "p19-4350684380ca",
+  "model": "claude-opus-5-5",
+  "stop_reason": "end_turn",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 571,
+    "output_tokens": 678,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "service_tier": "standard",
+    "speed": "standard"
+  },
+  "text": "{\"latex\":\"\\\\begin{aligned} \\\\mathcal{L}_{\\\\text{navigating}}(\\\\theta) = -\\\\frac{1}{N} \\\\Bigg[ & \\\\sum_{i=1}^{N_v} \\\\min\\\\left( r_i^{(v)} \\\\hat{A}_i^{(v)}, \\\\operatorname{clip}\\\\left( r_i^{(v)}, 1-\\\\epsilon_{\\\\text{low}}, 1+\\\\epsilon_{\\\\text{high}} \\\\right) \\\\hat{A}_i^{(v)} \\\\right) \\\\\\\\ & + \\\\sum_{j=1}^{N_e} \\\\min\\\\left( r_j^{(e)} \\\\hat{A}_j^{(e)}, \\\\operatorname{clip}\\\\left( r_j^{(e)}, 1-\\\\epsilon_{\\\\text{low}}, 1+\\\\epsilon_j \\\\right) \\\\hat{A}_j^{(e)} \\\\right) \\\\Bigg] + \\\\beta \\\\, \\\\mathrm{KL}\\\\left( \\\\pi_\\\\theta \\\\| \\\\pi_{\\\\theta_{\\\\text{old}}} \\\\right), \\\\\\\\ \\\\text{where:} \\\\quad & r_i^{(v)} = \\\\frac{\\\\pi_\\\\theta(\\\\tau_i^{(v)})}{\\\\pi_{\\\\theta_{\\\\text{old}}}(\\\\tau_i^{(v)})}, \\\\quad r_j^{(e)} = \\\\frac{\\\\pi_\\\\theta(\\\\tau_j^{(e)})}{\\\\pi_{\\\\theta_{\\\\text{old}}}(\\\\tau_j^{(e)})}, \\\\quad \\\\epsilon_j = \\\\begin{cases} \\\\hat{\\\\epsilon}_{\\\\text{high}} & \\\\text{if } \\\\hat{A}_j^{(e)} > 0 \\\\\\\\ \\\\epsilon_{\\\\text{high}} & \\\\text{otherwise} \\\\end{cases} . \\\\end{aligned}\"}",
+  "parsed": {
+    "outcome": "success",
+    "content": "\\begin{aligned} \\mathcal{L}_{\\text{navigating}}(\\theta) = -\\frac{1}{N} \\Bigg[ & \\sum_{i=1}^{N_v} \\min\\left( r_i^{(v)} \\hat{A}_i^{(v)}, \\operatorname{clip}\\left( r_i^{(v)}, 1-\\epsilon_{\\text{low}}, 1+\\epsilon_{\\text{high}} \\right) \\hat{A}_i^{(v)} \\right) \\\\ & + \\sum_{j=1}^{N_e} \\min\\left( r_j^{(e)} \\hat{A}_j^{(e)}, \\operatorname{clip}\\left( r_j^{(e)}, 1-\\epsilon_{\\text{low}}, 1+\\epsilon_j \\right) \\hat{A}_j^{(e)} \\right) \\Bigg] + \\beta \\, \\mathrm{KL}\\left( \\pi_\\theta \\| \\pi_{\\theta_{\\text{old}}} \\right), \\\\ \\text{where:} \\quad & r_i^{(v)} = \\frac{\\pi_\\theta(\\tau_i^{(v)})}{\\pi_{\\theta_{\\text{old}}}(\\tau_i^{(v)})}, \\quad r_j^{(e)} = \\frac{\\pi_\\theta(\\tau_j^{(e)})}{\\pi_{\\theta_{\\text{old}}}(\\tau_j^{(e)})}, \\quad \\epsilon_j = \\begin{cases} \\hat{\\epsilon}_{\\text{high}} & \\text{if } \\hat{A}_j^{(e)} > 0 \\\\ \\epsilon_{\\text{high}} & \\text{otherwise} \\end{cases} . \\end{aligned}",
+    "contradictions": [
+      "FORMULA_NATIVE_MISMATCH"
+    ],
+    "fields": {}
+  }
+}

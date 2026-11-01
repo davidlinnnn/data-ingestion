@@ -4,7 +4,7 @@ non-retryable ApplicationError whose details the workflow turns into the failure
 
 One worker serves one task queue, so each queue scales as its own deployment: orchestration
 runs the workflow and the light Activities, inference runs docling one call at a time and is
-the only one that loads it."""
+the only one that loads it, vlm sends the VLM requests."""
 
 import asyncio
 import uuid
@@ -37,6 +37,7 @@ from kp_processing.stages import (
     ProcessingFailure,
     Registered,
     Runtime,
+    enrich_vlm,
     finalize,
     inventory,
     prepare,
@@ -46,9 +47,12 @@ from kp_processing.workflow import (
     FAILURE_TYPE,
     INFERENCE_QUEUE,
     ORCHESTRATION_QUEUE,
+    VLM_QUEUE,
     PaperPdfWorkflow,
     Queue,
 )
+
+VLM_SLOTS = 5  # #93 §7: documents in VLM enrichment at once per worker
 
 T = TypeVar("T")
 
@@ -129,6 +133,15 @@ class Inference(_Activities):
         return [self.parse_group, self.assemble, self.enrich_local]
 
 
+class Vlm(_Activities):
+    @activity.defn(name="enrich_vlm")
+    async def enrich_vlm(self, input: EnrichInput) -> list[OutcomeRef]:
+        return await self._run(enrich_vlm.run, input)
+
+    def all(self) -> list[Callable[..., Any]]:
+        return [self.enrich_vlm]
+
+
 class WriteOnceUnsupported(RuntimeError):
     pass
 
@@ -153,6 +166,14 @@ async def make_worker(
     shutdown_grace_s to finish before they are cancelled and retried elsewhere."""
     await check_write_once(ports.store)
     grace = timedelta(seconds=shutdown_grace_s)
+    if queue == "vlm":
+        return Worker(
+            client,
+            task_queue=VLM_QUEUE,
+            activities=Vlm(ports, runtime).all(),
+            max_concurrent_activities=VLM_SLOTS,
+            graceful_shutdown_timeout=grace,
+        )
     if queue == "inference":
         components = [c for method in runtime.profile.methods.values() for c in method.components]
         await asyncio.to_thread(weights.verify, components, weights.root())

@@ -13,6 +13,20 @@ An item-scope method package also declares:
              "page_image" (the image of the target's page)
     ORIGIN   "reconstruction" or "interpretation"
     run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput, inputs in INPUTS order
+
+A method that calls the VLM declares instead (or as well, as code does for its native path),
+and its items then run in the VLM Activity (Method.calls_vlm):
+
+    request(item, inputs) -> dict | MethodOutput
+             the chat-completions request body without "model": messages carrying the images
+             as data URLs, and response_format {"type": "json_schema", "json_schema": {"name",
+             "strict": True, "schema"}} with the package's schema; or the MethodOutput itself
+             when no request is needed (code with a text layer)
+    parse(item, inputs, content: str) -> MethodOutput
+             the output for the response message's content; raises InvalidOutput when the
+             content is empty or does not validate against the schema
+    FIELDS   (optional) names of output fields that are each their own enrichment (v2 Q3c):
+             the MethodOutput of parse then sets fields, one MethodOutput per name
 """
 
 from dataclasses import dataclass, field
@@ -26,6 +40,18 @@ class InventoryItem(TypedDict):
     page: int  # the target's first provenance entry
     bbox: dict[str, Any]  # its docling bbox: l, t, r, b, coord_origin
     input_refs: list[dict[str, str]]  # [{"ref", "sha256"}] in the method's INPUTS order
+
+
+InvalidReason = Literal["EMPTY_OUTPUT", "SCHEMA_INVALID"]
+
+
+class InvalidOutput(Exception):
+    """A model answer that is empty or breaks the schema: retried once, then a content failure
+    (#93 §3.4)."""
+
+    def __init__(self, reason: InvalidReason, message: str = "") -> None:
+        super().__init__(f"{reason}: {message}" if message else reason)
+        self.reason: InvalidReason = reason
 
 
 class MethodUnavailable(Exception):
@@ -46,3 +72,5 @@ class MethodOutput:
     provider_artifact: str | None = None  # name in files: the raw model or library output
     signals: dict[str, Any] = field(default_factory=dict)  # weak signals; never change status
     contradictions: list[str] = field(default_factory=list)  # strong signals contradicting output
+    # Per FIELDS name, that field's own outcome, reason, content, signals and contradictions.
+    fields: dict[str, "MethodOutput"] = field(default_factory=dict)

@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfESTlLKYx1LMXUkwq3NOFiwVdkKL",
+  "object": "chat.completion",
+  "created": 1793495733,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"Four schematic context-management patterns show how tasks, actions, observations, and memory are arranged or modified across successive timelines.\",\"description\":\"A multi-panel diagram compares four templates. Grey boxes denote Task Tokens, orange boxes denote LLM-generated action tokens (compute policy loss), blue boxes denote environment tokens or masked action tokens, and purple boxes denote memory tokens. Black arrows within timelines point downward; ellipses mark omitted steps.\\n\\nBasic Causal Template: The timeline is labeled “TSR Timeline #1.” It shows Task → action 1 → obs 1 → …, followed by an omitted stretch and a later action t → obs t segment. Offset, overlapping token boxes near the omission depict repeated or omitted content. Reasoning-Augmented Template: Three downward timelines, labeled #1, #2, and #3, show progressively longer histories. #1 has Task → <think> + action 1. #2 has Task → action 1 → obs 1 → <think> + action 2. #3 has Task → action 1 → obs 1 → action 2 → obs 2 → <think> + action 3.\\n\\nSliding Context Window Template: Three green-outlined timelines are labeled TSR Timeline #n, #(n+1), and #(n+2). Timeline #n shows Task → action 1 → obs 1 → action 2 → obs 2 → … → action t → obs t. Timeline #(n+1) shows Task → purple mem M_{1,t} (with a small blue “…” token and “× Echo” beside it) → action t+1 → obs t+1 → … → action 2t → obs 2t. Timeline #(n+2) similarly shows Task → purple mem M_{1,2t} (with a small blue “…” token and “× Echo”) → action 2t+1 → obs 2t+1 → … → action 3t → obs 3t. Purple routed connectors link the end of a window to a “Memory Extract” box and the extracted memory to the memory-token block in a later window.\\n\\nSelf-context Managing Template: Four downward timelines are labeled #n, #n′, #(n+1), and #(n+2). #n shows Task → action 1 → obs 1 → action 2 → obs 2 → <think> + action 3. #n′ shows Task → action 1 → obs 1 → action 2 → obs 2 → action 3. In the later timelines, the corresponding action 1, action 2, and action 3 blocks are retained; obs 1 is marked “(discarded),” and obs 2 is represented by purple obs 2′. Timeline #(n+1) continues with obs 3 → <think> + action 4 → obs 4; #(n+2) continues with obs 3 → action 4 → obs 4 → <think> + action 5. Five left-to-right horizontal arrows connect the #n′ history to #(n+1): green preserve arrows connect action 1, action 2, and action 3; a red discard arrow connects obs 1 to the discarded observation; and a purple compress arrow connects obs 2 to obs 2′. Beneath #n′, a “Context Operation Command Prompt” box points downward to an orange “Context Operation” box. The legend identifies green as “Operation: Preserve,” red as “Operation: Discard,” and purple as “Operation: Compress.”\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3404,
+    "completion_tokens": 3346,
+    "total_tokens": 6750,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2559,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

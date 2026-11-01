@@ -1,0 +1,50 @@
+{
+  "label": "p17-2fe0065e348a",
+  "model": "claude-opus-5-5",
+  "stop_reason": "end_turn",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3826,
+    "output_tokens": 5925,
+    "output_tokens_details": {
+      "thinking_tokens": 5099
+    },
+    "service_tier": "standard",
+    "speed": "standard"
+  },
+  "text": "{\"caption\":\"SEAL overview diagram of one RL outer-loop iteration: the language model generates three candidate self-edits, each is used to finetune its weights, the updated models are tested, and the correct or incorrect results act as rewards for a policy update.\",\"description\":\"Diagram on a light-gray rounded panel showing one reinforcement-learning outer-loop iteration t of SEAL. It reads left to right and is split by a thin vertical line into a generate-and-update half and an evaluate half. Color coding: light-blue bars stand for text (context, test input, answer), yellow boxes for self-edits (SE), a lavender box for the Optimize step, and salmon blocks for model weights θ. LEFT HALF: 'Ctx' (context, blue bar) → white box 'LM θ_t' (the language model with current weights θ_t). From the LM box a branching connector fans out into three curved arrows, pointing to three candidate self-edits: SE_1 (top), SE_2 (middle) and SE_3 (bottom). Each row then reads SE_i → 'Optimize', followed by the loss ℒ(SE_i, θ_t) (a small yellow SE_i block and the salmon θ_t block inside parentheses) → updated weights. These are θ_t′ in row 1, θ_t† in row 2 and θ_t‡ in row 3. No arrow crosses the divider. RIGHT HALF: three matching rows, each 'Test' (blue bar) → an LM box holding that row's updated weights (LM θ_t′, LM θ_t†, LM θ_t‡) → 'Ans' (blue bar). The answers from θ_t′ and θ_t† carry check marks (✓, correct). The answer from θ_t‡ carries a cross (✗, incorrect). These marks are the rewards. The three answer rows converge through a merging bracket into 'Policy Update', which outputs new weights θ_{t+1} (salmon block). TOP-RIGHT INSET: a white rounded box titled 'RL Data' shows the tuple (Ctx with θ_t, SE, ✓/✗). Labels underneath read 'State' under the context and current weights θ_t, 'Action' under the self-edit SE, and 'Reward' under the check/cross, with the initial letters S, A and R in bold. The inset has no arrows connected to it. It summarizes the state-action-reward data used to improve the self-edit generation policy.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+  "parsed": {
+    "outcome": "success",
+    "content": {
+      "caption": "SEAL overview diagram of one RL outer-loop iteration: the language model generates three candidate self-edits, each is used to finetune its weights, the updated models are tested, and the correct or incorrect results act as rewards for a policy update.",
+      "description": "Diagram on a light-gray rounded panel showing one reinforcement-learning outer-loop iteration t of SEAL. It reads left to right and is split by a thin vertical line into a generate-and-update half and an evaluate half. Color coding: light-blue bars stand for text (context, test input, answer), yellow boxes for self-edits (SE), a lavender box for the Optimize step, and salmon blocks for model weights θ. LEFT HALF: 'Ctx' (context, blue bar) → white box 'LM θ_t' (the language model with current weights θ_t). From the LM box a branching connector fans out into three curved arrows, pointing to three candidate self-edits: SE_1 (top), SE_2 (middle) and SE_3 (bottom). Each row then reads SE_i → 'Optimize', followed by the loss ℒ(SE_i, θ_t) (a small yellow SE_i block and the salmon θ_t block inside parentheses) → updated weights. These are θ_t′ in row 1, θ_t† in row 2 and θ_t‡ in row 3. No arrow crosses the divider. RIGHT HALF: three matching rows, each 'Test' (blue bar) → an LM box holding that row's updated weights (LM θ_t′, LM θ_t†, LM θ_t‡) → 'Ans' (blue bar). The answers from θ_t′ and θ_t† carry check marks (✓, correct). The answer from θ_t‡ carries a cross (✗, incorrect). These marks are the rewards. The three answer rows converge through a merging bracket into 'Policy Update', which outputs new weights θ_{t+1} (salmon block). TOP-RIGHT INSET: a white rounded box titled 'RL Data' shows the tuple (Ctx with θ_t, SE, ✓/✗). Labels underneath read 'State' under the context and current weights θ_t, 'Action' under the self-edit SE, and 'Reward' under the check/cross, with the initial letters S, A and R in bold. The inset has no arrows connected to it. It summarizes the state-action-reward data used to improve the self-edit generation policy.",
+      "figure_type": "diagram",
+      "chart_values": []
+    },
+    "contradictions": [],
+    "fields": {
+      "caption": [
+        "success",
+        null
+      ],
+      "description": [
+        "success",
+        null
+      ],
+      "figure_type": [
+        "success",
+        null
+      ],
+      "chart_values": [
+        "success",
+        null
+      ]
+    }
+  }
+}
