@@ -1,7 +1,6 @@
 """document-summary: a short summary of the whole document from the summary API, each sentence
-tied to the sections that support it (v2 Q4b, Q4d, Q6). The request and response follow the
-provisional contract of #129; when the real contract arrives, only this package and the
-SummaryApi adapter change."""
+tied to the sections that support it (v2 Q4b, Q4d, Q6). request and parse use the provisional
+contract of #129 as their shape, whatever the summary API's own wire format (SummaryApi)."""
 
 import json
 import re

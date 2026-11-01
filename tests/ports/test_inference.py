@@ -20,6 +20,7 @@ from kp_processing.ports.inference import (
     SummaryApi,
     completion,
 )
+from tests.summary import completion as summary_completion
 
 BASE = "http://vlm.test/v1"
 SUMMARY_BASE = "http://summary.test"
@@ -195,6 +196,39 @@ def summary_answering(status: int, body: bytes) -> SummaryApi:
     return summary_adapter(
         httpx.MockTransport(lambda request: httpx.Response(status, content=body))
     )
+
+
+SUMMARY_BODY = {"model": "summarizer-3", "sentences": [{"text": "Glaciers retreat."}]}
+
+
+@pytest.fixture(params=["fake", "summary"])
+def summary_transport(request):
+    """The contract for the summary service: (transport answering SUMMARY_BODY, transport
+    answering 503)."""
+    if request.param == "fake":
+        ok = summary_completion(SUMMARY_BODY)
+        return FakeInference(lambda r: ok), FakeInference(lambda r: ServiceUnavailable("HTTP_5XX"))
+    return summary_answering(200, json.dumps(SUMMARY_BODY).encode()), summary_answering(503, b"")
+
+
+async def test_a_summary_answer_carries_the_response_body_and_model(summary_transport):
+    ok, _ = summary_transport
+
+    answer = await ok.complete(SUMMARY_REQUEST)
+
+    assert answer.content is not None
+    assert json.loads(answer.content) == SUMMARY_BODY
+    assert (answer.refusal, answer.model) == (None, "summarizer-3")
+    assert json.loads(answer.body) == SUMMARY_BODY
+
+
+async def test_an_unavailable_summary_service_raises_service_unavailable(summary_transport):
+    _, down = summary_transport
+
+    with pytest.raises(ServiceUnavailable) as caught:
+        await down.complete(SUMMARY_REQUEST)
+
+    assert caught.value.reason == "HTTP_5XX"
 
 
 async def test_the_summary_request_goes_to_its_endpoint_as_sent():

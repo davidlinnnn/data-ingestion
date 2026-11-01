@@ -314,8 +314,7 @@ async def enrichment_inputs(
 
 
 def enrichment_body(method: Method, prefix: str, output: MethodOutput) -> bytes:
-    """The enrichment-outcome/v1 bytes, with each declared field's outcome when present; "scope"
-    is the package's SCOPE, "item" when it declares none."""
+    """The enrichment-outcome/v1 bytes, with each declared field's outcome when present."""
     record = {
         "schema": "enrichment-outcome/v1",
         "method_ref": {
@@ -323,7 +322,7 @@ def enrichment_body(method: Method, prefix: str, output: MethodOutput) -> bytes:
             "version": method.version,
             "digest": method.module_digest,
         },
-        "scope": getattr(method.package, "SCOPE", "item"),
+        "scope": method.scope,
         "origin": method.package.ORIGIN,
         "outcome": output.outcome,
         "reason": output.reason,

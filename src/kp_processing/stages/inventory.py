@@ -33,11 +33,7 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
     reused=True when it already existed.
     """
     profile = runtime.profile.id
-    inventory_methods = [
-        m
-        for m in runtime.profile.methods.values()
-        if hasattr(m.package, "TARGET") or getattr(m.package, "SCOPE", None) == "document"
-    ]
+    inventory_methods = [m for m in runtime.profile.methods.values() if m.scope]
     method_identities = [[m.ref, m.module_digest] for m in inventory_methods]
     key = sha256(canonical_json([profile, input.assembly.digest, method_identities]))
     ref = f"{item_prefix(input.document_uid, key)}/inventory.json"
@@ -71,7 +67,7 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
     items: list[InventoryItem | DocumentItem] = []
     for method in inventory_methods:
         method_id, package = method.id, method.package
-        if getattr(package, "SCOPE", None) == "document":
+        if method.scope == "document":
             items.append(
                 {
                     "item_id": f"{method_id}:#",

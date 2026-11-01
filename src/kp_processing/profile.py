@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 
@@ -14,7 +14,8 @@ from kp_processing.identity import module_digest, reuse_key
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
 # The inference egresses of the data-security design §5; a new one updates §5 in the same PR.
-SERVICES = ("vlm", "summary")
+Service = Literal["vlm", "summary"]
+SERVICES: tuple[Service, ...] = ("vlm", "summary")
 # The runtime keys the code reads, as dotted paths, each a number; else the profile does not
 # load. Workflow code reads some of them, where a bad value would retry the task forever.
 REQUIRED_RUNTIME = (
@@ -63,7 +64,15 @@ class Method:
         return f"{self.id}@{self.version}"
 
     @property
-    def service(self) -> str | None:
+    def scope(self) -> Literal["item", "document"] | None:
+        """ "item" for a package that declares TARGET, the package's SCOPE ("document") when it
+        declares one, None for a method without inventory items (docling-parse)."""
+        if hasattr(self.package, "SCOPE"):
+            return self.package.SCOPE
+        return "item" if hasattr(self.package, "TARGET") else None
+
+    @property
+    def service(self) -> Service | None:
         """The external service whose Activity runs its items: the package's SERVICE ("vlm"
         when absent) when it declares request and parse; None for a package that declares only
         run, whose items run in the local Activity."""

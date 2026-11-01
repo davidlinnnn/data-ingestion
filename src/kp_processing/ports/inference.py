@@ -141,11 +141,14 @@ class OpenAIChat:
 
 
 class SummaryApi:
-    """The summary API under its provisional contract (#129): when the real contract arrives,
-    only this adapter and the document_summary package change.
+    """The summary API. Its interface to the document_summary package is the provisional
+    contract of #129: complete() takes {document_uid, sections [{section_id, heading, text}],
+    max_sentences} and answers with content {model, sentences [{text, evidence
+    [{section_id}]}]}. Translating to and from another wire format belongs here, and a new wire
+    format comes with a new summary-api component in the profile.
 
-    POST {base_url}/v1/summaries with the request body as JSON, bearer api_key; the request
-    carries document_uid, sections [{section_id, heading, text}] and max_sentences.
+    POST {base_url}/v1/summaries (provisional path) with the request body as JSON, bearer
+    api_key.
 
     Deadline, redirect rule and failure mapping are OpenAIChat's, with total_s bounding both the
     connect and the whole call. A 2xx body that is a JSON object with a string "model" ->

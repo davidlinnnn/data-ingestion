@@ -18,7 +18,7 @@ from kp_processing.methods import (
     MethodUnavailable,
 )
 from kp_processing.ports.inference import Completion, RequestRejected, ServiceUnavailable
-from kp_processing.profile import ProcessingProfile
+from kp_processing.profile import ProcessingProfile, Service
 from kp_processing.stages import (
     EnrichInput,
     OutcomeRef,
@@ -67,7 +67,7 @@ async def run_summary(input: EnrichInput, ports: Ports, runtime: Runtime) -> lis
 
 
 async def run_service(
-    input: EnrichInput, ports: Ports, runtime: Runtime, service: str
+    input: EnrichInput, ports: Ports, runtime: Runtime, service: Service
 ) -> list[OutcomeRef]:
     """Run every inventory item of a method whose Method.service is service, at most runtime
     vlm_concurrency_per_document items at once, and record one outcome per item; ports.heartbeat()
