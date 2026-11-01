@@ -23,9 +23,17 @@ PROMPT = (
     "unreadable content. Use an empty string for what cannot be read. No extra fields. "
     "The first image is original page context, the second is the target picture. Generate "
     "a caption, not a transcription of the source caption, and describe the picture and "
-    "its figure type. For charts preserve series, category, x and values; distinguish "
-    "printed observations from estimated read-offs and unreadable values. Never invent "
-    "unreadable values. Use chart_values=[] unless the picture is a chart."
+    "its figure type. Describe only the target picture, never neighbouring figures. The "
+    "description must let a reader who cannot see the picture recover: every labelled "
+    "component and what it holds; every arrow or connection, its direction and its label; "
+    "marks such as checks or crosses and which items carry them; the trends and comparisons "
+    "between series; and for a small symbol or icon, what it denotes in the page context. "
+    "For charts preserve series, category, x and values; distinguish printed observations "
+    "from estimated read-offs and unreadable values. Read values against the axis scale, "
+    "which need not start at zero. Without printed labels, give estimated read-offs at the "
+    "plotted marks or at the x-axis ticks. For stacked bars give each segment the axis "
+    "reading at its top edge, the cumulative total, and say so in the description. Never "
+    "invent unreadable values. Use chart_values=[] unless the picture is a chart."
 )
 
 
@@ -60,6 +68,8 @@ def request(item: InventoryItem, inputs: list[bytes]) -> dict[str, Any]:
         chart_values  array of {"series": string|null, "category": string|null,
                       "x": number|string|null, "value": number|string|null,
                       "value_status": "printed"|"estimated"|"unreadable"}; [] unless a chart
+
+    reasoning_effort is "high".
     """
     return {
         "messages": [
@@ -86,6 +96,7 @@ def request(item: InventoryItem, inputs: list[bytes]) -> dict[str, Any]:
                 "schema": Interpretation.model_json_schema(union_format="primitive_type_array"),
             },
         },
+        "reasoning_effort": "high",
     }
 
 

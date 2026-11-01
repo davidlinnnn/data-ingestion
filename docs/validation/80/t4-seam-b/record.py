@@ -1,5 +1,5 @@
-"""Record gpt-6-luna fixtures from the rest of the public corpus (#129: "fixture 先從
-`gpt-6-luna` 對 20 篇公開論文錄"); run.py recorded paper 20 with its Seam B evidence.
+"""Record gpt-6-luna fixtures from the public corpus (#129: "fixture 先從
+`gpt-6-luna` 對 20 篇公開論文錄"), all 20 papers by default.
 
     env HF_HUB_OFFLINE=1 OPENAI_API_KEY=... .venv/bin/python docs/validation/80/t4-seam-b/record.py \
         CORPUS_MANIFEST [INDEX ...]
@@ -115,7 +115,7 @@ async def main(argv: list[str]) -> int:
         for index in argv[2:]:
             await collect(argv[1], int(index), None)
     else:
-        indexes = [int(i) for i in argv[1:]] or [i for i in range(1, 21) if i != 20]
+        indexes = [int(i) for i in argv[1:]] or list(range(1, 21))
         await record(Path(argv[0]), indexes)
     return 0
 

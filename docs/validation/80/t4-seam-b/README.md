@@ -41,30 +41,35 @@ All three pass; details in `evidence.json`.
 
 ## Fixtures
 
-`run.py` (paper 20) and `record.py` (the other 19 papers, one real run each) save each
-registered provider response to `tests/fixtures/vlm/<method>/<params_digest>.json`: the full
-response JSON only, never an image or a request body. `tests/stages/test_enrich_vlm.py` feeds
-them to schema parsing and the status rule. The company VLM's fixtures are re-recorded on the
-company network.
+`record.py` (all 20 papers, one real run each) saves each registered provider response to
+`tests/fixtures/vlm/<method>/<params_digest>.json`: the full response JSON only, never an image
+or a request body. `tests/stages/test_enrich_vlm.py` feeds them to schema parsing and the status
+rule. The company VLM's fixtures are re-recorded on the company network.
 
-`record.py` results (`recorded.json`, 2026-11-01): all 19 documents complete. There were 357
-requests: 345 ok, 9 invalid and 3 unavailable. They used 450,604 prompt tokens and 173,646
-completion tokens, about US$0.13. With R's US$0.03, DEV spend this ticket is about US$0.16.
-The run saved 347 fixtures (with R's 38: 163 picture-interpretation and 222 formula).
+The fixtures were re-recorded on 2026-11-01 after the #133 accuracy check
+(`../t4-accuracy/README.md`) changed the picture-interpretation prompt and set
+`reasoning_effort` "high" on both VLM methods. R, C and F above ran with the earlier requests;
+the request change does not touch the Seam B mechanics they cover.
 
-- Paper 14: the model did not answer one picture within 60 s, three times. The picture's
-  4 fields ended `failed`/`SERVICE_UNAVAILABLE`, the document completed, and the redrive
-  marker was written and listed. The provider may still bill the cut requests; their tokens
-  are unknown and not in the estimate.
-- Paper 16: the model answered `{"latex": ""}` 9 times. The retry recovered 7; 2 formulas ended
-  `failed`/`EMPTY_OUTPUT`. Both empty answers are fixtures.
-- Statuses over the 19 papers: formula 197 unverified, 7 disputed, 2 failed;
-  picture-interpretation 564 unverified fields, 4 failed; code 144 unverified.
+`record.py` results (`recorded.json`): all 20 documents complete. There were 397 requests: 383
+ok, 6 invalid and 8 unavailable. They used 538,549 prompt tokens and 434,387 completion tokens,
+about US$0.27 (the first recording, before the change, used 173,646 completion tokens for 19
+papers). The run saved 384 fixtures: 162 picture-interpretation and 222 formula.
+
+- Papers 11 and 14: the model did not answer one picture each within 60 s, three times (and
+  paper 20 once, recovered by the retry). Those pictures' 4 fields ended
+  `failed`/`SERVICE_UNAVAILABLE`, the documents completed, and the redrive markers were written
+  and listed. The provider may still bill the cut requests; their tokens are unknown and not in
+  the estimate. Neither picture is in the accuracy check's gold.
+- Paper 16: the model answered `{"latex": ""}` 6 times; 1 formula ended `failed`/`EMPTY_OUTPUT`.
+- Statuses over the 20 papers: formula 209 unverified, 12 disputed, 1 failed;
+  picture-interpretation 648 unverified fields, 8 failed; code 182 unverified.
 
 ## Known limits
 
-- Response latency reaches the 60 s total deadline (R's slowest was 53.5 s; paper 14 hit it
-  three times on one picture).
+- With `reasoning_effort` "high", per-paper median latency ranges from 3.3 s to 21.7 s and
+  three pictures reached the 60 s total deadline. A slower company VLM will hit it more often;
+  the deadline and the effort are the two settings to weigh against each other.
 - Every corpus code block has a text layer, so the code fallback has no real-response fixture.
 
 ## Run
@@ -73,7 +78,7 @@ The run saved 347 fixtures (with R's 38: 163 picture-interpretation and 222 form
 env HF_HUB_OFFLINE=1 OPENAI_API_KEY=... .venv/bin/python docs/validation/80/t4-seam-b/run.py <corpus manifest> 20
 ```
 
-Recording the rest of the corpus:
+Recording the corpus fixtures:
 
 ```sh
 env HF_HUB_OFFLINE=1 OPENAI_API_KEY=... .venv/bin/python docs/validation/80/t4-seam-b/record.py <corpus manifest>

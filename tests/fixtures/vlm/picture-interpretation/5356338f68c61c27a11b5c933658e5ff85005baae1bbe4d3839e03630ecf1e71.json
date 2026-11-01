@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfESOpYaDB7XELyMzs95rHxcQUP0G",
+  "object": "chat.completion",
+  "created": 1793495728,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"A system architecture diagram showing a master coordinating task generation, parallel rollouts, experience summarization, and model training.\",\"description\":\"The diagram places a Master at the top, connected to four components: Task Manager on the left, parallel Rollout Workers near the center, Experience Manager to their right, and Sample Construction on the far right. The Master sends “A. Get Tasks” to the Task Manager, “B. Explore Trajectories” to the Rollout Workers, “C. Summarize Experiences” to the Experience Manager, and “D. Update Models” to Sample Construction. The Rollout Workers are depicted as overlapping cards, with “Paralleled” above them; the front card contains a Context Manager. The Task Manager contains Task Synthesis and Task Filtering. The Experience Manager contains Exp. Recall and Semantic Summary. Sample Construction contains Context Organization and Advantage computing. Below these are an Environment Server containing two Env. Worker boxes separated by an ellipsis, an Async LLM Server containing two LLM Worker boxes, and Trainer Workers containing Loss compute and Param. update. A vertical connection labeled “A.1 Explore” joins the Task Manager and Environment Server, with arrowheads indicating flow in both directions. A diagonal connection labeled “B.1 Create/Get State” joins the Environment Server and Context Manager, also with arrows in both directions. An arrow labeled “B.2 Get Exp.” points from the Experience Manager leftward to the Context Manager. An arrow labeled “B.3 Get Action” points downward from the Context Manager to the Async LLM Server. Sample Construction sends a downward arrow labeled “D.1 Training Batch” to Trainer Workers. Trainer Workers send a leftward arrow labeled “D.2 Updating Weights” to the Async LLM Server.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3303,
+    "completion_tokens": 2372,
+    "total_tokens": 5675,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1970,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

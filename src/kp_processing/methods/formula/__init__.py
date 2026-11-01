@@ -118,7 +118,7 @@ def request(item: InventoryItem, inputs: list[bytes]) -> dict[str, Any]:
     the formula alone, without its equation number) and one user message with the crop of the
     page image to item["bbox"] (scaled by the page image's pixels per PDF point, either
     coord_origin) as a PNG data URL, detail "high". response_format: the strict json_schema
-    named ID for {"latex": string}."""
+    named ID for {"latex": string}; reasoning_effort "high"."""
     return {
         "messages": [
             {"role": "system", "content": PROMPT},
@@ -144,6 +144,7 @@ def request(item: InventoryItem, inputs: list[bytes]) -> dict[str, Any]:
                 "schema": Formula.model_json_schema(union_format="primitive_type_array"),
             },
         },
+        "reasoning_effort": "high",
     }
 
 

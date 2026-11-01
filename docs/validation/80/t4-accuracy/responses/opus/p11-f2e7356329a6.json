@@ -1,0 +1,177 @@
+{
+  "label": "p11-f2e7356329a6",
+  "model": "claude-opus-5-5",
+  "stop_reason": "end_turn",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3841,
+    "output_tokens": 36767,
+    "output_tokens_details": {
+      "thinking_tokens": 34904
+    },
+    "service_tier": "standard",
+    "speed": "standard"
+  },
+  "text": "{\"caption\":\"Accuracy versus median (p50) and tail (p95) latency for the Base, Base + Reranker and Memory-R1 (GRPO) inference pipelines, shown separately for F1, BLEU-1 (B1) and LLM-judge (J) scores.\",\"description\":\"Line-and-marker chart in three side-by-side panels titled 'F1 (↑)', 'B1 (↑)' and 'J (↑)'. The up arrows mean higher is better. Per the page, B1 is BLEU-1 and J is the LLM-as-a-Judge score. The left panel carries the shared y-axis label 'Accuracy (%)'. Each panel has its own y-range: F1 ticks run 30–44 in steps of 2, B1 ticks run 22–38 in steps of 2, and J ticks run 45.0–62.5 in steps of 2.5. Each x-axis is 'Latency (s)' on a log scale where only the 10^0 (1 s) tick is labelled, with light grid lines. A legend across the top maps colours: blue = Base, orange = Base + Reranker, green = Memory-R1 (GRPO). A key at the top right shows a black filled circle = p50 (median latency) and a black triangle = p95 (tail latency). In every panel, each pipeline is a horizontal line joining its p50 circle (left end) to its p95 triangle (right end) at one accuracy level, so line length shows the median-to-tail latency spread. No values are printed. All numbers below are estimated read-offs, and the latencies are rough because only 10^0 is labelled. Latency positions are the same in all three panels: Memory-R1 (GRPO) runs from ≈0.3 s (p50) to ≈0.6 s (p95) at the left edge. Base runs from ≈1.1 s (p50, near the 10^0 tick) to ≈2.8 s (p95) and is the longest line. Base + Reranker runs from ≈3.5 s to ≈4.6 s, a short segment at the far right. Accuracies: F1 – Memory-R1 ≈45.0, Base + Reranker ≈32.7, Base ≈30.4. B1 – Memory-R1 ≈37.5, Base + Reranker ≈24.8, Base ≈22.2. J – Memory-R1 ≈62.7, Base + Reranker ≈60.0, Base ≈45.7. Comparisons: in every panel Memory-R1 (GRPO) sits alone in the top-left corner, combining the highest accuracy with the lowest median and tail latency; its whole range is below 1 s. Base is the least accurate pipeline and has the widest p50–p95 spread. Adding the reranker lifts accuracy only slightly over Base for F1 (+≈2.3) and B1 (+≈2.6), but strongly for J (+≈14, close to Memory-R1). At the same time it moves both latency percentiles furthest right, to the highest values of several seconds; its p50 lies beyond even Base's p95.\",\"figure_type\":\"chart\",\"chart_values\":[{\"series\":\"Memory-R1 (GRPO)\",\"category\":\"F1 – p50\",\"x\":0.3,\"value\":45.0,\"value_status\":\"estimated\"},{\"series\":\"Memory-R1 (GRPO)\",\"category\":\"F1 – p95\",\"x\":0.6,\"value\":45.0,\"value_status\":\"estimated\"},{\"series\":\"Base\",\"category\":\"F1 – p50\",\"x\":1.1,\"value\":30.4,\"value_status\":\"estimated\"},{\"series\":\"Base\",\"category\":\"F1 – p95\",\"x\":2.8,\"value\":30.4,\"value_status\":\"estimated\"},{\"series\":\"Base + Reranker\",\"category\":\"F1 – p50\",\"x\":3.5,\"value\":32.7,\"value_status\":\"estimated\"},{\"series\":\"Base + Reranker\",\"category\":\"F1 – p95\",\"x\":4.6,\"value\":32.7,\"value_status\":\"estimated\"},{\"series\":\"Memory-R1 (GRPO)\",\"category\":\"B1 – p50\",\"x\":0.3,\"value\":37.5,\"value_status\":\"estimated\"},{\"series\":\"Memory-R1 (GRPO)\",\"category\":\"B1 – p95\",\"x\":0.6,\"value\":37.5,\"value_status\":\"estimated\"},{\"series\":\"Base\",\"category\":\"B1 – p50\",\"x\":1.1,\"value\":22.2,\"value_status\":\"estimated\"},{\"series\":\"Base\",\"category\":\"B1 – p95\",\"x\":2.8,\"value\":22.2,\"value_status\":\"estimated\"},{\"series\":\"Base + Reranker\",\"category\":\"B1 – p50\",\"x\":3.5,\"value\":24.8,\"value_status\":\"estimated\"},{\"series\":\"Base + Reranker\",\"category\":\"B1 – p95\",\"x\":4.6,\"value\":24.8,\"value_status\":\"estimated\"},{\"series\":\"Memory-R1 (GRPO)\",\"category\":\"J – p50\",\"x\":0.3,\"value\":62.7,\"value_status\":\"estimated\"},{\"series\":\"Memory-R1 (GRPO)\",\"category\":\"J – p95\",\"x\":0.6,\"value\":62.7,\"value_status\":\"estimated\"},{\"series\":\"Base\",\"category\":\"J – p50\",\"x\":1.1,\"value\":45.7,\"value_status\":\"estimated\"},{\"series\":\"Base\",\"category\":\"J – p95\",\"x\":2.8,\"value\":45.7,\"value_status\":\"estimated\"},{\"series\":\"Base + Reranker\",\"category\":\"J – p50\",\"x\":3.5,\"value\":60.0,\"value_status\":\"estimated\"},{\"series\":\"Base + Reranker\",\"category\":\"J – p95\",\"x\":4.6,\"value\":60.0,\"value_status\":\"estimated\"}]}",
+  "parsed": {
+    "outcome": "success",
+    "content": {
+      "caption": "Accuracy versus median (p50) and tail (p95) latency for the Base, Base + Reranker and Memory-R1 (GRPO) inference pipelines, shown separately for F1, BLEU-1 (B1) and LLM-judge (J) scores.",
+      "description": "Line-and-marker chart in three side-by-side panels titled 'F1 (↑)', 'B1 (↑)' and 'J (↑)'. The up arrows mean higher is better. Per the page, B1 is BLEU-1 and J is the LLM-as-a-Judge score. The left panel carries the shared y-axis label 'Accuracy (%)'. Each panel has its own y-range: F1 ticks run 30–44 in steps of 2, B1 ticks run 22–38 in steps of 2, and J ticks run 45.0–62.5 in steps of 2.5. Each x-axis is 'Latency (s)' on a log scale where only the 10^0 (1 s) tick is labelled, with light grid lines. A legend across the top maps colours: blue = Base, orange = Base + Reranker, green = Memory-R1 (GRPO). A key at the top right shows a black filled circle = p50 (median latency) and a black triangle = p95 (tail latency). In every panel, each pipeline is a horizontal line joining its p50 circle (left end) to its p95 triangle (right end) at one accuracy level, so line length shows the median-to-tail latency spread. No values are printed. All numbers below are estimated read-offs, and the latencies are rough because only 10^0 is labelled. Latency positions are the same in all three panels: Memory-R1 (GRPO) runs from ≈0.3 s (p50) to ≈0.6 s (p95) at the left edge. Base runs from ≈1.1 s (p50, near the 10^0 tick) to ≈2.8 s (p95) and is the longest line. Base + Reranker runs from ≈3.5 s to ≈4.6 s, a short segment at the far right. Accuracies: F1 – Memory-R1 ≈45.0, Base + Reranker ≈32.7, Base ≈30.4. B1 – Memory-R1 ≈37.5, Base + Reranker ≈24.8, Base ≈22.2. J – Memory-R1 ≈62.7, Base + Reranker ≈60.0, Base ≈45.7. Comparisons: in every panel Memory-R1 (GRPO) sits alone in the top-left corner, combining the highest accuracy with the lowest median and tail latency; its whole range is below 1 s. Base is the least accurate pipeline and has the widest p50–p95 spread. Adding the reranker lifts accuracy only slightly over Base for F1 (+≈2.3) and B1 (+≈2.6), but strongly for J (+≈14, close to Memory-R1). At the same time it moves both latency percentiles furthest right, to the highest values of several seconds; its p50 lies beyond even Base's p95.",
+      "figure_type": "chart",
+      "chart_values": [
+        {
+          "series": "Memory-R1 (GRPO)",
+          "category": "F1 – p50",
+          "x": 0.3,
+          "value": 45.0,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Memory-R1 (GRPO)",
+          "category": "F1 – p95",
+          "x": 0.6,
+          "value": 45.0,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base",
+          "category": "F1 – p50",
+          "x": 1.1,
+          "value": 30.4,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base",
+          "category": "F1 – p95",
+          "x": 2.8,
+          "value": 30.4,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base + Reranker",
+          "category": "F1 – p50",
+          "x": 3.5,
+          "value": 32.7,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base + Reranker",
+          "category": "F1 – p95",
+          "x": 4.6,
+          "value": 32.7,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Memory-R1 (GRPO)",
+          "category": "B1 – p50",
+          "x": 0.3,
+          "value": 37.5,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Memory-R1 (GRPO)",
+          "category": "B1 – p95",
+          "x": 0.6,
+          "value": 37.5,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base",
+          "category": "B1 – p50",
+          "x": 1.1,
+          "value": 22.2,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base",
+          "category": "B1 – p95",
+          "x": 2.8,
+          "value": 22.2,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base + Reranker",
+          "category": "B1 – p50",
+          "x": 3.5,
+          "value": 24.8,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base + Reranker",
+          "category": "B1 – p95",
+          "x": 4.6,
+          "value": 24.8,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Memory-R1 (GRPO)",
+          "category": "J – p50",
+          "x": 0.3,
+          "value": 62.7,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Memory-R1 (GRPO)",
+          "category": "J – p95",
+          "x": 0.6,
+          "value": 62.7,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base",
+          "category": "J – p50",
+          "x": 1.1,
+          "value": 45.7,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base",
+          "category": "J – p95",
+          "x": 2.8,
+          "value": 45.7,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base + Reranker",
+          "category": "J – p50",
+          "x": 3.5,
+          "value": 60.0,
+          "value_status": "estimated"
+        },
+        {
+          "series": "Base + Reranker",
+          "category": "J – p95",
+          "x": 4.6,
+          "value": 60.0,
+          "value_status": "estimated"
+        }
+      ]
+    },
+    "contradictions": [],
+    "fields": {
+      "caption": [
+        "success",
+        null
+      ],
+      "description": [
+        "success",
+        null
+      ],
+      "figure_type": [
+        "success",
+        null
+      ],
+      "chart_values": [
+        "success",
+        null
+      ]
+    }
+  }
+}
