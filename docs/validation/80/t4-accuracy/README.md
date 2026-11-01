@@ -13,7 +13,7 @@ effort, then check again. Round 2 is the shipped state.
 
 | Area | Sample | Our Luna | #84 Luna | #84 Sol | Opus 5.5 | Bar |
 |---|---|---|---|---|---|---|
-| Descriptions | 18 gold images in the corpus, all matched (box overlap 1.0) | 17/18 (round 1: 10/18) | 16/18 | — | 17/18 (round 1: 18/18) | pass |
+| Descriptions | 18 gold images in the corpus, all matched (box overlap 1.0) | 17/18 (round 1: 10/18) | 16/18 | — | 18/18 (round 1: 18/18) | pass |
 | Chart values, diagnosis view | 88 points in images 6, 16, 17, 21, 22 | 84 (round 1: 67) | 83 | 86 | 84 (round 1: 76) | pass |
 | Chart values, formal view | same | 66 (round 1: 67) | 83 | 52 | 66 (round 1: 58) | see below |
 | Display formulas | 46 (at most 3 per paper, seed 133) | 36/46 (round 1: 34/46) | — | — | 45/46 (round 1: 46/46) | report only |
@@ -53,9 +53,8 @@ Findings:
   lost or added (6 of 10). The status rule's native-text check compares symbols by text, so it
   cannot see a font change: `disputed`
   caught none of the errors in either round, and its only flag was a correct formula.
-- Round 2's two description failures are each a single extra claim: Luna's axis ticks the crop
-  does not show (image 18), and Opus's inferred "Google Research publication" (image 5,
-  a judgement call).
+- Round 2's one description failure is a single extra claim: Luna's axis ticks the crop does
+  not show (image 18).
 - On image 17 (line chart, no printed values) round 1's Opus returned no values, citing "never
   invent unreadable values". Round 2's prompt asks for estimated read-offs, and both models give
   8/12.
@@ -64,7 +63,8 @@ Findings:
 
 Judging and self-preference: the judge is Claude Opus 5.5, the same model as the ceiling. Answers
 were shown as A and B in a seeded random order with the model names hidden (`key.json`). The
-user spot-checks a sample. Judgement calls are marked in `judgments.json` notes.
+user spot-checked 10 judgments on 2026-11-01 and agreed with 9; the tenth (image 5, Opus) was
+reversed from FAIL to PASS. Judgement calls are marked in `judgments.json` notes.
 
 Files: `targets.json` (items, Luna's answers), `responses/opus/` (Opus responses, parsed by the
 method), `judgments.json`, `evidence.json` (per item and summary); `round1/` holds the same
