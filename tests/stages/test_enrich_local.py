@@ -280,7 +280,7 @@ async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runt
         outcome = outcomes[item["item_id"]]
         method = runtime.profile.methods[item["method"]]
         target = json.dumps(
-            {k: item[k] for k in ("target_ref", "page", "bbox")},
+            {k: item[k] for k in ("target_ref", "page", "bbox") if k in item},
             sort_keys=True,
             separators=(",", ":"),
         )
@@ -301,7 +301,7 @@ async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runt
             "version": method.version,
             "digest": method.module_digest,
         }
-        assert record["scope"] == "item"
+        assert record["scope"] == ("document" if method.id == "document-summary" else "item")
         for ref in record["evidence_refs"] + [record["provider_artifact_ref"] or ""]:
             assert not ref or ref.startswith(f"documents/doc_1/items/{key}/")
             assert not ref or await ports.store.head(ref) is not None
@@ -309,7 +309,8 @@ async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runt
     by_id = await records(ports, input.outcomes)
     origins = {item_id.split(":")[0]: r["origin"] for item_id, r in by_id.items()}
     assert origins == {"picture-ocr": "reconstruction", "picture-interpretation": "interpretation",
-                       "code": "reconstruction", "table-status": "reconstruction"}  # fmt: skip
+                       "code": "reconstruction", "table-status": "reconstruction",
+                       "document-summary": "interpretation"}  # fmt: skip
     assert {i: r["outcome"] for i, r in by_id.items() if i.startswith("picture-ocr:")} == {
         "picture-ocr:#/pictures/0": "success",
         "picture-ocr:#/pictures/1": "no_text",
@@ -336,11 +337,11 @@ async def test_every_item_run_or_reused_sends_a_heartbeat(ports, runtime):
     beats = []
     ports = dataclasses.replace(ports, heartbeat=lambda: beats.append(1))
     first = await enriched(ports, runtime, enriched_paper())
-    assert len(beats) == len(first.outcomes) == 6
+    assert len(beats) == len(first.outcomes) == 7
 
     await enrich_local.run(enrich_input(first.inventory), ports, runtime)
 
-    assert len(beats) == 9
+    assert len(beats) == 10
 
 
 async def test_an_undecodable_picture_is_a_failed_item_and_the_document_completes(ports, runtime):

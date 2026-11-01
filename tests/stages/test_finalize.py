@@ -68,20 +68,21 @@ async def test_the_processing_result_describes_request_profile_and_native_eviden
 
     # seven_pages has two pictures and neither holds text; each is also interpreted, four
     # field enrichments apiece. Docling also reads the eleven-line paragraphs of some pages as
-    # tables; each native table becomes a table-status item.
+    # tables; each native table becomes a table-status item. One Document Summary per document.
     tables = len(assembly["document"]["tables"])
     zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
     assert result["inventory"] == {
         "ref": input.inventory.ref,
         "counts": {"picture-ocr": {**zero, "no_text": 2},
                    "picture-interpretation": {**zero, "unverified": 8}}
-        | ({"table-status": {**zero, "unverified": tables}} if tables else {}),
+        | ({"table-status": {**zero, "unverified": tables}} if tables else {})
+        | {"document-summary": {**zero, "unverified": 1}},
     }  # fmt: skip
     assert [(e["status"], e["status_reason"], e["content"]) for e in result["enrichments"][:2]] == [
         ("unverified", "NO_TEXT", ""),
         ("unverified", "NO_TEXT", ""),
     ]
-    assert len(result["enrichments"]) == 2 + 8 + tables
+    assert len(result["enrichments"]) == 2 + 8 + tables + 1
     assert result["limitations"] == [
         {"code": "READING_ORDER_DEFECTS", "scope": "profile",
          "detail": runtime.profile.limitations[0].detail},
