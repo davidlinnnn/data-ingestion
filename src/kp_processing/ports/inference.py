@@ -50,6 +50,39 @@ class InferenceTransport(Protocol):
         ...
 
 
+async def _post(
+    client: httpx.AsyncClient,
+    url: str,
+    api_key: str,
+    request: dict[str, Any],
+    connect_s: float,
+    total_s: float,
+) -> bytes:
+    try:
+        async with asyncio.timeout(total_s):
+            async with client.stream(
+                "POST",
+                url,
+                json=request,
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=httpx.Timeout(total_s, connect=connect_s),
+                follow_redirects=False,
+            ) as response:
+                body = await response.aread()
+                status = response.status_code
+    except (TimeoutError, httpx.TimeoutException) as exc:
+        raise ServiceUnavailable("TIMEOUT") from exc
+    except httpx.TransportError as exc:
+        raise ServiceUnavailable("CONNECTION") from exc
+    if status == 429:
+        raise ServiceUnavailable("HTTP_429")
+    if 500 <= status < 600:
+        raise ServiceUnavailable("HTTP_5XX")
+    if not 200 <= status < 300:
+        raise RequestRejected(status)
+    return body
+
+
 class OpenAIChat:
     """POST {base_url}/chat/completions with {**request, "model": model}, bearer api_key.
 
@@ -82,27 +115,14 @@ class OpenAIChat:
         self.total_s = total_s
 
     async def complete(self, request: dict[str, Any]) -> Completion:
-        try:
-            async with asyncio.timeout(self.total_s):
-                async with self.client.stream(
-                    "POST",
-                    f"{self.base_url}/chat/completions",
-                    json={**request, "model": self.model},
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=httpx.Timeout(self.total_s, connect=self.connect_s),
-                ) as response:
-                    body = await response.aread()
-                    status = response.status_code
-        except (TimeoutError, httpx.TimeoutException) as exc:
-            raise ServiceUnavailable("TIMEOUT") from exc
-        except httpx.TransportError as exc:
-            raise ServiceUnavailable("CONNECTION") from exc
-        if status == 429:
-            raise ServiceUnavailable("HTTP_429")
-        if 500 <= status < 600:
-            raise ServiceUnavailable("HTTP_5XX")
-        if not 200 <= status < 300:
-            raise RequestRejected(status)
+        body = await _post(
+            self.client,
+            f"{self.base_url}/chat/completions",
+            self.api_key,
+            {**request, "model": self.model},
+            self.connect_s,
+            self.total_s,
+        )
         try:
             data = json.loads(body)
             message = data["choices"][0]["message"]
@@ -143,7 +163,25 @@ class SummaryApi:
         self.total_s = total_s
 
     async def complete(self, request: dict[str, Any]) -> Completion:
-        raise NotImplementedError
+        body = await _post(
+            self.client,
+            f"{self.base_url}/v1/summaries",
+            self.api_key,
+            request,
+            self.total_s,
+            self.total_s,
+        )
+        try:
+            content = body.decode("utf-8")
+            data = json.loads(content)
+            if not isinstance(data, dict) or not isinstance(data.get("model"), str):
+                raise ValueError("Missing response model")
+            usage = data.get("usage")
+            return Completion(
+                content, None, data["model"], None, usage if isinstance(usage, dict) else {}, body
+            )
+        except (ValueError, TypeError) as exc:
+            raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
 
 
 class FakeInference:

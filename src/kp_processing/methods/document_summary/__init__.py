@@ -3,9 +3,15 @@ tied to the sections that support it (v2 Q4b, Q4d, Q6). The request and response
 provisional contract of #129; when the real contract arrives, only this package and the
 SummaryApi adapter change."""
 
+import json
+import re
 from typing import Any
 
-from kp_processing.methods import DocumentItem, MethodOutput
+from docling_core.types.doc.document import DoclingDocument
+from docling_core.types.doc.items.text import TextItem
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from kp_processing.methods import DocumentItem, InvalidOutput, MethodOutput
 
 ID = "document-summary"
 VERSION = 1
@@ -21,6 +27,30 @@ MIN_WORD_LENGTH = 4  # shorter words are mostly function words
 MIN_OVERLAP = 0.5
 
 
+class Evidence(BaseModel):
+    model_config = ConfigDict(strict=True, extra="ignore")
+
+    section_id: str
+
+
+class Sentence(BaseModel):
+    model_config = ConfigDict(strict=True, extra="ignore")
+
+    text: str
+    evidence: list[Evidence] = Field(default_factory=list)
+
+
+class Summary(BaseModel):
+    model_config = ConfigDict(strict=True, extra="ignore")
+
+    model: str
+    sentences: list[Sentence] = Field(max_length=MAX_SENTENCES)
+
+
+def _words(text: str) -> set[str]:
+    return {word for word in re.findall(r"[a-z0-9]+", text.lower()) if len(word) >= MIN_WORD_LENGTH}
+
+
 def request(item: DocumentItem, inputs: list[bytes]) -> dict[str, Any]:
     """{"document_uid": item["document_uid"], "sections": [...], "max_sentences": MAX_SENTENCES}
     for inputs [assembly.json].
@@ -32,7 +62,28 @@ def request(item: DocumentItem, inputs: list[bytes]) -> dict[str, Any]:
     next heading, joined by "\\n"}. Body items before the first heading form a first section
     {"section_id": "#/body", "heading": "", "text": ...}, only when there are any.
     """
-    raise NotImplementedError
+    document = DoclingDocument.model_validate(json.loads(inputs[0])["document"])
+    sections: list[dict[str, str]] = []
+    body: list[str] = []
+    for node, _ in document.iterate_items():
+        if not isinstance(node, TextItem):
+            continue
+        if node.label in HEADING_LABELS:
+            if sections:
+                sections[-1]["text"] = "\n".join(body)
+            sections.append({"section_id": node.self_ref, "heading": node.text, "text": ""})
+            body = []
+        elif node.label in BODY_LABELS:
+            if not sections:
+                sections.append({"section_id": "#/body", "heading": "", "text": ""})
+            body.append(node.text)
+    if sections:
+        sections[-1]["text"] = "\n".join(body)
+    return {
+        "document_uid": item["document_uid"],
+        "sections": sections,
+        "max_sentences": MAX_SENTENCES,
+    }
 
 
 def parse(item: DocumentItem, inputs: list[bytes], content: str) -> MethodOutput:
@@ -56,4 +107,40 @@ def parse(item: DocumentItem, inputs: list[bytes], content: str) -> MethodOutput
     [{"section_id"}], "support"}]} in response order, and contradictions
     ["UNSUPPORTED_SENTENCE"] when any sentence's support is none, else [].
     """
-    raise NotImplementedError
+    if not content.strip():
+        raise InvalidOutput("EMPTY_OUTPUT")
+    try:
+        summary = Summary.model_validate_json(content)
+    except ValidationError as exc:
+        raise InvalidOutput("SCHEMA_INVALID") from exc
+    if not summary.sentences:
+        raise InvalidOutput("EMPTY_OUTPUT")
+    if any(not sentence.text.strip() for sentence in summary.sentences):
+        raise InvalidOutput("SCHEMA_INVALID")
+    sections = request(item, inputs)["sections"]
+    section_ids = {section["section_id"] for section in sections}
+    section_words = [
+        (section["section_id"], _words(section["heading"] + "\n" + section["text"]))
+        for section in sections
+    ]
+    sentences: list[dict[str, Any]] = []
+    for sentence in summary.sentences:
+        evidence = [ref.model_dump() for ref in sentence.evidence if ref.section_id in section_ids]
+        support = "provider" if evidence else "none"
+        if not sentence.evidence:
+            words = _words(sentence.text)
+            best_overlap = 0.0
+            for section_id, source_words in section_words:
+                overlap = len(words & source_words) / len(words) if words else 0.0
+                if overlap >= MIN_OVERLAP and overlap > best_overlap:
+                    best_overlap = overlap
+                    evidence = [{"section_id": section_id}]
+                    support = "overlap"
+        sentences.append({"text": sentence.text, "evidence": evidence, "support": support})
+    return MethodOutput(
+        outcome="success",
+        content={"sentences": sentences},
+        contradictions=(
+            ["UNSUPPORTED_SENTENCE"] if any(s["support"] == "none" for s in sentences) else []
+        ),
+    )

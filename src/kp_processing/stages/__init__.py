@@ -323,7 +323,7 @@ def enrichment_body(method: Method, prefix: str, output: MethodOutput) -> bytes:
             "version": method.version,
             "digest": method.module_digest,
         },
-        "scope": "item",
+        "scope": getattr(method.package, "SCOPE", "item"),
         "origin": method.package.ORIGIN,
         "outcome": output.outcome,
         "reason": output.reason,

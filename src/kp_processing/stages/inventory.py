@@ -3,7 +3,7 @@
 import json
 
 from kp_processing.identity import canonical_json
-from kp_processing.methods import InventoryItem
+from kp_processing.methods import DocumentItem, InventoryItem
 from kp_processing.stages import (
     InventoryInput,
     InventoryRef,
@@ -33,8 +33,12 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
     reused=True when it already existed.
     """
     profile = runtime.profile.id
-    item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
-    method_identities = [[m.ref, m.module_digest] for m in item_methods]
+    inventory_methods = [
+        m
+        for m in runtime.profile.methods.values()
+        if hasattr(m.package, "TARGET") or getattr(m.package, "SCOPE", None) == "document"
+    ]
+    method_identities = [[m.ref, m.module_digest] for m in inventory_methods]
     key = sha256(canonical_json([profile, input.assembly.digest, method_identities]))
     ref = f"{item_prefix(input.document_uid, key)}/inventory.json"
     if existing := await registered(ports.store, ref):
@@ -49,21 +53,35 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
         for image in json.loads(await ports.store.get(group.ref))["page_images"]:
             page_images[image["page"]] = image
 
+    document_inputs = {
+        "source": {"ref": input.source_key, "sha256": input.source_sha256},
+        "assembly": {"ref": input.assembly.ref, "sha256": input.assembly.digest},
+    }
+
     def source(kind: str, target_ref: str, page: int) -> dict[str, str]:
         match kind:
-            case "source":
-                return {"ref": input.source_key, "sha256": input.source_sha256}
-            case "assembly":
-                return {"ref": input.assembly.ref, "sha256": input.assembly.digest}
+            case "source" | "assembly":
+                return document_inputs[kind]
             case "picture_image":
                 return {key: pictures[target_ref][key] for key in ("ref", "sha256")}
             case "page_image":
                 return {key: page_images[page][key] for key in ("ref", "sha256")}
         raise ValueError(f"Unknown input kind {kind}")
 
-    items: list[InventoryItem] = []
-    for method in item_methods:
+    items: list[InventoryItem | DocumentItem] = []
+    for method in inventory_methods:
         method_id, package = method.id, method.package
+        if getattr(package, "SCOPE", None) == "document":
+            items.append(
+                {
+                    "item_id": f"{method_id}:#",
+                    "method": method_id,
+                    "target_ref": "#",
+                    "document_uid": input.document_uid,
+                    "input_refs": [document_inputs[kind] for kind in package.INPUTS],
+                }
+            )
+            continue
         collection, label = package.TARGET
         for target in document[collection]:
             if label is not None and target["label"] != label:
