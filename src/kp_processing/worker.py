@@ -4,7 +4,7 @@ non-retryable ApplicationError whose details the workflow turns into the failure
 
 One worker serves one task queue, so each queue scales as its own deployment: orchestration
 runs the workflow and the light Activities, inference runs docling one call at a time and is
-the only one that loads it, vlm sends the VLM requests."""
+the only one that loads it, vlm sends the VLM requests and summary the summary API's."""
 
 import asyncio
 import uuid
@@ -47,12 +47,14 @@ from kp_processing.workflow import (
     FAILURE_TYPE,
     INFERENCE_QUEUE,
     ORCHESTRATION_QUEUE,
+    SUMMARY_QUEUE,
     VLM_QUEUE,
     PaperPdfWorkflow,
     Queue,
 )
 
 VLM_SLOTS = 5  # #93 §7: documents in VLM enrichment at once per worker
+SUMMARY_SLOTS = 5  # #93 §7: documents in summary enrichment at once per worker
 
 T = TypeVar("T")
 
@@ -142,6 +144,15 @@ class Vlm(_Activities):
         return [self.enrich_vlm]
 
 
+class Summary(_Activities):
+    @activity.defn(name="enrich_summary")
+    async def enrich_summary(self, input: EnrichInput) -> list[OutcomeRef]:
+        return await self._run(enrich_vlm.run_summary, input)
+
+    def all(self) -> list[Callable[..., Any]]:
+        return [self.enrich_summary]
+
+
 class WriteOnceUnsupported(RuntimeError):
     pass
 
@@ -172,6 +183,14 @@ async def make_worker(
             task_queue=VLM_QUEUE,
             activities=Vlm(ports, runtime).all(),
             max_concurrent_activities=VLM_SLOTS,
+            graceful_shutdown_timeout=grace,
+        )
+    if queue == "summary":
+        return Worker(
+            client,
+            task_queue=SUMMARY_QUEUE,
+            activities=Summary(ports, runtime).all(),
+            max_concurrent_activities=SUMMARY_SLOTS,
             graceful_shutdown_timeout=grace,
         )
     if queue == "inference":

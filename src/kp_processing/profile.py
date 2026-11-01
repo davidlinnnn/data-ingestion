@@ -13,22 +13,26 @@ import yaml
 from kp_processing.identity import module_digest, reuse_key
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
+# The inference egresses of the data-security design §5; a new one updates §5 in the same PR.
+SERVICES = ("vlm", "summary")
 # The runtime keys the code reads, as dotted paths, each a number; else the profile does not
 # load. Workflow code reads some of them, where a bad value would retry the task forever.
 REQUIRED_RUNTIME = (
     "heartbeat_interval_s",
     "heartbeat_timeout_s.inference",
     "heartbeat_timeout_s.vlm",
+    "heartbeat_timeout_s.summary",
     "start_to_close_s.orchestration",
     "start_to_close_s.inference",
     *(
         f"activity_retry.{queue}.{key}"
-        for queue in ("orchestration", "inference", "vlm")
+        for queue in ("orchestration", "inference", "vlm", "summary")
         for key in ("initial_s", "multiplier", "cap_s", "max_attempts")
     ),
     "external_start_to_close_slack_s",
     "vlm_request_deadline_s.connect",
     "vlm_request_deadline_s.total",
+    "summary_request_deadline_s",
     *(f"retry.{key}" for key in ("initial_s", "multiplier", "cap_s", "max_attempts")),
     "vlm_concurrency_per_document",
     "request_cap.per_item",
@@ -59,10 +63,13 @@ class Method:
         return f"{self.id}@{self.version}"
 
     @property
-    def calls_vlm(self) -> bool:
-        """True when the package declares request and parse: its items run in the VLM
-        Activity; an item-scope package that declares only run runs in the local one."""
-        return hasattr(self.package, "request")
+    def service(self) -> str | None:
+        """The external service whose Activity runs its items: the package's SERVICE ("vlm"
+        when absent) when it declares request and parse; None for a package that declares only
+        run, whose items run in the local Activity."""
+        if not hasattr(self.package, "request"):
+            return None
+        return getattr(self.package, "SERVICE", "vlm")
 
     def reuse_key(self, document_uid: str, input_digests: Sequence[str]) -> str:
         """The reuse key of one of this method's items (identity.reuse_key)."""
@@ -91,8 +98,8 @@ def load_profile(path: Path) -> ProcessingProfile:
     Raises ProfileError when a required key (profile, status_rule, methods, limitations,
     runtime) is missing, a methods key is not `<id>@<int>`, a method's package
     (kp_processing.methods.<id with _>) does not exist, or the package's ID or VERSION
-    differs from the listed `<id>@<version>`, or a REQUIRED_RUNTIME key is missing or not a
-    number.
+    differs from the listed `<id>@<version>`, a method's service is not one of SERVICES, or a
+    REQUIRED_RUNTIME key is missing or not a number.
     `released` defaults to False.
     """
     try:
@@ -129,13 +136,16 @@ def load_profile(path: Path) -> ProcessingProfile:
                 raise ProfileError(f"{path}: {ref} package VERSION differs from {version}")
             if package.__file__ is None:
                 raise ProfileError(f"{path}: {ref} package has no source file")
-            methods[method_id] = Method(
+            method = Method(
                 id=method_id,
                 version=version,
                 components=tuple(entry["components"]),
                 module_digest=module_digest(Path(package.__file__).parent),
                 package=package,
             )
+            if method.service not in (None, *SERVICES):
+                raise ProfileError(f"{path}: {ref} calls undeclared service {method.service!r}")
+            methods[method_id] = method
         return ProcessingProfile(
             id=data["profile"],
             released=data.get("released", False),

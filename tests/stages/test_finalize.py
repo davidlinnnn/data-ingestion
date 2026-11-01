@@ -196,7 +196,7 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
             "item_id": item["item_id"],
             "result_ref": outcome.ref,
             "method_ref": record["method_ref"],
-            "scope": "item",
+            "scope": "document" if item["method"] == "document-summary" else "item",
             "origin": record["origin"],
             "target_refs": [item["target_ref"]],
             "input_refs": [r["ref"] for r in item["input_refs"]],
@@ -223,13 +223,17 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
         *[("unverified", None)] * 8,
         ("unverified", None),
         ("unverified", None),
+        ("unverified", None),
     ]
+    assert enrichments[-1]["item_id"] == "document-summary:#"
+    assert enrichments[-1]["target_refs"] == ["#"]
     zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
     assert result["inventory"]["counts"] == {
         "picture-ocr": {**zero, "unverified": 1, "no_text": 1},
         "picture-interpretation": {**zero, "unverified": 8},
         "code": {**zero, "unverified": 1},
         "table-status": {**zero, "unverified": 1},
+        "document-summary": {**zero, "unverified": 1},
     }
 
 

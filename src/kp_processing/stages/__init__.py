@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from kp_processing.identity import canonical_json
-from kp_processing.methods import InventoryItem, MethodOutput, MethodUnavailable
+from kp_processing.methods import DocumentItem, InventoryItem, MethodOutput, MethodUnavailable
 from kp_processing.ports.clock import Clock, SystemClock
 from kp_processing.ports.inference import InferenceTransport
 from kp_processing.ports.object_store import ObjectNotFound, ObjectStore
@@ -49,6 +49,7 @@ class Ports:
     clock: Clock = SystemClock()
     heartbeat: Callable[[], None] = lambda: None  # called after each completed item
     vlm: InferenceTransport | None = None  # only the vlm worker has one
+    summary: InferenceTransport | None = None  # only the summary worker has one
 
 
 @dataclass(frozen=True)
@@ -271,17 +272,20 @@ def method_failure(item_id: str, error: Exception) -> ProcessingFailure:
     )
 
 
-def enrichment_key(document_uid: str, item: InventoryItem, method: Method) -> str:
-    """The item's reuse key, including its ordered inputs and target geometry."""
-    target = canonical_json({key: item[key] for key in ("target_ref", "page", "bbox")}).decode(
-        "utf-8"
-    )
+def enrichment_key(document_uid: str, item: InventoryItem | DocumentItem, method: Method) -> str:
+    """The item's reuse key, including its ordered inputs and its target: the compact sorted-key
+    JSON of {"target_ref", "page", "bbox"} for an InventoryItem, of {"target_ref"} for a
+    DocumentItem."""
+    fields = dict(item)
+    target = canonical_json(
+        {key: fields[key] for key in ("target_ref", "page", "bbox") if key in fields}
+    ).decode("utf-8")
     return method.reuse_key(document_uid, [*(ref["sha256"] for ref in item["input_refs"]), target])
 
 
 async def enrichment_inputs(
     store: ObjectStore,
-    item: InventoryItem,
+    item: InventoryItem | DocumentItem,
     verified: dict[str, tuple[bytes, str]],
     lock: asyncio.Lock,
 ) -> list[bytes]:
@@ -310,7 +314,8 @@ async def enrichment_inputs(
 
 
 def enrichment_body(method: Method, prefix: str, output: MethodOutput) -> bytes:
-    """The enrichment-outcome/v1 bytes, with each declared field's outcome when present."""
+    """The enrichment-outcome/v1 bytes, with each declared field's outcome when present; "scope"
+    is the package's SCOPE, "item" when it declares none."""
     record = {
         "schema": "enrichment-outcome/v1",
         "method_ref": {

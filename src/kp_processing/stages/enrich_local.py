@@ -20,7 +20,7 @@ from kp_processing.stages import (
 
 
 async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
-    """Run every inventory item of a method that runs locally (not Method.calls_vlm), in inventory
+    """Run every inventory item of a method that runs locally (Method.service None), in inventory
     order, and register one outcome record per item; ports.heartbeat() after each item. Returns one
     OutcomeRef per such item, in inventory order.
 
@@ -56,7 +56,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     item: InventoryItem
     for item in inventory["items"]:
         method = runtime.profile.methods[item["method"]]
-        if method.calls_vlm:
+        if method.service:
             continue
         key = enrichment_key(input.document_uid, item, method)
         prefix = item_prefix(input.document_uid, key)

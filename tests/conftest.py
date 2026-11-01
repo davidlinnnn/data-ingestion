@@ -9,6 +9,7 @@ from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.ports.status_reporter import RecordingStatusReporter
 from kp_processing.profile import load_profile
 from kp_processing.stages import Ports, Runtime
+from tests.summary import mock_summary
 from tests.vlm import canned_vlm
 
 DEV_PROFILE = Path(__file__).parent / "profiles" / "paper-pdf-dev.yaml"
@@ -21,6 +22,7 @@ def ports() -> Ports:
         reporter=RecordingStatusReporter(),
         clock=FakeClock(),
         vlm=canned_vlm(),
+        summary=mock_summary(),
     )
 
 

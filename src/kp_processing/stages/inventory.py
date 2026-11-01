@@ -20,16 +20,17 @@ from kp_processing.stages import (
 async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> InventoryRef:
     """Register documents/{document_uid}/items/{key}/inventory.json, where key = sha256 of
     the compact JSON [profile id, assembly digest, [[method ref, module digest] of each
-    item-scope method in profile order]], so that a method added to a draft profile or
-    changed in place yields a new inventory:
+    method with inventory items in profile order]], so that a method added to a draft profile
+    or changed in place yields a new inventory:
 
         {"schema": "pdf-inventory/v1", "profile": "<profile id>",
          "assembly_ref": "...", "assembly_digest": "...", "items": [...]}
 
-    One InventoryItem per target of each item-scope method the profile lists (a method
-    package that declares TARGET), grouped by method in profile order, then in document
-    order; input_refs follow the package's INPUTS. Write-once; reused=True when it already
-    existed.
+    Items are grouped by method in profile order. An item-scope method (its package declares
+    TARGET) has one InventoryItem per target, in document order; a document-scope method (SCOPE
+    "document") has one DocumentItem {"item_id": "<method id>:#", "method", "target_ref": "#",
+    "document_uid", "input_refs"}. input_refs follow the package's INPUTS. Write-once;
+    reused=True when it already existed.
     """
     profile = runtime.profile.id
     item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]

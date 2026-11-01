@@ -79,10 +79,14 @@ def enrich_input(inv: InventoryRef, request_id: str = "req_1") -> EnrichInput:
 
 
 async def enriched(ports, runtime, pdf: bytes, request_id: str = "req_1") -> FinalizeInput:
-    """native() plus the outcomes of the local and the VLM enrichment (ports.vlm answers)."""
+    """native() plus the outcomes of the local, VLM and summary enrichment (ports.vlm and
+    ports.summary answer)."""
     input = await native(ports, runtime, pdf, request_id)
     outcomes = await enrich_local.run(enrich_input(input.inventory, request_id), ports, runtime)
     outcomes += await enrich_vlm.run(enrich_input(input.inventory, request_id), ports, runtime)
+    outcomes += await enrich_vlm.run_summary(
+        enrich_input(input.inventory, request_id), ports, runtime
+    )
     return dataclasses.replace(input, outcomes=outcomes)
 
 
@@ -129,7 +133,9 @@ async def test_inventory_lists_one_item_per_target_with_its_input_refs(ports, ru
 
     stored = await ports.store.get(input.inventory.ref)
     body = json.loads(stored)
-    item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
+    item_methods = [m for m in runtime.profile.methods.values()
+                    if hasattr(m.package, "TARGET") or hasattr(m.package, "SCOPE")]  # fmt: skip
+    assert item_methods[-1].id == "document-summary"
     identity = [[m.ref, m.module_digest] for m in item_methods]
     key_input = json.dumps(["paper-pdf@1", input.assembly.digest, identity], separators=(",", ":"))
     key = hashlib.sha256(key_input.encode()).hexdigest()
@@ -148,9 +154,10 @@ async def test_inventory_lists_one_item_per_target_with_its_input_refs(ports, ru
         "picture-interpretation:#/pictures/1",
         "code:#/texts/" + items[4]["target_ref"].split("/")[-1],
         "table-status:#/tables/0",
+        "document-summary:#",
     ]
     assert items[4]["target_ref"].startswith("#/texts/")
-    assert [(i["method"], i["page"]) for i in items] == [
+    assert [(i["method"], i["page"]) for i in items[:6]] == [
         ("picture-ocr", 1),
         ("picture-ocr", 3),
         ("picture-interpretation", 1),
@@ -161,7 +168,7 @@ async def test_inventory_lists_one_item_per_target_with_its_input_refs(ports, ru
 
     assembly = json.loads(await ports.store.get(input.assembly.ref))
     document = assembly["document"]
-    for item in items:
+    for item in items[:6]:
         kind, index = item["target_ref"].split("/")[1:]
         prov = document[kind][int(index)]["prov"][0]
         assert (item["page"], item["bbox"]) == (prov["page_no"], prov["bbox"])
@@ -191,6 +198,13 @@ async def test_inventory_lists_one_item_per_target_with_its_input_refs(ports, ru
         {"ref": input.assembly.ref, "sha256": input.assembly.digest},
         {"ref": page_2["ref"], "sha256": page_2["sha256"]},
     ]
+    assert items[6] == {
+        "item_id": "document-summary:#",
+        "method": "document-summary",
+        "target_ref": "#",
+        "document_uid": "doc_1",
+        "input_refs": [{"ref": input.assembly.ref, "sha256": input.assembly.digest}],
+    }
 
 
 async def test_inventory_is_registered_once(ports, runtime):
@@ -228,6 +242,7 @@ async def test_a_method_added_to_the_draft_profile_gets_a_new_inventory_and_reus
         "picture-interpretation:#/pictures/1": True,
         next(i for i in reused if i.startswith("code:")): False,
         "table-status:#/tables/0": True,
+        "document-summary:#": True,
     }
 
 

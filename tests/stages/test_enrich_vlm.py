@@ -123,9 +123,11 @@ async def run_vlm(
 
 
 async def finalized(ports, runtime, input: FinalizeInput, outcomes) -> dict:
-    """finalize with the local outcomes and the given VLM outcomes; the Processing Result."""
-    local = await enrich_local.run(EnrichInput("doc_1", input.inventory, "req_1", "run_1"),
-                                   ports, runtime)  # fmt: skip
+    """finalize with the local and summary outcomes and the given VLM outcomes; the Processing
+    Result."""
+    item_input = EnrichInput("doc_1", input.inventory, "req_1", "run_1")
+    local = await enrich_local.run(item_input, ports, runtime)
+    local += await enrich_vlm.run_summary(item_input, ports, runtime)
     ref = await finalize.run(
         dataclasses.replace(input, outcomes=[*local, *outcomes]), ports, runtime
     )
@@ -405,8 +407,8 @@ def test_a_method_runs_where_its_package_shape_says(runtime):
     # Activity, run means the local one.
     item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
 
-    assert {m.id for m in item_methods if m.calls_vlm} == set(VLM_METHODS)
-    assert {m.id for m in item_methods if not m.calls_vlm} == {"picture-ocr", "table-status"}
+    assert {m.id for m in item_methods if m.service == "vlm"} == set(VLM_METHODS)
+    assert {m.id for m in item_methods if m.service is None} == {"picture-ocr", "table-status"}
 
 
 def test_the_model_is_the_shared_vlm_component(runtime):
