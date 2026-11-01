@@ -18,7 +18,7 @@ Before writing or reviewing code, read `CODING_STANDARDS.md`.
 
 Implementing a ticket follows the `implement` flow: `tdd` at the spec's seams, `codebase-design` on every new interface, two-axis `code-review` before the pull request. `/mattpocock-skills:implement` loads only when the user types it.
 
-`scripts/check` mirrors CI's lint and type checks; `scripts/check --all` adds the S3 stand-in and the whole test suite. Enable it as the pre-commit hook once per clone: `git config core.hooksPath scripts/git-hooks`.
+`scripts/check` mirrors CI's lint and type checks; `scripts/check --all` adds the S3 stand-in and the whole test suite. Enable the hooks once per clone: `git config core.hooksPath scripts/git-hooks`. Pre-commit runs `scripts/check`; pre-push runs `scripts/check-docs`.
 
 ### Branches and worktrees
 

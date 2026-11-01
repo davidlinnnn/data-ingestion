@@ -14,7 +14,7 @@ collect reads the items and Luna's answers from there, so nothing is re-sent to 
            picture-interpretation item by page and box overlap), and a fixed sample of display
            formulas (at most 3 per paper, seed 133), each with Luna's answer
   opus     responses/opus/<item label>.json: the same method request (method.request) sent to
-           claude-opus-5-5 through the Messages API, effort max, the method's schema as
+           claude-opus-5-5 through the Messages API, effort high, the method's schema as
            output_config.format; parsed with method.parse
   packet   blind judging sheets in OUT_DIR (outside git): per item the gold obligations or the
            formula crop, and the two answers as A and B in a seeded random order
@@ -136,7 +136,7 @@ def anthropic_request(request: dict) -> dict:
                                 "source": {"type": "base64", "media_type": media, "data": data}})  # fmt: skip
     schema = request["response_format"]["json_schema"]["schema"]
     return {"system": system, "messages": [{"role": "user", "content": content}],
-            "output_config": {"effort": "max", "format": {"type": "json_schema", "schema": schema}}}  # fmt: skip
+            "output_config": {"effort": "high", "format": {"type": "json_schema", "schema": schema}}}  # fmt: skip
 
 
 async def opus() -> None:
