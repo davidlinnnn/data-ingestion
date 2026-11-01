@@ -28,6 +28,7 @@ What changed between the rounds:
   each segment's cumulative top and say so.
 - Both VLM methods send `reasoning_effort` "high". Opus ran at effort `high` in round 1
   (adaptive thinking: it thought on 5 of 64 items) and at `max` in round 2 (all 64).
+  `run.py opus` now sends `high`: Opus is the ceiling, and `max` multiplied its output tokens by 10.
 
 How each is scored:
 
