@@ -341,6 +341,7 @@ def test_text_layer_signs_compare_like_their_latex_commands(native, latex, expec
         ("ℒ(θ) = 𝔼[x]", r"\mathcal{L}(\theta) = \mathbb{E}[x]", False),
         ("ℒ(θ) = 𝔼[x]", r"\mathscr L(\theta) = \mathbb E[x]", False),  # unbraced, script
         ("𝒜ℬ ⊂ ℝ", r"\mathcal{AB} \subset \mathbb{R}", False),  # a group of letters
+        ("ℒ", r"\mathcal{\bar{L}}", False),  # a command and a nested group inside
         ("ℒ(θ) = 𝔼[x]", r"L(\theta) = \mathbb{E}[x]", True),  # calligraphic lost
         ("ℒ(θ) = 𝔼[x]", r"\mathcal{L}(\theta) = E[x]", True),  # blackboard lost
         ("L(θ) = E[x]", r"\mathcal{L}(\theta) = E[x]", True),  # calligraphic added
