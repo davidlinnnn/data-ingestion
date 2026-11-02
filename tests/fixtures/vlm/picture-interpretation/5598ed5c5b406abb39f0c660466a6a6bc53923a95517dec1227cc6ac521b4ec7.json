@@ -1,14 +1,14 @@
 {
-  "id": "chatcmpl-EfEHGftERaEt6vDr0Vitmu22WInF2",
+  "id": "chatcmpl-EfS7TGUdxmUkGPoECi62jGyn7Wb34",
   "object": "chat.completion",
-  "created": 1793495038,
+  "created": 1793548247,
   "model": "gpt-6-luna",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "{\"caption\":\"A two-stage Memento workflow diagram shows how a planner uses stored cases to prepare subtasks and an executor carries them out with external tools.\",\"description\":\"The diagram has two adjacent panels: a turquoise “Stage 1: Case-Based Planning” panel and a yellow “Stage 2: Tool-based Execution” panel. In Stage 1, “Case Memory” contains indexed case tuples, shown as {(s_i,c_i,r_i)}~B, an “Online updating θ” process with a “Replay Buffer,” a yellow “Read” module labeled μθ(· | s_t, M_t; Qθ), and a cylinder labeled “Case Bank.” The Read module receives s_t from the left and M_t from the Case Bank, and sends information downward to the LLM Planner; a connection labeled “Write(s_t,a_t,r_t,M_t)” carries updates from the planner toward Case Memory. The planner also receives an upward arrow from the “User Query” card, which asks about a YouTube video watched “... on June ...” and asks for the character’s first name. It sends an “Answer” to the left, shown as a yellow speech bubble marked “A=”. A “Decomposed Plan” card lists three steps: identify the YouTube ID of the video, examine its thumbnail, and identify the first name in the thumbnail. The teal LLM Planner connects to a numbered 1–3 task stack with a rightward “Planning/Replanning” connection; a return arrow toward the planner is labeled “Return, if all subtasks done.” Curved cycle arrows indicate iteration. “Subtask Memory” contains entries “(Subtask 1, Result 1),” “(Subtask 2, Result 2),” and “(Subtask n, Result n),” with dots indicating additional entries. The task stack connects upward to this memory with “Store.” A rightward arrow labeled “Subtask” sends work from the planning side to the yellow LLM Executor; a leftward arrow labeled “Result” returns execution results to Subtask Memory. In Stage 2, “Tool Memory” holds interaction records “(Tool 1, Arg 1, Result 1),” “(Tool 2, Arg 2, Result 2),” and “(Tool k, Arg k, Result k),” with dots for intervening records. The Executor reads from Tool Memory via a downward “Read” arrow and writes to it via an upward “Store” arrow. The Tool Memory area also contains an “MCP protocol” box listing “Unified Interface,” “Safety and Scaling,” and “Client-Server Arch,” and a “Tool Register” showing a function-style template with type, function, name, description, and parameters fields. A downward connection labeled “Init” leads from the register to the “MCP Server.” Between Executor and server, “Tool Description” is directed toward the Executor, “Tool Arg” is directed toward the server, and “Result” returns leftward from the server to the Executor; curved cycle arrows indicate repeated interaction. The server fans out through branching connections to seven external-tool icons labeled “Search,” “Crawl,” “Video,” “Image,” “Code,” “Math,” and “Doc,” denoting the available tool categories. No checks or crosses are shown.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "content": "{\"caption\":\"A two-stage agent workflow connects case-based planning and memory with MCP-mediated tool execution.\",\"description\":\"The figure is a left-to-right workflow diagram with a teal Stage 1, “Case-Based Planning,” and a yellow Stage 2, “Tool-based Execution.” In Stage 1, the Case Memory box contains stored case notation, an “Online updating θ” component and “Replay Buffer,” a yellow “Read” component labeled with a retrieval-policy expression, and a cylinder labeled “Case Bank.” A state labeled s_t enters Read from the left, and the case-bank connection is labeled M_t. Read connects downward to the LLM Planner; a “Write(s_t, a_t, r_t, M_t)” connection indicates writing information back to memory. The LLM Planner also receives the user query from below and sends an “Answer” leftward out of the diagram. The User Query card reads: “I was watching this YouTube video ... on June ... tell me the character’s first name.” The Decomposed Plan card lists: 1. Identify the YouTube ID of the video; 2. Examine the thumbnail of the video; 3. Identify the first name in thumbnail. The planner sends “Planning/Replanning” toward a numbered subtask list, accompanied by a circular repeat-arrows symbol. Subtask Memory holds entries “(Subtask 1, Result 1),” “(Subtask 2, Result 2),” an ellipsis, and “(Subtask n, Result n).” A “Store” connection carries the numbered subtasks into this memory, and a return connection labeled “Return, if all subtasks done” points back toward the planner. A “Subtask” connection goes right from the subtask-memory side to the LLM Executor; a “Result” connection returns left from the executor toward subtask memory. In Stage 2, Tool Memory contains records “(Tool 1, Arg 1, Result 1),” “(Tool 2, Arg 2, Result 2),” an ellipsis, and “(Tool k, Arg k, Result k).” The executor connects upward to this memory through separate “Read” and “Store” connections. The MCP protocol box lists “Unified Interface,” “Safety and Scaling,” and “Client-Server Arch.” The Tool Register shows a function-definition template with fields for type, function, name, description, and parameters. A downward connection labeled “Init” leads from the register to the MCP Server. The LLM Executor sends “Tool Args” toward the server and receives “Tool Description” and “Result” connections back; a circular repeat-arrows symbol is shown beside this interaction. From the MCP Server, branching lines connect down to six external-tool icons labeled Search, Crawl, Video, Image, Code, Math, and Doc. The icons depict the corresponding tool categories. No plotted data, checks, or crosses appear.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
         "refusal": null,
         "annotations": []
       },
@@ -17,14 +17,14 @@
   ],
   "usage": {
     "prompt_tokens": 3227,
-    "completion_tokens": 4406,
-    "total_tokens": 7633,
+    "completion_tokens": 4090,
+    "total_tokens": 7317,
     "prompt_tokens_details": {
       "cached_tokens": 0,
       "audio_tokens": 0
     },
     "completion_tokens_details": {
-      "reasoning_tokens": 3659,
+      "reasoning_tokens": 3431,
       "audio_tokens": 0,
       "accepted_prediction_tokens": 0,
       "rejected_prediction_tokens": 0

@@ -78,11 +78,17 @@ def two_picture_paper() -> bytes:
                       Page(lines=["2 Results", *BODY], picture=True)])  # fmt: skip
 
 
-def formula_paper() -> bytes:
+def formula_paper(equation: str | list[tuple[str, str]] = EQUATION) -> bytes:
     """docling labels the equation line `formula` (probed 2026-10-31); its box holds "(1)"."""
     return write_pdf(
-        [Page(lines=["2 Method", *BODY, "", EQUATION, "", "Line after the equation continues."])]
+        [Page(lines=["2 Method", *BODY, "", equation, "", "Line after the equation continues."])]
     )
+
+
+def styled_equation(calligraphic: str, blackboard: str) -> list[tuple[str, str]]:
+    """EQUATION's line with its L in the font `calligraphic` and an added E in `blackboard`."""
+    return [("", " " * 20), (calligraphic, "L"), ("", " = 2 x + 3 y - 7 + "), (blackboard, "E"),
+            ("", " = 0" + " " * 20 + "(1)")]  # fmt: skip
 
 
 def answers(*script: Any) -> FakeInference:
@@ -276,6 +282,7 @@ async def test_a_refused_picture_fails_every_field(ports, runtime):
         ("L = 2x + 5y - 7 = 0", ("disputed", "FORMULA_NATIVE_MISMATCH")),  # a number differs
         ("L = 2x - 3y - 7 = 0", ("disputed", "FORMULA_NATIVE_MISMATCH")),  # an operator differs
         ("L = 2x + 3y - 7 = 0 = 0", ("disputed", "FORMULA_NATIVE_MISMATCH")),  # one too many
+        (r"\mathcal{L} = 2x + 3y - 7 = 0", ("disputed", "FORMULA_NATIVE_MISMATCH")),  # a style
     ],
 )
 async def test_a_formula_that_contradicts_the_text_layer_is_disputed(ports, runtime, latex, status):
@@ -326,6 +333,71 @@ async def test_a_formula_without_a_text_layer_has_nothing_to_contradict(ports, r
 )
 def test_text_layer_signs_compare_like_their_latex_commands(native, latex, expected):
     assert formula.mismatch(native, latex) is expected
+
+
+@pytest.mark.parametrize(
+    ("native", "latex", "expected"),
+    [
+        ("ℒ(θ) = 𝔼[x]", r"\mathcal{L}(\theta) = \mathbb{E}[x]", False),
+        ("ℒ(θ) = 𝔼[x]", r"\mathscr L(\theta) = \mathbb E[x]", False),  # unbraced, script
+        ("𝒜ℬ ⊂ ℝ", r"\mathcal{AB} \subset \mathbb{R}", False),  # a group of letters
+        ("ℒ", r"\mathcal{\bar{L}}", False),  # a command and a nested group inside
+        ("ℒ(θ) = 𝔼[x]", r"L(\theta) = \mathbb{E}[x]", True),  # calligraphic lost
+        ("ℒ(θ) = 𝔼[x]", r"\mathcal{L}(\theta) = E[x]", True),  # blackboard lost
+        ("L(θ) = E[x]", r"\mathcal{L}(\theta) = E[x]", True),  # calligraphic added
+        ("ℒ(θ) = 𝔼[x]", r"\mathcal{L}(\theta) = \mathcal{E}[x]", True),  # the other style
+        ("αβ", r"\mathcal{A}\beta", False),  # no capital letter on the native side
+        ("ℒ = 1", r"\mathcal{L} = 2", True),  # digits still compared
+    ],
+)
+def test_calligraphic_and_blackboard_capitals_compare_with_their_latex_styles(
+    native, latex, expected
+):
+    assert formula.mismatch(native, latex) is expected
+
+
+async def styled_formula(
+    ports, runtime, calligraphic: str, blackboard: str
+) -> tuple[InventoryItem, list[bytes]]:
+    """formula_paper's formula item, widened to the page, with the source swapped for the
+    styled_equation paper; the item and its inputs."""
+    input = await native(ports, runtime, formula_paper())
+    item = next(i for i in await items_of(ports, input.inventory) if i["method"] == "formula")
+    inputs = [await ports.store.get(source["ref"]) for source in item["input_refs"]]
+    inputs[1] = formula_paper(styled_equation(calligraphic, blackboard))
+    # The styled fonts are not embedded, so their widths may move the line sideways.
+    return {**item, "bbox": {**item["bbox"], "l": 0.0, "r": 612.0}}, inputs  # type: ignore[typeddict-item]
+
+
+@pytest.mark.parametrize(
+    ("calligraphic", "blackboard"),
+    [
+        ("CMSY10", "MSBM10"),
+        ("ABCDEF+txsys", "GHIJKL+PazoMathBlackboardBold"),  # subset prefixes
+        ("LMMathSymbols8-Regular", "MSBM7"),
+    ],
+)
+async def test_the_text_layer_font_gives_a_capital_its_style(
+    ports, runtime, calligraphic, blackboard
+):
+    wide, inputs = await styled_formula(ports, runtime, calligraphic, blackboard)
+
+    kept = formula.parse(
+        wide, inputs, json.dumps({"latex": r"\mathcal{L} = 2x + 3y - 7 + \mathbb{E} = 0"})
+    )
+    lost = formula.parse(wide, inputs, json.dumps({"latex": "L = 2x + 3y - 7 + E = 0"}))
+
+    assert "ℒ = 2 x + 3 y - 7 + 𝔼 = 0" in kept.signals["native_text"]
+    assert (kept.contradictions, lost.contradictions) == ([], ["FORMULA_NATIVE_MISMATCH"])
+
+
+async def test_a_capital_in_a_text_or_math_italic_font_has_no_style(ports, runtime):
+    wide, inputs = await styled_formula(ports, runtime, "CMMI10", "CMR10")
+
+    output = formula.parse(wide, inputs, json.dumps({"latex": "L = 2x + 3y - 7 + E = 0"}))
+
+    assert "L = 2 x + 3 y - 7 + E = 0" in output.signals["native_text"]
+    assert output.contradictions == []
 
 
 def test_a_method_runs_where_its_package_shape_says(runtime):

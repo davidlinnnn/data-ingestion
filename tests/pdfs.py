@@ -10,7 +10,8 @@ from pypdf import PdfReader, PdfWriter
 
 @dataclass
 class Page:
-    lines: list[str] = field(default_factory=list)  # body text, one Tj per line
+    # body text, one Tj per line; a line may be (base font, text) runs, "" for Helvetica
+    lines: list[str | list[tuple[str, str]]] = field(default_factory=list)
     picture: bool = False  # a 200x150 pt raster block under the text
     size: tuple[float, float] = (612, 792)  # points
     picture_text: list[str] = field(default_factory=list)  # words drawn into the raster block
@@ -60,12 +61,16 @@ def write_pdf(pages: list[Page]) -> bytes:
 
     font = add(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
     mono = add(b"<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>")
+    runs = {name: add(f"<< /Type /Font /Subtype /Type1 /BaseFont /{name} >>".encode())
+            for page in pages for line in page.lines if isinstance(line, list)
+            for name, _ in line}  # fmt: skip
+    run_fonts = "".join(f" /R{n} {n} 0 R" for n in runs.values())
     page_ids = []
     pages_id = len(objects) + 1 + 2 * len(pages) + sum(p.picture for p in pages)
     for page in pages:
         width, height = page.size
         ops = []
-        resources = f"/Font << /F1 {font} 0 R /F2 {mono} 0 R >>"
+        resources = f"/Font << /F1 {font} 0 R /F2 {mono} 0 R{run_fonts} >>"
         if page.picture:
             w, h, pixels = picture_pixels(page.picture_text)
             data = zlib.compress(pixels)
@@ -81,7 +86,11 @@ def write_pdf(pages: list[Page]) -> bytes:
         y = height - 72
         for i, line in enumerate(page.lines):
             size = 16 if i == 0 else 11
-            ops.append(f"BT /F1 {size} Tf 72 {y} Td ({_escape(line)}) Tj ET")
+            if isinstance(line, str):
+                line = [("", line)]
+            shown = " ".join(f"/{f'R{runs[name]}' if name else 'F1'} {size} Tf ({_escape(text)}) Tj"
+                             for name, text in line)  # fmt: skip
+            ops.append(f"BT 72 {y} Td {shown} ET")
             y -= 24 if i == 0 else 16
             if page.picture and i == 0:
                 y -= 200
