@@ -48,22 +48,26 @@ rule. The company VLM's fixtures are re-recorded on the company network.
 
 The fixtures were re-recorded on 2026-11-01 after the #133 accuracy check
 (`../t4-accuracy/README.md`) changed the picture-interpretation prompt and set
-`reasoning_effort` "high" on both VLM methods. R, C and F above ran with the earlier requests;
-the request change does not touch the Seam B mechanics they cover.
+`reasoning_effort` "high" on both VLM methods. They were re-recorded again on 2026-11-02 for
+#152, which added a letter-style rule to the formula prompt and the letter-style comparison to
+the `disputed` check. R, C and F above ran with the earlier requests; the request changes do not
+touch the Seam B mechanics they cover.
 
-`record.py` results (`recorded.json`): all 20 documents complete. There were 397 requests: 383
-ok, 6 invalid and 8 unavailable. They used 538,549 prompt tokens and 434,387 completion tokens,
-about US$0.27 (the first recording, before the change, used 173,646 completion tokens for 19
-papers). The run saved 384 fixtures: 162 picture-interpretation and 222 formula.
+`record.py` results (`recorded.json`, #152): all 20 documents complete. Papers 1–12 ran first
+(run `491fba`). The network dropped during that run, so every request from paper 13 on failed
+with `CONNECTION`; papers 13–20 were run again (run `151724`). The failed requests were never
+answered, so the spend estimate does not count them. There were 401 requests: 377 ok, 12
+invalid and 12 unavailable. They used 541,892 prompt tokens and 460,401 completion tokens,
+about US$0.28. The run saved 382 fixtures: 160 picture-interpretation and 222 formula. Two
+older picture-interpretation fixtures stay: their pictures timed out this time.
 
-- Papers 11 and 14: the model did not answer one picture each within 60 s, three times (and
-  paper 20 once, recovered by the retry). Those pictures' 4 fields ended
-  `failed`/`SERVICE_UNAVAILABLE`, the documents completed, and the redrive markers were written
-  and listed. The provider may still bill the cut requests; their tokens are unknown and not in
-  the estimate. Neither picture is in the accuracy check's gold.
-- Paper 16: the model answered `{"latex": ""}` 6 times; 1 formula ended `failed`/`EMPTY_OUTPUT`.
-- Statuses over the 20 papers: formula 209 unverified, 12 disputed, 1 failed;
-  picture-interpretation 648 unverified fields, 8 failed; code 182 unverified.
+- Papers 11, 12 and 14: the model did not answer one picture each within 60 s, three times.
+  Those pictures' 4 fields ended `failed`/`SERVICE_UNAVAILABLE`, the documents completed, and
+  the redrive markers were written and listed. The provider may still bill the cut requests;
+  their tokens are unknown and not in the estimate.
+- Paper 16: the model answered `{"latex": ""}` 12 times; 5 formulas ended `failed`/`EMPTY_OUTPUT`.
+- Statuses over the 20 papers: formula 183 unverified, 34 disputed, 5 failed (before #152: 209,
+  12, 1); picture-interpretation 640 unverified fields, 16 failed; code 182 unverified.
 
 ## Known limits
 

@@ -1,14 +1,14 @@
 {
-  "id": "chatcmpl-EfEQJ23Qhy038pk8NBSyAx6pj0zOk",
+  "id": "chatcmpl-EfiKlScKlVbouxYL5SJhXQIsT1q2v",
   "object": "chat.completion",
-  "created": 1793495599,
+  "created": 1793610575,
   "model": "gpt-6-luna",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "{\"caption\":\"Workflow diagram of generating, evaluating, and learning from alternative self-edits to a language model.\",\"description\":\"A process diagram shows a starting context (Ctx, in a blue box) entering a language model with parameters θ_t. The model branches into three candidate self-edits, SE₁, SE₂, and SE₃. Each candidate points to an Optimize step with its loss, 𝓛(SEᵢ, θ_t), and then to a corresponding updated parameter set, θ′ᵢ. To the right of a vertical divider, each candidate is tested: a “Test” input and blue input block feed a language model with θ′ᵢ, which produces an answer (Ans) in a blue box. The first and second answers have check marks; the third has a cross. A curly brace groups these evaluation outcomes. The RL Data box shows a tuple containing the state (Ctx and θ_t), action (SE), and reward (✓/✗). The grouped rewards and RL data are associated with a Policy Update that produces θ_{t+1}.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "content": "{\"caption\":\"Flow diagram of candidate self-edits, downstream evaluation, and reward-guided policy updating.\",\"description\":\"A left-to-right process diagram. A blue block labeled “Ctx” points to a rounded box labeled “LM” containing θ_t. From this model, three curved, right-pointing branches lead to orange boxes labeled SE₁, SE₂, and SE₃. Each branch continues through a purple “Optimize” box and a loss expression, respectively 𝓛(SE₁, θ_t), 𝓛(SE₂, θ_t), and 𝓛(SE₃, θ_t), then points to an updated-parameter symbol θ′_i. To the right of a vertical divider, three aligned evaluation rows each show “Test,” a blue block, an arrow to an “LM” box containing θ′_i, then an arrow to “Ans” and a blue answer block. The first and second answer rows carry checkmarks; the third carries a cross. Curved connectors group the evaluation outcomes and lead toward policy updating. An upper-right rounded box labeled “RL Data” shows the tuple (Ctx, θ_t, SE, ✓/✗), with “State” under Ctx and θ_t, “Action” under SE, and “Reward” under ✓/✗. Beneath it, “Policy Update” is paired with a coral box containing θ_{t+1}.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
         "refusal": null,
         "annotations": []
       },
@@ -17,14 +17,14 @@
   ],
   "usage": {
     "prompt_tokens": 2990,
-    "completion_tokens": 1649,
-    "total_tokens": 4639,
+    "completion_tokens": 2638,
+    "total_tokens": 5628,
     "prompt_tokens_details": {
       "cached_tokens": 0,
       "audio_tokens": 0
     },
     "completion_tokens_details": {
-      "reasoning_tokens": 1388,
+      "reasoning_tokens": 2298,
       "audio_tokens": 0,
       "accepted_prediction_tokens": 0,
       "rejected_prediction_tokens": 0

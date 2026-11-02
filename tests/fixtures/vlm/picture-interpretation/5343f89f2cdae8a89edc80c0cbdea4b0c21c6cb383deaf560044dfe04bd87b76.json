@@ -1,14 +1,14 @@
 {
-  "id": "chatcmpl-EfESTlLKYx1LMXUkwq3NOFiwVdkKL",
+  "id": "chatcmpl-EfiNFiWgbhnGU5uY8DveJuOB4Py89",
   "object": "chat.completion",
-  "created": 1793495733,
+  "created": 1793610729,
   "model": "gpt-6-luna",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "{\"caption\":\"Four schematic context-management patterns show how tasks, actions, observations, and memory are arranged or modified across successive timelines.\",\"description\":\"A multi-panel diagram compares four templates. Grey boxes denote Task Tokens, orange boxes denote LLM-generated action tokens (compute policy loss), blue boxes denote environment tokens or masked action tokens, and purple boxes denote memory tokens. Black arrows within timelines point downward; ellipses mark omitted steps.\\n\\nBasic Causal Template: The timeline is labeled “TSR Timeline #1.” It shows Task → action 1 → obs 1 → …, followed by an omitted stretch and a later action t → obs t segment. Offset, overlapping token boxes near the omission depict repeated or omitted content. Reasoning-Augmented Template: Three downward timelines, labeled #1, #2, and #3, show progressively longer histories. #1 has Task → <think> + action 1. #2 has Task → action 1 → obs 1 → <think> + action 2. #3 has Task → action 1 → obs 1 → action 2 → obs 2 → <think> + action 3.\\n\\nSliding Context Window Template: Three green-outlined timelines are labeled TSR Timeline #n, #(n+1), and #(n+2). Timeline #n shows Task → action 1 → obs 1 → action 2 → obs 2 → … → action t → obs t. Timeline #(n+1) shows Task → purple mem M_{1,t} (with a small blue “…” token and “× Echo” beside it) → action t+1 → obs t+1 → … → action 2t → obs 2t. Timeline #(n+2) similarly shows Task → purple mem M_{1,2t} (with a small blue “…” token and “× Echo”) → action 2t+1 → obs 2t+1 → … → action 3t → obs 3t. Purple routed connectors link the end of a window to a “Memory Extract” box and the extracted memory to the memory-token block in a later window.\\n\\nSelf-context Managing Template: Four downward timelines are labeled #n, #n′, #(n+1), and #(n+2). #n shows Task → action 1 → obs 1 → action 2 → obs 2 → <think> + action 3. #n′ shows Task → action 1 → obs 1 → action 2 → obs 2 → action 3. In the later timelines, the corresponding action 1, action 2, and action 3 blocks are retained; obs 1 is marked “(discarded),” and obs 2 is represented by purple obs 2′. Timeline #(n+1) continues with obs 3 → <think> + action 4 → obs 4; #(n+2) continues with obs 3 → action 4 → obs 4 → <think> + action 5. Five left-to-right horizontal arrows connect the #n′ history to #(n+1): green preserve arrows connect action 1, action 2, and action 3; a red discard arrow connects obs 1 to the discarded observation; and a purple compress arrow connects obs 2 to obs 2′. Beneath #n′, a “Context Operation Command Prompt” box points downward to an orange “Context Operation” box. The legend identifies green as “Operation: Preserve,” red as “Operation: Discard,” and purple as “Operation: Compress.”\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "content": "{\"caption\":\"Schematic comparison of four ways to retain, extend, or revise an agent’s interaction history across successive timelines.\",\"description\":\"The figure has four labeled panels. In all panels, gray rounded boxes denote Task tokens, orange boxes denote LLM-generated action or thought-plus-action tokens, blue boxes denote observations or other environment/masked tokens, and purple boxes denote memory tokens. Black arrows show downward sequence order unless otherwise noted.\\n\\nBasic Causal Template: One TSR Timeline #1 is laid out in two vertical portions: Task → action 1 → obs 1 → …, and … → action t → obs t. The ellipses indicate omitted intervening tokens.\\n\\nReasoning-Augmented Template: Three timelines show progressively longer histories. TSR Timeline #1 is Task → <think> + action 1. Timeline #2 is Task → action 1 → obs 1 → <think> + action 2. Timeline #3 is Task → action 1 → obs 1 → action 2 → obs 2 → <think> + action 3.\\n\\nSliding Context Window Template: Three green-outlined timelines show successive windows. Timeline #n is Task → action 1 → obs 1 → action 2 → obs 2 → … → action t → obs t. Timeline #(n+1) is Task → purple mem M₁,ₜ → a small blue … ×Echo block → action t+1 → obs t+1 → … → action 2t → obs 2t. Timeline #(n+2) is Task → purple mem M₁,₂ₜ → a small blue … ×Echo block → action 2t+1 → obs 2t+1 → … → action 3t → obs 3t. Purple connectors route completed timelines through purple Memory Extract nodes below the first and second windows, then forward to the memory token in the next window. The legend identifies orange as LLM Generated Action Tokens (Compute Policy Loss), blue as Environment Tokens / Masked Action Tokens, gray as Task Tokens, and purple as Memory Tokens.\\n\\nSelf-context Managing Template: Four columns show TSR Timelines #n, #n*, #(n+1), and #(n+2). Timeline #n is Task → action 1 → obs 1 → action 2 → obs 2 → <think> + action 3. Timeline #n* is Task → action 1 → obs 1 → action 2 → obs 2 → action 3; beneath it, a Context Operation Command Prompt points downward to a Context Operation block. Between #n* and #(n+1), green right-pointing arrows labeled Operation: Preserve carry action 1, action 2, and action 3 forward. A red right-pointing arrow labeled Operation: Discard maps obs 1 to a (discarded) block. A purple right-pointing arrow labeled Operation: Compress maps obs 2 to obs 2′. Timeline #(n+1) then continues Task → action 1 → (discarded) → action 2 → obs 2′ → action 3 → obs 3 → <think> + action 4. Timeline #(n+2) shows Task → action 1 → (discarded) → action 2 → obs 2′ → action 3 → obs 3 → action 4 → obs 4 → <think> + action 5. The arrows within each timeline point downward between successive boxes.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
         "refusal": null,
         "annotations": []
       },
@@ -17,14 +17,14 @@
   ],
   "usage": {
     "prompt_tokens": 3404,
-    "completion_tokens": 3346,
-    "total_tokens": 6750,
+    "completion_tokens": 3451,
+    "total_tokens": 6855,
     "prompt_tokens_details": {
       "cached_tokens": 0,
       "audio_tokens": 0
     },
     "completion_tokens_details": {
-      "reasoning_tokens": 2559,
+      "reasoning_tokens": 2681,
       "audio_tokens": 0,
       "accepted_prediction_tokens": 0,
       "rejected_prediction_tokens": 0
