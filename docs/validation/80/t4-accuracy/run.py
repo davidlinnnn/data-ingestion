@@ -2,6 +2,7 @@
 claude-opus-5-5 on the same items as a ceiling (user ruling 2026-11-01).
 
     .venv/bin/python docs/validation/80/t4-accuracy/run.py collect GOLD_ROOT CORPUS_MANIFEST
+    .venv/bin/python docs/validation/80/t4-accuracy/run.py collect-formulas
     env ANTHROPIC_API_KEY=... uv run --with anthropic python docs/validation/80/t4-accuracy/run.py opus
     .venv/bin/python docs/validation/80/t4-accuracy/run.py packet OUT_DIR
     .venv/bin/python docs/validation/80/t4-accuracy/run.py score GOLD_ROOT
@@ -13,6 +14,8 @@ collect reads the items and Luna's answers from there, so nothing is re-sent to 
   collect  targets.json: the #84 image-gold pictures that are in the corpus (matched to our
            picture-interpretation item by page and box overlap), and a fixed sample of display
            formulas (at most 3 per paper, seed 133), each with Luna's answer
+  collect-formulas  the formula targets again from the latest runs (#152's prompt change),
+           keeping the picture targets and their answers
   opus     responses/opus/<item label>.json: the same method request (method.request) sent to
            claude-opus-5-5 through the Messages API, effort high, the method's schema as
            output_config.format; parsed with method.parse
@@ -102,6 +105,15 @@ async def collect(gold_root: Path, manifest: Path) -> None:
         targets.append({"kind": "picture", "gold_index": g["index"], "paper": paper,
                         "matched": True, "overlap": round(iou(best["bbox"], box), 3),
                         "label": item_label(paper, best["item_id"]), "item": best, "luna": luna})  # fmt: skip
+    targets += await formula_targets()
+    TARGETS.write_text(json.dumps(targets, indent=2, ensure_ascii=False) + "\n")
+    print(sum(t["kind"] == "picture" and t["matched"] for t in targets), "pictures,",
+          sum(t["kind"] == "formula" for t in targets), "formulas,",
+          sum(t["kind"] == "picture" and not t["matched"] for t in targets), "unmatched")  # fmt: skip
+
+
+async def formula_targets() -> list[dict]:
+    targets = []
     rng = random.Random(133)
     for paper in sorted(runs()):
         _, items, enrichments = await document(paper)
@@ -112,10 +124,18 @@ async def collect(gold_root: Path, manifest: Path) -> None:
             targets.append({"kind": "formula", "paper": paper, "label": item_label(paper, item["item_id"]),
                             "item": item, "luna": {"latex": e["content"], "status": e["status"],
                                                    "status_reason": e["status_reason"]}})  # fmt: skip
+    return targets
+
+
+async def collect_formulas() -> None:
+    """Replace the formula targets with the latest runs' answers; keep the picture targets."""
+    old = json.loads(TARGETS.read_text())
+    new = await formula_targets()
+    assert [t["label"] for t in new] == [t["label"] for t in old if t["kind"] == "formula"]
+    targets = [t for t in old if t["kind"] == "picture"] + new
     TARGETS.write_text(json.dumps(targets, indent=2, ensure_ascii=False) + "\n")
-    print(sum(t["kind"] == "picture" and t["matched"] for t in targets), "pictures,",
-          sum(t["kind"] == "formula" for t in targets), "formulas,",
-          sum(t["kind"] == "picture" and not t["matched"] for t in targets), "unmatched")  # fmt: skip
+    print(len(new), "formulas,", sum(a["luna"]["latex"] != b["luna"]["latex"]
+          for a, b in zip([t for t in old if t["kind"] == "formula"], new, strict=True)), "answers changed")  # fmt: skip
 
 
 def anthropic_request(request: dict) -> dict:
@@ -323,6 +343,8 @@ if __name__ == "__main__":
     command, *args = sys.argv[1:]
     if command == "collect":
         asyncio.run(collect(Path(args[0]), Path(args[1])))
+    elif command == "collect-formulas":
+        asyncio.run(collect_formulas())
     elif command == "opus":
         asyncio.run(opus())
     elif command == "packet":

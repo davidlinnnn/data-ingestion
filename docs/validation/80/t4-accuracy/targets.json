@@ -1497,7 +1497,7 @@
       "target_ref": "#/texts/111"
     },
     "luna": {
-      "latex": "P_k \\leftarrow M_P(W'_k, S_{k-1}, T_{\\mathrm{train},k})",
+      "latex": "P_k \\leftarrow \\mathcal{M}_P(W'_k, S_{k-1}, \\mathcal{T}_{train,k})",
       "status": "unverified",
       "status_reason": null
     }
@@ -1530,9 +1530,9 @@
       "target_ref": "#/texts/115"
     },
     "luna": {
-      "latex": "S_k \\leftarrow \\begin{cases} S'_k & \\text{if } \\mathcal{R}(T_{\\mathrm{val},k}) > \\mathcal{R}_{\\mathrm{best}} \\\\ S_{k-1} & \\text{otherwise} \\end{cases}",
-      "status": "unverified",
-      "status_reason": null
+      "latex": "S_k \\leftarrow \\begin{cases} S'_k & \\text{if } R(\\mathcal{V}_{\\mathrm{val},k}) > R_{\\mathrm{best}} \\\\ S_{k-1} & \\text{otherwise} \\end{cases}",
+      "status": "disputed",
+      "status_reason": "FORMULA_NATIVE_MISMATCH"
     }
   },
   {
@@ -1563,7 +1563,7 @@
       "target_ref": "#/texts/363"
     },
     "luna": {
-      "latex": "C_{\\text{Trace2Skill}} \\approx N_{\\text{train}} + \\left(1 + \\frac{1}{c - 1}\\right) \\frac{N_{\\text{train}}}{B} + 1",
+      "latex": "\\mathcal{C}_{\\mathrm{Trace2Skill}} \\approx N_{\\mathrm{train}} + \\left(1 + \\frac{1}{c - 1}\\right)\\frac{N_{\\mathrm{train}}}{B} + 1",
       "status": "unverified",
       "status_reason": null
     }
@@ -1596,9 +1596,9 @@
       "target_ref": "#/texts/343"
     },
     "luna": {
-      "latex": "\\begin{aligned}\n\\Delta^{+}(p) &= \\operatorname{acc}_{V}(S_t \\oplus p) - \\operatorname{acc}_{V}(S_t),\\\\\n\\Delta^{-}(p) &= \\operatorname{acc}_{V}(S_t \\oplus P_t) - \\operatorname{acc}_{V}(S_t \\oplus (P_t \\setminus \\{p\\})).\n\\end{aligned}",
-      "status": "unverified",
-      "status_reason": null
+      "latex": "\\Delta^{+}(p) = \\mathrm{acc}_{\\mathcal{V}}(S_t \\oplus p) - \\mathrm{acc}_{\\mathcal{V}}(S_t),\\quad \\Delta^{-}(p) = \\mathrm{acc}_{\\mathcal{V}}(S_t \\oplus \\mathcal{P}_t) - \\mathrm{acc}_{\\mathcal{V}}(S_t \\oplus (\\mathcal{P}_t \\setminus \\{p\\})).",
+      "status": "disputed",
+      "status_reason": "FORMULA_NATIVE_MISMATCH"
     }
   },
   {
@@ -1629,7 +1629,7 @@
       "target_ref": "#/texts/348"
     },
     "luna": {
-      "latex": "\\mu_j^G = \\frac{\\sum_{x \\in G} x_j + \\alpha}{|G| + 2\\alpha}, \\quad \\mu_j^B = \\frac{\\sum_{x \\in B} x_j + \\alpha}{|B| + 2\\alpha}",
+      "latex": "\\mu_j^G = \\frac{\\sum_{x\\in G} x_j + \\alpha}{|G| + 2\\alpha}, \\quad \\mu_j^B = \\frac{\\sum_{x\\in B} x_j + \\alpha}{|B| + 2\\alpha}",
       "status": "unverified",
       "status_reason": null
     }
@@ -1662,7 +1662,7 @@
       "target_ref": "#/texts/350"
     },
     "luna": {
-      "latex": "A(x)=\\sum_{j=1}^{m}\\left[\\log q(x_j;\\mu_j^G)-\\log q(x_j;\\mu_j^B)\\right],\\quad q(b;\\mu)=\\mu^b(1-\\mu)^{1-b}.",
+      "latex": "A(x)=\\sum_{j=1}^{m}\\left[\\log q(x_j;\\mu_j^G)-\\log q(x_j;\\mu_j^B)\\right],\\quad q(b;\\mu)=\\mu^b(1-\\mu)^{1-b},",
       "status": "unverified",
       "status_reason": null
     }
@@ -1728,9 +1728,9 @@
       "target_ref": "#/texts/214"
     },
     "luna": {
-      "latex": "s_{\\mathrm{sel}}^{\\star}=\\arg\\max_{s\\in\\mathcal{C}(D_{\\mathrm{tr}})}\\frac{1}{|D_{\\mathrm{sel}}|}\\sum_{x\\in D_{\\mathrm{sel}}}r(s)",
-      "status": "unverified",
-      "status_reason": null
+      "latex": "s^{*}_{\\mathrm{sel}} = \\operatorname*{arg\\,max}_{s\\in C(D_{\\mathrm{tr}})} \\frac{1}{|D_{\\mathrm{sel}}|}\\sum_{x\\in D_{\\mathrm{sel}}} r(s),",
+      "status": "disputed",
+      "status_reason": "FORMULA_NATIVE_MISMATCH"
     }
   },
   {
@@ -1761,7 +1761,7 @@
       "target_ref": "#/texts/215"
     },
     "luna": {
-      "latex": "\\mathrm{Test}(s_{\\mathrm{sel}}^{*})=\\frac{1}{|D_{\\mathrm{test}}|}\\sum_{x\\in D_{\\mathrm{test}}}r(s_{\\mathrm{sel}}^{*})",
+      "latex": "\\mathrm{Test}(s^*_{\\mathrm{sel}}) = \\frac{1}{|D_{\\mathrm{test}}|} \\sum_{x \\in D_{\\mathrm{test}}} r(s^*_{\\mathrm{sel}}).",
       "status": "unverified",
       "status_reason": null
     }
@@ -1794,7 +1794,7 @@
       "target_ref": "#/texts/78"
     },
     "luna": {
-      "latex": "s^- = \\mathcal{M}_T(\\bar{\\tau}^-, d).",
+      "latex": "s^{-} = \\mathcal{M}_T(\\bar{T}^{-}, d).",
       "status": "unverified",
       "status_reason": null
     }
@@ -1827,7 +1827,7 @@
       "target_ref": "#/texts/87"
     },
     "luna": {
-      "latex": "a_t \\sim \\pi_\\theta(a_t \\mid o_{\\leq t}, d, S_g, S_{\\mathrm{ret}}).",
+      "latex": "a_t \\sim \\pi_\\theta(a_t \\mid o_{\\leq t}, d, \\mathcal{S}_g, \\mathcal{S}_{ret})",
       "status": "unverified",
       "status_reason": null
     }
@@ -1860,7 +1860,7 @@
       "target_ref": "#/texts/103"
     },
     "luna": {
-      "latex": "\\mathcal{J}(\\theta)=\\mathbb{E}_{d,\\{\\tau^{(i)}\\}}\\left[\\frac{1}{G}\\sum_{i=1}^{G}\\min\\left(\\rho_i A_i,\\operatorname{clip}(\\rho_i,1-\\epsilon,1+\\epsilon)A_i\\right)-\\beta D_{\\mathrm{KL}}\\left(\\pi_\\theta\\|\\pi_{\\mathrm{ref}}\\right)\\right]",
+      "latex": "\\mathcal{J}(\\theta)=\\mathbb{E}_{d,\\{\\tau^{(i)}\\}}\\left[\\frac{1}{G}\\sum_{i=1}^{G}\\min\\left(\\rho_i A_i,\\operatorname{clip}(\\rho_i,1-\\epsilon,1+\\epsilon)A_i\\right)-\\beta D_{\\mathrm{KL}}(\\pi_\\theta\\|\\pi_{\\mathrm{ref}})\\right]",
       "status": "unverified",
       "status_reason": null
     }
@@ -1893,7 +1893,7 @@
       "target_ref": "#/texts/100"
     },
     "luna": {
-      "latex": "S^* \\in \\arg\\max_S \\mathbb{E}_{\\tau\\sim\\pi(\\cdot\\mid S,T,W)}[\\mathcal{R}(\\tau)]",
+      "latex": "S^* \\in \\arg\\max_S \\mathbb{E}_{\\tau\\sim\\pi(\\cdot|S,T,W)} [\\mathcal{R}(\\tau)]",
       "status": "unverified",
       "status_reason": null
     }
@@ -1926,7 +1926,7 @@
       "target_ref": "#/texts/58"
     },
     "luna": {
-      "latex": "U = w_{\\text{score}}p_{\\text{score}} + w_{\\text{cost}}\\left(1 - \\min\\left(1, \\frac{p_{\\text{cost}}}{\\$10}\\right)\\right) + w_{\\text{time}}\\left(1 - \\min\\left(1, \\frac{p_{\\text{time}}}{300s}\\right)\\right)",
+      "latex": "U = w_{score}p_{score} + w_{cost}\\left(1 - \\min(1, p_{cost}/\\$10)\\right) + w_{time}\\left(1 - \\min(1, p_{time}/300\\,s)\\right)",
       "status": "unverified",
       "status_reason": null
     }
@@ -1959,7 +1959,7 @@
       "target_ref": "#/texts/60"
     },
     "luna": {
-      "latex": "U_{\\text{final}}=\\begin{cases}U(1-\\tau),&\\text{if timed out}\\\\U,&\\text{otherwise}\\end{cases}",
+      "latex": "U_{\\mathrm{final}}=\\begin{cases}U(1-\\tau),&\\text{if timed out}\\\\U,&\\text{otherwise}\\end{cases}",
       "status": "unverified",
       "status_reason": null
     }
@@ -1992,9 +1992,9 @@
       "target_ref": "#/texts/143"
     },
     "luna": {
-      "latex": "L_i \\leftarrow \\mathrm{LLM}(m_n \\parallel \\mathcal{M}_{\\mathrm{near}}^n \\parallel P_{s2})",
-      "status": "unverified",
-      "status_reason": null
+      "latex": "L_i \\leftarrow \\mathrm{LLM}(m_n \\parallel \\mathcal{N}_{near}^{n} \\parallel P_{s2})",
+      "status": "disputed",
+      "status_reason": "FORMULA_NATIVE_MISMATCH"
     }
   },
   {
@@ -2025,7 +2025,7 @@
       "target_ref": "#/texts/402"
     },
     "luna": {
-      "latex": "\\mathrm{BLEU-1}=BP\\cdot\\exp\\left(\\sum_{n=1}^{1}w_n\\log p_n\\right)",
+      "latex": "\\mathrm{BLEU}-1 = BP \\cdot \\exp\\left(\\sum_{n=1}^{1} w_n \\log p_n\\right)",
       "status": "unverified",
       "status_reason": null
     }
@@ -2058,7 +2058,7 @@
       "target_ref": "#/texts/409"
     },
     "luna": {
-      "latex": "\\mathrm{ROUGE\\text{-}L}=\\frac{(1+\\beta^2)R_lP_l}{R_l+\\beta^2P_l}",
+      "latex": "\\text{ROUGE-L}=\\frac{(1+\\beta^2)R_LP_L}{R_L+\\beta^2P_L}",
       "status": "unverified",
       "status_reason": null
     }
@@ -2091,7 +2091,7 @@
       "target_ref": "#/texts/31"
     },
     "luna": {
-      "latex": "(o,m') \\sim \\pi\\theta(\\cdot \\mid x, \\mathcal{M}_{\\text{old}}),",
+      "latex": "(o, m') \\sim \\pi_\\theta(\\cdot \\mid x, \\mathcal{M}_{\\mathrm{old}}),",
       "status": "unverified",
       "status_reason": null
     }
@@ -2157,7 +2157,7 @@
       "target_ref": "#/texts/37"
     },
     "luna": {
-      "latex": "\\mathcal{J}(\\theta)=\\mathbb{E}\\left[\\frac{1}{G}\\sum_{i=1}^{G}\\rho_{\\theta}^{(i)}A_i-\\beta\\,\\mathbb{D}_{\\mathrm{KL}}[\\pi_{\\theta}\\|\\pi_{\\mathrm{ref}}]\\right]",
+      "latex": "\\mathcal{J}(\\theta)=\\mathbb{E}\\left[\\frac{1}{G}\\sum_{i=1}^{G}\\rho_{\\theta}^{(i)}A_i-\\beta\\mathbb{D}_{\\mathrm{KL}}[\\pi_{\\theta}\\|\\pi_{\\mathrm{ref}}]\\right],",
       "status": "unverified",
       "status_reason": null
     }
@@ -2190,7 +2190,7 @@
       "target_ref": "#/texts/439"
     },
     "luna": {
-      "latex": "\\pi(a|s,M)=\\sum_{c\\in M}\\mu(c|s,M)p_{\\mathrm{LLM}}(a|s,c)",
+      "latex": "\\pi(a|s,M)=\\sum_{c\\in M}\\mu(c|s,M)p_{\\mathrm{LLM}}(a|s,c).",
       "status": "unverified",
       "status_reason": null
     }
@@ -2256,7 +2256,7 @@
       "target_ref": "#/texts/882"
     },
     "luna": {
-      "latex": "\\nabla_{\\theta}\\mathcal{L}(\\theta)=2\\mathbb{E}_{(s,c,r,s',M,M')}\\left[(Q(s,M,c;\\theta)-y)\\nabla_{\\theta}Q(s,M,c;\\theta)\\right],",
+      "latex": "\\nabla_\\theta \\mathcal{L}(\\theta)=2\\mathbb{E}_{(s,c,r,s',M,M')}[(Q(s,M,c;\\theta)-y)\\nabla_\\theta Q(s,M,c;\\theta)],",
       "status": "unverified",
       "status_reason": null
     }
@@ -2322,7 +2322,7 @@
       "target_ref": "#/texts/563"
     },
     "luna": {
-      "latex": "R_{\\mathrm{compression}}=\\max\\left(0,1-\\frac{T_{\\mathrm{used}}}{T_{\\mathrm{max}}}\\right)",
+      "latex": "R_{\\mathrm{compression}}=\\max\\left(0,1-\\frac{T_{\\mathrm{used}}}{T_{\\max}}\\right)",
       "status": "unverified",
       "status_reason": null
     }
@@ -2355,7 +2355,7 @@
       "target_ref": "#/texts/567"
     },
     "luna": {
-      "latex": "R_{\\mathrm{preservation}} = \\mathbb{1}_{\\mathrm{preserve}}",
+      "latex": "R_{\\mathrm{preservation}} = \\mathbb{1}_{\\mathrm{preserve}}.",
       "status": "unverified",
       "status_reason": null
     }
@@ -2388,7 +2388,7 @@
       "target_ref": "#/texts/114"
     },
     "luna": {
-      "latex": "\\begin{aligned} M^* &= \\Pi_{\\text{agent}}(H; \\mathcal{A}, \\mathcal{F}), \\\\ E_q &= \\operatorname{Retrieve}(q, M^*, H), \\\\ y &= \\operatorname{LLM}(q, M^*, E_q). \\end{aligned}",
+      "latex": "\\begin{aligned}\nM^* &= \\Pi_{\\mathrm{agent}}(H; \\mathcal{A}, \\mathcal{F}),\\\\\nE_q &= \\mathrm{Retrieve}(q, M^*, H),\\\\\ny &= \\mathrm{LLM}(q, M^*, E_q).\n\\end{aligned}",
       "status": "unverified",
       "status_reason": null
     }
@@ -2421,7 +2421,7 @@
       "target_ref": "#/texts/120"
     },
     "luna": {
-      "latex": "O_i^H = \\operatorname{Read}_H(a_i),",
+      "latex": "O_i^H = \\mathrm{Read}_H(a_i),",
       "status": "unverified",
       "status_reason": null
     }
@@ -2487,7 +2487,7 @@
       "target_ref": "#/texts/36"
     },
     "luna": {
-      "latex": "r_k = h_k \\frac{\\sum_j w_{k,j} z_{k,j}}{\\sum_j w_{k,j}}, \\qquad R_{e2e} = g\\left[\\lambda p + (1-\\lambda)c\\right]",
+      "latex": "r_k = h_k \\frac{\\sum_j w_{k,j} z_{k,j}}{\\sum_j w_{k,j}}, \\quad R_{e2e} = g [\\lambda p + (1 - \\lambda)c],",
       "status": "unverified",
       "status_reason": null
     }
@@ -2520,7 +2520,7 @@
       "target_ref": "#/texts/431"
     },
     "luna": {
-      "latex": "p_i = \\frac{w_i}{\\sum_{j=1}^{n} w_j}",
+      "latex": "\\text{(selection probability)}\\quad p_i = \\frac{w_i}{\\sum_{j=1}^{N} w_j},",
       "status": "unverified",
       "status_reason": null
     }
@@ -2619,7 +2619,7 @@
       "target_ref": "#/texts/72"
     },
     "luna": {
-      "latex": "\\mathcal{L}_{\\mathrm{RL}}(\\theta_t) := -\\mathbb{E}_{(C,\\tau)\\sim\\mathcal{D}}\\left[\\mathbb{E}_{\\mathrm{SE}\\sim\\mathrm{LM}_{\\theta_t}(\\cdot\\mid C)}\\left[r(\\mathrm{SE},\\tau,\\theta_t)\\right]\\right]",
+      "latex": "\\mathcal{L}_{\\mathrm{RL}}(\\theta_t) := -\\mathbb{E}_{(C,\\tau)\\sim\\mathcal{D}}\\left[\\mathbb{E}_{S,E\\sim\\mathrm{LM}_{\\theta_t}(\\cdot|C)}\\left[r(S,E,\\tau,\\theta_t)\\right]\\right].",
       "status": "unverified",
       "status_reason": null
     }
@@ -2652,7 +2652,7 @@
       "target_ref": "#/texts/86"
     },
     "luna": {
-      "latex": "r(\\mathrm{SE},\\tau,\\theta_t)=\\begin{cases}1 & \\text{If on }\\tau,\\text{ adaptation using SE improves }\\mathrm{LM}_{\\theta_t}\\text{'s performance}^{2}\\\\0 & \\text{Otherwise}\\end{cases}",
+      "latex": "r(\\mathrm{SE},\\tau,\\theta_t)=\\begin{cases}1 & \\text{If on }\\tau,\\text{ adaptation using }\\mathrm{SE}\\text{ improves }\\mathrm{LM}_{\\theta_t}\\text{’s performance}^{2}\\\\0 & \\text{Otherwise}\\end{cases}",
       "status": "unverified",
       "status_reason": null
     }
@@ -2685,7 +2685,7 @@
       "target_ref": "#/texts/88"
     },
     "luna": {
-      "latex": "\\nabla_{\\theta_t}\\mathcal{L}_{\\mathrm{RL}} \\approx -\\frac{1}{NM}\\sum_{i=1}^{N}\\sum_{j=1}^{M} r_{ij}\\nabla_{\\theta_t}\\log p_{\\theta_t}(SE_{ij}\\mid C_i)",
+      "latex": "\\nabla_{\\theta_t}\\mathcal{L}_{\\mathrm{RL}}\\approx-\\frac{1}{NM}\\sum_{i=1}^{N}\\sum_{j=1}^{M}r_{ij}\\nabla_{\\theta_t}\\log p_{\\theta_t}(sE_{ij}\\mid C_i)",
       "status": "unverified",
       "status_reason": null
     }
@@ -2751,9 +2751,9 @@
       "target_ref": "#/texts/175"
     },
     "luna": {
-      "latex": "\\mathcal{L}_{\\mathrm{ADPO}}(\\theta)=\\mathbb{E}_{x\\sim\\mathcal{D}(t)}\\left[-\\frac{1}{G}\\sum_{i=1}^{G}\\min\\left(r_i(\\theta)\\tilde{A}_i(x),\\operatorname{clip}\\left(r_i(\\theta),1-\\epsilon_{\\mathrm{low}},1+\\epsilon_{\\mathrm{high}}(x)\\right)\\tilde{A}_i(x)\\right)\\right]",
-      "status": "unverified",
-      "status_reason": null
+      "latex": "\\mathcal{L}_{\\mathrm{ADPO}}(\\theta)=\\mathbb{E}_{x\\sim\\mathcal{D}(t)}\\left[-\\frac{1}{G}\\sum_{i=1}^{G}\\min\\left(r_i(\\theta)\\tilde{A}_i(x),\\;\\mathrm{clip}\\left(r_i(\\theta),1-\\epsilon_{\\mathrm{low}},1+\\epsilon_{\\mathrm{high}}(x)\\right)\\tilde{A}_i(x)\\right)\\right]",
+      "status": "disputed",
+      "status_reason": "FORMULA_NATIVE_MISMATCH"
     }
   },
   {
@@ -2817,7 +2817,7 @@
       "target_ref": "#/texts/481"
     },
     "luna": {
-      "latex": "\\mathcal{P}_{\\exp}=\\bigcup_{g\\sim p_{\\mathrm{train}}}\\Omega_{\\mathrm{process}}\\left(\\left\\{\\tau_i^{(g)}\\right\\}_{i=1}^{N_{\\mathrm{pc}}}\\right),\\quad\\text{where}\\quad\\tau_i^{(g)}\\sim\\pi_{\\theta_{\\mathrm{init}}}(\\cdot\\mid\\mathcal{E},g).",
+      "latex": "\\mathcal{P}_{\\mathrm{exp}} = \\bigcup_{g\\sim p_{\\mathrm{train}}} \\Omega_{\\mathrm{process}}\\left(\\left\\{\\tau_i^{(g)}\\right\\}_{i=1}^{N_{\\mathrm{pc}}}\\right),\\quad \\text{where } \\tau_i^{(g)} \\sim \\pi_{\\theta_{\\mathrm{init}}}(\\cdot \\mid \\mathcal{E},g).",
       "status": "unverified",
       "status_reason": null
     }
@@ -2883,7 +2883,7 @@
       "target_ref": "#/texts/509"
     },
     "luna": {
-      "latex": "\\mathcal{L}_{\\mathrm{navigating}}(\\theta)=-\\frac{1}{N}\\left[\\sum_{i=1}^{N_v}\\min\\left(r_i^{(v)}\\hat{A}_i^{(v)},\\operatorname{clip}\\left(r_i^{(v)},1-\\epsilon_{\\mathrm{low}},1+\\epsilon_{\\mathrm{high}}\\right)\\hat{A}_i^{(v)}\\right)+\\sum_{j=1}^{N_e}\\min\\left(r_j^{(e)}\\hat{A}_j^{(e)},\\operatorname{clip}\\left(r_j^{(e)},1-\\epsilon_{\\mathrm{low}},1+\\epsilon_j\\right)\\hat{A}_j^{(e)}\\right)\\right]+\\beta\\,\\mathrm{KL}\\left(\\pi_\\theta\\|\\pi_{\\theta_{\\mathrm{old}}}\\right),\\quad\\text{where:}\\quad r_i^{(v)}=\\frac{\\pi_\\theta(\\tau_i^{(v)})}{\\pi_{\\theta_{\\mathrm{old}}}(\\tau_i^{(v)})},\\quad r_j^{(e)}=\\frac{\\pi_\\theta(\\tau_j^{(e)})}{\\pi_{\\theta_{\\mathrm{old}}}(\\tau_j^{(e)})},\\quad \\epsilon_j=\\begin{cases}\\hat{\\epsilon}_{\\mathrm{high}}&\\text{if }\\hat{A}_j^{(e)}>0,\\\\\\epsilon_{\\mathrm{high}}&\\text{otherwise.}\\end{cases}",
+      "latex": "\\begin{aligned}\n\\mathcal{L}_{\\mathrm{navigating}}(\\theta) ={}& -\\frac{1}{N}\\left[\\sum_{i=1}^{N_v}\\min\\left(r_i^{(v)}\\hat{A}_i^{(v)},\\,\\mathrm{clip}\\left(r_i^{(v)},1-\\epsilon_{\\mathrm{low}},1+\\epsilon_{\\mathrm{high}}\\right)\\hat{A}_i^{(v)}\\right) \\\\\n&\\quad + \\sum_{j=1}^{N_e}\\min\\left(r_j^{(e)}\\hat{A}_j^{(e)},\\,\\mathrm{clip}\\left(r_j^{(e)},1-\\epsilon_{\\mathrm{low}},1+\\epsilon_j\\right)\\hat{A}_j^{(e)}\\right)\\right] + \\beta\\,\\mathrm{KL}\\left(\\pi_\\theta\\|\\pi_{\\theta_{\\mathrm{old}}}\\right),\\\\[6pt]\n\\text{where:}\\quad r_i^{(v)}={}&\\frac{\\pi_\\theta(\\tau_i^{(v)})}{\\pi_{\\theta_{\\mathrm{old}}}(\\tau_i^{(v)})},\\quad r_j^{(e)}=\\frac{\\pi_\\theta(\\tau_j^{(e)})}{\\pi_{\\theta_{\\mathrm{old}}}(\\tau_j^{(e)})},\\quad \\epsilon_j=\\begin{cases}\\hat{\\epsilon}_{\\mathrm{high}}&\\text{if }\\hat{A}_j^{(e)}>0\\\\ \\epsilon_{\\mathrm{high}}&\\text{otherwise.}\\end{cases}\n\\end{aligned}",
       "status": "disputed",
       "status_reason": "FORMULA_NATIVE_MISMATCH"
     }
@@ -2916,7 +2916,7 @@
       "target_ref": "#/texts/140"
     },
     "luna": {
-      "latex": "\\mathcal{J}(\\theta) := \\max_{\\theta} \\mathbb{E}_{z\\sim p(z)}\\left[\\mathbb{E}_{(x,y')\\sim f_{\\epsilon}(\\cdot\\mid\\tau),\\,\\pi\\sim\\pi^{\\mathrm{propose}}_{\\theta}(\\cdot\\mid z)}\\left[r_{e}^{\\mathrm{propose}}(\\pi,\\tau)+\\lambda\\mathbb{E}_{y\\sim\\pi^{\\mathrm{solve}}_{\\theta}(\\cdot\\mid x)}\\left[r_{e}^{\\mathrm{solve}}(y,y^*)\\right]\\right]\\right]",
+      "latex": "\\mathcal{J}(\\theta) := \\max_{\\theta} \\mathbb{E}_{z\\sim p(z)} \\left[ \\mathbb{E}_{(x,y')\\sim f_{\\epsilon}(\\cdot|\\tau),\\,\\pi\\sim\\pi_{\\theta}^{\\mathrm{propose}}(\\cdot|z)} \\left[ r_{e}^{\\mathrm{propose}}(\\pi,\\tau_{\\theta}) + \\lambda \\mathbb{E}_{y\\sim\\pi_{\\theta}^{\\mathrm{solve}}(\\cdot|x)} \\left[ r_{e}^{\\mathrm{solve}}(y,y^*) \\right] \\right] \\right]",
       "status": "unverified",
       "status_reason": null
     }
@@ -2949,7 +2949,7 @@
       "target_ref": "#/texts/181"
     },
     "luna": {
-      "latex": "r_{\\text{solve}} = I_{(y=y^*)}",
+      "latex": "r_{\\mathrm{solve}} = \\mathbb{I}_{(y=y^*)}",
       "status": "unverified",
       "status_reason": null
     }
@@ -2982,7 +2982,7 @@
       "target_ref": "#/texts/241"
     },
     "luna": {
-      "latex": "A^{\\mathrm{norm}}_{\\mathrm{task},\\mathrm{role}} = \\frac{r - \\mu_{\\mathrm{task},\\mathrm{role}}}{\\sigma_{\\mathrm{task},\\mathrm{role}}},\\quad \\mathrm{task} \\in \\{\\mathrm{ind},\\mathrm{ded},\\mathrm{abd}\\},\\ \\mathrm{role} \\in \\{\\mathrm{propose},\\mathrm{solve}\\}",
+      "latex": "A^{\\mathrm{norm}}_{\\mathrm{task,role}} = \\frac{r - \\mu_{\\mathrm{task,role}}}{\\sigma_{\\mathrm{task,role}}},\\quad \\mathrm{task} \\in \\{\\mathrm{ind},\\mathrm{ded},\\mathrm{abd}\\},\\ \\mathrm{role} \\in \\{\\mathrm{propose},\\mathrm{solve}\\}",
       "status": "unverified",
       "status_reason": null
     }
