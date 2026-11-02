@@ -1,0 +1,1077 @@
+{
+  "run": "5a1a27",
+  "paper": {
+    "index": 12,
+    "file": "12-2508.16153v2.pdf",
+    "sha256": "4af90c2d57ab421048efc4ddc9567147530b72f919ea5e4c5632f7b64cdcb241",
+    "pages": 28
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 42.8,
+    "reports": [
+      [
+        1,
+        "prepare",
+        "running",
+        null
+      ],
+      [
+        2,
+        "prepare",
+        "succeeded",
+        null
+      ],
+      [
+        3,
+        "parse",
+        "running",
+        {
+          "done": 0,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        4,
+        "parse",
+        "running",
+        {
+          "done": 5,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        5,
+        "parse",
+        "running",
+        {
+          "done": 10,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        6,
+        "parse",
+        "running",
+        {
+          "done": 15,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        7,
+        "parse",
+        "running",
+        {
+          "done": 20,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        8,
+        "parse",
+        "running",
+        {
+          "done": 25,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        9,
+        "parse",
+        "running",
+        {
+          "done": 28,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        10,
+        "parse",
+        "succeeded",
+        {
+          "done": 28,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        11,
+        "enrich",
+        "running",
+        {
+          "done": 0,
+          "total": 48,
+          "unit": "items"
+        }
+      ],
+      [
+        12,
+        "enrich",
+        "succeeded",
+        {
+          "done": 48,
+          "total": 48,
+          "unit": "items"
+        }
+      ],
+      [
+        13,
+        "finalize",
+        "running",
+        null
+      ],
+      [
+        14,
+        "finalize",
+        "succeeded",
+        null
+      ]
+    ],
+    "statuses": {
+      "document-summary unverified None": 1,
+      "formula disputed FORMULA_NATIVE_MISMATCH": 26,
+      "picture-interpretation unverified None": 24,
+      "picture-ocr unverified None": 6,
+      "table-status unverified None": 9
+    },
+    "methods_with_enrichments": [
+      "document-summary",
+      "formula",
+      "picture-interpretation",
+      "picture-ocr",
+      "table-status"
+    ],
+    "summary_requests": [
+      {
+        "path": "/v1/summaries",
+        "keys": [
+          "document_uid",
+          "max_sentences",
+          "sections"
+        ],
+        "document_uid": "doc_4af90c2d57ab4210",
+        "sections": 33,
+        "section_keys": [
+          "heading",
+          "section_id",
+          "text"
+        ],
+        "text_chars": 70029,
+        "max_sentences": 5
+      }
+    ],
+    "summary_receipts": {
+      "requests": 1,
+      "results": {
+        "ok": 1,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 9.45387501269579,
+        "median": 9.45387501269579,
+        "max": 9.45387501269579
+      },
+      "tokens": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0
+      },
+      "models": [
+        "summary-mock"
+      ],
+      "system_fingerprints": [
+        "None"
+      ]
+    },
+    "vlm_receipts": {
+      "requests": 32,
+      "results": {
+        "ok": 32,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 3002.573583042249,
+        "median": 3005.9514581225812,
+        "max": 3019.572874996811
+      },
+      "tokens": {
+        "prompt_tokens": 32,
+        "completion_tokens": 32
+      },
+      "models": [
+        "fake"
+      ],
+      "system_fingerprints": [
+        "None"
+      ]
+    },
+    "summary": [
+      {
+        "item_id": "document-summary:#",
+        "scope": "document",
+        "origin": "interpretation",
+        "target_refs": [
+          "#"
+        ],
+        "input_refs": [
+          "documents/doc_4af90c2d57ab4210/items/e3af6110f6bba6fe255c16b6083a273069a103a84d2991b451f34ddb081491ab/assembly.json"
+        ],
+        "status": "unverified",
+        "status_reason": null,
+        "supports": [
+          "provider",
+          "overlap"
+        ]
+      }
+    ],
+    "result": {
+      "outcome": "complete",
+      "profile": {
+        "id": "paper-pdf@1",
+        "status_rule": "v1",
+        "methods": [
+          {
+            "components": [
+              "docling-slim@2.132.0",
+              "layout-heron@8f39ad3c",
+              "tableformer-accurate@v1",
+              "rapidocr-ppocrv6-small"
+            ],
+            "id": "docling-parse",
+            "module_digest": "4e86445244b3f429f4bfb2a0a621aafb600628e6692314d21eb77c9829b65b6e",
+            "version": 1
+          },
+          {
+            "components": [
+              "rapidocr-ppocrv6-small"
+            ],
+            "id": "picture-ocr",
+            "module_digest": "ea83dc20c95f60199dfbb46d9545d660c35c90402f834ccb9e35f2d4b0c8c7c1",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "picture-interpretation",
+            "module_digest": "50c247b8b090e26a93c99902508eb1e9893d058dec775374a44db94ec15e3854",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "formula",
+            "module_digest": "9cdab12ba351320109cc3d401af71193106f4a7ebfa0ec2a091a865eab4d01e9",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "code",
+            "module_digest": "e4b4bb4dfc4fcabeb24d92903b99d0b2fd94342f87700b468a9c848d4d4841d8",
+            "version": 1
+          },
+          {
+            "components": [],
+            "id": "table-status",
+            "module_digest": "b7e76d2706fd94e02cd327e98863014ce60f3165faea5a0ff483b66aaa493d3c",
+            "version": 1
+          },
+          {
+            "components": [
+              "summary-api/v1"
+            ],
+            "id": "document-summary",
+            "module_digest": "af594beaef79dbce4f3b0fe56811fc63140507ae1025f1e043a1554338f590e5",
+            "version": 1
+          }
+        ]
+      },
+      "native": {
+        "page_images": 28,
+        "picture_images": 6,
+        "page_groups": 6
+      },
+      "inventory_counts": {
+        "document-summary": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 1
+        },
+        "formula": {
+          "disputed": 26,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 0
+        },
+        "picture-interpretation": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 24
+        },
+        "picture-ocr": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 6
+        },
+        "table-status": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 9
+        }
+      },
+      "enrichments": [
+        {
+          "item_id": "picture-ocr:#/pictures/0",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "00eec6ae3e25a5bee8f0ac32408e91b84e6aca64e2cf15471c078a93da701f3f",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/1",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "ce030a6f0b9fe5ef331cc5005dc9028b29413b6490e3c069088ab03a91fc5ccb",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/2",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "2b85896f14164cdfdfdbd86ee475fda2cfb22b0196efb619ae22de658e696125",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/3",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "19d01372252f0d32bbdf5d029e154560b1c0fa982b1f29180e2e334cb7e463c6",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/4",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "558a18798bcc8852c0fd2572d664c3fb3cde8e236298441b23fee3924f33aebd",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/5",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "63d2269ea0121301d0e71622b30ce4d853f74325aba36f956852c81178bb477b",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "formula:#/texts/439",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u03c0(a\u2223s,M)=\u2211c\u2208M\u00b5(c\u2223s,M)pLLM(a\u2223s,c)."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/443",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "p(\u03c4)=T\u22121\u220ft=0\u00b5(ct\u2223st,Mt)\u00cd\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d1\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00cf(1)RetrievepLLM(at\u2223st,ct)\u00cd\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d1\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00cf(2)Reuse&ReviseI[rt=\u211b(st,at)]\u00cd\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d1\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00cf(3)EvaluationI[Mt+1=Mt\u222a(st,at,rt)]\u00cd\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d1\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00cf(4)Retain(st+1\u2223st,at)\u00cd\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d1\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00d2\u00cf(5)Transition,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/446",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "J(\u03c0)=E\u03c4\u223cp[T\u22121\u2211t=0[\u211b(st,at)+\u03b1\u210b(\u00b5(\u22c5\u2223st,Mt))]],"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/448",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "V\u03c0(st,Mt)=\u2211c\u2208Mt\u00b5(c\u2223st,Mt)[Q\u03c0(st,Mt,c)\u2212\u03b1log\u00b5(c\u2223st,Mt)]."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/450",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Q\u03c0(st,Mt,ct)=Ea\u223cpLLM(\u22c5\u2223st,ct),st+1\u223c(\u22c5\u2223st,at)[\u211b(st,at)+\u03b3V\u03c0(st+1,Mt+1)],"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/452",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "J(\u03c0)=E(s,M)\u223cd\u03c0[V\u03c0(s,M)]=E(s,M)\u223cd\u03c0[\u2211c\u2208M\u00b5(c\u2223s,M)[Q\u03c0(s,M,c)\u2212\u03b1log\u00b5(c\u2223s,M)]]."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/454",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u00b5\u2217(c\u2223s,M)=exp(Q\u2217(s,M,c)/\u03b1)\u2211c\u2032\u2208Mexp(Q\u2217(s,M,c\u2032)/\u03b1)."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/456",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Q(st,Mt,ct)\u2190Q(st,Mt,ct)+\u03b7\u23a1\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a3rt+\u03b3\u03b1log\u2211c\u2032\u2208Mt+1exp(Q(st+1,Mt+1,ct+1))\u2212Q(st,Mt,ct)\u23a4\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a6,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/469",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "QEC(s,M,c;\u03b8)=\u2211(s\u2032,c\u2032,Q\u2032)\u2208ck\u03b8(s,s\u2032)Q\u2032\u2211(s\u02c6,c\u02c6,Q\u02c6)\u2208ck\u03b8(s,s\u02c6),"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/471",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u2112(\u03b8)=E(s,c,r,s\u2032,M,M\u2032)\u23a1\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a3\u239b\u239dQEC(s,M,c;\u03b8)\u2212[r+\u03b3\u03b1log\u2211c\u2032\u2208M\u2032exp(QEC(s\u2032,M\u2032,c\u2032;\u00af\u03b8))]\u239e\u23a02\u23a4\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a6,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/473",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u25bd\u03b8\u2112(\u03b8)=2E(s,c,r,s\u2032,M,M\u2032)\u23a1\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a3(f\u03b8(s,c)\u2212y)\u2211i\u2208cwi(s,c;\u03b8)(Qi\u2212f\u03b8(s,c))\u25bd\u03b8logk\u03b8(s,si)\u23a4\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a6,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/578",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Write(st,at,rt,Mt)=Mt+1=Mt\u222a{(st,at,rt)}."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/581",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "ReadNP(st,Mt)=TopK(si,ai,ri)\u2208Mtsim(enc(st),enc(si)),"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/587",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u2112(\u03b8)=E(s,c,r)[(Q(s,c;\u03b8)\u2212r)2],"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/589",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u2112(\u03b8)=E(s,c,r)[\u2212rlogQ(s,c;\u03b8)\u2212(1\u2212r)log(1\u2212Q(s,c;\u03b8))],"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/592",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "ReadP(st,Mt)=TopKci\u2208MtQ(st,ci;\u03b8)."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/860",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "V\u03c0(s,M)=\u2211c\u2208M\u00b5(c\u2223s,M)[Q\u03c0(s,M,c)\u2212\u03b1log\u00b5(c\u2223s,M)]"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/862",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Q\u03c0(s,M,c)=Ea\u223cpLLM(\u22c5\u2223s,c),s\u2032\u223c(\u22c5\u2223s,a)[r(s,a)+\u03b3V\u03c0(s\u2032,M\u2032)],"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/864",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "JMaxEnt(\u03c0)=E(s,M)\u223cd\u03c0[V\u03c0(s,M)],=E(s,M)\u223cd\u03c0[\u2211c\u2208M\u00b5(c\u2223s,M)[Q\u03c0(s,M,c)\u2212\u03b1log\u00b5(c\u2223s,M)]]"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/866",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "({\u00b5c},\u03bb)=\u2211c\u00b5cQc\u2212\u03b1\u2211c\u00b5clog\u00b5c\u2212\u03bb(\u2211c\u00b5c\u22121),"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/869",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u2202({\u00b5c},\u03bb)\u2202\u00b5c=Qc\u2212\u03b1(1+log\u00b5c)\u2212\u03bb,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/870",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u00b5c=exp(Qc\u03b1\u2212(\u03bb\u03b1+1))=Kexp(Qc\u03b1),"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/872",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u00b5\u2217c=exp(Q\u2217c/\u03b1)\u2211c\u2032exp(Q\u2217c\u2032/\u03b1)."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/880",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u2112(\u03b8)=E(s,c,r,s\u2032,M,M\u2032)\u23a1\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a3\u239b\u239dQ(s,M,c;\u03b8)\u2212\u23a1\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a2\u23a3r+\u03b3\u03b1log\u2211c\u2032\u2208M\u2032exp(Q(s\u2032,M\u2032,c\u2032;\u00af\u03b8))\u23a4\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a6\u239e\u23a02\u23a4\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a5\u23a6,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/882",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u25bd\u03b8\u2112(\u03b8)=2E(s,c,r,s\u2032,M,M\u2032)[(Q(s,M,c;\u03b8)\u2212y)\u25bd\u03b8Q(s,M,c;\u03b8)],"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/887",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u25bd\u03b8\u2112(\u03b8)=E(s,c,r)[Q(s,c;\u03b8)\u2212rQ(s,c;\u03b8)(1\u2212Q(s,c;\u03b8))\u25bd\u03b8Q(s,c;\u03b8)]."
+          }
+        },
+        {
+          "item_id": "table-status:#/tables/0",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": false,
+          "content_sha256": null,
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/1",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "f6d2f7329e1d1110990a2e27ac268a3c6c64dd6a15f349d2812e3a13967effc5",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/2",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "fde265ce7de11d608e6579fa65b620abee3bec247a57073f08f64d1f243bb7ec",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/3",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "388cfddffadf1c23920eec23238d5069b2fb401b65770b0d35d7f9235c72185d",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/4",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "ac8b751a2399bfcaf3b1ee59826db9aa722d7633681b3c09c6a13a12eaddb661",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/5",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "77e80445e31094799926338b3ef4541f490faac55ba245560fa7217f35aa86ae",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/6",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "3213f0110413572ed2206464d85b7452d724797a5bafaaadf41c642d49ff02e9",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/7",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "b2782035d5c76406ac9a545988fd2f0a8841d6590626f2de3a751350c29e901a",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/8",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "23cce61b43da0fc8e68e2619730bf2190966672cf275f92bb94dbea7cd257fda",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "document-summary:#",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "b85d7218a043d061fc75233bf4eb15d87dcc2c1f1d68d895a68a7c91550ef7ce",
+          "evidence_refs": 0,
+          "signals": {}
+        }
+      ],
+      "limitations": [
+        "READING_ORDER_DEFECTS",
+        "CAPTION_INTERRUPTS_BODY",
+        "INLINE_MATH_NOT_RECONSTRUCTED",
+        "INLINE_CODE_NOT_RECONSTRUCTED"
+      ]
+    },
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 0.8,
+    "summary_requests": 0,
+    "external_receipts": 0,
+    "objects_added_under_documents": [],
+    "enrichments_reused": true,
+    "statuses_equal_S": true,
+    "pass": true
+  }
+}

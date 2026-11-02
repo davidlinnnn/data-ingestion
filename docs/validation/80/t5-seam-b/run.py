@@ -3,6 +3,8 @@ VLM and the summary API both served by local stand-ins (no external request).
 
     env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t5-seam-b/run.py CORPUS_MANIFEST [INDEX]
 
+Writes evidence-INDEX.json next to this file.
+
 Same stack as #133's t4-seam-b/run.py (S3 stand-in on port 9100), plus `kp-processing worker
 --queue summary`, on ports of its own (Temporal 7254, fake_admission 8101, VLM stand-in 8102,
 summary stand-in 8103): it refuses to start when any is taken, since workers on another
@@ -12,12 +14,13 @@ summary stand-in serves the DEV mock (tests/summary.py) under the provisional co
 records each request's shape.
 
 Cases:
-  S  a fresh bucket: the document completes, each of the six enrichment methods has
-     enrichments, the summary is one document-scope enrichment from one request
+  S  a fresh bucket: the document completes, every method with inventory items has
+     enrichments (all six for paper 20), the summary is one document-scope enrichment from one
+     request
   C  a new request for the same document in S's bucket: no summary request, every enrichment
      reused
 
-evidence.json keeps counts, statuses and shapes only: the paper is third-party.
+evidence-INDEX.json keeps counts, statuses and shapes only: the paper is third-party.
 """
 
 import asyncio
@@ -164,7 +167,9 @@ async def main(manifest: Path, index: int) -> int:
         evidence["S"]["pass"] = (
             code == 0
             and result["outcome"] == "complete"
-            and methods == METHODS
+            and methods == set(result["inventory"]["counts"])
+            and "document-summary" in methods
+            and (methods == METHODS or index != 20)
             and "document-summary" in result["inventory"]["counts"]
             and len(SENT) == 1
             and SENT[0]["path"] == "/v1/summaries"
@@ -204,7 +209,7 @@ async def main(manifest: Path, index: int) -> int:
             process.wait()
         for server in servers:
             server.shutdown()
-    (HERE / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
+    (HERE / f"evidence-{index}.json").write_text(json.dumps(evidence, indent=2) + "\n")
     for case in ("S", "C"):
         print(case, {k: v for k, v in evidence.get(case, {}).items() if k != "result"})
     return 0 if all(evidence.get(c, {}).get("pass") for c in ("S", "C")) else 1
