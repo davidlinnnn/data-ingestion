@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from kp_processing.identity import module_digest
+from kp_processing.methods import document_summary
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
 
 PAPER_PDF_1 = PROFILES_DIR / "paper-pdf@1.yaml"
@@ -45,6 +46,27 @@ def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
         "INLINE_CODE_NOT_RECONSTRUCTED",
     ]
     assert p.runtime["vlm_concurrency_per_document"] == 4
+
+
+def test_paper_pdf_1_sends_only_to_its_two_declared_services():
+    # The inference egresses of the data-security design §5: the company VLM and the summary API.
+    p = load_profile(PAPER_PDF_1)
+
+    external = {m.id: (m.service, m.components) for m in p.methods.values() if m.service}
+
+    assert external == {
+        "picture-interpretation": ("vlm", ("company-vlm/Qwen3.8-27B",)),
+        "formula": ("vlm", ("company-vlm/Qwen3.8-27B",)),
+        "code": ("vlm", ("company-vlm/Qwen3.8-27B",)),
+        "document-summary": ("summary", ("summary-api/v1",)),
+    }
+
+
+def test_a_method_calling_an_undeclared_service_refuses_to_load(monkeypatch):
+    monkeypatch.setattr(document_summary, "SERVICE", "web-search")
+
+    with pytest.raises(ProfileError, match="undeclared service 'web-search'"):
+        load_profile(PAPER_PDF_1)
 
 
 def test_each_method_carries_the_digest_of_its_own_package():

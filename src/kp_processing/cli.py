@@ -4,7 +4,9 @@ Connections come from the environment: TEMPORAL_ADDRESS (default localhost:7233)
 TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
 KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), which only the
 orchestration worker needs; KP_VLM_BASE_URL and KP_VLM_API_KEY, the OpenAI-compatible VLM
-endpoint, which only the vlm worker needs (the model comes from the profile).
+endpoint, which only the vlm worker needs (the model comes from the profile);
+KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the summary API, which only the summary worker
+needs.
 """
 
 import argparse
@@ -21,7 +23,7 @@ from temporalio.client import Client, WorkflowFailureError
 from temporalio.common import WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
-from kp_processing.ports.inference import OpenAIChat
+from kp_processing.ports.inference import OpenAIChat, SummaryApi
 from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
@@ -35,11 +37,11 @@ def main(argv: list[str] | None = None) -> int:
     `<id>@<version>  module_digest=<hex>  components=<c1>,<c2>,...` (components empty when
     none). A ProfileError prints to stderr and exits 1.
 
-    `kp-processing worker --queue orchestration|inference|vlm [--profile PATH] [--build-id ID]
-    [--shutdown-grace-s S]`: serve one task queue until SIGTERM or SIGINT, then stop polling
-    and give running Activities S seconds (default 0) to finish before they are cancelled and
-    retried elsewhere; keep S below the pod's termination grace period. It refuses to start
-    on a store without write-once.
+    `kp-processing worker --queue orchestration|inference|vlm|summary [--profile PATH]
+    [--build-id ID] [--shutdown-grace-s S]`: serve one task queue until SIGTERM or SIGINT, then
+    stop polling and give running Activities S seconds (default 0) to finish before they are
+    cancelled and retried elsewhere; keep S below the pod's termination grace period. It
+    refuses to start on a store without write-once.
 
     `kp-processing start-request START.json [--wait]`: start the workflow for an admission
     spec §10 start input, with the workflow ID set to its request_id. Starting a request
@@ -54,7 +56,9 @@ def main(argv: list[str] | None = None) -> int:
     profile = commands.add_parser("profile")
     profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker = commands.add_parser("worker")
-    worker.add_argument("--queue", choices=["orchestration", "inference", "vlm"], required=True)
+    worker.add_argument(
+        "--queue", choices=["orchestration", "inference", "vlm", "summary"], required=True
+    )
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker.add_argument("--build-id", default="dev")
     worker.add_argument("--shutdown-grace-s", type=float, default=0)
@@ -105,6 +109,11 @@ async def run_worker(
     if queue == "vlm" and not vlm_url:
         print("KP_VLM_BASE_URL is required for the vlm worker", file=sys.stderr)
         return 2
+    summary_url = os.environ.get("KP_SUMMARY_BASE_URL")
+    summary_key = os.environ.get("KP_SUMMARY_API_KEY", "")
+    if queue == "summary" and not summary_url:
+        print("KP_SUMMARY_BASE_URL is required for the summary worker", file=sys.stderr)
+        return 2
     from kp_processing.stages import enrich_vlm
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
 
@@ -112,16 +121,21 @@ async def run_worker(
     runtime = Runtime(
         profile=load_profile(profile_path), build_id=build_id, custody_bucket=store.bucket
     )
-    async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as vlm_http:
-        # Only orchestration Activities send status reports, only vlm ones VLM requests.
+    async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as external_http:
+        # Only orchestration Activities send status reports, only vlm ones VLM requests and
+        # only summary ones summary requests.
         reporter = HttpStatusReporter(http, admission or "")
-        vlm = None
+        vlm = summary = None
         if queue == "vlm":
             deadline = runtime.profile.runtime["vlm_request_deadline_s"]
-            vlm = OpenAIChat(vlm_http, vlm_url or "", vlm_key, enrich_vlm.model(runtime.profile),
-                             deadline["connect"], deadline["total"])  # fmt: skip
-        worker = await make_worker(await connect(), Ports(store, reporter, vlm=vlm),
-                                   runtime, queue, shutdown_grace_s)  # fmt: skip
+            vlm = OpenAIChat(external_http, vlm_url or "", vlm_key,
+                             enrich_vlm.model(runtime.profile), deadline["connect"],
+                             deadline["total"])  # fmt: skip
+        if queue == "summary":
+            summary = SummaryApi(external_http, summary_url or "", summary_key,
+                                 runtime.profile.runtime["summary_request_deadline_s"])  # fmt: skip
+        ports = Ports(store, reporter, vlm=vlm, summary=summary)
+        worker = await make_worker(await connect(), ports, runtime, queue, shutdown_grace_s)
         print(f"worker {runtime.profile.id} build {build_id} on {worker.task_queue}",
               flush=True)  # fmt: skip
         stop = asyncio.Event()

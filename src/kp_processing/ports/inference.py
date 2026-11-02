@@ -1,5 +1,6 @@
-"""InferenceTransport port: one OpenAI-compatible chat-completions service, such as the company
-VLM or the DEV reference model (#129, inference adapter; #93 §3.2)."""
+"""InferenceTransport port: one external inference service (#129, inference adapter; #93 §3.2).
+OpenAIChat serves an OpenAI-compatible chat-completions service, such as the company VLM or the
+DEV reference model; SummaryApi serves the summary API (#134)."""
 
 import asyncio
 import inspect
@@ -15,7 +16,7 @@ UnavailableReason = Literal["TIMEOUT", "CONNECTION", "HTTP_5XX", "HTTP_429", "MA
 
 @dataclass(frozen=True)
 class Completion:
-    content: str | None  # choices[0].message.content
+    content: str | None  # choices[0].message.content; the summary API's whole body
     refusal: str | None  # choices[0].message.refusal, set when the model refused
     model: str  # the response's model
     system_fingerprint: str | None
@@ -42,10 +43,44 @@ class RequestRejected(Exception):
 
 class InferenceTransport(Protocol):
     async def complete(self, request: dict[str, Any]) -> Completion:
-        """Send one chat-completions request body (messages, response_format, ...; without
-        "model", which the transport adds) and return the first choice. Raises
-        ServiceUnavailable or RequestRejected; nothing else escapes."""
+        """Send one request body of the service's contract (for chat completions: messages,
+        response_format, ...; without "model", which the transport adds) to the one endpoint
+        the transport was built for, and return the answer. Raises ServiceUnavailable or
+        RequestRejected; nothing else escapes."""
         ...
+
+
+async def _post(
+    client: httpx.AsyncClient,
+    url: str,
+    api_key: str,
+    request: dict[str, Any],
+    connect_s: float,
+    total_s: float,
+) -> bytes:
+    try:
+        async with asyncio.timeout(total_s):
+            async with client.stream(
+                "POST",
+                url,
+                json=request,
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=httpx.Timeout(total_s, connect=connect_s),
+                follow_redirects=False,
+            ) as response:
+                body = await response.aread()
+                status = response.status_code
+    except (TimeoutError, httpx.TimeoutException) as exc:
+        raise ServiceUnavailable("TIMEOUT") from exc
+    except httpx.TransportError as exc:
+        raise ServiceUnavailable("CONNECTION") from exc
+    if status == 429:
+        raise ServiceUnavailable("HTTP_429")
+    if 500 <= status < 600:
+        raise ServiceUnavailable("HTTP_5XX")
+    if not 200 <= status < 300:
+        raise RequestRejected(status)
+    return body
 
 
 class OpenAIChat:
@@ -58,7 +93,9 @@ class OpenAIChat:
 
     Mapping: 2xx with a JSON body holding choices[0].message -> Completion; 429 -> HTTP_429;
     5xx -> HTTP_5XX; connect or transport errors -> CONNECTION; a 2xx body without
-    choices[0].message -> MALFORMED_RESPONSE; any other status -> RequestRejected.
+    choices[0].message -> MALFORMED_RESPONSE; any other status -> RequestRejected. A redirect
+    is never followed, whatever the client's setting: requests leave only for base_url (the
+    3xx status is a RequestRejected).
     """
 
     def __init__(
@@ -78,27 +115,14 @@ class OpenAIChat:
         self.total_s = total_s
 
     async def complete(self, request: dict[str, Any]) -> Completion:
-        try:
-            async with asyncio.timeout(self.total_s):
-                async with self.client.stream(
-                    "POST",
-                    f"{self.base_url}/chat/completions",
-                    json={**request, "model": self.model},
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=httpx.Timeout(self.total_s, connect=self.connect_s),
-                ) as response:
-                    body = await response.aread()
-                    status = response.status_code
-        except (TimeoutError, httpx.TimeoutException) as exc:
-            raise ServiceUnavailable("TIMEOUT") from exc
-        except httpx.TransportError as exc:
-            raise ServiceUnavailable("CONNECTION") from exc
-        if status == 429:
-            raise ServiceUnavailable("HTTP_429")
-        if 500 <= status < 600:
-            raise ServiceUnavailable("HTTP_5XX")
-        if not 200 <= status < 300:
-            raise RequestRejected(status)
+        body = await _post(
+            self.client,
+            f"{self.base_url}/chat/completions",
+            self.api_key,
+            {**request, "model": self.model},
+            self.connect_s,
+            self.total_s,
+        )
         try:
             data = json.loads(body)
             message = data["choices"][0]["message"]
@@ -113,6 +137,53 @@ class OpenAIChat:
                 body,
             )
         except (ValueError, KeyError, IndexError, TypeError) as exc:
+            raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
+
+
+class SummaryApi:
+    """The summary API. Its interface to the document_summary package is the provisional
+    contract of #129: complete() takes {document_uid, sections [{section_id, heading, text}],
+    max_sentences} and answers with content {model, sentences [{text, evidence
+    [{section_id}]}]}. Translating to and from another wire format belongs here, and a new wire
+    format comes with a new summary-api component in the profile.
+
+    POST {base_url}/v1/summaries (provisional path) with the request body as JSON, bearer
+    api_key.
+
+    Deadline, redirect rule and failure mapping are OpenAIChat's, with total_s bounding both the
+    connect and the whole call. A 2xx body that is a JSON object with a string "model" ->
+    Completion(content: the body decoded as UTF-8, refusal None, model, system_fingerprint
+    None, usage: its "usage" object or {}, body: the bytes as received); any other 2xx body ->
+    MALFORMED_RESPONSE. The sentences are not checked here: the package's parse validates them.
+    """
+
+    def __init__(
+        self, client: httpx.AsyncClient, base_url: str, api_key: str, total_s: float
+    ) -> None:
+        self.client = client
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.total_s = total_s
+
+    async def complete(self, request: dict[str, Any]) -> Completion:
+        body = await _post(
+            self.client,
+            f"{self.base_url}/v1/summaries",
+            self.api_key,
+            request,
+            self.total_s,
+            self.total_s,
+        )
+        try:
+            content = body.decode("utf-8")
+            data = json.loads(content)
+            if not isinstance(data, dict) or not isinstance(data.get("model"), str):
+                raise ValueError("Missing response model")
+            usage = data.get("usage")
+            return Completion(
+                content, None, data["model"], None, usage if isinstance(usage, dict) else {}, body
+            )
+        except (ValueError, TypeError) as exc:
             raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
 
 

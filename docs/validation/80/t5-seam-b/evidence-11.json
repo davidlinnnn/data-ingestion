@@ -1,0 +1,1120 @@
+{
+  "run": "17c155",
+  "paper": {
+    "index": 11,
+    "file": "11-2508.19828v5.pdf",
+    "sha256": "c206af4e792e9550f2aaec8a6c4d9b141d1ddcb587e781d7866870c8f3e4dd4f",
+    "pages": 20
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 29.6,
+    "reports": [
+      [
+        1,
+        "prepare",
+        "running",
+        null
+      ],
+      [
+        2,
+        "prepare",
+        "succeeded",
+        null
+      ],
+      [
+        3,
+        "parse",
+        "running",
+        {
+          "done": 0,
+          "total": 20,
+          "unit": "pages"
+        }
+      ],
+      [
+        4,
+        "parse",
+        "running",
+        {
+          "done": 5,
+          "total": 20,
+          "unit": "pages"
+        }
+      ],
+      [
+        5,
+        "parse",
+        "running",
+        {
+          "done": 10,
+          "total": 20,
+          "unit": "pages"
+        }
+      ],
+      [
+        6,
+        "parse",
+        "running",
+        {
+          "done": 15,
+          "total": 20,
+          "unit": "pages"
+        }
+      ],
+      [
+        7,
+        "parse",
+        "running",
+        {
+          "done": 20,
+          "total": 20,
+          "unit": "pages"
+        }
+      ],
+      [
+        8,
+        "parse",
+        "succeeded",
+        {
+          "done": 20,
+          "total": 20,
+          "unit": "pages"
+        }
+      ],
+      [
+        9,
+        "enrich",
+        "running",
+        {
+          "done": 0,
+          "total": 41,
+          "unit": "items"
+        }
+      ],
+      [
+        10,
+        "enrich",
+        "succeeded",
+        {
+          "done": 41,
+          "total": 41,
+          "unit": "items"
+        }
+      ],
+      [
+        11,
+        "finalize",
+        "running",
+        null
+      ],
+      [
+        12,
+        "finalize",
+        "succeeded",
+        null
+      ]
+    ],
+    "statuses": {
+      "code unverified None": 7,
+      "document-summary unverified None": 1,
+      "formula disputed FORMULA_NATIVE_MISMATCH": 4,
+      "formula unverified None": 2,
+      "picture-interpretation unverified None": 44,
+      "picture-ocr unverified None": 11,
+      "table-status unverified None": 5
+    },
+    "methods_with_enrichments": [
+      "code",
+      "document-summary",
+      "formula",
+      "picture-interpretation",
+      "picture-ocr",
+      "table-status"
+    ],
+    "summary_requests": [
+      {
+        "path": "/v1/summaries",
+        "keys": [
+          "document_uid",
+          "max_sentences",
+          "sections"
+        ],
+        "document_uid": "doc_c206af4e792e9550",
+        "sections": 44,
+        "section_keys": [
+          "heading",
+          "section_id",
+          "text"
+        ],
+        "text_chars": 52834,
+        "max_sentences": 5
+      }
+    ],
+    "summary_receipts": {
+      "requests": 1,
+      "results": {
+        "ok": 1,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 8.805207908153534,
+        "median": 8.805207908153534,
+        "max": 8.805207908153534
+      },
+      "tokens": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0
+      },
+      "models": [
+        "summary-mock"
+      ],
+      "system_fingerprints": [
+        "None"
+      ]
+    },
+    "vlm_receipts": {
+      "requests": 17,
+      "results": {
+        "ok": 17,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 3004.254541127011,
+        "median": 3007.591832894832,
+        "max": 3016.5645838715136
+      },
+      "tokens": {
+        "prompt_tokens": 17,
+        "completion_tokens": 17
+      },
+      "models": [
+        "fake"
+      ],
+      "system_fingerprints": [
+        "None"
+      ]
+    },
+    "summary": [
+      {
+        "item_id": "document-summary:#",
+        "scope": "document",
+        "origin": "interpretation",
+        "target_refs": [
+          "#"
+        ],
+        "input_refs": [
+          "documents/doc_c206af4e792e9550/items/58e02e8350b1a220a592b2bc248475f8efa0a7568ce697cea9f27a24ad622597/assembly.json"
+        ],
+        "status": "unverified",
+        "status_reason": null,
+        "supports": [
+          "provider",
+          "overlap"
+        ]
+      }
+    ],
+    "result": {
+      "outcome": "complete",
+      "profile": {
+        "id": "paper-pdf@1",
+        "status_rule": "v1",
+        "methods": [
+          {
+            "components": [
+              "docling-slim@2.132.0",
+              "layout-heron@8f39ad3c",
+              "tableformer-accurate@v1",
+              "rapidocr-ppocrv6-small"
+            ],
+            "id": "docling-parse",
+            "module_digest": "4e86445244b3f429f4bfb2a0a621aafb600628e6692314d21eb77c9829b65b6e",
+            "version": 1
+          },
+          {
+            "components": [
+              "rapidocr-ppocrv6-small"
+            ],
+            "id": "picture-ocr",
+            "module_digest": "ea83dc20c95f60199dfbb46d9545d660c35c90402f834ccb9e35f2d4b0c8c7c1",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "picture-interpretation",
+            "module_digest": "50c247b8b090e26a93c99902508eb1e9893d058dec775374a44db94ec15e3854",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "formula",
+            "module_digest": "9cdab12ba351320109cc3d401af71193106f4a7ebfa0ec2a091a865eab4d01e9",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "code",
+            "module_digest": "e4b4bb4dfc4fcabeb24d92903b99d0b2fd94342f87700b468a9c848d4d4841d8",
+            "version": 1
+          },
+          {
+            "components": [],
+            "id": "table-status",
+            "module_digest": "b7e76d2706fd94e02cd327e98863014ce60f3165faea5a0ff483b66aaa493d3c",
+            "version": 1
+          },
+          {
+            "components": [
+              "summary-api/v1"
+            ],
+            "id": "document-summary",
+            "module_digest": "af594beaef79dbce4f3b0fe56811fc63140507ae1025f1e043a1554338f590e5",
+            "version": 1
+          }
+        ]
+      },
+      "native": {
+        "page_images": 20,
+        "picture_images": 11,
+        "page_groups": 4
+      },
+      "inventory_counts": {
+        "code": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 7
+        },
+        "document-summary": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 1
+        },
+        "formula": {
+          "disputed": 4,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 2
+        },
+        "picture-interpretation": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 44
+        },
+        "picture-ocr": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 11
+        },
+        "table-status": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 5
+        }
+      },
+      "enrichments": [
+        {
+          "item_id": "picture-ocr:#/pictures/0",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd85e81e1f3835f69bb1b763a99e6334d00a5bf8dd1e31c8e4e0e30d5fcaebd8",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/1",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "541e1c2dff126938f8463e55969360731543882e88bcbb275e0da5e14cc87032",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/2",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "ea64dbb9eaaa56bbb938ba385432d9212a5c52f6d95c5ba49be6c5ceda293579",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/3",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "91952de4ae535aa904b2843e932df67f15ece1240738667baa21a055eaa42565",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/4",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4573ba42c5ad24ec3788f712fb5b268cf5a9f0200b89cae3006ccf148e39f571",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/5",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "bd88065de3a827cf37ae559889b196858342bc9dcd41bb4dab1d612eb4eaead5",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/6",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "bcc1fbc43a3912da454d27dee9ffbdcf063524085ebed279ec83748ac47a1764",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/7",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "3446b0a442c9c33ffb6bdd99320c9c9153dafd94ae82d20dd7cd21a734640dbf",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/8",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cfc3a938388e255e805969ef51bcfb032081450dd1eb538535d408aaa11209e7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/9",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "820fdd935210e56917abab0fd1c8caccbd7d2b7433e42b669c461536a8405fb7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/10",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "3dc53c3f5a51f08719dea35f6db51a73d1829c860a0bd1d17f7d5b740eec2e59",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/5/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/6/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/6/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/6/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/6/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/7/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/7/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/7/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/7/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/8/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/8/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/8/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/8/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/9/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/9/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/9/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/9/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/10/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/10/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/10/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/10/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "formula:#/texts/31",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "(o,m\u2032)\u223c\u03c0\u03b8(\u00b7|x,Mold),"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/34",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "J(\u03b8)=Emin\u03c1\u03b8A,clip(\u03c1\u03b8,1\u2212\u03f5,1+\u03f5)A\u0001,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/37",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "J(\u03b8)=E\"1GXGi=1\u03c1(i)\u03b8Ai\u2212\u03b2DKL[\u03c0\u03b8\u2225\u03c0ref]#,"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/40",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Ranswer=EM(ypred,ygold)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/46",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "y\u223c\u03c0\u03b8(\u00b7|q,Mret)."
+          }
+        },
+        {
+          "item_id": "formula:#/texts/48",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "\u03c1\u03b8(q,Mret)=\u03c0\u03b8(y|q,Mret)\u03c0old(y|q,Mret),"
+          }
+        },
+        {
+          "item_id": "code:#/texts/206",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "c3d4d2c7f1dedc1299d35c5274209d37a7e5eaed5e101dfd2940afbd79a67c52",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": true
+          }
+        },
+        {
+          "item_id": "code:#/texts/209",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "afb5d00d8dab279dcb00a658743f68c1a9943c25eab66199989afa16f24b7e76",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": true
+          }
+        },
+        {
+          "item_id": "code:#/texts/231",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48c1f0b74f14cbdf3a11d88a69c85ab45198a0f346e9de26af3421dad4e8a51e",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": true
+          }
+        },
+        {
+          "item_id": "code:#/texts/235",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "27e5818d6db959aaad11c50947ed0d8586ca657a5df2280cd8027e6d4d5de2cd",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": true
+          }
+        },
+        {
+          "item_id": "code:#/texts/254",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6c782af74dacdb38fd530587fa1f05b64ea834e43a819ad2ca637c5306128f4b",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": false
+          }
+        },
+        {
+          "item_id": "code:#/texts/257",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "9d5b61b7bbb318126809a96d2e37a02950e42694dccd43a14a4ee29cc6c2eda7",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": false
+          }
+        },
+        {
+          "item_id": "code:#/texts/262",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "3060e43d284b46a1f6ee989a54f45f7efc9e267a112e6f14f071d80ce3d5b5f7",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": false
+          }
+        },
+        {
+          "item_id": "table-status:#/tables/0",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": false,
+          "content_sha256": null,
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/1",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4a68dde6c5b70d1d2d2e9e3181ce2437854c8cfd70263244f9085a52c0e044bb",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/2",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "39e6abf4f9bf7624c593c9e52fd990cd0288afbbb1c4eefe6a3f7684b9c89ff9",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/3",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "679027b8996579b6966a036192596ad0ec2b8aea1a5b44dc5a338ea1f99ed606",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/4",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "664d2debc4ed43731e1ffa54036b033cddfa1b7dae2addd637a3ce879f7c237a",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "document-summary:#",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "21fc9d8b2eb8c3803ac627e602c625488609e64cbaa4aeab645758371e699264",
+          "evidence_refs": 0,
+          "signals": {}
+        }
+      ],
+      "limitations": [
+        "READING_ORDER_DEFECTS",
+        "CAPTION_INTERRUPTS_BODY",
+        "INLINE_MATH_NOT_RECONSTRUCTED",
+        "INLINE_CODE_NOT_RECONSTRUCTED"
+      ]
+    },
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 0.6,
+    "summary_requests": 0,
+    "external_receipts": 0,
+    "objects_added_under_documents": [],
+    "enrichments_reused": true,
+    "statuses_equal_S": true,
+    "pass": true
+  }
+}

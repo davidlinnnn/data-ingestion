@@ -3,7 +3,7 @@
 import json
 
 from kp_processing.identity import canonical_json
-from kp_processing.methods import InventoryItem
+from kp_processing.methods import DocumentItem, InventoryItem
 from kp_processing.stages import (
     InventoryInput,
     InventoryRef,
@@ -20,20 +20,21 @@ from kp_processing.stages import (
 async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> InventoryRef:
     """Register documents/{document_uid}/items/{key}/inventory.json, where key = sha256 of
     the compact JSON [profile id, assembly digest, [[method ref, module digest] of each
-    item-scope method in profile order]], so that a method added to a draft profile or
-    changed in place yields a new inventory:
+    method with inventory items in profile order]], so that a method added to a draft profile
+    or changed in place yields a new inventory:
 
         {"schema": "pdf-inventory/v1", "profile": "<profile id>",
          "assembly_ref": "...", "assembly_digest": "...", "items": [...]}
 
-    One InventoryItem per target of each item-scope method the profile lists (a method
-    package that declares TARGET), grouped by method in profile order, then in document
-    order; input_refs follow the package's INPUTS. Write-once; reused=True when it already
-    existed.
+    Items are grouped by method in profile order. An item-scope method (its package declares
+    TARGET) has one InventoryItem per target, in document order; a document-scope method (SCOPE
+    "document") has one DocumentItem {"item_id": "<method id>:#", "method", "target_ref": "#",
+    "document_uid", "input_refs"}. input_refs follow the package's INPUTS. Write-once;
+    reused=True when it already existed.
     """
     profile = runtime.profile.id
-    item_methods = [m for m in runtime.profile.methods.values() if hasattr(m.package, "TARGET")]
-    method_identities = [[m.ref, m.module_digest] for m in item_methods]
+    inventory_methods = [m for m in runtime.profile.methods.values() if m.scope]
+    method_identities = [[m.ref, m.module_digest] for m in inventory_methods]
     key = sha256(canonical_json([profile, input.assembly.digest, method_identities]))
     ref = f"{item_prefix(input.document_uid, key)}/inventory.json"
     if existing := await registered(ports.store, ref):
@@ -48,21 +49,35 @@ async def run(input: InventoryInput, ports: Ports, runtime: Runtime) -> Inventor
         for image in json.loads(await ports.store.get(group.ref))["page_images"]:
             page_images[image["page"]] = image
 
+    document_inputs = {
+        "source": {"ref": input.source_key, "sha256": input.source_sha256},
+        "assembly": {"ref": input.assembly.ref, "sha256": input.assembly.digest},
+    }
+
     def source(kind: str, target_ref: str, page: int) -> dict[str, str]:
         match kind:
-            case "source":
-                return {"ref": input.source_key, "sha256": input.source_sha256}
-            case "assembly":
-                return {"ref": input.assembly.ref, "sha256": input.assembly.digest}
+            case "source" | "assembly":
+                return document_inputs[kind]
             case "picture_image":
                 return {key: pictures[target_ref][key] for key in ("ref", "sha256")}
             case "page_image":
                 return {key: page_images[page][key] for key in ("ref", "sha256")}
         raise ValueError(f"Unknown input kind {kind}")
 
-    items: list[InventoryItem] = []
-    for method in item_methods:
+    items: list[InventoryItem | DocumentItem] = []
+    for method in inventory_methods:
         method_id, package = method.id, method.package
+        if method.scope == "document":
+            items.append(
+                {
+                    "item_id": f"{method_id}:#",
+                    "method": method_id,
+                    "target_ref": "#",
+                    "document_uid": input.document_uid,
+                    "input_refs": [document_inputs[kind] for kind in package.INPUTS],
+                }
+            )
+            continue
         collection, label = package.TARGET
         for target in document[collection]:
             if label is not None and target["label"] != label:

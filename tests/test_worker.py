@@ -20,6 +20,7 @@ from kp_processing.weights import WeightsMismatch
 from kp_processing.worker import (
     Inference,
     Orchestration,
+    Summary,
     Vlm,
     WriteOnceUnsupported,
     check_write_once,
@@ -101,6 +102,20 @@ async def test_the_enrich_vlm_activity_heartbeats_after_every_item(ports, runtim
     )
 
     assert len(beats) == 1 + len(outcomes) == 4
+
+
+async def test_the_enrich_summary_activity_heartbeats_after_its_item(ports, runtime):
+    runtime = with_runtime(runtime, heartbeat_interval_s=3600)
+    input = await native(ports, runtime, enriched_paper())
+    environment = ActivityEnvironment()
+    beats = []
+    environment.on_heartbeat = lambda *details: beats.append(details)
+
+    outcomes = await environment.run(
+        Summary(ports, runtime).enrich_summary, EnrichInput("doc_1", input.inventory, "r", "run")
+    )
+
+    assert len(beats) == 1 + len(outcomes) == 2
 
 
 async def test_a_cancelled_parse_frees_the_slot_only_after_the_docling_thread_ends(
