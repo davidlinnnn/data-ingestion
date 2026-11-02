@@ -2,6 +2,8 @@
 # the Codex sandbox cannot run: the S3 contract against tests/s3/compose.yaml (marker `s3`)
 # and the local-socket tests (marker `network`, which download the Temporal dev server).
 # The docling tests need the pinned weights, fetched once per manifest and verified against it.
+# pytest runs in parallel shards (scripts/test-shard): docling on the runner's CPU made one job
+# take about 10 minutes.
 name: code-checks
 
 on:
@@ -11,8 +13,28 @@ permissions:
   contents: read
 
 jobs:
-  code-checks:
+  lint:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.14"
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Lint, format and type check
+        run: scripts/check
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     env:
       KP_S3_ENDPOINT: http://127.0.0.1:9100
       KP_S3_BUCKET: kp-dev
@@ -29,9 +51,6 @@ jobs:
       - name: Install
         run: uv sync --frozen
 
-      - name: Lint, format and type check
-        run: scripts/check
-
       - name: Cache model weights
         uses: actions/cache@v4
         with:
@@ -45,6 +64,6 @@ jobs:
         run: docker compose -f tests/s3/compose.yaml up -d --wait
 
       - name: Tests
-        run: uv run pytest
+        run: scripts/test-shard ${{ matrix.shard }}
         env:
           HF_HUB_OFFLINE: "1"
