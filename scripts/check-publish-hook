@@ -7,7 +7,10 @@ dir=$(dirname "$0")
 status=0
 while IFS= read -r f; do
   [ -n "$f" ] && [ "$f" != "-" ] || continue
-  if [ ! -f "$f" ]; then
+  if [[ $f == *'$'* ]]; then
+    echo "check-publish-hook: $f: give the body file's literal path; the hook reads the command text and cannot expand shell variables" >&2
+    status=2
+  elif [ ! -f "$f" ]; then
     echo "check-publish-hook: $f does not exist; write the body first, then post it in a separate command" >&2
     status=2
   elif ! "$dir/check-publish" "$f" >&2; then
