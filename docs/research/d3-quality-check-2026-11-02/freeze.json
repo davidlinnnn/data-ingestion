@@ -6,7 +6,7 @@
   "repo:judging-rules.md": "00f6d9f868304885389eb2e38e4303eab4689495cc653ec833a2733fcc0e7926",
   "repo:questions.json": "7a82cd58b684f241a3f5d5e21f222d49bbffa7d6722fb00315290a0b0939647e",
   "repo:score.py": "2af45383f12e0e929ed320deb937ae7d7e5318b6ad1939746117d13f316ff0ba",
-  "repo:run_d3.py": "0decc5e0f911fb1b827fd2557538364520e34b39fbb3ac475ed039f30e70cf11",
+  "repo:run_d3.py": "84753c4f7dde69ab045d322a8ef8803c75cb096a19d8d15a8ce8d0790b3f8259",
   "repo:prepare_inputs.py": "f5c3d3797910f31c2892f94e748f2b0bfd7c3a7a0be5d0724b039d802b47ffe8",
   "repo:build_split.py": "c64d7ae1924f24b6b35d90126b089f10111ccc38d25e18631e3c045c00dccbb8",
   "repo:merge_verdicts.py": "350b677543eb7dc5f411563a2f00aae63c60a84225bce7e448afadefc33cc629",
@@ -19,5 +19,21 @@
   "split.json": "73ae0d107d1522ac7287a1f76ce06833ab3bce73adab37dff8fc20cca0eed1d5",
   "model-inputs.json": "2a7219163fdfe708e9f9bba03a9479980a4c2b9ba1c586c00f1e9e467d4133ca",
   "test-counts.json": "e4b8e080e24d33b205ed239ffb13df320943cb3fe9e885a01385d90419381645"
- }
+ },
+ "amendments": [
+  {
+   "at": "2026-11-02T21:54:37.156841+00:00",
+   "file": "run_d3.py",
+   "old_sha256": "0decc5e0f911fb1b827fd2557538364520e34b39fbb3ac475ed039f30e70cf11",
+   "new_sha256": "747ad255ca049d26cf4d0165bed9a76d076ce0921a7580dbd340edcca68f48ea",
+   "reason": "add --resume after a MEMORY_FENCE stop (mini dev stopped at 100/787 while the flash shards were hashed); runs only items without a result; no label, split, question, input or scoring file changed"
+  },
+  {
+   "at": "2026-11-02T22:48:45.984875+00:00",
+   "file": "run_d3.py",
+   "old_sha256": "747ad255ca049d26cf4d0165bed9a76d076ce0921a7580dbd340edcca68f48ea",
+   "new_sha256": "84753c4f7dde69ab045d322a8ef8803c75cb096a19d8d15a8ce8d0790b3f8259",
+   "reason": "lower MEMORY_FENCE from 8 to 6 GiB: Docker Desktop's VM holds ~18 GB for #136's tests and cannot be restarted now; mini needs ~9-10 GB and stopped at 101/787 with ~8.7 GB available; the fence decides only whether a run stops, not any score; no label, split, question, input or scoring file changed"
+  }
+ ]
 }

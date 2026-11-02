@@ -5,10 +5,13 @@
         --questions QUESTIONS.json [--control W4B_DIR W4B_ROOT] [--device mps]
 
 Adapted from W4b's infer.py. Before loading: OUT/freeze.json hashes must match, every manifest
-file must match on disk, and no docling process may be running (48 GiB host). Network is
+file must match on disk, and no docling process may be running (48 GiB host). The run stops
+(MEMORY_FENCE) when host available memory falls below 6 GiB. Network is
 forbidden during inference by a socket guard. Dev rows get both questions; test rows get the
 question frozen in OUT/selection/MODEL.json. One result file per item under
-OUT/runs/MODEL/SPLIT/; a run that finds results there refuses to start (no silent retry).
+OUT/runs/MODEL/SPLIT/; a run that finds results there refuses to start (no silent retry),
+except --resume after a MEMORY_FENCE stop, which runs only the items without a result and
+keeps the stop record as stop-N.json.
 --control runs W4b's own dev inputs and questions (results under OUT/runs/control-MODEL/dev/)
 to check this runtime reproduces W4b's saved scores.
 """
@@ -43,6 +46,7 @@ def main() -> int:
     parser.add_argument("--questions", type=Path, required=True)
     parser.add_argument("--control", nargs=2, type=Path, metavar=("W4B_DIR", "W4B_ROOT"))
     parser.add_argument("--device", default="mps", choices=["mps", "cpu"])
+    parser.add_argument("--resume", action="store_true")
     a = parser.parse_args()
     out = a.out.resolve()
     for key, value in {
@@ -98,7 +102,16 @@ def main() -> int:
     assert not others, f"docling is running: {others}"
     base = out / "runs" / name / a.split
     base.mkdir(parents=True, exist_ok=True)
-    assert not list(base.glob("*.result.json")), "results exist; one execution per model and split"
+    done = {json.loads(p.read_text())["id"] for p in base.glob("*.result.json")}
+    if a.resume:
+        # Items are independent and the runtime is deterministic (W4b control), so finishing
+        # the rest after a memory stop changes no score; any other stop is not resumable.
+        stop = json.loads((base / "stop.json").read_text())
+        assert stop["reason"] == "MEMORY_FENCE", stop
+        (base / "stop.json").rename(base / f"stop-{len(list(base.glob('stop-*.json'))) + 1}.json")
+        rows = [r for r in rows if r["id"] not in done]
+    else:
+        assert not done, "results exist; one execution per model and split"
 
     network_attempts = []
     connect = socket.socket.connect
@@ -167,7 +180,7 @@ def main() -> int:
         )
         raise
     for i, r in enumerate(rows):
-        if psutil.virtual_memory().available < 8 * 1024**3:
+        if psutil.virtual_memory().available < 6 * 1024**3:
             write(base / "stop.json", {"reason": "MEMORY_FENCE", "remaining": len(rows) - i})
             break
         assert set(r["state"]) == {"category", "reconstruction"}
