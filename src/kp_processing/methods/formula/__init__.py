@@ -24,11 +24,10 @@ ORIGIN = "reconstruction"
 TARGET = ("texts", "formula")
 INPUTS = ("page_image", "source")
 
-# Fonts of calligraphic and blackboard capitals in the text layer. Seen on the #133 corpus:
-# CMSY10/8/7, txsys, LMMathSymbols8/9, MSBM10, PazoMathBlackboardBold; rsfs, eusm, bbold and
-# dsrom are the other LaTeX packages for these letters.
+# Font names seen on the #133 corpus, plus the other LaTeX packages for these letters.
 CALLIGRAPHIC_FONTS = re.compile(r"cmsy|txsys|mathsymbols|rsfs|eusm", re.IGNORECASE)
 BLACKBOARD_FONTS = re.compile(r"msbm|bbold|dsrom|blackboard", re.IGNORECASE)
+FONT_STYLES = ((CALLIGRAPHIC_FONTS, "SCRIPT"), (BLACKBOARD_FONTS, "DOUBLE-STRUCK"))
 LATEX_STYLES = {"mathcal": "SCRIPT", "mathscr": "SCRIPT", "mathbb": "DOUBLE-STRUCK"}
 
 PROMPT = (
@@ -119,10 +118,8 @@ def _native_text(item: InventoryItem, source: bytes) -> str:
                     letter = unicodedata.normalize("NFKC", glyph)
                     if re.fullmatch(r"[A-Z]", letter):
                         font = _font(text, index)
-                        if CALLIGRAPHIC_FONTS.search(font):
-                            glyph = _styled(letter, "SCRIPT")
-                        elif BLACKBOARD_FONTS.search(font):
-                            glyph = _styled(letter, "DOUBLE-STRUCK")
+                        glyph = next((_styled(letter, style) for fonts, style in FONT_STYLES
+                                      if fonts.search(font)), glyph)  # fmt: skip
                     characters.append(glyph)
     return re.sub(r"\s*\(\d+(?:\.\d+)*[A-Za-z]?\)\s*$", "", "".join(characters))
 
@@ -150,6 +147,16 @@ def _styled_capitals(text: str) -> Counter[tuple[str, ...]]:
     )
 
 
+def _styled_argument(match: re.Match[str]) -> str:
+    """A style command's argument with its A-Z as styled capitals; inner commands kept."""
+    style = LATEX_STYLES[match[1]]
+    return re.sub(
+        r"\\[A-Za-z]+|[A-Z]",
+        lambda c: c[0] if c[0].startswith("\\") else _styled(c[0], style),
+        match[2] if match[2] is not None else match[3],
+    )
+
+
 def mismatch(native: str, latex: str) -> bool:
     """Whether the native text and the LaTeX differ in digits or operators (when the native
     text has one) or in styled capitals (when it has a capital letter), as parse's docstring
@@ -157,11 +164,7 @@ def mismatch(native: str, latex: str) -> bool:
     latex = re.sub(r"\\tag\{[^}]*\}", "", latex)
     latex = re.sub(
         r"\\(mathcal|mathscr|mathbb)(?![A-Za-z])\s*(?:\{((?:[^{}]|\{[^{}]*\})*)\}|([A-Za-z]))",
-        lambda match: re.sub(
-            r"\\[A-Za-z]+|[A-Z]",
-            lambda c: c[0] if c[0][0] == "\\" else _styled(c[0], LATEX_STYLES[match[1]]),
-            match[2] if match[2] is not None else match[3],
-        ),
+        _styled_argument,
         latex,
     )
     latex = re.sub(r"\\([A-Za-z]+)", lambda match: OPERATORS.get(match[1], ""), latex)

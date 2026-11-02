@@ -10,7 +10,7 @@ from pypdf import PdfReader, PdfWriter
 
 @dataclass
 class Page:
-    # body text, one Tj per line; a line given as (base font, text) runs switches font per run
+    # body text, one Tj per line; a line may be (base font, text) runs, "" for Helvetica
     lines: list[str | list[tuple[str, str]]] = field(default_factory=list)
     picture: bool = False  # a 200x150 pt raster block under the text
     size: tuple[float, float] = (612, 792)  # points

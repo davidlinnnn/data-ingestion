@@ -356,6 +356,19 @@ def test_calligraphic_and_blackboard_capitals_compare_with_their_latex_styles(
     assert formula.mismatch(native, latex) is expected
 
 
+async def styled_formula(
+    ports, runtime, calligraphic: str, blackboard: str
+) -> tuple[InventoryItem, list[bytes]]:
+    """formula_paper's formula item, widened to the page, with the source swapped for the
+    styled_equation paper; the item and its inputs."""
+    input = await native(ports, runtime, formula_paper())
+    item = next(i for i in await items_of(ports, input.inventory) if i["method"] == "formula")
+    inputs = [await ports.store.get(source["ref"]) for source in item["input_refs"]]
+    inputs[1] = formula_paper(styled_equation(calligraphic, blackboard))
+    # The styled fonts are not embedded, so their widths may move the line sideways.
+    return {**item, "bbox": {**item["bbox"], "l": 0.0, "r": 612.0}}, inputs  # type: ignore[typeddict-item]
+
+
 @pytest.mark.parametrize(
     ("calligraphic", "blackboard"),
     [
@@ -367,12 +380,7 @@ def test_calligraphic_and_blackboard_capitals_compare_with_their_latex_styles(
 async def test_the_text_layer_font_gives_a_capital_its_style(
     ports, runtime, calligraphic, blackboard
 ):
-    input = await native(ports, runtime, formula_paper())
-    item = next(i for i in await items_of(ports, input.inventory) if i["method"] == "formula")
-    inputs = [await ports.store.get(source["ref"]) for source in item["input_refs"]]
-    inputs[1] = formula_paper(styled_equation(calligraphic, blackboard))
-    # The styled fonts are not embedded, so their widths may move the line sideways.
-    wide: InventoryItem = {**item, "bbox": {**item["bbox"], "l": 0.0, "r": 612.0}}  # type: ignore[typeddict-item]
+    wide, inputs = await styled_formula(ports, runtime, calligraphic, blackboard)
 
     kept = formula.parse(
         wide, inputs, json.dumps({"latex": r"\mathcal{L} = 2x + 3y - 7 + \mathbb{E} = 0"})
@@ -384,11 +392,7 @@ async def test_the_text_layer_font_gives_a_capital_its_style(
 
 
 async def test_a_capital_in_a_text_or_math_italic_font_has_no_style(ports, runtime):
-    input = await native(ports, runtime, formula_paper())
-    item = next(i for i in await items_of(ports, input.inventory) if i["method"] == "formula")
-    inputs = [await ports.store.get(source["ref"]) for source in item["input_refs"]]
-    inputs[1] = formula_paper(styled_equation("CMMI10", "CMR10"))
-    wide: InventoryItem = {**item, "bbox": {**item["bbox"], "l": 0.0, "r": 612.0}}  # type: ignore[typeddict-item]
+    wide, inputs = await styled_formula(ports, runtime, "CMMI10", "CMR10")
 
     output = formula.parse(wide, inputs, json.dumps({"latex": "L = 2x + 3y - 7 + E = 0"}))
 
