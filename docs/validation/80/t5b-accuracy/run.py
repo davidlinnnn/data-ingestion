@@ -1,13 +1,18 @@
 """#155 C1: how well the Document Summary's verify step catches unsupported sentences, by planted
 errors. From the kept sentences of a Seam B run (t5b-seam-b OUT_DIR), sample N; gpt-6-luna
-rewrites each into one error of a type the program assigns in rotation (ERRORS); the planted
+rewrites each into one error of a type the program assigns in rotation (ERRORS; number only
+for a sentence with a digit, since without one the planter cannot change a value); the planted
 version goes through the production verify request (document_summary.verify_request, batched
 with the rest of its Section's kept sentences, D4) on Sonnet 5.5, and so does the unaltered
 batch. Caught = the planted sentence judged unsupported; false drop = an original judged
 unsupported.
 
     set -a; . ~/.config/kp-dev/anthropic.env; . ~/.config/kp-dev/openai.env; set +a
-    .venv/bin/python docs/validation/80/t5b-accuracy/run.py OUT_DIR SET_NAME N INDEX...
+    .venv/bin/python docs/validation/80/t5b-accuracy/run.py OUT_DIR SET_NAME N|--rescore INDEX...
+
+--rescore scores OUT_DIR/accuracy-SET_NAME.json again, without a request. A planted version
+that is unchanged or a refusal of the planter (it starts with REFUSALS) is an invalid plant:
+counted, but not in the catch rate.
 
 Writes evidence-SET_NAME.json here (counts, rates with sample sizes, error types; no paper
 text) and, under OUT_DIR, accuracy-SET_NAME.json (every case with text) and
@@ -39,6 +44,8 @@ ERRORS = {
 }
 PLANT = ds._schema("plant", ds._object(sentence=ds._STRING))
 SPOT_CHECK = 30
+REFUSALS = ("I can’t", "I can't", "I cannot")  # gpt-6-luna's, seen in the 2026-11-04 run
+PRICE_PER_MTOK = {"input": 2.0, "output": 10.0}  # Sonnet 5.5, as t5b-seam-b
 
 
 async def plant(luna: OpenAIChat, sentence: str, kind: str) -> str:
@@ -87,17 +94,12 @@ def revised(summary: dict) -> list[dict]:
     return out
 
 
-async def main(argv: list[str]) -> int:
-    out, name, size, indices = Path(argv[0]), argv[1], int(argv[2]), [int(i) for i in argv[3:]]
-    summaries = {}
-    for index in indices:
-        summary = json.loads((out / f"summary-{index}.json").read_text())
-        if summary["record"]:
-            summaries[index] = summary
-    pool = [c for s in summaries.values() for c in candidates(s)]
-    rng = random.Random(SEED)
-    sample = rng.sample(pool, min(size, len(pool)))
-    kinds = list(ERRORS)
+def valid(case: dict) -> bool:
+    return case["planted"] != case["text"] and not case["planted"].startswith(REFUSALS)
+
+
+async def judged(summaries: dict, sample: list[dict]) -> tuple[list[dict], dict]:
+    """Every sampled case planted and judged, and the judge's token usage."""
     usage = {"prompt_tokens": 0, "completion_tokens": 0}
     async with httpx.AsyncClient() as http:
         judge = OpenAIChat(http, "https://api.anthropic.com/v1", os.environ["ANTHROPIC_API_KEY"],
@@ -108,6 +110,7 @@ async def main(argv: list[str]) -> int:
 
         async def case(number: int, c: dict) -> dict:
             async with gate:
+                kinds = [k for k in ERRORS if k != "number" or any(ch.isdigit() for ch in c["text"])]
                 kind = kinds[number % len(kinds)]
                 document = summaries[c["paper"]]["sections"]
                 planted = await plant(luna, c["text"], kind)
@@ -128,7 +131,24 @@ async def main(argv: list[str]) -> int:
                         "original_reason": original_v[c["n"]][1]}  # fmt: skip
 
         cases = await asyncio.gather(*(case(n, c) for n, c in enumerate(sample)))
-    planted = [c for c in cases if c["changed"]]
+    return list(cases), usage
+
+
+async def main(argv: list[str]) -> int:
+    out, name, indices = Path(argv[0]), argv[1], [int(i) for i in argv[3:]]
+    summaries = {}
+    for index in indices:
+        summary = json.loads((out / f"summary-{index}.json").read_text())
+        if summary["record"]:
+            summaries[index] = summary
+    pool = [c for s in summaries.values() for c in candidates(s)]
+    if argv[2] == "--rescore":
+        cases = json.loads((out / f"accuracy-{name}.json").read_text())
+        usage = json.loads((HERE / f"evidence-{name}.json").read_text())["judge_tokens"]
+    else:
+        sample = random.Random(SEED).sample(pool, min(int(argv[2]), len(pool)))
+        cases, usage = await judged(summaries, sample)
+    planted = [c for c in cases if valid(c)]
     caught = [c for c in planted if not c["planted_supported"]]
     dropped = [c for c in cases if not c["original_supported"]]
     by_error = {k: {"n": sum(c["error"] == k for c in planted),
@@ -136,7 +156,7 @@ async def main(argv: list[str]) -> int:
     evidence = {
         "set": name, "papers": sorted(summaries), "pool": len(pool), "sample": len(cases),
         "seed": SEED, "judge": "claude-sonnet-5-5", "planter": "gpt-6-luna",
-        "planted_changed": len(planted),
+        "valid_plants": len(planted), "invalid_plants": len(cases) - len(planted),
         "catch_rate": {"caught": len(caught), "n": len(planted),
                        "rate": round(len(caught) / len(planted), 3) if planted else None},
         "false_drop_rate": {"dropped": len(dropped), "n": len(cases),
@@ -144,6 +164,8 @@ async def main(argv: list[str]) -> int:
         "by_error": by_error,
         "by_kind": {k: sum(c["kind"] == k for c in cases) for k in ("section", "overview")},
         "judge_tokens": usage,
+        "judge_usd": round((usage["prompt_tokens"] * PRICE_PER_MTOK["input"]
+                            + usage["completion_tokens"] * PRICE_PER_MTOK["output"]) / 1e6, 3),
     }  # fmt: skip
     (HERE / f"evidence-{name}.json").write_text(json.dumps(evidence, indent=2) + "\n")
     (out / f"accuracy-{name}.json").write_text(json.dumps(cases, indent=1, ensure_ascii=False))
@@ -153,8 +175,8 @@ async def main(argv: list[str]) -> int:
     spot += [{"why": "rewritten or dropped by the pipeline", **r}
              for s in summaries.values() for r in revised(s)]  # fmt: skip
     # All of the above, even past SPOT_CHECK (C1); the rest of the cases fill up to it.
-    rest = [c for c in cases if c not in missed and c not in dropped]
-    fill = rng.sample(rest, max(0, min(len(rest), SPOT_CHECK - len(spot))))
+    rest = [c for c in cases if c not in missed and c not in dropped and valid(c)]
+    fill = random.Random(SEED).sample(rest, max(0, min(len(rest), SPOT_CHECK - len(spot))))
     spot += [{"why": "random case", **c} for c in fill]
     (out / f"spot-check-{name}.json").write_text(json.dumps(spot, indent=1, ensure_ascii=False))
     print(json.dumps({k: evidence[k] for k in ("catch_rate", "false_drop_rate", "by_error")}))

@@ -15,16 +15,18 @@ Cases, each paper in a fresh bucket of this run:
      sentence cites at least one summarized Section, every summarized Section is listed in
      reading order, no published sentence lacks a verify, summary sends all ok
   C  a second request for the same document: no summary request, the summary reused
-  F  (with --fairness) BIG starts; SMALL starts once BIG's summary Sections exist. The DEV
-     profile is copied with summary_concurrency_per_document FAIR_CONCURRENCY, so BIG's chunks
-     queue behind the summary worker's slots. Measured: the BIG chunks that started while
-     SMALL's first chunk waited (scheduled to started). Pass when BIG had at least
-     MIN_BACKLOG chunks waiting as SMALL's was scheduled and at most MAX_PASSED_BY started.
+  F  (with --fairness) BIG starts; SMALL (a short paper, so its chunks come soon) starts once
+     BIG's chunk Activities are scheduled. The DEV profile is copied with
+     summary_concurrency_per_document FAIR_CONCURRENCY, so BIG's chunks queue behind the
+     summary worker's slots, and a second inference worker runs. Measured: the BIG chunks that
+     started while SMALL had a summary task in the queue (its summary_sections, then its first
+     chunk to start, each from scheduled to started). Pass when BIG had at least MIN_BACKLOG
+     chunks waiting as SMALL's summary_sections was scheduled and at most MAX_PASSED_BY started.
      --fairness-off is the negative control, fairness switched off in the server: pass when
      at least MIN_BACKLOG started, so the measurement can see a document waiting.
 
-Per paper, evidence-INDEX.json keeps counts, timings, tokens and statuses only (the papers are
-third-party). OUT_DIR (outside the repo) gets each summary's content and record.json, for the
+Per paper, evidence-INDEX.json keeps counts, timings, tokens, statuses and the headings of the
+skipped Sections only (the papers are third-party). OUT_DIR (outside the repo) gets each summary's content and record.json, for the
 accuracy evaluation and the user's spot check. The run stops starting papers once the summary's
 tokens priced at PRICE_PER_MTOK reach STOP_AT_USD (C3).
 """
@@ -41,6 +43,7 @@ from pathlib import Path
 
 import yaml
 from temporalio.client import Client
+from temporalio.service import RPCError
 
 HERE = Path(__file__).resolve().parent
 
@@ -97,6 +100,19 @@ async def summary_timeline(client: Client, request_id: str) -> dict:
     last = max((s["completed"] for s in spans if s["activity"] == "summary_overview"), default=None)
     seconds = round(last - first, 1) if first is not None and last is not None else None
     return {"seconds": seconds, "spans": spans}
+
+
+async def scheduled(client: Client, request_id: str, activity: str) -> bool:
+    """Whether the workflow has scheduled the Activity."""
+    try:
+        history = await client.get_workflow_handle(request_id).fetch_history()
+    except RPCError:  # not started yet
+        return False
+    return any(
+        event.activity_task_scheduled_event_attributes.activity_type.name == activity
+        for event in history.events
+        if event.HasField("activity_task_scheduled_event_attributes")
+    )
 
 
 async def summary_of(store, result: dict) -> tuple[dict, dict | None]:
@@ -185,7 +201,8 @@ async def main(argv: list[str]) -> int:
     temporal = t5.subprocess.Popen(
         ["temporal", "server", "start-dev", "--headless", "--port", str(TEMPORAL_PORT),
          "--ui-port", str(TEMPORAL_PORT + 1), "--db-filename", str(t2.LOGS / "temporal.db"),
-         "--log-level", "warn", "--dynamic-config-value", f"matching.enableFairness={str(fair).lower()}",
+         "--log-level", "warn",
+         "--dynamic-config-value", f"matching.enableFairness={str(fair).lower()}",
          *t2.SEARCH_ATTRIBUTE_FLAGS],
         stdout=open(t2.LOGS / "temporal.log", "w"), stderr=t5.subprocess.STDOUT,
     )  # fmt: skip
@@ -202,6 +219,8 @@ async def main(argv: list[str]) -> int:
         t5.worker(bucket, "s", "summary", {"KP_SUMMARY_BASE_URL": ANTHROPIC,
                                            "KP_SUMMARY_API_KEY": key}),
     ]  # fmt: skip
+    if fairness:  # SMALL's parse must not wait for BIG's local enrichment (one slot a worker)
+        workers.append(t5.worker(bucket, "s2", "inference", {}))
     spent = {"prompt_tokens": 0, "completion_tokens": 0}
     failures = []
     try:
@@ -227,12 +246,15 @@ async def main(argv: list[str]) -> int:
             for sha, data in ((big_sha, big_data), (small_sha, small_data)):
                 await store.put_if_absent(f"custody/{sha}", data)
             big_id, small_id = f"req_{t2.RUN}_f{big['index']}", f"req_{t2.RUN}_f{small['index']}"
-            big_task = asyncio.create_task(t4.run_case(bucket, big_sha, big_data, big_id))
+            # run_case blocks on the CLI subprocess, so BIG gets a thread and an event loop of
+            # its own while this one watches its history.
+            big_task = asyncio.create_task(
+                asyncio.to_thread(asyncio.run, t4.run_case(bucket, big_sha, big_data, big_id))
+            )
             begin = time.monotonic()
-            while not any("/chunks/" in k or k.endswith("sections.json")
-                          for k in await store.list_prefix(f"documents/doc_{big_sha[:16]}/")):
-                assert time.monotonic() - begin < 900, "BIG's summary never started"
-                await asyncio.sleep(1)  # fmt: skip
+            while not await scheduled(client, big_id, "summary_chunk"):
+                assert time.monotonic() - begin < 900, "BIG's chunks were never scheduled"
+                await asyncio.sleep(1)
             small_started = round(time.monotonic() - begin, 1)
             small_case = await t4.run_case(bucket, small_sha, small_data, small_id)
             big_case = await big_task
@@ -250,16 +272,21 @@ async def main(argv: list[str]) -> int:
                         "small_overview_completed": (small_spans[0]["completed"] + offset
                                                      if small_spans else None),
                         "big_chunks": [s for s in big_t["spans"] if s["activity"] == "summary_chunk"],
-                        "small_chunks": [{**s, **{k: s[k] + offset for k in ("scheduled", "started",
-                                                                              "completed")}}
-                                         for s in small_t["spans"]
-                                         if s["activity"] == "summary_chunk"]}  # fmt: skip
-            first = min(evidence["small_chunks"], key=lambda s: s["scheduled"])
+                        "small_spans": [{**s, **{k: s[k] + offset for k in ("scheduled", "started",
+                                                                             "completed")}}
+                                        for s in small_t["spans"]]}  # fmt: skip
+            spans = evidence["small_spans"]
+            (sections,) = [s for s in spans if s["activity"] == "summary_sections"]
+            first = min((s for s in spans if s["activity"] == "summary_chunk"),
+                        key=lambda s: s["started"])  # fmt: skip
+            # SMALL waits in the queue for its sections, then for its first chunk.
+            waits = [(t["scheduled"], t["started"]) for t in (sections, first)]
             waiting = [s for s in evidence["big_chunks"]
-                       if s["scheduled"] <= first["scheduled"] < s["started"]]
-            passed_by = [s for s in waiting if s["started"] < first["started"]]
+                       if s["scheduled"] <= sections["scheduled"] < s["started"]]
+            passed_by = [s for s in evidence["big_chunks"]
+                         if any(a <= s["started"] < b for a, b in waits)]
             evidence.update(fair=fair, big_waiting=len(waiting), passed_by=len(passed_by),
-                            small_wait_s=round(first["started"] - first["scheduled"], 1))
+                            small_wait_s=round(sum(b - a for a, b in waits), 1))
             backlog = len(waiting) >= MIN_BACKLOG
             evidence["pass"] = (
                 big_case[0] == 0 and small_case[0] == 0 and backlog
@@ -268,7 +295,8 @@ async def main(argv: list[str]) -> int:
             )  # fmt: skip
             name = "evidence-fairness.json" if fair else "evidence-fairness-off.json"
             (HERE / name).write_text(json.dumps(evidence, indent=2) + "\n")
-            print("F", {k: v for k, v in evidence.items() if not k.endswith("_chunks")}, flush=True)
+            print("F", {k: v for k, v in evidence.items() if not k.endswith(("_chunks", "_spans"))},
+                  flush=True)
             failures += [] if evidence["pass"] else ["F"]
 
         for index in indices:
