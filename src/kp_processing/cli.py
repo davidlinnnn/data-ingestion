@@ -206,6 +206,7 @@ async def run_worker(
         if queue == "summary":
             settings = runtime.profile.runtime
             deadline = settings["summary_request_deadline_s"]
+            # #155: a chunk's calls run in parallel, so slots alone do not bound the requests.
             summary = Bounded(OpenAIChat(external_http, summary_url or "", summary_key,
                                          enrich_vlm.model(runtime.profile, "summary"),
                                          deadline["connect"], deadline["total"]),

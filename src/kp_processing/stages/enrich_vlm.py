@@ -204,7 +204,6 @@ class Sends:
         runtime: Runtime,
         service: Service,
         attempt_prefix: str,
-        receipts: list[str],
         limit: int,
         deadline: float,
     ) -> None:
@@ -213,16 +212,12 @@ class Sends:
         self.service = service
         self.transport = ports.vlm if service == "vlm" else ports.summary
         self.prefix = f"{attempt_prefix}/receipts/"
-        self.keys = receipts
-        self.used = len(receipts)
+        self.methods = runtime.profile.methods
+        self.keys: list[str] = []
         self.limit = limit
         self.deadline = deadline
         self.lock = asyncio.Lock()
         self.numbers: dict[str, int] = {}
-        for key in receipts:
-            directory, name = key[len(self.prefix) :].rsplit("/", 1)
-            number = int(name.removesuffix(".json"))
-            self.numbers[directory] = max(self.numbers.get(directory, 0), number)
 
     @classmethod
     async def start(
@@ -234,20 +229,27 @@ class Sends:
         limit: int,
         deadline: float,
     ) -> "Sends":
-        """Sends that count, toward limit, the receipts under {attempt_prefix}/receipts/ when
-        called whose item (the path's first segment, "<method id>:<target_ref>") is of a method
+        """Sends that count, toward limit, the receipts under {attempt_prefix}/receipts/ whose
+        item (the path's first segment, "<method id>:<target_ref>") is of a method
         whose service is service, and send nothing once ports.clock.monotonic() passes
         deadline."""
-        prefix = f"{attempt_prefix}/receipts/"
-        methods = runtime.profile.methods
-        keys = [
+        sends = cls(ports, runtime, service, attempt_prefix, limit, deadline)
+        sends.keys = await sends.listed()
+        for key in sends.keys:
+            directory, name = key[len(sends.prefix) :].rsplit("/", 1)
+            number = int(name.removesuffix(".json"))
+            sends.numbers[directory] = max(sends.numbers.get(directory, 0), number)
+        return sends
+
+    async def listed(self) -> list[str]:
+        """The keys of the receipts under the attempt prefix of this service's methods."""
+        return [
             key
-            for key in await ports.store.list_prefix(prefix.rstrip("/"))
-            if key.startswith(prefix)
-            and (method := methods.get(key[len(prefix) :].split(":", 1)[0]))
-            and method.service == service
+            for key in await self.ports.store.list_prefix(self.prefix.rstrip("/"))
+            if key.startswith(self.prefix)
+            and (method := self.methods.get(key[len(self.prefix) :].split(":", 1)[0]))
+            and method.service == self.service
         ]
-        return cls(ports, runtime, service, attempt_prefix, keys, limit, deadline)
 
     def receipts(self, directory: str) -> list[str]:
         """The keys of the receipts directly in directory when start() listed them."""
@@ -302,8 +304,9 @@ class Sends:
                                                           (metadata also {"status"})
           a receipt number already taken (another worker
           sends the same chain in this attempt)           integrity     RECEIPT_CONFLICT
-          a send beyond the limit (receipts counted at
-          start() plus this object's sends)               configuration REQUEST_CAP_EXCEEDED
+          a send beyond the limit (the service's receipts
+          in the attempt, listed before each send, so
+          Activities sending at once share it)            configuration REQUEST_CAP_EXCEEDED
                                                           (metadata also {"limit"})
           any exception from parse but InvalidOutput,
           or MethodUnavailable from the transport          method_failure()
@@ -344,7 +347,7 @@ class Sends:
             async with self.lock:
                 if clock.monotonic() > self.deadline:
                     break
-                if self.used >= self.limit:
+                if len(await self.listed()) >= self.limit:
                     raise ProcessingFailure(
                         "platform",
                         "configuration",
@@ -371,7 +374,6 @@ class Sends:
                         "External request receipt already exists",
                         metadata={"item_id": item_id},
                     )
-                self.used += 1
             attempts += 1
             answer: Completion | None = None
             send_started = time.perf_counter()

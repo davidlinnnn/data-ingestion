@@ -2,6 +2,7 @@
 Section rules, chunking, map, verify, repair and reduce, the failure paths and their statuses,
 receipts and reuse, and the summary in the Processing Result."""
 
+import asyncio
 import dataclasses
 import json
 
@@ -288,6 +289,31 @@ async def test_large_documents_run_one_chunk_activity_per_chunk(ports, runtime, 
     assert record["outcome"] == "success"
 
 
+async def test_an_overview_left_empty_keeps_the_section_summaries(ports, runtime):
+    def judge(sentence: str) -> bool:
+        return sentence != METHOD  # the only overview sentence is unsupported
+
+    def reply_to(request: dict):
+        if step(request) == "reduce":
+            return reply({"sentences": [{"text": METHOD, "sources": [2]}]})
+        return reply(answer(request, judge, rewrite=lambda s: ""))
+
+    _, record, _ = await summarized(ports, runtime, FakeInference(reply_to))
+
+    assert record["outcome"] == "success"
+    assert record["content"]["overview"] == []
+    assert record["content"]["sections"][0]["sentences"] != []
+
+
+async def test_a_reduce_without_a_sentence_is_empty_output(ports, runtime):
+    transport = failing("reduce", json.dumps({"sentences": [{"text": " ", "sources": [1]}]}))
+
+    _, record, _ = await summarized(ports, runtime, transport)
+
+    assert (record["outcome"], record["reason"]) == ("failed", "EMPTY_OUTPUT")
+    assert steps(transport).count("reduce") == 2
+
+
 # --- failure paths --------------------------------------------------------------------------
 
 
@@ -388,6 +414,35 @@ async def test_a_send_past_the_request_cap_fails_the_document(ports, runtime):
 
     assert (caught.value.category, caught.value.reason) == ("configuration", "REQUEST_CAP_EXCEEDED")
     assert len(ports.summary.requests) == 1  # type: ignore[union-attr]
+
+
+async def test_the_request_cap_counts_sends_of_chunks_running_at_once(ports, runtime, monkeypatch):
+    monkeypatch.setattr(document_summary, "CHUNK_CHARS", 1000)
+    runtime = with_runtime(runtime, request_cap={"per_item": 3, "per_section": 0, "extra": 3})
+    both = asyncio.Event()
+
+    async def held(request: dict):
+        # Each chunk's map waits for the other's, so both Activities have started sending.
+        if step(request) == "map":
+            if steps(transport).count("map") == 2:
+                both.set()
+            await both.wait()
+        return reply(answer(request))
+
+    transport = FakeInference(held)
+    ports = dataclasses.replace(ports, summary=transport)
+    input = await native(ports, runtime, summary_paper())
+    plan = await summary.run_sections(enrich(input), ports, runtime)
+
+    results = await asyncio.gather(
+        *(summary.run_chunk(ChunkInput(enrich(input), plan, i), ports, runtime) for i in (0, 1)),
+        return_exceptions=True,
+    )
+
+    # Each chunk needs a map and a verify: 4 sends, of which the cap allows 3.
+    assert len(transport.requests) == 3
+    (failure,) = [r for r in results if isinstance(r, ProcessingFailure)]
+    assert failure.reason == "REQUEST_CAP_EXCEEDED"
 
 
 async def test_a_summary_worker_without_a_transport_fails_the_document(ports, runtime):

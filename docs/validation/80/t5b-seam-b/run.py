@@ -4,19 +4,24 @@ stand-in, so the summary is the only external request.
 
     set -a; . ~/.config/kp-dev/anthropic.env; set +a
     env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t5b-seam-b/run.py \\
-        CORPUS_MANIFEST OUT_DIR [--fairness BIG SMALL] INDEX...
+        CORPUS_MANIFEST OUT_DIR [--fairness|--fairness-off BIG SMALL] INDEX...
 
 Ports of its own (Temporal 7264/7265, fake_admission 8111, VLM stand-in 8112; S3 stand-in on
 9100); it refuses to start when any is taken. Fairness is switched on in the dev server
-(matching.enableFairness).
+(matching.enableFairness), except with --fairness-off.
 
 Cases, each paper in a fresh bucket of this run:
   S  the document completes; its summary is success (or a recorded failure reason), each overview
      sentence cites at least one summarized Section, every summarized Section is listed in
      reading order, no published sentence lacks a verify, summary sends all ok
   C  a second request for the same document: no summary request, the summary reused
-  F  (with --fairness) BIG starts; SMALL starts once BIG's first chunk Activity has started; pass
-     when SMALL's summary_overview completes before BIG's does
+  F  (with --fairness) BIG starts; SMALL starts once BIG's summary Sections exist. The DEV
+     profile is copied with summary_concurrency_per_document FAIR_CONCURRENCY, so BIG's chunks
+     queue behind the summary worker's slots. Measured: the BIG chunks that started while
+     SMALL's first chunk waited (scheduled to started). Pass when BIG had at least
+     MIN_BACKLOG chunks waiting as SMALL's was scheduled and at most MAX_PASSED_BY started.
+     --fairness-off is the negative control, fairness switched off in the server: pass when
+     at least MIN_BACKLOG started, so the measurement can see a document waiting.
 
 Per paper, evidence-INDEX.json keeps counts, timings, tokens and statuses only (the papers are
 third-party). OUT_DIR (outside the repo) gets each summary's content and record.json, for the
@@ -34,6 +39,7 @@ import time
 from datetime import UTC
 from pathlib import Path
 
+import yaml
 from temporalio.client import Client
 
 HERE = Path(__file__).resolve().parent
@@ -54,9 +60,12 @@ TEMPORAL_PORT, ADMISSION_PORT, VLM_PORT = 7264, 8111, 8112
 t2.TEMPORAL, t2.ADMISSION = f"127.0.0.1:{TEMPORAL_PORT}", f"http://127.0.0.1:{ADMISSION_PORT}"
 t2.BASE_ENV.update(TEMPORAL_ADDRESS=t2.TEMPORAL, KP_ADMISSION_URL=t2.ADMISSION)
 ANTHROPIC = "https://api.anthropic.com/v1"
-PRICE_PER_MTOK = {"input": 3.0, "output": 15.0}  # Sonnet 5.5, USD per million tokens
+PRICE_PER_MTOK = {"input": 2.0, "output": 10.0}  # Sonnet 5.5, USD per million tokens (2026-10)
 STOP_AT_USD = 40.0
 SUMMARY = "document-summary"
+FAIR_CONCURRENCY = 16  # paper 20's chunks, against the worker's 5 slots
+MIN_BACKLOG = 3
+MAX_PASSED_BY = 2  # tasks already dispatched to a poller when SMALL's chunk was scheduled
 
 
 def cost(tokens: dict) -> float:
@@ -157,9 +166,9 @@ async def run_paper(client, manifest: Path, paper: dict, out: Path, request_id: 
 async def main(argv: list[str]) -> int:
     manifest, out = Path(argv[0]), Path(argv[1])
     rest = argv[2:]
-    fairness = None
-    if rest[:1] == ["--fairness"]:
-        fairness, rest = (int(rest[1]), int(rest[2])), rest[3:]
+    fairness, fair = None, True
+    if rest[:1] in (["--fairness"], ["--fairness-off"]):
+        fairness, fair, rest = (int(rest[1]), int(rest[2])), rest[0] == "--fairness", rest[3:]
     indices = [int(i) for i in rest]
     key = os.environ["ANTHROPIC_API_KEY"]
     ports = (TEMPORAL_PORT, TEMPORAL_PORT + 1, ADMISSION_PORT, VLM_PORT)
@@ -167,11 +176,16 @@ async def main(argv: list[str]) -> int:
         raise SystemExit(f"ports already in use: {busy}")
     t2.LOGS.mkdir(parents=True)
     out.mkdir(parents=True, exist_ok=True)
+    if fairness:
+        profile = yaml.safe_load(Path(t2.PROFILE).read_text())
+        profile["runtime"]["summary_concurrency_per_document"] = FAIR_CONCURRENCY
+        t2.PROFILE = str(t2.LOGS / "paper-pdf-dev-fairness.yaml")
+        Path(t2.PROFILE).write_text(yaml.safe_dump(profile, sort_keys=False))
     papers = {p["index"]: p for p in json.loads(manifest.read_text())["papers"]}
     temporal = t5.subprocess.Popen(
         ["temporal", "server", "start-dev", "--headless", "--port", str(TEMPORAL_PORT),
          "--ui-port", str(TEMPORAL_PORT + 1), "--db-filename", str(t2.LOGS / "temporal.db"),
-         "--log-level", "warn", "--dynamic-config-value", "matching.enableFairness=true",
+         "--log-level", "warn", "--dynamic-config-value", f"matching.enableFairness={str(fair).lower()}",
          *t2.SEARCH_ATTRIBUTE_FLAGS],
         stdout=open(t2.LOGS / "temporal.log", "w"), stderr=t5.subprocess.STDOUT,
     )  # fmt: skip
@@ -217,8 +231,8 @@ async def main(argv: list[str]) -> int:
             begin = time.monotonic()
             while not any("/chunks/" in k or k.endswith("sections.json")
                           for k in await store.list_prefix(f"documents/doc_{big_sha[:16]}/")):
+                assert time.monotonic() - begin < 900, "BIG's summary never started"
                 await asyncio.sleep(1)  # fmt: skip
-            await asyncio.sleep(3)  # BIG's chunk Activities are in flight
             small_started = round(time.monotonic() - begin, 1)
             small_case = await t4.run_case(bucket, small_sha, small_data, small_id)
             big_case = await big_task
@@ -240,13 +254,20 @@ async def main(argv: list[str]) -> int:
                                                                               "completed")}}
                                          for s in small_t["spans"]
                                          if s["activity"] == "summary_chunk"]}  # fmt: skip
+            first = min(evidence["small_chunks"], key=lambda s: s["scheduled"])
+            waiting = [s for s in evidence["big_chunks"]
+                       if s["scheduled"] <= first["scheduled"] < s["started"]]
+            passed_by = [s for s in waiting if s["started"] < first["started"]]
+            evidence.update(fair=fair, big_waiting=len(waiting), passed_by=len(passed_by),
+                            small_wait_s=round(first["started"] - first["scheduled"], 1))
+            backlog = len(waiting) >= MIN_BACKLOG
             evidence["pass"] = (
-                big_case[0] == 0 and small_case[0] == 0
-                and evidence["small_overview_completed"] is not None
-                and evidence["big_overview_completed"] is not None
-                and 0 <= evidence["small_overview_completed"] < evidence["big_overview_completed"]
+                big_case[0] == 0 and small_case[0] == 0 and backlog
+                and (0 <= len(passed_by) <= MAX_PASSED_BY if fair
+                     else len(passed_by) >= MIN_BACKLOG)
             )  # fmt: skip
-            (HERE / "evidence-fairness.json").write_text(json.dumps(evidence, indent=2) + "\n")
+            name = "evidence-fairness.json" if fair else "evidence-fairness-off.json"
+            (HERE / name).write_text(json.dumps(evidence, indent=2) + "\n")
             print("F", {k: v for k, v in evidence.items() if not k.endswith("_chunks")}, flush=True)
             failures += [] if evidence["pass"] else ["F"]
 

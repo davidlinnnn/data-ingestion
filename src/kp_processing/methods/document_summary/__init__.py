@@ -38,9 +38,9 @@ HEADING_LABELS = ("title", "section_header")
 BODY_LABELS = ("text", "paragraph", "list_item")
 # A9: a heading equal to one of these, after normalize(), marks the reference list.
 REFERENCES = {
-    "references", "reference", "bibliography", "works cited", "literature cited",
-    "cited literature", "references and notes", "參考文獻", "参考文献", "參考資料",
-}  # fmt: skip
+    "references", "bibliography", "works cited", "literature cited", "references and notes",
+    "參考文獻", "参考文献", "參考資料",
+}  # A9  # fmt: skip
 ACKNOWLEDGEMENTS = ("acknowledg", "致謝", "致谢", "誌謝")  # A10: heading prefixes
 CHUNK_CHARS = 8000  # whole sections are packed up to this; a larger section is its own chunk
 CHARS_PER_SECTION_SENTENCE = 1500
@@ -212,6 +212,14 @@ def _parse[M: BaseModel](model: type[M], content: str) -> M:
         raise InvalidOutput("SCHEMA_INVALID") from exc
 
 
+def _reduced(content: str) -> _Reduce:
+    """The reduce answer's non-blank sentences; EMPTY_OUTPUT when there are none."""
+    sentences = [s for s in _parse(_Reduce, content).sentences if s.text.strip()]
+    if not sentences:
+        raise InvalidOutput("EMPTY_OUTPUT")
+    return _Reduce(sentences=sentences)
+
+
 def _request(prompt: str, response_format: dict[str, Any]) -> dict[str, Any]:
     return {
         "messages": [{"role": "user", "content": prompt}],
@@ -234,6 +242,11 @@ def _sections_xml(document: dict[str, Any], indices: list[int]) -> str:
     sections = document["sections"]
     body = "\n".join(_section_xml(i, sections[i]) for i in indices)
     return f"<sections>\n{body}\n</sections>"
+
+
+def _titled_sections_xml(document: dict[str, Any], indices: list[int]) -> str:
+    """The sections with the paper's title, so a sentence may name what the title names."""
+    return f"<paper_title>{document['title']}</paper_title>\n{_sections_xml(document, indices)}"
 
 
 def map_request(document: dict[str, Any], indices: list[int]) -> dict[str, Any]:
@@ -261,12 +274,14 @@ def verify_request(document: dict[str, Any], indices: list[int], sentences: list
     """Judge each sentence against the sections of indices only."""
     listing = "\n".join(f'<sentence n="{n}">{s}</sentence>' for n, s in enumerate(sentences, 1))
     prompt = (
-        f"{_sections_xml(document, indices)}\n\n<sentences>\n{listing}\n</sentences>\n\n"
+        f"{_titled_sections_xml(document, indices)}\n\n<sentences>\n{listing}\n</sentences>\n\n"
         "For each sentence, is every claim in it supported by the sections above? Judge only "
-        "against their text: background knowledge, plausibility and other parts of the paper do "
-        "not count. Paraphrase is fine; added numbers, causes, comparisons or generalisations "
-        "that the text does not state are not. Give one verdict per sentence, with its n; in "
-        "reason name the unsupported part in one sentence (or say why it is supported)."
+        "against their text and the paper's title (a sentence may call the paper's method or "
+        "system by the name in its title): background knowledge, plausibility and other parts "
+        "of the paper do not count. Paraphrase is fine; added numbers, causes, comparisons or "
+        "generalisations that the text does not state are not. Give one verdict per sentence, "
+        "with its n; in reason name the unsupported part in one sentence (or say why it is "
+        "supported)."
     )
     return _request(prompt, VERIFY)
 
@@ -284,12 +299,13 @@ def repair_request(
     document: dict[str, Any], indices: list[int], sentence: str, reason: str
 ) -> dict[str, Any]:
     prompt = (
-        f"{_sections_xml(document, indices)}\n\n<sentence>{sentence}</sentence>\n"
+        f"{_titled_sections_xml(document, indices)}\n\n<sentence>{sentence}</sentence>\n"
         f"<problem>{reason}</problem>\n\n"
         "The sentence was judged not fully supported by the sections, for the problem given. "
         "First copy into quotes the passages of the sections that support any part of the "
         "sentence. Then rewrite the sentence with as few changes as possible so that every "
-        "claim is supported by those quotes, in the sentence's language; never add a claim. If "
+        "claim is supported by those quotes (or names what the title names), in the "
+        "sentence's language; never add a claim. If "
         "nothing in the sections supports it, return an empty sentence."
     )
     return _request(prompt, REPAIR)
@@ -394,8 +410,8 @@ async def overview(
     Output:
       no_text  no summarized section has a target (none, or all too short); content ""; no
                call
-      failed   NO_SUPPORTED_SENTENCE when every sentence was dropped, so there is no statement
-               (no call), or no overview sentence is left
+      failed   NO_SUPPORTED_SENTENCE when every section sentence was dropped, so there is no
+               statement (no call); a reduce answer without a sentence is EMPTY_OUTPUT
       success  content {"overview": [{"text", "evidence": [{"section_id"}]}],
                         "sections": [{"section_id", "heading", "sentences": [{"text"}]}]}
                with every summarized section in reading order (sentences [] when it has none),
@@ -432,7 +448,7 @@ async def overview(
     reduced = await ask(
         "reduce",
         reduce_request(document, statements, target),
-        lambda content: _parse(_Reduce, content),
+        _reduced,
     )
 
     async def fate(sentence: _ReduceSentence) -> dict[str, Any]:
@@ -446,13 +462,11 @@ async def overview(
         (result,) = await checked(document, cited, [sentence.text], ask)
         return {**result, "evidence": evidence}
 
-    texts = [s for s in reduced.sentences if s.text.strip()][:target]
+    texts = reduced.sentences[:target]
     async with asyncio.TaskGroup() as group:
         tasks = [group.create_task(fate(sentence)) for sentence in texts]
     record["overview"]["fates"] = [task.result() for task in tasks]
     kept = [f for f in record["overview"]["fates"] if f["text"]]
-    if not kept:
-        return MethodOutput(outcome="failed", reason="NO_SUPPORTED_SENTENCE"), record
     every = [f for s in record["sections"] for f in s["fates"]] + record["overview"]["fates"]
     content = {
         "overview": [{"text": f["text"], "evidence": f["evidence"]} for f in kept],
