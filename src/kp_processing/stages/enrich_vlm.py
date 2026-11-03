@@ -9,6 +9,7 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
+from kp_processing import metrics
 from kp_processing.identity import canonical_json
 from kp_processing.methods import (
     DocumentItem,
@@ -93,6 +94,8 @@ async def run_service(
     The item's receipts already present when the call starts each count as one attempt used;
     one without "result" (the worker died between send and completion) counts as
     "unavailable".
+    Each completed send is counted by kp_processing.metrics.external_request, and each item's
+    sends at the end of its chain, earlier receipts included, by metrics.item_attempts.
 
     Retry chain (#93 §3.4), per item:
       ServiceUnavailable(r)  result unavailable, reason r; send again after a backoff of
@@ -297,8 +300,11 @@ async def run_service(
                         system_fingerprint=answer.system_fingerprint if answer else None,
                     )
                     await ports.store.put(receipt_ref, canonical_json(receipt))
+                    metrics.external_request(service, receipt["result"], receipt["reason"],
+                                             latency_ms / 1000, receipt["usage"])  # fmt: skip
                     if last_result == "ok":
                         break
+                metrics.item_attempts.labels(service).observe(attempts)
                 if last_completion is not None:
                     output = dataclasses.replace(
                         output,

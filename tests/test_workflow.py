@@ -6,6 +6,7 @@ sandbox)."""
 import contextlib
 import dataclasses
 import json
+import logging
 import uuid
 
 import pytest
@@ -21,7 +22,7 @@ from kp_processing.ports.status_reporter import (
 )
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
-from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW
+from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, priority
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_parse import seven_pages
@@ -44,7 +45,11 @@ async def workers(client: Client, ports: Ports, runtime):
 async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, str]:
     async with workers(client, ports, runtime):
         handle = await client.start_workflow(
-            WORKFLOW, start, id=start["request_id"], task_queue=ORCHESTRATION_QUEUE
+            WORKFLOW,
+            start,
+            id=start["request_id"],
+            task_queue=ORCHESTRATION_QUEUE,
+            priority=priority(start.get("priority")),
         )
         outcome = await handle.result()
     return outcome, handle.result_run_id or ""
@@ -271,6 +276,35 @@ async def test_admission_priority_sets_the_temporal_priority_key(
 
     described = await client.get_workflow_handle(start["request_id"]).describe()
     assert described.raw_description.workflow_execution_info.priority.priority_key == key
+
+
+async def test_start_request_puts_the_correlation_ids_into_search_attributes(
+    client, monkeypatch, ports
+):
+    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    assert await start_request(start, wait=False) == 0
+
+    described = await client.get_workflow_handle(start["request_id"]).describe()
+    assert {pair.key.name: pair.value for pair in described.typed_search_attributes} == {
+        "DocumentUid": "doc_1",
+        "SourceRevisionId": "srv_1",
+        "TraceId": "4bf92f3577b34da6",
+    }
+
+
+async def test_prepare_logs_the_correlation_ids_once(client, ports, runtime, caplog):
+    caplog.set_level(logging.INFO, logger="temporalio.activity")
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    await process(client, ports, runtime, start)
+
+    lines = [r for r in caplog.records if getattr(r, "correlation", None)]
+    assert [(r.temporal_activity["workflow_id"], r.correlation) for r in lines] == [
+        (start["request_id"], {"document_uid": "doc_1", "source_revision_id": "srv_1",
+                               "trace_id": "4bf92f3577b34da6"}),
+    ]  # fmt: skip
 
 
 async def _resolved(value):
