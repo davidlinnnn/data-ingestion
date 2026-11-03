@@ -43,6 +43,10 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 - A worker hears of an Activity timeout or cancel only through a heartbeat response, throttled
   to 0.8 x the heartbeat timeout. A test of cancellation on a real worker sets a heartbeat
   timeout, and runs a negative control to show it can see the failure.
+- An exception in workflow code does not fail the workflow: Temporal retries its task until a
+  fixed build is deployed, so the workflow stays running and a test that awaits it hangs.
+  Workflow code reads state it may not have set (a stage that fails before it starts) with a
+  guard, and deployments alert on `temporal_workflow_task_execution_failed`.
 
 ## Validation evidence
 
@@ -50,5 +54,7 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
   broken measurement fails instead of passing. Convert external timestamps with an
   explicit UTC zone.
 - Pair a "never happens" claim with a negative control that shows the measurement can see it.
+- Check presence against the expected set of keys (queues, tiers, metrics): a key that never
+  appears must fail, not drop out of the check.
 - Cache the expensive pipeline output of a corpus run, keyed by input and method digests, and
   score one document before the whole corpus, so a scorer fix reruns only the scoring.
