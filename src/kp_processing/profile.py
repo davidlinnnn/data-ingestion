@@ -33,10 +33,15 @@ REQUIRED_RUNTIME = (
     "external_start_to_close_slack_s",
     "vlm_request_deadline_s.connect",
     "vlm_request_deadline_s.total",
-    "summary_request_deadline_s",
+    "summary_request_deadline_s.connect",
+    "summary_request_deadline_s.total",
+    "summary_budget_s",
+    "summary_concurrency_per_document",
+    "summary_requests_per_worker",
     *(f"retry.{key}" for key in ("initial_s", "multiplier", "cap_s", "max_attempts")),
     "vlm_concurrency_per_document",
     "request_cap.per_item",
+    "request_cap.per_section",
     "request_cap.extra",
     "enrichment_stage_budget_s.hard",
     "parse_group_pages",
@@ -73,12 +78,12 @@ class Method:
 
     @property
     def service(self) -> Service | None:
-        """The external service whose Activity runs its items: the package's SERVICE ("vlm"
-        when absent) when it declares request and parse; None for a package that declares only
-        run, whose items run in the local Activity."""
-        if not hasattr(self.package, "request"):
-            return None
-        return getattr(self.package, "SERVICE", "vlm")
+        """The external service whose Activities run its items: the package's SERVICE when it
+        declares one, else "vlm" when it declares request and parse; None for a package that
+        declares only run, whose items run in the local Activity."""
+        if hasattr(self.package, "SERVICE"):
+            return self.package.SERVICE
+        return "vlm" if hasattr(self.package, "request") else None
 
     def reuse_key(self, document_uid: str, input_digests: Sequence[str]) -> str:
         """The reuse key of one of this method's items (identity.reuse_key)."""

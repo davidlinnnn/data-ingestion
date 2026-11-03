@@ -71,12 +71,15 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
         (("stage", "inventory"), normal): 1,
         (("stage", "enrich_local"), normal): 1,
         (("stage", "enrich_vlm"), normal): 1,
-        (("stage", "enrich_summary"), normal): 1,
+        (("stage", "summary_sections"), normal): 1,
+        (("stage", "summary_chunk"), normal): 1,
+        (("stage", "summary_overview"), normal): 1,
         (("stage", "report"), normal): 10,
     }
     work = d["kp_processing_stage_work_total"]
     assert work[(("stage", "parse_group"), normal)] == 7
-    assert sum(v for k, v in work.items() if k[0][1].startswith("enrich_")) == items
+    enriched = ("enrich_", "summary_overview")  # the summary's one item
+    assert sum(v for k, v in work.items() if k[0][1].startswith(enriched)) == items
     outcomes = d["kp_processing_item_outcomes_total"]
     assert sum(outcomes.values()) == len(result["enrichments"])
     assert outcomes[(("method", "picture-ocr@1"), ("reason", "NO_TEXT"),
@@ -86,16 +89,18 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
         (("task_queue", "orchestration"), normal): ORCHESTRATION_ACTIVITIES,
         (("task_queue", "inference"), normal): INFERENCE_ACTIVITIES,
         (("task_queue", "vlm"), normal): 1,
-        (("task_queue", "summary"), normal): 1,
+        (("task_queue", "summary"), normal): 3,
     }
-    # Two pictures (one VLM request each) and one summary, each answered at the first send.
+    # Two pictures (one VLM request each); the summary of four sections of one sentence each
+    # (docling reads sections 1 and 7 as empty; page 6 has no text layer): one map, four
+    # verify, one reduce and four overview verify. All answered at the first send.
     assert d["kp_processing_external_requests_total"] == {
         (("outcome", "ok"), ("reason", ""), ("service", "vlm")): 2,
-        (("outcome", "ok"), ("reason", ""), ("service", "summary")): 1,
+        (("outcome", "ok"), ("reason", ""), ("service", "summary")): 10,
     }
     assert d["kp_processing_external_request_duration_seconds_count"] == {
         (("service", "vlm"),): 2,
-        (("service", "summary"),): 1,
+        (("service", "summary"),): 10,
     }
     assert (
         d["kp_processing_external_tokens_total"][(("direction", "input"), ("service", "vlm"))] == 2
@@ -103,14 +108,8 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     assert (
         d["kp_processing_external_tokens_total"][(("direction", "output"), ("service", "vlm"))] == 2
     )
-    assert d["kp_processing_item_attempts_count"] == {
-        (("service", "vlm"),): 2,
-        (("service", "summary"),): 1,
-    }
-    assert d["kp_processing_item_attempts_sum"] == {
-        (("service", "vlm"),): 2,
-        (("service", "summary"),): 1,
-    }
+    assert d["kp_processing_item_attempts_count"] == {(("service", "vlm"),): 2}
+    assert d["kp_processing_item_attempts_sum"] == {(("service", "vlm"),): 2}
 
 
 async def test_a_failed_document_counts_as_failed(client, ports, runtime):

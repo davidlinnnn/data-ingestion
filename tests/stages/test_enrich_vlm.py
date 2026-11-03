@@ -59,6 +59,7 @@ from tests.stages.test_enrich_local import (
     records,
     with_items,
 )
+from tests.summary import summarize_all
 from tests.vlm import CANNED, canned, images, schema_name
 
 BODY = [f"Line {i} of the method section describes the approach in plain prose." for i in range(4)]
@@ -127,7 +128,7 @@ async def finalized(ports, runtime, input: FinalizeInput, outcomes) -> dict:
     Result."""
     item_input = EnrichInput("doc_1", input.inventory, "req_1", "run_1")
     local = await enrich_local.run(item_input, ports, runtime)
-    local += await enrich_vlm.run_summary(item_input, ports, runtime)
+    local += await summarize_all(ports, runtime, item_input)
     ref = await finalize.run(
         dataclasses.replace(input, outcomes=[*local, *outcomes]), ports, runtime
     )
@@ -595,8 +596,8 @@ async def test_a_send_past_the_request_cap_fails_the_document(ports, runtime, ea
         runtime, request_cap={"per_item": 0, "extra": 1}, vlm_concurrency_per_document=1
     )
     input = await native(ports, runtime, two_picture_paper())
-    for n in range(earlier):  # a send of another Activity of this attempt
-        await ports.store.put(f"requests/req_1/attempts/run_1/receipts/other:#/x/{n}/1.json", b"{}")
+    for n in range(earlier):  # a send of another vlm Activity of this attempt
+        await ports.store.put(f"requests/req_1/attempts/run_1/receipts/code:#/x/{n}/1.json", b"{}")
 
     with pytest.raises(ProcessingFailure) as caught:
         await run_vlm(ports, runtime, input.inventory)
