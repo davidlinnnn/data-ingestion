@@ -327,7 +327,8 @@ async def main(manifest: Path) -> int:
         ["temporal", "server", "start-dev", "--headless", "--port", "7244", "--ui-port", "7245",
          "--db-filename", str(seamb.LOGS / "temporal.db"), "--log-level", "warn",
          "--dynamic-config-value", "matching.numTaskqueueReadPartitions=1",
-         "--dynamic-config-value", "matching.numTaskqueueWritePartitions=1"],
+         "--dynamic-config-value", "matching.numTaskqueueWritePartitions=1",
+         *seamb.SEARCH_ATTRIBUTE_FLAGS],
         stdout=open(seamb.LOGS / "temporal.log", "w"), stderr=subprocess.STDOUT,
     )  # fmt: skip
     admission = subprocess.Popen(

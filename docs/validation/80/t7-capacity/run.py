@@ -48,7 +48,7 @@ t5 = load("t5", HERE.parent / "t5-seam-b/run.py")
 t4, t2 = t5.t4, t5.t2
 from kp_processing.profile import PROFILES_DIR, load_profile  # noqa: E402
 from kp_processing.stages import enrichment_key, item_prefix  # noqa: E402
-from kp_processing.workflow import SEARCH_ATTRIBUTES, STAGE_DURATION  # noqa: E402
+from kp_processing.workflow import STAGE_DURATION  # noqa: E402
 
 TEMPORAL_PORT, ADMISSION_PORT, VLM_PORT, SUMMARY_PORT = 7284, 8121, 8122, 8123
 METRICS = {"orchestration": 9480, "vlm": 9482, "summary": 9484}  # +1: the Temporal runtime's
@@ -269,7 +269,7 @@ class Stack:
              "--log-level", "warn",
              "--dynamic-config-value", "matching.numTaskqueueReadPartitions=1",
              "--dynamic-config-value", "matching.numTaskqueueWritePartitions=1",
-             *[a for key in SEARCH_ATTRIBUTES.values() for a in ("--search-attribute", f"{key.name}=Keyword")]],
+             *t2.SEARCH_ATTRIBUTE_FLAGS],
             stdout=open(t2.LOGS / "temporal.log", "w"), stderr=subprocess.STDOUT,
         ), subprocess.Popen(
             [str(t2.REPO / ".venv/bin/python"), "-m", "tools.fake_admission.server",
