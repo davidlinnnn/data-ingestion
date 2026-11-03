@@ -4,9 +4,10 @@ non-retryable ApplicationError whose details the workflow turns into the failure
 
 One worker serves one task queue, so each queue scales as its own deployment: orchestration
 runs the workflow and the light Activities, inference runs docling one call at a time and is
-the only one that loads it, vlm sends the VLM requests."""
+the only one that loads it, vlm sends the VLM requests and summary the summary API's."""
 
 import asyncio
+import json
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
@@ -18,7 +19,7 @@ from temporalio.client import Client
 from temporalio.exceptions import ApplicationError
 from temporalio.worker import Worker
 
-from kp_processing import weights
+from kp_processing import metrics, weights
 from kp_processing.ports.object_store import ObjectStore
 from kp_processing.ports.status_reporter import StatusReport
 from kp_processing.stages import (
@@ -47,12 +48,16 @@ from kp_processing.workflow import (
     FAILURE_TYPE,
     INFERENCE_QUEUE,
     ORCHESTRATION_QUEUE,
+    SEARCH_ATTRIBUTES,
+    SUMMARY_QUEUE,
     VLM_QUEUE,
     PaperPdfWorkflow,
     Queue,
+    tier,
 )
 
 VLM_SLOTS = 5  # #93 §7: documents in VLM enrichment at once per worker
+SUMMARY_SLOTS = 5  # #93 §7: documents in summary enrichment at once per worker
 
 T = TypeVar("T")
 
@@ -63,9 +68,20 @@ class _Activities:
         self.runtime = runtime
 
     async def _run(self, body: Callable[..., Awaitable[T]], input: Any) -> T:
+        info = activity.info()
+        label = _tier()
+        age = (info.started_time - info.current_attempt_scheduled_time).total_seconds()
+        metrics.queue_age.labels(info.task_queue, label).observe(age)
+        started = self.ports.clock.monotonic()
         heartbeat = asyncio.create_task(self._heartbeat())
         try:
-            return await body(input, self.ports, self.runtime)
+            result = await body(input, self.ports, self.runtime)
+            # prepare and finalize are status stages: the workflow times them.
+            if info.activity_type not in ("prepare", "finalize"):
+                metrics.stage_duration.labels(info.activity_type, label).observe(
+                    self.ports.clock.monotonic() - started
+                )
+            return result
         except ProcessingFailure as failure:
             activity.logger.warning(
                 "%s: %s (cause %s) %s", failure.reason, failure.message, failure.cause,
@@ -86,6 +102,9 @@ class _Activities:
 class Orchestration(_Activities):
     @activity.defn(name="prepare")
     async def prepare(self, input: PrepareInput) -> Plan:
+        start = input.start if isinstance(input.start, dict) else {}
+        correlation = {field: start.get(field) for field in SEARCH_ATTRIBUTES}
+        activity.logger.info("preparing", extra={"correlation": correlation})
         return await self._run(prepare.run, input)
 
     @activity.defn(name="inventory")
@@ -94,11 +113,19 @@ class Orchestration(_Activities):
 
     @activity.defn(name="finalize")
     async def finalize(self, input: FinalizeInput) -> str:
-        return await self._run(finalize.run, input)
+        ref = await self._run(finalize.run, input)
+        result = json.loads(await self.ports.store.get(ref))
+        for e in result["enrichments"]:
+            method = f"{e['method_ref']['id']}@{e['method_ref']['version']}"
+            metrics.item_outcomes.labels(method, e["status"], e["status_reason"] or "").inc()
+        metrics.document_outcomes.labels("complete", _tier()).inc()
+        return ref
 
     @activity.defn(name="register_failure")
     async def register_failure(self, input: FailureInput) -> str:
-        return await self._run(finalize.run_failure, input)
+        ref = await self._run(finalize.run_failure, input)
+        metrics.document_outcomes.labels("failed", _tier()).inc()
+        return ref
 
     @activity.defn(name="report")
     async def report(self, input: StatusReport) -> bool:
@@ -119,7 +146,11 @@ class Inference(_Activities):
 
     @activity.defn(name="parse_group")
     async def parse_group(self, input: GroupInput) -> GroupRef:
-        return await self._run(self.parse.run_group, input)
+        group = await self._run(self.parse.run_group, input)
+        if not group.reused:
+            first, last = group.pages
+            metrics.stage_work.labels("parse_group", _tier()).inc(last - first + 1)
+        return group
 
     @activity.defn(name="assemble")
     async def assemble(self, input: AssembleInput) -> Registered:
@@ -127,7 +158,7 @@ class Inference(_Activities):
 
     @activity.defn(name="enrich_local")
     async def enrich_local(self, input: EnrichInput) -> list[OutcomeRef]:
-        return await self._run(self.enrich_local_stage.run, input)
+        return _count_enriched(await self._run(self.enrich_local_stage.run, input))
 
     def all(self) -> list[Callable[..., Any]]:
         return [self.parse_group, self.assemble, self.enrich_local]
@@ -136,10 +167,30 @@ class Inference(_Activities):
 class Vlm(_Activities):
     @activity.defn(name="enrich_vlm")
     async def enrich_vlm(self, input: EnrichInput) -> list[OutcomeRef]:
-        return await self._run(enrich_vlm.run, input)
+        return _count_enriched(await self._run(enrich_vlm.run, input))
 
     def all(self) -> list[Callable[..., Any]]:
         return [self.enrich_vlm]
+
+
+class Summary(_Activities):
+    @activity.defn(name="enrich_summary")
+    async def enrich_summary(self, input: EnrichInput) -> list[OutcomeRef]:
+        return _count_enriched(await self._run(enrich_vlm.run_summary, input))
+
+    def all(self) -> list[Callable[..., Any]]:
+        return [self.enrich_summary]
+
+
+def _tier() -> str:
+    return tier(activity.info().priority.priority_key)
+
+
+def _count_enriched(outcomes: list[OutcomeRef]) -> list[OutcomeRef]:
+    """Count the items this Activity enriched (not reused) as its stage work."""
+    fresh = sum(not outcome.reused for outcome in outcomes)
+    metrics.stage_work.labels(activity.info().activity_type, _tier()).inc(fresh)
+    return outcomes
 
 
 class WriteOnceUnsupported(RuntimeError):
@@ -174,6 +225,14 @@ async def make_worker(
             max_concurrent_activities=VLM_SLOTS,
             graceful_shutdown_timeout=grace,
         )
+    if queue == "summary":
+        return Worker(
+            client,
+            task_queue=SUMMARY_QUEUE,
+            activities=Summary(ports, runtime).all(),
+            max_concurrent_activities=SUMMARY_SLOTS,
+            graceful_shutdown_timeout=grace,
+        )
     if queue == "inference":
         components = [c for method in runtime.profile.methods.values() for c in method.components]
         await asyncio.to_thread(weights.verify, components, weights.root())
@@ -192,4 +251,6 @@ async def make_worker(
         workflows=[PaperPdfWorkflow],
         activities=Orchestration(ports, runtime).all(),
         graceful_shutdown_timeout=grace,
+        # Eager Activities skip matching: they would carry no priority and no queue age.
+        disable_eager_activity_execution=True,
     )

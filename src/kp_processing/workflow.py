@@ -1,8 +1,8 @@
-"""The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132)
-and VLM enrichment (#133).
+"""The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132),
+VLM enrichment (#133) and summary enrichment (#134).
 
-prepare -> parse group x N (in order) -> assemble -> inventory -> {local, VLM} enrichment ->
-finalize,
+prepare -> parse group x N (in order) -> assemble -> inventory -> {local, VLM, summary}
+enrichment -> finalize,
 reporting the four admission stages. Activities are addressed by name so that this module,
 which the workflow sandbox re-imports, stays free of docling.
 """
@@ -13,7 +13,7 @@ from datetime import timedelta
 from typing import Any, Literal, TypeVar
 
 from temporalio import workflow
-from temporalio.common import Priority, RetryPolicy
+from temporalio.common import Priority, RetryPolicy, SearchAttributeKey
 from temporalio.exceptions import ActivityError, ApplicationError
 
 with workflow.unsafe.imports_passed_through():
@@ -47,13 +47,30 @@ FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingF
 ORCHESTRATION_QUEUE = "orchestration"
 INFERENCE_QUEUE = "inference"
 VLM_QUEUE = "vlm"
-Queue = Literal["orchestration", "inference", "vlm"]
+SUMMARY_QUEUE = "summary"
+Queue = Literal["orchestration", "inference", "vlm", "summary"]
 
 
 def priority(admission_priority: Any) -> Priority:
     """Admission priority low waits behind normal on the shared queues. Temporal priority keys
     run 1 (first) to 5; Activities inherit the workflow's."""
     return Priority(priority_key=4 if admission_priority == "low" else 2)
+
+
+def tier(priority_key: int | None) -> str:
+    """The metrics label of a priority key: bulk for admission priority low."""
+    return "bulk" if priority_key == priority("low").priority_key else "normal"
+
+
+# Correlation IDs besides request_id (the workflow ID); namespaces register them as Keyword (#137).
+SEARCH_ATTRIBUTES = {
+    "document_uid": SearchAttributeKey.for_keyword("DocumentUid"),
+    "source_revision_id": SearchAttributeKey.for_keyword("SourceRevisionId"),
+    "trace_id": SearchAttributeKey.for_keyword("TraceId"),
+}
+
+# Provisional until #78; the workflow records status stages under it through the Temporal meter.
+STAGE_DURATION = "kp_processing_stage_duration_seconds"
 
 
 # prepare runs before the plan exists, and register_failure may too: they take these options.
@@ -72,20 +89,33 @@ _BOOTSTRAP = {
 def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dict[str, Any]]:
     """execute_activity options per task queue from the profile's runtime section:
     activity_retry.<queue> ({initial_s, multiplier, cap_s, max_attempts}; ProcessingFailure
-    never retried); start_to_close_s.<queue>, except vlm's backstop for a document of `items`
-    inventory items (#93 §3.2): ceil(items / vlm_concurrency_per_document) x
-    vlm_request_deadline_s.total x retry.max_attempts + external_start_to_close_slack_s; and
-    heartbeat_timeout_s.<queue> for inference and vlm."""
+    never retried); start_to_close_s.<queue>, except the external backstops (#93 §3.2): for vlm
+    and a document of `items` inventory items, ceil(items / vlm_concurrency_per_document) x
+    vlm_request_deadline_s.total x retry.max_attempts + external_start_to_close_slack_s; for
+    summary (one item per document), summary_request_deadline_s x retry.max_attempts +
+    external_start_to_close_slack_s; and heartbeat_timeout_s.<queue> for all but
+    orchestration."""
     vlm_s = (
         math.ceil(items / runtime["vlm_concurrency_per_document"])
         * runtime["vlm_request_deadline_s"]["total"]
         * runtime["retry"]["max_attempts"]
         + runtime["external_start_to_close_slack_s"]
     )
+    summary_s = (
+        runtime["summary_request_deadline_s"] * runtime["retry"]["max_attempts"]
+        + runtime["external_start_to_close_slack_s"]
+    )
     options: dict[Queue, dict[str, Any]] = {}
-    for queue in ("orchestration", "inference", "vlm"):
+    queue: Queue
+    for queue in ("orchestration", "inference", "vlm", "summary"):
         retry = runtime["activity_retry"][queue]
-        seconds = vlm_s if queue == "vlm" else runtime["start_to_close_s"][queue]
+        match queue:
+            case "vlm":
+                seconds = vlm_s
+            case "summary":
+                seconds = summary_s
+            case _:
+                seconds = runtime["start_to_close_s"][queue]
         options[queue] = {
             "task_queue": queue,
             "start_to_close_timeout": timedelta(seconds=seconds),
@@ -110,6 +140,7 @@ class PaperPdfWorkflow:
         self._seq = 0
         self._sending: asyncio.Future[None] | None = None
         self._delivered = True  # whether the last report sent reached the receiver
+        self._stage_started: dict[str, Any] = {}
 
     @workflow.run
     async def run(self, start: Any) -> dict[str, Any]:
@@ -148,15 +179,15 @@ class PaperPdfWorkflow:
             )
             inventory = await self._call("inventory", inventory_input, InventoryRef, orchestration)
             self._report("enrich", "running", Progress(0, inventory.items, "items"))
-            # #108 screening goes here, before any enrichment; the summary Activity (#134)
-            # joins the two below.
+            # #108 screening goes here, before any enrichment.
             enrich_input = EnrichInput(uid, inventory, info.workflow_id, info.run_id)
-            vlm = activity_options(plan.runtime, inventory.items)["vlm"]
-            local, external = await asyncio.gather(
+            external = activity_options(plan.runtime, inventory.items)
+            local, vlm, summary = await asyncio.gather(
                 self._call("enrich_local", enrich_input, list[OutcomeRef], inference),
-                self._call("enrich_vlm", enrich_input, list[OutcomeRef], vlm),
+                self._call("enrich_vlm", enrich_input, list[OutcomeRef], external["vlm"]),
+                self._call("enrich_summary", enrich_input, list[OutcomeRef], external["summary"]),
             )
-            outcomes = local + external
+            outcomes = local + vlm + summary
             self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))
 
             stage = "finalize"
@@ -197,6 +228,15 @@ class PaperPdfWorkflow:
         """Build the report here (seq, workflow time) so that every resend is identical, and
         queue it behind the previous one so that reports leave in seq order."""
         info = workflow.info()
+        if state == "running":
+            self._stage_started.setdefault(stage, workflow.now())
+        elif stage in self._stage_started:  # a stage can fail before it reports running
+            seconds = (workflow.now() - self._stage_started[stage]).total_seconds()
+            workflow.metric_meter().create_histogram_float(
+                STAGE_DURATION, "Wall time per status stage", "s"
+            ).with_additional_attributes(
+                {"stage": stage, "tier": tier(info.priority.priority_key)}
+            ).record(seconds)
         self._seq += 1
         version = self._start.get("adopted_version") if isinstance(self._start, dict) else None
         report = StatusReport(

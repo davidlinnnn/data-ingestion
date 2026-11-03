@@ -25,7 +25,8 @@ async def main(manifest: Path) -> None:
         ["temporal", "server", "start-dev", "--headless", "--port", "7244", "--ui-port", "7245",
          "--db-filename", str(seamb.LOGS / "temporal.db"), "--log-level", "warn",
          "--dynamic-config-value", "matching.numTaskqueueReadPartitions=1",
-         "--dynamic-config-value", "matching.numTaskqueueWritePartitions=1"],
+         "--dynamic-config-value", "matching.numTaskqueueWritePartitions=1",
+         *seamb.SEARCH_ATTRIBUTE_FLAGS],
         stdout=open(seamb.LOGS / "temporal.log", "w"), stderr=subprocess.STDOUT)
     admission = subprocess.Popen(
         [str(seamb.REPO / ".venv/bin/python"), "-m", "tools.fake_admission.server", "--port",

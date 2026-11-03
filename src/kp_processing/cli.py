@@ -4,29 +4,42 @@ Connections come from the environment: TEMPORAL_ADDRESS (default localhost:7233)
 TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
 KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), which only the
 orchestration worker needs; KP_VLM_BASE_URL and KP_VLM_API_KEY, the OpenAI-compatible VLM
-endpoint, which only the vlm worker needs (the model comes from the profile).
+endpoint, which only the vlm worker needs (the model comes from the profile);
+KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the summary API, which only the summary worker
+needs.
 """
 
 import argparse
 import asyncio
 import json
+import logging
 import os
 import signal
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
+import prometheus_client
 from temporalio.client import Client, WorkflowFailureError
-from temporalio.common import WorkflowIDReusePolicy
+from temporalio.common import SearchAttributePair, TypedSearchAttributes, WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
+from temporalio.runtime import PrometheusConfig, TelemetryConfig
+from temporalio.runtime import Runtime as TemporalRuntime
 
-from kp_processing.ports.inference import OpenAIChat
+from kp_processing.ports.inference import OpenAIChat, SummaryApi
 from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
 from kp_processing.stages import Ports, Runtime, finalize
-from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, Queue, priority
+from kp_processing.workflow import (
+    ORCHESTRATION_QUEUE,
+    SEARCH_ATTRIBUTES,
+    WORKFLOW,
+    Queue,
+    priority,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -35,11 +48,14 @@ def main(argv: list[str] | None = None) -> int:
     `<id>@<version>  module_digest=<hex>  components=<c1>,<c2>,...` (components empty when
     none). A ProfileError prints to stderr and exits 1.
 
-    `kp-processing worker --queue orchestration|inference|vlm [--profile PATH] [--build-id ID]
-    [--shutdown-grace-s S]`: serve one task queue until SIGTERM or SIGINT, then stop polling
-    and give running Activities S seconds (default 0) to finish before they are cancelled and
-    retried elsewhere; keep S below the pod's termination grace period. It refuses to start
-    on a store without write-once.
+    `kp-processing worker --queue orchestration|inference|vlm|summary [--profile PATH]
+    [--build-id ID] [--shutdown-grace-s S] [--metrics-port P] [--temporal-metrics-port Q]`:
+    serve one task queue until SIGTERM or SIGINT, then stop polling and give running Activities
+    S seconds (default 0) to finish before they are cancelled and retried elsewhere; keep S
+    below the pod's termination grace period. It refuses to start on a store without
+    write-once. It logs JSON lines to stderr, serves kp_processing.metrics at
+    http://0.0.0.0:P/metrics and the Temporal SDK's metrics, the status-stage durations
+    included, at http://0.0.0.0:Q/metrics; each endpoint is off without its port.
 
     `kp-processing start-request START.json [--wait]`: start the workflow for an admission
     spec §10 start input, with the workflow ID set to its request_id. Starting a request
@@ -54,10 +70,14 @@ def main(argv: list[str] | None = None) -> int:
     profile = commands.add_parser("profile")
     profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker = commands.add_parser("worker")
-    worker.add_argument("--queue", choices=["orchestration", "inference", "vlm"], required=True)
+    worker.add_argument(
+        "--queue", choices=["orchestration", "inference", "vlm", "summary"], required=True
+    )
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker.add_argument("--build-id", default="dev")
     worker.add_argument("--shutdown-grace-s", type=float, default=0)
+    worker.add_argument("--metrics-port", type=int)
+    worker.add_argument("--temporal-metrics-port", type=int)
     start = commands.add_parser("start-request")
     start.add_argument("start_input", type=Path)
     start.add_argument("--wait", action="store_true")
@@ -66,7 +86,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "worker":
         return asyncio.run(
-            run_worker(args.queue, args.profile, args.build_id, args.shutdown_grace_s)
+            run_worker(
+                args.queue,
+                args.profile,
+                args.build_id,
+                args.shutdown_grace_s,
+                args.metrics_port,
+                args.temporal_metrics_port,
+            )  # fmt: skip
         )
     if args.command == "start-request":
         return asyncio.run(start_request(json.loads(args.start_input.read_text()), args.wait))
@@ -87,15 +114,49 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-async def connect() -> Client:
+class JsonFormatter(logging.Formatter):
+    """One JSON object per log line. The SDK's workflow and Activity loggers add the workflow
+    ID, which is the request_id, and the run ID, which is the attempt_id; a record's
+    `correlation` extra adds its fields (prepare logs document_uid, source_revision_id and
+    trace_id once per request)."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        line: dict[str, Any] = {
+            "time": datetime.fromtimestamp(record.created, UTC).isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }  # fmt: skip
+        context = getattr(record, "temporal_activity", None) or {}
+        if context:
+            line.update(request_id=context.get("workflow_id"),
+                        attempt_id=context.get("workflow_run_id"),
+                        activity=context.get("activity_type"))  # fmt: skip
+        workflow = getattr(record, "temporal_workflow", None) or {}
+        if workflow:
+            line.update(request_id=workflow.get("workflow_id"), attempt_id=workflow.get("run_id"))
+        line.update(getattr(record, "correlation", None) or {})
+        if record.exc_info:
+            line["exception"] = self.formatException(record.exc_info)
+        return json.dumps(line)
+
+
+async def connect(runtime: TemporalRuntime | None = None) -> Client:
     return await Client.connect(
         os.environ.get("TEMPORAL_ADDRESS", "localhost:7233"),
         namespace=os.environ.get("TEMPORAL_NAMESPACE", "default"),
+        runtime=runtime,
     )
 
 
 async def run_worker(
-    queue: Queue, profile_path: Path, build_id: str, shutdown_grace_s: float
+    queue: Queue,
+    profile_path: Path,
+    build_id: str,
+    shutdown_grace_s: float,
+    metrics_port: int | None = None,
+    temporal_metrics_port: int | None = None,
 ) -> int:
     admission = os.environ.get("KP_ADMISSION_URL")
     if queue == "orchestration" and not admission:
@@ -105,23 +166,49 @@ async def run_worker(
     if queue == "vlm" and not vlm_url:
         print("KP_VLM_BASE_URL is required for the vlm worker", file=sys.stderr)
         return 2
+    summary_url = os.environ.get("KP_SUMMARY_BASE_URL")
+    summary_key = os.environ.get("KP_SUMMARY_API_KEY", "")
+    if queue == "summary" and not summary_url:
+        print("KP_SUMMARY_BASE_URL is required for the summary worker", file=sys.stderr)
+        return 2
+    from kp_processing import metrics
     from kp_processing.stages import enrich_vlm
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
+    if metrics_port is not None:
+        prometheus_client.start_http_server(metrics_port)
+    temporal_runtime = None
+    if temporal_metrics_port is not None:
+        prometheus = PrometheusConfig(
+            bind_address=f"0.0.0.0:{temporal_metrics_port}",
+            durations_as_seconds=True,
+            histogram_bucket_overrides={metrics.STAGE_DURATION: metrics.STAGE_BUCKETS},
+        )
+        temporal_runtime = TemporalRuntime(telemetry=TelemetryConfig(metrics=prometheus))
 
     store = S3ObjectStore.from_env()
     runtime = Runtime(
         profile=load_profile(profile_path), build_id=build_id, custody_bucket=store.bucket
     )
-    async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as vlm_http:
-        # Only orchestration Activities send status reports, only vlm ones VLM requests.
+    async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as external_http:
+        # Only orchestration Activities send status reports, only vlm ones VLM requests and
+        # only summary ones summary requests.
         reporter = HttpStatusReporter(http, admission or "")
-        vlm = None
+        vlm = summary = None
         if queue == "vlm":
             deadline = runtime.profile.runtime["vlm_request_deadline_s"]
-            vlm = OpenAIChat(vlm_http, vlm_url or "", vlm_key, enrich_vlm.model(runtime.profile),
-                             deadline["connect"], deadline["total"])  # fmt: skip
-        worker = await make_worker(await connect(), Ports(store, reporter, vlm=vlm),
-                                   runtime, queue, shutdown_grace_s)  # fmt: skip
+            vlm = OpenAIChat(external_http, vlm_url or "", vlm_key,
+                             enrich_vlm.model(runtime.profile), deadline["connect"],
+                             deadline["total"])  # fmt: skip
+        if queue == "summary":
+            summary = SummaryApi(external_http, summary_url or "", summary_key,
+                                 runtime.profile.runtime["summary_request_deadline_s"])  # fmt: skip
+        ports = Ports(store, reporter, vlm=vlm, summary=summary)
+        client = await connect(temporal_runtime)
+        worker = await make_worker(client, ports, runtime, queue, shutdown_grace_s)
         print(f"worker {runtime.profile.id} build {build_id} on {worker.task_queue}",
               flush=True)  # fmt: skip
         stop = asyncio.Event()
@@ -145,6 +232,13 @@ async def start_request(start: dict[str, Any], wait: bool) -> int:
             id=request_id,
             task_queue=ORCHESTRATION_QUEUE,
             priority=priority(start.get("priority")),
+            search_attributes=TypedSearchAttributes(
+                [
+                    SearchAttributePair(key, start[field])
+                    for field, key in SEARCH_ATTRIBUTES.items()
+                    if isinstance(start.get(field), str)
+                ]
+            ),
             id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
         )
         print(f"started {request_id}")

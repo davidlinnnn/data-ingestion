@@ -14,19 +14,27 @@ An item-scope method package also declares:
     ORIGIN   "reconstruction" or "interpretation"
     run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput, inputs in INPUTS order
 
-A method that calls the VLM declares instead (or as well, as code does for its native path),
-and its items then run in the VLM Activity (Method.calls_vlm):
+A method that calls an external service declares instead (or as well, as code does for its
+native path), and its items then run in that service's Activity (Method.service):
+
+    SERVICE  (optional) "vlm" (the default) or "summary": the external service its requests go
+             to, one of the two inference egresses of the data-security design §5
 
     request(item, inputs) -> dict | MethodOutput
-             the chat-completions request body without "model": messages carrying the images
-             as data URLs, and response_format {"type": "json_schema", "json_schema": {"name",
-             "strict": True, "schema"}} with the package's schema; or the MethodOutput itself
-             when no request is needed (code with a text layer)
+             the request body of its service; for "vlm", the chat-completions body without
+             "model": messages carrying the images as data URLs, and response_format
+             {"type": "json_schema", "json_schema": {"name", "strict": True, "schema"}} with the
+             package's schema; or the MethodOutput itself when no request is needed (code with
+             a text layer)
     parse(item, inputs, content: str) -> MethodOutput
-             the output for the response message's content; raises InvalidOutput when the
-             content is empty or does not validate against the schema
+             the output for the response's content (Completion.content); raises InvalidOutput
+             when the content is empty or does not validate against the schema
     FIELDS   (optional) names of output fields that are each their own enrichment (v2 Q3c):
              the MethodOutput of parse then sets fields, one MethodOutput per name
+
+A document-scope method package (v2 §4) declares SCOPE = "document" instead of TARGET: inventory
+lists one DocumentItem for it, whose target is the whole document. It declares INPUTS, ORIGIN
+and the request/parse pair as above, with a DocumentItem in place of the InventoryItem.
 """
 
 from dataclasses import dataclass, field
@@ -39,6 +47,14 @@ class InventoryItem(TypedDict):
     target_ref: str  # docling self_ref, e.g. "#/pictures/0"
     page: int  # the target's first provenance entry
     bbox: dict[str, Any]  # its docling bbox: l, t, r, b, coord_origin
+    input_refs: list[dict[str, str]]  # [{"ref", "sha256"}] in the method's INPUTS order
+
+
+class DocumentItem(TypedDict):
+    item_id: str  # "<method id>:#"
+    method: str
+    target_ref: str  # "#": the whole document
+    document_uid: str
     input_refs: list[dict[str, str]]  # [{"ref", "sha256"}] in the method's INPUTS order
 
 

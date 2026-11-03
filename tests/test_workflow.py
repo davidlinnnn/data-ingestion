@@ -6,6 +6,7 @@ sandbox)."""
 import contextlib
 import dataclasses
 import json
+import logging
 import uuid
 
 import pytest
@@ -21,7 +22,7 @@ from kp_processing.ports.status_reporter import (
 )
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
-from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW
+from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, priority
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_parse import seven_pages
@@ -36,6 +37,7 @@ async def workers(client: Client, ports: Ports, runtime):
         await make_worker(client, ports, runtime, "orchestration"),
         await make_worker(client, ports, runtime, "inference"),
         await make_worker(client, ports, runtime, "vlm"),
+        await make_worker(client, ports, runtime, "summary"),
     ):
         yield
 
@@ -43,7 +45,11 @@ async def workers(client: Client, ports: Ports, runtime):
 async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, str]:
     async with workers(client, ports, runtime):
         handle = await client.start_workflow(
-            WORKFLOW, start, id=start["request_id"], task_queue=ORCHESTRATION_QUEUE
+            WORKFLOW,
+            start,
+            id=start["request_id"],
+            task_queue=ORCHESTRATION_QUEUE,
+            priority=priority(start.get("priority")),
         )
         outcome = await handle.result()
     return outcome, handle.result_run_id or ""
@@ -91,7 +97,15 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
         for n in (0, 1)
         for field in ("caption", "chart_values", "description", "figure_type")
     ]
-    assert {e["item_id"].split(":")[0] for e in enrichments[10:]} <= {"table-status"}
+    assert {e["item_id"].split(":")[0] for e in enrichments[10:-1]} <= {"table-status"}
+    # The Document Summary from the summary worker, against the DEV mock.
+    summary = enrichments[-1]
+    assert (summary["item_id"], summary["scope"], summary["target_refs"]) == (
+        "document-summary:#",
+        "document",
+        ["#"],
+    )
+    assert (summary["status"], summary["status_reason"]) == ("unverified", None)
     assert {"code": "NO_TEXT_LAYER_PAGES", "scope": "document",
             "detail": "no text layer on pages 6"} in result["limitations"]  # fmt: skip
 
@@ -264,6 +278,35 @@ async def test_admission_priority_sets_the_temporal_priority_key(
     assert described.raw_description.workflow_execution_info.priority.priority_key == key
 
 
+async def test_start_request_puts_the_correlation_ids_into_search_attributes(
+    client, monkeypatch, ports
+):
+    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    assert await start_request(start, wait=False) == 0
+
+    described = await client.get_workflow_handle(start["request_id"]).describe()
+    assert {pair.key.name: pair.value for pair in described.typed_search_attributes} == {
+        "DocumentUid": "doc_1",
+        "SourceRevisionId": "srv_1",
+        "TraceId": "4bf92f3577b34da6",
+    }
+
+
+async def test_prepare_logs_the_correlation_ids_once(client, ports, runtime, caplog):
+    caplog.set_level(logging.INFO, logger="temporalio.activity")
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    await process(client, ports, runtime, start)
+
+    lines = [r for r in caplog.records if getattr(r, "correlation", None)]
+    assert [(r.temporal_activity["workflow_id"], r.correlation) for r in lines] == [
+        (start["request_id"], {"document_uid": "doc_1", "source_revision_id": "srv_1",
+                               "trace_id": "4bf92f3577b34da6"}),
+    ]  # fmt: skip
+
+
 async def _resolved(value):
     return value
 
@@ -271,14 +314,16 @@ async def _resolved(value):
 async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports, runtime):
     runtime = with_runtime(
         runtime,
-        heartbeat_timeout_s={"inference": 61, "vlm": 91},
+        heartbeat_timeout_s={"inference": 61, "vlm": 91, "summary": 151},
         start_to_close_s={"orchestration": 121, "inference": 901},
         activity_retry={
             "orchestration": {"initial_s": 3, "multiplier": 2, "cap_s": 31, "max_attempts": 6},
             "inference": {"initial_s": 2, "multiplier": 3, "cap_s": 99, "max_attempts": 2},
             "vlm": {"initial_s": 4, "multiplier": 2, "cap_s": 29, "max_attempts": 7},
+            "summary": {"initial_s": 5, "multiplier": 2, "cap_s": 28, "max_attempts": 4},
         },
         vlm_request_deadline_s={"connect": 5, "total": 61},
+        summary_request_deadline_s=121,
         external_start_to_close_slack_s=301,
     )
     # One picture: a picture-ocr and a picture-interpretation item.
@@ -313,6 +358,13 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert vlm.heartbeat_timeout.seconds == 91
     assert vlm.retry_policy.maximum_attempts == 7
     assert vlm.retry_policy.initial_interval.seconds == 4
+    summary = scheduled["enrich_summary"]
+    assert summary.task_queue.name == "summary"
+    # one item x 121 s deadline x 3 attempts + 301 s slack (#93 §3.2)
+    assert summary.start_to_close_timeout.seconds == 121 * 3 + 301
+    assert summary.heartbeat_timeout.seconds == 151
+    assert summary.retry_policy.maximum_attempts == 4
+    assert summary.retry_policy.initial_interval.seconds == 5
 
 
 async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(

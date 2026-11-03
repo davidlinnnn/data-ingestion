@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
 # Enabled with the pre-commit hook (core.hooksPath). Git's remote arguments are not check-docs' BASE.
-exec "$(git rev-parse --show-toplevel)/scripts/check-docs"
+# Branch deletions and tags on commits a remote already has (archive tags) publish no new commit,
+# and check-docs would refuse them once the merged branch is behind its base.
+while read -r local_ref local_sha _ _; do
+  [[ $local_sha =~ ^0+$ ]] && continue
+  [[ $local_ref == refs/tags/* && -z $(git rev-list -n1 "$local_sha" --not --remotes) ]] && continue
+  exec "$(git rev-parse --show-toplevel)/scripts/check-docs"
+done

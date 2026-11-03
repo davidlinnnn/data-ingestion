@@ -1,4 +1,5 @@
-"""VLM enrichment: the item-scope methods that call the VLM, on the vlm worker (#133; #93 §3)."""
+"""External enrichment: the methods that call the VLM, on the vlm worker (#133), and the Document
+Summary, on the summary worker (#134); one retry chain and receipt scheme for both (#93 §3)."""
 
 import asyncio
 import dataclasses
@@ -8,10 +9,17 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
+from kp_processing import metrics
 from kp_processing.identity import canonical_json
-from kp_processing.methods import InvalidOutput, InventoryItem, MethodOutput, MethodUnavailable
+from kp_processing.methods import (
+    DocumentItem,
+    InvalidOutput,
+    InventoryItem,
+    MethodOutput,
+    MethodUnavailable,
+)
 from kp_processing.ports.inference import Completion, RequestRejected, ServiceUnavailable
-from kp_processing.profile import ProcessingProfile
+from kp_processing.profile import ProcessingProfile, Service
 from kp_processing.stages import (
     EnrichInput,
     OutcomeRef,
@@ -32,11 +40,11 @@ from kp_processing.stages import (
 
 def model(profile: ProcessingProfile) -> str:
     """The VLM model the profile names: the text after the first "/" of the one component that
-    every item-scope method that calls the VLM lists, e.g. "gpt-6-luna" for "openai/gpt-6-luna".
+    every method whose service is "vlm" lists, e.g. "gpt-6-luna" for "openai/gpt-6-luna".
     Raises ValueError when those methods do not all list exactly that one component."""
     components = []
     for method in profile.methods.values():
-        if not (hasattr(method.package, "TARGET") and method.calls_vlm):
+        if method.service != "vlm":
             continue
         if len(method.components) != 1:
             raise ValueError("VLM methods must each list one shared component")
@@ -50,16 +58,29 @@ def model(profile: ProcessingProfile) -> str:
 
 
 async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
-    """Run every inventory item of a method that calls the VLM (Method.calls_vlm), at most runtime
+    """run_service for "vlm": the items of the methods that call the VLM, sent with ports.vlm."""
+    return await run_service(input, ports, runtime, "vlm")
+
+
+async def run_summary(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[OutcomeRef]:
+    """run_service for "summary": the Document Summary item, sent with ports.summary."""
+    return await run_service(input, ports, runtime, "summary")
+
+
+async def run_service(
+    input: EnrichInput, ports: Ports, runtime: Runtime, service: Service
+) -> list[OutcomeRef]:
+    """Run every inventory item of a method whose Method.service is service, at most runtime
     vlm_concurrency_per_document items at once, and record one outcome per item; ports.heartbeat()
-    after each item. Returns one OutcomeRef per such item, in inventory order. Parameters below are
+    after each item. Requests go only through that service's transport (ports.vlm or
+    ports.summary). Returns one OutcomeRef per such item, in inventory order. Parameters below are
     runtime keys.
 
     Per item, the reuse key, the prefix documents/{document_uid}/items/{key}, the reuse of an
     already registered {prefix}/outcome.json (nothing is sent) and the reading of inputs are
     those of enrich_local. Otherwise the package's request(item, inputs) runs off the event
-    loop; a MethodOutput it returns is recorded as below, a request body is sent with
-    ports.vlm.complete through the retry chain.
+    loop; a MethodOutput it returns is recorded as below, a request body is sent with the
+    service's transport complete() through the retry chain.
 
     Receipts, one per send, at requests/{request_id}/attempts/{run_id}/receipts/{item_id}/
     {n}.json, n = 1, 2, ... Written write-once before the send:
@@ -73,6 +94,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     The item's receipts already present when the call starts each count as one attempt used;
     one without "result" (the worker died between send and completion) counts as
     "unavailable".
+    Each completed send is counted by kp_processing.metrics.external_request, and each item's
+    sends at the end of its chain, earlier receipts included, by metrics.item_attempts.
 
     Retry chain (#93 §3.4), per item:
       ServiceUnavailable(r)  result unavailable, reason r; send again after a backoff of
@@ -91,7 +114,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                              enrichment_stage_budget_s.hard seconds after this call started
                              (ports.clock.monotonic), first sends included
 
-    The record is enrich_local's enrichment-outcome/v1 record, with "provider_artifact_ref"
+    The record is enrich_local's enrichment-outcome/v1 record ("scope" from the package), with
+    "provider_artifact_ref"
     naming {prefix}/response.json (the last Completion.body) when a Completion came back, and,
     for a package with FIELDS, "fields": {name: {"outcome", "reason", "content", "signals",
     "contradictions"}} for every FIELDS name; when the item failed as a whole each field
@@ -103,7 +127,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
 
     Errors (ProcessingFailure, all cause "platform", metadata {"item_id", ...}):
       an input missing or differing from its sha256  integrity     INPUT_DIGEST_MISMATCH
-      MethodUnavailable                               configuration METHOD_UNAVAILABLE
+      MethodUnavailable, or no transport for service  configuration METHOD_UNAVAILABLE
       RequestRejected(status)                         configuration INFERENCE_REQUEST_REJECTED
                                                       (metadata also {"status"})
       a receipt number already taken (another worker
@@ -116,6 +140,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     A content failure is an outcome, never an error.
     """
     started = ports.clock.monotonic()
+    transport = ports.vlm if service == "vlm" else ports.summary
     inventory = json.loads(await ports.store.get(input.inventory.ref))
     settings = runtime.profile.runtime
     retry = settings["retry"]
@@ -141,7 +166,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     semaphore = asyncio.Semaphore(settings["vlm_concurrency_per_document"])
     verified: dict[str, tuple[bytes, str]] = {}
 
-    async def process(item: InventoryItem) -> OutcomeRef:
+    async def process(item: InventoryItem | DocumentItem) -> OutcomeRef:
         nonlocal used
         async with semaphore:
             item_id = item["item_id"]
@@ -203,9 +228,9 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                         "sent_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                     }
                     receipt_ref = f"{receipt_prefix}{item_id}/{number}.json"
-                    if ports.vlm is None:
+                    if transport is None:
                         raise method_failure(
-                            item_id, MethodUnavailable("VLM transport is not configured")
+                            item_id, MethodUnavailable(f"{service} transport is not configured")
                         )
                     async with cap_lock:
                         if ports.clock.monotonic() - started > budget:
@@ -234,7 +259,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                     answer: Completion | None = None
                     send_started = time.perf_counter()
                     try:
-                        answer = await ports.vlm.complete(request)
+                        answer = await transport.complete(request)
                     except ServiceUnavailable as exc:
                         last_result, last_reason = "unavailable", exc.reason
                         unavailable += 1
@@ -275,8 +300,11 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
                         system_fingerprint=answer.system_fingerprint if answer else None,
                     )
                     await ports.store.put(receipt_ref, canonical_json(receipt))
+                    metrics.external_request(service, receipt["result"], receipt["reason"],
+                                             latency_ms / 1000, receipt["usage"])  # fmt: skip
                     if last_result == "ok":
                         break
+                metrics.item_attempts.labels(service).observe(attempts)
                 if last_completion is not None:
                     output = dataclasses.replace(
                         output,
@@ -302,7 +330,7 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     try:
         async with asyncio.TaskGroup() as group:
             for item in inventory["items"]:
-                if runtime.profile.methods[item["method"]].calls_vlm:
+                if runtime.profile.methods[item["method"]].service == service:
                     tasks.append(group.create_task(process(item)))
     except* ProcessingFailure as failures:
         raise failures.exceptions[0] from None

@@ -1,0 +1,1059 @@
+{
+  "run": "d66e42",
+  "paper": {
+    "index": 9,
+    "file": "09-2502.12110v11.pdf",
+    "sha256": "fec32b521c4a1f793442bf1aeb26139c583078350d1cd4ab8f4eccc54a0694f0",
+    "pages": 28
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 53.3,
+    "reports": [
+      [
+        1,
+        "prepare",
+        "running",
+        null
+      ],
+      [
+        2,
+        "prepare",
+        "succeeded",
+        null
+      ],
+      [
+        3,
+        "parse",
+        "running",
+        {
+          "done": 0,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        4,
+        "parse",
+        "running",
+        {
+          "done": 5,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        5,
+        "parse",
+        "running",
+        {
+          "done": 10,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        6,
+        "parse",
+        "running",
+        {
+          "done": 15,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        7,
+        "parse",
+        "running",
+        {
+          "done": 20,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        8,
+        "parse",
+        "running",
+        {
+          "done": 25,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        9,
+        "parse",
+        "running",
+        {
+          "done": 28,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        10,
+        "parse",
+        "succeeded",
+        {
+          "done": 28,
+          "total": 28,
+          "unit": "pages"
+        }
+      ],
+      [
+        11,
+        "enrich",
+        "running",
+        {
+          "done": 0,
+          "total": 48,
+          "unit": "items"
+        }
+      ],
+      [
+        12,
+        "enrich",
+        "succeeded",
+        {
+          "done": 48,
+          "total": 48,
+          "unit": "items"
+        }
+      ],
+      [
+        13,
+        "finalize",
+        "running",
+        null
+      ],
+      [
+        14,
+        "finalize",
+        "succeeded",
+        null
+      ]
+    ],
+    "statuses": {
+      "code unverified None": 3,
+      "document-summary unverified None": 1,
+      "formula disputed FORMULA_NATIVE_MISMATCH": 25,
+      "picture-interpretation unverified None": 20,
+      "picture-ocr unverified None": 5,
+      "table-status unverified None": 9
+    },
+    "methods_with_enrichments": [
+      "code",
+      "document-summary",
+      "formula",
+      "picture-interpretation",
+      "picture-ocr",
+      "table-status"
+    ],
+    "summary_requests": [
+      {
+        "path": "/v1/summaries",
+        "keys": [
+          "document_uid",
+          "max_sentences",
+          "sections"
+        ],
+        "document_uid": "doc_fec32b521c4a1f79",
+        "sections": 59,
+        "section_keys": [
+          "heading",
+          "section_id",
+          "text"
+        ],
+        "text_chars": 64846,
+        "max_sentences": 5
+      }
+    ],
+    "summary_receipts": {
+      "requests": 1,
+      "results": {
+        "ok": 1,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 10.799957904964685,
+        "median": 10.799957904964685,
+        "max": 10.799957904964685
+      },
+      "tokens": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0
+      },
+      "models": [
+        "summary-mock"
+      ],
+      "system_fingerprints": [
+        "None"
+      ]
+    },
+    "vlm_receipts": {
+      "requests": 30,
+      "results": {
+        "ok": 30,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 3003.4189999569207,
+        "median": 3006.8382499739528,
+        "max": 3014.840125106275
+      },
+      "tokens": {
+        "prompt_tokens": 30,
+        "completion_tokens": 30
+      },
+      "models": [
+        "fake"
+      ],
+      "system_fingerprints": [
+        "None"
+      ]
+    },
+    "summary": [
+      {
+        "item_id": "document-summary:#",
+        "scope": "document",
+        "origin": "interpretation",
+        "target_refs": [
+          "#"
+        ],
+        "input_refs": [
+          "documents/doc_fec32b521c4a1f79/items/f32845501cd967cb4012164a9ecd2173ffde59a330a38ea51be09d8100c1cc7b/assembly.json"
+        ],
+        "status": "unverified",
+        "status_reason": null,
+        "supports": [
+          "provider",
+          "overlap"
+        ]
+      }
+    ],
+    "result": {
+      "outcome": "complete",
+      "profile": {
+        "id": "paper-pdf@1",
+        "status_rule": "v1",
+        "methods": [
+          {
+            "components": [
+              "docling-slim@2.132.0",
+              "layout-heron@8f39ad3c",
+              "tableformer-accurate@v1",
+              "rapidocr-ppocrv6-small"
+            ],
+            "id": "docling-parse",
+            "module_digest": "4e86445244b3f429f4bfb2a0a621aafb600628e6692314d21eb77c9829b65b6e",
+            "version": 1
+          },
+          {
+            "components": [
+              "rapidocr-ppocrv6-small"
+            ],
+            "id": "picture-ocr",
+            "module_digest": "ea83dc20c95f60199dfbb46d9545d660c35c90402f834ccb9e35f2d4b0c8c7c1",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "picture-interpretation",
+            "module_digest": "50c247b8b090e26a93c99902508eb1e9893d058dec775374a44db94ec15e3854",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "formula",
+            "module_digest": "9cdab12ba351320109cc3d401af71193106f4a7ebfa0ec2a091a865eab4d01e9",
+            "version": 1
+          },
+          {
+            "components": [
+              "openai/gpt-6-luna"
+            ],
+            "id": "code",
+            "module_digest": "e4b4bb4dfc4fcabeb24d92903b99d0b2fd94342f87700b468a9c848d4d4841d8",
+            "version": 1
+          },
+          {
+            "components": [],
+            "id": "table-status",
+            "module_digest": "b7e76d2706fd94e02cd327e98863014ce60f3165faea5a0ff483b66aaa493d3c",
+            "version": 1
+          },
+          {
+            "components": [
+              "summary-api/v1"
+            ],
+            "id": "document-summary",
+            "module_digest": "af594beaef79dbce4f3b0fe56811fc63140507ae1025f1e043a1554338f590e5",
+            "version": 1
+          }
+        ]
+      },
+      "native": {
+        "page_images": 28,
+        "picture_images": 5,
+        "page_groups": 6
+      },
+      "inventory_counts": {
+        "code": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 3
+        },
+        "document-summary": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 1
+        },
+        "formula": {
+          "disputed": 25,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 0
+        },
+        "picture-interpretation": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 20
+        },
+        "picture-ocr": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 5
+        },
+        "table-status": {
+          "disputed": 0,
+          "failed": 0,
+          "no_text": 0,
+          "unverified": 9
+        }
+      },
+      "enrichments": [
+        {
+          "item_id": "picture-ocr:#/pictures/0",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "3e719c3f1c6efca9af771ed8557d349a8897c1a49035878c6a66480c35627292",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/1",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "00f38200ce4ade95f739bfdd4e16268c916edd7d51918be7818498bba47d8ce1",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/2",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "5d61c314bf2ecaa9f17779b00d496fcce1e5594658894df53c492496d680d6d0",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/3",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6c652cbd009cb45f4922f7acabe6fae997c667c3b8c8eebf7b8515030672fea3",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-ocr:#/pictures/4",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "408be2aee32064e4d61cedea009a462dd70463df56ac73724f629c71659e5563",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/0/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/1/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/2/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/3/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/caption",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "6a4111bb87b757cc8266ce6d4208e016e95261a2e7dd794f94f069cbe7c90ca7",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/chart_values",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/description",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "48822c2330abdd369d1457bd9daf6d76ac99010ae15c1ff9b5876ccf10e52ec4",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "picture-interpretation:#/pictures/4/figure_type",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "adc05f6048f491743a7512e9d584d890e08f6271a3e8e958bb812e298a5fc386",
+          "evidence_refs": 0,
+          "signals": {}
+        },
+        {
+          "item_id": "formula:#/texts/131",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "mi={ci,ti,Ki,Gi,Xi,ei,Li}"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/133",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Ki,Gi,Xi\u2190LLM(ci\u2225ti\u2225Ps1)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/135",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "ei=fenc[concat(ci,Ki,Gi,Xi)]"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/139",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "sn,j=en\u22c5ej\u2223en\u2223\u2223ej\u2223"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/141",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Mnnear={mj\u2223rank(sn,j)\u2264k,mj\u2208M}"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/143",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Li\u2190LLM(mn\u2225Mnnear\u2225Ps2)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/148",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "m\u2217j\u2190LLM(mn\u2225Mnnear\\mj\u2225mj\u2225Ps3)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/152",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "eq=fenc(q)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/154",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "sq,i=eq\u22c5ei\u2223eq\u2223\u2223ei\u2223,whereei\u2208mi,\u2200mi\u2208M"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/156",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Mretrieved={mi\u2223rank(sq,i)\u2264k,mi\u2208M}"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/397",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "F1=2\u22c5precision\u22c5recallprecision+recall"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/398",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "precision=truepositivestruepositives+falsepositives"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/399",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "recall=truepositivestruepositives+falsenegatives"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/402",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "BLEU-1=BP\u22c5exp(1\u2211n=1wnlogpn)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/403",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "BP={1ifc>re1\u2212r/cifc\u2264r"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/404",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "pn=\u2211i\u2211kmin(hik,mik)\u2211i\u2211khik"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/409",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "ROUGE-L=(1+\u03b22)RlPlRl+\u03b22Pl"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/410",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Rl=LCS(X,Y)\u2223X\u2223"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/411",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Pl=LCS(X,Y)\u2223Y\u2223"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/414",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "ROUGE-2=\u2211bigram\u2208refmin(Countref(bigram),Countcand(bigram))\u2211bigram\u2208refCountref(bigram)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/417",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "METEOR=Fmean\u22c5(1\u2212Penalty)"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/418",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Fmean=10P\u22c5RR+9P"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/419",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "Penalty=0.5\u22c5(chm)3"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/422",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "SBERT_Similarity=cos(SBERT(x),SBERT(y))"
+          }
+        },
+        {
+          "item_id": "formula:#/texts/423",
+          "status": "disputed",
+          "status_reason": "FORMULA_NATIVE_MISMATCH",
+          "reused": false,
+          "inline": true,
+          "content_sha256": "cd40617296cb118740bfcda829b69d0af7e15e68b61eccf6c5644c4ead610a12",
+          "evidence_refs": 1,
+          "signals": {
+            "native_text": "cos(a,b)=a\u22c5b\u2225a\u2225\u2225b\u2225"
+          }
+        },
+        {
+          "item_id": "code:#/texts/566",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "8f1375a81c6e72824083b2e507dfa5b6430f2b55915fc4d42a74f9c4e7bf2bdf",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": false
+          }
+        },
+        {
+          "item_id": "code:#/texts/568",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "40d972e159b5864fe9ff398d62bf8ab74e3fdd63d24c80fb5ce9f784bd3485bd",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": false
+          }
+        },
+        {
+          "item_id": "code:#/texts/574",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "4e97ce2af79341d30779748ddea9428cc263b83092477622f7a511bb8ab240bb",
+          "evidence_refs": 0,
+          "signals": {
+            "indent_quantized": true
+          }
+        },
+        {
+          "item_id": "table-status:#/tables/0",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": false,
+          "content_sha256": null,
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/1",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "1c32a7eddad09fde7752deab0db1e097c52a5d50e4c89435502f66547db0a40a",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/2",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "201e6ceb2d026df0d6c73f7313ec0921f8bf7f59983ae5bfede21fcdf1de5c40",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/3",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "308fc60499f757dbb8303f993ec2b0d37f9565c5a03e97235453f1e9797506e8",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/4",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "5db2d9fbc79a015feeb34240e7ae9e8b7faee0e297b09866378066b1b181b81b",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/5",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": false,
+          "content_sha256": null,
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/6",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": false,
+          "content_sha256": null,
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/7",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "1330ed093de1a837e0d00bc531a6c76b6c2a0badd1c3741784025ca99ca1fb72",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "table-status:#/tables/8",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "bb39e57de1d5aed4283a05565ab93b2f8b063dfb20ea56a667d380a65b4540dd",
+          "evidence_refs": 1,
+          "signals": {}
+        },
+        {
+          "item_id": "document-summary:#",
+          "status": "unverified",
+          "status_reason": null,
+          "reused": false,
+          "inline": true,
+          "content_sha256": "e7912638a02a1271bafa45113c820967b93a2622be5a31d7417d1b39f0acebff",
+          "evidence_refs": 0,
+          "signals": {}
+        }
+      ],
+      "limitations": [
+        "READING_ORDER_DEFECTS",
+        "CAPTION_INTERRUPTS_BODY",
+        "INLINE_MATH_NOT_RECONSTRUCTED",
+        "INLINE_CODE_NOT_RECONSTRUCTED"
+      ]
+    },
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 0.7,
+    "summary_requests": 0,
+    "external_receipts": 0,
+    "objects_added_under_documents": [],
+    "enrichments_reused": true,
+    "statuses_equal_S": true,
+    "pass": true
+  }
+}
