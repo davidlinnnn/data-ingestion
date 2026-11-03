@@ -13,7 +13,7 @@ from datetime import timedelta
 from typing import Any, Literal, TypeVar
 
 from temporalio import workflow
-from temporalio.common import Priority, RetryPolicy
+from temporalio.common import Priority, RetryPolicy, SearchAttributeKey
 from temporalio.exceptions import ActivityError, ApplicationError
 
 with workflow.unsafe.imports_passed_through():
@@ -55,6 +55,22 @@ def priority(admission_priority: Any) -> Priority:
     """Admission priority low waits behind normal on the shared queues. Temporal priority keys
     run 1 (first) to 5; Activities inherit the workflow's."""
     return Priority(priority_key=4 if admission_priority == "low" else 2)
+
+
+def tier(priority_key: int | None) -> str:
+    """The metrics label of a priority key: bulk for admission priority low."""
+    return "bulk" if priority_key == priority("low").priority_key else "normal"
+
+
+# Correlation IDs besides request_id (the workflow ID); namespaces register them as Keyword (#137).
+SEARCH_ATTRIBUTES = {
+    "document_uid": SearchAttributeKey.for_keyword("DocumentUid"),
+    "source_revision_id": SearchAttributeKey.for_keyword("SourceRevisionId"),
+    "trace_id": SearchAttributeKey.for_keyword("TraceId"),
+}
+
+# Provisional until #78; the workflow records status stages under it through the Temporal meter.
+STAGE_DURATION = "kp_processing_stage_duration_seconds"
 
 
 # prepare runs before the plan exists, and register_failure may too: they take these options.
@@ -124,6 +140,7 @@ class PaperPdfWorkflow:
         self._seq = 0
         self._sending: asyncio.Future[None] | None = None
         self._delivered = True  # whether the last report sent reached the receiver
+        self._stage_started: dict[str, Any] = {}
 
     @workflow.run
     async def run(self, start: Any) -> dict[str, Any]:
@@ -211,6 +228,15 @@ class PaperPdfWorkflow:
         """Build the report here (seq, workflow time) so that every resend is identical, and
         queue it behind the previous one so that reports leave in seq order."""
         info = workflow.info()
+        if state == "running":
+            self._stage_started.setdefault(stage, workflow.now())
+        elif stage in self._stage_started:  # a stage can fail before it reports running
+            seconds = (workflow.now() - self._stage_started[stage]).total_seconds()
+            workflow.metric_meter().create_histogram_float(
+                STAGE_DURATION, "Wall time per status stage", "s"
+            ).with_additional_attributes(
+                {"stage": stage, "tier": tier(info.priority.priority_key)}
+            ).record(seconds)
         self._seq += 1
         version = self._start.get("adopted_version") if isinstance(self._start, dict) else None
         report = StatusReport(

@@ -159,7 +159,8 @@ async def main(manifest: Path, index: int) -> int:
                       "paper": {k: paper[k] for k in ("index", "file", "sha256", "pages")}}  # fmt: skip
     temporal = subprocess.Popen(
         ["temporal", "server", "start-dev", "--headless", "--port", "7244", "--ui-port", "7245",
-         "--db-filename", str(t2.LOGS / "temporal.db"), "--log-level", "warn"],
+         "--db-filename", str(t2.LOGS / "temporal.db"), "--log-level", "warn",
+         *t2.SEARCH_ATTRIBUTE_FLAGS],
         stdout=open(t2.LOGS / "temporal.log", "w"), stderr=subprocess.STDOUT,
     )  # fmt: skip
     admission = subprocess.Popen(

@@ -33,11 +33,16 @@ from botocore.exceptions import ClientError
 from temporalio.client import Client
 
 from kp_processing.ports.object_store import S3ObjectStore
+from kp_processing.workflow import SEARCH_ATTRIBUTES
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
 TEMPORAL = "127.0.0.1:7244"
 ADMISSION = "http://127.0.0.1:8091"
+# start-request sets these, so every dev server registers them (#136).
+SEARCH_ATTRIBUTE_FLAGS = [
+    a for key in SEARCH_ATTRIBUTES.values() for a in ("--search-attribute", f"{key.name}=Keyword")
+]
 RUN = uuid.uuid4().hex[:6]
 BASE_ENV = {
     **os.environ,
@@ -158,7 +163,7 @@ async def main(manifest: Path, index: int) -> int:
 
     temporal = subprocess.Popen(
         ["temporal", "server", "start-dev", "--headless", "--port", "7244", "--ui-port", "7245",
-         "--db-filename", str(LOGS / "temporal.db"), "--log-level", "warn"],
+         "--db-filename", str(LOGS / "temporal.db"), "--log-level", "warn", *SEARCH_ATTRIBUTE_FLAGS],
         stdout=open(LOGS / "temporal.log", "w"), stderr=subprocess.STDOUT,
     )  # fmt: skip
     admission = subprocess.Popen(
