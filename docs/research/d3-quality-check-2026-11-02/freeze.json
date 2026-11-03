@@ -6,7 +6,7 @@
   "repo:judging-rules.md": "00f6d9f868304885389eb2e38e4303eab4689495cc653ec833a2733fcc0e7926",
   "repo:questions.json": "7a82cd58b684f241a3f5d5e21f222d49bbffa7d6722fb00315290a0b0939647e",
   "repo:score.py": "2af45383f12e0e929ed320deb937ae7d7e5318b6ad1939746117d13f316ff0ba",
-  "repo:run_d3.py": "84753c4f7dde69ab045d322a8ef8803c75cb096a19d8d15a8ce8d0790b3f8259",
+  "repo:run_d3.py": "ccbaaa3c6f98b7ddebb911585ced959f34f51317101e5af64f1d9367496aaa59",
   "repo:prepare_inputs.py": "f5c3d3797910f31c2892f94e748f2b0bfd7c3a7a0be5d0724b039d802b47ffe8",
   "repo:build_split.py": "c64d7ae1924f24b6b35d90126b089f10111ccc38d25e18631e3c045c00dccbb8",
   "repo:merge_verdicts.py": "350b677543eb7dc5f411563a2f00aae63c60a84225bce7e448afadefc33cc629",
@@ -34,6 +34,13 @@
    "old_sha256": "747ad255ca049d26cf4d0165bed9a76d076ce0921a7580dbd340edcca68f48ea",
    "new_sha256": "84753c4f7dde69ab045d322a8ef8803c75cb096a19d8d15a8ce8d0790b3f8259",
    "reason": "lower MEMORY_FENCE from 8 to 6 GiB: Docker Desktop's VM holds ~18 GB for #136's tests and cannot be restarted now; mini needs ~9-10 GB and stopped at 101/787 with ~8.7 GB available; the fence decides only whether a run stops, not any score; no label, split, question, input or scoring file changed"
+  },
+  {
+   "at": "2026-11-03T10:52:22.289758+00:00",
+   "file": "run_d3.py",
+   "old_sha256": "84753c4f7dde69ab045d322a8ef8803c75cb096a19d8d15a8ce8d0790b3f8259",
+   "new_sha256": "ccbaaa3c6f98b7ddebb911585ced959f34f51317101e5af64f1d9367496aaa59",
+   "reason": "raise the MPS memory fraction from 0.45 to 0.65 of the 37.4 GiB recommended working set (16.8 -> 24.3 GiB): d3-flash BF16 weights alone are 16.8 GB; the fraction is an allocation cap, not a numeric setting, so no score changes; nano and mini dev ran under 0.45; no label, split, question, input or scoring file changed"
   }
  ]
 }

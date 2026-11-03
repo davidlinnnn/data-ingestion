@@ -130,7 +130,7 @@ def main() -> int:
     torch.set_num_threads(2)
     torch.set_num_interop_threads(1)
     if a.device == "mps":
-        torch.mps.set_per_process_memory_fraction(0.45)
+        torch.mps.set_per_process_memory_fraction(0.65)  # flash: 16.8 GB BF16 weights
 
     def sync():
         if a.device == "mps":
