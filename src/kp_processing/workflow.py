@@ -1,5 +1,5 @@
 """The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132),
-VLM enrichment (#133) and summary enrichment (#134).
+VLM enrichment (#133) and the Document Summary (#134, #155).
 
 prepare -> parse group x N (in order) -> assemble -> inventory -> {local, VLM, summary}
 enrichment -> finalize,
@@ -19,6 +19,7 @@ from temporalio.exceptions import ActivityError, ApplicationError
 with workflow.unsafe.imports_passed_through():
     from kp_processing.ports.status_reporter import Progress, Stage, State, StatusReport
     from kp_processing.stages import (
+        FAILURE_TYPE,
         AssembleInput,
         EnrichInput,
         FailureInput,
@@ -34,11 +35,11 @@ with workflow.unsafe.imports_passed_through():
         Registered,
         error_block,
     )
+    from kp_processing.summarize import summarize
 
 T = TypeVar("T")
 WORKFLOW = "paper-pdf"
 STAGES_VERSION = "1"
-FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingFailure.details()
 
 
 # Task queues are named after what their workers can run and are shared by every pipeline:
@@ -92,8 +93,8 @@ def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dic
     never retried); start_to_close_s.<queue>, except the external backstops (#93 §3.2): for vlm
     and a document of `items` inventory items, ceil(items / vlm_concurrency_per_document) x
     vlm_request_deadline_s.total x retry.max_attempts + external_start_to_close_slack_s; for
-    summary (one item per document), summary_request_deadline_s x retry.max_attempts +
-    external_start_to_close_slack_s; and heartbeat_timeout_s.<queue> for all but
+    summary, summary_budget_s + external_start_to_close_slack_s (the budget's workflow timer,
+    not this timeout, ends a slow summary); and heartbeat_timeout_s.<queue> for all but
     orchestration."""
     vlm_s = (
         math.ceil(items / runtime["vlm_concurrency_per_document"])
@@ -101,10 +102,7 @@ def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dic
         * runtime["retry"]["max_attempts"]
         + runtime["external_start_to_close_slack_s"]
     )
-    summary_s = (
-        runtime["summary_request_deadline_s"] * runtime["retry"]["max_attempts"]
-        + runtime["external_start_to_close_slack_s"]
-    )
+    summary_s = runtime["summary_budget_s"] + runtime["external_start_to_close_slack_s"]
     options: dict[Queue, dict[str, Any]] = {}
     queue: Queue
     for queue in ("orchestration", "inference", "vlm", "summary"):
@@ -185,7 +183,7 @@ class PaperPdfWorkflow:
             local, vlm, summary = await asyncio.gather(
                 self._call("enrich_local", enrich_input, list[OutcomeRef], inference),
                 self._call("enrich_vlm", enrich_input, list[OutcomeRef], external["vlm"]),
-                self._call("enrich_summary", enrich_input, list[OutcomeRef], external["summary"]),
+                summarize(enrich_input, plan.runtime, external["summary"]),
             )
             outcomes = local + vlm + summary
             self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))

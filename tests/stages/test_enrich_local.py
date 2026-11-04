@@ -25,6 +25,7 @@ from kp_processing.stages import (
 )
 from tests.pdfs import Page, write_pdf
 from tests.stages.test_parse import parse_all
+from tests.summary import summarize_all
 
 LOCAL_METHODS = ("picture-ocr", "table-status")
 PICTURE_WORDS = ["Encoder", "Attention x4", "Decoder 512", "Loss: 0.031"]
@@ -84,9 +85,7 @@ async def enriched(ports, runtime, pdf: bytes, request_id: str = "req_1") -> Fin
     input = await native(ports, runtime, pdf, request_id)
     outcomes = await enrich_local.run(enrich_input(input.inventory, request_id), ports, runtime)
     outcomes += await enrich_vlm.run(enrich_input(input.inventory, request_id), ports, runtime)
-    outcomes += await enrich_vlm.run_summary(
-        enrich_input(input.inventory, request_id), ports, runtime
-    )
+    outcomes += await summarize_all(ports, runtime, enrich_input(input.inventory, request_id))
     return dataclasses.replace(input, outcomes=outcomes)
 
 
@@ -315,8 +314,10 @@ async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runt
         "picture-ocr:#/pictures/0": "success",
         "picture-ocr:#/pictures/1": "no_text",
     }
+    # The paper's sections are too short for a summary sentence (#155 A8).
+    assert by_id["document-summary:#"]["outcome"] == "no_text"
     assert all(r["outcome"] == "success" for i, r in by_id.items()
-               if not i.startswith("picture-ocr:"))  # fmt: skip
+               if not i.startswith(("picture-ocr:", "document-summary:")))  # fmt: skip
 
 
 async def test_a_second_run_reuses_every_item_without_calling_rapidocr(ports, runtime, monkeypatch):
@@ -337,11 +338,12 @@ async def test_every_item_run_or_reused_sends_a_heartbeat(ports, runtime):
     beats = []
     ports = dataclasses.replace(ports, heartbeat=lambda: beats.append(1))
     first = await enriched(ports, runtime, enriched_paper())
-    assert len(beats) == len(first.outcomes) == 7
+    # Every item but the summary's, whose Activities rely on the wrapper's heartbeat loop.
+    assert len(beats) == len(first.outcomes) - 1 == 6
 
     await enrich_local.run(enrich_input(first.inventory), ports, runtime)
 
-    assert len(beats) == 10
+    assert len(beats) == 9
 
 
 async def test_an_undecodable_picture_is_a_failed_item_and_the_document_completes(ports, runtime):

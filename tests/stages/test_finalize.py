@@ -224,7 +224,7 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
         *[("unverified", None)] * 8,
         ("unverified", None),
         ("unverified", None),
-        ("unverified", None),
+        ("unverified", "NO_TEXT"),  # sections too short for a summary sentence (#155 A8)
     ]
     assert enrichments[-1]["item_id"] == "document-summary:#"
     assert enrichments[-1]["target_refs"] == ["#"]
@@ -234,7 +234,7 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
         "picture-interpretation": {**zero, "unverified": 8},
         "code": {**zero, "unverified": 1},
         "table-status": {**zero, "unverified": 1},
-        "document-summary": {**zero, "unverified": 1},
+        "document-summary": {**zero, "no_text": 1},
     }
 
 

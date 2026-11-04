@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import json
 import logging
 import threading
 import time
@@ -15,7 +16,15 @@ from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 from kp_processing.methods.docling_parse import pipeline
 from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.stages import EnrichInput, GroupInput, GroupRef, PrepareInput, sha256
+from kp_processing.stages import (
+    ChunkInput,
+    EnrichInput,
+    GroupInput,
+    GroupRef,
+    OverviewInput,
+    PrepareInput,
+    sha256,
+)
 from kp_processing.weights import WeightsMismatch
 from kp_processing.worker import (
     Inference,
@@ -30,6 +39,7 @@ from kp_processing.workflow import INFERENCE_QUEUE
 from tests.pdfs import Page, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_enrich_local import enriched_paper, native
+from tests.stages.test_enrich_summary import summary_paper
 
 
 class OverwritingStore(DictObjectStore):
@@ -104,18 +114,20 @@ async def test_the_enrich_vlm_activity_heartbeats_after_every_item(ports, runtim
     assert len(beats) == 1 + len(outcomes) == 4
 
 
-async def test_the_enrich_summary_activity_heartbeats_after_its_item(ports, runtime):
-    runtime = with_runtime(runtime, heartbeat_interval_s=3600)
-    input = await native(ports, runtime, enriched_paper())
+async def test_the_summary_activities_run_in_the_temporal_wrappers(ports, runtime):
+    input = await native(ports, runtime, summary_paper())
+    enrich = EnrichInput("doc_1", input.inventory, "r", "run")
+    activities = Summary(ports, runtime)
     environment = ActivityEnvironment()
-    beats = []
-    environment.on_heartbeat = lambda *details: beats.append(details)
 
-    outcomes = await environment.run(
-        Summary(ports, runtime).enrich_summary, EnrichInput("doc_1", input.inventory, "r", "run")
-    )
+    plan = await environment.run(activities.summary_sections, enrich)
+    for index in range(plan.chunks):
+        await environment.run(activities.summary_chunk, ChunkInput(enrich, plan, index))
+    overview = OverviewInput(enrich, plan, True, 900)
+    outcome = await environment.run(activities.summary_overview, overview)
 
-    assert len(beats) == 1 + len(outcomes) == 2
+    record = json.loads(await ports.store.get(outcome.ref))
+    assert (outcome.item_id, record["outcome"]) == ("document-summary:#", "success")
 
 
 async def test_a_cancelled_parse_frees_the_slot_only_after_the_docling_thread_ends(
