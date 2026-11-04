@@ -643,7 +643,14 @@ d3 抓得到「讀錯成怪字」，但抓不到「漏讀」和「簡繁混淆�
 | 6 | t_d | 先用 dev 值：formula 0.445、table 0.306 | 綁定執行環境（模型 revision、BF16、batch 1、不開 batching）。上線前在部署 GPU 重跑 formula、table 的 dev＋test：`disputed` 集合與 AUROC 一致就沿用，否則用同一支 `score.py` 在 GPU 上重校 dev，再跑一次 test |
 | 7 | runtime | 接受新增 d3 推論服務；故障時降級 | 服務由 LLM／d3 provider team 維運，我們負責申請與使用。重試仍失敗時，該項只看規則判定，`signals` 記錄 d3 未執行並告警；之後只需重跑 finalize 補上 |
 
-**容量估算（申請用，未在 GPU 實測）**：每篇平均約 28 個請求（formula 11、table 8、picture-ocr 8，依 20 篇語料）；pilot 尖峰約 0.23 req/s。mini 預估峰值 13–16 GiB，需要 20 GB 等級的 GPU 切片；1 個 pod 即足夠，要高可用就開 2 個。
+**部署方式與容量（申請用，未在公司 GPU 實測）**：provider team 以 vLLM Semantic Router 的 Engine mode 部署（`vllm-sr serve -e vllm-sr/d3-mini`），API 是 `POST /v1/systemone`，回應與模型套件內的 `system_one`／`d3_server.py` 相同（`{"model", "answers", "usage"}`）。以下數字出自 d3-mini 模型卡，在 AMD Instinct MI325X 上量測：
+
+- **記憶體**：每個 replica 峰值 21.9 GiB（一次一個 forward），開 batching 為 19.5 GiB，另外最多快取 2 GiB 影像特徵。要申請 **≥ 24 GiB** 的 GPU 切片；NVIDIA MIG 通常是 40 GB 等級，例如 H100／A100 80GB 的 `3g.40gb`。
+- **延遲**：一張 1.6 MP 圖、一題，p50 135 ms（一次一個 forward），循序約 7 req/s。
+- **負載**：每篇平均約 28 個請求（formula 11、table 8、picture-ocr 8，依 20 篇語料）；pilot 尖峰約 0.23 req/s。1 個 pod 即足夠，要高可用就開 2 個。
+- **batching**：Engine mode 預設開 batching，官方量到 0.136% 的判定（接近平手的）會改變。申請以 `--max-num-seqs 1 --batch-window-ms 0` 部署，並固定 revision `bd0090dd758d32ba59ef5c749910a8e87fc4391f`、`--dtype auto`（BF16）。官方文件沒有保證這組設定和本機逐位元相同，所以第 6 項的 GPU 驗證要對實際部署的設定跑。
+- **版本風險**：模型卡註明 Engine mode 與 Decision 3.0 仍在 vLLM-SR 的開發通道（`--channel dev`），尚未進穩定版。
+- **DEV 替代服務**：模型套件內的 `d3_server.py` 提供同一個 `/v1/systemone`，可在本機 MPS 上起（尚未實測）。
 
 **未定、交給其他票**：消費端如何處理 `disputed` 的公式與表格（#127、E1 負責人）；第 2 層複查（較貴的地端判讀模型，或以更強的 VLM 重做被標出的項目）尚無設計，列為後續候選。
 
