@@ -1,6 +1,6 @@
 """InferenceTransport: the fake and the OpenAI-compatible adapter pass one contract; the adapter's
-failure mapping and its in-code deadline (V7: the #84 dead-socket hang as a regression test); the
-summary API adapter under the provisional contract (#134, V6); no adapter follows a redirect."""
+failure mapping and its in-code deadline (V7: the #84 dead-socket hang as a regression test); no
+adapter follows a redirect; Bounded caps a worker's requests in flight (#155)."""
 
 import asyncio
 import base64
@@ -13,17 +13,15 @@ import pytest
 from PIL import Image
 
 from kp_processing.ports.inference import (
+    Bounded,
     FakeInference,
     OpenAIChat,
     RequestRejected,
     ServiceUnavailable,
-    SummaryApi,
     completion,
 )
-from tests.summary import completion as summary_completion
 
 BASE = "http://vlm.test/v1"
-SUMMARY_BASE = "http://summary.test"
 
 
 def synthetic_png() -> str:
@@ -179,124 +177,35 @@ async def test_other_statuses_are_rejected_requests(status):
     assert caught.value.status == status
 
 
-# --- summary API adapter (provisional contract) -------------------------------------------
-
-SUMMARY_REQUEST = {
-    "document_uid": "doc_1",
-    "sections": [{"section_id": "#/texts/0", "heading": "1 Introduction", "text": "Glaciers."}],
-    "max_sentences": 5,
-}
+# --- Bounded: a worker's requests in flight ------------------------------------------------
 
 
-def summary_adapter(transport: httpx.AsyncBaseTransport, total_s: float = 120) -> SummaryApi:
-    return SummaryApi(httpx.AsyncClient(transport=transport), SUMMARY_BASE, "sum-key", total_s)
+async def test_bounded_holds_requests_past_its_limit_until_one_returns():
+    release = asyncio.Event()
+    running = 0
+    peak = 0
 
+    async def slow(request: dict):
+        nonlocal running, peak
+        running += 1
+        peak = max(peak, running)
+        await release.wait()
+        running -= 1
+        return completion("{}")
 
-def summary_answering(status: int, body: bytes) -> SummaryApi:
-    return summary_adapter(
-        httpx.MockTransport(lambda request: httpx.Response(status, content=body))
-    )
-
-
-SUMMARY_BODY = {"model": "summarizer-3", "sentences": [{"text": "Glaciers retreat."}]}
-
-
-@pytest.fixture(params=["fake", "summary"])
-def summary_transport(request):
-    """The contract for the summary service: (transport answering SUMMARY_BODY, transport
-    answering 503)."""
-    if request.param == "fake":
-        ok = summary_completion(SUMMARY_BODY)
-        return FakeInference(lambda r: ok), FakeInference(lambda r: ServiceUnavailable("HTTP_5XX"))
-    return summary_answering(200, json.dumps(SUMMARY_BODY).encode()), summary_answering(503, b"")
-
-
-async def test_a_summary_answer_carries_the_response_body_and_model(summary_transport):
-    ok, _ = summary_transport
-
-    answer = await ok.complete(SUMMARY_REQUEST)
-
-    assert answer.content is not None
-    assert json.loads(answer.content) == SUMMARY_BODY
-    assert (answer.refusal, answer.model) == (None, "summarizer-3")
-    assert json.loads(answer.body) == SUMMARY_BODY
-
-
-async def test_an_unavailable_summary_service_raises_service_unavailable(summary_transport):
-    _, down = summary_transport
-
-    with pytest.raises(ServiceUnavailable) as caught:
-        await down.complete(SUMMARY_REQUEST)
-
-    assert caught.value.reason == "HTTP_5XX"
-
-
-async def test_the_summary_request_goes_to_its_endpoint_as_sent():
-    body = b'{"model": "summarizer-3", "sentences": [{"text": "Glaciers retreat."}]}'
-    seen = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        seen.append(request)
-        return httpx.Response(200, content=body)
-
-    answer = await summary_adapter(httpx.MockTransport(handler)).complete(SUMMARY_REQUEST)
-
-    (request,) = seen
-    assert (request.method, str(request.url)) == ("POST", f"{SUMMARY_BASE}/v1/summaries")
-    assert request.headers["authorization"] == "Bearer sum-key"
-    assert json.loads(request.content) == SUMMARY_REQUEST
-    assert (answer.content, answer.refusal, answer.model) == (body.decode(), None, "summarizer-3")
-    assert (answer.system_fingerprint, answer.usage, answer.body) == (None, {}, body)
-
-
-async def test_the_summary_usage_is_kept_when_the_api_reports_it():
-    body = b'{"model": "m", "sentences": [], "usage": {"input_tokens": 3}}'
-
-    assert (await summary_answering(200, body).complete(SUMMARY_REQUEST)).usage == {
-        "input_tokens": 3
-    }
-
-
-@pytest.mark.parametrize(
-    ("status", "body", "reason"),
-    [
-        (429, b"slow down", "HTTP_429"),
-        (503, b"", "HTTP_5XX"),
-        (200, b"<html>not json</html>", "MALFORMED_RESPONSE"),
-        (200, b"[]", "MALFORMED_RESPONSE"),
-        (200, b'{"sentences": []}', "MALFORMED_RESPONSE"),
-        (200, b'{"model": 7, "sentences": []}', "MALFORMED_RESPONSE"),
-    ],
-)
-async def test_summary_failures_map_like_the_vlm_ones(status, body, reason):
-    with pytest.raises(ServiceUnavailable) as caught:
-        await summary_answering(status, body).complete(SUMMARY_REQUEST)
-
-    assert caught.value.reason == reason
-
-
-async def test_a_summary_request_the_api_refuses_is_rejected():
-    with pytest.raises(RequestRejected) as caught:
-        await summary_answering(422, b"{}").complete(SUMMARY_REQUEST)
-
-    assert caught.value.status == 422
-
-
-async def test_a_summary_connection_error_is_connection():
-    def handler(request: httpx.Request) -> httpx.Response:
-        raise httpx.ConnectError("down", request=request)
-
-    with pytest.raises(ServiceUnavailable) as caught:
-        await summary_adapter(httpx.MockTransport(handler)).complete(SUMMARY_REQUEST)
-
-    assert caught.value.reason == "CONNECTION"
+    bounded = Bounded(FakeInference(slow), 2)
+    calls = [asyncio.create_task(bounded.complete({"n": n})) for n in range(5)]
+    await asyncio.sleep(0.01)
+    assert (peak, running) == (2, 2)
+    release.set()
+    await asyncio.gather(*calls)
+    assert peak == 2
 
 
 # --- egress: requests leave only for the configured endpoint -------------------------------
 
 
-@pytest.mark.parametrize("service", ["vlm", "summary"])
-async def test_a_redirect_elsewhere_is_never_followed(service):
+async def test_a_redirect_elsewhere_is_never_followed():
     seen = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -305,15 +214,10 @@ async def test_a_redirect_elsewhere_is_never_followed(service):
 
     # The client would follow redirects; the adapter must not.
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=True)
-    if service == "vlm":
-        sender = OpenAIChat(client, BASE, "sk-test", "gpt-6-luna", connect_s=5, total_s=60)
-        request = REQUEST
-    else:
-        sender = SummaryApi(client, SUMMARY_BASE, "sum-key", total_s=120)
-        request = SUMMARY_REQUEST
+    sender = OpenAIChat(client, BASE, "sk-test", "gpt-6-luna", connect_s=5, total_s=60)
 
     with pytest.raises(RequestRejected) as caught:
-        await sender.complete(request)
+        await sender.complete(REQUEST)
 
     assert caught.value.status == 307
     assert len(seen) == 1
@@ -369,17 +273,13 @@ class Hang(httpx.AsyncBaseTransport):
         return self.cancelled + sum(body.closed for body in self.bodies)
 
 
-@pytest.mark.parametrize("service", ["vlm", "summary"])
 @pytest.mark.parametrize("variant", ["silent", "headers", "drip"])
-async def test_a_hung_call_is_cut_at_the_deadline_and_closed(variant, service):
+async def test_a_hung_call_is_cut_at_the_deadline_and_closed(variant):
     hang = Hang(variant)
     total_s = 0.5
     tasks_before = asyncio.all_tasks()
     started = time.monotonic()
-    if service == "vlm":
-        call = adapter(hang, total_s=total_s).complete(REQUEST)
-    else:
-        call = summary_adapter(hang, total_s=total_s).complete(SUMMARY_REQUEST)
+    call = adapter(hang, total_s=total_s).complete(REQUEST)
 
     with pytest.raises(ServiceUnavailable) as caught:
         await call

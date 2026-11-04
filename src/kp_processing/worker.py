@@ -4,7 +4,7 @@ non-retryable ApplicationError whose details the workflow turns into the failure
 
 One worker serves one task queue, so each queue scales as its own deployment: orchestration
 runs the workflow and the light Activities, inference runs docling one call at a time and is
-the only one that loads it, vlm sends the VLM requests and summary the summary API's."""
+the only one that loads it, vlm sends the VLM requests and summary the Document Summary's."""
 
 import asyncio
 import json
@@ -24,6 +24,7 @@ from kp_processing.ports.object_store import ObjectStore
 from kp_processing.ports.status_reporter import StatusReport
 from kp_processing.stages import (
     AssembleInput,
+    ChunkInput,
     EnrichInput,
     FailureInput,
     FinalizeInput,
@@ -32,17 +33,20 @@ from kp_processing.stages import (
     InventoryInput,
     InventoryRef,
     OutcomeRef,
+    OverviewInput,
     Plan,
     Ports,
     PrepareInput,
     ProcessingFailure,
     Registered,
     Runtime,
+    SummaryPlan,
     enrich_vlm,
     finalize,
     inventory,
     prepare,
     report,
+    summary,
 )
 from kp_processing.workflow import (
     FAILURE_TYPE,
@@ -57,7 +61,7 @@ from kp_processing.workflow import (
 )
 
 VLM_SLOTS = 5  # #93 §7: documents in VLM enrichment at once per worker
-SUMMARY_SLOTS = 5  # #93 §7: documents in summary enrichment at once per worker
+SUMMARY_SLOTS = 5  # #93 §7: summary Activities (a chunk each) at once per worker
 
 T = TypeVar("T")
 
@@ -174,12 +178,21 @@ class Vlm(_Activities):
 
 
 class Summary(_Activities):
-    @activity.defn(name="enrich_summary")
-    async def enrich_summary(self, input: EnrichInput) -> list[OutcomeRef]:
-        return _count_enriched(await self._run(enrich_vlm.run_summary, input))
+    @activity.defn(name="summary_sections")
+    async def summary_sections(self, input: EnrichInput) -> SummaryPlan:
+        return await self._run(summary.run_sections, input)
+
+    @activity.defn(name="summary_chunk")
+    async def summary_chunk(self, input: ChunkInput) -> None:
+        return await self._run(summary.run_chunk, input)
+
+    @activity.defn(name="summary_overview")
+    async def summary_overview(self, input: OverviewInput) -> OutcomeRef:
+        (outcome,) = _count_enriched([await self._run(summary.run_overview, input)])
+        return outcome
 
     def all(self) -> list[Callable[..., Any]]:
-        return [self.enrich_summary]
+        return [self.summary_sections, self.summary_chunk, self.summary_overview]
 
 
 def _tier() -> str:

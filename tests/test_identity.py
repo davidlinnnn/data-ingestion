@@ -111,7 +111,7 @@ def test_runtime_values_never_change_any_key(tmp_path):
     changed.write_text(
         text.replace("vlm_concurrency_per_document: 4", "vlm_concurrency_per_document: 8")
         .replace("max_attempts: 3", "max_attempts: 5")
-        .replace("summary_request_deadline_s: 120", "summary_request_deadline_s: 300")
+        .replace("summary_budget_s: 900", "summary_budget_s: 300")
     )
 
     def keys(path: Path) -> list[str]:

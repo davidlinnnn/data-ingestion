@@ -14,11 +14,9 @@ An item-scope method package also declares:
     ORIGIN   "reconstruction" or "interpretation"
     run(item: InventoryItem, inputs: list[bytes]) -> MethodOutput, inputs in INPUTS order
 
-A method that calls an external service declares instead (or as well, as code does for its
-native path), and its items then run in that service's Activity (Method.service):
+A method that calls the VLM declares instead (or as well, as code does for its native path),
+and its items then run in the vlm Activity (Method.service "vlm"):
 
-    SERVICE  (optional) "vlm" (the default) or "summary": the external service its requests go
-             to, one of the two inference egresses of the data-security design §5
 
     request(item, inputs) -> dict | MethodOutput
              the request body of its service; for "vlm", the chat-completions body without
@@ -33,8 +31,10 @@ native path), and its items then run in that service's Activity (Method.service)
              the MethodOutput of parse then sets fields, one MethodOutput per name
 
 A document-scope method package (v2 §4) declares SCOPE = "document" instead of TARGET: inventory
-lists one DocumentItem for it, whose target is the whole document. It declares INPUTS, ORIGIN
-and the request/parse pair as above, with a DocumentItem in place of the InventoryItem.
+lists one DocumentItem for it, whose target is the whole document, and it declares INPUTS and
+ORIGIN as above. The one with SERVICE = "summary" (document_summary) runs in the summary
+Activities (kp_processing.stages.summary) and declares their functions instead of request and
+parse. "vlm" and "summary" are the two inference egresses of the data-security design §5.
 """
 
 from dataclasses import dataclass, field

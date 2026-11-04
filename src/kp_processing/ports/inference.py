@@ -1,6 +1,6 @@
 """InferenceTransport port: one external inference service (#129, inference adapter; #93 §3.2).
-OpenAIChat serves an OpenAI-compatible chat-completions service, such as the company VLM or the
-DEV reference model; SummaryApi serves the summary API (#134)."""
+OpenAIChat serves an OpenAI-compatible chat-completions service: the company VLM or LLM, the DEV
+reference model, or Anthropic's OpenAI-compatible endpoint for the DEV Document Summary (#155)."""
 
 import asyncio
 import inspect
@@ -16,7 +16,7 @@ UnavailableReason = Literal["TIMEOUT", "CONNECTION", "HTTP_5XX", "HTTP_429", "MA
 
 @dataclass(frozen=True)
 class Completion:
-    content: str | None  # choices[0].message.content; the summary API's whole body
+    content: str | None  # choices[0].message.content
     refusal: str | None  # choices[0].message.refusal, set when the model refused
     model: str  # the response's model
     system_fingerprint: str | None
@@ -140,51 +140,17 @@ class OpenAIChat:
             raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
 
 
-class SummaryApi:
-    """The summary API. Its interface to the document_summary package is the provisional
-    contract of #129: complete() takes {document_uid, sections [{section_id, heading, text}],
-    max_sentences} and answers with content {model, sentences [{text, evidence
-    [{section_id}]}]}. Translating to and from another wire format belongs here, and a new wire
-    format comes with a new summary-api component in the profile.
+class Bounded:
+    """At most limit requests of the wrapped transport in flight at once, for one worker process;
+    the others wait here, before the transport's deadline starts."""
 
-    POST {base_url}/v1/summaries (provisional path) with the request body as JSON, bearer
-    api_key.
-
-    Deadline, redirect rule and failure mapping are OpenAIChat's, with total_s bounding both the
-    connect and the whole call. A 2xx body that is a JSON object with a string "model" ->
-    Completion(content: the body decoded as UTF-8, refusal None, model, system_fingerprint
-    None, usage: its "usage" object or {}, body: the bytes as received); any other 2xx body ->
-    MALFORMED_RESPONSE. The sentences are not checked here: the package's parse validates them.
-    """
-
-    def __init__(
-        self, client: httpx.AsyncClient, base_url: str, api_key: str, total_s: float
-    ) -> None:
-        self.client = client
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key
-        self.total_s = total_s
+    def __init__(self, transport: InferenceTransport, limit: int) -> None:
+        self.transport = transport
+        self.slots = asyncio.Semaphore(limit)
 
     async def complete(self, request: dict[str, Any]) -> Completion:
-        body = await _post(
-            self.client,
-            f"{self.base_url}/v1/summaries",
-            self.api_key,
-            request,
-            self.total_s,
-            self.total_s,
-        )
-        try:
-            content = body.decode("utf-8")
-            data = json.loads(content)
-            if not isinstance(data, dict) or not isinstance(data.get("model"), str):
-                raise ValueError("Missing response model")
-            usage = data.get("usage")
-            return Completion(
-                content, None, data["model"], None, usage if isinstance(usage, dict) else {}, body
-            )
-        except (ValueError, TypeError) as exc:
-            raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
+        async with self.slots:
+            return await self.transport.complete(request)
 
 
 class FakeInference:

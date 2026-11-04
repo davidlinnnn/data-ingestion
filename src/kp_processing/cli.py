@@ -5,8 +5,8 @@ TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
 KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), which only the
 orchestration worker needs; KP_VLM_BASE_URL and KP_VLM_API_KEY, the OpenAI-compatible VLM
 endpoint, which only the vlm worker needs (the model comes from the profile);
-KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the summary API, which only the summary worker
-needs.
+KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the OpenAI-compatible endpoint of the Document
+Summary's model, which only the summary worker needs (the model comes from the profile).
 """
 
 import argparse
@@ -28,7 +28,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.runtime import PrometheusConfig, TelemetryConfig
 from temporalio.runtime import Runtime as TemporalRuntime
 
-from kp_processing.ports.inference import OpenAIChat, SummaryApi
+from kp_processing.ports.inference import Bounded, OpenAIChat
 from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
@@ -204,8 +204,13 @@ async def run_worker(
                              enrich_vlm.model(runtime.profile), deadline["connect"],
                              deadline["total"])  # fmt: skip
         if queue == "summary":
-            summary = SummaryApi(external_http, summary_url or "", summary_key,
-                                 runtime.profile.runtime["summary_request_deadline_s"])  # fmt: skip
+            settings = runtime.profile.runtime
+            deadline = settings["summary_request_deadline_s"]
+            # #155: a chunk's calls run in parallel, so slots alone do not bound the requests.
+            summary = Bounded(OpenAIChat(external_http, summary_url or "", summary_key,
+                                         enrich_vlm.model(runtime.profile, "summary"),
+                                         deadline["connect"], deadline["total"]),
+                              settings["summary_requests_per_worker"])  # fmt: skip
         ports = Ports(store, reporter, vlm=vlm, summary=summary)
         client = await connect(temporal_runtime)
         worker = await make_worker(client, ports, runtime, queue, shutdown_grace_s)

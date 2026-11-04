@@ -3,6 +3,7 @@ in-process store and reporter fakes. Uses the local `temporal` CLI when installe
 the SDK downloads the dev server; either way it binds a local port (outside the Codex
 sandbox)."""
 
+import asyncio
 import contextlib
 import dataclasses
 import json
@@ -14,6 +15,7 @@ from temporalio.client import Client
 
 from kp_processing.cli import start_request
 from kp_processing.ports.clock import SystemClock
+from kp_processing.ports.inference import FakeInference, completion
 from kp_processing.ports.status_reporter import (
     Progress,
     RecordingStatusReporter,
@@ -98,7 +100,7 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
         for field in ("caption", "chart_values", "description", "figure_type")
     ]
     assert {e["item_id"].split(":")[0] for e in enrichments[10:-1]} <= {"table-status"}
-    # The Document Summary from the summary worker, against the DEV mock.
+    # The Document Summary from the summary worker, against the DEV fake.
     summary = enrichments[-1]
     assert (summary["item_id"], summary["scope"], summary["target_refs"]) == (
         "document-summary:#",
@@ -314,7 +316,7 @@ async def _resolved(value):
 async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports, runtime):
     runtime = with_runtime(
         runtime,
-        heartbeat_timeout_s={"inference": 61, "vlm": 91, "summary": 151},
+        heartbeat_timeout_s={"inference": 61, "vlm": 91, "summary": 62},
         start_to_close_s={"orchestration": 121, "inference": 901},
         activity_retry={
             "orchestration": {"initial_s": 3, "multiplier": 2, "cap_s": 31, "max_attempts": 6},
@@ -323,7 +325,7 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
             "summary": {"initial_s": 5, "multiplier": 2, "cap_s": 28, "max_attempts": 4},
         },
         vlm_request_deadline_s={"connect": 5, "total": 61},
-        summary_request_deadline_s=121,
+        summary_budget_s=901,
         external_start_to_close_slack_s=301,
     )
     # One picture: a picture-ocr and a picture-interpretation item.
@@ -358,13 +360,17 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert vlm.heartbeat_timeout.seconds == 91
     assert vlm.retry_policy.maximum_attempts == 7
     assert vlm.retry_policy.initial_interval.seconds == 4
-    summary = scheduled["enrich_summary"]
-    assert summary.task_queue.name == "summary"
-    # one item x 121 s deadline x 3 attempts + 301 s slack (#93 §3.2)
-    assert summary.start_to_close_timeout.seconds == 121 * 3 + 301
-    assert summary.heartbeat_timeout.seconds == 151
-    assert summary.retry_policy.maximum_attempts == 4
-    assert summary.retry_policy.initial_interval.seconds == 5
+    for name in ("summary_sections", "summary_chunk", "summary_overview"):
+        summary = scheduled[name]
+        assert summary.task_queue.name == "summary"
+        # the summary budget + 301 s slack: the budget's timer ends a slow summary (#155)
+        assert summary.start_to_close_timeout.seconds == 901 + 301
+        assert summary.heartbeat_timeout.seconds == 62
+        assert summary.retry_policy.maximum_attempts == 4
+        assert summary.retry_policy.initial_interval.seconds == 5
+    # Chunks share the summary queue fairly between documents (#155).
+    assert scheduled["summary_chunk"].priority.fairness_key == "doc_1"
+    assert scheduled["summary_sections"].priority.fairness_key == ""
 
 
 async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
@@ -389,3 +395,24 @@ async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
     error = failure["error"]
     assert (error["reason"], error["retryable"]) == ("PLATFORM_ERROR", True)
     assert error["metadata"] == {"category": "platform", "activity": "inventory"}
+
+
+async def test_a_summary_past_its_budget_does_not_hold_the_document(client, ports, runtime):
+    async def hang(request: dict):
+        await asyncio.sleep(60)
+        return completion("{}")
+
+    ports = dataclasses.replace(ports, summary=FakeInference(hang))
+    runtime = with_runtime(runtime, summary_budget_s=2)
+    start = await start_input(ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    result = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    summary = result["enrichments"][-1]
+    assert (summary["item_id"], summary["status"], summary["status_reason"]) == (
+        "document-summary:#", "failed", "SERVICE_UNAVAILABLE",
+    )  # fmt: skip
+    marker = f"documents/doc_1/service-unavailable/{start['request_id']}"
+    assert await ports.store.head(marker) is not None

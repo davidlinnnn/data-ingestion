@@ -30,7 +30,7 @@ def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
         "formula@1",
         "code@1",
         "table-status@1",
-        "document-summary@1",
+        "document-summary@2",
     ]
     assert p.methods["docling-parse"].components == (
         "docling-slim@2.132.0",
@@ -49,7 +49,7 @@ def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
 
 
 def test_paper_pdf_1_sends_only_to_its_two_declared_services():
-    # The inference egresses of the data-security design §5: the company VLM and the summary API.
+    # The inference egresses of the data-security design §5: the company VLM and the summary model.
     p = load_profile(PAPER_PDF_1)
 
     external = {m.id: (m.service, m.components) for m in p.methods.values() if m.service}
@@ -58,7 +58,7 @@ def test_paper_pdf_1_sends_only_to_its_two_declared_services():
         "picture-interpretation": ("vlm", ("company-vlm/Qwen3.8-27B",)),
         "formula": ("vlm", ("company-vlm/Qwen3.8-27B",)),
         "code": ("vlm", ("company-vlm/Qwen3.8-27B",)),
-        "document-summary": ("summary", ("summary-api/v1",)),
+        "document-summary": ("summary", ("company-vlm/Qwen3.8-27B",)),
     }
 
 

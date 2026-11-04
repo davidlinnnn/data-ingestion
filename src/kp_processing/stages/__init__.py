@@ -9,7 +9,9 @@ Object keys (#129, object storage and registration):
     documents/{document_uid}/items/{key}/...         registered, write-once, shared across requests
     requests/{request_id}/attempts/{run_id}/plan.json the frozen group plan of one attempt
     requests/{request_id}/attempts/{run_id}/receipts/{item_id}/{attempt}.json
-                                                      external request receipts (#133)
+                                                      external request receipts (#133); the
+                                                      Document Summary's add a directory per
+                                                      chunk or the overview (#155)
     requests/{request_id}/attempts/{run_id}/outcomes/{key}/outcome.json
                                                       outcome records that must not be reused
     documents/{document_uid}/service-unavailable/{request_id}  redrive marker (empty)
@@ -40,6 +42,7 @@ Cause = Literal["source", "platform"]
 # means the Source Revision itself is unprocessable; platform covers the rest.
 Category = Literal["source", "configuration", "method", "integrity", "platform"]
 ERROR_DOMAIN = "kp-processing"
+FAILURE_TYPE = "ProcessingFailure"  # ApplicationError type carrying ProcessingFailure.details()
 
 
 @dataclass(frozen=True)
@@ -384,3 +387,27 @@ class FailureInput:
     cause: Cause
     error: dict[str, Any]  # error_block()
     inventory_ref: str | None
+
+
+@dataclass(frozen=True)
+class SummaryPlan:
+    item_id: str  # the Document Summary's inventory item
+    key: str  # its reuse key: documents/{document_uid}/items/{key}
+    sections: Registered | None  # the registered sections.json; None when outcome is set
+    chunks: int  # number of chunk Activities to run
+    outcome: OutcomeRef | None  # the outcome record already registered, when reused
+
+
+@dataclass(frozen=True)
+class ChunkInput:
+    enrich: EnrichInput
+    plan: SummaryPlan
+    index: int  # which chunk of sections.json
+
+
+@dataclass(frozen=True)
+class OverviewInput:
+    enrich: EnrichInput
+    plan: SummaryPlan
+    complete: bool  # every chunk Activity returned within the summary budget
+    budget_s: float  # what is left of it; no send starts later
