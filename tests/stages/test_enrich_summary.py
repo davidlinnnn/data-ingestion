@@ -66,6 +66,16 @@ async def summarized(ports, runtime, transport: FakeInference, complete=True):
     return input, (await records(ports, [outcome]))[ITEM_ID], outcome
 
 
+async def section_ids(ports) -> dict[str, str]:
+    """Each summarized Section's id by heading, from sections.json: docling numbers its texts
+    differently across platforms."""
+    (key,) = [k for k in await ports.store.list_prefix("documents/doc_1/items/")
+              if k.endswith("/sections.json")]  # fmt: skip
+    return {
+        s["heading"]: s["section_id"] for s in json.loads(await ports.store.get(key))["sections"]
+    }
+
+
 async def summary_enrichment(ports, runtime, input, outcome) -> dict:
     """The Processing Result's summary enrichment, after local and VLM enrichment."""
     outcomes = await enrich_local.run(enrich(input), ports, runtime)
@@ -168,17 +178,19 @@ async def test_a_summary_is_an_overview_citing_sections_and_a_summary_per_sectio
 
     input, record, outcome = await summarized(ports, runtime, transport)
 
+    ids = await section_ids(ports)
     assert (record["outcome"], record["reason"], record["contradictions"]) == ("success", None, [])
     assert record["content"] == {
         "overview": [
-            {"text": INTRO, "evidence": [{"section_id": "#/texts/0"}]},
-            {"text": METHOD, "evidence": [{"section_id": "#/texts/13"}]},
+            {"text": INTRO, "evidence": [{"section_id": ids["1 Introduction"]}]},
+            {"text": METHOD, "evidence": [{"section_id": ids["2 Method"]}]},
         ],
         "sections": [
-            {"section_id": "#/texts/0", "heading": "1 Introduction",
+            {"section_id": ids["1 Introduction"], "heading": "1 Introduction",
              "sentences": [{"text": INTRO}]},
-            {"section_id": "#/texts/13", "heading": "2 Method", "sentences": [{"text": METHOD}]},
-            {"section_id": "#/texts/23", "heading": "4 Note", "sentences": []},
+            {"section_id": ids["2 Method"], "heading": "2 Method",
+             "sentences": [{"text": METHOD}]},
+            {"section_id": ids["4 Note"], "heading": "4 Note", "sentences": []},
         ],
     }  # fmt: skip
     assert record["signals"] == {"rewritten": 0, "dropped": 0}
@@ -270,7 +282,7 @@ async def test_an_overview_sentence_without_a_valid_source_is_dropped(ports, run
     _, record, _ = await summarized(ports, runtime, FakeInference(reply_to))
 
     assert record["content"]["overview"] == [
-        {"text": METHOD, "evidence": [{"section_id": "#/texts/13"}]}
+        {"text": METHOD, "evidence": [{"section_id": (await section_ids(ports))["2 Method"]}]}
     ]
     assert record["signals"]["dropped"] == 1
 
