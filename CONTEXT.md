@@ -152,6 +152,12 @@ A versioned component of a Processing Profile that produces one or more kinds of
 Enrichment for a declared scope from its actual inputs.
 _Avoid_: enrichment plugin, per-Source enrichment option
 
+**Quality Check**:
+A versioned method of a Processing Profile that judges another Enrichment
+Method's output after enrichment and contributes signals or contradictions to
+that output's Enrichment Status; it produces no Enrichment of its own (ADR-0011).
+_Avoid_: verification, validation step, judge (alone)
+
 **Picture Interpretation**:
 Enrichment generated from a picture, such as a caption, description, figure type
 or chart values, each attributable to its producing method.

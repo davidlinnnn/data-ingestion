@@ -209,6 +209,8 @@ This refines #84 D4 ("v1 is always `unverified`"): v1 still never produces
 such as cheap-signal agreement, are recorded but never change status. The rule
 is versioned inside the Processing Profile; changing it reruns only finalize.
 Canonical keeps the status; consumers check it before use.
+[ADR-0011](../adr/0011-model-judged-strong-signals-d3-quality-check.md) adds a
+model-judged strong signal for formulas and tables: the d3 Quality Check.
 
 ## 8. Processing Result and failure report
 
