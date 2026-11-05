@@ -20,6 +20,10 @@ Implementing a ticket follows the `implement` flow: `tdd` at the spec's seams, `
 
 `scripts/check` mirrors CI's lint and type checks; `scripts/check --all` adds the S3 stand-in and the whole test suite. Enable the hooks once per clone: `git config core.hooksPath scripts/git-hooks`. Pre-commit runs `scripts/check`; pre-push runs `scripts/check-docs`.
 
+### Heavy local jobs
+
+Run docling, d3 inference and vllm-sr on this machine as `scripts/heavy-lock <name> -- <command>`: one heavy job at a time across all sessions. When it refuses, wait for the named holder; see the script's docstring.
+
 ### Branches and worktrees
 
 Public repo. Before creating a branch or worktree, committing, pushing, merging or deleting a branch, read `docs/agents/branching.md`.
