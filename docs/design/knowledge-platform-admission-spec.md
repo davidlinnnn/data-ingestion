@@ -143,6 +143,8 @@ Response `201`:
 }
 ```
 
+The `method` and `url` of `uploads[]` are superseded; see the note in §5.2.
+
 Item `status` after declaration:
 
 | Status | Meaning |
@@ -170,6 +172,17 @@ body reissues every grant not yet used. Only for `open` batches; returns the sam
 `uploads` shape. Each grant allows one `PUT` of one file to its staging
 location, limited to the declared size (and digest where storage supports it),
 valid for one hour.
+
+Superseded on 2026-10-30 by company policy, relayed on
+[#95](https://github.com/davidlinnnn/data-ingestion/issues/95#issuecomment-6518076869):
+clients may not upload files through presigned URLs, and SAS is excluded with
+them. A grant is therefore not a storage-native URL, and the `method` and `url`
+of `uploads[]` (§5.1) do not point at storage. The replacement upload form is
+not decided and is tracked on
+[#96](https://github.com/davidlinnnn/data-ingestion/issues/96). Declaration,
+finalization and the rules in §6 are unchanged. The decided, unchanged and open
+points are in the
+[design notes](knowledge-platform-admission.md#upload-grant-form-excluded-by-company-policy-on-2026-10-30).
 
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 

@@ -283,6 +283,8 @@ platform-verified digest as the artifact's integrity information.
   declared size (and digest where supported). Default lifetime is one hour;
   grants may be reissued while the session is open. The concrete form is a
   storage-native presigned URL or SAS, chosen with the storage product.
+  Superseded on 2026-10-30: company policy excludes this form; see
+  [Upload grant form excluded by company policy on 2026-10-30](#upload-grant-form-excluded-by-company-policy-on-2026-10-30).
 - An upload session not finalized within 24 hours expires: its items are not
   admitted and staged files are deleted. Finalizing an expired session fails
   explicitly.
@@ -986,6 +988,54 @@ becomes its own ticket only once the pilot client's language is known.
   `document_uid`.
 - The round-3 status reporting contract's "exhausted retries become
   `product_failed`": they become `processing_failed`.
+
+## Upload grant form excluded by company policy on 2026-10-30
+
+During the #80 specification work the user's manager confirmed a company policy:
+clients may not upload files through presigned URLs. The policy was relayed on
+[#95](https://github.com/davidlinnnn/data-ingestion/issues/95#issuecomment-6518076869)
+and is tracked on [#96](https://github.com/davidlinnnn/data-ingestion/issues/96),
+which implements the upload path.
+
+Decided:
+
+- An upload grant is not a storage-native presigned URL. The handoff treats SAS,
+  the equivalent storage-issued URL, as excluded with it. This replaces the
+  concrete form in Q5 and the `method` and `url` of `uploads[]` in the
+  specification (§5.1, §5.2).
+- Processing is unaffected: it issues no URL to clients and reads files by
+  `custody_ref` with platform credentials
+  ([#129](https://github.com/davidlinnnn/data-ingestion/issues/129)).
+
+Unchanged:
+
+- The declare, upload, finalize flow (Q4), the integrity information (Q4b), the
+  24-hour expiry (Q5a) and staging kept separate from custody (Q5b).
+- Every finalization check, and acceptance and dispatch (Q7), which start after
+  finalization.
+
+Open:
+
+1. What the policy permits: any authenticated platform endpoint, or only a
+   company-designated transfer channel. The user brings this back.
+2. The upload form. The handoff's candidate is a platform upload endpoint
+   through which admission writes staging; `uploads[]` keeps its shape, `url`
+   names the platform endpoint and the grant is a token. Under this candidate
+   the client holds no delegated storage access, so the Valet Key principle
+   (first section, and the principle below) needs restating.
+3. Whether a per-file grant remains (the one-hour lifetime and reissue of Q5,
+   §5.2 of the specification), or the upload endpoint authenticates the Source
+   credential directly.
+4. Capacity once file bytes pass through the `api` role. The PROD burst on
+   [#88](https://github.com/davidlinnnn/data-ingestion/issues/88#issuecomment-6633160435)
+   is 50 PDFs a minute for 10 minutes, 20 MB on average and 50 MB at most:
+   about 1 GB a minute, or 17 MB/s. Streaming into staging, request-size limits
+   and `api` scaling follow from the chosen form.
+
+Passages written before the policy and not rewritten: Q5 above; the principle
+below; §5.1, §5.2, §6.1 step 8 and the "Upload grant" row of §11 in the
+specification; and "platform-issued direct upload" in the
+[source handoff design](knowledge-platform-source-handoff.md).
 
 ## Principle for later architecture documentation
 

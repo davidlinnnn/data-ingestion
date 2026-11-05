@@ -38,6 +38,7 @@
 - **推論服務**（B4）：別的 team 的摘要 API 和公司 VLM 都已確認四個條件：on-prem；不留存內容，或留存符合公司規定；不用於訓練；log 不含正文，或 log 存取受控。
 - **特權存取**（D1）：公司有既有的特權存取機制，使用時會留下身分紀錄。
 - **agent 身分**（A3、F1）：公司原則是「agent 代表人做事」，A2A 和 MCP 呼叫會帶身分。候選做法（待進公司確認）是以 workload 身分（例如 K8s ServiceAccount token）作為 agent 身分、tSSO 作為使用者身分。Agent Platform 對資料面還沒有定義，由本文提出準則（F3、F5）。
+- **client 上傳**（2026-10-30 主管確認後補記）：公司政策禁止 client 以 presigned URL 上傳檔案。admission 的上傳 grant 形式因此待重新決定，見 [admission 規格](knowledge-platform-admission-spec.md) §5.2 的註記。
 
 ## 3. 決策
 
@@ -192,6 +193,7 @@ agent 在每次呼叫時帶 [W3C Trace Context](https://www.w3.org/TR/trace-cont
 | 主管核准 Platform Security Baseline | 第 8 節；A 級接入；Agent Platform 契約 | 使用者 |
 | Agent Platform infra team 同意第 7 節的義務 | 第 7 節 | 使用者 |
 | 讀取限速的數值 | E3 | #88（PROD 讀取量）、#76 |
+| 公司政策允許的 client 上傳方式：任何通過驗證的平台端點皆可，或只能走公司指定的傳輸管道 | admission 規格 §5.1、§5.2 的上傳形式 | 使用者帶回；代入 #96 |
 
 ## 10. 交接
 
