@@ -41,6 +41,13 @@ def test_the_summary_worker_needs_the_summary_url(monkeypatch, capsys):
     assert "KP_SUMMARY_BASE_URL" in capsys.readouterr().err
 
 
+def test_the_d3_worker_needs_the_d3_url(monkeypatch, capsys):
+    monkeypatch.delenv("KP_D3_BASE_URL", raising=False)
+
+    assert main(["worker", "--queue", "d3"]) == 2
+    assert "KP_D3_BASE_URL is required for the d3 worker" in capsys.readouterr().err
+
+
 def test_the_orchestration_worker_needs_the_admission_url(monkeypatch, capsys):
     monkeypatch.delenv("KP_ADMISSION_URL", raising=False)
 

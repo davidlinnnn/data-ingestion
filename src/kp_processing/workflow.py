@@ -1,10 +1,10 @@
 """The paper-pdf workflow: the stage graph of #129 as code (#131), with local enrichment (#132),
-VLM enrichment (#133) and the Document Summary (#134, #155).
+VLM enrichment (#133), the Document Summary (#134, #155) and the Quality Check (#161).
 
 prepare -> parse group x N (in order) -> assemble -> inventory -> {local, VLM, summary}
-enrichment -> finalize,
-reporting the four admission stages. Activities are addressed by name so that this module,
-which the workflow sandbox re-imports, stays free of docling.
+enrichment -> check (when the plan says the profile lists a Quality Check) -> finalize,
+reporting the four admission stages; the check is part of enrich. Activities are addressed by
+name so that this module, which the workflow sandbox re-imports, stays free of docling.
 """
 
 import asyncio
@@ -21,6 +21,7 @@ with workflow.unsafe.imports_passed_through():
     from kp_processing.stages import (
         FAILURE_TYPE,
         AssembleInput,
+        CheckInput,
         EnrichInput,
         FailureInput,
         FinalizeInput,
@@ -44,12 +45,13 @@ STAGES_VERSION = "1"
 
 # Task queues are named after what their workers can run and are shared by every pipeline:
 # the workflow and light Activities on orchestration, docling on inference (one call per
-# worker), the external enrichment services on vlm and summary.
+# worker), the external enrichment services on vlm and summary, the d3 decision model on d3.
 ORCHESTRATION_QUEUE = "orchestration"
 INFERENCE_QUEUE = "inference"
 VLM_QUEUE = "vlm"
 SUMMARY_QUEUE = "summary"
-Queue = Literal["orchestration", "inference", "vlm", "summary"]
+D3_QUEUE = "d3"
+Queue = Literal["orchestration", "inference", "vlm", "summary", "d3"]
 
 
 def priority(admission_priority: Any) -> Priority:
@@ -91,25 +93,24 @@ def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dic
     """execute_activity options per task queue from the profile's runtime section:
     activity_retry.<queue> ({initial_s, multiplier, cap_s, max_attempts}; ProcessingFailure
     never retried); start_to_close_s.<queue>, except the external backstops (#93 §3.2): for vlm
-    and a document of `items` inventory items, ceil(items / vlm_concurrency_per_document) x
-    vlm_request_deadline_s.total x retry.max_attempts + external_start_to_close_slack_s; for
-    summary, summary_budget_s + external_start_to_close_slack_s (the budget's workflow timer,
-    not this timeout, ends a slow summary); and heartbeat_timeout_s.<queue> for all but
-    orchestration."""
-    vlm_s = (
-        math.ceil(items / runtime["vlm_concurrency_per_document"])
-        * runtime["vlm_request_deadline_s"]["total"]
-        * runtime["retry"]["max_attempts"]
-        + runtime["external_start_to_close_slack_s"]
-    )
+    and d3 and a document of `items` inventory items (a check item per inventory item at
+    most), ceil(items / <queue>_concurrency_per_document) x <queue>_request_deadline_s.total x
+    retry.max_attempts + external_start_to_close_slack_s; for summary, summary_budget_s +
+    external_start_to_close_slack_s (the budget's workflow timer, not this timeout, ends a slow
+    summary); and heartbeat_timeout_s.<queue> for all but orchestration."""
     summary_s = runtime["summary_budget_s"] + runtime["external_start_to_close_slack_s"]
     options: dict[Queue, dict[str, Any]] = {}
     queue: Queue
-    for queue in ("orchestration", "inference", "vlm", "summary"):
+    for queue in ("orchestration", "inference", "vlm", "summary", "d3"):
         retry = runtime["activity_retry"][queue]
         match queue:
-            case "vlm":
-                seconds = vlm_s
+            case "vlm" | "d3":
+                seconds = (
+                    math.ceil(items / runtime[f"{queue}_concurrency_per_document"])
+                    * runtime[f"{queue}_request_deadline_s"]["total"]
+                    * runtime["retry"]["max_attempts"]
+                    + runtime["external_start_to_close_slack_s"]
+                )
             case "summary":
                 seconds = summary_s
             case _:
@@ -186,7 +187,11 @@ class PaperPdfWorkflow:
                 summarize(enrich_input, plan.runtime, external["summary"]),
             )
             outcomes = local + vlm + summary
-            self._report("enrich", "succeeded", Progress(len(outcomes), inventory.items, "items"))
+            enriched = Progress(len(outcomes), inventory.items, "items")
+            if plan.check:
+                check_input = CheckInput(enrich_input, outcomes)
+                outcomes += await self._call("check", check_input, list[OutcomeRef], external["d3"])
+            self._report("enrich", "succeeded", enriched)
 
             stage = "finalize"
             self._report("finalize", "running")

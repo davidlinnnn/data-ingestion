@@ -27,6 +27,7 @@ from kp_processing.worker import make_worker
 from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, priority
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
+from tests.stages.test_check import checked_paper, without_check
 from tests.stages.test_parse import seven_pages
 
 pytestmark = pytest.mark.network
@@ -40,6 +41,7 @@ async def workers(client: Client, ports: Ports, runtime):
         await make_worker(client, ports, runtime, "inference"),
         await make_worker(client, ports, runtime, "vlm"),
         await make_worker(client, ports, runtime, "summary"),
+        await make_worker(client, ports, runtime, "d3"),
     ):
         yield
 
@@ -131,6 +133,57 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
     }
     assert [r.manifest_ref for r in reports][-1] == ref
     assert all(r.error is None for r in reports)
+
+
+def scheduled_activities(history) -> list:
+    """The ActivityTaskScheduled attributes of a workflow history, in order."""
+    return [
+        e.activity_task_scheduled_event_attributes
+        for e in history.events
+        if e.HasField("activity_task_scheduled_event_attributes")
+    ]
+
+
+async def test_the_quality_check_runs_on_the_d3_queue_between_enrichment_and_finalize(
+    client, ports, runtime
+):
+    start = await start_input(ports, checked_paper(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    result = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    # The picture with words, the formula and the table carry the d3 fake's score.
+    assert [
+        e["item_id"].split(":")[0]
+        for e in result["enrichments"]
+        if e["signals"].get("d3", {}).get("score") == 0.99
+    ] == ["picture-ocr", "formula", "table-status"]
+    history = await client.get_workflow_handle(start["request_id"]).fetch_history()
+    scheduled = scheduled_activities(history)
+    names = [a.activity_type.name for a in scheduled if a.activity_type.name != "report"]
+    assert names.index("check") > max(names.index(n) for n in names if n.startswith("enrich_"))
+    assert names[-2:] == ["check", "finalize"]
+    (check,) = [a for a in scheduled if a.activity_type.name == "check"]
+    assert check.task_queue.name == "d3"
+    # The enrich stage succeeds after the check, counting the inventory's items.
+    total = len(json.loads(await ports.store.get(result["inventory"]["ref"]))["items"])
+    assert shape(ports.reporter.reports)[-3] == (  # type: ignore[attr-defined]
+        len(ports.reporter.reports) - 2, "enrich", "succeeded", Progress(total, total, "items"),  # type: ignore[attr-defined]
+    )  # fmt: skip
+
+
+async def test_a_profile_without_a_quality_check_schedules_no_check_activity(
+    client, ports, runtime
+):
+    start = await start_input(ports, checked_paper(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, without_check(runtime), start)
+
+    assert outcome["outcome"] == "complete"
+    history = await client.get_workflow_handle(start["request_id"]).fetch_history()
+    names = {a.activity_type.name for a in scheduled_activities(history)}
+    assert "check" not in names and "finalize" in names
 
 
 async def test_a_second_request_for_the_same_document_reuses_every_registered_item(
@@ -316,15 +369,18 @@ async def _resolved(value):
 async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports, runtime):
     runtime = with_runtime(
         runtime,
-        heartbeat_timeout_s={"inference": 61, "vlm": 91, "summary": 62},
+        heartbeat_timeout_s={"inference": 61, "vlm": 91, "summary": 62, "d3": 63},
         start_to_close_s={"orchestration": 121, "inference": 901},
         activity_retry={
             "orchestration": {"initial_s": 3, "multiplier": 2, "cap_s": 31, "max_attempts": 6},
             "inference": {"initial_s": 2, "multiplier": 3, "cap_s": 99, "max_attempts": 2},
             "vlm": {"initial_s": 4, "multiplier": 2, "cap_s": 29, "max_attempts": 7},
             "summary": {"initial_s": 5, "multiplier": 2, "cap_s": 28, "max_attempts": 4},
+            "d3": {"initial_s": 6, "multiplier": 2, "cap_s": 27, "max_attempts": 5},
         },
         vlm_request_deadline_s={"connect": 5, "total": 61},
+        d3_request_deadline_s={"connect": 5, "total": 31},
+        d3_concurrency_per_document=1,
         summary_budget_s=901,
         external_start_to_close_slack_s=301,
     )
@@ -336,13 +392,7 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
 
     assert outcome["outcome"] == "complete"
     history = await client.get_workflow_handle(start["request_id"]).fetch_history()
-    scheduled = {
-        e.activity_task_scheduled_event_attributes.activity_type.name: (
-            e.activity_task_scheduled_event_attributes
-        )
-        for e in history.events
-        if e.HasField("activity_task_scheduled_event_attributes")
-    }
+    scheduled = {a.activity_type.name: a for a in scheduled_activities(history)}
     parse_group, finalize = scheduled["parse_group"], scheduled["finalize"]
     assert parse_group.start_to_close_timeout.seconds == 901
     assert parse_group.heartbeat_timeout.seconds == 61
@@ -360,6 +410,14 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert vlm.heartbeat_timeout.seconds == 91
     assert vlm.retry_policy.maximum_attempts == 7
     assert vlm.retry_policy.initial_interval.seconds == 4
+    check = scheduled["check"]
+    assert check.task_queue.name == "d3"
+    # At most one check item per inventory item (the two and the summary's): ceil(3 / 1) x 31 s
+    # deadline x 3 attempts + 301 s slack.
+    assert check.start_to_close_timeout.seconds == 3 * 31 * 3 + 301
+    assert check.heartbeat_timeout.seconds == 63
+    assert check.retry_policy.maximum_attempts == 5
+    assert check.retry_policy.initial_interval.seconds == 6
     for name in ("summary_sections", "summary_chunk", "summary_overview"):
         summary = scheduled[name]
         assert summary.task_queue.name == "summary"

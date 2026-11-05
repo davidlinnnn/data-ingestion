@@ -4,7 +4,8 @@ non-retryable ApplicationError whose details the workflow turns into the failure
 
 One worker serves one task queue, so each queue scales as its own deployment: orchestration
 runs the workflow and the light Activities, inference runs docling one call at a time and is
-the only one that loads it, vlm sends the VLM requests and summary the Document Summary's."""
+the only one that loads it, vlm sends the VLM requests, summary the Document Summary's and d3
+the Quality Check's."""
 
 import asyncio
 import json
@@ -24,6 +25,7 @@ from kp_processing.ports.object_store import ObjectStore
 from kp_processing.ports.status_reporter import StatusReport
 from kp_processing.stages import (
     AssembleInput,
+    CheckInput,
     ChunkInput,
     EnrichInput,
     FailureInput,
@@ -41,6 +43,7 @@ from kp_processing.stages import (
     Registered,
     Runtime,
     SummaryPlan,
+    check,
     enrich_vlm,
     finalize,
     inventory,
@@ -49,6 +52,7 @@ from kp_processing.stages import (
     summary,
 )
 from kp_processing.workflow import (
+    D3_QUEUE,
     FAILURE_TYPE,
     INFERENCE_QUEUE,
     ORCHESTRATION_QUEUE,
@@ -62,6 +66,7 @@ from kp_processing.workflow import (
 
 VLM_SLOTS = 5  # #93 §7: documents in VLM enrichment at once per worker
 SUMMARY_SLOTS = 5  # #93 §7: summary Activities (a chunk each) at once per worker
+D3_SLOTS = 5  # documents in the Quality Check at once per worker, as VLM_SLOTS
 
 T = TypeVar("T")
 
@@ -195,12 +200,21 @@ class Summary(_Activities):
         return [self.summary_sections, self.summary_chunk, self.summary_overview]
 
 
+class D3(_Activities):
+    @activity.defn(name="check")
+    async def check(self, input: CheckInput) -> list[OutcomeRef]:
+        return _count_enriched(await self._run(check.run, input))
+
+    def all(self) -> list[Callable[..., Any]]:
+        return [self.check]
+
+
 def _tier() -> str:
     return tier(activity.info().priority.priority_key)
 
 
 def _count_enriched(outcomes: list[OutcomeRef]) -> list[OutcomeRef]:
-    """Count the items this Activity enriched (not reused) as its stage work."""
+    """Count the items this Activity enriched or checked (not reused) as its stage work."""
     fresh = sum(not outcome.reused for outcome in outcomes)
     metrics.stage_work.labels(activity.info().activity_type, _tier()).inc(fresh)
     return outcomes
@@ -244,6 +258,14 @@ async def make_worker(
             task_queue=SUMMARY_QUEUE,
             activities=Summary(ports, runtime).all(),
             max_concurrent_activities=SUMMARY_SLOTS,
+            graceful_shutdown_timeout=grace,
+        )
+    if queue == "d3":
+        return Worker(
+            client,
+            task_queue=D3_QUEUE,
+            activities=D3(ports, runtime).all(),
+            max_concurrent_activities=D3_SLOTS,
             graceful_shutdown_timeout=grace,
         )
     if queue == "inference":

@@ -20,11 +20,14 @@ stage_duration = Histogram(
     STAGE_DURATION, "Wall time per internal Activity", ["stage", "tier"], buckets=STAGE_BUCKETS
 )
 stage_work = Counter(
-    "kp_processing_stage_work", "Pages parsed and items enriched, reuse excluded", ["stage", "tier"]
+    "kp_processing_stage_work",
+    "Pages parsed and items enriched or checked, reuse excluded",
+    ["stage", "tier"],
 )
 item_outcomes = Counter(
     "kp_processing_item_outcomes",
-    "Enrichments by Enrichment Status and reason",
+    "Enrichments by Enrichment Status and reason; a Quality Check's judgements under its own "
+    "method, with status not_run, disputed or unverified",
     ["method", "status", "reason"],
 )
 document_outcomes = Counter(
@@ -65,5 +68,11 @@ def external_request(
     external_requests.labels(service, result, reason or "").inc()
     external_request_duration.labels(service).observe(seconds)
     usage = usage or {}
-    external_tokens.labels(service, "input").inc(usage.get("prompt_tokens") or 0)
-    external_tokens.labels(service, "output").inc(usage.get("completion_tokens") or 0)
+    # OpenAI names its counts prompt_tokens and completion_tokens, System One input_tokens and
+    # output_tokens.
+    external_tokens.labels(service, "input").inc(
+        usage.get("prompt_tokens") or usage.get("input_tokens") or 0
+    )
+    external_tokens.labels(service, "output").inc(
+        usage.get("completion_tokens") or usage.get("output_tokens") or 0
+    )

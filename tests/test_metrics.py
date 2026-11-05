@@ -74,6 +74,7 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
         (("stage", "summary_sections"), normal): 1,
         (("stage", "summary_chunk"), normal): 1,
         (("stage", "summary_overview"), normal): 1,
+        (("stage", "check"), normal): 1,
         (("stage", "report"), normal): 10,
     }
     work = d["kp_processing_stage_work_total"]
@@ -81,7 +82,12 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     enriched = ("enrich_", "summary_overview")  # the summary's one item
     assert sum(v for k, v in work.items() if k[0][1].startswith(enriched)) == items
     outcomes = d["kp_processing_item_outcomes_total"]
-    assert sum(outcomes.values()) == len(result["enrichments"])
+    # The Quality Check's judgements are counted besides the enrichments, under its own method.
+    judged = sum("d3" in e["signals"] for e in result["enrichments"])
+    of_check = {k: v for k, v in outcomes.items() if k[0] == ("method", "d3-check@1")}
+    assert sum(of_check.values()) == judged > 0
+    assert sum(outcomes.values()) - judged == len(result["enrichments"])
+    assert work[(("stage", "check"), normal)] == judged
     assert outcomes[(("method", "picture-ocr@1"), ("reason", "NO_TEXT"),
                      ("status", "unverified"))] == 2  # fmt: skip
     assert d["kp_processing_document_outcomes_total"] == {(("outcome", "complete"), normal): 1}
@@ -90,26 +96,39 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
         (("task_queue", "inference"), normal): INFERENCE_ACTIVITIES,
         (("task_queue", "vlm"), normal): 1,
         (("task_queue", "summary"), normal): 3,
+        (("task_queue", "d3"), normal): 1,
     }
     # Two pictures (one VLM request each); the summary of four sections of one sentence each
     # (docling reads sections 1 and 7 as empty; page 6 has no text layer): one map, four
-    # verify, one reduce and four overview verify. All answered at the first send.
+    # verify, one reduce and four overview verify; one d3 request per judged item. All answered
+    # at the first send.
     assert d["kp_processing_external_requests_total"] == {
         (("outcome", "ok"), ("reason", ""), ("service", "vlm")): 2,
         (("outcome", "ok"), ("reason", ""), ("service", "summary")): 10,
+        (("outcome", "ok"), ("reason", ""), ("service", "d3")): judged,
     }
     assert d["kp_processing_external_request_duration_seconds_count"] == {
         (("service", "vlm"),): 2,
         (("service", "summary"),): 10,
+        (("service", "d3"),): judged,
     }
+    # System One reports input_tokens and output_tokens: 591 and 0 from the d3 fake.
+    tokens = d["kp_processing_external_tokens_total"]
+    assert tokens[(("direction", "input"), ("service", "d3"))] == 591 * judged
     assert (
         d["kp_processing_external_tokens_total"][(("direction", "input"), ("service", "vlm"))] == 2
     )
     assert (
         d["kp_processing_external_tokens_total"][(("direction", "output"), ("service", "vlm"))] == 2
     )
-    assert d["kp_processing_item_attempts_count"] == {(("service", "vlm"),): 2}
-    assert d["kp_processing_item_attempts_sum"] == {(("service", "vlm"),): 2}
+    assert d["kp_processing_item_attempts_count"] == {
+        (("service", "vlm"),): 2,
+        (("service", "d3"),): judged,
+    }
+    assert d["kp_processing_item_attempts_sum"] == {
+        (("service", "vlm"),): 2,
+        (("service", "d3"),): judged,
+    }
 
 
 async def test_a_failed_document_counts_as_failed(client, ports, runtime):
