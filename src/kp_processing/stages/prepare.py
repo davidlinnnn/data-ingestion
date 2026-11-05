@@ -179,6 +179,7 @@ async def run(input: PrepareInput, ports: Ports, runtime: Runtime) -> Plan:
         ],
         no_text_layer_pages=no_text,
         runtime=runtime.profile.runtime,
+        check=any(method.checks for method in runtime.profile.methods.values()),
         ref=f"requests/{start['request_id']}/attempts/{input.run_id}/plan.json",
     )
     encoded = canonical_json(asdict(plan))

@@ -5,7 +5,9 @@ import importlib
 import importlib.metadata
 import json
 import platform
+from functools import partial
 
+from kp_processing import metrics
 from kp_processing.identity import canonical_json
 from kp_processing.ports.object_store import ObjectStore
 from kp_processing.stages import (
@@ -54,14 +56,24 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     the field's entry (the rule applied to it), the rest from the record; counts count
     enrichments.
 
-    When any enrichment has status_reason SERVICE_UNAVAILABLE, the redrive marker
-    documents/{document_uid}/service-unavailable/{request_id} (empty) is written first,
-    write-once (#129; listed by service_unavailable()).
+    When the profile lists a Quality Check (Method.checks, ADR-0011), each item of a method it
+    judges whose outcome is success takes, before the status rule, the check's outcome record
+    (the OutcomeRef "<check id>:<item_id>"): a successful check's contradictions go after the
+    item's own and its signals are added to the item's; a failed one adds signals {<the
+    package's SIGNAL>: {"state": "not_run", "reason": the check's}} and leaves the item's status
+    as it is. Check items are not enrichments. Each judgement is counted by
+    metrics.item_outcomes under the check's method ref: status not_run, disputed (reason: its
+    contradiction) or unverified.
+
+    When any enrichment has status_reason SERVICE_UNAVAILABLE, or a check did not run for
+    that reason, the redrive marker documents/{document_uid}/service-unavailable/{request_id}
+    (empty) is written first, write-once (#129; listed by service_unavailable()).
 
     An inventory item without an OutcomeRef, or whose outcome record is missing or differs
     from the OutcomeRef's digest, raises ProcessingFailure(platform, integrity,
-    OUTCOME_RECORD_MISSING, metadata {"item_id"}). A status rule that does not exist raises
-    ProcessingFailure(platform, configuration, STATUS_RULE_UNKNOWN).
+    OUTCOME_RECORD_MISSING, metadata {"item_id"}); so does a judged item's check, under the
+    check's item_id. A status rule that does not exist raises ProcessingFailure(platform,
+    configuration, STATUS_RULE_UNKNOWN).
     """
     profile = runtime.profile
     rule_name = f"kp_processing.status_rules.{profile.status_rule}"
@@ -75,6 +87,8 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         ) from exc
     inventory = json.loads(await ports.store.get(input.inventory.ref))
     outcomes = {outcome.item_id: outcome for outcome in input.outcomes}
+    quality = next((m for m in profile.methods.values() if m.checks), None)
+    redrive = False
     enrichments = []
     counts: dict[str, dict[str, int]] = {}
     for item in inventory["items"]:
@@ -92,6 +106,29 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         if outcome is None:
             raise missing()
         record = json.loads(await read_verified(ports.store, outcome.ref, outcome.digest, missing))
+        if (
+            quality
+            and record["outcome"] == "success"
+            and profile.methods[item["method"]].ref in quality.checks
+        ):
+            absent = partial(missing, f"{quality.id}:{item['item_id']}")
+            judgement = outcomes.get(f"{quality.id}:{item['item_id']}")
+            if judgement is None:
+                raise absent()
+            check = json.loads(
+                await read_verified(ports.store, judgement.ref, judgement.digest, absent)
+            )
+            codes = check["contradictions"]
+            if check["outcome"] == "success":
+                record["contradictions"] += codes
+                record["signals"] |= check["signals"]
+                verdict = ("disputed", codes[0]) if codes else ("unverified", "")
+            else:
+                not_run = {"state": "not_run", "reason": check["reason"]}
+                record["signals"][quality.package.SIGNAL] = not_run
+                redrive = redrive or check["reason"] == "SERVICE_UNAVAILABLE"
+                verdict = ("not_run", check["reason"])
+            metrics.item_outcomes.labels(quality.ref, *verdict).inc()
         method_counts = counts.setdefault(
             item["method"], {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
         )
@@ -184,7 +221,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         "limitations": limitations,
     }
     ref = f"requests/{input.start['request_id']}/result.json"
-    if any(item["status_reason"] == "SERVICE_UNAVAILABLE" for item in enrichments):
+    if redrive or any(item["status_reason"] == "SERVICE_UNAVAILABLE" for item in enrichments):
         marker = (
             f"documents/{input.start['document_uid']}/service-unavailable/"
             f"{input.start['request_id']}"

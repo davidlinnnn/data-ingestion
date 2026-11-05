@@ -19,7 +19,9 @@ Object keys (#129, object storage and registration):
 
 Enrichment (#132): inventory lists one item per enrichment target; an enrichment Activity
 registers one outcome record per item under documents/{document_uid}/items/{key}/, and
-finalize applies the profile's status rule to the outcome records.
+finalize applies the profile's status rule to the outcome records. The check Activity (#161)
+registers a Quality Check's outcome records the same way, and finalize merges each into the
+record of the item it judges.
 """
 
 import asyncio
@@ -53,6 +55,7 @@ class Ports:
     heartbeat: Callable[[], None] = lambda: None  # called after each completed item
     vlm: InferenceTransport | None = None  # only the vlm worker has one
     summary: InferenceTransport | None = None  # only the summary worker has one
+    d3: InferenceTransport | None = None  # only the d3 worker has one
 
 
 @dataclass(frozen=True)
@@ -132,6 +135,7 @@ class Plan:
     # The profile's runtime section, frozen into workflow history by this Activity's result;
     # the workflow takes the later Activities' options from it.
     runtime: dict[str, Any]
+    check: bool = False  # the profile lists a Quality Check: the workflow runs the check Activity
 
 
 @dataclass(frozen=True)
@@ -326,7 +330,7 @@ def enrichment_body(method: Method, prefix: str, output: MethodOutput) -> bytes:
             "digest": method.module_digest,
         },
         "scope": method.scope,
-        "origin": method.package.ORIGIN,
+        "origin": getattr(method.package, "ORIGIN", None),  # a Quality Check has none
         "outcome": output.outcome,
         "reason": output.reason,
         "content": output.content,
@@ -370,13 +374,19 @@ async def register_enrichment(
 
 
 @dataclass(frozen=True)
+class CheckInput:
+    enrich: EnrichInput
+    outcomes: list[OutcomeRef]  # from every enrichment Activity, in any order
+
+
+@dataclass(frozen=True)
 class FinalizeInput:
     start: dict[str, Any]
     plan: Plan
     groups: list[GroupRef]
     assembly: Registered
     inventory: InventoryRef
-    outcomes: list[OutcomeRef]  # from every enrichment Activity, in any order
+    outcomes: list[OutcomeRef]  # from every enrichment Activity and the check, in any order
 
 
 @dataclass(frozen=True)
