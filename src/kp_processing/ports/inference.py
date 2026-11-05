@@ -1,6 +1,7 @@
 """InferenceTransport port: one external inference service (#129, inference adapter; #93 §3.2).
 OpenAIChat serves an OpenAI-compatible chat-completions service: the company VLM or LLM, the DEV
-reference model, or Anthropic's OpenAI-compatible endpoint for the DEV Document Summary (#155)."""
+reference model, or Anthropic's OpenAI-compatible endpoint for the DEV Document Summary (#155).
+SystemOne serves a d3 decision model's System One service (#161)."""
 
 import asyncio
 import inspect
@@ -16,7 +17,7 @@ UnavailableReason = Literal["TIMEOUT", "CONNECTION", "HTTP_5XX", "HTTP_429", "MA
 
 @dataclass(frozen=True)
 class Completion:
-    content: str | None  # choices[0].message.content
+    content: str | None  # choices[0].message.content; from SystemOne, the response JSON text
     refusal: str | None  # choices[0].message.refusal, set when the model refused
     model: str  # the response's model
     system_fingerprint: str | None
@@ -137,6 +138,45 @@ class OpenAIChat:
                 body,
             )
         except (ValueError, KeyError, IndexError, TypeError) as exc:
+            raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
+
+
+class SystemOne:
+    """POST {base_url}/v1/systemone with the request as given, bearer api_key: the System One
+    service of a d3 decision model, as vLLM Semantic Router's Engine mode and the model package's
+    d3_server.py serve it. The request names its own model.
+
+    Deadline, redirects and status mapping are OpenAIChat's. A 2xx JSON object holding an
+    "answers" object -> Completion with content = the body as text, model and usage from the
+    body and no refusal; any other 2xx body -> MALFORMED_RESPONSE.
+    """
+
+    def __init__(
+        self,
+        client: httpx.AsyncClient,
+        base_url: str,
+        api_key: str,
+        connect_s: float,
+        total_s: float,
+    ) -> None:
+        self.client = client
+        self.url = f"{base_url.rstrip('/')}/v1/systemone"
+        self.api_key = api_key
+        self.connect_s = connect_s
+        self.total_s = total_s
+
+    async def complete(self, request: dict[str, Any]) -> Completion:
+        body = await _post(
+            self.client, self.url, self.api_key, request, self.connect_s, self.total_s
+        )
+        try:
+            data = json.loads(body)
+            if not isinstance(data["answers"], dict):
+                raise ValueError("Missing answers")
+            return Completion(
+                body.decode(), None, data.get("model", ""), None, data.get("usage", {}), body
+            )
+        except (ValueError, KeyError, TypeError) as exc:
             raise ServiceUnavailable("MALFORMED_RESPONSE") from exc
 
 
