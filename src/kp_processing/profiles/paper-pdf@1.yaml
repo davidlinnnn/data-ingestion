@@ -64,7 +64,7 @@ runtime:
     vlm: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
     summary: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
     d3: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
-  # vlm start-to-close = ceil(items / concurrency) x deadline total x retry attempts + slack;
+  # vlm and d3 start-to-close = ceil(items / concurrency) x deadline total x retry attempts + slack;
   # summary start-to-close = summary_budget_s + slack: the budget's workflow timer ends a slow
   # summary, cancelling its chunk Activities (heard at the next heartbeat).
   external_start_to_close_slack_s: 300

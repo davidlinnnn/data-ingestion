@@ -178,7 +178,7 @@ metric labels.
 |---|---|---|---|
 | stage duration | histogram | stage, tier | Wall time per stage (the four status stages plus internal Activities) |
 | stage work volume | counter | stage, tier | Pages parsed, items enriched |
-| item outcomes | counter | method, status, reason | Per-item results by Enrichment Status and failure reason |
+| item outcomes | counter | method, status, reason | Per-item results by Enrichment Status and failure reason; a Quality Check's judgements under its own method, with status `not_run`, `disputed` or `unverified` (#161) |
 | document outcomes | counter | outcome, tier | Completed / failed documents |
 | queue age | histogram | task queue, tier | Schedule-to-start latency per task queue |
 | external requests | counter | service, outcome, reason | Calls per service, including retries |
@@ -190,7 +190,11 @@ Operator alerts (metrics only, no `attention[]` — workflow v2 Q15):
 
 - per-method `failed` ratio over a sliding window exceeds its threshold;
 - daily aggregate token consumption approaches the granted quota;
-- queue age p95 over threshold per task queue (backlog forming).
+- queue age p95 over threshold per task queue (backlog forming);
+- any Quality Check judgement that did not run (#161):
+  `increase(kp_processing_item_outcomes_total{method="d3-check@1",status="not_run"}[15m]) > 0`.
+  The d3 service gave no answer after the retries; the judged items keep their own status and
+  wait for the service-unavailable redrive.
 
 ## 7. Initial parameters (Q11)
 
@@ -201,14 +205,16 @@ after V2/V7–V10 measurements.
 |---|---|---|
 | VLM per-request deadline | connect 5 s / total 60 s, force-closed | #84: seconds-level latency; 20× headroom |
 | Summary per-request deadline | 120 s | Document-level; contract undecided |
+| d3 per-request deadline | connect 5 s / total 30 s, force-closed | #153: at most 16 s per request on a Mac (MPS); #83 re-measures on the GPU service |
 | Heartbeat | per completed item and at least every 15 s | Progress signal and resume hint |
-| Heartbeat timeout | VLM Activity 90 s; summary Activity 150 s | Per-request deadline + 30 s per service |
+| Heartbeat timeout | VLM Activity 90 s; summary Activity 150 s; d3 Activity 60 s | Per-request deadline + 30 s per service |
 | Start-to-close (external Activities) | `items / c × deadline × attempts + 5 min` | Backstop only |
 | Retry backoff | initial 2 s, ×2, cap 30 s, jitter, ≤3 attempts | Q6 |
 | In-Activity VLM concurrency `c` | 4 per document | ~30 requests/document → ~23 s wall |
+| In-Activity d3 concurrency | 4 per document | One request per judged formula, table and OCR picture (#161) |
 | CPU workers | normal 3; bulk 0–1, event-scaled | Q15; §8.3 decomposition |
-| I/O slots | normal: vlm 5, summary 5; bulk: vlm 2, summary 2 | Concurrent documents bound them (§3.1) |
-| Per-document request cap | `3 × inventory items + 20` → `configuration` failure | Q8 |
+| I/O slots | normal: vlm 5, summary 5, d3 5; bulk: vlm 2, summary 2 | Concurrent documents bound them (§3.1) |
+| Per-document request cap | `3 × inventory items + 20` → `configuration` failure; the Quality Check's own requests against `3 × (inventory items + check items) + 20` | Q8; #161 |
 | Task-queue rate limit | off in pilot; set from granted TPM in PROD | Q2 |
 | Document Category placement | VLM Activity (+1 request/document) | Capacity assumption |
 | Enrichment stage budget | p50 2 min, hard 4 min; in-code deadline on each item's retry chain | 10-minute target decomposition |
