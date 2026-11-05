@@ -5,6 +5,7 @@ sandbox)."""
 
 import asyncio
 import contextlib
+import copy
 import dataclasses
 import json
 import logging
@@ -24,7 +25,7 @@ from kp_processing.ports.status_reporter import (
 )
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
-from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, priority
+from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, activity_options, priority
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_check import checked_paper, without_check
@@ -429,6 +430,16 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     # Chunks share the summary queue fairly between documents (#155).
     assert scheduled["summary_chunk"].priority.fairness_key == "doc_1"
     assert scheduled["summary_sections"].priority.fairness_key == ""
+
+
+def test_a_plan_recorded_before_the_d3_queue_replays_with_its_own_queues(runtime):
+    recorded = copy.deepcopy(runtime.profile.runtime)
+    del recorded["activity_retry"]["d3"], recorded["heartbeat_timeout_s"]["d3"]
+    del recorded["d3_request_deadline_s"], recorded["d3_concurrency_per_document"]
+
+    options = activity_options(recorded, 3)
+
+    assert set(options) == {"orchestration", "inference", "vlm", "summary"}
 
 
 async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(

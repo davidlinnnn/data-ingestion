@@ -10,8 +10,7 @@ Operating it. The Processing Profile is the only switch:
        needed, and results are what they were without it
 When the service gives no answer after the retries, the judged item keeps the status its own
 method gives it, with signals {"d3": {"state": "not_run", "reason"}}, and the redrive marker is
-written. Alert on any increase of
-kp_processing_item_outcomes_total{method="d3-check@1", status="not_run"}.
+written.
 
 The request and the constants are #153's measurement (tag research/153-d3-quality-check):
 questions.json (Q2), prepare_inputs.py (state, image size) and selection/d3-mini.json

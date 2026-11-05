@@ -246,7 +246,7 @@ class Sends:
         deadline: float,
     ) -> "Sends":
         """Sends that count, toward limit, the receipts under {attempt_prefix}/receipts/ whose
-        item (the path's first segment, "<method id>:<target_ref>") is of a method
+        item (the path after the prefix starts with its id, "<method id>:...") is of a method
         whose service is service, and send nothing once ports.clock.monotonic() passes
         deadline."""
         sends = cls(ports, runtime, service, attempt_prefix, limit, deadline)

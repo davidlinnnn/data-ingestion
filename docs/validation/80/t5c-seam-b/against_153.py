@@ -159,7 +159,7 @@ async def main(argv: list[str]) -> int:
                                "max": round(max(seconds), 2)}  # fmt: skip
         print(json.dumps({"scores": scores, "seconds": evidence["seconds"]}, indent=1), flush=True)
     (HERE / f"evidence-{name or '153'}.json").write_text(json.dumps(evidence, indent=2) + "\n")
-    ok = not differing and all(
+    ok = not differing and len(evidence.get("scores", JUDGED)) == len(JUDGED) and all(
         (name or s["equal"] == s["items"]) and not s["judgements_differ"]
         for s in evidence.get("scores", {}).values()
     )

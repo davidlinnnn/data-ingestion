@@ -16,6 +16,7 @@ from kp_processing.stages import (
     Ports,
     ProcessingFailure,
     Runtime,
+    outcome_record_missing,
     read_verified,
 )
 
@@ -87,21 +88,13 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         ) from exc
     inventory = json.loads(await ports.store.get(input.inventory.ref))
     outcomes = {outcome.item_id: outcome for outcome in input.outcomes}
-    quality = next((m for m in profile.methods.values() if m.checks), None)
+    quality = profile.quality_check
     redrive = False
     enrichments = []
+    judgements: list[tuple[str, ...]] = []  # metrics.item_outcomes labels, one each
     counts: dict[str, dict[str, int]] = {}
     for item in inventory["items"]:
-
-        def missing(item_id: str = item["item_id"]) -> ProcessingFailure:
-            return ProcessingFailure(
-                "platform",
-                "integrity",
-                "OUTCOME_RECORD_MISSING",
-                "Enrichment outcome record is missing or differs from its declared digest",
-                metadata={"item_id": item_id},
-            )
-
+        missing = partial(outcome_record_missing, item["item_id"])
         outcome = outcomes.get(item["item_id"])
         if outcome is None:
             raise missing()
@@ -111,7 +104,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
             and record["outcome"] == "success"
             and profile.methods[item["method"]].ref in quality.checks
         ):
-            absent = partial(missing, f"{quality.id}:{item['item_id']}")
+            absent = partial(outcome_record_missing, f"{quality.id}:{item['item_id']}")
             judgement = outcomes.get(f"{quality.id}:{item['item_id']}")
             if judgement is None:
                 raise absent()
@@ -128,7 +121,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
                 record["signals"][quality.package.SIGNAL] = not_run
                 redrive = redrive or check["reason"] == "SERVICE_UNAVAILABLE"
                 verdict = ("not_run", check["reason"])
-            metrics.item_outcomes.labels(quality.ref, *verdict).inc()
+            judgements.append((quality.ref, *verdict))
         method_counts = counts.setdefault(
             item["method"], {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
         )
@@ -229,6 +222,8 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         await ports.store.put_if_absent(marker, b"")
     # Write-once: a retried finalize keeps the result already registered.
     await ports.store.put_if_absent(ref, canonical_json(result))
+    for labels in judgements:
+        metrics.item_outcomes.labels(*labels).inc()
     return ref
 
 

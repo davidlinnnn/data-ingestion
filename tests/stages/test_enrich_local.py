@@ -94,7 +94,7 @@ async def enrichment(ports, runtime, pdf: bytes, request_id: str = "req_1") -> F
 async def checked(ports, runtime, input: FinalizeInput, request_id: str = "req_1") -> FinalizeInput:
     """input plus the outcomes of the profile's Quality Check, when it lists one (ports.d3
     answers)."""
-    if not any(method.checks for method in runtime.profile.methods.values()):
+    if runtime.profile.quality_check is None:
         return input
     enrich = enrich_input(input.inventory, request_id)
     outcomes = await check.run(CheckInput(enrich, input.outcomes), ports, runtime)
@@ -267,7 +267,7 @@ async def test_a_method_added_to_the_draft_profile_gets_a_new_inventory_and_reus
 
 
 async def test_enrichment_files_exist_before_the_outcome_is_registered(ports, runtime):
-    checked = []
+    found = []
 
     class CheckingStore(DictObjectStore):
         async def put_if_absent(self, key: str, data: bytes) -> bool:
@@ -277,12 +277,12 @@ async def test_enrichment_files_exist_before_the_outcome_is_registered(ports, ru
                 for ref in refs:
                     if ref:
                         assert await self.head(ref) is not None
-                        checked.append(ref)
+                        found.append(ref)
             return await super().put_if_absent(key, data)
 
     await enrichment(dataclasses.replace(ports, store=CheckingStore()), runtime, enriched_paper())
 
-    assert checked
+    assert found
 
 
 async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runtime):

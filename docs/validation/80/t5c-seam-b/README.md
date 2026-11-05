@@ -40,28 +40,113 @@ All pass (`evidence-153.json`).
 | Scores, formula test | 110 | all 110 equal #153's (largest difference 0); 24 contradicted, the same 24 as in #153 |
 | Scores, OCR test | 13 | all 13 equal; none contradicted (weak signal) |
 
-A request took 0.62 / 0.83 / 4.49 s (min / median / max). No formula or OCR image of #153 is over
+A request took 0.59 / 0.83 / 4.52 s (min / median / max). No formula or OCR image of #153 is over
 1.6 MP, which is why the downsized images are compared separately. Tables are not in this case:
 the package takes a table's text from the assembly, so it cannot be handed #153's text (see
 "Input format" below).
 
 ### W: the switch (paper 8, 12 pages)
 
-Passes (`evidence-switch.json`).
+Passes (`evidence-switch.json`, run `2dc1d2`). The sha256 is comparable within a run only.
 
 | Request | Wall clock | Requests sent | New under `documents/` | Enrichments reused | Result sha256 |
 |---|---|---|---|---|---|
-| before | 11.9 s | 31 summary, 3 picture-interpretation | 56 objects | 0 of 21 | `86d25861…` |
-| off | 2.1 s | 0 | 0 | 21 of 21 | `86d25861…` |
-| on | 12.1 s | 7 d3-check | 14 objects in 7 item folders | 21 of 21 | `0ab886a8…` |
+| before | 11.4 s | 31 summary, 3 picture-interpretation | 56 objects | 0 of 21 | `e811d992…` |
+| off | 2.1 s | 0 | 0 | 21 of 21 | `e811d992…` |
+| on | 12.3 s | 7 d3-check | 14 objects in 7 item folders, none elsewhere | 21 of 21 | `80e21236…` |
 
 - `off` reuses every item `before` registered, so adding the check changes no reuse key, and the
   two results are equal.
 - `on` adds one folder per check item (its outcome record and the service's reply) and nothing
-  else; its check Activity ran 10.1 s for 7 requests. Its result differs from `off`'s only in the
+  else; its check Activity ran 10.3 s for 7 requests. Its result differs from `off`'s only in the
   d3 signals and in the status of the three tables d3 contradicts.
 - `kp-processing worker --queue d3` without `KP_D3_BASE_URL` exits 2 with
   `KP_D3_BASE_URL is required for the d3 worker`.
+
+### S and C: the 20 papers (551 pages)
+
+All 20 pass both cases (`evidence-1.json` to `evidence-20.json`, run `ecf447`).
+
+| Paper | Pages | Formulas judged / items | Tables judged / items | Picture OCR judged / items | d3 requests | Check Activity (s) | d3 request median / max (s) | Formulas d3 contradicts | `FORMULA_D3_UNFAITHFUL` | `FORMULA_NATIVE_MISMATCH` | `TABLE_D3_UNFAITHFUL` | S (s) | C (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 28 | 8 / 8 | 7 / 7 | 9 / 11 | 24 | 34.1 | 0.88 / 4.26 | 2 | 1 | 1 | 6 | 56.0 | 1.2 |
+| 2 | 22 | 0 / 0 | 1 / 1 | 2 / 2 | 3 | 6.1 | 1.33 / 3.31 | 0 | 0 | 0 | 1 | 17.9 | 1.0 |
+| 3 | 25 | 6 / 6 | 14 / 14 | 8 / 8 | 28 | 45.4 | 1.00 / 7.59 | 0 | 0 | 3 | 12 | 70.8 | 1.1 |
+| 4 | 27 | 3 / 3 | 6 / 6 | 4 / 4 | 13 | 31.7 | 1.38 / 12.05 | 0 | 0 | 1 | 6 | 55.8 | 1.1 |
+| 5 | 31 | 9 / 9 | 15 / 15 | 6 / 6 | 30 | 48.7 | 1.36 / 3.32 | 2 | 1 | 2 | 14 | 72.6 | 1.3 |
+| 6 | 29 | 1 / 1 | 22 / 22 | 9 / 10 | 32 | 46.0 | 1.10 / 4.94 | 0 | 0 | 0 | 16 | 75.3 | 1.2 |
+| 7 | 18 | 2 / 2 | 1 / 1 | 6 / 6 | 9 | 14.0 | 1.33 / 3.31 | 0 | 0 | 0 | 1 | 28.5 | 0.8 |
+| 8 | 12 | 0 / 0 | 4 / 4 | 3 / 3 | 7 | 10.4 | 1.29 / 2.53 | 0 | 0 | 0 | 3 | 21.5 | 0.7 |
+| 9 | 28 | 25 / 25 | 9 / 9 | 5 / 5 | 39 | 63.1 | 0.84 / 6.97 | 2 | 0 | 2 | 6 | 96.3 | 1.2 |
+| 10 | 30 | 0 / 0 | 7 / 7 | 15 / 15 | 22 | 34.8 | 1.21 / 3.99 | 0 | 0 | 0 | 6 | 62.7 | 1.1 |
+| 11 | 20 | 6 / 6 | 5 / 5 | 11 / 11 | 22 | 35.5 | 1.20 / 4.66 | 1 | 1 | 0 | 3 | 59.5 | 0.8 |
+| 12 | 28 | 26 / 26 | 9 / 9 | 6 / 6 | 41 | 52.7 | 0.95 / 3.69 | 2 | 1 | 8 | 8 | 75.7 | 1.2 |
+| 13 | 27 | 29 / 29 | 8 / 8 | 8 / 8 | 45 | 48.0 | 0.85 / 3.83 | 3 | 1 | 3 | 6 | 69.0 | 1.3 |
+| 14 | 16 | 10 / 10 | 3 / 3 | 8 / 8 | 21 | 35.3 | 0.98 / 5.09 | 0 | 0 | 0 | 3 | 57.2 | 0.8 |
+| 15 | 27 | 1 / 1 | 20 / 20 | 6 / 6 | 27 | 54.9 | 1.92 / 7.97 | 0 | 0 | 0 | 9 | 80.2 | 1.2 |
+| 16 | 64 | 39 / 44 | 3 / 3 | 8 / 8 | 50 | 53.3 | 0.84 / 2.92 | 10 | 8 | 5 | 1 | 83.4 | 2.0 |
+| 17 | 22 | 4 / 4 | 9 / 9 | 6 / 6 | 19 | 19.5 | 0.85 / 1.91 | 1 | 1 | 0 | 1 | 36.3 | 1.0 |
+| 18 | 18 | 10 / 10 | 8 / 8 | 5 / 5 | 23 | 29.1 | 0.87 / 2.54 | 0 | 0 | 1 | 3 | 46.6 | 1.0 |
+| 19 | 29 | 22 / 22 | 7 / 7 | 13 / 14 | 42 | 51.8 | 0.92 / 2.21 | 0 | 0 | 5 | 7 | 76.2 | 1.2 |
+| 20 | 50 | 16 / 16 | 9 / 9 | 22 / 22 | 47 | 73.3 | 1.08 / 4.81 | 3 | 2 | 3 | 5 | 112.6 | 1.8 |
+| **All** | 551 | 217 / 222 | 167 / 167 | 160 / 164 | 544 | 787.7 | | 26 | 16 | 34 | 117 | 1254.1 | 23.0 |
+
+"Judged" is the items whose outcome is `success`, and every one of them carries a d3 score: the
+5 failed formulas (paper 16) and the 4 pictures without text are not judged. The three reason
+columns count `disputed` enrichments by status reason; "Formulas d3 contradicts" also counts the
+10 formulas that the rule contradicts first (`FORMULA_NATIVE_MISMATCH` is then the status
+reason).
+
+- **S.** 544 check items, 544 d3 requests, all answered on the first send; no item is `not_run`.
+  The check Activity took 787.7 s in all, 1.45 s per check item with one request at a time per
+  document. The requests carried 365,447 input tokens (672 each).
+- **C.** The second request sent nothing, added nothing under `documents/` and reused all 544
+  check outcomes.
+- **VLM stand-in.** All 227 formula requests and 162 of 164 picture-interpretation requests were
+  answered from the recordings; 2 got the canned answer.
+- **Formulas.** d3 contradicts 26 of 217 (12%). 41 of the 217 have a crop and LaTeX that are
+  byte for byte a #153 item's, and all 41 get #153's score.
+- **Picture OCR** is a weak signal and changes no status: p is 0.18 / 0.50 / 0.96 (min / median
+  / max), below 0.5 for 81 of 160.
+
+### Tables: d3 contradicts 117 of 167
+
+The grid of every table of papers 1 and 8 was read (11 tables), with the crop beside it where
+the text alone left doubt. All 11 grids are wrong: several columns of numbers sit in one cell,
+and header cells are displaced. d3 contradicts 9; the other 2 pass with p 0.79 and 0.35, above
+the threshold 0.306.
+
+The rate matches what #153's labels say about this docling configuration, so it reads as table
+quality, not as a threshold that moved: of #153's tables from the baseline with cell matching
+on (the profile's setting), 18 of 23 are labelled `meaning_changed` (78%), against 11 of 36
+(31%) with cell matching off. With `d3-check@1` on, most tables of such papers are therefore
+`disputed`. The table extraction is outside #161.
+
+### V: vLLM Semantic Router
+
+Passes (`evidence-vllm-sr.json`): `vllm-sr` 0.5.0.dev20261020093359, Engine mode in Docker on
+the CPU (`--dtype float32 --max-num-seqs 1`), d3-mini at revision `bd0090dd`, no API key.
+
+| #153 test item | Score | #153's score | Judgement |
+|---|---|---|---|
+| Formula, lowest score | 0.02556 | 0.02548 | contradicted, as in #153 |
+| Formula, highest score | 0.99428 | 0.99426 | not contradicted, as in #153 |
+| OCR, lowest score | 0.13565 | 0.13467 | weak signal, no contradiction |
+| OCR, highest score | 0.96822 | 0.96930 | weak signal, no contradiction |
+
+The reply holds `answers`, `model` (`vllm-sr/d3-mini`) and `usage` (`input_tokens`,
+`output_tokens`), which is what the client and the token metric read. The scores differ from
+#153's by at most 0.0011: float32 on the CPU against BF16 on MPS. A request took 4.0 to 13.1 s,
+which says nothing about PROD. No table is sent: `against_153.py` cannot build a table request
+without an assembly, and a table request differs from these only in its state and question.
+
+### Not covered
+
+- The table and OCR thresholds on `paper-pdf@1`'s own outputs: no labels exist for them. #83
+  retests them on the deployed service.
+- The deployed model revision cannot be read through the API; the signal records the revision
+  the constants were measured at.
+- PROD latency and throughput: this is d3-mini on MPS, one request per forward.
 
 ## Input format compared with #153
 

@@ -218,6 +218,17 @@ async def read_verified(
     return data
 
 
+def outcome_record_missing(item_id: str) -> ProcessingFailure:
+    """The integrity failure of an item without a usable outcome record."""
+    return ProcessingFailure(
+        "platform",
+        "integrity",
+        "OUTCOME_RECORD_MISSING",
+        "Enrichment outcome record is missing or differs from its declared digest",
+        metadata={"item_id": item_id},
+    )
+
+
 @dataclass(frozen=True)
 class AssembleInput:
     document_uid: str

@@ -191,10 +191,13 @@ Operator alerts (metrics only, no `attention[]` — workflow v2 Q15):
 - per-method `failed` ratio over a sliding window exceeds its threshold;
 - daily aggregate token consumption approaches the granted quota;
 - queue age p95 over threshold per task queue (backlog forming);
-- any Quality Check judgement that did not run (#161):
-  `increase(kp_processing_item_outcomes_total{method="d3-check@1",status="not_run"}[15m]) > 0`.
-  The d3 service gave no answer after the retries; the judged items keep their own status and
-  wait for the service-unavailable redrive.
+- any Quality Check judgement that did not run (#161), with
+  `X = kp_processing_item_outcomes_total{method=~"d3-check@.+",status="not_run"}`:
+  `increase(X[15m]) > 0 or (X unless X offset 15m)`. The second term covers a series that its
+  first increment creates, which `increase()` reads as 0. The judged items keep their own
+  status. Reason `SERVICE_UNAVAILABLE`: the d3 service gave no answer after the retries, and the
+  items wait for the service-unavailable redrive. Reason `SCHEMA_INVALID`: the reply held no
+  usable score; it is registered like any invalid reply and is not asked again.
 
 ## 7. Initial parameters (Q11)
 

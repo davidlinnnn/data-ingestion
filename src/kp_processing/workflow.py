@@ -102,6 +102,8 @@ def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dic
     options: dict[Queue, dict[str, Any]] = {}
     queue: Queue
     for queue in ("orchestration", "inference", "vlm", "summary", "d3"):
+        if queue not in runtime["activity_retry"]:
+            continue  # a Plan recorded before the queue existed schedules nothing on it
         retry = runtime["activity_retry"][queue]
         match queue:
             case "vlm" | "d3":

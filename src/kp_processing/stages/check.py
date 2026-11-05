@@ -2,14 +2,15 @@
 finalize."""
 
 import json
+from functools import partial
 
 from kp_processing.methods import DocumentItem, InventoryItem
 from kp_processing.stages import (
     CheckInput,
     OutcomeRef,
     Ports,
-    ProcessingFailure,
     Runtime,
+    outcome_record_missing,
     read_verified,
     registered,
 )
@@ -34,11 +35,12 @@ async def run(input: CheckInput, ports: Ports, runtime: Runtime) -> list[Outcome
     request_cap.per_item x (inventory items + check items) + request_cap.extra.
 
     Errors: send_items', and (ProcessingFailure, platform, integrity, OUTCOME_RECORD_MISSING,
-    metadata {"item_id"}) when a judged item has no OutcomeRef, or its outcome record or first
-    evidence file is missing or differs from its digest.
+    metadata {"item_id"}) when a judged item has no OutcomeRef, its outcome record is missing
+    or differs from its digest, or its first evidence file is not registered.
     """
     profile = runtime.profile
-    (method,) = [m for m in profile.methods.values() if m.checks]
+    method = profile.quality_check
+    assert method is not None  # the workflow schedules this Activity only when plan.check
     inventory = json.loads(await ports.store.get(input.enrich.inventory.ref))
     outcomes = {outcome.item_id: outcome for outcome in input.outcomes}
     items: list[InventoryItem | DocumentItem] = []
@@ -47,16 +49,7 @@ async def run(input: CheckInput, ports: Ports, runtime: Runtime) -> list[Outcome
         check = method.checks.get(judged_method.ref)
         if check is None:
             continue
-
-        def missing(item_id: str = judged["item_id"]) -> ProcessingFailure:
-            return ProcessingFailure(
-                "platform",
-                "integrity",
-                "OUTCOME_RECORD_MISSING",
-                "Enrichment outcome record is missing or differs from its declared digest",
-                metadata={"item_id": item_id},
-            )
-
+        missing = partial(outcome_record_missing, judged["item_id"])
         outcome = outcomes.get(judged["item_id"])
         if outcome is None:
             raise missing()

@@ -264,6 +264,24 @@ async def test_without_an_answer_the_item_keeps_its_status_and_a_redrive_fills_t
     assert await ports.store.head("documents/doc_1/service-unavailable/req_2") is None
 
 
+async def test_a_reply_without_a_score_is_not_run_for_good_and_waits_for_no_redrive(ports, runtime):
+    garbled = dataclasses.replace(ports, d3=FakeInference(lambda request: completion("{}")))
+    input = await enrichment(garbled, runtime, checked_paper())
+
+    result = await result_of(garbled, runtime, input)
+
+    formula = judged_enrichments(result)["formula"]
+    assert (formula["status"], formula["status_reason"]) == ("unverified", None)
+    assert formula["signals"]["d3"] == {"state": "not_run", "reason": "SCHEMA_INVALID"}
+    assert await ports.store.head(MARKER) is None
+
+    # Registered like any invalid reply: the next request reuses it and asks nothing.
+    sent = len(garbled.d3.requests)
+    again = await enrichment(garbled, runtime, checked_paper(), "req_2")
+    await result_of(garbled, runtime, again, "req_2")
+    assert len(garbled.d3.requests) == sent
+
+
 async def test_a_judged_item_without_its_check_outcome_fails_integrity(ports, runtime):
     input = await enrichment(ports, runtime, checked_paper())
 

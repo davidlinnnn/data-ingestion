@@ -115,6 +115,11 @@ class ProcessingProfile:
     limitations: tuple[Limitation, ...]
     runtime: dict[str, Any]  # has every REQUIRED_RUNTIME key; never enters a reuse key
 
+    @property
+    def quality_check(self) -> Method | None:
+        """The profile's Quality Check, its method with checks; None when it lists none."""
+        return next((method for method in self.methods.values() if method.checks), None)
+
 
 def load_profile(path: Path) -> ProcessingProfile:
     """Load a profile yaml and check it against the method packages.

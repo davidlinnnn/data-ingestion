@@ -17,8 +17,13 @@ mkdir -p "$logs"
     --revision bd0090dd758d32ba59ef5c749910a8e87fc4391f \
     --max-num-seqs 1 --batch-window-ms 0 --dtype float32 > "$logs/serve.log" 2>&1 &
 serve=$!
-until grep -q "Router is ready" "$logs/serve.log"; do
-    kill -0 "$serve" 2> /dev/null || { tail -n 20 "$logs/serve.log"; exit 1; }
+# serve prints "Ready: <url>" and, without a terminal, returns; the container keeps running.
+until grep -q "Ready: http" "$logs/serve.log"; do
+    if ! kill -0 "$serve" 2> /dev/null && ! grep -q "Ready: http" "$logs/serve.log"; then
+        tail -n 20 "$logs/serve.log"
+        "$vllm_sr" stop >> "$logs/serve.log" 2>&1
+        exit 1
+    fi
     sleep 2
 done
 .venv/bin/python docs/validation/80/t5c-seam-b/against_153.py "$r153" http://localhost:8899 \

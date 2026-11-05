@@ -1,0 +1,203 @@
+{
+  "run": "ecf447",
+  "d3_server": {
+    "command": [
+      "d3_server.py",
+      "--device",
+      "mps",
+      "--batch-size",
+      "1",
+      "--port",
+      "8134"
+    ],
+    "serves": {
+      "health": {
+        "status": "ready",
+        "model": "d3-mini",
+        "max_input_tokens": null,
+        "modalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "authentication": true
+      },
+      "models": [
+        {
+          "name": "d3-mini",
+          "description": "Typed decisions with a probability for every option",
+          "max_input_tokens": null,
+          "modalities": [
+            "text",
+            "image",
+            "video"
+          ],
+          "image_max_pixels": 1638400,
+          "video": {
+            "fps": 2.0,
+            "max_frames": 32,
+            "max_pixels_per_frame": 200704,
+            "max_tokens_per_request": 16384,
+            "max_bytes": 32000000
+          }
+        }
+      ]
+    }
+  },
+  "paper": {
+    "index": 8,
+    "sha256": "44d8abc99ec95a804c7635fefcb8ca85da6b1ede3ad88640b8917722df18d7c7",
+    "pages": 12
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 21.5,
+    "outcome": "complete",
+    "judged": {
+      "picture-ocr": {
+        "items": 3,
+        "success": 3,
+        "scored": 3,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 0,
+        "disputed": {}
+      },
+      "formula": {
+        "items": 0,
+        "success": 0,
+        "scored": 0,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 0,
+        "disputed": {}
+      },
+      "table-status": {
+        "items": 4,
+        "success": 4,
+        "scored": 4,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 3,
+        "disputed": {
+          "TABLE_D3_UNFAITHFUL": 3
+        }
+      }
+    },
+    "d3_receipts": {
+      "requests": 7,
+      "results": {
+        "ok": 7,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 957.1249578148127,
+        "median": 1293.9682500436902,
+        "max": 2534.854165976867
+      },
+      "models": [
+        "d3-mini"
+      ],
+      "system_fingerprints": [
+        "None"
+      ],
+      "input_tokens": 4624
+    },
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 10.4,
+      "outcomes": 7,
+      "reused": 0
+    },
+    "vlm_answers": {
+      "picture-interpretation replayed": 3
+    },
+    "statuses": {
+      "code unverified None": 1,
+      "document-summary unverified None": 1,
+      "picture-interpretation unverified None": 12,
+      "picture-ocr unverified None": 3,
+      "table-status disputed TABLE_D3_UNFAITHFUL": 3,
+      "table-status unverified None": 1
+    },
+    "judgements": [
+      [
+        "picture-ocr:#/pictures/0",
+        "success",
+        "unverified",
+        null,
+        0.212297260761261,
+        0.3996568714749357
+      ],
+      [
+        "picture-ocr:#/pictures/1",
+        "success",
+        "unverified",
+        null,
+        0.43800002336502075,
+        0.5174344194434107
+      ],
+      [
+        "picture-ocr:#/pictures/2",
+        "success",
+        "unverified",
+        null,
+        0.03635362257985532,
+        0.21592746653608016
+      ],
+      [
+        "table-status:#/tables/0",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.18967553407920795,
+        0.022762930687992365
+      ],
+      [
+        "table-status:#/tables/1",
+        "success",
+        "unverified",
+        null,
+        0.5738981024087606,
+        0.34944572010110914
+      ],
+      [
+        "table-status:#/tables/2",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.4471113681793213,
+        0.17707536836813514
+      ],
+      [
+        "table-status:#/tables/3",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.5317346732774572,
+        0.28342581406779505
+      ]
+    ],
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 0.7,
+    "external_receipts": 0,
+    "objects_added_under_documents": 0,
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 0.0,
+      "outcomes": 7,
+      "reused": 7
+    },
+    "pass": true
+  }
+}

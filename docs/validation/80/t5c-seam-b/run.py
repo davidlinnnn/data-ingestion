@@ -340,6 +340,7 @@ async def run_switch(client: Client, paper: dict, sha: str, data: bytes, tree: P
             "receipts_per_method": dict(Counter(r["method"] for r in sent)),
             "objects_added_under_documents": len(added),
             "item_folders_added": len({k.split("/")[3] for k in added if "/items/" in k}),
+            "objects_added_outside_items": sum("/items/" not in k for k in added),
             "enrichments": len(result.get("enrichments", [])),
             "enrichments_reused": sum(e["reused"] for e in result.get("enrichments", [])),
             "result_sha256": digest(comparable(result)) if result else None,
@@ -378,6 +379,7 @@ async def run_switch(client: Client, paper: dict, sha: str, data: bytes, tree: P
         and on_case["enrichments_reused"] == on_case["enrichments"] > 0
         and on_case["receipts_per_method"] == {CHECK: checks} and checks > 0
         and on_case["item_folders_added"] == checks
+        and on_case["objects_added_outside_items"] == 0
         and on_case["check"] is not None and on_case["check"]["reused"] == 0
         and evidence["on"]["differs_from_off_beyond_d3"] == []
         and evidence["on"]["same_inventory_as_off"]
