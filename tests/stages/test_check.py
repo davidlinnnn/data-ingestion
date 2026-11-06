@@ -33,8 +33,8 @@ from tests.stages.test_enrich_local import (
 from tests.stages.test_enrich_vlm import BODY, EQUATION
 from tests.vlm import canned, schema_name
 
-TABLE_MARKDOWN = (
-    "Table 1: Scores of the three models.\n\n"
+TABLE_CAPTION = "Table 1: Scores of the three models."
+TABLE_GRID = (
     "| Model    | Params    |   Score |\n"
     "|----------|-----------|---------|\n"
     "| Alpha    | 7B        |    61.2 |\n"
@@ -49,9 +49,7 @@ def checked_paper() -> bytes:
         [
             Page(lines=["1 Architecture", *BODY], picture=True, picture_text=PICTURE_WORDS),
             Page(lines=["2 Method", *BODY, "", EQUATION, "", "Line after the equation continues."]),
-            Page(
-                lines=["3 Results", *BODY, "", "Table 1: Scores of the three models."], table=TABLE
-            ),
+            Page(lines=["3 Results", *BODY, "", TABLE_CAPTION], table=TABLE),
             Page(lines=["4 Appendix", *BODY], picture=True),
         ]
     )
@@ -93,7 +91,11 @@ async def test_each_successful_formula_table_and_ocr_item_is_checked_with_its_im
     assert by_category["formula LaTeX"]["images"] == [
         data_url(await ports.store.get(judged[formula_id]["evidence_refs"][0]))
     ]
-    assert by_category["table grid (Markdown)"]["state"]["reconstruction"] == TABLE_MARKDOWN
+    # Whether docling's layout model attaches the caption to the table differs by platform.
+    assert by_category["table grid (Markdown)"]["state"]["reconstruction"] in (
+        TABLE_GRID,
+        f"{TABLE_CAPTION}\n\n{TABLE_GRID}",
+    )
     assert by_category["table grid (Markdown)"]["images"] == [
         data_url(await ports.store.get(judged["table-status:#/tables/0"]["evidence_refs"][0]))
     ]
