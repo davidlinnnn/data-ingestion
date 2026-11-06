@@ -28,7 +28,7 @@
 
 主管確認：公司政策禁止 client 以 presigned URL 上傳檔案。SAS 是同類的、由 storage 簽發的 bearer URL，轉達時一併視為排除。這條政策讓 2026-10-20 定下的上傳 grant 形式（storage 原生 presigned URL 或 SAS，設計筆記 Q5）失效。紀錄：[#95 的轉達](https://github.com/davidlinnnn/data-ingestion/issues/95#issuecomment-6518076869)、[#96 的轉達](https://github.com/davidlinnnn/data-ingestion/issues/96#issuecomment-6658212404)、[資料安全文件](knowledge-platform-data-security.md) §2。
 
-**政策範圍尚待確認**：它禁止的是「bearer URL」這種機制，還是「client 只能走公司指定的傳輸管道」。本文的決定在前者成立；只有後者會推翻它（第 7 節）。
+**政策範圍（使用者 2026-11-07 確認）**：政策只排除 presigned URL 這種 bearer URL 機制，不限定傳輸管道；經 admission API 上傳可行。這是本文決定的唯一前提，已成立。
 
 ### 1.4 規模
 
@@ -50,7 +50,7 @@ PROD 負載規格（[#88](https://github.com/davidlinnnn/data-ingestion/issues/8
 | # | 方案 | 誰搬檔案 | 當時的結論 | 政策下的狀態 |
 |---|---|---|---|---|
 | 1 | 平台發上傳授權，client 直接 PUT 到 storage（presigned URL） | client | 選為通用入口 | 被排除 |
-| 2 | Source 發 signed GET，平台去抓檔 | 平台 | 保留為選用的匯入路徑 | 也是 presigned URL，只是方向相反；是否被禁要看政策範圍 |
+| 2 | Source 發 signed GET，平台去抓檔 | 平台 | 保留為選用的匯入路徑 | 也是 presigned URL，只是方向相反；不採用 |
 | 3 | 長期委派的 connector（暫時憑證、聯邦身分） | 平台 | 只給需要持續同步的來源 | 不受影響，但建置成本最高 |
 | 4 | 預先註冊 Source 的 storage，平台用自己的身分去讀，client 只送檔案位置 | 平台 | 最早的 pilot 提案；每個 Source 都要設定 endpoint 與 token，改為方案 1 | 不受影響 |
 | 5 | 檔案內容直接放在 ingestion API 的 request 裡 | client → API | 影像、影片不該經過 API；pilot 不提供 | 不受影響 |
@@ -355,7 +355,6 @@ ingress-nginx 的預設值是為小 request 設的，上傳路徑要另外設定
 
 | 事項 | 影響 | 負責 |
 |---|---|---|
-| 政策範圍：是否只能走公司指定的傳輸管道 | 唯一會推翻本決定的答案 | 使用者帶回（資料安全文件 §9） |
 | pull 路徑 | 等有「檔案已在公司核准 storage」的具體來源再開 | #96 之後另開票 |
 | 分段上傳 | GB 級檔案才需要；契約形狀相容（OpenAI Uploads 的 create、add parts、complete 同形） | 不在第一版 |
 | 公司的 ingress 產品與設定值 | 第 6.2 節的數值 | #78 |
@@ -369,6 +368,7 @@ ingress-nginx 的預設值是為小 request 設的，上傳路徑要另外設定
 | 2026-10-30 | 主管確認公司政策禁止 client 以 presigned URL 上傳；轉達 #95 |
 | 2026-11-05 | 規格與設計筆記加上 superseded 註記；轉達補到 #96 |
 | 2026-11-07 | 決定 push、經平台上傳端點；契約寫入規格 §5.2；本文建立 |
+| 2026-11-07 | 使用者確認政策只排除 presigned URL，不限定傳輸管道；本決定的前提成立，未決事項移除 |
 
 ## 來源
 
