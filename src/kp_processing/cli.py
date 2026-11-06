@@ -6,7 +6,9 @@ KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), w
 orchestration worker needs; KP_VLM_BASE_URL and KP_VLM_API_KEY, the OpenAI-compatible VLM
 endpoint, which only the vlm worker needs (the model comes from the profile);
 KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the OpenAI-compatible endpoint of the Document
-Summary's model, which only the summary worker needs (the model comes from the profile).
+Summary's model, which only the summary worker needs (the model comes from the profile);
+KP_D3_BASE_URL and KP_D3_API_KEY, the root of the d3 decision model's System One service and
+its bearer key, which only the d3 worker needs (the model comes from the d3-check package).
 """
 
 import argparse
@@ -28,7 +30,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.runtime import PrometheusConfig, TelemetryConfig
 from temporalio.runtime import Runtime as TemporalRuntime
 
-from kp_processing.ports.inference import Bounded, OpenAIChat
+from kp_processing.ports.inference import Bounded, OpenAIChat, SystemOne
 from kp_processing.ports.object_store import S3ObjectStore
 from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
@@ -48,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     `<id>@<version>  module_digest=<hex>  components=<c1>,<c2>,...` (components empty when
     none). A ProfileError prints to stderr and exits 1.
 
-    `kp-processing worker --queue orchestration|inference|vlm|summary [--profile PATH]
+    `kp-processing worker --queue orchestration|inference|vlm|summary|d3 [--profile PATH]
     [--build-id ID] [--shutdown-grace-s S] [--metrics-port P] [--temporal-metrics-port Q]`:
     serve one task queue until SIGTERM or SIGINT, then stop polling and give running Activities
     S seconds (default 0) to finish before they are cancelled and retried elsewhere; keep S
@@ -71,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
     profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker = commands.add_parser("worker")
     worker.add_argument(
-        "--queue", choices=["orchestration", "inference", "vlm", "summary"], required=True
+        "--queue", choices=["orchestration", "inference", "vlm", "summary", "d3"], required=True
     )
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
     worker.add_argument("--build-id", default="dev")
@@ -171,6 +173,10 @@ async def run_worker(
     if queue == "summary" and not summary_url:
         print("KP_SUMMARY_BASE_URL is required for the summary worker", file=sys.stderr)
         return 2
+    d3_url, d3_key = os.environ.get("KP_D3_BASE_URL"), os.environ.get("KP_D3_API_KEY", "")
+    if queue == "d3" and not d3_url:
+        print("KP_D3_BASE_URL is required for the d3 worker", file=sys.stderr)
+        return 2
     from kp_processing import metrics
     from kp_processing.stages import enrich_vlm
     from kp_processing.worker import make_worker  # loads docling; other commands stay fast
@@ -194,10 +200,10 @@ async def run_worker(
         profile=load_profile(profile_path), build_id=build_id, custody_bucket=store.bucket
     )
     async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as external_http:
-        # Only orchestration Activities send status reports, only vlm ones VLM requests and
-        # only summary ones summary requests.
+        # Only orchestration Activities send status reports, only vlm ones VLM requests, only
+        # summary ones summary requests and only d3 ones Quality Check requests.
         reporter = HttpStatusReporter(http, admission or "")
-        vlm = summary = None
+        vlm = summary = d3 = None
         if queue == "vlm":
             deadline = runtime.profile.runtime["vlm_request_deadline_s"]
             vlm = OpenAIChat(external_http, vlm_url or "", vlm_key,
@@ -211,7 +217,11 @@ async def run_worker(
                                          enrich_vlm.model(runtime.profile, "summary"),
                                          deadline["connect"], deadline["total"]),
                               settings["summary_requests_per_worker"])  # fmt: skip
-        ports = Ports(store, reporter, vlm=vlm, summary=summary)
+        if queue == "d3":
+            deadline = runtime.profile.runtime["d3_request_deadline_s"]
+            d3 = SystemOne(external_http, d3_url or "", d3_key, deadline["connect"],
+                           deadline["total"])  # fmt: skip
+        ports = Ports(store, reporter, vlm=vlm, summary=summary, d3=d3)
         client = await connect(temporal_runtime)
         worker = await make_worker(client, ports, runtime, queue, shutdown_grace_s)
         print(f"worker {runtime.profile.id} build {build_id} on {worker.task_queue}",

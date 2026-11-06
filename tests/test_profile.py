@@ -18,7 +18,7 @@ def variant(tmp_path: Path, old: str, new: str) -> Path:
     return path
 
 
-def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
+def test_paper_pdf_1_lists_its_eight_methods_with_declared_components():
     p = load_profile(PAPER_PDF_1)
 
     assert p.id == "paper-pdf@1"
@@ -31,6 +31,7 @@ def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
         "code@1",
         "table-status@1",
         "document-summary@2",
+        "d3-check@1",
     ]
     assert p.methods["docling-parse"].components == (
         "docling-slim@2.132.0",
@@ -48,8 +49,9 @@ def test_paper_pdf_1_lists_its_seven_methods_with_declared_components():
     assert p.runtime["vlm_concurrency_per_document"] == 4
 
 
-def test_paper_pdf_1_sends_only_to_its_two_declared_services():
-    # The inference egresses of the data-security design §5: the company VLM and the summary model.
+def test_paper_pdf_1_sends_only_to_its_three_declared_services():
+    # The inference egresses of the data-security design §5: the company VLM, the summary model
+    # and the d3 decision model.
     p = load_profile(PAPER_PDF_1)
 
     external = {m.id: (m.service, m.components) for m in p.methods.values() if m.service}
@@ -59,6 +61,7 @@ def test_paper_pdf_1_sends_only_to_its_two_declared_services():
         "formula": ("vlm", ("company-vlm/Qwen3.8-27B",)),
         "code": ("vlm", ("company-vlm/Qwen3.8-27B",)),
         "document-summary": ("summary", ("company-vlm/Qwen3.8-27B",)),
+        "d3-check": ("d3", ("company-d3/vllm-sr/d3-mini@bd0090dd",)),
     }
 
 

@@ -10,6 +10,7 @@ from kp_processing.ports.status_reporter import RecordingStatusReporter
 from kp_processing.profile import load_profile
 from kp_processing.stages import Ports, Runtime
 from kp_processing.workflow import SEARCH_ATTRIBUTES
+from tests.d3 import fake_d3
 from tests.summary import fake_llm
 from tests.vlm import canned_vlm
 
@@ -24,6 +25,7 @@ def ports() -> Ports:
         clock=FakeClock(),
         vlm=canned_vlm(),
         summary=fake_llm(),
+        d3=fake_d3(),
     )
 
 

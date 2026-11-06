@@ -12,11 +12,13 @@ from kp_processing.methods import picture_ocr
 from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.stages import (
     AssembleInput,
+    CheckInput,
     EnrichInput,
     FinalizeInput,
     InventoryInput,
     InventoryRef,
     ProcessingFailure,
+    check,
     enrich_local,
     enrich_vlm,
     finalize,
@@ -79,7 +81,7 @@ def enrich_input(inv: InventoryRef, request_id: str = "req_1") -> EnrichInput:
     return EnrichInput("doc_1", inv, request_id, "run_1")
 
 
-async def enriched(ports, runtime, pdf: bytes, request_id: str = "req_1") -> FinalizeInput:
+async def enrichment(ports, runtime, pdf: bytes, request_id: str = "req_1") -> FinalizeInput:
     """native() plus the outcomes of the local, VLM and summary enrichment (ports.vlm and
     ports.summary answer)."""
     input = await native(ports, runtime, pdf, request_id)
@@ -87,6 +89,22 @@ async def enriched(ports, runtime, pdf: bytes, request_id: str = "req_1") -> Fin
     outcomes += await enrich_vlm.run(enrich_input(input.inventory, request_id), ports, runtime)
     outcomes += await summarize_all(ports, runtime, enrich_input(input.inventory, request_id))
     return dataclasses.replace(input, outcomes=outcomes)
+
+
+async def checked(ports, runtime, input: FinalizeInput, request_id: str = "req_1") -> FinalizeInput:
+    """input plus the outcomes of the profile's Quality Check, when it lists one (ports.d3
+    answers)."""
+    if runtime.profile.quality_check is None:
+        return input
+    enrich = enrich_input(input.inventory, request_id)
+    outcomes = await check.run(CheckInput(enrich, input.outcomes), ports, runtime)
+    return dataclasses.replace(input, outcomes=[*input.outcomes, *outcomes])
+
+
+async def enriched(ports, runtime, pdf: bytes, request_id: str = "req_1") -> FinalizeInput:
+    """enrichment() plus the check: the finalize input of a whole run."""
+    input = await enrichment(ports, runtime, pdf, request_id)
+    return await checked(ports, runtime, input, request_id)
 
 
 async def local_only(ports, inv: InventoryRef) -> InventoryRef:
@@ -226,9 +244,9 @@ async def test_a_method_added_to_the_draft_profile_gets_a_new_inventory_and_reus
     without_code = dataclasses.replace(
         runtime, profile=dataclasses.replace(runtime.profile, methods=methods)
     )
-    before = await enriched(ports, without_code, enriched_paper())
+    before = await enrichment(ports, without_code, enriched_paper())
 
-    after = await enriched(ports, runtime, enriched_paper())
+    after = await enrichment(ports, runtime, enriched_paper())
 
     assert after.assembly.reused
     assert after.inventory.ref != before.inventory.ref
@@ -249,7 +267,7 @@ async def test_a_method_added_to_the_draft_profile_gets_a_new_inventory_and_reus
 
 
 async def test_enrichment_files_exist_before_the_outcome_is_registered(ports, runtime):
-    checked = []
+    found = []
 
     class CheckingStore(DictObjectStore):
         async def put_if_absent(self, key: str, data: bytes) -> bool:
@@ -259,16 +277,16 @@ async def test_enrichment_files_exist_before_the_outcome_is_registered(ports, ru
                 for ref in refs:
                     if ref:
                         assert await self.head(ref) is not None
-                        checked.append(ref)
+                        found.append(ref)
             return await super().put_if_absent(key, data)
 
-    await enriched(dataclasses.replace(ports, store=CheckingStore()), runtime, enriched_paper())
+    await enrichment(dataclasses.replace(ports, store=CheckingStore()), runtime, enriched_paper())
 
-    assert checked
+    assert found
 
 
 async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runtime):
-    input = await enriched(ports, runtime, enriched_paper())
+    input = await enrichment(ports, runtime, enriched_paper())
 
     items = await items_of(ports, input.inventory)
     outcomes = {o.item_id: o for o in input.outcomes}
@@ -322,7 +340,7 @@ async def test_every_item_gets_an_outcome_record_under_its_reuse_key(ports, runt
 
 async def test_a_second_run_reuses_every_item_without_calling_rapidocr(ports, runtime, monkeypatch):
     calls = counting(monkeypatch)
-    first = await enriched(ports, runtime, enriched_paper())
+    first = await enrichment(ports, runtime, enriched_paper())
     assert len(calls) == 2  # the spy sees the real calls: one per picture
     objects = dict(ports.store.objects)  # type: ignore[attr-defined]
 
@@ -337,7 +355,7 @@ async def test_a_second_run_reuses_every_item_without_calling_rapidocr(ports, ru
 async def test_every_item_run_or_reused_sends_a_heartbeat(ports, runtime):
     beats = []
     ports = dataclasses.replace(ports, heartbeat=lambda: beats.append(1))
-    first = await enriched(ports, runtime, enriched_paper())
+    first = await enrichment(ports, runtime, enriched_paper())
     # Every item but the summary's, whose Activities rely on the wrapper's heartbeat loop.
     assert len(beats) == len(first.outcomes) - 1 == 6
 
@@ -355,9 +373,8 @@ async def test_an_undecodable_picture_is_a_failed_item_and_the_document_complete
     inv = await with_items(ports, input.inventory, items)
 
     outcomes = await enrich_local.run(enrich_input(inv), ports, runtime)
-    ref = await finalize.run(
-        dataclasses.replace(input, inventory=inv, outcomes=outcomes), ports, runtime
-    )
+    final = dataclasses.replace(input, inventory=inv, outcomes=outcomes)
+    ref = await finalize.run(await checked(ports, runtime, final), ports, runtime)
 
     record = (await records(ports, outcomes))["picture-ocr:#/pictures/0"]
     assert (record["outcome"], record["reason"], record["content"]) == (

@@ -10,7 +10,7 @@ def test_profile_prints_every_method_identity(capsys):
     assert main(["profile"]) == 0
 
     lines = capsys.readouterr().out.splitlines()
-    assert len(lines) == 7
+    assert len(lines) == 8
     assert re.fullmatch(
         r"docling-parse@1  module_digest=[0-9a-f]{64}  components="
         r"docling-slim@2\.132\.0,layout-heron@8f39ad3c,tableformer-accurate@v1,rapidocr-ppocrv6-small",
@@ -21,7 +21,7 @@ def test_profile_prints_every_method_identity(capsys):
 
 def test_profile_takes_a_path(capsys):
     assert main(["profile", str(PROFILES_DIR / "paper-pdf@1.yaml")]) == 0
-    assert len(capsys.readouterr().out.splitlines()) == 7
+    assert len(capsys.readouterr().out.splitlines()) == 8
 
 
 def test_a_bad_profile_exits_1_with_the_reason_on_stderr(tmp_path, capsys):
@@ -39,6 +39,13 @@ def test_the_summary_worker_needs_the_summary_url(monkeypatch, capsys):
 
     assert main(["worker", "--queue", "summary"]) == 2
     assert "KP_SUMMARY_BASE_URL" in capsys.readouterr().err
+
+
+def test_the_d3_worker_needs_the_d3_url(monkeypatch, capsys):
+    monkeypatch.delenv("KP_D3_BASE_URL", raising=False)
+
+    assert main(["worker", "--queue", "d3"]) == 2
+    assert "KP_D3_BASE_URL is required for the d3 worker" in capsys.readouterr().err
 
 
 def test_the_orchestration_worker_needs_the_admission_url(monkeypatch, capsys):

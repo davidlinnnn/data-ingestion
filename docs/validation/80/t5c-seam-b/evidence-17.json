@@ -1,0 +1,304 @@
+{
+  "run": "ecf447",
+  "d3_server": {
+    "command": [
+      "d3_server.py",
+      "--device",
+      "mps",
+      "--batch-size",
+      "1",
+      "--port",
+      "8134"
+    ],
+    "serves": {
+      "health": {
+        "status": "ready",
+        "model": "d3-mini",
+        "max_input_tokens": null,
+        "modalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "authentication": true
+      },
+      "models": [
+        {
+          "name": "d3-mini",
+          "description": "Typed decisions with a probability for every option",
+          "max_input_tokens": null,
+          "modalities": [
+            "text",
+            "image",
+            "video"
+          ],
+          "image_max_pixels": 1638400,
+          "video": {
+            "fps": 2.0,
+            "max_frames": 32,
+            "max_pixels_per_frame": 200704,
+            "max_tokens_per_request": 16384,
+            "max_bytes": 32000000
+          }
+        }
+      ]
+    }
+  },
+  "paper": {
+    "index": 17,
+    "sha256": "eb3e7a5a10d352058f15bbd9a3f20069b21f7da7aac28d1a148595a8463c6331",
+    "pages": 22
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 36.3,
+    "outcome": "complete",
+    "judged": {
+      "picture-ocr": {
+        "items": 6,
+        "success": 6,
+        "scored": 6,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 0,
+        "disputed": {}
+      },
+      "formula": {
+        "items": 4,
+        "success": 4,
+        "scored": 4,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 1,
+        "disputed": {
+          "FORMULA_D3_UNFAITHFUL": 1
+        }
+      },
+      "table-status": {
+        "items": 9,
+        "success": 9,
+        "scored": 9,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 1,
+        "disputed": {
+          "TABLE_D3_UNFAITHFUL": 1
+        }
+      }
+    },
+    "d3_receipts": {
+      "requests": 19,
+      "results": {
+        "ok": 19,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 717.6072499714792,
+        "median": 852.7830420061946,
+        "max": 1912.2027079574764
+      },
+      "models": [
+        "d3-mini"
+      ],
+      "system_fingerprints": [
+        "None"
+      ],
+      "input_tokens": 9095
+    },
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 19.5,
+      "outcomes": 19,
+      "reused": 0
+    },
+    "vlm_answers": {
+      "picture-interpretation replayed": 6,
+      "formula replayed": 4
+    },
+    "statuses": {
+      "code unverified None": 2,
+      "document-summary unverified None": 1,
+      "formula disputed FORMULA_D3_UNFAITHFUL": 1,
+      "formula unverified None": 3,
+      "picture-interpretation unverified None": 24,
+      "picture-ocr unverified None": 6,
+      "table-status disputed TABLE_D3_UNFAITHFUL": 1,
+      "table-status unverified None": 8
+    },
+    "judgements": [
+      [
+        "picture-ocr:#/pictures/0",
+        "success",
+        "unverified",
+        null,
+        0.21281155309642694,
+        0.399987859786322
+      ],
+      [
+        "picture-ocr:#/pictures/1",
+        "success",
+        "unverified",
+        null,
+        0.6611774366743136,
+        0.618167160733859
+      ],
+      [
+        "picture-ocr:#/pictures/2",
+        "success",
+        "unverified",
+        null,
+        0.3241998746514246,
+        0.46305172595493915
+      ],
+      [
+        "picture-ocr:#/pictures/3",
+        "success",
+        "unverified",
+        null,
+        0.8222168700558595,
+        0.7045638313769015
+      ],
+      [
+        "picture-ocr:#/pictures/4",
+        "success",
+        "unverified",
+        null,
+        0.3087533528355746,
+        0.455090913113165
+      ],
+      [
+        "picture-ocr:#/pictures/5",
+        "success",
+        "unverified",
+        null,
+        0.19377682236834665,
+        0.387388541425243
+      ],
+      [
+        "formula:#/texts/72",
+        "success",
+        "unverified",
+        null,
+        0.9255483815487353,
+        0.7940311142965818
+      ],
+      [
+        "formula:#/texts/86",
+        "success",
+        "unverified",
+        null,
+        0.9645494402302325,
+        0.931303986986887
+      ],
+      [
+        "formula:#/texts/88",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.7638710114263751,
+        0.30749918320857184
+      ],
+      [
+        "formula:#/texts/89",
+        "success",
+        "unverified",
+        null,
+        0.9522087822312917,
+        0.8915507695702941
+      ],
+      [
+        "table-status:#/tables/0",
+        "success",
+        "unverified",
+        null,
+        0.6240886039760293,
+        0.43871577909624093
+      ],
+      [
+        "table-status:#/tables/1",
+        "success",
+        "unverified",
+        null,
+        0.7809014553100304,
+        0.7546744933445982
+      ],
+      [
+        "table-status:#/tables/2",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.2542674985964597,
+        0.04372787397106672
+      ],
+      [
+        "table-status:#/tables/3",
+        "success",
+        "unverified",
+        null,
+        0.9502295710112219,
+        0.9842265743204639
+      ],
+      [
+        "table-status:#/tables/4",
+        "success",
+        "unverified",
+        null,
+        0.9710411537927518,
+        0.9941969202901456
+      ],
+      [
+        "table-status:#/tables/5",
+        "success",
+        "unverified",
+        null,
+        0.5518390803433013,
+        0.3138282368364947
+      ],
+      [
+        "table-status:#/tables/6",
+        "success",
+        "unverified",
+        null,
+        0.5712032743929841,
+        0.3449701170251161
+      ],
+      [
+        "table-status:#/tables/7",
+        "success",
+        "unverified",
+        null,
+        0.825064671413074,
+        0.8356267194799442
+      ],
+      [
+        "table-status:#/tables/8",
+        "success",
+        "unverified",
+        null,
+        0.578132348600994,
+        0.3565467046492559
+      ]
+    ],
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 1.0,
+    "external_receipts": 0,
+    "objects_added_under_documents": 0,
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 0.1,
+      "outcomes": 19,
+      "reused": 19
+    },
+    "pass": true
+  }
+}

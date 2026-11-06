@@ -1,6 +1,7 @@
-"""InferenceTransport: the fake and the OpenAI-compatible adapter pass one contract; the adapter's
-failure mapping and its in-code deadline (V7: the #84 dead-socket hang as a regression test); no
-adapter follows a redirect; Bounded caps a worker's requests in flight (#155)."""
+"""InferenceTransport: the fake and the adapters (OpenAI-compatible chat, System One) pass one
+contract; the adapters' failure mapping and their in-code deadline (V7: the #84 dead-socket hang
+as a regression test); no adapter follows a redirect; Bounded caps a worker's requests in flight
+(#155)."""
 
 import asyncio
 import base64
@@ -18,10 +19,12 @@ from kp_processing.ports.inference import (
     OpenAIChat,
     RequestRejected,
     ServiceUnavailable,
+    SystemOne,
     completion,
 )
 
 BASE = "http://vlm.test/v1"
+D3_BASE = "http://d3.test"
 
 
 def synthetic_png() -> str:
@@ -72,32 +75,69 @@ def answering(status: int, body: bytes | dict) -> OpenAIChat:
     return adapter(httpx.MockTransport(lambda request: httpx.Response(status, content=content)))
 
 
-# --- contract: fake and adapter -----------------------------------------------------------
+SYSTEM_ONE_REQUEST = {
+    "model": "vllm-sr/d3-mini",
+    "state": {"category": "formula LaTeX", "reconstruction": "x"},
+    "images": [synthetic_png()],
+    "questions": {"Q2": {"type": "noul", "instructions": "Is it faithful?"}},
+}
+# The reply shape measured on vLLM Semantic Router Engine mode and d3_server.py (#161).
+SYSTEM_ONE_REPLY = {
+    "model": "d3-mini",
+    "answers": {"Q2": {"type": "noul", "noul": 0.25}},
+    "usage": {"input_tokens": 591, "output_tokens": 0},
+}
 
 
-@pytest.fixture(params=["fake", "openai"])
+def system_one(transport: httpx.AsyncBaseTransport, total_s: float = 60) -> SystemOne:
+    client = httpx.AsyncClient(transport=transport, follow_redirects=True)
+    return SystemOne(client, D3_BASE, "sk-d3", connect_s=5, total_s=total_s)
+
+
+def judging(status: int, body: bytes | dict) -> SystemOne:
+    content = body if isinstance(body, bytes) else json.dumps(body).encode()
+    return system_one(httpx.MockTransport(lambda request: httpx.Response(status, content=content)))
+
+
+# --- contract: fake and adapters ----------------------------------------------------------
+
+
+@pytest.fixture(params=["fake", "openai", "system-one"])
 def transport(request):
-    """(transport answering an ok response, transport answering 503)."""
+    """(transport answering an ok response, transport answering 503, the ok answer's content)."""
     body = response_body()
+    content = body["choices"][0]["message"]["content"]
     if request.param == "fake":
-        ok = completion(body["choices"][0]["message"]["content"], model=body["model"])
-        return FakeInference(lambda r: ok), FakeInference(lambda r: ServiceUnavailable("HTTP_5XX"))
-    return answering(200, body), answering(503, b"overloaded")
+        ok = completion(content, model=body["model"])
+        down = FakeInference(lambda r: ServiceUnavailable("HTTP_5XX"))
+        return FakeInference(lambda r: ok), down, content
+    if request.param == "system-one":
+        reply = json.dumps(SYSTEM_ONE_REPLY)
+        return judging(200, reply.encode()), judging(503, b"overloaded"), reply
+    return answering(200, body), answering(503, b"overloaded"), content
 
 
-async def test_an_answer_is_the_first_choice(transport):
-    ok, _ = transport
+async def test_an_answer_carries_its_content_and_the_body_as_received(transport):
+    ok, _, content = transport
 
     answer = await ok.complete(REQUEST)
 
-    assert answer.content == '{"latex": "x"}'
+    assert answer.content == content
     assert answer.refusal is None
+    assert answer.model
+    assert answer.body
+
+
+async def test_an_openai_answer_is_the_first_choice():
+    answer = await answering(200, response_body()).complete(REQUEST)
+
+    assert answer.content == '{"latex": "x"}'
     assert answer.model == "gpt-6-luna-2026-09-01"
     assert json.loads(answer.body)["choices"][0]["message"]["content"] == answer.content
 
 
 async def test_an_unavailable_service_raises_service_unavailable(transport):
-    _, down = transport
+    _, down, _ = transport
 
     with pytest.raises(ServiceUnavailable) as caught:
         await down.complete(REQUEST)
@@ -175,6 +215,73 @@ async def test_other_statuses_are_rejected_requests(status):
         await answering(status, b'{"error": {}}').complete(REQUEST)
 
     assert caught.value.status == status
+
+
+# --- SystemOne: the d3 service (#161) ------------------------------------------------------
+
+
+async def test_system_one_posts_the_request_as_given_with_the_key():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, content=json.dumps(SYSTEM_ONE_REPLY).encode())
+
+    answer = await system_one(httpx.MockTransport(handler)).complete(SYSTEM_ONE_REQUEST)
+
+    (request,) = seen
+    assert (request.method, str(request.url)) == ("POST", f"{D3_BASE}/v1/systemone")
+    assert request.headers["authorization"] == "Bearer sk-d3"
+    assert json.loads(request.content) == SYSTEM_ONE_REQUEST
+    assert json.loads(answer.content or "")["answers"]["Q2"]["noul"] == 0.25
+    assert answer.body == json.dumps(SYSTEM_ONE_REPLY).encode()
+    assert (answer.model, answer.refusal, answer.system_fingerprint) == ("d3-mini", None, None)
+    assert answer.usage == {"input_tokens": 591, "output_tokens": 0}
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "reason"),
+    [
+        (429, b"slow down", "HTTP_429"),
+        (500, b"500: the server failed on this request (RuntimeError)", "HTTP_5XX"),
+        (200, b"<html>not json</html>", "MALFORMED_RESPONSE"),
+        (200, json.dumps({"model": "d3-mini"}).encode(), "MALFORMED_RESPONSE"),
+        (200, json.dumps({"answers": []}).encode(), "MALFORMED_RESPONSE"),
+        (200, json.dumps([SYSTEM_ONE_REPLY]).encode(), "MALFORMED_RESPONSE"),
+    ],
+)
+async def test_system_one_maps_transient_failures_to_service_unavailable(status, body, reason):
+    with pytest.raises(ServiceUnavailable) as caught:
+        await judging(status, body).complete(SYSTEM_ONE_REQUEST)
+
+    assert caught.value.reason == reason
+
+
+@pytest.mark.parametrize("status", [401, 307, 422])  # wrong key, redirect, unreadable request
+async def test_system_one_rejects_other_statuses_without_following_a_redirect(status):
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(status, headers={"location": "http://elsewhere.test/collect"})
+
+    with pytest.raises(RequestRejected) as caught:
+        await system_one(httpx.MockTransport(handler)).complete(SYSTEM_ONE_REQUEST)
+
+    assert caught.value.status == status
+    assert seen == [f"{D3_BASE}/v1/systemone"]
+
+
+async def test_a_hung_system_one_call_is_cut_at_the_deadline():
+    hang = Hang("drip")
+    started = time.monotonic()
+
+    with pytest.raises(ServiceUnavailable) as caught:
+        await system_one(hang, total_s=0.5).complete(SYSTEM_ONE_REQUEST)
+
+    assert caught.value.reason == "TIMEOUT"
+    assert 0.5 <= time.monotonic() - started <= 1.5
+    assert hang.ended() == 1
 
 
 # --- Bounded: a worker's requests in flight ------------------------------------------------

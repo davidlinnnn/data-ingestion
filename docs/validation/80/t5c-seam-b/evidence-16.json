@@ -1,0 +1,595 @@
+{
+  "run": "ecf447",
+  "d3_server": {
+    "command": [
+      "d3_server.py",
+      "--device",
+      "mps",
+      "--batch-size",
+      "1",
+      "--port",
+      "8134"
+    ],
+    "serves": {
+      "health": {
+        "status": "ready",
+        "model": "d3-mini",
+        "max_input_tokens": null,
+        "modalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "authentication": true
+      },
+      "models": [
+        {
+          "name": "d3-mini",
+          "description": "Typed decisions with a probability for every option",
+          "max_input_tokens": null,
+          "modalities": [
+            "text",
+            "image",
+            "video"
+          ],
+          "image_max_pixels": 1638400,
+          "video": {
+            "fps": 2.0,
+            "max_frames": 32,
+            "max_pixels_per_frame": 200704,
+            "max_tokens_per_request": 16384,
+            "max_bytes": 32000000
+          }
+        }
+      ]
+    }
+  },
+  "paper": {
+    "index": 16,
+    "sha256": "217c1ac0884312b897648027bdfd6745f4b790b522cab8a61fea32faf0752943",
+    "pages": 64
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 83.4,
+    "outcome": "complete",
+    "judged": {
+      "picture-ocr": {
+        "items": 8,
+        "success": 8,
+        "scored": 8,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 0,
+        "disputed": {}
+      },
+      "formula": {
+        "items": 44,
+        "success": 39,
+        "scored": 39,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 10,
+        "disputed": {
+          "FORMULA_NATIVE_MISMATCH": 5,
+          "FORMULA_D3_UNFAITHFUL": 8
+        }
+      },
+      "table-status": {
+        "items": 3,
+        "success": 3,
+        "scored": 3,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 1,
+        "disputed": {
+          "TABLE_D3_UNFAITHFUL": 1
+        }
+      }
+    },
+    "d3_receipts": {
+      "requests": 50,
+      "results": {
+        "ok": 50,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 731.7750840447843,
+        "median": 843.5204168781638,
+        "max": 2919.829666847363
+      },
+      "models": [
+        "d3-mini"
+      ],
+      "system_fingerprints": [
+        "None"
+      ],
+      "input_tokens": 23673
+    },
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 53.3,
+      "outcomes": 50,
+      "reused": 0
+    },
+    "vlm_answers": {
+      "picture-interpretation replayed": 8,
+      "formula replayed": 49
+    },
+    "statuses": {
+      "code unverified None": 59,
+      "document-summary unverified None": 1,
+      "formula disputed FORMULA_D3_UNFAITHFUL": 8,
+      "formula disputed FORMULA_NATIVE_MISMATCH": 5,
+      "formula failed EMPTY_OUTPUT": 5,
+      "formula unverified None": 26,
+      "picture-interpretation unverified None": 32,
+      "picture-ocr unverified None": 8,
+      "table-status disputed TABLE_D3_UNFAITHFUL": 1,
+      "table-status unverified None": 2
+    },
+    "judgements": [
+      [
+        "picture-ocr:#/pictures/0",
+        "success",
+        "unverified",
+        null,
+        0.26970712154230836,
+        0.43401666402101546
+      ],
+      [
+        "picture-ocr:#/pictures/1",
+        "success",
+        "unverified",
+        null,
+        0.5520879030227661,
+        0.568451731018213
+      ],
+      [
+        "picture-ocr:#/pictures/2",
+        "success",
+        "unverified",
+        null,
+        0.5738719701766968,
+        0.5781758665759201
+      ],
+      [
+        "picture-ocr:#/pictures/3",
+        "success",
+        "unverified",
+        null,
+        0.6049661040306091,
+        0.592180844872738
+      ],
+      [
+        "picture-ocr:#/pictures/4",
+        "success",
+        "unverified",
+        null,
+        0.6989087462425232,
+        0.6363801075819374
+      ],
+      [
+        "picture-ocr:#/pictures/5",
+        "success",
+        "unverified",
+        null,
+        0.7393053549735142,
+        0.6569159222473876
+      ],
+      [
+        "picture-ocr:#/pictures/6",
+        "success",
+        "unverified",
+        null,
+        0.7381783503836885,
+        0.6563249070302519
+      ],
+      [
+        "picture-ocr:#/pictures/7",
+        "success",
+        "unverified",
+        null,
+        0.04984038771150186,
+        0.24202838455207584
+      ],
+      [
+        "formula:#/texts/422",
+        "success",
+        "unverified",
+        null,
+        0.9791834804537374,
+        0.9702804114301221
+      ],
+      [
+        "formula:#/texts/424",
+        "success",
+        "unverified",
+        null,
+        0.9658693758827379,
+        0.9352333843268442
+      ],
+      [
+        "formula:#/texts/426",
+        "success",
+        "unverified",
+        null,
+        0.9312182664871216,
+        0.8155326806186912
+      ],
+      [
+        "formula:#/texts/427",
+        "success",
+        "unverified",
+        null,
+        0.9322186708450317,
+        0.8193003613832366
+      ],
+      [
+        "formula:#/texts/428",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9884307540984105,
+        0.9883862473215763
+      ],
+      [
+        "formula:#/texts/429",
+        "success",
+        "unverified",
+        null,
+        0.9757316490471739,
+        0.9620864860325924
+      ],
+      [
+        "formula:#/texts/430",
+        "success",
+        "unverified",
+        null,
+        0.985094854440338,
+        0.9825654779885097
+      ],
+      [
+        "formula:#/texts/431",
+        "success",
+        "unverified",
+        null,
+        0.9810820945865935,
+        0.9744796442561464
+      ],
+      [
+        "formula:#/texts/432",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.8234692917186444,
+        0.44417416585012126
+      ],
+      [
+        "formula:#/texts/457",
+        "failed",
+        "failed",
+        "EMPTY_OUTPUT",
+        null,
+        null
+      ],
+      [
+        "formula:#/texts/458",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.4179269497968838,
+        0.03810781453354456
+      ],
+      [
+        "formula:#/texts/462",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.3983236968017726,
+        0.03360859971724219
+      ],
+      [
+        "formula:#/texts/466",
+        "success",
+        "unverified",
+        null,
+        0.9568640732297908,
+        0.9071263557583557
+      ],
+      [
+        "formula:#/texts/467",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.07721492878243115,
+        0.0012550254980546842
+      ],
+      [
+        "formula:#/texts/468",
+        "success",
+        "unverified",
+        null,
+        0.9598601293501315,
+        0.9167989502764421
+      ],
+      [
+        "formula:#/texts/469",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.31511634425369,
+        0.019022616036606915
+      ],
+      [
+        "formula:#/texts/470",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9020901129584065,
+        0.7044258983685149
+      ],
+      [
+        "formula:#/texts/472",
+        "success",
+        "unverified",
+        null,
+        0.952629889057611,
+        0.8929848002236571
+      ],
+      [
+        "formula:#/texts/475",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.3502390578317923,
+        0.02439322762008396
+      ],
+      [
+        "formula:#/texts/476",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.38814999496489777,
+        0.031454819111952866
+      ],
+      [
+        "formula:#/texts/478",
+        "success",
+        "unverified",
+        null,
+        0.9482035009982288,
+        0.8776871752430232
+      ],
+      [
+        "formula:#/texts/480",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.5448193712478688,
+        0.08256186563146735
+      ],
+      [
+        "formula:#/texts/482",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9120240603680001,
+        0.7422698778203135
+      ],
+      [
+        "formula:#/texts/483",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.3920753831908335,
+        0.03227184852287116
+      ],
+      [
+        "formula:#/texts/484",
+        "failed",
+        "failed",
+        "EMPTY_OUTPUT",
+        null,
+        null
+      ],
+      [
+        "formula:#/texts/485",
+        "success",
+        "unverified",
+        null,
+        0.9414651919975052,
+        0.8535747815848364
+      ],
+      [
+        "formula:#/texts/487",
+        "success",
+        "unverified",
+        null,
+        0.9392167960823208,
+        0.8453476887209803
+      ],
+      [
+        "formula:#/texts/488",
+        "failed",
+        "failed",
+        "EMPTY_OUTPUT",
+        null,
+        null
+      ],
+      [
+        "formula:#/texts/489",
+        "success",
+        "disputed",
+        "FORMULA_D3_UNFAITHFUL",
+        0.36434586750430265,
+        0.026853948153492166
+      ],
+      [
+        "formula:#/texts/490",
+        "failed",
+        "failed",
+        "EMPTY_OUTPUT",
+        null,
+        null
+      ],
+      [
+        "formula:#/texts/491",
+        "failed",
+        "failed",
+        "EMPTY_OUTPUT",
+        null,
+        null
+      ],
+      [
+        "formula:#/texts/492",
+        "success",
+        "unverified",
+        null,
+        0.9368963945040497,
+        0.8367785342949858
+      ],
+      [
+        "formula:#/texts/493",
+        "success",
+        "unverified",
+        null,
+        0.9419372397083867,
+        0.8552916565565992
+      ],
+      [
+        "formula:#/texts/494",
+        "success",
+        "unverified",
+        null,
+        0.9447714127819442,
+        0.8655166830480113
+      ],
+      [
+        "formula:#/texts/496",
+        "success",
+        "unverified",
+        null,
+        0.933299664658328,
+        0.823360764569073
+      ],
+      [
+        "formula:#/texts/503",
+        "success",
+        "unverified",
+        null,
+        0.9339865058806502,
+        0.8259344390124017
+      ],
+      [
+        "formula:#/texts/505",
+        "success",
+        "unverified",
+        null,
+        0.9318644572087305,
+        0.8179673959523563
+      ],
+      [
+        "formula:#/texts/507",
+        "success",
+        "unverified",
+        null,
+        0.9397218578381352,
+        0.8472026165010026
+      ],
+      [
+        "formula:#/texts/510",
+        "success",
+        "unverified",
+        null,
+        0.9315499414335915,
+        0.8167828389474558
+      ],
+      [
+        "formula:#/texts/512",
+        "success",
+        "unverified",
+        null,
+        0.9313775300979614,
+        0.8161331047536957
+      ],
+      [
+        "formula:#/texts/513",
+        "success",
+        "unverified",
+        null,
+        0.941140237976388,
+        0.8523907337881607
+      ],
+      [
+        "formula:#/texts/514",
+        "success",
+        "unverified",
+        null,
+        0.943537175655365,
+        0.8610819374157126
+      ],
+      [
+        "formula:#/texts/515",
+        "success",
+        "unverified",
+        null,
+        0.9386552991861984,
+        0.8432810541708755
+      ],
+      [
+        "formula:#/texts/516",
+        "success",
+        "unverified",
+        null,
+        0.9286197812418688,
+        0.8057065979463102
+      ],
+      [
+        "table-status:#/tables/0",
+        "success",
+        "unverified",
+        null,
+        0.7723417282104492,
+        0.7379242292764393
+      ],
+      [
+        "table-status:#/tables/1",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.3246062003193438,
+        0.07803028628461457
+      ],
+      [
+        "table-status:#/tables/2",
+        "success",
+        "unverified",
+        null,
+        0.8333268413939131,
+        0.8494987015752142
+      ]
+    ],
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 2.0,
+    "external_receipts": 0,
+    "objects_added_under_documents": 0,
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 0.2,
+      "outcomes": 50,
+      "reused": 50
+    },
+    "pass": true
+  }
+}

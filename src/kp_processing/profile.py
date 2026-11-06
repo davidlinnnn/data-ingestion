@@ -14,8 +14,8 @@ from kp_processing.identity import module_digest, reuse_key
 
 PROFILES_DIR = Path(__file__).parent / "profiles"
 # The inference egresses of the data-security design §5; a new one updates §5 in the same PR.
-Service = Literal["vlm", "summary"]
-SERVICES: tuple[Service, ...] = ("vlm", "summary")
+Service = Literal["vlm", "summary", "d3"]
+SERVICES: tuple[Service, ...] = ("vlm", "summary", "d3")
 # The runtime keys the code reads, as dotted paths, each a number; else the profile does not
 # load. Workflow code reads some of them, where a bad value would retry the task forever.
 REQUIRED_RUNTIME = (
@@ -23,16 +23,20 @@ REQUIRED_RUNTIME = (
     "heartbeat_timeout_s.inference",
     "heartbeat_timeout_s.vlm",
     "heartbeat_timeout_s.summary",
+    "heartbeat_timeout_s.d3",
     "start_to_close_s.orchestration",
     "start_to_close_s.inference",
     *(
         f"activity_retry.{queue}.{key}"
-        for queue in ("orchestration", "inference", "vlm", "summary")
+        for queue in ("orchestration", "inference", "vlm", "summary", "d3")
         for key in ("initial_s", "multiplier", "cap_s", "max_attempts")
     ),
     "external_start_to_close_slack_s",
     "vlm_request_deadline_s.connect",
     "vlm_request_deadline_s.total",
+    "d3_request_deadline_s.connect",
+    "d3_request_deadline_s.total",
+    "d3_concurrency_per_document",
     "summary_request_deadline_s.connect",
     "summary_request_deadline_s.total",
     "summary_budget_s",
@@ -71,7 +75,8 @@ class Method:
     @property
     def scope(self) -> Literal["item", "document"] | None:
         """ "item" for a package that declares TARGET, the package's SCOPE ("document") when it
-        declares one, None for a method without inventory items (docling-parse)."""
+        declares one, None for a method without inventory items (docling-parse, a Quality
+        Check)."""
         if hasattr(self.package, "SCOPE"):
             return self.package.SCOPE
         return "item" if hasattr(self.package, "TARGET") else None
@@ -84,6 +89,11 @@ class Method:
         if hasattr(self.package, "SERVICE"):
             return self.package.SERVICE
         return "vlm" if hasattr(self.package, "request") else None
+
+    @property
+    def checks(self) -> dict[str, Any]:
+        """A Quality Check package's CHECKS, {judged method ref: Check}; {} for any other."""
+        return getattr(self.package, "CHECKS", {})
 
     def reuse_key(self, document_uid: str, input_digests: Sequence[str]) -> str:
         """The reuse key of one of this method's items (identity.reuse_key)."""
@@ -104,6 +114,11 @@ class ProcessingProfile:
     methods: dict[str, Method]  # keyed by method id, in file order
     limitations: tuple[Limitation, ...]
     runtime: dict[str, Any]  # has every REQUIRED_RUNTIME key; never enters a reuse key
+
+    @property
+    def quality_check(self) -> Method | None:
+        """The profile's Quality Check, its method with checks; None when it lists none."""
+        return next((method for method in self.methods.values() if method.checks), None)
 
 
 def load_profile(path: Path) -> ProcessingProfile:

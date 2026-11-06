@@ -1,0 +1,495 @@
+{
+  "run": "ecf447",
+  "d3_server": {
+    "command": [
+      "d3_server.py",
+      "--device",
+      "mps",
+      "--batch-size",
+      "1",
+      "--port",
+      "8134"
+    ],
+    "serves": {
+      "health": {
+        "status": "ready",
+        "model": "d3-mini",
+        "max_input_tokens": null,
+        "modalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "authentication": true
+      },
+      "models": [
+        {
+          "name": "d3-mini",
+          "description": "Typed decisions with a probability for every option",
+          "max_input_tokens": null,
+          "modalities": [
+            "text",
+            "image",
+            "video"
+          ],
+          "image_max_pixels": 1638400,
+          "video": {
+            "fps": 2.0,
+            "max_frames": 32,
+            "max_pixels_per_frame": 200704,
+            "max_tokens_per_request": 16384,
+            "max_bytes": 32000000
+          }
+        }
+      ]
+    }
+  },
+  "paper": {
+    "index": 19,
+    "sha256": "b92a8992a78d58ef248715979f42d79184b6785310ce647ac5249242f806429b",
+    "pages": 29
+  },
+  "S": {
+    "exit": 0,
+    "seconds": 76.2,
+    "outcome": "complete",
+    "judged": {
+      "picture-ocr": {
+        "items": 14,
+        "success": 13,
+        "scored": 13,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 0,
+        "disputed": {}
+      },
+      "formula": {
+        "items": 22,
+        "success": 22,
+        "scored": 22,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 0,
+        "disputed": {
+          "FORMULA_NATIVE_MISMATCH": 5
+        }
+      },
+      "table-status": {
+        "items": 7,
+        "success": 7,
+        "scored": 7,
+        "not_run": 0,
+        "unjudged": 0,
+        "judged_without_success": 0,
+        "d3_flagged": 7,
+        "disputed": {
+          "TABLE_D3_UNFAITHFUL": 7
+        }
+      }
+    },
+    "d3_receipts": {
+      "requests": 42,
+      "results": {
+        "ok": 42,
+        "unavailable": 0,
+        "invalid": 0,
+        "refused": 0
+      },
+      "reasons": [],
+      "incomplete": 0,
+      "latency_ms": {
+        "min": 651.2980000115931,
+        "median": 915.3426659759134,
+        "max": 2211.969334166497
+      },
+      "models": [
+        "d3-mini"
+      ],
+      "system_fingerprints": [
+        "None"
+      ],
+      "input_tokens": 23551
+    },
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 51.8,
+      "outcomes": 42,
+      "reused": 0
+    },
+    "vlm_answers": {
+      "picture-interpretation replayed": 14,
+      "formula replayed": 22
+    },
+    "statuses": {
+      "document-summary unverified None": 1,
+      "formula disputed FORMULA_NATIVE_MISMATCH": 5,
+      "formula unverified None": 17,
+      "picture-interpretation unverified None": 56,
+      "picture-ocr unverified NO_TEXT": 1,
+      "picture-ocr unverified None": 13,
+      "table-status disputed TABLE_D3_UNFAITHFUL": 7
+    },
+    "judgements": [
+      [
+        "picture-ocr:#/pictures/0",
+        "no_text",
+        "unverified",
+        "NO_TEXT",
+        null,
+        null
+      ],
+      [
+        "picture-ocr:#/pictures/1",
+        "success",
+        "unverified",
+        null,
+        0.02322368038046239,
+        0.1829041504826161
+      ],
+      [
+        "picture-ocr:#/pictures/2",
+        "success",
+        "unverified",
+        null,
+        0.04127853505619606,
+        0.22614166771137256
+      ],
+      [
+        "picture-ocr:#/pictures/3",
+        "success",
+        "unverified",
+        null,
+        0.2801761031150818,
+        0.43981686946524373
+      ],
+      [
+        "picture-ocr:#/pictures/4",
+        "success",
+        "unverified",
+        null,
+        0.16812583065595466,
+        0.36909453623739846
+      ],
+      [
+        "picture-ocr:#/pictures/5",
+        "success",
+        "unverified",
+        null,
+        0.3120638523120836,
+        0.45681307179929515
+      ],
+      [
+        "picture-ocr:#/pictures/6",
+        "success",
+        "unverified",
+        null,
+        0.23493540287017822,
+        0.41378954534155227
+      ],
+      [
+        "picture-ocr:#/pictures/7",
+        "success",
+        "unverified",
+        null,
+        0.22638636827468872,
+        0.408553323991577
+      ],
+      [
+        "picture-ocr:#/pictures/8",
+        "success",
+        "unverified",
+        null,
+        0.03104476672388768,
+        0.20377105962427672
+      ],
+      [
+        "picture-ocr:#/pictures/9",
+        "success",
+        "unverified",
+        null,
+        0.4067865014076233,
+        0.5030786663810957
+      ],
+      [
+        "picture-ocr:#/pictures/10",
+        "success",
+        "unverified",
+        null,
+        0.5108830472037452,
+        0.5501341415888487
+      ],
+      [
+        "picture-ocr:#/pictures/11",
+        "success",
+        "unverified",
+        null,
+        0.3421182828510319,
+        0.4720663206401886
+      ],
+      [
+        "picture-ocr:#/pictures/12",
+        "success",
+        "unverified",
+        null,
+        0.49618895363244553,
+        0.5435952620819021
+      ],
+      [
+        "picture-ocr:#/pictures/13",
+        "success",
+        "unverified",
+        null,
+        0.3799931448691915,
+        0.4904758042446753
+      ],
+      [
+        "formula:#/texts/272",
+        "success",
+        "unverified",
+        null,
+        0.9356625181185095,
+        0.832192706906186
+      ],
+      [
+        "formula:#/texts/277",
+        "success",
+        "unverified",
+        null,
+        0.9426411425420684,
+        0.8578447168176728
+      ],
+      [
+        "formula:#/texts/279",
+        "success",
+        "unverified",
+        null,
+        0.9827369616266948,
+        0.9779488880043923
+      ],
+      [
+        "formula:#/texts/283",
+        "success",
+        "unverified",
+        null,
+        0.9721277084538422,
+        0.9528251456456807
+      ],
+      [
+        "formula:#/texts/286",
+        "success",
+        "unverified",
+        null,
+        0.9580909991691038,
+        0.9111229772477992
+      ],
+      [
+        "formula:#/texts/289",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.8257293351211946,
+        0.4503758902938716
+      ],
+      [
+        "formula:#/texts/290",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9582685839033348,
+        0.9116974326760684
+      ],
+      [
+        "formula:#/texts/372",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9067229886828739,
+        0.7220208743396547
+      ],
+      [
+        "formula:#/texts/376",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9035825604578698,
+        0.7100809634366705
+      ],
+      [
+        "formula:#/texts/384",
+        "success",
+        "unverified",
+        null,
+        0.94745330904027,
+        0.8750483760384018
+      ],
+      [
+        "formula:#/texts/393",
+        "success",
+        "unverified",
+        null,
+        0.9722995721835659,
+        0.9532821237062618
+      ],
+      [
+        "formula:#/texts/395",
+        "success",
+        "unverified",
+        null,
+        0.9742290504641893,
+        0.9583087046244843
+      ],
+      [
+        "formula:#/texts/481",
+        "success",
+        "unverified",
+        null,
+        0.9716591094187035,
+        0.9515716651627819
+      ],
+      [
+        "formula:#/texts/484",
+        "success",
+        "unverified",
+        null,
+        0.9597602164825725,
+        0.9164812168749076
+      ],
+      [
+        "formula:#/texts/491",
+        "success",
+        "unverified",
+        null,
+        0.937747506432161,
+        0.8399303123525679
+      ],
+      [
+        "formula:#/texts/494",
+        "success",
+        "unverified",
+        null,
+        0.9729628905253849,
+        0.9550318454727743
+      ],
+      [
+        "formula:#/texts/509",
+        "success",
+        "disputed",
+        "FORMULA_NATIVE_MISMATCH",
+        0.9268384506788965,
+        0.7989420916938252
+      ],
+      [
+        "formula:#/texts/554",
+        "success",
+        "unverified",
+        null,
+        0.972440694246125,
+        0.9536562494514473
+      ],
+      [
+        "formula:#/texts/561",
+        "success",
+        "unverified",
+        null,
+        0.9726551082713639,
+        0.9542227497356746
+      ],
+      [
+        "formula:#/texts/566",
+        "success",
+        "unverified",
+        null,
+        0.968281532741974,
+        0.9422245989407987
+      ],
+      [
+        "formula:#/texts/569",
+        "success",
+        "unverified",
+        null,
+        0.9892914808321527,
+        0.9897421049821696
+      ],
+      [
+        "formula:#/texts/792",
+        "success",
+        "unverified",
+        null,
+        0.9585215759717949,
+        0.9125140317708053
+      ],
+      [
+        "table-status:#/tables/0",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.3821407740670212,
+        0.1174172094410105
+      ],
+      [
+        "table-status:#/tables/1",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.3262368440628052,
+        0.07899402749808074
+      ],
+      [
+        "table-status:#/tables/2",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.3004602610790574,
+        0.06470475974248337
+      ],
+      [
+        "table-status:#/tables/3",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.13317679067219482,
+        0.010828871797370307
+      ],
+      [
+        "table-status:#/tables/4",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.18073872413909178,
+        0.02051610531058591
+      ],
+      [
+        "table-status:#/tables/5",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.2565308587709325,
+        0.044629121591208507
+      ],
+      [
+        "table-status:#/tables/6",
+        "success",
+        "disputed",
+        "TABLE_D3_UNFAITHFUL",
+        0.5128112435340881,
+        0.25662957538651615
+      ]
+    ],
+    "pass": true
+  },
+  "C": {
+    "exit": 0,
+    "seconds": 1.2,
+    "external_receipts": 0,
+    "objects_added_under_documents": 0,
+    "check": {
+      "waited_s": 0.0,
+      "seconds": 0.2,
+      "outcomes": 42,
+      "reused": 42
+    },
+    "pass": true
+  }
+}

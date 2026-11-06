@@ -193,6 +193,8 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
     for item in items:
         outcome = outcomes[item["item_id"]]
         record = json.loads(await ports.store.get(outcome.ref))
+        if judgement := outcomes.get(f"d3-check:{item['item_id']}"):  # the Quality Check's signal
+            record["signals"] |= json.loads(await ports.store.get(judgement.ref))["signals"]
         common = {
             "item_id": item["item_id"],
             "result_ref": outcome.ref,

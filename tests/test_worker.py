@@ -17,6 +17,7 @@ from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 from kp_processing.methods.docling_parse import pipeline
 from kp_processing.ports.object_store import DictObjectStore
 from kp_processing.stages import (
+    CheckInput,
     ChunkInput,
     EnrichInput,
     GroupInput,
@@ -27,6 +28,7 @@ from kp_processing.stages import (
 )
 from kp_processing.weights import WeightsMismatch
 from kp_processing.worker import (
+    D3,
     Inference,
     Orchestration,
     Summary,
@@ -38,7 +40,7 @@ from kp_processing.worker import (
 from kp_processing.workflow import INFERENCE_QUEUE
 from tests.pdfs import Page, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
-from tests.stages.test_enrich_local import enriched_paper, native
+from tests.stages.test_enrich_local import enriched_paper, enrichment, native
 from tests.stages.test_enrich_summary import summary_paper
 
 
@@ -112,6 +114,20 @@ async def test_the_enrich_vlm_activity_heartbeats_after_every_item(ports, runtim
     )
 
     assert len(beats) == 1 + len(outcomes) == 4
+
+
+async def test_the_check_activity_heartbeats_after_every_check_item(ports, runtime):
+    runtime = with_runtime(runtime, heartbeat_interval_s=3600)
+    input = await enrichment(ports, runtime, enriched_paper())
+    environment = ActivityEnvironment()
+    beats = []
+    environment.on_heartbeat = lambda *details: beats.append(details)
+
+    # The picture's OCR text and the table are judged.
+    enrich = EnrichInput("doc_1", input.inventory, "r", "run")
+    outcomes = await environment.run(D3(ports, runtime).check, CheckInput(enrich, input.outcomes))
+
+    assert len(beats) == 1 + len(outcomes) == 3
 
 
 async def test_the_summary_activities_run_in_the_temporal_wrappers(ports, runtime):

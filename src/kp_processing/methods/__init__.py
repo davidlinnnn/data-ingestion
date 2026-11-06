@@ -34,7 +34,22 @@ A document-scope method package (v2 §4) declares SCOPE = "document" instead of 
 lists one DocumentItem for it, whose target is the whole document, and it declares INPUTS and
 ORIGIN as above. The one with SERVICE = "summary" (document_summary) runs in the summary
 Activities (kp_processing.stages.summary) and declares their functions instead of request and
-parse. "vlm" and "summary" are the two inference egresses of the data-security design §5.
+parse. "vlm" and "summary" are inference egresses of the data-security design §5.
+
+A Quality Check package (ADR-0011; d3_check) judges other methods' outputs instead of enriching
+the document. It declares neither TARGET nor SCOPE, so the inventory lists nothing for it: the
+check Activity (kp_processing.stages.check) derives one check item per judged item whose outcome
+is success. It declares:
+
+    SERVICE  the service that answers: "d3", the decision model's System One service, an
+             inference egress of the data-security design §5 whose conditions #137 confirms
+    SIGNAL   the key of its judgement in the judged item's signals
+    CHECKS   {judged method ref "<id>@<version>": Check}; a Check's inputs are the check item's
+             input kinds, in order: "evidence" (the first evidence file of the judged outcome),
+             "outcome" (the judged outcome record), or a kind of the judged method's INPUTS
+    request(item, inputs) and parse(item, inputs, content) as above, the request being the
+             service's whole body; parse returns signals {SIGNAL: the judgement} and, as
+             contradictions, the reason code a strong signal adds to the judged item
 """
 
 from dataclasses import dataclass, field

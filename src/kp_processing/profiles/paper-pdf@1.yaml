@@ -29,6 +29,13 @@ methods:
   document-summary@2:
     components:
       - company-vlm/Qwen3.8-27B
+  # The d3 Quality Check (ADR-0011, #161) judges formulas, tables and picture OCR. This entry
+  # is its only switch. On: keep it, and deploy `kp-processing worker --queue d3` with
+  # KP_D3_BASE_URL (ConfigMap) and KP_D3_API_KEY (Secret). Off: remove it; no d3 worker or
+  # variable is needed then, and results are what they were without it.
+  d3-check@1:
+    components:
+      - company-d3/vllm-sr/d3-mini@bd0090dd
 
 # #84 U1: position-class defects of the native parse; text is complete. Copied into every result.
 limitations:
@@ -44,9 +51,10 @@ limitations:
 # #93 §7 initial parameters. Never part of a reuse key.
 runtime:
   vlm_request_deadline_s: {connect: 5, total: 60}
+  d3_request_deadline_s: {connect: 5, total: 30}
   summary_request_deadline_s: {connect: 5, total: 120}
   heartbeat_interval_s: 15
-  heartbeat_timeout_s: {inference: 60, vlm: 90, summary: 60}
+  heartbeat_timeout_s: {inference: 60, vlm: 90, summary: 60, d3: 60}
   # Temporal Activity options per task queue; the workflow reads them from the plan.
   start_to_close_s: {orchestration: 120, inference: 900}
   activity_retry:
@@ -55,13 +63,17 @@ runtime:
     # Receipts cap each item's sends, so a retried external Activity never re-bills past them.
     vlm: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
     summary: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
-  # vlm start-to-close = ceil(items / concurrency) x deadline total x retry attempts + slack;
+    d3: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
+  # vlm and d3 start-to-close = ceil(items / concurrency) x deadline total x retry attempts + slack;
   # summary start-to-close = summary_budget_s + slack: the budget's workflow timer ends a slow
   # summary, cancelling its chunk Activities (heard at the next heartbeat).
   external_start_to_close_slack_s: 300
   # #93 §3.4 retry of each external request inside an Activity.
   retry: {initial_s: 2, multiplier: 2, cap_s: 30, max_attempts: 3}
   vlm_concurrency_per_document: 4
+  # d3-mini answers one request per forward in about 135 ms (model card), so 5 documents x 4
+  # requests wait about 3 s at worst, inside the 30 s deadline.
+  d3_concurrency_per_document: 4
   # #155 B3, A8: the Document Summary's own budget, chunks in flight per document, and the
   # requests one summary worker has in flight (its Activities' calls run concurrently).
   summary_budget_s: 900

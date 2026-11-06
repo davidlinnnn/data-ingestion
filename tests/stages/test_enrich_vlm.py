@@ -53,6 +53,7 @@ from tests.stages.conftest import with_runtime
 from tests.stages.test_enrich_local import (
     CODE,
     PICTURE_WORDS,
+    checked,
     enriched_paper,
     items_of,
     native,
@@ -129,9 +130,8 @@ async def finalized(ports, runtime, input: FinalizeInput, outcomes) -> dict:
     item_input = EnrichInput("doc_1", input.inventory, "req_1", "run_1")
     local = await enrich_local.run(item_input, ports, runtime)
     local += await summarize_all(ports, runtime, item_input)
-    ref = await finalize.run(
-        dataclasses.replace(input, outcomes=[*local, *outcomes]), ports, runtime
-    )
+    final = dataclasses.replace(input, outcomes=[*local, *outcomes])
+    ref = await finalize.run(await checked(ports, runtime, final), ports, runtime)
     return json.loads(await ports.store.get(ref))
 
 

@@ -22,7 +22,12 @@ from kp_processing.methods import (
     MethodOutput,
     MethodUnavailable,
 )
-from kp_processing.ports.inference import Completion, RequestRejected, ServiceUnavailable
+from kp_processing.ports.inference import (
+    Completion,
+    InferenceTransport,
+    RequestRejected,
+    ServiceUnavailable,
+)
 from kp_processing.ports.object_store import ObjectStore
 from kp_processing.profile import Method, ProcessingProfile, Service
 from kp_processing.stages import (
@@ -95,21 +100,33 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
       any other exception from a method               method        METHOD_ERROR
     A content failure is an outcome, never an error.
     """
-    service: Service = "vlm"
-    started = ports.clock.monotonic()
     inventory = json.loads(await ports.store.get(input.inventory.ref))
+    methods = runtime.profile.methods
+    items = [item for item in inventory["items"] if methods[item["method"]].service == "vlm"]
+    return await send_items(input, ports, runtime, "vlm", items, len(inventory["items"]))
+
+
+async def send_items(
+    input: EnrichInput,
+    ports: Ports,
+    runtime: Runtime,
+    service: Service,
+    items: list[InventoryItem | DocumentItem],
+    counted: int,
+) -> list[OutcomeRef]:
+    """run()'s procedure for the given items of service's methods, through ports.<service>: at
+    most runtime <service>_concurrency_per_document at once, the cap limit request_cap.per_item
+    x counted + request_cap.extra. Returns one OutcomeRef per item, in order."""
+    started = ports.clock.monotonic()
     settings = runtime.profile.runtime
     attempt_prefix = f"requests/{input.request_id}/attempts/{input.run_id}"
-    limit = (
-        settings["request_cap"]["per_item"] * len(inventory["items"])
-        + settings["request_cap"]["extra"]
-    )
+    limit = settings["request_cap"]["per_item"] * counted + settings["request_cap"]["extra"]
     sends = await Sends.start(
         ports, runtime, service, attempt_prefix, limit,
         started + settings["enrichment_stage_budget_s"]["hard"],
     )  # fmt: skip
     input_lock = asyncio.Lock()
-    semaphore = asyncio.Semaphore(settings["vlm_concurrency_per_document"])
+    semaphore = asyncio.Semaphore(settings[f"{service}_concurrency_per_document"])
     verified: dict[str, tuple[bytes, str]] = {}
 
     async def process(item: InventoryItem | DocumentItem) -> OutcomeRef:
@@ -161,9 +178,8 @@ async def run(input: EnrichInput, ports: Ports, runtime: Runtime) -> list[Outcom
     tasks: list[asyncio.Task[OutcomeRef]] = []
     try:
         async with asyncio.TaskGroup() as group:
-            for item in inventory["items"]:
-                if runtime.profile.methods[item["method"]].service == service:
-                    tasks.append(group.create_task(process(item)))
+            for item in items:
+                tasks.append(group.create_task(process(item)))
     except* ProcessingFailure as failures:
         raise failures.exceptions[0] from None
     return [task.result() for task in tasks]
@@ -210,7 +226,7 @@ class Sends:
         self.ports = ports
         self.retry = runtime.profile.runtime["retry"]
         self.service = service
-        self.transport = ports.vlm if service == "vlm" else ports.summary
+        self.transport: InferenceTransport | None = getattr(ports, service)
         self.prefix = f"{attempt_prefix}/receipts/"
         self.methods = runtime.profile.methods
         self.keys: list[str] = []
@@ -230,7 +246,7 @@ class Sends:
         deadline: float,
     ) -> "Sends":
         """Sends that count, toward limit, the receipts under {attempt_prefix}/receipts/ whose
-        item (the path's first segment, "<method id>:<target_ref>") is of a method
+        item (the path after the prefix starts with its id, "<method id>:...") is of a method
         whose service is service, and send nothing once ports.clock.monotonic() passes
         deadline."""
         sends = cls(ports, runtime, service, attempt_prefix, limit, deadline)
