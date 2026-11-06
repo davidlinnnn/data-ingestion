@@ -7,15 +7,18 @@ The decisions and their reasons are in the
 question numbers such as Q9.4). This document states only the current result.
 The rules in §6 are also modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html), whose
-19 scenarios pass. Domain terms follow `CONTEXT.md`.
+19 scenarios pass. Domain terms follow `CONTEXT.md`. The file upload path (why
+it is a platform endpoint, the architecture, the sequence diagrams and the
+Source-facing guide) is the [file upload design](knowledge-platform-file-upload.md);
+§5.2 here stays its contract.
 
 Sizing figures marked *unmeasured* are provisional until the cluster-tier
 validation (§13) measures them.
 
 ## 1. Scope
 
-In scope: document submission through batches, direct upload, durable
-admission, dispatch to Temporal, request and document status, Source Deletion,
+In scope: document submission through batches, file upload through the
+platform, durable admission, dispatch to Temporal, request and document status, Source Deletion,
 application retry and platform redrive, retention, and the validation plan.
 
 Out of scope here, with owners:
@@ -137,13 +140,14 @@ Response `201`:
   "expires_at": "2026-10-22T09:00:00Z",
   "items": [
     { "index": 0, "document_id": "hr/leave-policy", "document_uid": "doc_7f3…", "status": "declared",
-      "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://…", "expires_at": "2026-10-21T10:00:00Z" } ],
+      "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://kp.example/v1/batches/bat_01J…/items/0/files/assets/flow.png" } ],
       "carried_over": ["policy.md"] }
   ]
 }
 ```
 
-The `method` and `url` of `uploads[]` are superseded; see the note in §5.2.
+Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
+valid until the batch is finalized or expires.
 
 Item `status` after declaration:
 
@@ -165,27 +169,40 @@ during database failover. Every `429` and `503` carries `Retry-After`.
 
 A batch in which no item is `declared` is created `finalized`.
 
-### 5.2 Reissue grants: `POST /v1/batches/{batch_id}/grants`
+### 5.2 Upload: `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`
 
-Body `{ "items": [ { "index": 0, "paths": ["assets/flow.png"] } ] }`; an empty
-body reissues every grant not yet used. Only for `open` batches; returns the same
-`uploads` shape. Each grant allows one `PUT` of one file to its staging
-location, limited to the declared size (and digest where storage supports it),
-valid for one hour.
+One request per file listed in the item's `uploads`, authenticated with the
+Source credential like every other call; there is no separate upload grant.
+`{path}` is the declared file path. `Content-Length` is required and must equal
+the declared `size`; `Content-Type` may carry the declared `media_type` (the
+platform detects the type itself). The body is the file's bytes in one request:
+no multipart form, no chunked encoding, no resumption.
 
-Superseded on 2026-10-30 by company policy, relayed on
-[#95](https://github.com/davidlinnnn/data-ingestion/issues/95#issuecomment-6518076869):
-clients may not upload files through presigned URLs, and SAS is excluded with
-them. A grant is therefore not a storage-native URL, and the `method` and `url`
-of `uploads[]` (§5.1) do not point at storage. The replacement upload form is
-not decided and is tracked on
-[#96](https://github.com/davidlinnnn/data-ingestion/issues/96). Declaration,
-finalization and the rules in §6 are unchanged. The decided, unchanged and open
-points are in the
-[design notes](knowledge-platform-admission.md#upload-grant-form-excluded-by-company-policy-on-2026-10-30).
-On 2026-11-07 the user chose push through a platform upload endpoint
-([decision](knowledge-platform-admission.md#decision-on-2026-11-07-push-through-a-platform-upload-endpoint));
-the endpoint contract that replaces this section is pending on #96.
+The platform streams the body into staging, computing the SHA-256 and counting
+bytes as it goes, and stops the transfer as soon as the bytes exceed the
+declared `size`. Outcomes:
+
+| Outcome | Response |
+|---|---|
+| Bytes staged; size, SHA-256 and detected media type equal the declaration | `204` |
+| `Content-Length` absent | `411 LENGTH_REQUIRED` |
+| `Content-Length`, or the bytes received, differ from the declared `size` | `400 SIZE_MISMATCH`; nothing is staged |
+| SHA-256 differs from the declaration | `422 DIGEST_MISMATCH`; nothing is staged |
+| Detected media type differs from the declaration | `422 MEDIA_TYPE_MISMATCH`; nothing is staged |
+| Batch finalized | `409 BATCH_FINALIZED` |
+| Batch expired | `409 BATCH_EXPIRED` |
+| Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` |
+
+A repeated `PUT` of the same path replaces the staged file; finalization uses the
+bytes of the last `PUT` that returned `204`. Files of one item, and of different
+items, may be uploaded in parallel. A client that loses the connection repeats
+the whole request. Uploads are accepted until the batch is finalized or expires
+(§11); staged files of rejected or expired items are deleted (§6.2).
+
+Changed on 2026-11-07: this endpoint replaces the storage-native upload grant
+(presigned URL or SAS) that company policy excluded on 2026-10-30. The reasons
+and the options compared are in the
+[file upload design](knowledge-platform-file-upload.md).
 
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 
@@ -272,7 +289,8 @@ describes the stages.
 
 1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`), exactly one
    `main` file, unique paths, valid `metadata` (§11) →
-   `INVALID_ARGUMENT`.
+   `INVALID_ARGUMENT`; every file's `size` within the maximum file size (§11) →
+   `FILE_TOO_LARGE`.
 2. Main-file format supported (pilot: PDF, Markdown, PPTX) →
    `UNSUPPORTED_FORMAT`.
 3. Under `ordering: source_version`, `source_version` present →
@@ -292,8 +310,9 @@ describes the stages.
    `VERSION_CONFLICT`.
 7. Same content (§6.4) → `queued` with the active request, a new retry request,
    or `unchanged`.
-8. Otherwise `declared`, with grants for files whose (path, digest) differs from
-   the latest Source Revision; the others are `carried_over` (Q10.1d).
+8. Otherwise `declared`, with an upload entry (§5.2) for each file whose (path,
+   digest) differs from the latest Source Revision; the others are
+   `carried_over` (Q10.1d).
 
 Results decided at declaration (`unchanged`, `queued`, `rejected`) are final;
 requests they create are committed with their outbox rows before `201`.
@@ -302,12 +321,11 @@ requests they create are committed with their outbox rows before `201`.
 
 1. Document deleted since declaration → `DOCUMENT_DELETED`.
 2. Placement re-check → `RESOURCE_NOT_FOUND`.
-3. Every file to upload present in staging → `FILES_MISSING`.
-4. Recomputed SHA-256 equals the declaration → `DIGEST_MISMATCH`; detected media
-   type matches → `MEDIA_TYPE_MISMATCH`.
-5. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
+3. Every file in `uploads` staged by a `PUT` that returned `204` (§5.2 verified
+   size, digest and media type at that point) → `FILES_MISSING`.
+4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
    or `VERSION_CONFLICT`; same content → §6.4.
-6. Otherwise: create the document on first submission (new `document_uid`),
+5. Otherwise: create the document on first submission (new `document_uid`),
    create the Source Revision, move staged files into custody (carried-over files
    reference the existing custody objects), apply catalog fields and metadata,
    create a `process` request and its outbox row.
@@ -478,8 +496,9 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Intake quota per Source | Token bucket, 50 declared items per minute (provisional) |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
-| Files per item, file size, open batches per Source | Set in I2 configuration, *unmeasured* |
-| Upload grant | 1 hour, reissuable while the batch is open |
+| Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |
+| Maximum file size | 50 MB, the PROD requirement ([#88](https://github.com/davidlinnnn/data-ingestion/issues/88#issuecomment-6633160435)); configurable per deployment |
+| Upload | One `PUT` per file (§5.2), accepted until the batch is finalized or expires; a repeated `PUT` replaces the staged file |
 | Open batch | Expires 24 hours after creation |
 | `Idempotency-Key` | 24 hours |
 | Request | `404` 30 days after its terminal outcome; active requests never expire |
@@ -491,16 +510,20 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
 | Reason | Level | HTTP |
 |---|---|---|
-| `INVALID_ARGUMENT`, `TOO_MANY_ITEMS` | request | 400 |
+| `INVALID_ARGUMENT`, `TOO_MANY_ITEMS`, `SIZE_MISMATCH` | request | 400 |
 | `UNAUTHENTICATED` | request | 401 |
 | `PERMISSION_DENIED` | request | 403 |
 | `NOT_FOUND` | request | 404 |
-| `BATCH_EXPIRED`, `IDEMPOTENCY_IN_PROGRESS` | request | 409 |
-| `ALL_ITEMS_REJECTED`, `IDEMPOTENCY_KEY_REUSED` | request | 422 |
+| `BATCH_EXPIRED`, `BATCH_FINALIZED`, `IDEMPOTENCY_IN_PROGRESS` | request | 409 |
+| `LENGTH_REQUIRED` | request | 411 |
+| `ALL_ITEMS_REJECTED`, `IDEMPOTENCY_KEY_REUSED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` | request | 422 |
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
-| `INVALID_ARGUMENT`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `FILES_MISSING`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` | item, finalization | — |
+| `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
+| `DOCUMENT_DELETED`, `FILES_MISSING` | item, finalization | — |
+
+`SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
+`BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
 
 `RESOURCE_NOT_EMPTY` (`409`) belongs to the Resource API (#85).
 
@@ -510,6 +533,12 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
   (reconciler every 5 minutes, batch expiry hourly, retention daily).
 - Its own CNPG database; staging storage belongs to admission; custody to #57;
   topology and configuration loading to #78.
+- The `api` role carries upload bytes (§5.2): it streams each body into staging
+  in parts and never holds a whole file in memory. On the upload route the
+  ingress must allow bodies up to the maximum file size, pass the body through
+  without buffering it first, and allow several minutes per request; #78 sets
+  these values. Capacity runs include the PROD burst (#88) through the upload
+  route.
 - **CI tier:** Testcontainers PostgreSQL and Temporal; failpoints around each
   commit and start; an adjustable clock; the prototype's 19 scenarios as
   acceptance tests.
@@ -526,7 +555,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Ticket | Scope | Depends on |
 |---|---|---|
 | I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1–§5.4, §6, staging to custody, idempotency, quota, minimal SDK | I1, #85, #57 |
+| I2 Batch API | §5.1–§5.4 including the upload endpoint, §6, staging to custody, idempotency, quota, minimal SDK | I1, #85, #57 |
 | I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #80 |
 | I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
 | I5 Validation harness | §13 tiers | I1–I4, #78 |
