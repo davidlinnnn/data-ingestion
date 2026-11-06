@@ -11,6 +11,19 @@ d3 本身的判讀能力不是問題：它確實讀了證據，植入錯誤的 A
 
 登錄與方法見 [freeze.md](freeze.md)。test 只跑了一次（905 個請求，沒有中途停止）。數字來源：[metrics.json](metrics.json)、[selection.json](selection.json)、[blind-check.json](blind-check.json)。
 
+**2026-11-06 重新驗證過**（§2.6、§2.7）：
+
+- 獨立重算的全部數字都和檔案一致。
+- 重送 dev 項目，分數逐位元相同。
+- 對照官方 model card，讀分數的方式正確。
+
+這次驗證修正了兩處解釋：
+
+- held-out 的延遲被機器負載拖慢，已改用乾淨速率重估（§2.5）。
+- 「一個單位一個請求可以降低 d3 負載」不成立，因為每題各自一次 forward（§3）。
+
+兩處修正都不影響建議。
+
 ## 1. 量了什麼
 
 - 用 #155 frozen-1 的 20 篇論文。
@@ -119,16 +132,64 @@ d3_server 在 MPS 上、batch 1，client 端量到的每個請求：
 | dev（一次帶兩題） | 404 | 4.46 s | 11.7 s | 25.2 s | 2,103／5,383／11,550 |
 | held-out（一次帶一題） | 905 | 4.31 s | 11.3 s | 31.3 s | 792／1,819／4,289 |
 
-- 兩題的 input tokens 約是一題的 2.7 倍，延遲卻幾乎一樣。可見在這個大小，延遲主要不由輸入長度決定。這是 MPS 的數字，不能當 PROD sizing（ADR-0011）。
-- 換算：每篇約 53.6 個 d3 請求（20 篇共 1,072 句單位句子）。50 PDF/min 等於約 2,680 req/min，也就是 **約 45 req/s**；每個請求平均約 940 input tokens，約 42k tokens/s。
-- 對照 model card 在 MI325X 上的數字：文字請求 19.2 ms，batching 時 95 req/s。
+**held-out 這一列被機器負載拖慢了，不能直接用。**
+
+- 每個 input token 花的時間：dev 全程穩定在 2.1 ms；held-out 前 10% 的請求是 3.3 ms，後半段升到 5.6–6.0 ms。
+- dev 一次帶兩題，每題各跑一次 forward（§2.7），所以 dev 一個請求的時間約是單題的兩倍。dev 的 2.1 ms/token 是兩題 token 加總後算的。
+- 2026-11-06 在同一台機器上重送 15 個 dev 項目、只帶一題（§2.6），量到 0.07 s + 2.06 ms/token，和 dev 的速率相同。
+- 用這個速率估 held-out 的 779 句單位句子：每個請求 **p50 約 1.7 s、p95 約 3.8 s、最大約 8.9 s**；一篇論文依序送完約 104 s。
+- held-out 當時為什麼變慢，現在查不出來。
+- 重送的是 dev 項目，不是 held-out 項目；test 項目照登錄只送一次。重送分數逐位元相同，代表這個 runtime 的分數可以重現。所以負載只拖慢速度，不會改變計算結果。這是推論，held-out 本身沒有重送驗證。
+- 這些都是 MPS 的數字，不能當 PROD sizing（ADR-0011）。
+
+**換算給 #88：**
+
+- 每篇約 53.6 個 d3 請求（20 篇共 1,072 句單位句子）。
+- 50 PDF/min 等於約 2,680 req/min，也就是 **約 45 req/s**。每個請求平均約 940 input tokens，合計約 42k tokens/s。
+- model card 在 MI325X 上量的是「約 330 tokens 的 support ticket」：單題文字請求 19.2 ms，Engine batching 時 95 req/s（p99 < 1 s）。我們的請求平均長約 3 倍，所以 95 req/s 不能直接套用，要在 PROD 硬體上重量（#137）。
 - 照目前的建議 (c)，summary 不會產生 d3 負載，這組數字只留給 #88 參考。
 
-### 2.6 vLLM-SR 本體的介面確認：未執行
+### 2.6 重現與獨立重算（2026-11-06）
+
+- **重送 15 個 dev 項目**：
+  - 以 seed 166 抽樣，同樣用 `d3_server.py --device mps --batch-size 1`，只帶 Q2，在 heavy-lock 下執行。
+  - 結果：Q2 分數和 dev run（Q1、Q2 同一請求）**逐位元相同（|Δ| = 0）**。
+  - 這表示 d3 在這個 runtime 上是確定性的，同一請求裡的其他題也不影響分數。
+  - 只送 dev 項目；test 項目仍然只送過一次。結果在 [recheck-dev.json](recheck-dev.json)。
+- **獨立重算**：一個沒看過本報告的子代理只拿 freeze.md 和原始資料，自己寫腳本（不 import `router.py`、`build_inputs.py`），重算了以下全部數字，結果和 commit 的檔案**全部一致**，沒有找到會改變任何數字的 bug：
+  - 輸入、標註、單位重建；
+  - dev 的問法選擇、`t_route`、`t_route_alt`、Platt、`t_d`、負對照；
+  - test 的 AUROC 和 bootstrap、兩個門檻上的所有指標、token 模型、曲線、`curve.svg`（逐位元相同）；
+  - 盲評抽樣與統計。
+- **原始輸出的檢查**：
+  - 每個項目恰好一個結果，server log 也顯示 404／905 次 POST 全部回 200，沒有重送。
+  - 所有分數互不相同，沒有大量重複值。
+  - input tokens 和證據長度成線性關係（r = 0.97／0.98），沒有截斷跡象。
+  - 分數和證據長度無關（等級相關 0.03／−0.09）。
+- 子代理指出的解釋差異都不改變數字，列在 §4。
+
+### 2.7 對照官方用法
+
+依據：[d3-flash model card](https://huggingface.co/vllm-sr/d3-flash) 與它連到的 vLLM-SR 文件（[quickstart](https://github.com/vllm-project/semantic-router/blob/main/website/docs/model-runtime/quickstart.md)、[reference](https://github.com/vllm-project/semantic-router/blob/main/website/docs/model-runtime/reference.md)），再加上本機套件的 `d3_format.py`、`d3_runtime.py`。
+
+| 我們的做法 | 官方說法 | 結論 |
+|---|---|---|
+| 讀 Q2 的 `noul` 當 P(yes) | quickstart：noul 的答案是「the probability that the answer is yes」；`d3_format.py` 回傳的是「Yes / true」選項的機率 | 正確 |
+| 不用 `confidence` | reference：「A Noul has none: its `noul` already says how sure it is」；choice 的 confidence 是 `(p_max − 1/n)/(1 − 1/n)`，描述的是最高選項 | 正確 |
+| state 用 JSON 物件，不送圖 | card：「Text or JSON, plus images and videos」；套件把 JSON 轉成一行字串放進 prompt。`max_length` 是 null，超長會報錯，不會截斷 | 合規。但 JSON 和純文字哪種分數比較好，官方沒說，本研究也沒量 |
+| 一請求帶兩題（只在 dev） | card：「answered together, each from its own forward pass over the input」 | 兩題互不影響（§2.6 已驗證）；但 freeze §1 寫的「每個請求一次 forward」不精確，見 §4 |
+| 門檻用 dev 自己選 | card 和文件都沒有校準或門檻建議 | 只能這樣做 |
+| 拿 d3 判「句子是否被原文支撐」 | card 的評測（Jev Decision Index、視覺 benchmark、safeagents-judge-bench）都不是文字對文字的 grounding 或驗證任務 | 這個用途沒有官方評測，本研究是唯一證據 |
+
+還有一條 card 上的事實和本題相關：PROD 的 Engine batching 會讓「接近平手」的判斷改變（card 的樣本上是 0.075%）。我們的門檻剛好落在分數最密的地方，見 §3 第 3 點。
+
+### 2.8 vLLM-SR 本體的介面確認：未執行
 
 freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重約 34 GB），這台機器的 Docker VM 是 23.4 GiB，所以未執行。
 
 替代的證據是 #161 用 d3-mini 做的同一介面確認：vLLM-SR 0.5.0.dev，CPU float32，分數與 #153 MPS 的差 ≤ 0.0011。這只證明介面相同；flash 經 vLLM-SR 的分數沒有量。
+
+即使當時跑了，freeze §7 登錄的容許差 |Δ| ≤ 0.02 也太寬，證明不了門檻能搬到另一個 runtime：門檻下移 0.02 時，test 跳過的單位會從 132 個變成 368 個；上移 0.005 就只剩 55 個。
 
 ## 3. 建議與理由
 
@@ -143,6 +204,8 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
    - router 的前提是「d3 放行的句子不必 LLM 判」，但 d3 對細微的限定詞、因果、範圍錯誤給高分。
 3. **門檻不穩。**
    - `t_route` = 0.986，幾乎就是 dev 正確原句的中位數（0.985）。分數一點點漂移，跳過率就大幅改變：同一個門檻，dev 17%、test 25%。
+   - test 的單位句子分數擠在 0.98–0.998 之間，16% 落在 `t_route` ±0.002 以內。門檻只要動 ±0.002，跳過率就在 18.8% 到 31.3% 之間擺盪。
+   - PROD 的 batching 本來就會改變接近平手的判斷（§2.7），門檻落在這麼密的地方，影響會被放大。
    - 換 PROD runtime（ADR-0011）、換格式（Markdown、PPTX 的投影片短句）都要重新校準；#166 把「門檻改變等於 method 版本升級」列為待決事項，若採用，每次校準都要升版。
 4. **d3 自己的負載不小。**
    - router 每篇要送約 52 個 d3 請求、約 49k input tokens，比它省下的 12.2k LLM token 多四倍，也接近 verify prompt 本身（每篇約 59k）。
@@ -155,9 +218,9 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
 **什麼情況下值得重開：**
 
 - #88 的負載測試顯示 summary verify 是 50 PDF/min 的瓶頸。
-- 而且可以把 d3 請求改成一個單位一次、每句一題：System One 允許多題共用同一個 state，dev 一次帶兩題時的延遲和 held-out 一次帶一題時相近。但 held-out 每個單位平均只有 1.45 句，請求數只會從每篇約 52 個降到約 36 個。
+- 而且第 4 點的負載能降下來。改成「一個單位一個請求、每句一題」降不了：官方說每題各自對整個 input 做一次 forward，d3 讀的 token 一樣多。只有支援 state 只讀一次的套件才可能降，文件點名的是 d3-turbo，不是 d3-flash。
 
-但第 2、3 點（細微錯誤、門檻位置）不會因此改變；重開時要用自然錯誤（不只植入）重新驗。
+即使負載降下來，第 2、3 點（細微錯誤、門檻位置）也不會改變；重開時要用自然錯誤（不只植入）重新驗。
 
 ## 4. 限制
 
@@ -167,9 +230,17 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
 - §2.3 的三句是我自己讀的，沒有登錄。
 - MPS 的門檻和延遲不能帶到 PROD（ADR-0011）。
 - 只量了論文。Markdown 和 PPTX 的 Section 文字分布可能不同。
-- 下列兩支程式寫於 freeze 之後、不在 `freeze.json` 的 hash 裡，兩者都不影響選擇：
+- 下列程式寫於 freeze 之後、不在 `freeze.json` 的 hash 裡，都不影響選擇：
   - `figure.py`（曲線上的綠線）；
-  - `blind.py`（抽樣與統計）。
+  - `blind.py`（抽樣與統計）；給盲評者的 prompt 另存在 [blind-prompt.md](blind-prompt.md)；
+  - `recheck.py`（§2.6）。
+- 獨立重算指出的登錄文字與解釋差異，都不改變任何報告的數字：
+  - freeze §1 寫「每個請求各自一次 forward」。實際上 test 請求是一次 forward，dev 請求帶兩題，是兩次。
+  - router 的誤刪率按 A2 的單位規則算：同單位有任一句被標，整個單位送 LLM，原句就會被 LLM 刪掉。若只看原句自己的分數，dev 會是 0/50 而不是 1/50；test 兩種算法都是 1/100。
+  - 曲線的門檻集合沒有包含 40 個改寫後最終句的分數。這些句子不影響跳過率、recall 與抓錯率，所以曲線不變。
+  - 盲評包把 Section 重新編號為 S1..Sk，和 LLM 當時看到的編號不同。這只影響外觀。
+  - freeze §7 的容許差太寬（§2.8）。
+- server log 顯示 transformers 在 MPS 上退回參考 PyTorch kernel（causal_conv1d、gated delta rule）。這只會變慢，不影響分數。
 
 ## 5. 檔案
 
@@ -178,8 +249,9 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
 | [freeze.md](freeze.md)、[freeze.json](freeze.json) | 事前登錄與輸入的 hash |
 | [selection.json](selection.json)、[test-launch.json](test-launch.json) | dev 上的選擇；test 啟動前 commit |
 | [metrics.json](metrics.json) | held-out 的全部指標與曲線 |
-| [blind-check.json](blind-check.json) | 盲評計數 |
+| [blind-check.json](blind-check.json)、[blind-prompt.md](blind-prompt.md) | 盲評計數與給盲評者的 prompt |
+| [recheck-dev.json](recheck-dev.json) | 15 個 dev 項目的重送結果（只有分數、秒數、token 數） |
 | [curve.svg](curve.svg) | 本報告的圖 |
-| `build_inputs.py`、`run_d3.py`、`router.py`、`blind.py`、`figure.py`、`test_router.py` | 程式 |
+| `build_inputs.py`、`run_d3.py`、`router.py`、`blind.py`、`figure.py`、`recheck.py`、`test_router.py` | 程式 |
 
 論文文字、d3 的逐句輸出和盲評理由在 `~/archive/research/166-d3-router/`，不進 git。
