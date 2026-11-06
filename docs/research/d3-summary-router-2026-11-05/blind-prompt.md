@@ -15,3 +15,5 @@ Write your verdicts to OUT/blind/verdicts-N.json as a JSON list with one object 
 ```
 
 `OUT` stands for `~/archive/research/166-d3-router` (the prompt gave the absolute path).
+
+The unmarked arm (2026-11-07, post hoc) sent the same prompt to four new subagents with the same model and effort, with `OUT/blind/` replaced by `OUT/blind-unmarked/` in both paths.

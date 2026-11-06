@@ -24,6 +24,12 @@ d3 本身的判讀能力不是問題：它確實讀了證據，植入錯誤的 A
 
 兩處修正都不影響建議。
 
+**2026-11-07 補做盲評對照組**（§2.4，事後分析，不在登錄裡）：
+
+- 已交付但沒被 `t_d` 標的句子，盲評判為不受支撐的是 3/60 = 5%；被標的是 20%，約 4 倍（Fisher p = 0.025）。
+- 推估 held-out 交付的句子約 8.6%（4.1–18.0%）不受支撐，而且都已通過 LLM verify。
+- (b) 的結論不變：20% 仍遠低於登錄要求的 80%。但 d3 的標記確實集中在殘留錯誤上，「d3 當第二道檢查」值得另外問（§3）。
+
 ## 1. 量了什麼
 
 - 用 #155 frozen-1 的 20 篇論文。
@@ -121,7 +127,33 @@ dev 在 `t_route` 上的對照數字：
 - 加了「只」；
 - 把整體的性質歸給某個元件。
 
-所以已交付的摘要裡仍有細微的錯誤殘留。這屬於 #155 的品質問題，與 router 無關；比例沒有量（沒抽未被標的句子做對照），這裡只記錄現象。
+所以已交付的摘要裡仍有細微的錯誤殘留。這屬於 #155 的品質問題，與 router 無關；比例見下面的對照組。
+
+**對照組（2026-11-07 補做，事後分析）**：從 held-out 已交付、`t_d` 沒標的 592 句中，以 seed 166 抽 60 句，用同一份 prompt、同樣的模型和 effort 盲評。抽樣程式在派出評審前 commit（46af1ef）；重跑被標組的抽樣與統計，結果和原本逐位元相同。
+
+| | 被 `t_d` 標的 | 沒被標的 |
+|---|---|---|
+| 母體 | 184 句 | 592 句 |
+| 不受支撐 | 12/60 = 20%（11.8–31.8%） | **3/60 = 5%（1.7–13.7%）** |
+| 其中 Section 句 | 9/44 | 3/54 |
+| 其中 overview 句 | 3/16 | 0/6 |
+
+- 兩組差約 4 倍，Fisher 雙尾 p = 0.025；只看 Section 句是 p = 0.032。
+- 按母體加權，held-out 交付的 776 句約 **8.6%** 不受支撐（兩組 Wilson 上下限加權組合：4.1–18.0%）。
+- 這些錯句約 55% 落在 `t_d` 標的句子裡（點估計 37 句對 30 句，區間很寬）。
+- 對照組 3 句的錯誤類型和被標組相同：把有限定的排名寫成一般情形、漏掉限定條件、把「可能」寫成必然。
+
+解讀：
+
+- d3 的標記有鑑別力：被標的句子不受支撐的比例約是沒被標的 4 倍。
+- 當 (b) 仍不合格：精確率 20%，標記率 24%。
+- 8.6% 是 #155 的品質數字。評審是 Claude Opus 5.5，套 D4 規則原文，可能比 DEV 的 Sonnet verify 嚴；沒有人工複核，所以這是「Opus 判為不受支撐」的比例，不等於人判的錯誤率。
+
+限制：
+
+- 事後補做，不在 freeze.md。
+- 兩組組成不同：對照組 overview 只有 6 句（被標組 16 句），每包的 Section 證據也比較短（約 35k 對 55k 字元）。只看 Section 句，結論不變。
+- 每組只有 60 句，區間寬。
 
 ### 2.5 延遲與 #88 的換算
 
@@ -211,7 +243,7 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
    - router 每篇要送約 52 個 d3 請求、約 49k input tokens，比它省下的 12.2k LLM token 多四倍，也接近 verify prompt 本身（每篇約 59k）。
    - 原因是 d3 一句一個請求，Section 文字每句都重送一次；LLM verify 則是一個 Section 一次。
    - 實際淨省多少 GPU，要看 PROD LLM 和 d3-flash 的相對成本（#137），這裡沒量。
-5. **(b) 沒達到自己的標準**：見 §2.4。在實際輸出上精確率 20%，標記比例 24%。
+5. **(b) 沒達到自己的標準**：見 §2.4。在實際輸出上精確率 20%，標記比例 24%。對照組顯示標記有鑑別力（被標 20% 對沒被標 5%），但五個標記有四個是誤報，不能當給讀者看的類別。
 
 **為什麼不是 (a) 的變形**（例如只對 overview 或只對 Section 用 router）：overview 只跳過 11%；Section 的 3 句漏網全在 Section。兩種切法都沒有改變上面的結論。
 
@@ -222,17 +254,24 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
 
 即使負載降下來，第 2、3 點（細微錯誤、門檻位置）也不會改變；重開時要用自然錯誤（不只植入）重新驗。
 
+**另一個值得單獨問的問題**（不是 #166 的 (a) 或 (b)）：d3 放在 LLM verify 之後當第二道檢查，只把它標的約 24% 句子送去更嚴的檢查。對照組顯示這些句子約集中了一半的殘留錯誤（§2.4）。要回答這個問題，需要：
+
+- 自己的事前登錄；
+- 第二道檢查本身的抓錯率與成本；
+- 人工複核過的自然錯誤標註；
+- 新的 held-out 論文。
+
 ## 4. 限制
 
 - 錯誤是植入的，比例也不是自然比例。§2.3 已經顯示植入錯誤比自然錯誤容易抓。
 - 原句一律標「正」（freeze §9）。
-- 盲評者是 Claude，獨立性低於人審；且只抽了被標的句子，沒有未被標句子的對照。
+- 盲評者是 Claude，獨立性低於人審；未被標句子的對照組是 2026-11-07 事後補做的（§2.4）。
 - §2.3 的三句是我自己讀的，沒有登錄。
 - MPS 的門檻和延遲不能帶到 PROD（ADR-0011）。
 - 只量了論文。Markdown 和 PPTX 的 Section 文字分布可能不同。
 - 下列程式寫於 freeze 之後、不在 `freeze.json` 的 hash 裡，都不影響選擇：
   - `figure.py`（曲線上的綠線）；
-  - `blind.py`（抽樣與統計）；給盲評者的 prompt 另存在 [blind-prompt.md](blind-prompt.md)；
+  - `blind.py`（抽樣與統計，2026-11-07 加上對照組）；給盲評者的 prompt 另存在 [blind-prompt.md](blind-prompt.md)；
   - `recheck.py`（§2.6）。
 - 獨立重算指出的登錄文字與解釋差異，都不改變任何報告的數字：
   - freeze §1 寫「每個請求各自一次 forward」。實際上 test 請求是一次 forward，dev 請求帶兩題，是兩次。
@@ -249,7 +288,7 @@ freeze §7 的前提是 Docker VM 記憶體 ≥ 44 GiB（flash 的 FP32 權重�
 | [freeze.md](freeze.md)、[freeze.json](freeze.json) | 事前登錄與輸入的 hash |
 | [selection.json](selection.json)、[test-launch.json](test-launch.json) | dev 上的選擇；test 啟動前 commit |
 | [metrics.json](metrics.json) | held-out 的全部指標與曲線 |
-| [blind-check.json](blind-check.json)、[blind-prompt.md](blind-prompt.md) | 盲評計數與給盲評者的 prompt |
+| [blind-check.json](blind-check.json)、[blind-unmarked.json](blind-unmarked.json)、[blind-prompt.md](blind-prompt.md) | 盲評計數（被標組、對照組與兩組比較）與給盲評者的 prompt |
 | [recheck-dev.json](recheck-dev.json) | 15 個 dev 項目的重送結果（只有分數、秒數、token 數） |
 | [curve.svg](curve.svg) | 本報告的圖 |
 | `build_inputs.py`、`run_d3.py`、`router.py`、`blind.py`、`figure.py`、`recheck.py`、`test_router.py` | 程式 |
