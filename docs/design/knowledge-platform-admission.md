@@ -1014,7 +1014,7 @@ Unchanged:
 - Every finalization check, and acceptance and dispatch (Q7), which start after
   finalization.
 
-Open:
+Open (2 and 3 were settled in direction on 2026-11-07; see the decision below):
 
 1. What the policy permits: any authenticated platform endpoint, or only a
    company-designated transfer channel. The user brings this back.
@@ -1036,6 +1036,96 @@ Passages written before the policy and not rewritten: Q5 above; the principle
 below; §5.1, §5.2, §6.1 step 8 and the "Upload grant" row of §11 in the
 specification; and "platform-issued direct upload" in the
 [source handoff design](knowledge-platform-source-handoff.md).
+
+### Decision on 2026-11-07: push through a platform upload endpoint
+
+The user chose **push through the platform API**: the client uploads each file
+to an admission upload endpoint with its Source credential, and admission
+streams the bytes into staging. This settles open points 2 and 3 in direction;
+the endpoint contract, and whether a per-file grant remains, are specified on
+#96. Open point 1 is still to be confirmed; this choice holds under every
+reading of the policy except a company-designated transfer channel. The
+options compared, for the record:
+
+**Delivery direction.** The #53 Q9 proposals (2026-10-02 and 2026-10-03) and
+their state under the policy:
+
+| Proposal | Who moves bytes | Then | Under the policy |
+|---|---|---|---|
+| Platform-issued upload grant; the client PUTs to storage (presigned URL) | client | chosen as the general entry | excluded |
+| Source-issued signed GET; the platform fetches | platform | optional bounded import | also a presigned URL; whether the policy covers it is unconfirmed |
+| Delegated connector (temporary credentials, federated identity) | platform | only for recurring synchronisation | unaffected; the highest onboarding cost |
+| Registered Source storage read with the platform's own identity | platform | the first pilot proposal; dropped because every Source needs an endpoint and a token configured | unaffected |
+| File bytes inside the ingestion API request | client to API | questioned for images and video; not offered in the pilot | unaffected |
+
+**Push (the client sends bytes to the platform) against pull (the platform
+reads the Source's storage).**
+
+| Aspect | Push | Pull |
+|---|---|---|
+| Client work | upload and retry | send a location and a sha256 |
+| Platform work | receive and verify | a fetcher with retries, pacing and timeouts |
+| Onboarding per Source | issue a credential | agree the storage location, read permission and firewall path |
+| Network | the client reaches the platform; no platform egress | the platform must reach every Source's storage |
+| Credentials | the platform holds none of the Source's | the platform holds read access to every Source's storage |
+| Fixed content | SHA-256 computed on arrival; fixed at once | the object can change or vanish between declaration and fetch; needs version binding and failure states |
+| Status | finalize answers at once | an asynchronous fetching stage with its own errors |
+| Load | clients decide when; bursts hit the platform; rate limits | the platform paces its own fetches |
+| Sources served | anything that speaks HTTP | only compatible storage; other systems need connectors |
+| Confused deputy | small: a client writes only its assigned location | must stop Source A referencing Source B's objects through the platform's identity |
+| Change to the specification | small: the three-step flow and the rules stay | large: the upload step becomes a fetch stage |
+| Policy | through the API, compliant in all likelihood | no client upload; platform reads of other teams' storage need their own approval |
+
+Both move the same volume (about 1 GB a minute in the PROD burst) and both
+copy into custody, so pull saves no storage. Pull remains the option for a
+Source whose files already sit in approved company storage, as Q9 allowed; no
+such Source is known in the pilot.
+
+**Through the API against a direct write to storage with the client's own
+credentials.** Presigned URLs existed to let a client write storage without
+holding storage credentials; without them, a direct write needs a storage
+identity per client.
+
+| Aspect | Through the API | Direct write to storage |
+|---|---|---|
+| Data path | client, API pod, storage | client, storage |
+| Client credentials | the Source credential only | a second credential: a storage key, or STS temporary credentials (MinIO: 15 minutes to 365 days, default one hour) |
+| Onboarding per Source | issue a credential | create a storage identity and a prefix-scoped policy |
+| Network | storage stays internal | storage reachable from every client network |
+| Checks before bytes land | reject over 50 MB, a wrong type, an unknown batch or an exhausted quota; SHA-256 in the stream | the prefix can be confined, but no documented policy condition limits the upload size; found at finalize |
+| Client code | a plain HTTP PUT | an S3 SDK and endpoint configuration |
+| Coupling to the storage product | none for clients (#57 has not selected one) | clients bound to the product's API and credential scheme |
+| Audit | one place | split between storage and the platform |
+| Policy | compliant in all likelihood | temporary credentials handed to clients are the banned mechanism in a stronger form |
+
+The extra hop is cheap at this scale: about 17 MB/s in the PROD burst, one or
+two concurrent uploads on average, and the `api` role already scales
+horizontally. A direct write would pay off at gigabyte files or one to two
+orders of magnitude more throughput.
+
+**Large files through the API.** The endpoint streams: each received part
+(8 MiB with the boto3 defaults) goes to storage as a multipart upload while the
+SHA-256 and the byte count accumulate, so memory per upload is one part
+whatever the file size, and the declared size and digest are checked before the
+response. Deployment must raise the ingress defaults on the upload route: with
+ingress-nginx, `proxy-body-size` defaults to 1m, `proxy-request-buffering` to
+on, and `proxy-read-timeout` and `proxy-send-timeout` to 60 s, while 50 MB
+takes about 40 s at 10 Mbps. A failed upload of this size is retried whole by
+the client (Q4). Resumable parts are not needed below gigabyte sizes; OpenAI's
+Uploads API (parts of at most 64 MB, 8 GB in total, one-hour expiry; create,
+add parts, complete) shows the same three-step shape, so parts can be added
+later without changing the contract. The figures are estimates, not
+measurements.
+
+Sources: MinIO
+[STS](https://docs.min.io/enterprise/aistor-object-store/developers/security-token-service/)
+and [access management](https://docs.min.io/enterprise/aistor-object-store/administration/iam/access/)
+(the pages now describe AIStor; the deployed edition may differ),
+[ingress-nginx ConfigMap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/),
+[boto3 S3 transfers](https://docs.aws.amazon.com/boto3/latest/reference/customizations/s3.html),
+[OpenAI Uploads](https://developers.openai.com/api/docs/api-reference/uploads),
+the [#53 Q9 recommendation](https://github.com/davidlinnnn/data-ingestion/issues/53#issuecomment-5966660481)
+and the [attachment handoff research](../research/attachment-handoff-cloud-practices-2026-10-02.md).
 
 ## Principle for later architecture documentation
 

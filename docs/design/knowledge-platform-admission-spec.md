@@ -183,6 +183,9 @@ not decided and is tracked on
 finalization and the rules in §6 are unchanged. The decided, unchanged and open
 points are in the
 [design notes](knowledge-platform-admission.md#upload-grant-form-excluded-by-company-policy-on-2026-10-30).
+On 2026-11-07 the user chose push through a platform upload endpoint
+([decision](knowledge-platform-admission.md#decision-on-2026-11-07-push-through-a-platform-upload-endpoint));
+the endpoint contract that replaces this section is pending on #96.
 
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 
