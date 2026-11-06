@@ -1,6 +1,6 @@
 # #166 報告：d3-flash 當 summary verify 的 router
 
-**建議：(c) 兩者都不做。** router 不放進 summary method，`t_d` 也不交給 #161 當事後類別。理由有四點：
+**建議：(c) 兩者都不做；使用者 2026-11-07 裁定採 (c)。** router 不放進 summary method，`t_d` 也不交給 #161 當事後類別。理由有四點：
 
 - **(a) 省得少**：held-out 上省下 summary 總 token 的 11%（verify 的 19%）。
 - **(a) 有品質代價**：LLM 在真實輸出裡抓到的錯，有 7% 會因此不再送到 LLM（43 句中 3 句），這 3 句都是真錯。
