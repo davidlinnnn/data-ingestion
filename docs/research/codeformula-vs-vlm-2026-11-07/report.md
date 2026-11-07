@@ -4,7 +4,7 @@
 |---|---|
 | 票 | #159（#80 的子票，擋 #135） |
 | 量測日期 | 2026-11-07 |
-| 狀態 | 量測與盲評完成；抽查與建議待使用者裁定（§9） |
+| 狀態 | 完成；2026-11-07 使用者裁定（§9）：維持 `formula@1`，CodeFormulaV2 記為備案 |
 | 受測方法 | `docling-project/CodeFormulaV2@ecedbe11`（docling 官方 formula stage）、`formula@1` 的 Luna（`gpt-6-luna`）、Claude Opus 5.5（上限） |
 | 事前登錄 | `freeze.md`、`freeze.json`（凍結時 CodeFormulaV2 輸出 0 筆） |
 
@@ -14,16 +14,16 @@
 
 | 方法 | 正確 | Wilson 95% | 主要錯誤 |
 |---|---:|---|---|
-| CodeFormulaV2，docling 官方裁圖（`cf-official`） | 29／45 | 0.50–0.77 | 字詞拼錯、上下標、邊距帶進相鄰文字（4 個） |
-| CodeFormulaV2，`formula@1` 的裁圖（`cf-same`） | 34／45 | 0.61–0.86 | 字詞拼錯、打字機字體的 SE 讀成 `\mathbb{S}`、程式識別字 |
-| Luna（`formula@1`，#152 之後） | 33／45 | 0.59–0.84 | 花體／黑板體字母、大小寫 |
-| Opus 5.5（上限） | 44／45 | 0.88–1.00 | 1 個上下標 |
+| CodeFormulaV2，docling 官方裁圖（`cf-official`） | 29／46 | 0.49–0.76 | 字詞拼錯、上下標、邊距帶進相鄰文字（4 個） |
+| CodeFormulaV2，`formula@1` 的裁圖（`cf-same`） | 35／46 | 0.62–0.86 | 字詞拼錯、打字機字體的 SE 讀成 `\mathbb{S}`、程式識別字 |
+| Luna（`formula@1`，#152 之後） | 34／46 | 0.60–0.84 | 花體／黑板體字母、大小寫 |
+| Opus 5.5（上限） | 44／46 | 0.86–0.99 | 1 個上下標、1 個花體 |
 
-分母是 45：有一個公式四方都判 UNKNOWN（§5.6）。若依 t4 的裁定把它算成花體 C，四方是 29、35、34、44／46，Luna 和 Opus 與 t4 公布的數字相同。
+Luna 和 Opus 的數字與 t4-accuracy 公布的相同。一個公式（§5.6）由盲評判成 UNKNOWN，使用者依字層字型裁定為花體（A1）。
 
 - **CodeFormulaV2 沒有比 Luna 準**：
   - `cf-same` 對 Luna：只有一方對的公式是 8 比 7（符號檢定 p = 1.0）；
-  - 官方裁圖更差：`cf-official` 對 Luna 是 8 比 12（p = 0.50），對 `cf-same` 是 2 比 7。
+  - 官方裁圖更差：`cf-official` 對 Luna 是 8 比 13（p = 0.38），對 `cf-same` 是 2 比 8。
   - 三者都遠低於 Opus。
 - **兩邊錯的地方不同**：
   - CodeFormulaV2 的錯多在 `\text` 裡的字詞拼錯（sore、compresion、pospose）和打字機字體；字母樣式只錯 1 個。
@@ -35,7 +35,7 @@
   - 官方沒有公布 GPU 數字；社群在 NVIDIA L4 上量到約每個公式 1 秒。
   - 改用就要在公司部署 GPU worker。目前的 VLM 是公司以 API 提供的。
 
-**建議（待裁定）：維持 `formula@1`（VLM）**。CodeFormulaV2 不更準，固定 prompt 也無法修正它的錯，換用還要多一套 GPU 部署。VLM 這條路的上限（Opus 44／45）高得多。CodeFormulaV2 的價值在於準度已知、可重現；若公司 VLM（Qwen3.8-27B）在 V10 測出的公式準度明顯低於 Luna，它是現成的備案。
+**裁定（2026-11-07）：維持 `formula@1`（VLM）**。CodeFormulaV2 不更準，固定 prompt 也無法修正它的錯，換用還要多一套 GPU 部署。VLM 這條路的上限（Opus 44／46）高得多。CodeFormulaV2 的價值在於準度已知、可重現：它是備案，觸發條件是公司 VLM（Qwen3.8-27B）在同一批 46 個公式上錯的比它多 5 個以上（§7）。
 
 ---
 
@@ -84,6 +84,7 @@
   - 46 張 sheet 共 165 個不同的答案。CodeFormulaV2 在兩種裁圖下有 16 個公式答案相同。
 - **試評後的澄清**：LaTeX 能否編譯不判；字詞上的標點（`where:` 的冒號）視同結尾標點。兩條都和試評的判法一致，沒有判定因此改變。
 - **和 t4 的一致性**：Luna 和 Opus 的答案這次在同一輪重判。46 個公式中，45 個的判定和 t4 `judgments.json` 完全相同；唯一不同的是 §5.6 的 UNKNOWN。
+- **抽查**：使用者於 2026-11-07 指示由 Claude Fable 5.1（接手本 session 的模型，不是判定者）代為抽查，不是人工抽查。它放大 3 倍逐一看了 10 個 `cf-official` 判定（5 FAIL、5 PASS，seed 159），10 個都和判定者一致，沒有翻判。
 - **判定者留下的判斷題**（列入抽查參考）：
   - 兩個「公式」其實是程式識別字（`django__django`），雙底線寫成下標或 `\dots` 判 FAIL；
   - `\mathtt` 視同 `\texttt`；
@@ -94,19 +95,19 @@
 
 ### 5.1 正確數
 
-見摘要的表；數字在 `evidence.json`。沒有空答案（EMPTY 0）。
+見摘要的表；數字在 `evidence.json`。沒有空答案（EMPTY 0）。`judgments.json` 記每個公式四方的判定；使用者的裁定在 `rulings.json`，合併時覆蓋判定者的判定並保留原判。
 
 ### 5.2 配對比較（只有一方對的公式數）
 
 | 比較 | 前者對、後者錯 | 前者錯、後者對 | 精確符號檢定 p |
 |---|---:|---:|---:|
 | `cf-same` vs Luna | 8 | 7 | 1.0 |
-| `cf-official` vs Luna | 8 | 12 | 0.50 |
-| `cf-official` vs `cf-same` | 2 | 7 | 0.18 |
-| `cf-same` vs Opus | 1 | 11 | 0.006 |
+| `cf-official` vs Luna | 8 | 13 | 0.38 |
+| `cf-official` vs `cf-same` | 2 | 8 | 0.11 |
+| `cf-same` vs Opus | 2 | 11 | 0.02 |
 | `cf-official` vs Opus | 1 | 16 | 0.0003 |
 
-`cf-same` 和 Luna：兩者都對 26、只有 `cf-same` 對 8、只有 Luna 對 7、都錯 4。如果有一個完美的選擇器，兩者合起來的上限是 41／45；但本票沒有量測任何實際的合併方式。
+`cf-same` 和 Luna：兩者都對 27、只有 `cf-same` 對 8、只有 Luna 對 7、都錯 4。如果有一個完美的選擇器，兩者合起來的上限是 42／46；但本票沒有量測任何實際的合併方式。
 
 ### 5.3 錯誤類型
 
@@ -117,7 +118,7 @@
 | `missing` | 5 | 5 | 0 | 0 |
 | `extra`（不在公式裡的內容） | 4 | 0 | 1 | 0 |
 | `structure` | 2 | 0 | 1 | 0 |
-| `letter-style` | 1 | 1 | 4 | 0 |
+| `letter-style` | 2 | 1 | 4 | 1 |
 | `letter-case` | 0 | 1 | 3 | 0 |
 
 一個 FAIL 可以有多個類型。
@@ -142,14 +143,12 @@ docling 文件也提到，寬邊距可能帶進方程式編號或相鄰文字，
 
 | | 標記 | 其中真錯 | 誤標正確 | 錯的總數 | 沒標到的錯 |
 |---|---:|---:|---:|---:|---:|
-| `cf-official` | 15 | 11 | 3 | 16 | 5 |
+| `cf-official` | 15 | 12 | 3 | 17 | 5 |
 | `cf-same` | 6 | 6 | 0 | 11 | 5 |
 | Luna | 6 | 5 | 1 | 12 | 7 |
-| Opus | 2 | 0 | 1 | 1 | 1 |
+| Opus | 2 | 1 | 1 | 2 | 1 |
 
-另有 1 個標記落在 §5.6 的 UNKNOWN 上（`cf-official` 和 Opus 都是寫成一般 C 的答案）。
-
-- #152 的字母樣式與數字檢查不依賴模型，CodeFormulaV2 的 LaTeX 也能比。在 `cf-same` 上標 6 個、6 個都是真錯，抓到 11 個錯中的 6 個。
+- #152 的字母樣式與數字檢查不依賴模型，CodeFormulaV2 的 LaTeX 也能比。在 `cf-same` 上標 6 個、6 個都是真錯，抓到 11 個錯中的 6 個。§5.6 那個花體 C 也是它抓到的（`cf-official` 和 Opus 的一般 C）。
 - `cf-official` 的 3 個誤標都是結尾的 `( 2 )`。`mismatch()` 只去掉 `\tag{}`，字層這邊則會去掉結尾的方程式編號。若沿用官方裁圖，LaTeX 這邊也要去掉結尾的編號。
 - 沒標到的錯以字詞拼錯和上下標為主，字層比對看不出來。
 
@@ -157,7 +156,7 @@ docling 文件也提到，寬邊距可能帶進方程式編號或相鄰文字，
 
 - 四個答案只差在開頭的 C 是不是花體。判定者放大 8 倍仍無法確定，四個答案都判 UNKNOWN。
 - 字層的證據：這個 C 的字型是 `txsys`（newtx 的花體符號字型）。t4 在 #152 依這個證據裁定為花體。
-- 依這個裁定，`cf-same` 和 Luna 對，`cf-official` 和 Opus 錯。待使用者裁定（§9 A1）。
+- 使用者裁定（A1，2026-11-07）：算花體，和 t4 一致。`cf-same` 和 Luna 對，`cf-official` 和 Opus 錯（`rulings.json`）。
 
 ## 6. 成本與風險
 
@@ -192,11 +191,16 @@ docling 文件也提到，寬邊距可能帶進方程式編號或相鄰文字，
 | 可調整性 | prompt 固定，無法像 #152 那樣用 prompt 修正錯誤；只能換模型或加後處理。 |
 | 授權 | CDLA-Permissive-2.0（模型卡）。 |
 
-## 7. 建議與各選項要改的地方
+## 7. 裁定與各選項要改的地方
+
+使用者於 2026-11-07 裁定選項 A（C1）。備案的觸發條件與交接（C2）：
+
+- **觸發條件**：#83 把公司 VLM（Qwen3.8-27B）跑在同一批 46 個公式上（`inputs.json` 可定位每個公式），用 `judging-rules.md` 的規則盲評。公司 VLM 錯的公式比 CodeFormulaV2（`cf-same`，35／46，greedy decoding、可重現）多 5 個以上，也就是低於 30／46，就開票評估改用 CodeFormulaV2（選項 B 的範圍）。差 0–4 維持 VLM：t4 觀察到重錄差 1 是 run-to-run 變異，差 5 約 10 個百分點，超出變異。
+- **交接**：#83 留言附基準數字、觸發條件與重跑指令；#153／#161 的公式結論不需重新檢視（方法不變）；#135 解除阻擋；不開實作票。
 
 | 選項 | 要改的地方 | 評估 |
 |---|---|---|
-| **A. 維持 `formula@1`（建議）** | 無。CodeFormulaV2 記為備案，觸發條件：V10 測出公司 VLM 的公式準度明顯低於 Luna（比較交 #83） | 準度相同、成本最低；PROD 準度仍取決於 V10 |
+| **A. 維持 `formula@1`（已裁定）** | 無。CodeFormulaV2 記為備案，觸發條件如上 | 準度相同、成本最低；PROD 準度仍取決於 V10 |
 | B. 改用 CodeFormulaV2 | 新 method `formula@2`（本機推論，元件 `docling-project/CodeFormulaV2@ecedbe11`）；GPU task queue 與 worker；docling 升級或自寫重複停止；`d3-check@1` 的 `CHECKS` 加 `formula@2`，並在 CodeFormulaV2 的輸出上重驗 d3-mini 的門檻（#153 的 formula 門檻 0.445 是在含 #84 W3 CodeFormulaV2 答案的混合資料上校準的）；`FORMULA_NATIVE_MISMATCH` 可沿用；#135 前要先開實作票並讓它擋 #135 | 準度沒有提升，多一套 GPU 部署 |
 | C. 兩者合用（VLM 主路徑，CodeFormulaV2 當第二意見） | B 的全部部署，加一條 LaTeX 等價比較規則（`P _ { k }` 對 `P_k` 這類格式差異要先正規化），不一致就標 `disputed` | 錯的地方互補（同時錯 4 個），但等價比較與誤標率都沒有量測；d3-mini 已經在當公式的第二意見（#153 強訊號） |
 
@@ -204,15 +208,15 @@ docling 文件也提到，寬邊距可能帶進方程式編號或相鄰文字，
 
 - **偏差有利於 Luna**：這 46 個公式曾用來調整 #152 的 prompt 與檢查，所以 Luna 的數字偏樂觀。CodeFormulaV2 沒有被調過，Opus 的答案也早於 #152。這一點修正了票上「對三方都一樣」的說法。
 - **樣本小**：每個方法每個公式只有一個答案，46 個樣本的 Wilson 區間寬約 0.25。t4 觀察到 Luna 重錄時正確數差 1 屬於 run-to-run 變異。CodeFormulaV2 是 greedy decoding，可重現。
-- **判定者和 `opus` 是同一個模型**：有自我偏好的風險，以隱藏模型名來降低。和 t4 判定 45／46 一致，這是判定穩定的證據，不是準確的證據；後者靠使用者抽查。
+- **判定者和 `opus` 是同一個模型**：有自我偏好的風險，以隱藏模型名來降低。和 t4 判定 45／46 一致，這是判定穩定的證據，不是準確的證據；後者靠抽查（§4，由另一個模型代做，不是人工）。
 - 本機是 CPU 的 BF16。CUDA 上的數值可能有細微差異，未量測。
 
-## 9. 待裁定（grilling）
+## 9. 裁定（2026-11-07，grilling 逐題）
 
-- **A1**：p01-a5304a07488e 的 C 依字層字型算花體嗎？
-- **A2**：抽查 10 個 `cf-official` 判定（5 FAIL、5 PASS，seed 159），頁面在 `~/archive/data-ingestion-159-untracked/spot-check.html`。
-- **C1**：選項 A、B 或 C。
-- **C2**：若選 A，備案的觸發條件與交接。
+- **A1（已裁定 2026-11-07）**：p01-a5304a07488e 的 C 依字層字型（`txsys`）算花體，和 t4 一致（`rulings.json`）。數字：`cf-official` 29／46、`cf-same` 35／46、Luna 34／46、Opus 44／46。
+- **A2（已完成 2026-11-07）**：抽查由 Claude Fable 5.1 代做，10 個判定全部一致（§4）。
+- **C1（已裁定）**：選項 A，維持 `formula@1`。
+- **C2（已裁定）**：備案的觸發條件與交接如 §7。
 
 ## 10. 重現
 
