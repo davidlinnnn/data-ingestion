@@ -47,6 +47,16 @@ Added for #159, because one input has a margin around the formula:
   "reason": "matches symbol for symbol"}}}
 ```
 
+## Clarifications after the batch-00 pilot (2026-11-07, before batches 01–02)
+
+The pilot judge asked about two cases the rules did not name. Both clarify how it already judged,
+so no pilot verdict changes.
+
+- **Compilation is not judged.** An answer whose LaTeX would not compile (a `\left[` closed by
+  `\right]` after a `\\`) is judged on the formula it writes, like any other.
+- **Punctuation in words.** Punctuation attached to a word of the formula (the colon of "where:")
+  is accepted like trailing punctuation.
+
 ## Spot checks
 
 The user reviews 10 CodeFormulaV2 verdicts (5 `FAIL`, 5 `PASS` of the official-crop answers,
