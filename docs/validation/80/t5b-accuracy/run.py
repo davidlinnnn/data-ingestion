@@ -134,7 +134,7 @@ async def judged(
     async with httpx.AsyncClient() as http:
         judge = OpenAIChat(http, "https://api.anthropic.com/v1", os.environ["ANTHROPIC_API_KEY"],
                            "claude-sonnet-5-5", 10, 300)  # fmt: skip
-        luna = OpenAIChat(http, "https://api.openai.com/v1", os.environ["OPENAI_API_KEY"],
+        luna = OpenAIChat(http, "https://api.openai.com/v1", os.environ.get("OPENAI_API_KEY", ""),
                           "gpt-6-luna", 10, 120)  # fmt: skip
         gate = asyncio.Semaphore(8)
 
