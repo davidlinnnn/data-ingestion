@@ -101,7 +101,14 @@ direct-upload direction and Valet Key principle. The
 current contract for implementers: API, admission rules, status, Source
 Deletion, dispatch, limits and validation. Its rules are modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html). The
-storage product and grant mechanism remain open.
+storage product remains open (#57).
+
+[File upload](knowledge-platform-file-upload.md) is the account of one topic
+across the two documents above: why clients push files through a platform
+upload endpoint after company policy excluded presigned URLs (2026-10-30 and
+2026-11-07), the options compared, the architecture and sequence diagrams, the
+Source-facing guide and the deployment requirements. The specification's §5.2
+stays the contract.
 
 [PDF processing workflow v2](knowledge-platform-processing-workflow-v2.md)
 records the #91 decisions (Q1–Q32): the stage graph, Activity and per-item

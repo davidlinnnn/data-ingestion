@@ -55,6 +55,45 @@ dropped in that set's papers (C1), filled with random cases up to 30:
 - held-out: 50 items (43 pipeline rewrites/drops, 6 missed plants, 1 false drop)
 - dev: 30 items (24 pipeline rewrites/drops, 4 missed plants, 1 false drop, 1 random case)
 
+## #164: reason before verdict (measured, reverted)
+
+The spot check's 4 wrong verdicts (2 false drops, 2 pipeline drops) all had a reason that ended
+"actually supported" with `supported` false. #164 tried putting `reason` before `supported` in
+`VERIFY`, so the model would reason before it decided. `--rejudge` judged the same plants again
+twice: once with the frozen order as a control for judge noise (the judge runs at the default
+temperature), and once with reason first.
+
+| | Held-out base | control | reason first | Dev base | control | reason first |
+|---|---|---|---|---|---|---|
+| Catch rate | 80/86 = 93.0 % | 80/86 | **76/86 = 88.4 %** (79.9–93.6 %) | 41/45 | 40/45 | 40/45 |
+| False drops | 1/100 | 0/100 | 1/100 | 1/50 | 0/50 | 0/50 |
+| Answers with the reason first | | 0/205 | 205/205 | | 0/105 | 105/105 |
+| Judge cost | | US$1.12 | US$1.12 | | US$0.82 | US$0.78 |
+
+Compared with the control, reason first newly missed 5 held-out plants and newly caught 1. The
+control, compared with the base, moved 2 each way. Held-out scope errors fell to 12/18 caught,
+from 15/18 (base) and 16/18 (control). In the 5 new misses, the judge restates what the
+Section says and concludes that the sentence "summarizes accurately", but never sees the one
+word the plant changed: "all" added twice, "LLMs" → "AI systems", "CBR" → "RAG", and "across
+all settings" added. With the verdict first, its reason names that word.
+
+The 4 wrong verdicts:
+- **The 2 false drops** (held-out paper 1, dev paper 6) are judged supported in the control
+  too, so judge noise alone flips them. Reason first adds a new held-out false drop (paper 1).
+- **The 2 pipeline drops** (paper 8 §5.1.3, paper 6 §F) are still unsupported in the control.
+  Reason first judges both originals supported. It also judges supported the original of
+  paper 6 §3.4, which the spot check rated a correct drop.
+
+Since the catch rate fell, `VERIFY` keeps the frozen order (supported, then reason), as #164
+asks, and frozen-1's verify prompt still holds for the numbers above. The other change of #164
+alters only how degenerate repair answers are handled. A repair answer that is not a sentence
+(fewer than three words, or no letter), or that has quotes but no sentence, is now sent once
+more. If it is
+degenerate again, the sentence is dropped without a second verify. Of frozen-1's 67 repairs, 2
+were degenerate. Paper 6's `x` would be sent again. Paper 15's `""` would be sent again only
+if it came with quotes, and frozen-1's summaries do not keep the answers' quotes. This change
+has unit tests and was not run against the model.
+
 ## Reproduce
 
 ```
@@ -63,6 +102,16 @@ set -a; . ~/.config/kp-dev/anthropic.env; . ~/.config/kp-dev/openai.env; set +a
     held-out 100 1 3 5 7 8 9 10 11 12 13 14 15 17 18 19
 .venv/bin/python docs/validation/80/t5b-accuracy/run.py ~/archive/research/155-summary/frozen-1 \
     dev 50 2 4 20 16 6
+```
+
+#164's runs judge the saved plants again: the control as below, and `reason-first` the same
+way with `VERIFY`'s `reason` moved before `supported`:
+
+```
+.venv/bin/python docs/validation/80/t5b-accuracy/run.py ~/archive/research/155-summary/frozen-1 \
+    held-out-control --rejudge=held-out 1 3 5 7 8 9 10 11 12 13 14 15 17 18 19
+.venv/bin/python docs/validation/80/t5b-accuracy/run.py ~/archive/research/155-summary/frozen-1 \
+    dev-control --rejudge=dev 2 4 20 16 6
 ```
 
 `--rescore` in place of N scores the saved `accuracy-SET_NAME.json` again without a request.
