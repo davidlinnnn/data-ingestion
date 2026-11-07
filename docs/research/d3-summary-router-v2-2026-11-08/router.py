@@ -60,9 +60,9 @@ def scores(out: Path, run: str) -> dict[str, dict[str, float]]:
 
 def labelled(cases: list[dict], confirmed: set[str]) -> tuple[list[str], list[str], list[str]]:
     """Items, labels (correct / meaning_changed) and bootstrap groups (units)."""
-    originals = [c for c in cases if c["role"] == "original"]
+    # t5b labels every original correct by default; a review that confirms one as an error wins
+    originals = [c for c in cases if c["role"] == "original" and c["item"] not in confirmed]
     errors = [(c["item"], c["unit"]) for c in cases if c["role"] == "planted"]
-    assert not confirmed & {c["item"] for c in originals}, "an original confirmed as an error"
     rows = [(c["item"], "correct", c["unit"]) for c in originals]
     rows += [(i, "meaning_changed", u) for i, u in errors]
     rows += [(i, "meaning_changed", f"natural:{i}") for i in sorted(confirmed)]
