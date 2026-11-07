@@ -3,7 +3,7 @@
  "d3_outputs_seen": 0,
  "files": {
   "questions.json": "449f1d8c5b7a6a65bbf2932919f030b8034b028696612937b38911c43480c0f3",
-  "inputs.py": "009c5b804dd168782db94ca2632dfba770547dd55553c13a0e038ecd72cda9da",
+  "inputs.py": "fb2083dc03e974ebd370c81b2fb43664a0e5e8f7980583c47bcbf1f553208967",
   "review.py": "43c83fa1a7772f6c3f25b43c62a46158bf10f852a90c706d4a3e933f48ac28dd",
   "run_d3.py": "e62a0229ab37d2b09949145867afa427bb7ab859a66e4420e36c3da4619dbb6c",
   "router.py": "e0a140fa8c453a331db44270b964184ed37a0e7b761a7de7cc42e264c445ecf7",
@@ -25,6 +25,11 @@
    "date": "2026-11-08",
    "file": "router.py",
    "change": "labelled(): an original the review confirms as an error counts as an error, not as correct (2 dev items, both from #166's blind check); made before any format or selection result was read"
+  },
+  {
+   "date": "2026-11-08",
+   "file": "inputs.py",
+   "change": "heldout(): a dropped rewrite with no second_reason was never verified, so it adds no re-verify call (#164 drops a rewrite that is still not a sentence; the old rule counted a non-empty one); found by the verify-call assert on held-out paper 2, before any held-out d3 output"
   }
  ],
  "review_answers_sha256": "121ab3edb86c24810b68790981faaaf627b0e93247259caddfc19af2048af5fc"

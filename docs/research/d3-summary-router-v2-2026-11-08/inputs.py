@@ -79,7 +79,9 @@ def heldout(run: Path, accuracy: str) -> tuple[list, list, list, dict]:
         calls = 0
         for name, kind, indices, fates in verified:
             entered = [f.get("original", f["text"]) for f in fates]
-            rewrites = [f for f in fates if "original" in f and f.get("rewrite", f["text"])]
+            # a dropped rewrite without second_reason was never verified (#164: not a sentence)
+            rewrites = [f for f in fates if "original" in f
+                        and not ("rewrite" in f and f["second_reason"] is None)]  # fmt: skip
             units.append({
                 "id": f"{p}:{name}", "split": "heldout", "paper": p, "kind": kind, "indices": indices,
                 "sentences": [{"item": item(p, document, indices, s), "llm_flagged": "original" in f,
