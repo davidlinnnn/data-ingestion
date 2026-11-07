@@ -254,6 +254,7 @@ async def test_a_sentence_still_unsupported_after_repair_is_dropped(ports, runti
                     "second_reason": "judged 1" if rewrite else None}  # fmt: skip
     # Two sections, one overview sentence, and the rewrite's verify unless it is empty.
     assert steps(transport).count("verify") == (4 if rewrite else 3)
+    assert steps(transport).count("repair") == 1  # "" without quotes is not sent again
     assert record["signals"] == {"rewritten": 0, "dropped": 1}
 
 
@@ -270,8 +271,9 @@ def repairing(*answers: dict) -> FakeInference:
     return FakeInference(reply_to)
 
 
-async def test_a_repair_that_is_not_a_sentence_is_resent_once(ports, runtime):
-    transport = repairing({"quotes": [], "sentence": "x"},
+@pytest.mark.parametrize("degenerate", ["x", "0.93 0.95 0.97"])
+async def test_a_repair_that_is_not_a_sentence_is_resent_once(ports, runtime, degenerate):
+    transport = repairing({"quotes": [], "sentence": degenerate},
                           {"quotes": [], "sentence": "Ice moved fast."})  # fmt: skip
 
     _, record, _ = await summarized(ports, runtime, transport)
@@ -308,12 +310,13 @@ async def test_a_repair_with_quotes_but_no_sentence_is_resent_once(ports, runtim
     assert steps(transport).count("repair") == 2
 
 
-async def test_a_short_chinese_repair_is_a_sentence(ports, runtime):
-    transport = repairing({"quotes": [], "sentence": "冰川移動。"})
+@pytest.mark.parametrize("sentence", ["冰川移動。", "Recall reached 0.93."])
+async def test_a_short_repair_is_a_sentence(ports, runtime, sentence):
+    transport = repairing({"quotes": [], "sentence": sentence})
 
     _, record, _ = await summarized(ports, runtime, transport)
 
-    assert record["content"]["sections"][0]["sentences"] == [{"text": "冰川移動。"}]
+    assert record["content"]["sections"][0]["sentences"] == [{"text": sentence}]
     assert steps(transport).count("repair") == 1
 
 

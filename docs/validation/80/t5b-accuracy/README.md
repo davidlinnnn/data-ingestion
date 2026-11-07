@@ -87,7 +87,8 @@ The 4 wrong verdicts:
 Since the catch rate fell, `VERIFY` keeps the frozen order (supported, then reason), as #164
 asks, and frozen-1's verify prompt still holds for the numbers above. The other change of #164
 alters only how degenerate repair answers are handled. A repair answer that is not a sentence
-(fewer than three words), or that has quotes but no sentence, is now sent once more. If it is
+(fewer than three words, or no letter), or that has quotes but no sentence, is now sent once
+more. If it is
 degenerate again, the sentence is dropped without a second verify. Of frozen-1's 67 repairs, 2
 were degenerate. Paper 6's `x` would be sent again. Paper 15's `""` would be sent again only
 if it came with quotes, and frozen-1's summaries do not keep the answers' quotes. This change

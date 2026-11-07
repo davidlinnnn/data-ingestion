@@ -21,8 +21,8 @@ Writes evidence-SET_NAME.json here (counts, rates with sample sizes, error types
 text) and, under OUT_DIR, accuracy-SET_NAME.json (every case with text) and
 spot-check-SET_NAME.json: every missed planted error, every original the judge called
 unsupported and every sentence the pipeline rewrote or dropped, filled up at random to 30 cases
-(C1). Every run that judges also judges each sentence the pipeline dropped again, the original
-in its Section's batch and a rewrite of more than one word alone (#164).
+(C1). --rejudge also judges each sentence the pipeline dropped again: the original in its
+Section's batch, and the rewrite alone when it is a sentence (#164).
 """
 
 import asyncio
@@ -129,7 +129,7 @@ async def judged(
     summaries: dict, sample: list[dict], plants: list[str] | None
 ) -> tuple[list[dict], dict, list[dict]]:
     """Every sampled case planted (plants[i] when given) and judged, the judge's usage with the
-    answers that wrote a reason first, and every pipeline drop judged again."""
+    answers that wrote a reason first, and, given plants, every pipeline drop judged again."""
     usage = {"prompt_tokens": 0, "completion_tokens": 0, "answers": 0, "reason_first": 0}
     async with httpx.AsyncClient() as http:
         judge = OpenAIChat(http, "https://api.anthropic.com/v1", os.environ["ANTHROPIC_API_KEY"],
@@ -152,7 +152,7 @@ async def judged(
                 result = {"paper": d["paper"], "section_id": d["section_id"],
                           "original_supported": v[d["n"]][0], "rewrite_supported": None}  # fmt: skip
                 rewrite = d["fate"]["rewrite"]
-                if len(rewrite.split()) > 1:  # "" and "x" were never sentences
+                if ds._is_sentence(rewrite):
                     v, u, first = await verdicts(judge, document, d["indices"], [rewrite])
                     count(u, first)
                     result["rewrite_supported"] = v[0][0]
@@ -180,7 +180,7 @@ async def judged(
                         "original_reason": original_v[c["n"]][1]}  # fmt: skip
 
         cases = await asyncio.gather(*(case(n, c) for n, c in enumerate(sample)))
-        dropped = [d for s in summaries.values() for d in drops(s)]
+        dropped = [d for s in summaries.values() for d in drops(s)] if plants else []
         redropped = await asyncio.gather(*(again(d) for d in dropped))
     return list(cases), usage, list(redropped)
 

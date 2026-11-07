@@ -214,8 +214,10 @@ def _parse[M: BaseModel](model: type[M], content: str) -> M:
 
 
 def _is_sentence(text: str) -> bool:
-    """At least three words: letter runs, each CJK character counting as one (#164)."""
-    return len(re.findall(r"[\u3400-\u9fff]|[^\W\d_]+", text)) >= 3
+    """At least three words, each CJK character counting as one, and a letter (#164)."""
+    cjk = "\u3040-\u30ff\u3400-\u9fff"
+    words = re.findall(rf"[{cjk}]|[^\s{cjk}]+", text)
+    return len(words) >= 3 and any(c.isalpha() for c in text)
 
 
 def _repair_parse() -> Callable[[str], _Repair]:
