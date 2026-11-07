@@ -159,6 +159,7 @@ _INTEGER = {"type": "integer"}
 MAP = _schema(
     "map", _object(sections={"type": "array", "items": _object(id=_STRING, sentences=_STRINGS)})
 )
+# supported before reason: with reason first the judge missed more planted errors (#164)
 VERIFY = _schema("verify", _object(verdicts={"type": "array", "items": _object(
     n=_INTEGER, supported={"type": "boolean"}, reason=_STRING)}))  # fmt: skip
 REPAIR = _schema("repair", _object(quotes=_STRINGS, sentence=_STRING))
@@ -210,6 +211,29 @@ def _parse[M: BaseModel](model: type[M], content: str) -> M:
         return model.model_validate_json(content)
     except ValidationError as exc:
         raise InvalidOutput("SCHEMA_INVALID") from exc
+
+
+def _is_sentence(text: str) -> bool:
+    """At least three words: letter runs, each CJK character counting as one (#164)."""
+    return len(re.findall(r"[\u3400-\u9fff]|[^\W\d_]+", text)) >= 3
+
+
+def _repair_parse() -> Callable[[str], _Repair]:
+    """parse for one repair request: its first answer is SCHEMA_INVALID when the sentence is not
+    a sentence, unless it is "" without quotes, so the retry chain sends it again once (#164)."""
+    answers = 0
+
+    def parse(content: str) -> _Repair:
+        nonlocal answers
+        answers += 1
+        repaired = _parse(_Repair, content)
+        sentence = repaired.sentence.strip()
+        empty = not sentence and not any(q.strip() for q in repaired.quotes)
+        if answers == 1 and not empty and not _is_sentence(sentence):
+            raise InvalidOutput("SCHEMA_INVALID", "the repair is not a sentence")
+        return repaired
+
+    return parse
 
 
 def _reduced(content: str) -> _Reduce:
@@ -338,7 +362,8 @@ async def checked(
     of them (D4); each unsupported one repaired once with the judge's reason and the rewrite
     verified alone. A fate is {"text"} when supported, {"text", "original", "reason"} when
     rewritten, {"text": None, "original", "reason", "rewrite", "second_reason"} when dropped
-    (rewrite "" and second_reason None when repair found nothing to keep)."""
+    (second_reason None, never verified, when the rewrite is "" because repair found nothing
+    to keep, or is still not a sentence when sent again)."""
     if not sentences:
         return []
     verdicts = await ask(
@@ -353,11 +378,11 @@ async def checked(
         repaired = await ask(
             "repair",
             repair_request(document, indices, sentence, reason),
-            lambda content: _parse(_Repair, content),
+            _repair_parse(),
         )
         rewrite = repaired.sentence.strip()
         dropped = {"text": None, "original": sentence, "reason": reason, "rewrite": rewrite}
-        if not rewrite:
+        if not _is_sentence(rewrite):
             return {**dropped, "second_reason": None}
         ((ok, second_reason),) = await ask(
             "verify",
