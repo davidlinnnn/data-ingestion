@@ -225,17 +225,17 @@ async def test_the_record_keeps_skipped_sections_fates_and_usage(ports, runtime)
 
 
 async def test_an_unsupported_sentence_is_rewritten_with_the_judges_reason(ports, runtime):
-    transport = fake_llm(judge=lambda s: "glacier" not in s, rewrite=lambda s: "Ice moved.")
+    transport = fake_llm(judge=lambda s: "glacier" not in s, rewrite=lambda s: "Ice moved fast.")
 
     _, record, outcome = await summarized(ports, runtime, transport)
 
-    assert record["content"]["sections"][0]["sentences"] == [{"text": "Ice moved."}]
-    assert record["content"]["overview"][0]["text"] == "Ice moved."
+    assert record["content"]["sections"][0]["sentences"] == [{"text": "Ice moved fast."}]
+    assert record["content"]["overview"][0]["text"] == "Ice moved fast."
     (repair,) = [prompt(r) for r in transport.requests if step(r) == "repair"]
     assert f"<sentence>{INTRO}</sentence>" in repair and "<problem>judged 1</problem>" in repair
     detail = json.loads(await ports.store.get(outcome.ref.replace("outcome.json", "record.json")))
     assert detail["sections"][0]["fates"] == [
-        {"text": "Ice moved.", "original": INTRO, "reason": "judged 1"}
+        {"text": "Ice moved fast.", "original": INTRO, "reason": "judged 1"}
     ]
     assert record["signals"] == {"rewritten": 1, "dropped": 0}
 
@@ -254,7 +254,70 @@ async def test_a_sentence_still_unsupported_after_repair_is_dropped(ports, runti
                     "second_reason": "judged 1" if rewrite else None}  # fmt: skip
     # Two sections, one overview sentence, and the rewrite's verify unless it is empty.
     assert steps(transport).count("verify") == (4 if rewrite else 3)
+    assert steps(transport).count("repair") == 1  # "" without quotes is not sent again
     assert record["signals"] == {"rewritten": 0, "dropped": 1}
+
+
+def repairing(*answers: dict) -> FakeInference:
+    """The fake, judging only the Introduction's sentence unsupported, with answers as the repair
+    answers in turn."""
+    given = iter(answers)
+
+    def reply_to(request: dict):
+        if step(request) == "repair":
+            return reply(next(given))
+        return reply(answer(request, judge=lambda s: s != INTRO))
+
+    return FakeInference(reply_to)
+
+
+@pytest.mark.parametrize("degenerate", ["x", "0.93 0.95 0.97"])
+async def test_a_repair_that_is_not_a_sentence_is_resent_once(ports, runtime, degenerate):
+    transport = repairing({"quotes": [], "sentence": degenerate},
+                          {"quotes": [], "sentence": "Ice moved fast."})  # fmt: skip
+
+    _, record, _ = await summarized(ports, runtime, transport)
+
+    assert record["content"]["sections"][0]["sentences"] == [{"text": "Ice moved fast."}]
+    assert steps(transport).count("repair") == 2
+    receipts = [json.loads(await ports.store.get(k))
+                for k in await ports.store.list_prefix(f"{RECEIPTS}/c0")]  # fmt: skip
+    assert [(r["result"], r["reason"]) for r in receipts if r["result"] != "ok"] == [
+        ("invalid", "SCHEMA_INVALID")
+    ]
+
+
+async def test_a_repair_twice_not_a_sentence_is_dropped_without_a_verify(ports, runtime):
+    transport = repairing({"quotes": [], "sentence": "x"}, {"quotes": [], "sentence": "x"})
+
+    _, record, outcome = await summarized(ports, runtime, transport)
+
+    assert record["content"]["sections"][0]["sentences"] == []
+    detail = json.loads(await ports.store.get(outcome.ref.replace("outcome.json", "record.json")))
+    assert detail["sections"][0]["fates"] == [{"text": None, "original": INTRO,
+        "reason": "judged 1", "rewrite": "x", "second_reason": None}]  # fmt: skip
+    assert steps(transport).count("verify") == 3  # two sections and one overview sentence
+    assert record["signals"] == {"rewritten": 0, "dropped": 1}
+
+
+async def test_a_repair_with_quotes_but_no_sentence_is_resent_once(ports, runtime):
+    transport = repairing({"quotes": ["Line 1 reports"], "sentence": ""},
+                          {"quotes": [], "sentence": "Ice moved fast."})  # fmt: skip
+
+    _, record, _ = await summarized(ports, runtime, transport)
+
+    assert record["content"]["sections"][0]["sentences"] == [{"text": "Ice moved fast."}]
+    assert steps(transport).count("repair") == 2
+
+
+@pytest.mark.parametrize("sentence", ["冰川移動。", "Recall reached 0.93."])
+async def test_a_short_repair_is_a_sentence(ports, runtime, sentence):
+    transport = repairing({"quotes": [], "sentence": sentence})
+
+    _, record, _ = await summarized(ports, runtime, transport)
+
+    assert record["content"]["sections"][0]["sentences"] == [{"text": sentence}]
+    assert steps(transport).count("repair") == 1
 
 
 async def test_no_supported_sentence_fails_the_summary_without_a_reduce(ports, runtime):
