@@ -104,6 +104,8 @@ def merge(out: Path) -> None:
             assert v["sheet"] not in verdicts, f"{v['sheet']} judged twice"
             verdicts[v["sheet"]] = v
     assert sorted(verdicts) == sorted(key), f"unjudged: {sorted(set(key) - set(verdicts))}"
+    path = HERE / "rulings.json"
+    rulings = json.loads(path.read_text()) if path.exists() else {}
     judgments = {}
     for sheet, entry in key.items():
         answered = verdicts[sheet]["answers"]
@@ -118,12 +120,15 @@ def merge(out: Path) -> None:
             row |= {p: {"verdict": v["verdict"], "types": v["types"], "reason": v["reason"]}
                     for p in producers}  # fmt: skip
         assert sorted(row) == sorted(PRODUCERS), sheet
+        for p, ruling in rulings.get(entry["label"], {}).items():
+            row[p] = {**ruling, "judge": row[p]}
         judgments[entry["label"]] = {"sheet": sheet, **row}
     (HERE / "judgments.json").write_text(json.dumps(judgments, indent=1, ensure_ascii=False) + "\n")
     rng = random.Random(SEED)
-    official = sorted(judgments)
-    fails = [x for x in official if judgments[x]["cf-official"]["verdict"] == "FAIL"]
-    passes = [x for x in official if judgments[x]["cf-official"]["verdict"] == "PASS"]
+    # the sample comes from the judge's verdicts, so a user ruling never redraws it
+    judged = {x: row["cf-official"].get("judge", row["cf-official"]) for x, row in judgments.items()}
+    fails = [x for x in sorted(judged) if judged[x]["verdict"] == "FAIL"]
+    passes = [x for x in sorted(judged) if judged[x]["verdict"] == "PASS"]
     print("spot check:", rng.sample(fails, min(5, len(fails))) + rng.sample(passes, min(5, len(passes))))
     t4 = json.loads((T4 / "judgments.json").read_text())
     for label, row in sorted(judgments.items()):
