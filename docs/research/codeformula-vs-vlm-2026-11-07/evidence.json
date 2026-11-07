@@ -1,0 +1,182 @@
+{
+ "summary": {
+  "cf-official": {
+   "pass": 29,
+   "of": 45,
+   "wilson95": [
+    0.498,
+    0.768
+   ],
+   "fail": 16,
+   "unknown": 1,
+   "empty": 0,
+   "error_types": {
+    "missing": 5,
+    "symbol": 8,
+    "extra": 4,
+    "script": 6,
+    "letter-style": 1,
+    "structure": 2
+   }
+  },
+  "cf-same": {
+   "pass": 34,
+   "of": 45,
+   "wilson95": [
+    0.613,
+    0.858
+   ],
+   "fail": 11,
+   "unknown": 1,
+   "empty": 0,
+   "error_types": {
+    "missing": 5,
+    "symbol": 7,
+    "script": 4,
+    "letter-style": 1,
+    "letter-case": 1
+   }
+  },
+  "luna": {
+   "pass": 33,
+   "of": 45,
+   "wilson95": [
+    0.59,
+    0.84
+   ],
+   "fail": 12,
+   "unknown": 1,
+   "empty": 0,
+   "error_types": {
+    "letter-style": 4,
+    "symbol": 4,
+    "structure": 1,
+    "letter-case": 3,
+    "script": 3,
+    "extra": 1
+   }
+  },
+  "opus": {
+   "pass": 44,
+   "of": 45,
+   "wilson95": [
+    0.884,
+    0.996
+   ],
+   "fail": 1,
+   "unknown": 1,
+   "empty": 0,
+   "error_types": {
+    "script": 1
+   }
+  }
+ },
+ "paired": {
+  "cf-official vs luna": {
+   "only_first": 8,
+   "only_second": 12,
+   "sign_test_p": 0.5034
+  },
+  "cf-official vs opus": {
+   "only_first": 1,
+   "only_second": 16,
+   "sign_test_p": 0.0003
+  },
+  "cf-official vs cf-same": {
+   "only_first": 2,
+   "only_second": 7,
+   "sign_test_p": 0.1797
+  },
+  "cf-same vs luna": {
+   "only_first": 8,
+   "only_second": 7,
+   "sign_test_p": 1.0
+  },
+  "cf-same vs opus": {
+   "only_first": 1,
+   "only_second": 11,
+   "sign_test_p": 0.0063
+  }
+ },
+ "native_mismatch": {
+  "cf-official": {
+   "flagged": 15,
+   "flagged_and_fail": 11,
+   "flagged_and_pass": 3,
+   "fail": 16,
+   "fail_not_flagged": [
+    "p03-f030d77a2b50",
+    "p05-ec830981228e",
+    "p16-35fa058a6093",
+    "p19-b98e45926872",
+    "p20-7f6622236fe6"
+   ],
+   "pass_flagged": [
+    "p07-784358facac0",
+    "p17-6e6b97501efe",
+    "p18-e5976e29bae2"
+   ]
+  },
+  "cf-same": {
+   "flagged": 6,
+   "flagged_and_fail": 6,
+   "flagged_and_pass": 0,
+   "fail": 11,
+   "fail_not_flagged": [
+    "p03-f030d77a2b50",
+    "p07-920b7f2c1868",
+    "p13-9fe17f5b86ed",
+    "p16-35fa058a6093",
+    "p20-e5976e29bae2"
+   ],
+   "pass_flagged": []
+  },
+  "luna": {
+   "flagged": 6,
+   "flagged_and_fail": 5,
+   "flagged_and_pass": 1,
+   "fail": 12,
+   "fail_not_flagged": [
+    "p05-d6ee78e62e75",
+    "p09-39887459eddc",
+    "p11-12a068f1b41c",
+    "p14-668c1c3cb149",
+    "p17-ae7b5caad363",
+    "p17-d998fade34cb",
+    "p20-e5976e29bae2"
+   ],
+   "pass_flagged": [
+    "p19-4350684380ca"
+   ]
+  },
+  "opus": {
+   "flagged": 2,
+   "flagged_and_fail": 0,
+   "flagged_and_pass": 1,
+   "fail": 1,
+   "fail_not_flagged": [
+    "p11-12a068f1b41c"
+   ],
+   "pass_flagged": [
+    "p19-4350684380ca"
+   ]
+  }
+ },
+ "latency_cpu": {
+  "engine": "TransformersVlmEngine",
+  "device": "cpu",
+  "torch_threads": 4,
+  "official": {
+   "items": 46,
+   "median_s": 22.34,
+   "max_s": 31.33,
+   "total_s": 1113.0
+  },
+  "same": {
+   "items": 46,
+   "median_s": 22.73,
+   "max_s": 31.12,
+   "total_s": 1115.0
+  }
+ }
+}

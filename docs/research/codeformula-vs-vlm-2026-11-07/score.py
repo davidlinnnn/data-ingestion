@@ -155,9 +155,11 @@ def score(out: Path) -> None:
     given = answers()
     n = len(judgments)
     correct = {p: {x for x, row in judgments.items() if row[p]["verdict"] == "PASS"} for p in PRODUCERS}
-    summary = {p: {"pass": len(correct[p]), "of": n, "wilson95": wilson(len(correct[p]), n),
-                   **{v.lower(): sum(row[p]["verdict"] == v for row in judgments.values())
-                      for v in ("FAIL", "UNKNOWN", "EMPTY")},
+    counts = {p: Counter(row[p]["verdict"] for row in judgments.values()) for p in PRODUCERS}
+    # judging-rules.md: UNKNOWN counts against no producer, so it leaves the denominator
+    summary = {p: {"pass": len(correct[p]), "of": n - counts[p]["UNKNOWN"],
+                   "wilson95": wilson(len(correct[p]), n - counts[p]["UNKNOWN"]),
+                   **{v.lower(): counts[p][v] for v in ("FAIL", "UNKNOWN", "EMPTY")},
                    "error_types": dict(Counter(t for row in judgments.values() for t in row[p]["types"]))}
                for p in PRODUCERS}  # fmt: skip
     paired = {}
