@@ -5,9 +5,9 @@
   "questions.json": "449f1d8c5b7a6a65bbf2932919f030b8034b028696612937b38911c43480c0f3",
   "inputs.py": "fb2083dc03e974ebd370c81b2fb43664a0e5e8f7980583c47bcbf1f553208967",
   "review.py": "43c83fa1a7772f6c3f25b43c62a46158bf10f852a90c706d4a3e933f48ac28dd",
-  "run_d3.py": "e62a0229ab37d2b09949145867afa427bb7ab859a66e4420e36c3da4619dbb6c",
-  "router.py": "e0a140fa8c453a331db44270b964184ed37a0e7b761a7de7cc42e264c445ecf7",
-  "test_router.py": "6feb40741c683053937f6b379c02deb8dbcfde986516a2efe01e074757348303",
+  "run_d3.py": "d89f16b607c46b7a9609c5db48825cd3c64e2171645130d743754c42690b7660",
+  "router.py": "147dd6aa389eb3d98b47523a4905b954612ad42581540417327c34a10ebce172",
+  "test_router.py": "752e6e6885e75ad06e995a3cdfea0449c4b50ffff321d7ad1e4dbc95a29b9b02",
   "weights-d3-flash.json": "0dd4f71f19f4c5316fe4f49d3c561adb807c04a06f2cdc9edc547e84bb31c56a",
   "inputs-dev.json": "8740d4e9188d616e8d7ad8ca2a0e1426213d1ca5172b106d21b6acde1bedce74",
   "../d3-summary-router-2026-11-05/build_inputs.py": "6d82e88ead3dc21f1738c6d1e5e39847b3e21ccbf99aefee9bf2171d962bba7a",
@@ -30,6 +30,16 @@
    "date": "2026-11-08",
    "file": "inputs.py",
    "change": "heldout(): a dropped rewrite with no second_reason was never verified, so it adds no re-verify call (#164 drops a rewrite that is still not a sentence; the old rule counted a non-empty one); found by the verify-call assert on held-out paper 2, before any held-out d3 output"
+  },
+  {
+   "date": "2026-11-08",
+   "file": "router.py",
+   "change": "evaluate(): fold_resends() folds #164's repair resends (3 on held-out papers 2, 12, 15; their tokens kept) into the call counts #166's token model fits; found by fit_tokens' assert after the test run; touches the token model only, not the rule, threshold or labels"
+  },
+  {
+   "date": "2026-11-08",
+   "file": "run_d3.py",
+   "change": "explore run: held-out C, S, Q, E after metrics.json is committed; post hoc, not part of the registered result"
   }
  ],
  "review_answers_sha256": "121ab3edb86c24810b68790981faaaf627b0e93247259caddfc19af2048af5fc"

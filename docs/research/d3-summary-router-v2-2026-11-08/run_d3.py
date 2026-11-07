@@ -8,6 +8,8 @@ RUN is one of (freeze.md §5):
   test                heldout, every item, selection.json's questions and format; selection.json
                       and test-launch.json committed unchanged, test-launch naming selection's
                       hash and the held-out requests' hash
+  explore             heldout, every item, the questions test did not ask (C, S, Q, E), in the
+                      same format; after metrics.json is committed (post hoc, not registered)
 
 One request per evidence group (OUT/SPLIT/requests.json): the evidence once in state, one
 question per (sentence, question) with the sentence in its instructions. D3_PYTHON is the d3
@@ -36,7 +38,7 @@ import psutil
 
 HERE = Path(__file__).resolve().parent
 PORT = 8174
-RUNS = {"fmt-json": "dev", "fmt-text": "dev", "dev": "dev", "test": "heldout"}
+RUNS = {"fmt-json": "dev", "fmt-text": "dev", "dev": "dev", "test": "heldout", "explore": "heldout"}
 
 
 def sha(path: Path) -> str:
@@ -71,6 +73,9 @@ def plan(out: Path, run: str) -> tuple[str, list[str], set[str] | None]:
     assert launched["selection_sha256"] == sha(selection)
     assert launched["heldout_requests_sha256"] == sha(out / "heldout" / "requests.json")
     chosen = json.loads(selection.read_text())
+    if run == "explore":
+        assert committed(HERE / "metrics.json"), "the registered result must be committed first"
+        return chosen["format"], [q for q in "GCSQE" if q not in chosen["questions"]], None
     return chosen["format"], chosen["questions"], None
 
 

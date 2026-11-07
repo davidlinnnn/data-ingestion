@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from router import route_threshold, rule_score  # noqa: E402
+from router import fold_resends, route_threshold, rule_score  # noqa: E402
 
 
 def test_rule_scores():
@@ -23,3 +23,11 @@ def test_threshold_allows_misses():
 def test_threshold_counts_each_error():
     unit_min = {"a": 0.3, "b": 0.9}
     assert route_threshold(unit_min, ["b", "b"], 1) == 0.9  # two errors in b: skipping b loses both
+
+
+def test_fold_resends_keeps_tokens():
+    steps = {"1": {"repair": {"calls": 3, "prompt_tokens": 90}}, "2": {"verify": {"calls": 1}}}
+    units = [{"paper": 1, "repair_chars": [10, 20]}, {"paper": 2, "repair_chars": []}]
+    folded, resends = fold_resends(steps, units)
+    assert resends == {"1": 1} and folded["1"]["repair"] == {"calls": 2, "prompt_tokens": 90}
+    assert steps["1"]["repair"]["calls"] == 3  # the input is not changed

@@ -164,14 +164,29 @@ def launch(out: Path) -> None:
         "written": datetime.now(UTC).isoformat(timespec="seconds")})  # fmt: skip
 
 
+def fold_resends(steps: dict, units: list[dict]) -> tuple[dict, dict[str, int]]:
+    """#164 sends a degenerate repair answer once more: a repair call with no fate of its own.
+    Its tokens stay in the paper's repair totals; only the call count is folded into the fate's,
+    so #166's token model, which counts one repair call per repaired sentence, can be fitted."""
+    folded, resends = json.loads(json.dumps(steps)), {}
+    for p, s in folded.items():
+        fates = sum(len(u["repair_chars"]) for u in units if str(u["paper"]) == p)
+        if "repair" in s and s["repair"]["calls"] > fates:
+            resends[p] = s["repair"]["calls"] - fates
+            s["repair"]["calls"] = fates
+    return folded, resends
+
+
 def evaluate(out: Path) -> None:
     selection = json.loads((HERE / "selection.json").read_text())
     rule, t = selection["rule"], selection["t_route"]
     units, cases = load(out, "heldout", "units"), load(out, "heldout", "cases")
     confirmed = set(load(out, "heldout", "confirmed"))
     q = scores(out, "test")
-    fits = V1R.fit_tokens(load(out, "heldout", "steps"), units)
+    steps, resends = fold_resends(load(out, "heldout", "steps"), units)
+    fits = V1R.fit_tokens(steps, units)
     result = evaluate_rule(rule, t, q, units, cases, fits, confirmed)
+    result["repair_resends_folded"] = resends
     score = {i: rule_score(rule, v) for i, v in q.items()}
     items, labels, groups = labelled(cases, confirmed)
     result["auroc_all_bootstrap_by_unit"] = s153.bootstrap_auc(
