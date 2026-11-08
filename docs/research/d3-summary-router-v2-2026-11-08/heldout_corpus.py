@@ -124,7 +124,8 @@ def main(original: Path, out: Path, replace: tuple[int, str] | None = None) -> N
                                                           for s, c, q in STRATA],
          "papers": [{k: p[k] for k in ("index", "stratum", "arxiv", "version", "pages", "sha256")}
                     for p in papers],
-         "candidates": log}, indent=1) + "\n")  # fmt: skip
+         "candidates": [{k: v for k, v in c.items() if k != "title"} for c in log]},
+        indent=1) + "\n")  # fmt: skip
     print(json.dumps({"papers": len(papers), "candidates": len(log)}))
 
 
