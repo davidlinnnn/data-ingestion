@@ -2,7 +2,7 @@
 
 import pytest
 
-from kp_processing.status_rules import v1
+from kp_canonicalization.status_rules import v1
 
 
 def record(outcome="success", reason=None, contradictions=()):

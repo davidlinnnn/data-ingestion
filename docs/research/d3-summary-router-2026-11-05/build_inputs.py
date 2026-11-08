@@ -31,7 +31,7 @@ T5B = HERE.parents[1] / "validation/80/t5b-accuracy"
 sys.path.insert(0, str(T5B))
 import run as t5b  # noqa: E402
 
-from kp_processing.methods import document_summary as ds  # noqa: E402
+from kp_canonicalization.methods import document_summary as ds  # noqa: E402
 
 SEED = 166
 

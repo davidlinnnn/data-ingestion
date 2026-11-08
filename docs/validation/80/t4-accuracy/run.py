@@ -162,8 +162,8 @@ def anthropic_request(request: dict) -> dict:
 async def opus() -> None:
     import anthropic
 
-    from kp_processing.methods import InvalidOutput
-    from kp_processing.profile import load_profile
+    from kp_canonicalization.methods import InvalidOutput
+    from kp_canonicalization.profile import load_profile
 
     profile = load_profile(REPO / "tests/profiles/paper-pdf-dev.yaml")
     client = anthropic.AsyncAnthropic()
@@ -216,7 +216,7 @@ def answers(t: dict) -> dict[str, dict]:
 
 async def packet(out: Path) -> None:
     """Blind sheets: A/B order seeded per item; the key to unblind stays next to the sheets."""
-    from kp_processing.methods.formula import _crop
+    from kp_canonicalization.methods.formula import _crop
 
     out.mkdir(parents=True, exist_ok=True)
     gold_root = Path(os.environ["GOLD_ROOT"])

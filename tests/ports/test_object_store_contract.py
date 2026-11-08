@@ -8,7 +8,7 @@ import uuid
 import pytest
 from botocore.exceptions import ClientError
 
-from kp_processing.ports.object_store import (
+from kp_canonicalization.ports.object_store import (
     DictObjectStore,
     ObjectNotFound,
     ObjectStore,

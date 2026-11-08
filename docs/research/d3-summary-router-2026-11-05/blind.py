@@ -25,7 +25,7 @@ sys.path.insert(0, str(HERE))
 import router  # noqa: E402
 import score as s153  # noqa: E402
 
-from kp_processing.methods.document_summary import _titled_sections_xml  # noqa: E402
+from kp_canonicalization.methods.document_summary import _titled_sections_xml  # noqa: E402
 
 SAMPLE, PACKS, SEED = 60, 4, 166
 ARMS = {"marked": ("blind", "b", "blind-check.json"),

@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from kp_processing.stages import PrepareInput, ProcessingFailure, prepare
+from kp_canonicalization.stages import PrepareInput, ProcessingFailure, prepare
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 

@@ -8,8 +8,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-from kp_processing.ports.inference import Completion, FakeInference, completion
-from kp_processing.stages import (
+from kp_canonicalization.ports.inference import Completion, FakeInference, completion
+from kp_canonicalization.stages import (
     ChunkInput,
     EnrichInput,
     OutcomeRef,

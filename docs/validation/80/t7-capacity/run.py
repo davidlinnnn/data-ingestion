@@ -6,7 +6,7 @@ orchestration worker and three inference containers).
     env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t7-capacity/run.py kill CORPUS_MANIFEST INDEX
     env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t7-capacity/run.py v8 CORPUS_MANIFEST N1,N2,N3,N4,N5 LOW
 
-Needs the image `kp-processing:t7` (Dockerfile here), the S3 stand-in on port 9100, the
+Needs the image `kp-canonicalization:t7` (Dockerfile here), the S3 stand-in on port 9100, the
 `temporal` CLI and the weights under ~/models/docling. The stack is t5's on ports of its own
 (Temporal 7284, fake_admission 8121, VLM stand-in 8122, summary stand-in 8123, metrics
 9480-9491); it refuses to start when any is taken. Temporal runs with one task-queue
@@ -46,16 +46,16 @@ def load(name: str, path: Path):
 
 t5 = load("t5", HERE.parent / "t5-seam-b/run.py")
 t4, t2 = t5.t4, t5.t2
-from kp_processing.profile import PROFILES_DIR, load_profile  # noqa: E402
-from kp_processing.stages import enrichment_key, item_prefix  # noqa: E402
-from kp_processing.workflow import STAGE_DURATION  # noqa: E402
+from kp_canonicalization.profile import PROFILES_DIR, load_profile  # noqa: E402
+from kp_canonicalization.stages import enrichment_key, item_prefix  # noqa: E402
+from kp_canonicalization.workflow import STAGE_DURATION  # noqa: E402
 
 TEMPORAL_PORT, ADMISSION_PORT, VLM_PORT, SUMMARY_PORT = 7284, 8121, 8122, 8123
 METRICS = {"orchestration": 9480, "vlm": 9482, "summary": 9484}  # +1: the Temporal runtime's
 INFERENCE_METRICS = 9486  # inference container i: 9486 + 2i and 9487 + 2i
 t2.TEMPORAL, t2.ADMISSION = f"127.0.0.1:{TEMPORAL_PORT}", f"http://127.0.0.1:{ADMISSION_PORT}"
 t2.BASE_ENV.update(TEMPORAL_ADDRESS=t2.TEMPORAL, KP_ADMISSION_URL=t2.ADMISSION)
-IMAGE = "kp-processing:t7"
+IMAGE = "kp-canonicalization:t7"
 MODELS = Path.home() / "models/docling"
 CPUS, MEMORY_GIB = 4, 5
 GUARD_GIB = load_profile(PROFILES_DIR / "paper-pdf@1.yaml").runtime["memory_guard_gib"]
@@ -170,10 +170,10 @@ class Container:
 
 
 def scrape(port: int) -> list[str]:
-    """The kp_processing_* and temporal_* sample lines of one metrics endpoint."""
+    """The kp_canonicalization_* and temporal_* sample lines of one metrics endpoint."""
     with urllib.request.urlopen(f"http://127.0.0.1:{port}/metrics", timeout=5) as response:
         text = response.read().decode()
-    return [line for line in text.splitlines() if line.startswith(("kp_processing_", "temporal_"))]
+    return [line for line in text.splitlines() if line.startswith(("kp_canonicalization_", "temporal_"))]
 
 
 def metric_summary(lines: list[str]) -> dict[str, float]:

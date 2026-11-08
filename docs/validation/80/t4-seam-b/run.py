@@ -5,7 +5,7 @@ enrichment against the DEV reference model and against a 3-second stand-in.
         CORPUS_MANIFEST [INDEX]
 
 Same stack as #132's t3-seam-b/run.py (S3 stand-in on port 9100, Temporal dev server on 7244,
-fake_admission on 8091), plus a `kp-processing worker --queue vlm` subprocess. INDEX defaults to
+fake_admission on 8091), plus a `kp-canonicalization worker --queue vlm` subprocess. INDEX defaults to
 20, the paper with the most pictures in t3-seam-b/census.json. Only the 20 public corpus papers
 may be sent to the DEV model (#129).
 

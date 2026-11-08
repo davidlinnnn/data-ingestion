@@ -8,9 +8,9 @@ import json
 
 import pytest
 
-from kp_processing.methods import document_summary
-from kp_processing.ports.inference import FakeInference, ServiceUnavailable, completion
-from kp_processing.stages import (
+from kp_canonicalization.methods import document_summary
+from kp_canonicalization.ports.inference import FakeInference, ServiceUnavailable, completion
+from kp_canonicalization.stages import (
     ChunkInput,
     EnrichInput,
     OverviewInput,
@@ -20,7 +20,7 @@ from kp_processing.stages import (
     finalize,
     summary,
 )
-from kp_processing.stages.summary import NoAnswer
+from kp_canonicalization.stages.summary import NoAnswer
 from tests.pdfs import Page, write_pdf
 from tests.stages.conftest import with_runtime
 from tests.stages.test_enrich_local import native, records

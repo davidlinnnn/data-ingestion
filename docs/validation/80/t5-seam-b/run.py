@@ -5,7 +5,7 @@ VLM and the summary API both served by local stand-ins (no external request).
 
 Writes evidence-INDEX.json next to this file.
 
-Same stack as #133's t4-seam-b/run.py (S3 stand-in on port 9100), plus `kp-processing worker
+Same stack as #133's t4-seam-b/run.py (S3 stand-in on port 9100), plus `kp-canonicalization worker
 --queue summary`, on ports of its own (Temporal 7254, fake_admission 8101, VLM stand-in 8102,
 summary stand-in 8103): it refuses to start when any is taken, since workers on another
 session's Temporal would take that session's tasks. INDEX defaults to 20, the paper with

@@ -6,7 +6,7 @@ import json
 import pytest
 from docling.datamodel.base_models import FigureElement, PageConfidenceScores
 
-from kp_processing.methods.docling_parse.serialization import (
+from kp_canonicalization.methods.docling_parse.serialization import (
     Group,
     capture_page,
     group_json,
@@ -15,8 +15,8 @@ from kp_processing.methods.docling_parse.serialization import (
     restore_page,
     unpack_assembled,
 )
-from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.stages import (
+from kp_canonicalization.ports.object_store import DictObjectStore
+from kp_canonicalization.stages import (
     AssembleInput,
     GroupInput,
     InventoryInput,

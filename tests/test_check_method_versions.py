@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 SCRIPT = Path(__file__).parents[1] / "scripts/check-method-versions"
-PROFILE = "src/kp_processing/profiles/demo@1.yaml"
-FORMULA = "src/kp_processing/methods/formula/"
+PROFILE = "src/kp_canonicalization/profiles/demo@1.yaml"
+FORMULA = "src/kp_canonicalization/methods/formula/"
 
 
 def git(repo: Path, *args: str) -> None:
@@ -26,12 +26,14 @@ def repo(tmp_path: Path) -> Path:
     write(tmp_path, PROFILE, "profile: demo@1\nreleased: true\nmethods:\n  formula@1: {}\n")
     write(
         tmp_path,
-        "src/kp_processing/profiles/draft@1.yaml",
+        "src/kp_canonicalization/profiles/draft@1.yaml",
         "released: false\nmethods:\n  code@1: {}\n",
     )
     write(tmp_path, FORMULA + "__init__.py", 'ID = "formula"\nVERSION = 1\n')
     write(tmp_path, FORMULA + "prompt.txt", "Transcribe.\n")
-    write(tmp_path, "src/kp_processing/methods/code/__init__.py", 'ID = "code"\nVERSION = 1\n')
+    write(
+        tmp_path, "src/kp_canonicalization/methods/code/__init__.py", 'ID = "code"\nVERSION = 1\n'
+    )
     git(tmp_path, "add", "-A")
     git(tmp_path, "commit", "-q", "-m", "base")
     git(tmp_path, "checkout", "-q", "-b", "work")
@@ -78,7 +80,7 @@ def test_deleting_a_released_profile_fails(repo):
 def test_adding_a_new_profile_passes(repo):
     write(
         repo,
-        "src/kp_processing/profiles/demo@2.yaml",
+        "src/kp_canonicalization/profiles/demo@2.yaml",
         "profile: demo@2\nreleased: true\nmethods:\n  formula@1: {}\n",
     )
 
@@ -86,9 +88,11 @@ def test_adding_a_new_profile_passes(repo):
 
 
 def test_methods_and_profiles_still_in_draft_may_change(repo):
-    write(repo, "src/kp_processing/methods/code/extra.py", "X = 1\n")
+    write(repo, "src/kp_canonicalization/methods/code/extra.py", "X = 1\n")
     write(
-        repo, "src/kp_processing/profiles/draft@1.yaml", "released: true\nmethods:\n  code@1: {}\n"
+        repo,
+        "src/kp_canonicalization/profiles/draft@1.yaml",
+        "released: true\nmethods:\n  code@1: {}\n",
     )
 
     assert check(repo).returncode == 0

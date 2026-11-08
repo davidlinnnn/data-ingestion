@@ -55,10 +55,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/models/docling
-          key: models-${{ hashFiles('src/kp_processing/model-manifest.json') }}
+          key: models-${{ hashFiles('src/kp_canonicalization/model-manifest.json') }}
 
       - name: Fetch model weights
-        run: uv run scripts/fetch-models && git diff --exit-code src/kp_processing/model-manifest.json
+        run: uv run scripts/fetch-models && git diff --exit-code src/kp_canonicalization/model-manifest.json
 
       - name: Start the S3 stand-in
         run: docker compose -f tests/s3/compose.yaml up -d --wait

@@ -27,8 +27,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import run  # noqa: E402
 
-from kp_processing.ports.object_store import ObjectNotFound  # noqa: E402
-from kp_processing.stages import finalize  # noqa: E402
+from kp_canonicalization.ports.object_store import ObjectNotFound  # noqa: E402
+from kp_canonicalization.stages import finalize  # noqa: E402
 
 t2 = run.t2
 RECORDED = HERE / "recorded.json"

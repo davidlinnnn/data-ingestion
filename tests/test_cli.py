@@ -2,8 +2,8 @@ import json
 import logging
 import re
 
-from kp_processing.cli import JsonFormatter, main
-from kp_processing.profile import PROFILES_DIR
+from kp_canonicalization.cli import JsonFormatter, main
+from kp_canonicalization.profile import PROFILES_DIR
 
 
 def test_profile_prints_every_method_identity(capsys):
@@ -77,7 +77,9 @@ def test_worker_logs_are_json_lines_that_carry_the_request_id():
 
 
 def test_a_log_line_outside_an_activity_has_no_correlation_fields():
-    record = logging.LogRecord("kp_processing", logging.INFO, __file__, 1, "worker up", None, None)
+    record = logging.LogRecord(
+        "kp_canonicalization", logging.INFO, __file__, 1, "worker up", None, None
+    )
 
     assert set(json.loads(JsonFormatter().format(record))) == {"time", "level", "logger", "message"}
 

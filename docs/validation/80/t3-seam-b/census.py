@@ -15,7 +15,7 @@ from docling.datamodel.base_models import InputFormat
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 
-from kp_processing.methods.docling_parse.pipeline import options
+from kp_canonicalization.methods.docling_parse.pipeline import options
 
 manifest = Path(sys.argv[1])
 converter = DocumentConverter(

@@ -34,8 +34,8 @@ from pathlib import Path
 
 import httpx
 
-from kp_processing.methods import document_summary as ds
-from kp_processing.ports.inference import OpenAIChat
+from kp_canonicalization.methods import document_summary as ds
+from kp_canonicalization.ports.inference import OpenAIChat
 
 HERE = Path(__file__).resolve().parent
 SEED = 155

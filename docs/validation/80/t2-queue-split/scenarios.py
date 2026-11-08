@@ -4,7 +4,7 @@
 
 Same stack as ../t2-tracer-bullet/run.py (whose helpers it reuses): its own Temporal dev
 server, here with one read and one write partition per task queue, fake_admission, the
-RustFS S3 stand-in on port 9100, and every worker a `kp-processing worker --queue ...`
+RustFS S3 stand-in on port 9100, and every worker a `kp-canonicalization worker --queue ...`
 process. Each scenario runs in a fresh bucket so nothing is reused. Writes evidence.json
 next to this file; raw samples go to the log directory.
 """
@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "t2-tracer-bullet"))
 import run as seamb  # noqa: E402
 
-from kp_processing.cli import start_request  # noqa: E402
+from kp_canonicalization.cli import start_request  # noqa: E402
 
 INFERENCE = {"parse_group", "assemble"}
 PAPERS = [1, 2, 3, 4]  # corpus indices, 22-28 pages each

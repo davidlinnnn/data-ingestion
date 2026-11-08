@@ -10,8 +10,8 @@ import json
 import pytest
 from PIL import Image
 
-from kp_processing.identity import canonical_json
-from kp_processing.methods import InvalidOutput, InventoryItem, d3_check
+from kp_canonicalization.identity import canonical_json
+from kp_canonicalization.methods import InvalidOutput, InventoryItem, d3_check
 
 ITEM: InventoryItem = {
     "item_id": "d3-check:formula:#/texts/7",

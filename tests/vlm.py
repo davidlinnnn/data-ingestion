@@ -3,7 +3,7 @@
 import json
 from typing import Any
 
-from kp_processing.ports.inference import Completion, FakeInference, completion
+from kp_canonicalization.ports.inference import Completion, FakeInference, completion
 
 CANNED = {
     "picture-interpretation": {

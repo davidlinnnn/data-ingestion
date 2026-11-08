@@ -3,8 +3,8 @@
 import hashlib
 import json
 
-from kp_processing import weights
-from kp_processing.weights import problems
+from kp_canonicalization import weights
+from kp_canonicalization.weights import problems
 
 MANIFEST = {
     "layout@1": {"source": "test", "files": {

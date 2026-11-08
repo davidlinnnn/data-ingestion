@@ -13,7 +13,7 @@ import httpx
 import pytest
 from PIL import Image
 
-from kp_processing.ports.inference import (
+from kp_canonicalization.ports.inference import (
     Bounded,
     FakeInference,
     OpenAIChat,

@@ -14,18 +14,18 @@ import uuid
 import pytest
 from temporalio.client import Client
 
-from kp_processing.cli import start_request
-from kp_processing.ports.clock import SystemClock
-from kp_processing.ports.inference import FakeInference, completion
-from kp_processing.ports.status_reporter import (
+from kp_canonicalization.cli import start_request
+from kp_canonicalization.ports.clock import SystemClock
+from kp_canonicalization.ports.inference import FakeInference, completion
+from kp_canonicalization.ports.status_reporter import (
     Progress,
     RecordingStatusReporter,
     ReportOutcome,
     StatusReport,
 )
-from kp_processing.stages import Ports
-from kp_processing.worker import make_worker
-from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, activity_options, priority
+from kp_canonicalization.stages import Ports
+from kp_canonicalization.worker import make_worker
+from kp_canonicalization.workflow import ORCHESTRATION_QUEUE, WORKFLOW, activity_options, priority
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_check import checked_paper, without_check
@@ -306,7 +306,7 @@ async def test_processing_completes_while_the_report_receiver_is_down(client, po
 async def test_starting_the_same_request_twice_counts_as_success(
     client, monkeypatch, capsys, ports, runtime
 ):
-    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
     start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
     async with workers(client, ports, runtime):
@@ -324,7 +324,7 @@ async def test_starting_the_same_request_twice_counts_as_success(
 async def test_admission_priority_sets_the_temporal_priority_key(
     client, monkeypatch, ports, admission, key
 ):
-    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
     start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
     start["priority"] = admission
 
@@ -337,7 +337,7 @@ async def test_admission_priority_sets_the_temporal_priority_key(
 async def test_start_request_puts_the_correlation_ids_into_search_attributes(
     client, monkeypatch, ports
 ):
-    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
     start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
     assert await start_request(start, wait=False) == 0
@@ -448,7 +448,7 @@ async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
     async def broken(input, ports, runtime):
         raise RuntimeError("bug")
 
-    monkeypatch.setattr("kp_processing.stages.inventory.run", broken)
+    monkeypatch.setattr("kp_canonicalization.stages.inventory.run", broken)
     retry = {"initial_s": 1, "multiplier": 2, "cap_s": 1, "max_attempts": 1}
     runtime = with_runtime(
         runtime,
