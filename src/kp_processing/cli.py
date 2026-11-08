@@ -24,8 +24,15 @@ from typing import Any
 
 import httpx
 import prometheus_client
+import yaml
 from temporalio.client import Client, WorkflowFailureError
-from temporalio.common import SearchAttributePair, TypedSearchAttributes, WorkflowIDReusePolicy
+from temporalio.common import (
+    PinnedVersioningOverride,
+    SearchAttributePair,
+    TypedSearchAttributes,
+    WorkerDeploymentVersion,
+    WorkflowIDReusePolicy,
+)
 from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.runtime import PrometheusConfig, TelemetryConfig
 from temporalio.runtime import Runtime as TemporalRuntime
@@ -36,6 +43,7 @@ from kp_processing.ports.status_reporter import HttpStatusReporter
 from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
 from kp_processing.stages import Ports, Runtime, finalize
 from kp_processing.workflow import (
+    DEPLOYMENT,
     ORCHESTRATION_QUEUE,
     SEARCH_ATTRIBUTES,
     WORKFLOW,
@@ -54,14 +62,19 @@ def main(argv: list[str] | None = None) -> int:
     [--build-id ID] [--shutdown-grace-s S] [--metrics-port P] [--temporal-metrics-port Q]`:
     serve one task queue until SIGTERM or SIGINT, then stop polling and give running Activities
     S seconds (default 0) to finish before they are cancelled and retried elsewhere; keep S
-    below the pod's termination grace period. It refuses to start on a store without
+    below the pod's termination grace period. With --build-id the worker joins Worker
+    Deployment canonicalization as that build and its workflows stay Pinned to it; without, it is
+    unversioned and its results name build "dev". It refuses to start on a store without
     write-once. It logs JSON lines to stderr, serves kp_processing.metrics at
     http://0.0.0.0:P/metrics and the Temporal SDK's metrics, the status-stage durations
     included, at http://0.0.0.0:Q/metrics; each endpoint is off without its port.
 
-    `kp-processing start-request START.json [--wait]`: start the workflow for an admission
-    spec §10 start input, with the workflow ID set to its request_id. Starting a request
-    that already exists counts as success. --wait prints the workflow's outcome.
+    `kp-processing start-request START.json [--wait] [--builds MAP]`: start the workflow for an
+    admission spec §10 start input, with the workflow ID set to its request_id. Starting a
+    request that already exists counts as success. --wait prints the workflow's outcome.
+    --builds is the dispatcher's map, a yaml mapping of adopted_version to build ID: the
+    workflow starts Pinned to that build of canonicalization; an adopted_version the map lacks
+    exits 2 without starting. The server refuses a build until its workers have polled.
 
     `kp-processing list-service-unavailable`: one JSON line {"document_uid", "request_id"}
     per redrive marker, for #98's redrive; it does not check that the request is still its
@@ -76,13 +89,14 @@ def main(argv: list[str] | None = None) -> int:
         "--queue", choices=["orchestration", "inference", "vlm", "summary", "d3"], required=True
     )
     worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
-    worker.add_argument("--build-id", default="dev")
+    worker.add_argument("--build-id")
     worker.add_argument("--shutdown-grace-s", type=float, default=0)
     worker.add_argument("--metrics-port", type=int)
     worker.add_argument("--temporal-metrics-port", type=int)
     start = commands.add_parser("start-request")
     start.add_argument("start_input", type=Path)
     start.add_argument("--wait", action="store_true")
+    start.add_argument("--builds", type=Path)
     commands.add_parser("list-service-unavailable")
     args = parser.parse_args(argv)
 
@@ -98,7 +112,8 @@ def main(argv: list[str] | None = None) -> int:
             )  # fmt: skip
         )
     if args.command == "start-request":
-        return asyncio.run(start_request(json.loads(args.start_input.read_text()), args.wait))
+        start_input = json.loads(args.start_input.read_text())
+        return asyncio.run(start_request(start_input, args.wait, args.builds))
     if args.command == "list-service-unavailable":
         for marker in asyncio.run(finalize.service_unavailable(S3ObjectStore.from_env())):
             print(json.dumps(marker))
@@ -155,7 +170,7 @@ async def connect(runtime: TemporalRuntime | None = None) -> Client:
 async def run_worker(
     queue: Queue,
     profile_path: Path,
-    build_id: str,
+    build_id: str | None,
     shutdown_grace_s: float,
     metrics_port: int | None = None,
     temporal_metrics_port: int | None = None,
@@ -197,7 +212,7 @@ async def run_worker(
 
     store = S3ObjectStore.from_env()
     runtime = Runtime(
-        profile=load_profile(profile_path), build_id=build_id, custody_bucket=store.bucket
+        profile=load_profile(profile_path), build_id=build_id or "dev", custody_bucket=store.bucket
     )
     async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as external_http:
         # Only orchestration Activities send status reports, only vlm ones VLM requests, only
@@ -223,8 +238,10 @@ async def run_worker(
                            deadline["total"])  # fmt: skip
         ports = Ports(store, reporter, vlm=vlm, summary=summary, d3=d3)
         client = await connect(temporal_runtime)
-        worker = await make_worker(client, ports, runtime, queue, shutdown_grace_s)
-        print(f"worker {runtime.profile.id} build {build_id} on {worker.task_queue}",
+        worker = await make_worker(
+            client, ports, runtime, queue, shutdown_grace_s, versioned=build_id is not None
+        )
+        print(f"worker {runtime.profile.id} build {runtime.build_id} on {worker.task_queue}",
               flush=True)  # fmt: skip
         stop = asyncio.Event()
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -237,7 +254,14 @@ async def run_worker(
     os._exit(0)
 
 
-async def start_request(start: dict[str, Any], wait: bool) -> int:
+async def start_request(start: dict[str, Any], wait: bool, builds: Path | None = None) -> int:
+    override = None
+    if builds is not None:
+        build_id = (yaml.safe_load(builds.read_text()) or {}).get(start.get("adopted_version"))
+        if not isinstance(build_id, str):
+            print(f"{builds} maps no build for {start.get('adopted_version')}", file=sys.stderr)
+            return 2
+        override = PinnedVersioningOverride(WorkerDeploymentVersion(DEPLOYMENT, build_id))
     client = await connect()
     request_id = start["request_id"]
     try:
@@ -255,6 +279,7 @@ async def start_request(start: dict[str, Any], wait: bool) -> int:
                 ]
             ),
             id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
+            versioning_override=override,
         )
         print(f"started {request_id}")
     except WorkflowAlreadyStartedError:

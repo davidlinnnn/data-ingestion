@@ -52,8 +52,7 @@ class Stack:
     async def worker(self, bucket: str, name: str, queue: str, *extra: str) -> subprocess.Popen:
         log = seamb.LOGS / f"worker-{name}-{queue}.log"
         proc = subprocess.Popen(
-            [*seamb.CLI, "worker", "--queue", queue, "--profile", seamb.PROFILE,
-             "--build-id", "queues-r1", *extra],
+            [*seamb.CLI, "worker", "--queue", queue, "--profile", seamb.PROFILE, *extra],
             env=seamb.env(bucket), stdout=open(log, "w"), stderr=subprocess.STDOUT,
             cwd=seamb.REPO,
         )  # fmt: skip

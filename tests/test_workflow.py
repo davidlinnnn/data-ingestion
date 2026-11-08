@@ -12,7 +12,13 @@ import logging
 import uuid
 
 import pytest
+from temporalio.api.workflowservice.v1 import (
+    DescribeWorkerDeploymentVersionRequest,
+    SetWorkerDeploymentCurrentVersionRequest,
+)
 from temporalio.client import Client
+from temporalio.common import WorkerDeploymentVersion
+from temporalio.service import RPCError
 
 from kp_processing.cli import start_request
 from kp_processing.ports.clock import SystemClock
@@ -25,7 +31,13 @@ from kp_processing.ports.status_reporter import (
 )
 from kp_processing.stages import Ports
 from kp_processing.worker import make_worker
-from kp_processing.workflow import ORCHESTRATION_QUEUE, WORKFLOW, activity_options, priority
+from kp_processing.workflow import (
+    DEPLOYMENT,
+    ORCHESTRATION_QUEUE,
+    WORKFLOW,
+    activity_options,
+    priority,
+)
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_check import checked_paper, without_check
@@ -34,16 +46,16 @@ from tests.stages.test_parse import seven_pages
 pytestmark = pytest.mark.network
 
 
+QUEUES = ("orchestration", "inference", "vlm", "summary", "d3")
+
+
 @contextlib.asynccontextmanager
-async def workers(client: Client, ports: Ports, runtime):
+async def workers(client: Client, ports: Ports, runtime, versioned: bool = False):
     """One worker per task queue, as the deployments run them."""
-    async with (
-        await make_worker(client, ports, runtime, "orchestration"),
-        await make_worker(client, ports, runtime, "inference"),
-        await make_worker(client, ports, runtime, "vlm"),
-        await make_worker(client, ports, runtime, "summary"),
-        await make_worker(client, ports, runtime, "d3"),
-    ):
+    async with contextlib.AsyncExitStack() as stack:
+        for queue in QUEUES:
+            worker = await make_worker(client, ports, runtime, queue, versioned=versioned)
+            await stack.enter_async_context(worker)
         yield
 
 
@@ -361,6 +373,86 @@ async def test_prepare_logs_the_correlation_ids_once(client, ports, runtime, cap
         (start["request_id"], {"document_uid": "doc_1", "source_revision_id": "srv_1",
                                "trace_id": "4bf92f3577b34da6"}),
     ]  # fmt: skip
+
+
+async def test_a_request_runs_on_the_build_its_adopted_version_maps_to_not_the_current_one(
+    client, monkeypatch, ports, runtime, tmp_path
+):
+    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    old, new = (dataclasses.replace(runtime, build_id=b) for b in ("pdf-1-r1", "pdf-1-r2"))
+    builds = tmp_path / "builds.yaml"
+    builds.write_text("paper-pdf@1: pdf-1-r2\n")
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    async with (
+        workers(client, ports, old, versioned=True),
+        workers(client, ports, new, versioned=True),
+    ):
+        await registered(client, "pdf-1-r1", "pdf-1-r2")
+        await client.workflow_service.set_worker_deployment_current_version(
+            SetWorkerDeploymentCurrentVersionRequest(
+                namespace=client.namespace, deployment_name=DEPLOYMENT, build_id="pdf-1-r1"
+            )
+        )
+        assert await start_request(start, wait=True, builds=builds) == 0
+
+    result = json.loads(await ports.store.get(f"requests/{start['request_id']}/result.json"))
+    assert result["profile"]["runtime_identity"]["build_id"] == "pdf-1-r2"
+
+
+async def test_a_map_that_names_another_profiles_build_fails_the_request_with_integrity(
+    client, monkeypatch, ports, runtime, tmp_path
+):
+    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    other = dataclasses.replace(runtime.profile, id="paper-pdf@2")
+    build = dataclasses.replace(runtime, profile=other, build_id="pdf-2-r1")
+    builds = tmp_path / "builds.yaml"
+    builds.write_text("paper-pdf@1: pdf-2-r1\n")
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    async with workers(client, ports, build, versioned=True):
+        await registered(client, "pdf-2-r1")
+        assert await start_request(start, wait=True, builds=builds) == 0
+
+    failure = json.loads(await ports.store.get(f"requests/{start['request_id']}/failure.json"))
+    assert failure["error"]["metadata"]["category"] == "integrity"
+    assert failure["error"]["reason"] == "ADOPTED_VERSION_MISMATCH"
+
+
+async def test_an_adopted_version_the_map_lacks_starts_nothing(
+    client, monkeypatch, capsys, ports, tmp_path
+):
+    monkeypatch.setattr("kp_processing.cli.connect", lambda: _resolved(client))
+    builds = tmp_path / "builds.yaml"
+    builds.write_text("paper-pdf@2: pdf-2-r1\n")
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    assert await start_request(start, wait=False, builds=builds) == 2
+
+    assert "maps no build for paper-pdf@1" in capsys.readouterr().err
+    with pytest.raises(RPCError, match="not found"):
+        await client.get_workflow_handle(start["request_id"]).describe()
+
+
+async def registered(client: Client, *build_ids: str) -> None:
+    """Wait until each build's workers have joined the deployment on every task queue: until
+    then the server refuses a start pinned to it."""
+    for build_id in build_ids:
+        request = DescribeWorkerDeploymentVersionRequest(
+            namespace=client.namespace,
+            deployment_version=WorkerDeploymentVersion(DEPLOYMENT, build_id)._to_proto(),
+        )
+        for _ in range(100):
+            with contextlib.suppress(RPCError):
+                described = await client.workflow_service.describe_worker_deployment_version(
+                    request
+                )
+                infos = described.worker_deployment_version_info.task_queue_infos
+                if {info.name for info in infos} >= set(QUEUES):
+                    break
+            await asyncio.sleep(0.1)
+        else:
+            raise TimeoutError(f"build {build_id} did not join every task queue")
 
 
 async def _resolved(value):
