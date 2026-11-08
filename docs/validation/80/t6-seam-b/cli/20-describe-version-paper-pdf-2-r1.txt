@@ -1,0 +1,43 @@
+$ temporal worker deployment describe-version --deployment-name canonicalization --build-id paper-pdf-2-r1 -o json
+# exit 0
+{
+  "deploymentName": "canonicalization",
+  "BuildID": "paper-pdf-2-r1",
+  "createTime": "2026-11-08T12:11:09.67572Z",
+  "routingChangedTime": "1970-01-01T00:00:00Z",
+  "currentSinceTime": "1970-01-01T00:00:00Z",
+  "rampingSinceTime": "1970-01-01T00:00:00Z",
+  "rampPercentage": 0,
+  "drainageInfo": {
+    "drainageStatus": "",
+    "lastChangedTime": "0001-01-01T00:00:00Z",
+    "lastCheckedTime": "0001-01-01T00:00:00Z"
+  },
+  "taskQueuesInfos": [
+    {
+      "name": "vlm",
+      "type": "activity"
+    },
+    {
+      "name": "inference",
+      "type": "activity"
+    },
+    {
+      "name": "summary",
+      "type": "activity"
+    },
+    {
+      "name": "orchestration",
+      "type": "activity"
+    },
+    {
+      "name": "orchestration",
+      "type": "workflow"
+    },
+    {
+      "name": "d3",
+      "type": "activity"
+    }
+  ],
+  "metadata": null
+}

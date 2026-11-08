@@ -17,8 +17,8 @@ dispatcher stand-in. Profiles, both DEV (tests/profiles/paper-pdf-dev.yaml) with
 The dev server refreshes drainage and forgets pollers after seconds instead of minutes.
 
 Steps (cli/ keeps each temporal CLI output, evidence.json the checks):
-  1  build paper-pdf-1-r1 (A): a start pinned to it before its workers polled is refused; it
-     joins the deployment on its four queues; set-current-version makes it current
+  1  a start pinned to paper-pdf-1-r1 before that build exists is refused; the build (A) then
+     joins the deployment on its four queues and set-current-version makes it current
   2  R1 pinned to 1-r1 by the map: the paper is processed, on 1-r1 only
   3  R2 resubmission (new request, new source revision) and R3 redrive (operator, same
      revision): no inference request, every parse group, the assembly, the inventory and every
@@ -26,14 +26,15 @@ Steps (cli/ keeps each temporal CLI output, evidence.json the checks):
   4  build paper-pdf-1-r2 (A, a patch) beside 1-r1, which stays current: R4 pinned to 1-r2 by
      the new map and R5 pinned to 1-r1 by the old one run at once, each on its own build
   5  retire 1-r1: current moves to 1-r2; with 1-r1's inference worker stopped, R6 pinned to
-     1-r1 stays open; visibility counts it while the version's drainage status is read; the
-     worker returns, R6 completes on 1-r1, visibility counts 0, 1-r1's workers stop and its
-     version is deleted
+     1-r1 stays open (its parse waits for 1-r1 instead of running on the current build);
+     visibility counts it while the version's drainage status is read; the worker returns, R6
+     completes on 1-r1, visibility counts 0, 1-r1's workers stop and its version is deleted
   6  build paper-pdf-2-r1 (B) on five queues; a map that sends paper-pdf@1 to it fails R7
      with integrity (ADOPTED_VERSION_MISMATCH)
   7  R8, the refresh of the document under paper-pdf@2: only d3-check@1 runs (one d3 request
-     per check item, no VLM or summary request, parse reused); the result's profile section
-     names paper-pdf@2 and d3-check@1 with its module digest; 2-r1 becomes current
+     per check item, no VLM or summary request, parse reused) and the inventory is rebuilt,
+     because its key holds the profile id; the result's profile section names paper-pdf@2
+     and d3-check@1 with its module digest; 2-r1 becomes current
 The paper stays out of git; evidence keeps counts, IDs and statuses only.
 """
 
@@ -101,7 +102,7 @@ class Summary(t5c.Summary):
 class D3(t5c.StandIn):
     def answer(self, request: dict) -> bytes:
         CALLS["d3"] += 1
-        return system_one(request, 0.99).body.encode()
+        return system_one(request, 0.99).body
 
 
 def redact(text: str) -> str:
@@ -325,9 +326,10 @@ async def main(manifest: Path, index: int) -> int:
         assert client is not None
 
         # 1. the first build
-        up("paper-pdf-1-r1", profile_a, QUEUES_A)
+        # Started before the build's workers exist, so the refusal does not race their start-up.
         early = start(bucket, request("early"), {"paper-pdf@1": "paper-pdf-1-r1"}, wait=False)
         early_out = early.communicate()[0]
+        up("paper-pdf-1-r1", profile_a, QUEUES_A)
         joined_r1 = joined("paper-pdf-1-r1", QUEUES_A)
         temporal("set-current-1-r1", "worker", "deployment", "set-current-version",
                  "--deployment-name", DEPLOYMENT, "--build-id", "paper-pdf-1-r1", "--yes")  # fmt: skip
@@ -433,6 +435,7 @@ async def main(manifest: Path, index: int) -> int:
         evidence["5"]["pass"] = (
             evidence["5"]["open_while_r6"] == 1 and evidence["5"]["open_after_r6"] == 0
             and r6_done["build_id"] == "paper-pdf-1-r1" and all_reused(r6_done)
+            and r6_done["activity_builds"] == ["paper-pdf-1-r1"]  # waited; no hop to current
             and deleted is not None
         )  # fmt: skip
 
@@ -463,9 +466,10 @@ async def main(manifest: Path, index: int) -> int:
             r8["outcome"] == "complete" and r8["build_id"] == "paper-pdf-2-r1"
             and r8["profile"] == "paper-pdf@2" and CHECK in r8["profile_methods"]
             and r8["stand_in_calls"] == {"d3": checks} and checks > 0
-            and r8["receipts"] == {CHECK: checks} and r8["item_folders_added"] == checks
+            and r8["receipts"] == {CHECK: checks}
+            and r8["item_folders_added"] == checks + 1  # the checks and the new inventory
             and r8["objects_added_outside_items"] == 0
-            and r8["fresh_activities"] == ["check"]
+            and r8["fresh_activities"] == ["check", "inventory"]
             and r8["enrichments_reused"] == r8["enrichments"] > 0
         )  # fmt: skip
     finally:

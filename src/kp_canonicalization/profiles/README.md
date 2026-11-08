@@ -50,8 +50,10 @@ parameters; CI rule 1 refuses method changes.
      --profile src/kp_canonicalization/profiles/paper-pdf@<N+1>.yaml --build-id paper-pdf-<N+1>-r1
    ```
 
-   The workers must cover every queue. An Activity sent to a queue that the pinned build does
-   not poll runs on that queue's current version, so it would run on another build.
+   The workers must cover every queue. An Activity sent to a queue that the pinned build has
+   never polled runs on that queue's current version, so it would run on another build. Once
+   the build has polled a queue, its Activities there wait for it, even while none of its
+   workers is up.
 2. Wait until the version lists every queue. Until a build's workers have polled, the server
    refuses a start pinned to it (`Pinned version 'canonicalization:<build>' is not present in
    task queue ...`).
