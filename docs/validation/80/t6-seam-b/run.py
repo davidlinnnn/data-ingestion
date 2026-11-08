@@ -11,7 +11,8 @@ stand-in is the DEV fake and the d3 stand-in answers every question with 0.99.
 
 Every build is a set of `kp-canonicalization worker --build-id B` processes, one per task queue, in
 Worker Deployment canonicalization; every request goes through `start-request --builds MAP`, the
-dispatcher stand-in. Profiles, both DEV (tests/profiles/paper-pdf-dev.yaml) with another id:
+dispatcher stand-in. Processing Profiles, both DEV (tests/profiles/paper-pdf-dev.yaml) with
+another id:
   A  paper-pdf@1: the DEV profile without d3-check@1 (no d3 queue)
   B  paper-pdf@2: the DEV profile, so A plus d3-check@1: the rehearsal of adding a method
 The dev server refreshes drainage and forgets pollers after seconds instead of minutes.
@@ -19,22 +20,26 @@ The dev server refreshes drainage and forgets pollers after seconds instead of m
 Steps (cli/ keeps each temporal CLI output, evidence.json the checks):
   1  a start pinned to paper-pdf-1-r1 before that build exists is refused; the build (A) then
      joins the deployment on its four queues and set-current-version makes it current
-  2  R1 pinned to 1-r1 by the map: the paper is processed, on 1-r1 only
+  2  R1 pinned to 1-r1 by the map: the paper is processed, on 1-r1 only, and yields an
+     enrichment of every kind, so the later reuse checks cannot pass on a kind it lacks
   3  R2 resubmission (new request, new source revision) and R3 redrive (operator, same
      revision): no inference request, every parse group, the assembly, the inventory and every
      enrichment reused, nothing new under documents/
   4  build paper-pdf-1-r2 (A, a patch) beside 1-r1, which stays current: R4 pinned to 1-r2 by
      the new map and R5 pinned to 1-r1 by the old one run at once, each on its own build
-  5  retire 1-r1: current moves to 1-r2; with 1-r1's inference worker stopped, R6 pinned to
-     1-r1 stays open (its parse waits for 1-r1 instead of running on the current build);
-     visibility counts it while the version's drainage status is read; the worker returns, R6
-     completes on 1-r1, visibility counts 0, 1-r1's workers stop and its version is deleted
+  5  retire 1-r1: current moves to 1-r2, whose delete is refused; with 1-r1's inference worker
+     stopped, R6 pinned to 1-r1 stays open (its parse waits for 1-r1 instead of running on the
+     current build); visibility counts it, its version reads draining and its delete is refused;
+     the worker returns, R6 completes on 1-r1, visibility counts 0, the version reads drained,
+     1-r1's workers stop and its version is deleted after refusals for recent pollers
   6  build paper-pdf-2-r1 (B) on five queues; a map that sends paper-pdf@1 to it fails R7
      with integrity (ADOPTED_VERSION_MISMATCH)
   7  R8, the refresh of the document under paper-pdf@2: only d3-check@1 runs (one d3 request
      per check item, no VLM or summary request, parse reused) and the inventory is rebuilt,
      because its key holds the profile id; the result's profile section names paper-pdf@2
      and d3-check@1 with its module digest; 2-r1 becomes current
+  8  R9, a resubmission under paper-pdf@2: nothing is computed, the check items included
+  9  which build IDs and deployment names a worker can join with (`-`, `@`, `.`, `/`)
 The paper stays out of git; evidence keeps counts, IDs and statuses only.
 """
 
@@ -48,10 +53,14 @@ import subprocess
 import sys
 import time
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 import yaml
+from temporalio import activity
 from temporalio.client import Client
+from temporalio.common import WorkerDeploymentVersion
+from temporalio.worker import Worker, WorkerDeploymentConfig
 
 from kp_canonicalization.workflow import DEPLOYMENT
 
@@ -82,6 +91,15 @@ SERVICES = {
 QUEUES_A = ("orchestration", "inference", "vlm", "summary")
 QUEUES_B = (*QUEUES_A, "d3")
 CHECK = "d3-check@1"
+STEPS = ("1", "2", "3", "4", "5", "6", "7", "8", "9")
+# The Activities every complete request runs, whether they compute or reuse.
+EVERY_REQUEST = {"parse_group", "assemble", "inventory", "summary_sections", "enrich_local",
+                 "enrich_vlm"}  # fmt: skip
+KINDS = {"picture-ocr", "picture-interpretation", "formula", "code", "table-status",
+         "document-summary"}  # fmt: skip
+# (deployment, build ID, whether the server lists the version); the last is the SDK's split at `.`
+NAMES = (("names-probe", "a-1", True), ("names-probe", "a@1", True), ("names-probe", "a.1", True),
+         ("names-probe", "a/1", True), ("names.probe", "a-1", False))  # fmt: skip
 CALLS: Counter = Counter()  # requests each stand-in answered
 CLI_OUT = HERE / "cli"
 REDACT = {socket.gethostname(): "<host>", getpass.getuser(): "<user>"}
@@ -220,8 +238,8 @@ async def observe(client, store, start_input, code, output, before, calls, begin
     ran = await activities(client, request_id, pids) if code == 0 else []
     _, described = temporal(f"describe-{request_id}", "workflow", "describe", "--workflow-id",
                             request_id, "-o", "json", check=False)  # fmt: skip
-    versioning = (json.loads(described).get("workflowExecutionInfo", {})
-                  .get("versioningInfo") if described.startswith("{") else None)  # fmt: skip
+    info = (json.loads(described).get("workflowExecutionInfo", {})
+            if described.startswith("{") else {})  # fmt: skip
     (t2.LOGS / f"result-{request_id}.json").write_text(json.dumps(result, indent=2))
     enrichments = result.get("enrichments", [])
     return {
@@ -229,6 +247,8 @@ async def observe(client, store, start_input, code, output, before, calls, begin
         "exit": code,
         "output": redact(output.strip().splitlines()[-1]) if output.strip() else "",
         "seconds": round(time.monotonic() - begin, 1),
+        "started": info.get("startTime"),
+        "closed": info.get("closeTime"),
         "outcome": result.get("outcome") or result["kind"],
         "reason": (result.get("error") or {}).get("reason"),
         "category": ((result.get("error") or {}).get("metadata") or {}).get("category"),
@@ -236,7 +256,7 @@ async def observe(client, store, start_input, code, output, before, calls, begin
         "profile": result.get("profile", {}).get("id"),
         "profile_methods": {f"{m['id']}@{m['version']}": m["module_digest"]
                             for m in result.get("profile", {}).get("methods", [])},
-        "versioning_info": versioning,
+        "versioning_info": info.get("versioningInfo"),
         "stand_in_calls": dict(CALLS - calls),
         "receipts": dict(Counter(r["method"] for r in await t4.receipts(store, request_id))),
         "activity_builds": sorted({a["build"] for a in ran}),
@@ -245,6 +265,7 @@ async def observe(client, store, start_input, code, output, before, calls, begin
                                     if a["reused"] and not all(a["reused"])}),
         "enrichments": len(enrichments),
         "enrichments_reused": sum(e["reused"] for e in enrichments),
+        "enrichment_methods": dict(Counter(e["method_ref"]["id"] for e in enrichments)),
         "item_folders_added": len({k.split("/")[3] for k in added if "/items/" in k}),
         "objects_added_outside_items": sum("/items/" not in k for k in added),
     }  # fmt: skip
@@ -254,10 +275,46 @@ def all_reused(c: dict) -> bool:
     """Nothing was computed: no inference request and no fresh Activity or registered item."""
     return (
         c["outcome"] == "complete" and c["stand_in_calls"] == {} and c["receipts"] == {}
-        and c["fresh_activities"] == [] and c["activities"].get("parse_group", 0) > 0
+        and c["fresh_activities"] == [] and EVERY_REQUEST <= set(c["activities"])
         and c["enrichments_reused"] == c["enrichments"] > 0
         and c["item_folders_added"] == c["objects_added_outside_items"] == 0
     )  # fmt: skip
+
+
+def pinned_to(c: dict, build_id: str) -> bool:
+    """The workflow carries a Pinned override to the build."""
+    override = (c["versioning_info"] or {}).get("versioningOverride", {})
+    return override.get("pinned", {}).get("version", {}).get("buildId") == build_id
+
+
+def instant(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def overlap_s(a: dict, b: dict) -> float:
+    """How long two requests' workflows ran at once, by the server's times; negative when apart."""
+    latest_start = max(instant(a["started"]), instant(b["started"]))
+    earliest_close = min(instant(a["closed"]), instant(b["closed"]))
+    return (earliest_close - latest_start).total_seconds()
+
+
+@activity.defn
+async def noop() -> None:
+    pass
+
+
+async def listed(client: Client, deployment: str, build_id: str) -> dict:
+    """Whether a worker can join with this version: the server lists its task queue."""
+    queue = "names-probe"
+    config = WorkerDeploymentConfig(WorkerDeploymentVersion(deployment, build_id),
+                                    use_worker_versioning=True)  # fmt: skip
+    STEP["names"] += 1
+    async with Worker(client, task_queue=queue, activities=[noop], deployment_config=config):
+        await asyncio.sleep(2)
+        code, out = temporal(f"describe-version-name-{STEP['names']}", "worker", "deployment",
+                             "describe-version", "--deployment-name", deployment, "--build-id",
+                             build_id, "-o", "json", check=False)  # fmt: skip
+    return {"deployment": deployment, "build_id": build_id, "listed": code == 0 and queue in out}
 
 
 def stop(processes) -> None:
@@ -350,8 +407,10 @@ async def main(manifest: Path, index: int) -> int:
         r1 = evidence["2"] = await case(client, store, bucket, request("r1"), old_map, pids, uid)
         r1["pass"] = (
             r1["outcome"] == "complete" and r1["build_id"] == "paper-pdf-1-r1"
-            and r1["activity_builds"] == ["paper-pdf-1-r1"]
-            and r1["stand_in_calls"].get("vlm", 0) > 0 and r1["item_folders_added"] > 0
+            and r1["activity_builds"] == ["paper-pdf-1-r1"] and pinned_to(r1, "paper-pdf-1-r1")
+            and r1["stand_in_calls"].get("vlm", 0) > 0
+            and r1["stand_in_calls"].get("summary", 0) > 0
+            and r1["item_folders_added"] > 0 and KINDS <= set(r1["enrichment_methods"])
         )  # fmt: skip
 
         # 3. resubmission and redrive
@@ -360,7 +419,9 @@ async def main(manifest: Path, index: int) -> int:
         r3 = await case(client, store, bucket, request("r3", initiator="operator"), old_map, pids,
                         uid)  # fmt: skip
         evidence["3"] = {"resubmission": r2, "redrive": r3,
-                         "pass": all_reused(r2) and all_reused(r3)}  # fmt: skip
+                         "pass": all_reused(r2) and all_reused(r3)
+                         and r2["enrichment_methods"] == r3["enrichment_methods"]
+                         == r1["enrichment_methods"]}  # fmt: skip
 
         # 4. a patch build beside the current one
         up("paper-pdf-1-r2", profile_a, QUEUES_A)
@@ -375,17 +436,21 @@ async def main(manifest: Path, index: int) -> int:
                   for s, out, code in outputs]  # fmt: skip
         _, deployment = temporal("describe-deployment-2", "worker", "deployment", "describe",
                                  "--name", DEPLOYMENT, "-o", "json")  # fmt: skip
-        evidence["4"] = {"r4": r4, "r5": r5}
+        evidence["4"] = {"r4": r4, "r5": r5, "overlap_s": round(overlap_s(r4, r5), 3)}
         evidence["4"]["pass"] = (
             r4["build_id"] == "paper-pdf-1-r2" and r4["activity_builds"] == ["paper-pdf-1-r2"]
             and r5["build_id"] == "paper-pdf-1-r1" and r5["activity_builds"] == ["paper-pdf-1-r1"]
-            and all_reused(r4) and all_reused(r5)
+            and pinned_to(r4, "paper-pdf-1-r2") and pinned_to(r5, "paper-pdf-1-r1")
+            and all_reused(r4) and all_reused(r5) and evidence["4"]["overlap_s"] > 0
             and json.loads(deployment)["routingConfig"]["currentVersionBuildID"] == "paper-pdf-1-r1"
         )  # fmt: skip
 
         # 5. retire 1-r1
         temporal("set-current-1-r2", "worker", "deployment", "set-current-version",
                  "--deployment-name", DEPLOYMENT, "--build-id", "paper-pdf-1-r2", "--yes")  # fmt: skip
+        delete_current, _ = temporal("delete-version-current-1-r2", "worker", "deployment",
+                                     "delete-version", "--deployment-name", DEPLOYMENT,
+                                     "--build-id", "paper-pdf-1-r2", check=False)  # fmt: skip
         stop([builds["paper-pdf-1-r1"].pop("inference")])
         r6_start = request("r6")
         r6_calls, r6_begin = Counter(CALLS), time.monotonic()
@@ -399,6 +464,9 @@ async def main(manifest: Path, index: int) -> int:
         _, draining = temporal("describe-version-1-r1-while-r6", "worker", "deployment",
                                "describe-version", "--deployment-name", DEPLOYMENT,
                                "--build-id", "paper-pdf-1-r1", "-o", "json")  # fmt: skip
+        delete_draining, _ = temporal("delete-version-1-r1-while-r6", "worker", "deployment",
+                                      "delete-version", "--deployment-name", DEPLOYMENT,
+                                      "--build-id", "paper-pdf-1-r1", check=False)  # fmt: skip
         restarted = build(bucket, "paper-pdf-1-r1", profile_a, ("inference",))
         builds["paper-pdf-1-r1"] |= restarted
         pids.update({p.pid: "paper-pdf-1-r1" for p in restarted.values()})
@@ -430,13 +498,19 @@ async def main(manifest: Path, index: int) -> int:
             "r6": r6_done,
             "open_after_r6": int(json.loads(closed_count).get("count", 0)),
             "drainage_after_r6": json.loads(drained)["drainageInfo"]["drainageStatus"],
+            "delete_current_exit": delete_current,
+            "delete_while_draining_exit": delete_draining,
             "deleted": deleted,
         }
         evidence["5"]["pass"] = (
             evidence["5"]["open_while_r6"] == 1 and evidence["5"]["open_after_r6"] == 0
             and r6_done["build_id"] == "paper-pdf-1-r1" and all_reused(r6_done)
             and r6_done["activity_builds"] == ["paper-pdf-1-r1"]  # waited; no hop to current
-            and deleted is not None
+            and pinned_to(r6_done, "paper-pdf-1-r1")
+            and evidence["5"]["drainage_while_r6"] == "draining"
+            and evidence["5"]["drainage_after_r6"] == "drained"
+            and delete_current != 0 and delete_draining != 0
+            and deleted is not None and deleted["attempts"] > 1  # refused for recent pollers first
         )  # fmt: skip
 
         # 6. a profile that adds a method, and a map that names the wrong build
@@ -447,7 +521,8 @@ async def main(manifest: Path, index: int) -> int:
         r7["pass"] = (
             r7["outcome"] == "failure" and r7["category"] == "integrity"
             and r7["reason"] == "ADOPTED_VERSION_MISMATCH" and r7["stand_in_calls"] == {}
-            and r7["item_folders_added"] == 0
+            and r7["item_folders_added"] == 0 and r7["activity_builds"] == ["paper-pdf-2-r1"]
+            and pinned_to(r7, "paper-pdf-2-r1")
         )  # fmt: skip
 
         # 7. the refresh under paper-pdf@2
@@ -464,6 +539,7 @@ async def main(manifest: Path, index: int) -> int:
         checks = r8["receipts"].get(CHECK, 0)
         r8["pass"] = (
             r8["outcome"] == "complete" and r8["build_id"] == "paper-pdf-2-r1"
+            and r8["activity_builds"] == ["paper-pdf-2-r1"] and pinned_to(r8, "paper-pdf-2-r1")
             and r8["profile"] == "paper-pdf@2" and CHECK in r8["profile_methods"]
             and r8["stand_in_calls"] == {"d3": checks} and checks > 0
             and r8["receipts"] == {CHECK: checks}
@@ -471,7 +547,26 @@ async def main(manifest: Path, index: int) -> int:
             and r8["objects_added_outside_items"] == 0
             and r8["fresh_activities"] == ["check", "inventory"]
             and r8["enrichments_reused"] == r8["enrichments"] > 0
+            and r8["enrichment_methods"] == r1["enrichment_methods"]
         )  # fmt: skip
+
+        # 8. a resubmission under paper-pdf@2
+        r9 = evidence["8"] = await case(
+            client, store, bucket,
+            request("r9", source_revision_id="srv_3", adopted_version="paper-pdf@2",
+                    adoption_sequence=2),
+            both_maps, pids, uid,
+        )  # fmt: skip
+        r9["pass"] = (
+            all_reused(r9) and r9["activities"].get("check", 0) > 0
+            and r9["build_id"] == "paper-pdf-2-r1" and r9["activity_builds"] == ["paper-pdf-2-r1"]
+            and pinned_to(r9, "paper-pdf-2-r1")
+        )  # fmt: skip
+
+        # 9. the names a worker can join with
+        names = [await listed(client, deployment, build_id) for deployment, build_id, _ in NAMES]
+        evidence["9"] = {"names": names,
+                         "pass": [n["listed"] for n in names] == [n[2] for n in NAMES]}  # fmt: skip
     finally:
         stop([p for b in builds.values() for p in b.values()])
         stop([admission, server])
@@ -479,11 +574,10 @@ async def main(manifest: Path, index: int) -> int:
             s.shutdown()
 
     (HERE / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
-    failed = [step for step, value in evidence.items() if isinstance(value, dict)
-              and "pass" in value and not value["pass"]]  # fmt: skip
+    failed = [step for step in STEPS if not evidence.get(step, {}).get("pass")]
     print("failed:", failed or "none", flush=True)
     return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main(Path(sys.argv[1]), int(sys.argv[2]) if len(sys.argv) > 2 else 8)))
+    sys.exit(asyncio.run(main(Path(sys.argv[1]), int(sys.argv[2]) if len(sys.argv) > 2 else 7)))

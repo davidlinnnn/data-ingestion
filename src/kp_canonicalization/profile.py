@@ -127,8 +127,9 @@ def load_profile(path: Path) -> ProcessingProfile:
     Raises ProfileError when a required key (profile, status_rule, methods, limitations,
     runtime) is missing, a methods key is not `<id>@<int>`, a method's package
     (kp_canonicalization.methods.<id with _>) does not exist, or the package's ID or VERSION
-    differs from the listed `<id>@<version>`, a method's service is not one of SERVICES, or a
-    REQUIRED_RUNTIME key is missing or not a number.
+    differs from the listed `<id>@<version>`, a method's service is not one of SERVICES, a
+    REQUIRED_RUNTIME key is missing or not a number, or a Quality Check judges a listed method
+    at other versions only.
     `released` defaults to False.
     """
     try:
@@ -175,6 +176,11 @@ def load_profile(path: Path) -> ProcessingProfile:
             if method.service not in (None, *SERVICES):
                 raise ProfileError(f"{path}: {ref} calls undeclared service {method.service!r}")
             methods[method_id] = method
+        for check in methods.values():
+            judged_ids = {ref.split("@")[0] for ref in check.checks}
+            for method in methods.values():
+                if method.id in judged_ids and method.ref not in check.checks:
+                    raise ProfileError(f"{path}: {check.ref} has no check for {method.ref}")
         return ProcessingProfile(
             id=data["profile"],
             released=data.get("released", False),

@@ -1,17 +1,17 @@
-$ temporal worker deployment describe-version --deployment-name canonicalization --build-id paper-pdf-2-r1 -o json
+$ temporal worker deployment describe-version --deployment-name canonicalization --build-id paper-pdf-1-r1 -o json
 # exit 0
 {
   "deploymentName": "canonicalization",
-  "BuildID": "paper-pdf-2-r1",
-  "createTime": "2026-11-08T12:11:09.67572Z",
-  "routingChangedTime": "1970-01-01T00:00:00Z",
+  "BuildID": "paper-pdf-1-r1",
+  "createTime": "2026-11-08T13:26:01.236661Z",
+  "routingChangedTime": "2026-11-08T13:26:21.382241Z",
   "currentSinceTime": "1970-01-01T00:00:00Z",
   "rampingSinceTime": "1970-01-01T00:00:00Z",
   "rampPercentage": 0,
   "drainageInfo": {
-    "drainageStatus": "",
-    "lastChangedTime": "0001-01-01T00:00:00Z",
-    "lastCheckedTime": "0001-01-01T00:00:00Z"
+    "drainageStatus": "draining",
+    "lastChangedTime": "2026-11-08T13:26:22.30902Z",
+    "lastCheckedTime": "2026-11-08T13:26:30.395367Z"
   },
   "taskQueuesInfos": [
     {
@@ -19,15 +19,11 @@ $ temporal worker deployment describe-version --deployment-name canonicalization
       "type": "activity"
     },
     {
-      "name": "inference",
-      "type": "activity"
-    },
-    {
       "name": "summary",
       "type": "activity"
     },
     {
-      "name": "orchestration",
+      "name": "inference",
       "type": "activity"
     },
     {
@@ -35,7 +31,7 @@ $ temporal worker deployment describe-version --deployment-name canonicalization
       "type": "workflow"
     },
     {
-      "name": "d3",
+      "name": "orchestration",
       "type": "activity"
     }
   ],

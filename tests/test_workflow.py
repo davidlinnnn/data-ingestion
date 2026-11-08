@@ -12,12 +12,12 @@ import logging
 import uuid
 
 import pytest
+from temporalio.api.deployment.v1 import WorkerDeploymentVersion
 from temporalio.api.workflowservice.v1 import (
     DescribeWorkerDeploymentVersionRequest,
     SetWorkerDeploymentCurrentVersionRequest,
 )
 from temporalio.client import Client
-from temporalio.common import WorkerDeploymentVersion
 from temporalio.service import RPCError
 
 from kp_canonicalization.cli import start_request
@@ -400,7 +400,7 @@ async def test_a_request_runs_on_the_build_its_adopted_version_maps_to_not_the_c
     assert result["profile"]["runtime_identity"]["build_id"] == "pdf-1-r2"
 
 
-async def test_a_map_that_names_another_profiles_build_fails_the_request_with_integrity(
+async def test_a_map_that_names_another_processing_profiles_build_fails_the_request_with_integrity(
     client, monkeypatch, ports, runtime, tmp_path
 ):
     monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
@@ -440,7 +440,9 @@ async def registered(client: Client, *build_ids: str) -> None:
     for build_id in build_ids:
         request = DescribeWorkerDeploymentVersionRequest(
             namespace=client.namespace,
-            deployment_version=WorkerDeploymentVersion(DEPLOYMENT, build_id)._to_proto(),
+            deployment_version=WorkerDeploymentVersion(
+                deployment_name=DEPLOYMENT, build_id=build_id
+            ),
         )
         for _ in range(100):
             with contextlib.suppress(RPCError):

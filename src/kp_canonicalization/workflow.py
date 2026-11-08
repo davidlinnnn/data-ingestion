@@ -52,9 +52,7 @@ VLM_QUEUE = "vlm"
 SUMMARY_QUEUE = "summary"
 D3_QUEUE = "d3"
 Queue = Literal["orchestration", "inference", "vlm", "summary", "d3"]
-# The Worker Deployment of every build (#135), named after the layer's work as the namespace
-# is. The current version is kept per task queue, so pipelines that share the queues share one
-# deployment; a build ID names its profile and patch.
+# One Worker Deployment (#135): the current version is per queue, and pipelines share queues.
 DEPLOYMENT = "canonicalization"
 
 

@@ -89,6 +89,12 @@ def test_a_method_without_a_package_refuses_to_load(tmp_path):
         load_profile(variant(tmp_path, "table-status@1:", "document-category@1:"))
 
 
+def test_a_quality_check_lacking_a_listed_methods_version_refuses_to_load(tmp_path, monkeypatch):
+    monkeypatch.setattr("kp_canonicalization.methods.formula.VERSION", 2)
+    with pytest.raises(ProfileError, match="d3-check@1 has no check for formula@2"):
+        load_profile(variant(tmp_path, "formula@1:", "formula@2:"))
+
+
 def test_a_malformed_method_key_refuses_to_load(tmp_path):
     with pytest.raises(ProfileError, match="expected <id>@<int>"):
         load_profile(variant(tmp_path, "formula@1:", "formula:"))

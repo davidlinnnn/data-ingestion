@@ -1,0 +1,161 @@
+$ temporal workflow describe --workflow-id req_501b11_r2 -o json
+# exit 0
+{
+  "closeEvent": {
+    "eventId": "134",
+    "eventTime": "2026-11-08T13:26:16.699730Z",
+    "eventType": "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED",
+    "taskId": "1050002",
+    "workflowExecutionCompletedEventAttributes": {
+      "result": [
+        {
+          "manifest_ref": "requests/req_501b11_r2/result.json",
+          "outcome": "complete"
+        }
+      ],
+      "workflowTaskCompletedEventId": "133"
+    }
+  },
+  "executionConfig": {
+    "defaultWorkflowTaskTimeout": "10s",
+    "taskQueue": {
+      "kind": "TASK_QUEUE_KIND_NORMAL",
+      "name": "orchestration"
+    }
+  },
+  "result": {
+    "manifest_ref": "requests/req_501b11_r2/result.json",
+    "outcome": "complete"
+  },
+  "workflowExecutionInfo": {
+    "autoResetPoints": {
+      "points": [
+        {
+          "buildId": "paper-pdf-1-r1",
+          "createTime": "2026-11-08T13:26:16.242253Z",
+          "firstWorkflowTaskCompletedId": "4",
+          "resettable": true,
+          "runId": "01a1bb56-95aa-791f-9201-bbc56e4813ec"
+        }
+      ]
+    },
+    "closeTime": "2026-11-08T13:26:16.699730Z",
+    "execution": {
+      "runId": "01a1bb56-95aa-791f-9201-bbc56e4813ec",
+      "workflowId": "req_501b11_r2"
+    },
+    "executionDuration": "0.465132s",
+    "executionTime": "2026-11-08T13:26:16.234598Z",
+    "firstRunId": "01a1bb56-95aa-791f-9201-bbc56e4813ec",
+    "historyLength": "134",
+    "historySizeBytes": "42335",
+    "memo": {},
+    "mostRecentWorkerVersionStamp": {
+      "buildId": "paper-pdf-1-r1"
+    },
+    "priority": {
+      "priorityKey": 2
+    },
+    "rootExecution": {
+      "runId": "01a1bb56-95aa-791f-9201-bbc56e4813ec",
+      "workflowId": "req_501b11_r2"
+    },
+    "searchAttributes": {
+      "indexedFields": {
+        "BuildIds": {
+          "data": "WyJwaW5uZWQ6Y2Fub25pY2FsaXphdGlvbjpwYXBlci1wZGYtMS1yMSIsInVudmVyc2lvbmVkOnBhcGVyLXBkZi0xLXIxIl0=",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZExpc3Q="
+          }
+        },
+        "DocumentUid": {
+          "data": "ImRvY185Nzc4MWI4MmVkNDNhMzMwIg==",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZA=="
+          }
+        },
+        "SourceRevisionId": {
+          "data": "InNydl8yIg==",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZA=="
+          }
+        },
+        "TemporalUsedWorkerDeploymentVersions": {
+          "data": "WyJjYW5vbmljYWxpemF0aW9uOnBhcGVyLXBkZi0xLXIxIl0=",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZExpc3Q="
+          }
+        },
+        "TemporalWorkerDeployment": {
+          "data": "ImNhbm9uaWNhbGl6YXRpb24i",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZA=="
+          }
+        },
+        "TemporalWorkerDeploymentVersion": {
+          "data": "ImNhbm9uaWNhbGl6YXRpb246cGFwZXItcGRmLTEtcjEi",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZA=="
+          }
+        },
+        "TemporalWorkflowVersioningBehavior": {
+          "data": "IlBpbm5lZCI=",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZA=="
+          }
+        },
+        "TraceId": {
+          "data": "Ijk3NzgxYjgyZWQ0M2EzMzAi",
+          "metadata": {
+            "encoding": "anNvbi9wbGFpbg==",
+            "type": "S2V5d29yZA=="
+          }
+        }
+      }
+    },
+    "startTime": "2026-11-08T13:26:16.234598Z",
+    "stateTransitionCount": "108",
+    "status": "WORKFLOW_EXECUTION_STATUS_COMPLETED",
+    "taskQueue": "orchestration",
+    "type": {
+      "name": "paper-pdf"
+    },
+    "versioningInfo": {
+      "behavior": "VERSIONING_BEHAVIOR_PINNED",
+      "deploymentVersion": {
+        "buildId": "paper-pdf-1-r1",
+        "deploymentName": "canonicalization"
+      },
+      "version": "canonicalization.paper-pdf-1-r1",
+      "versioningOverride": {
+        "behavior": "VERSIONING_BEHAVIOR_PINNED",
+        "pinned": {
+          "behavior": "PINNED_OVERRIDE_BEHAVIOR_PINNED",
+          "version": {
+            "buildId": "paper-pdf-1-r1",
+            "deploymentName": "canonicalization"
+          }
+        },
+        "pinnedVersion": "canonicalization.paper-pdf-1-r1"
+      }
+    },
+    "workerDeploymentName": "canonicalization"
+  },
+  "workflowExtendedInfo": {
+    "originalStartTime": "2026-11-08T13:26:16.234598Z",
+    "requestIdInfos": {
+      "07751884-cd43-4cbb-9cf0-f5e188ba812c": {
+        "eventId": "1",
+        "eventType": "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED"
+      }
+    },
+    "runExpirationTime": "0001-01-01T00:00:00Z"
+  }
+}
