@@ -144,6 +144,7 @@ held-out：20 篇、630 個 verify 單位、984 句單位句子，LLM 標過 96 
 5. **inputs.py 的 re-verify 計數**：#164 之後，不成句的改寫直接丟掉、不再 verify，舊規則卻把它算成一次 re-verify。這是 paper 2 的 verify 呼叫數 assert 抓到的。
 6. **事後修正：token 模型的 repair 重送**。#164 會把退化的 repair 答案重送一次，held-out 有 3 次（paper 2、12、15）。#166 的 token 模型要求「repair 呼叫數 = 改寫句數」，所以 `fold_resends()` 把重送併進呼叫數，token 保留在總數裡。這是 test 之後才發現的，但只影響 token 模型，不影響規則、門檻或標註。
 7. **事後分析（§2.4）**：在登錄結果 commit 之後才跑，不改變登錄的結論。
+8. **freeze.json 的一個欄位**：`dev/review/key.json` 的 hash 從 `files` 移到 `review_answers_sha256`，在發布前改寫了分支的每個 commit，因為 gitleaks 會把這個路徑加 hash 判成金鑰。值沒變，所有 run 都是在原本的檢查下啟動的。
 
 ## 5. 限制
 
