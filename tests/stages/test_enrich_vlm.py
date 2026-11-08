@@ -20,15 +20,15 @@ import httpx
 import pytest
 from PIL import Image
 
-from kp_processing.methods import (
+from kp_canonicalization.methods import (
     InvalidOutput,
     InventoryItem,
     code,
     formula,
     picture_interpretation,
 )
-from kp_processing.ports.clock import FakeClock
-from kp_processing.ports.inference import (
+from kp_canonicalization.ports.clock import FakeClock
+from kp_canonicalization.ports.inference import (
     Completion,
     FakeInference,
     OpenAIChat,
@@ -36,9 +36,9 @@ from kp_processing.ports.inference import (
     ServiceUnavailable,
     completion,
 )
-from kp_processing.ports.object_store import DictObjectStore, S3ObjectStore
-from kp_processing.profile import ProcessingProfile
-from kp_processing.stages import (
+from kp_canonicalization.ports.object_store import DictObjectStore, S3ObjectStore
+from kp_canonicalization.profile import ProcessingProfile
+from kp_canonicalization.stages import (
     EnrichInput,
     FinalizeInput,
     InventoryRef,

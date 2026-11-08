@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 
-from kp_processing.ports.status_reporter import (
+from kp_canonicalization.ports.status_reporter import (
     HttpStatusReporter,
     Position,
     Progress,

@@ -42,16 +42,16 @@ def delta(before: dict[tuple, float], after: dict[tuple, float]) -> dict[tuple, 
 
 async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runtime):
     names = [
-        "kp_processing_stage_duration_seconds_count",
-        "kp_processing_stage_work_total",
-        "kp_processing_item_outcomes_total",
-        "kp_processing_document_outcomes_total",
-        "kp_processing_queue_age_seconds_count",
-        "kp_processing_external_requests_total",
-        "kp_processing_external_request_duration_seconds_count",
-        "kp_processing_external_tokens_total",
-        "kp_processing_item_attempts_count",
-        "kp_processing_item_attempts_sum",
+        "kp_canonicalization_stage_duration_seconds_count",
+        "kp_canonicalization_stage_work_total",
+        "kp_canonicalization_item_outcomes_total",
+        "kp_canonicalization_document_outcomes_total",
+        "kp_canonicalization_queue_age_seconds_count",
+        "kp_canonicalization_external_requests_total",
+        "kp_canonicalization_external_request_duration_seconds_count",
+        "kp_canonicalization_external_tokens_total",
+        "kp_canonicalization_item_attempts_count",
+        "kp_canonicalization_item_attempts_sum",
     ]
     before = {name: samples(name) for name in names}
     start = await start_input(ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}")
@@ -65,7 +65,7 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     normal = ("tier", "normal")
 
     # prepare and finalize are status stages, timed by the workflow instead.
-    assert d["kp_processing_stage_duration_seconds_count"] == {
+    assert d["kp_canonicalization_stage_duration_seconds_count"] == {
         (("stage", "parse_group"), normal): 2,
         (("stage", "assemble"), normal): 1,
         (("stage", "inventory"), normal): 1,
@@ -77,11 +77,11 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
         (("stage", "check"), normal): 1,
         (("stage", "report"), normal): 10,
     }
-    work = d["kp_processing_stage_work_total"]
+    work = d["kp_canonicalization_stage_work_total"]
     assert work[(("stage", "parse_group"), normal)] == 7
     enriched = ("enrich_", "summary_overview")  # the summary's one item
     assert sum(v for k, v in work.items() if k[0][1].startswith(enriched)) == items
-    outcomes = d["kp_processing_item_outcomes_total"]
+    outcomes = d["kp_canonicalization_item_outcomes_total"]
     # The Quality Check's judgements are counted besides the enrichments, under its own method.
     judged = sum("d3" in e["signals"] for e in result["enrichments"])
     of_check = {k: v for k, v in outcomes.items() if k[0] == ("method", "d3-check@1")}
@@ -90,8 +90,10 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     assert work[(("stage", "check"), normal)] == judged
     assert outcomes[(("method", "picture-ocr@1"), ("reason", "NO_TEXT"),
                      ("status", "unverified"))] == 2  # fmt: skip
-    assert d["kp_processing_document_outcomes_total"] == {(("outcome", "complete"), normal): 1}
-    assert d["kp_processing_queue_age_seconds_count"] == {
+    assert d["kp_canonicalization_document_outcomes_total"] == {
+        (("outcome", "complete"), normal): 1
+    }
+    assert d["kp_canonicalization_queue_age_seconds_count"] == {
         (("task_queue", "orchestration"), normal): ORCHESTRATION_ACTIVITIES,
         (("task_queue", "inference"), normal): INFERENCE_ACTIVITIES,
         (("task_queue", "vlm"), normal): 1,
@@ -102,37 +104,41 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     # (docling reads sections 1 and 7 as empty; page 6 has no text layer): one map, four
     # verify, one reduce and four overview verify; one d3 request per judged item. All answered
     # at the first send.
-    assert d["kp_processing_external_requests_total"] == {
+    assert d["kp_canonicalization_external_requests_total"] == {
         (("outcome", "ok"), ("reason", ""), ("service", "vlm")): 2,
         (("outcome", "ok"), ("reason", ""), ("service", "summary")): 10,
         (("outcome", "ok"), ("reason", ""), ("service", "d3")): judged,
     }
-    assert d["kp_processing_external_request_duration_seconds_count"] == {
+    assert d["kp_canonicalization_external_request_duration_seconds_count"] == {
         (("service", "vlm"),): 2,
         (("service", "summary"),): 10,
         (("service", "d3"),): judged,
     }
     # System One reports input_tokens and output_tokens: 591 and 0 from the d3 fake.
-    tokens = d["kp_processing_external_tokens_total"]
+    tokens = d["kp_canonicalization_external_tokens_total"]
     assert tokens[(("direction", "input"), ("service", "d3"))] == 591 * judged
     assert (
-        d["kp_processing_external_tokens_total"][(("direction", "input"), ("service", "vlm"))] == 2
+        d["kp_canonicalization_external_tokens_total"][(("direction", "input"), ("service", "vlm"))]
+        == 2
     )
     assert (
-        d["kp_processing_external_tokens_total"][(("direction", "output"), ("service", "vlm"))] == 2
+        d["kp_canonicalization_external_tokens_total"][
+            (("direction", "output"), ("service", "vlm"))
+        ]
+        == 2
     )
-    assert d["kp_processing_item_attempts_count"] == {
+    assert d["kp_canonicalization_item_attempts_count"] == {
         (("service", "vlm"),): 2,
         (("service", "d3"),): judged,
     }
-    assert d["kp_processing_item_attempts_sum"] == {
+    assert d["kp_canonicalization_item_attempts_sum"] == {
         (("service", "vlm"),): 2,
         (("service", "d3"),): judged,
     }
 
 
 async def test_a_failed_document_counts_as_failed(client, ports, runtime):
-    before = sample("kp_processing_document_outcomes_total", outcome="failed", tier="normal")
+    before = sample("kp_canonicalization_document_outcomes_total", outcome="failed", tier="normal")
     start = await start_input(
         ports, encrypt(write_pdf(paper(2))), request_id=f"req_{uuid.uuid4().hex[:8]}"
     )
@@ -140,7 +146,7 @@ async def test_a_failed_document_counts_as_failed(client, ports, runtime):
     outcome, _ = await process(client, ports, runtime, start)
 
     assert outcome["outcome"] == "failed"
-    after = sample("kp_processing_document_outcomes_total", outcome="failed", tier="normal")
+    after = sample("kp_canonicalization_document_outcomes_total", outcome="failed", tier="normal")
     assert after - before == 1
 
 
@@ -149,7 +155,7 @@ async def test_a_low_priority_request_is_measured_as_bulk_and_its_status_stages_
 ):
     buffer = MetricBuffer(100_000)  # the SDK's own metrics share it
     temporal = Runtime(telemetry=TelemetryConfig(metrics=buffer))
-    before = sample("kp_processing_document_outcomes_total", outcome="complete", tier="bulk")
+    before = sample("kp_canonicalization_document_outcomes_total", outcome="complete", tier="bulk")
     start = await start_input(
         ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}", priority="low"
     )
@@ -159,12 +165,12 @@ async def test_a_low_priority_request_is_measured_as_bulk_and_its_status_stages_
         outcome, _ = await process(env.client, ports, runtime, start)
 
     assert outcome["outcome"] == "complete"
-    after = sample("kp_processing_document_outcomes_total", outcome="complete", tier="bulk")
+    after = sample("kp_canonicalization_document_outcomes_total", outcome="complete", tier="bulk")
     assert after - before == 1
     stages = [
         (u.attributes["stage"], u.attributes["tier"], u.value)
         for u in buffer.retrieve_updates()
-        if u.metric.name == "kp_processing_stage_duration_seconds"
+        if u.metric.name == "kp_canonicalization_stage_duration_seconds"
     ]
     assert [(stage, tier) for stage, tier, _ in stages] == [
         ("prepare", "bulk"), ("parse", "bulk"), ("enrich", "bulk"), ("finalize", "bulk"),

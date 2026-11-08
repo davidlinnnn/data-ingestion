@@ -39,9 +39,9 @@ from pathlib import Path
 
 import httpx
 
-from kp_processing.identity import canonical_json
-from kp_processing.methods import InventoryItem, d3_check
-from kp_processing.ports.inference import SystemOne
+from kp_canonicalization.identity import canonical_json
+from kp_canonicalization.methods import InventoryItem, d3_check
+from kp_canonicalization.ports.inference import SystemOne
 
 HERE = Path(__file__).resolve().parent
 TAG = "refs/tags/research/153-d3-quality-check:docs/research/d3-quality-check-2026-11-02"

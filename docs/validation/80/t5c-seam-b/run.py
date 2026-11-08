@@ -73,7 +73,7 @@ t4, t2 = t5.t4, t5.t2
 sys.path.insert(0, str(HERE))
 import against_153  # noqa: E402
 
-from kp_processing.identity import canonical_json  # noqa: E402
+from kp_canonicalization.identity import canonical_json  # noqa: E402
 from tests import summary as dev_summary  # noqa: E402
 from tests.vlm import canned, schema_name  # noqa: E402
 
@@ -126,7 +126,7 @@ def worker(bucket: str, name: str, queue: str, profile: Path, extra: dict,
     env = {**t2.env(bucket), **extra}
     cli = t2.CLI
     if tree is not None:
-        cli = [str(t2.REPO / ".venv/bin/python"), "-m", "kp_processing.cli"]
+        cli = [str(t2.REPO / ".venv/bin/python"), "-m", "kp_canonicalization.cli"]
         env["PYTHONPATH"] = str(tree / "src")
     return subprocess.Popen(
         [*cli, "worker", "--queue", queue, "--profile", str(profile), "--build-id", "seamb-r1"],

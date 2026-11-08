@@ -192,7 +192,7 @@ Operator alerts (metrics only, no `attention[]` — workflow v2 Q15):
 - daily aggregate token consumption approaches the granted quota;
 - queue age p95 over threshold per task queue (backlog forming);
 - any Quality Check judgement that did not run (#161), with
-  `X = kp_processing_item_outcomes_total{method=~"d3-check@.+",status="not_run"}`:
+  `X = kp_canonicalization_item_outcomes_total{method=~"d3-check@.+",status="not_run"}`:
   `increase(X[15m]) > 0 or (X unless X offset 15m)`. The second term covers a series that its
   first increment creates, which `increase()` reads as 0. The judged items keep their own
   status. Reason `SERVICE_UNAVAILABLE`: the d3 service gave no answer after the retries, and the

@@ -155,7 +155,7 @@ Image: `kp-processing:t7`, `sha256:5623c9b8234d1d9db479c16eb34e91bf76a2795d6e0dc
 ## Run
 
 ```sh
-docker build --platform linux/arm64 -f docs/validation/80/t7-capacity/Dockerfile -t kp-processing:t7 .
+docker build --platform linux/arm64 -f docs/validation/80/t7-capacity/Dockerfile -t kp-canonicalization:t7 .
 env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t7-capacity/run.py v2 <corpus manifest> 16
 env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t7-capacity/run.py kill <corpus manifest> 16
 env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/80/t7-capacity/run.py v8 <corpus manifest> 11,17,3,4,1 2

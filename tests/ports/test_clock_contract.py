@@ -2,7 +2,7 @@
 
 import pytest
 
-from kp_processing.ports.clock import FakeClock, SystemClock
+from kp_canonicalization.ports.clock import FakeClock, SystemClock
 
 
 @pytest.fixture(params=[FakeClock, SystemClock])

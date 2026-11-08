@@ -4,7 +4,7 @@
 
 Needs the S3 stand-in (tests/s3/compose.yaml, port 9100), the `temporal` CLI and the model
 weights. Starts its own Temporal dev server (port 7244) and fake_admission (port 8091), runs
-kp-processing workers as subprocesses with the DEV profile, and writes evidence.json plus each
+kp-canonicalization workers as subprocesses with the DEV profile, and writes evidence.json plus each
 case's result and received reports next to this file. The paper itself stays out of git.
 
 Cases:
@@ -32,8 +32,8 @@ import httpx
 from botocore.exceptions import ClientError
 from temporalio.client import Client
 
-from kp_processing.ports.object_store import S3ObjectStore
-from kp_processing.workflow import SEARCH_ATTRIBUTES
+from kp_canonicalization.ports.object_store import S3ObjectStore
+from kp_canonicalization.workflow import SEARCH_ATTRIBUTES
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
@@ -53,7 +53,7 @@ BASE_ENV = {
     "KP_ADMISSION_URL": ADMISSION,
     "HF_HUB_OFFLINE": "1",
 }
-CLI = [str(REPO / ".venv/bin/kp-processing")]
+CLI = [str(REPO / ".venv/bin/kp-canonicalization")]
 PROFILE = str(REPO / "tests/profiles/paper-pdf-dev.yaml")
 LOGS = Path(os.environ.get("SEAMB_LOGS", "/tmp")) / f"seamb-{RUN}"
 

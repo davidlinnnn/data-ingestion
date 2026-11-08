@@ -5,7 +5,7 @@ enrichment.
 
 Same stack as #131's t2-tracer-bullet/run.py, whose helpers it reuses: the S3 stand-in
 (tests/s3/compose.yaml, port 9100), a Temporal dev server (port 7244), fake_admission (port
-8091), and one kp-processing worker subprocess per task queue on the DEV profile. INDEX defaults
+8091), and one kp-canonicalization worker subprocess per task queue on the DEV profile. INDEX defaults
 to 20, the paper with the most pictures (22) in census.json (census.py).
 
 Cases:

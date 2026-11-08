@@ -21,7 +21,7 @@ from dataclasses import fields
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-from kp_processing.ports.status_reporter import StatusReport
+from kp_canonicalization.ports.status_reporter import StatusReport
 
 FIELDS = {field.name for field in fields(StatusReport)}
 PATH = re.compile(r"^/v1/requests/([^/]+)/status-reports$")

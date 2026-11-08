@@ -10,8 +10,8 @@ import json
 import pytest
 from prometheus_client import REGISTRY
 
-from kp_processing.ports.inference import FakeInference, ServiceUnavailable, completion
-from kp_processing.stages import (
+from kp_canonicalization.ports.inference import FakeInference, ServiceUnavailable, completion
+from kp_canonicalization.stages import (
     CheckInput,
     FinalizeInput,
     PrepareInput,
@@ -392,7 +392,7 @@ async def test_a_profile_without_the_check_judges_nothing_and_needs_no_d3_servic
 async def test_each_judgement_is_counted_as_an_item_outcome_of_the_check(ports, runtime):
     def count(status: str, reason: str) -> float:
         labels = {"method": "d3-check@1", "status": status, "reason": reason}
-        return REGISTRY.get_sample_value("kp_processing_item_outcomes_total", labels) or 0.0
+        return REGISTRY.get_sample_value("kp_canonicalization_item_outcomes_total", labels) or 0.0
 
     series = [("disputed", "FORMULA_D3_UNFAITHFUL"), ("unverified", ""),
               ("not_run", "SERVICE_UNAVAILABLE")]  # fmt: skip

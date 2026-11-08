@@ -11,7 +11,7 @@ from typing import cast
 import pypdfium2 as pdfium
 from PIL import Image
 
-from kp_processing.methods import InventoryItem, code
+from kp_canonicalization.methods import InventoryItem, code
 from tests.stages.test_enrich_local import (
     CODE,
     PICTURE_WORDS,

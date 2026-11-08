@@ -25,8 +25,8 @@ from docling.models.stages.table_structure.table_structure_model import TableStr
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 from docling_core.types.doc.document import DoclingDocument
 
-from kp_processing.identity import reuse_key
-from kp_processing.stages import (
+from kp_canonicalization.identity import reuse_key
+from kp_canonicalization.stages import (
     AssembleInput,
     GroupInput,
     GroupRef,
