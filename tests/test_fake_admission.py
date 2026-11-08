@@ -6,7 +6,7 @@ import threading
 import httpx
 import pytest
 
-from kp_processing.ports.status_reporter import HttpStatusReporter, Position
+from kp_canonicalization.ports.status_reporter import HttpStatusReporter, Position
 from tests.ports.test_status_reporter import report
 from tools.fake_admission.server import make_server
 

@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from kp_processing.identity import module_digest
-from kp_processing.methods import document_summary
-from kp_processing.profile import PROFILES_DIR, ProfileError, load_profile
+from kp_canonicalization.identity import module_digest
+from kp_canonicalization.methods import document_summary
+from kp_canonicalization.profile import PROFILES_DIR, ProfileError, load_profile
 
 PAPER_PDF_1 = PROFILES_DIR / "paper-pdf@1.yaml"
-METHODS_DIR = Path(__file__).parents[1] / "src/kp_processing/methods"
+METHODS_DIR = Path(__file__).parents[1] / "src/kp_canonicalization/methods"
 
 
 def variant(tmp_path: Path, old: str, new: str) -> Path:

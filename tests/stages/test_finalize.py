@@ -10,7 +10,7 @@ import types
 
 import pytest
 
-from kp_processing.stages import FailureInput, ProcessingFailure, error_block, finalize
+from kp_canonicalization.stages import FailureInput, ProcessingFailure, error_block, finalize
 from tests.stages.test_enrich_local import counting, enriched, enriched_paper
 from tests.stages.test_parse import seven_pages
 
@@ -122,7 +122,7 @@ async def test_the_failure_report_carries_cause_stage_and_the_error_block(ports,
         "cause": "source",
         "stage": "prepare",
         "error": {
-            "domain": "kp-processing",
+            "domain": "kp-canonicalization",
             "reason": "PASSWORD_REQUIRED",
             "message": "the PDF needs a password",
             "retryable": False,
@@ -271,9 +271,9 @@ async def test_a_new_status_rule_reruns_only_finalize(ports, runtime, monkeypatc
     calls = counting(monkeypatch)
     first = await enriched(ports, runtime, enriched_paper())
     ocr_calls = len(calls)
-    rule = types.ModuleType("kp_processing.status_rules.vtest")
+    rule = types.ModuleType("kp_canonicalization.status_rules.vtest")
     rule.assign = lambda outcome: ("disputed", "TEST_RULE")  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "kp_processing.status_rules.vtest", rule)
+    monkeypatch.setitem(sys.modules, "kp_canonicalization.status_rules.vtest", rule)
     profile = dataclasses.replace(runtime.profile, status_rule="vtest")
     runtime = dataclasses.replace(runtime, profile=profile)
 

@@ -4,7 +4,7 @@ import dataclasses
 import hashlib
 from typing import Any
 
-from kp_processing.stages import Ports, Runtime
+from kp_canonicalization.stages import Ports, Runtime
 
 
 def with_runtime(runtime: Runtime, **overrides: Any) -> Runtime:

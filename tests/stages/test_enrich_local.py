@@ -7,10 +7,10 @@ import json
 
 import pytest
 
-from kp_processing.identity import reuse_key
-from kp_processing.methods import picture_ocr
-from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.stages import (
+from kp_canonicalization.identity import reuse_key
+from kp_canonicalization.methods import picture_ocr
+from kp_canonicalization.ports.object_store import DictObjectStore
+from kp_canonicalization.stages import (
     AssembleInput,
     CheckInput,
     EnrichInput,

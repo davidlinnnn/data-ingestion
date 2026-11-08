@@ -14,9 +14,9 @@ from temporalio.exceptions import ActivityError, ApplicationError
 from temporalio.testing import ActivityEnvironment
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
-from kp_processing.methods.docling_parse import pipeline
-from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.stages import (
+from kp_canonicalization.methods.docling_parse import pipeline
+from kp_canonicalization.ports.object_store import DictObjectStore
+from kp_canonicalization.stages import (
     CheckInput,
     ChunkInput,
     EnrichInput,
@@ -26,8 +26,8 @@ from kp_processing.stages import (
     PrepareInput,
     sha256,
 )
-from kp_processing.weights import WeightsMismatch
-from kp_processing.worker import (
+from kp_canonicalization.weights import WeightsMismatch
+from kp_canonicalization.worker import (
     D3,
     Inference,
     Orchestration,
@@ -37,7 +37,7 @@ from kp_processing.worker import (
     check_write_once,
     make_worker,
 )
-from kp_processing.workflow import INFERENCE_QUEUE
+from kp_canonicalization.workflow import INFERENCE_QUEUE
 from tests.pdfs import Page, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_enrich_local import enriched_paper, enrichment, native

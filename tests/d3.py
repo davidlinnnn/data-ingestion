@@ -4,7 +4,7 @@ import json
 from collections.abc import Callable
 from typing import Any
 
-from kp_processing.ports.inference import Completion, FakeInference
+from kp_canonicalization.ports.inference import Completion, FakeInference
 
 Score = float | Exception
 

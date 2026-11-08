@@ -32,12 +32,12 @@ import statistics
 import sys
 from pathlib import Path
 
-from kp_processing.methods import code
-from kp_processing.ports.clock import FakeClock
-from kp_processing.ports.object_store import DictObjectStore
-from kp_processing.ports.status_reporter import RecordingStatusReporter
-from kp_processing.profile import load_profile
-from kp_processing.stages import (
+from kp_canonicalization.methods import code
+from kp_canonicalization.ports.clock import FakeClock
+from kp_canonicalization.ports.object_store import DictObjectStore
+from kp_canonicalization.ports.status_reporter import RecordingStatusReporter
+from kp_canonicalization.profile import load_profile
+from kp_canonicalization.stages import (
     AssembleInput,
     EnrichInput,
     GroupInput,

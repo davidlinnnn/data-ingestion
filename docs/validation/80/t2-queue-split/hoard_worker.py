@@ -12,6 +12,6 @@ def init(self, *args, **kwargs):
 
 
 tw.Worker.__init__ = init
-from kp_processing.cli import main  # noqa: E402
+from kp_canonicalization.cli import main  # noqa: E402
 
 sys.exit(main(sys.argv[1:]))

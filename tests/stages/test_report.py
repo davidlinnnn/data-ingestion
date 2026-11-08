@@ -2,8 +2,8 @@
 
 import dataclasses
 
-from kp_processing.ports.status_reporter import Position, ReportOutcome
-from kp_processing.stages import Ports, report
+from kp_canonicalization.ports.status_reporter import Position, ReportOutcome
+from kp_canonicalization.stages import Ports, report
 from tests.ports.test_status_reporter import report as a_report
 from tests.stages.conftest import with_runtime
 
