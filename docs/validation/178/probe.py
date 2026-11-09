@@ -1,4 +1,5 @@
-"""Probes for the per-profile-version deployment design (#178; Server 1.32.0, temporalio 1.34.0).
+"""Probes for task queues and Worker Deployments per Processing Profile version (#178;
+Server 1.32.0, temporalio 1.34.0).
 
 P1  A workflow started on a queue that no deployment polls yet (owner adopted before the
     rollout) runs once a versioned worker arrives and is made current; nothing is refused.
@@ -11,9 +12,9 @@ P4  Control: a workflow started while current exists is pinned to it (reads vers
 P5  A version whose Processing Profile lost its adoption, with no workflow left, stays current
     and does not read draining, so the Controller never scales it down. Controls: the same
     reading shows draining and drained on a version that stopped being current.
-P6  Deleting every version of a deployment needs both preconditions, in either order: not
-    current, and no pollers. Then the deployment itself can go. Replays the order of the
-    Controller's finalizer (v1.14.0 handleDeletion).
+P6  Deleting every version of a deployment, one version or a patched two, needs both
+    preconditions, in either order: not current, and no pollers. Then the deployment itself can
+    go. Replays the order of the Controller's finalizer (v1.14.0 handleDeletion).
 P7  What that order does to a workflow still open on the version: --skip-drainage deletes the
     version anyway. Which is why retirement counts open workflows first.
 """
@@ -37,6 +38,7 @@ PORT = 7322
 ADDR = f"127.0.0.1:{PORT}"
 ORCH, INF = "pp2.orchestration", "pp2.inference"
 D_ORCH, D_INF = "pp2-orchestration", "pp2-inference"
+D_PATCHED = "kp/paper-pdf-6-orchestration"
 POLLER_TTL_S = 5  # the defaults are minutes; see README.md
 FAST = [
     'matching.wv.VersionDrainageStatusRefreshInterval="2s"',
@@ -97,7 +99,7 @@ async def versioning(client, wf_id):
     d = await client.get_workflow_handle(wf_id).describe()
     raw = d.raw_description.workflow_execution_info.versioning_info
     v = raw.deployment_version
-    return {"behavior": raw.behavior, "version": f"{v.deployment_name}:{v.build_id}" if v.build_id else None}
+    return {"behavior": VersioningBehavior(raw.behavior).name, "version": f"{v.deployment_name}:{v.build_id}" if v.build_id else None}
 
 
 async def cli(*args):
@@ -122,28 +124,52 @@ async def delete_version(deployment, build, *flags):
     return {"exit": code, "error": out if code else None}
 
 
+async def delete_deployment(deployment):
+    code, out = await cli("delete", "--name", deployment)
+    return {"exit": code, "error": out if code else None}
+
+
 async def unversioned(deployment):
     code, out = await cli("set-current-version", "--deployment-name", deployment, "--unversioned", "--yes")
     assert code == 0, out
 
 
-async def until(read, want, limit=30):
-    """The first reading that satisfies `want` and its wait in seconds; wait is None on timeout."""
+async def until(read, want):
+    """The first reading that satisfies `want` and its wait in seconds; wait is None after 30 s."""
     t0 = time.monotonic()
     while True:
         value = await read()
         if want(value):
             return value, round(time.monotonic() - t0, 1)
-        if time.monotonic() - t0 > limit:
+        if time.monotonic() - t0 > 30:
             return value, None
         await asyncio.sleep(0.5)
 
 
-async def count(client, query):
-    return (await client.count_workflows(f'{query} AND ExecutionStatus="Running"')).count
+async def count(query):
+    """The operating doc's pre-check, as the operator runs it: open workflows matching `query`."""
+    r = await asyncio.to_thread(
+        subprocess.run, ["temporal", "workflow", "count", "--address", ADDR, "--query", f'{query} AND ExecutionStatus="Running"'],
+        capture_output=True, text=True, check=True)
+    return int(r.stdout.split("Total:")[1].split()[0])
 
 
-async def p5_idle(client):
+async def task_queue(queue):
+    r = await asyncio.to_thread(
+        subprocess.run, ["temporal", "task-queue", "describe", "--address", ADDR, "--task-queue", queue, "-o", "json"],
+        capture_output=True, text=True, check=True)
+    d = json.loads(r.stdout)
+    return {"pollers": len(d["pollers"] or []),
+            "workflow_backlog": sum(s["approximateBacklogCount"] for s in d["stats"] or [] if s["taskQueueType"] == "workflow")}
+
+
+async def queues_of(deployment, build):
+    """The operating doc's name check: the queues a version polls, or the refusal."""
+    code, out = await cli("describe-version", "--deployment-name", deployment, "--build-id", build)
+    return {"exit": code, "error": out} if code else [q["name"] for q in json.loads(out)["taskQueuesInfos"]]
+
+
+async def p5_idle():
     """Runs inside the P1-P4 workers: orchestration r1 is current and every workflow has ended."""
     samples = []
     for _ in range(4):
@@ -151,12 +177,16 @@ async def p5_idle(client):
         samples.append({"orch": await state(D_ORCH), "inf": await state(D_INF)})
     return {
         "samples": samples,
-        "open_workflows": await count(client, f'TemporalWorkerDeploymentVersion="{D_ORCH}:r1"'),
+        "open_workflows": await count(f'TemporalWorkerDeploymentVersion="{D_ORCH}:r1"'),
+        "queues": await queues_of(D_ORCH, "r1"),
+        "queues_wrong_deployment": await queues_of(D_ORCH + "-typo", "r1"),
+        "count_wrong_name": await count(f'TaskQueue="{ORCH}-typo"'),
+        "task_queue_with_versioned_worker": await task_queue(ORCH),
     }
 
 
 async def p5_control(client):
-    dep, queue = "kp/ctrl-orchestration", "ctrl.orchestration"
+    dep, queue = D_PATCHED, "pp6.orchestration"
     async with worker(client, queue, dep, "r1", workflows=[Held]), worker(client, queue, dep, "r2", workflows=[Held]):
         await asyncio.sleep(1.5)
         await set_current(client, dep, "r1")
@@ -181,8 +211,7 @@ async def p6_retire(client):
         await h.signal(Held.release)
         await h.result()
         steps["current_with_pollers"] = await delete_version(dep, build, "--skip-drainage")
-        code, out = await cli("delete", "--name", dep)
-        steps["delete_deployment_with_version"] = {"exit": code, "error": out if code else None}
+        steps["delete_deployment_with_version"] = await delete_deployment(dep)
         await unversioned(dep)
         steps["state_after_unversioned"] = await state(dep)
         steps["not_current_with_pollers"] = await delete_version(dep, build, "--skip-drainage")
@@ -192,8 +221,7 @@ async def p6_retire(client):
     deleted, wait = await until(lambda: delete_version(dep, build, "--skip-drainage"), lambda r: r["exit"] == 0)
     steps["not_current_no_pollers"], steps["wait_for_poller_ttl_s"] = deleted, wait
     steps["state_after_delete_version"] = await state(dep)
-    code, out = await cli("delete", "--name", dep)
-    steps["delete_empty_deployment"] = {"exit": code, "error": out if code else None}
+    steps["delete_empty_deployment"] = await delete_deployment(dep)
     steps["state_after_delete"] = await state(dep)
 
     # The other order: the workers leave first and the version is still current.
@@ -205,6 +233,15 @@ async def p6_retire(client):
     steps["current_no_pollers"] = await delete_version(dep2, build2, "--skip-drainage")
     await unversioned(dep2)
     steps["other_order_not_current_no_pollers"] = await delete_version(dep2, build2, "--skip-drainage")
+
+    # After a patch, as p5_control left it: r1 superseded, r2 current, workers gone.
+    await unversioned(D_PATCHED)
+    await asyncio.sleep(POLLER_TTL_S + 2)
+    steps["patched_before_delete"] = await state(D_PATCHED)
+    steps["patched_r1"] = await delete_version(D_PATCHED, "r1", "--skip-drainage")
+    steps["patched_r2"] = await delete_version(D_PATCHED, "r2", "--skip-drainage")
+    steps["patched_deployment"] = await delete_deployment(D_PATCHED)
+    steps["patched_after_delete"] = await state(D_PATCHED)
     return steps
 
 
@@ -219,15 +256,14 @@ async def p7_open_workflow(client):
         out["versioning"] = await versioning(client, "p7")
         # Negative control of the required pre-check: both queries must see this one workflow.
         out["count_by_queue"], out["wait_count_s"] = await until(
-            lambda: count(client, f'TaskQueue="{queue}"'), lambda c: c == 1)
-        out["count_by_version"] = await count(client, f'TemporalWorkerDeploymentVersion="{dep}:{build}"')
+            lambda: count(f'TaskQueue="{queue}"'), lambda c: c == 1)
+        out["count_by_version"] = await count(f'TemporalWorkerDeploymentVersion="{dep}:{build}"')
         await unversioned(dep)
         out["draining"], _ = await until(lambda: state(dep), lambda s: s["versions"][build] == "draining")
     await asyncio.sleep(POLLER_TTL_S + 2)
     out["delete_without_skip"] = await delete_version(dep, build)
     out["delete_with_skip"] = await delete_version(dep, build, "--skip-drainage")
-    code, text = await cli("delete", "--name", dep)
-    out["delete_deployment"] = {"exit": code, "error": text if code else None}
+    out["delete_deployment"] = await delete_deployment(dep)
     out["status_after_delete"] = (await h.describe()).status.name
     await h.signal(Held.release)
     await asyncio.sleep(4)
@@ -244,6 +280,14 @@ async def p7_open_workflow(client):
 
 def refused(step, text):
     return step["exit"] != 0 and text in step["error"]
+
+
+def pinned(reading, version):
+    return reading == {"behavior": "PINNED", "version": version}
+
+
+def within(wait, limit=30):
+    return wait is not None and 0 <= wait <= limit
 
 
 async def main() -> int:
@@ -271,8 +315,9 @@ async def main() -> int:
         d = await h1.describe()
         ev["p1_status_before_workers"] = d.status.name
         ev["p1_count_by_queue_before_workers"], _ = await until(
-            lambda: count(client, f'TaskQueue="{ORCH}"'), lambda c: c == 1)
-        ev["p1_count_by_version_before_workers"] = await count(client, f'TemporalWorkerDeploymentVersion="{D_ORCH}:r1"')
+            lambda: count(f'TaskQueue="{ORCH}"'), lambda c: c == 1)
+        ev["p1_count_by_version_before_workers"] = await count(f'TemporalWorkerDeploymentVersion="{D_ORCH}:r1"')
+        ev["p1_task_queue_before_workers"], _ = await until(lambda: task_queue(ORCH), lambda q: q["workflow_backlog"] == 1)
         orch_r1 =worker(client, ORCH, D_ORCH, "r1", workflows=[Probe])
         inf_r1 = inf_worker(client, "r1")
         async with orch_r1, inf_r1:
@@ -302,39 +347,45 @@ async def main() -> int:
                 h3 = await client.start_workflow(Probe.run, 1, id="p3", task_queue=ORCH)
                 ev["p3_result"] = await asyncio.wait_for(h3.result(), 60)
                 ev["p3_versioning"] = await versioning(client, "p3")
-                ev["p5"] = await p5_idle(client)
+                ev["p5"] = await p5_idle()
         ev["p5_control"] = await p5_control(client)
         ev["p6"] = await p6_retire(client)
         ev["p7"] = await p7_open_workflow(client)
 
         p5, ctrl, p6, p7 = ev["p5"], ev["p5_control"], ev["p6"], ev["p7"]
         ev["pass"] = {
-            "P1 runs once workers arrive, not refused": ev["p1_status_before_workers"] == "RUNNING" and ev["p1_result"] == ["r1"],
+            "P1 runs once workers arrive, not refused": ev["p1_status_before_workers"] == "RUNNING" and ev["p1_result"] == ["r1"] and within(ev["p1_wait_s"]),
+            "P1 pinned to the version once it ran": pinned(ev["p1_versioning"], f"{D_ORCH}:r1"),
             "P1 the queue count sees a workflow with no version yet": ev["p1_count_by_queue_before_workers"] == 1 and ev["p1_count_by_version_before_workers"] == 0,
+            "P1 the waiting workflow shows as backlog": ev["p1_task_queue_before_workers"]["workflow_backlog"] == 1,
             "P2 activity ran on the other deployment": ev["p2_p3_result"][0] == "r1",
             "P3 next activity followed the new current": ev["p2_p3_result"][1] == "r2" and ev["p3_result"] == ["r2"],
-            "P4 control pinned to orchestration r1": ev["p4_versioning"]["version"] == f"{D_ORCH}:r1",
+            "P3 both workflows stayed pinned to orchestration r1": pinned(ev["p2_versioning"], f"{D_ORCH}:r1") and pinned(ev["p3_versioning"], f"{D_ORCH}:r1"),
+            "P4 control pinned to orchestration r1": pinned(ev["p4_versioning"], f"{D_ORCH}:r1"),
             "P5 no open workflow on the idle version": p5["open_workflows"] == 0,
+            "P5 the name check names the queue and refuses a wrong deployment; a wrong queue counts 0": p5["queues"] == [ORCH] and refused(p5["queues_wrong_deployment"], "not found") and p5["count_wrong_name"] == 0,
+            "P5 task-queue describe lists no pollers of a versioned worker": p5["task_queue_with_versioned_worker"]["pollers"] == 0,
             "P5 idle version stays current, not draining": all(
                 s["orch"]["current"] == "r1" and s["orch"]["versions"]["r1"] == "unspecified"
                 and s["inf"]["current"] == "r2" and s["inf"]["versions"]["r2"] == "unspecified"
                 for s in p5["samples"]),
             "P5 control: a superseded version with no pinned workflow reads drained": p5["samples"][-1]["inf"]["versions"]["r1"] == "drained",
-            "P5 control: an open pinned workflow reads draining, then drained": ctrl["wait_draining_s"] is not None and ctrl["wait_drained_s"] is not None,
-            "P6 an idle version out of current reads drained if waited for": p6["wait_drained_s"] is not None,
+            "P5 control: an open pinned workflow reads draining, then drained": within(ctrl["wait_draining_s"]) and within(ctrl["wait_drained_s"]),
+            "P6 an idle version out of current reads drained if waited for": within(p6["wait_drained_s"]),
             "P6 current with pollers refused": refused(p6["current_with_pollers"], "current or ramping"),
-            "P6 deployment with a version refused": p6["delete_deployment_with_version"]["exit"] != 0,
+            "P6 deployment with a version refused": refused(p6["delete_deployment_with_version"], "deployment has versions"),
             "P6 not current with pollers refused": refused(p6["not_current_with_pollers"], "active pollers"),
             "P6 refused just after the workers stop": refused(p6["just_after_workers_stop"], "active pollers"),
-            "P6 not current, no pollers deletes": p6["wait_for_poller_ttl_s"] is not None and 0 < p6["wait_for_poller_ttl_s"] <= POLLER_TTL_S * 4,
-            "P6 empty deployment deletes and is gone": p6["delete_empty_deployment"]["exit"] == 0 and p6["state_after_delete"].get("exit", 0) != 0,
+            "P6 not current, no pollers deletes": p6["not_current_no_pollers"]["exit"] == 0 and within(p6["wait_for_poller_ttl_s"], POLLER_TTL_S * 4),
+            "P6 empty deployment deletes and is gone": p6["delete_empty_deployment"]["exit"] == 0 and refused(p6["state_after_delete"], "no Worker Deployment found"),
             "P6 current, no pollers refused": refused(p6["current_no_pollers"], "current or ramping"),
             "P6 other order deletes": p6["other_order_not_current_no_pollers"]["exit"] == 0,
-            "P7 pre-check sees the open workflow": p7["count_by_queue"] == 1 and p7["count_by_version"] == 1,
+            "P6 a patched deployment's two versions delete, then the deployment": set(p6["patched_before_delete"]["versions"]) == {"r1", "r2"} and p6["patched_r1"]["exit"] == 0 and p6["patched_r2"]["exit"] == 0 and p6["patched_deployment"]["exit"] == 0 and refused(p6["patched_after_delete"], "no Worker Deployment found"),
+            "P7 pre-check sees the open workflow": p7["count_by_queue"] == 1 and p7["count_by_version"] == 1 and pinned(p7["versioning"], "kp/paper-pdf-5-orchestration:paper-pdf-5-r1-0a1b2c"),
             "P7 draining refused without --skip-drainage": refused(p7["delete_without_skip"], "draining"),
-            "P7 --skip-drainage deletes under an open workflow": p7["delete_with_skip"]["exit"] == 0,
+            "P7 --skip-drainage deletes under an open workflow": p7["delete_with_skip"]["exit"] == 0 and p7["delete_deployment"]["exit"] == 0,
             "P7 the workflow is left running, with no worker": p7["status_after_delete"] == "RUNNING" and p7["status_4s_after_signal_no_worker"] == "RUNNING",
-            "P7 the same build returning finishes it": p7["result_when_build_returns"] == "done",
+            "P7 the same build returning finishes it": p7["result_when_build_returns"] == "done" and within(p7["wait_when_build_returns_s"]),
         }
         Path(__file__).with_name("evidence.json").write_text(json.dumps(ev, indent=2, default=str) + "\n")
         for name, ok in ev["pass"].items():

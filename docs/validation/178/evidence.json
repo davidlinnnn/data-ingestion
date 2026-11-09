@@ -2,19 +2,23 @@
   "p1_status_before_workers": "RUNNING",
   "p1_count_by_queue_before_workers": 1,
   "p1_count_by_version_before_workers": 0,
+  "p1_task_queue_before_workers": {
+    "pollers": 0,
+    "workflow_backlog": 1
+  },
   "p1_result": [
     "r1"
   ],
   "p1_wait_s": 0.1,
   "p1_versioning": {
-    "behavior": 1,
+    "behavior": "PINNED",
     "version": "pp2-orchestration:r1"
   },
   "p4_result": [
     "r1"
   ],
   "p4_versioning": {
-    "behavior": 1,
+    "behavior": "PINNED",
     "version": "pp2-orchestration:r1"
   },
   "p2_p3_result": [
@@ -22,14 +26,14 @@
     "r2"
   ],
   "p2_versioning": {
-    "behavior": 1,
+    "behavior": "PINNED",
     "version": "pp2-orchestration:r1"
   },
   "p3_result": [
     "r2"
   ],
   "p3_versioning": {
-    "behavior": 1,
+    "behavior": "PINNED",
     "version": "pp2-orchestration:r1"
   },
   "p5": {
@@ -95,25 +99,37 @@
         }
       }
     ],
-    "open_workflows": 0
+    "open_workflows": 0,
+    "queues": [
+      "pp2.orchestration"
+    ],
+    "queues_wrong_deployment": {
+      "exit": 1,
+      "error": "Error: error describing worker deployment version: Worker Deployment Version not found"
+    },
+    "count_wrong_name": 0,
+    "task_queue_with_versioned_worker": {
+      "pollers": 0,
+      "workflow_backlog": 0
+    }
   },
   "p5_control": {
     "draining": {
       "current": "r2",
       "versions": {
-        "r2": "unspecified",
-        "r1": "draining"
+        "r1": "draining",
+        "r2": "unspecified"
       }
     },
     "wait_draining_s": 1.0,
     "drained": {
       "current": "r2",
       "versions": {
-        "r2": "unspecified",
-        "r1": "drained"
+        "r1": "drained",
+        "r2": "unspecified"
       }
     },
-    "wait_drained_s": 2.2
+    "wait_drained_s": 2.0
   },
   "p6": {
     "current_with_pollers": {
@@ -169,11 +185,34 @@
     "other_order_not_current_no_pollers": {
       "exit": 0,
       "error": null
+    },
+    "patched_before_delete": {
+      "current": "",
+      "versions": {
+        "r1": "drained",
+        "r2": "drained"
+      }
+    },
+    "patched_r1": {
+      "exit": 0,
+      "error": null
+    },
+    "patched_r2": {
+      "exit": 0,
+      "error": null
+    },
+    "patched_deployment": {
+      "exit": 0,
+      "error": null
+    },
+    "patched_after_delete": {
+      "exit": 1,
+      "error": "Error: error describing worker deployment: no Worker Deployment found with name 'kp/paper-pdf-6-orchestration'; does your Worker Deployment have pollers?"
     }
   },
   "p7": {
     "versioning": {
-      "behavior": 1,
+      "behavior": "PINNED",
       "version": "kp/paper-pdf-5-orchestration:paper-pdf-5-r1-0a1b2c"
     },
     "count_by_queue": 1,
@@ -204,11 +243,16 @@
   },
   "pass": {
     "P1 runs once workers arrive, not refused": true,
+    "P1 pinned to the version once it ran": true,
     "P1 the queue count sees a workflow with no version yet": true,
+    "P1 the waiting workflow shows as backlog": true,
     "P2 activity ran on the other deployment": true,
     "P3 next activity followed the new current": true,
+    "P3 both workflows stayed pinned to orchestration r1": true,
     "P4 control pinned to orchestration r1": true,
     "P5 no open workflow on the idle version": true,
+    "P5 the name check names the queue and refuses a wrong deployment; a wrong queue counts 0": true,
+    "P5 task-queue describe lists no pollers of a versioned worker": true,
     "P5 idle version stays current, not draining": true,
     "P5 control: a superseded version with no pinned workflow reads drained": true,
     "P5 control: an open pinned workflow reads draining, then drained": true,
@@ -221,6 +265,7 @@
     "P6 empty deployment deletes and is gone": true,
     "P6 current, no pollers refused": true,
     "P6 other order deletes": true,
+    "P6 a patched deployment's two versions delete, then the deployment": true,
     "P7 pre-check sees the open workflow": true,
     "P7 draining refused without --skip-drainage": true,
     "P7 --skip-drainage deletes under an open workflow": true,
