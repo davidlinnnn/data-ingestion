@@ -14,8 +14,6 @@ from kp_admission.cli import main
 from kp_canonicalization.workflow import ORCHESTRATION_QUEUE
 from tests.admission.support import request, revision, runs
 
-pytestmark = pytest.mark.docker
-
 
 def role(command: str, env: dict[str, str], **kwargs) -> subprocess.Popen:
     return subprocess.Popen(
@@ -26,6 +24,7 @@ def role(command: str, env: dict[str, str], **kwargs) -> subprocess.Popen:
     )
 
 
+@pytest.mark.docker
 async def test_two_dispatcher_processes_start_each_request_once_and_stop_on_sigterm(
     conn, dsn, temporal, temporal_address
 ):
@@ -51,6 +50,7 @@ async def test_two_dispatcher_processes_start_each_request_once_and_stop_on_sigt
     assert (reconciler.returncode, json.loads(out)) == (0, {"running": 6})
 
 
+@pytest.mark.docker
 async def test_the_dispatcher_starts_while_temporal_is_down_and_its_rows_wait(conn, dsn):
     await request(conn, *await revision(conn))
     env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn, "TEMPORAL_ADDRESS": "127.0.0.1:9"}

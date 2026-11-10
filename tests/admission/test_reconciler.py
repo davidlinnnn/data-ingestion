@@ -7,6 +7,7 @@ import pytest
 from temporalio import workflow
 from temporalio.api.common.v1 import WorkflowExecution
 from temporalio.api.workflowservice.v1 import DeleteWorkflowExecutionRequest
+from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
@@ -63,6 +64,7 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
         "retryable": True,
         "metadata": {"status": "TERMINATED"},
     }
+    assert error["occurred_at"].endswith("Z")
     assert by_id[ids["running"]] == ("queued", False, None)
     assert await reconcile(conn, temporal) == Counter(running=1)
 
@@ -96,3 +98,16 @@ async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(con
     assert await dispatch_due(conn, start) == 1
     assert await runs(temporal, request_id) == 1
     assert await reconcile(conn, temporal) == Counter(running=1)
+
+
+async def test_a_missing_namespace_raises_and_sends_nothing_back(conn, temporal, temporal_address):
+    await request(conn, *await revision(conn))
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 1
+    elsewhere = await Client.connect(temporal_address, namespace="missing")
+
+    with pytest.raises(RPCError) as raised:
+        await reconcile(conn, elsewhere)
+
+    assert raised.value.status == RPCStatusCode.NOT_FOUND
+    cursor = await conn.execute("SELECT dispatched_at IS NOT NULL, redispatch_reason FROM outbox")
+    assert await cursor.fetchone() == (True, None)

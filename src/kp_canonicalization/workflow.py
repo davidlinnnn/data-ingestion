@@ -146,7 +146,7 @@ class PaperPdfWorkflow:
     @workflow.run
     async def run(self, start: Any) -> dict[str, Any]:
         """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}, and
-        on failure "error", the failed status report's error block, for admission's reconciler."""
+        on failure "error", the failed status report's error block."""
         info = workflow.info()
         self._start = start
         stage: Stage = "prepare"

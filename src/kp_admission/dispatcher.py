@@ -21,15 +21,15 @@ normally when that workflow exists already and raises when it cannot tell that i
 
 # Provisional until the cluster-tier Temporal outage run (§13).
 BACKOFF_CAP_S = 60
-# In-flight budgets, unmeasured: about 1,000 workflows at the PROD burst (#88); four Sources can
-# each fill a quarter. Per-Source overrides wait for Source configuration (#78).
+# In-flight budgets, unmeasured until the cluster-tier capacity runs (§13): one Source may hold
+# the whole PROD burst, 500 documents (#88), and two Sources may at once. Per-Source overrides
+# wait for Source configuration (#78).
 IN_FLIGHT = 1000
-PER_SOURCE = 250
+PER_SOURCE = 500
 
-# Its columns are the §10 start input, in order. Normal priority goes first; then the Source
-# with the fewest requests in flight, so Sources take turns; then the oldest row.
+# Its columns are the §10 start input, in order.
 # shortcut: dispatchers that claim at once can each take a budget's last place, so a budget can
-# be exceeded by one per extra dispatcher; take an advisory lock if that ever matters.
+# be exceeded by one per extra dispatcher; take an advisory lock once a budget is a hard limit.
 _CLAIM = """
 WITH in_flight AS (
     SELECT d.tenant_id, d.source_id, count(*) AS n
@@ -78,18 +78,19 @@ async def dispatch_due(
     in_flight: int = IN_FLIGHT,
     per_source: int = PER_SOURCE,
 ) -> int:
-    """Starts the workflow of each due outbox row in _CLAIM's order, in one transaction per row on
-    an autocommit connection, while fewer than in_flight dispatched requests, and fewer than
-    per_source of the row's Source, are still queued or processing. Returns how many rows it
-    recorded as dispatched. It stops at the first start that fails: that row is due again 1, 2,
-    4, … seconds after its 1st, 2nd, 3rd, … failure, at most BACKOFF_CAP_S, and the others keep
-    their place."""
+    """Starts the workflow of each due outbox row, in one transaction per row on an autocommit
+    connection, while fewer than in_flight dispatched requests, and fewer than per_source of the
+    row's Source, are still queued or processing; a request leaves the budgets when its outcome is
+    recorded. Normal priority goes first; then the Source with the fewest requests in flight, so
+    Sources take turns; then the oldest row. Returns how many rows it recorded as dispatched. It
+    stops at the first start that fails: that row is due again 1, 2, 4, … seconds after its 1st,
+    2nd, 3rd, … failure, at most BACKOFF_CAP_S, and the others keep their place."""
+    budgets = {"in_flight": in_flight, "per_source": per_source}
     dispatched = 0
     while True:
         async with conn.transaction():
             cursor = conn.cursor(row_factory=dict_row)
-            claim = {"in_flight": in_flight, "per_source": per_source}
-            start_input = await (await cursor.execute(_CLAIM, claim)).fetchone()
+            start_input = await (await cursor.execute(_CLAIM, budgets)).fetchone()
             if start_input is None:
                 return dispatched
             request_id = start_input["request_id"]

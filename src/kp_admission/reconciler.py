@@ -7,6 +7,7 @@ from typing import Any
 
 from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
+from temporalio.api.errordetails.v1 import NamespaceNotFoundFailure
 from temporalio.client import (
     Client,
     WorkflowExecutionDescription,
@@ -19,7 +20,7 @@ ERROR_DOMAIN = "admission.knowledge-platform"
 
 _UNSETTLED = """
 SELECT request_id FROM outbox JOIN request USING (request_id)
-WHERE dispatched_at IS NOT NULL AND state IN ('queued', 'processing')
+WHERE dispatched_at IS NOT NULL AND kind = 'process' AND state IN ('queued', 'processing')
 """
 
 # The state guard keeps an outcome that status reports (#97) recorded meanwhile.
@@ -41,14 +42,19 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
     processing: a running workflow is left alone; an ended one records the request's outcome,
     succeeded, or failed with the workflow's error block; a missing one goes back to the outbox,
     due now under the same request ID, with the reason in redispatch_reason. Returns how many
-    requests went each way: running, recorded, redispatched. An unreachable Temporal raises."""
+    requests went each way: running, recorded, redispatched. An unreachable Temporal or a
+    missing namespace raises."""
     actions: Counter[str] = Counter()
     for (request_id,) in await (await conn.execute(_UNSETTLED)).fetchall():
         handle = client.get_workflow_handle(request_id)
         try:
             described = await handle.describe()
         except RPCError as err:
-            if err.status != RPCStatusCode.NOT_FOUND:
+            # A missing namespace is NOT_FOUND too, and must not send every request back.
+            details = err.grpc_status.details
+            if err.status != RPCStatusCode.NOT_FOUND or any(
+                detail.Is(NamespaceNotFoundFailure.DESCRIPTOR) for detail in details
+            ):
                 raise
             log.warning("workflow %s is missing; it goes back to the outbox", request_id)
             await conn.execute(_REDISPATCH, (str(err), request_id))
@@ -75,7 +81,7 @@ async def _outcome(
             return "succeeded", None
         if result.get("error"):
             return "failed", result["error"]
-    name = status.name if status else "UNKNOWN"
+    name, closed = status.name if status else "UNKNOWN", described.close_time
     return "failed", {
         "domain": ERROR_DOMAIN,
         "reason": "WORKFLOW_ENDED_WITHOUT_RESULT",
@@ -83,4 +89,5 @@ async def _outcome(
         "retryable": True,
         "metadata": {"status": name},
         "support_ref": f"temporal:{described.id}/{described.run_id}",
+        "occurred_at": closed and closed.isoformat().replace("+00:00", "Z"),
     }
