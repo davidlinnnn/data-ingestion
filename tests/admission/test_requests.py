@@ -62,9 +62,11 @@ async def test_concurrent_requests_for_one_source_revision_create_one_active_req
 
 
 async def test_without_the_index_the_same_race_creates_a_request_per_caller(conn, dsn):
-    """Negative control: the race above is real, so only the index keeps it to one request."""
+    """Negative control: when checks overlap uncommitted inserts, as in the race above, only the
+    index keeps it to one request."""
     uid, srv = await revision(conn)
     await conn.execute("DROP INDEX request_one_active")
+    checked = asyncio.Barrier(8)
 
     async def check_then_insert(own: AsyncConnection) -> None:
         await own.execute(
@@ -75,6 +77,7 @@ async def test_without_the_index_the_same_race_creates_a_request_per_caller(conn
             " WHERE document_uid = %(uid)s AND source_revision_id = %(srv)s)",
             {"uid": uid, "srv": srv},
         )
+        await checked.wait()  # no caller commits before every caller has checked
 
     await race(dsn, 8, check_then_insert)
 
