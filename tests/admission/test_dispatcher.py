@@ -179,3 +179,33 @@ async def test_a_row_that_failed_many_times_waits_the_cap_and_no_longer(conn):
     attempts, wait = await cursor.fetchone()
     assert attempts == 5001
     assert timedelta(seconds=BACKOFF_CAP_S - 1) <= wait <= timedelta(seconds=BACKOFF_CAP_S)
+
+
+async def dispatch_order(conn) -> list[str]:
+    cursor = await conn.execute(
+        "SELECT request_id FROM outbox WHERE dispatched_at IS NOT NULL ORDER BY dispatched_at"
+    )
+    return [request_id for (request_id,) in await cursor.fetchall()]
+
+
+async def test_sources_take_turns_and_one_at_its_budget_waits(conn, temporal):
+    a1, a2, a3 = [(await request(conn, *await revision(conn, "a")))[0] for _ in range(3)]
+    (b1, _) = await request(conn, *await revision(conn, "b"))
+    start = temporal_start(temporal, queue)
+
+    assert await dispatch_due(conn, start, per_source=2) == 3
+
+    assert await dispatch_order(conn) == [a1, b1, a2]  # b1 is newer than a2 and a3
+    await conn.execute("UPDATE request SET state = 'succeeded' WHERE request_id = %s", (a1,))
+    assert await dispatch_due(conn, start, per_source=2) == 1
+    assert (await dispatch_order(conn))[-1] == a3
+
+
+async def test_normal_priority_goes_before_low_and_the_global_budget_holds(conn, temporal):
+    (low, _) = await request(conn, *await revision(conn, "a"), priority="low")
+    normal = [(await request(conn, *await revision(conn, source)))[0] for source in "bc"]
+
+    assert await dispatch_due(conn, temporal_start(temporal, queue), in_flight=2) == 2
+
+    assert await dispatch_order(conn) == normal
+    assert low not in await dispatch_order(conn)

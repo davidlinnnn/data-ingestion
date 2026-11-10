@@ -525,6 +525,10 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
 
+`WORKFLOW_ENDED_WITHOUT_RESULT` (domain `admission.knowledge-platform`,
+retryable) is a failed request's `error` when the reconciler finds its workflow
+ended without an error block, such as terminated or timed out (§9).
+
 `RESOURCE_NOT_EMPTY` (`409`) belongs to the Resource API (#85).
 
 ## 13. Deployment and validation

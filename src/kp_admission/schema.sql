@@ -78,7 +78,8 @@ CREATE TABLE outbox (
     tenant_id     text NOT NULL,
     available_at  timestamptz NOT NULL DEFAULT now(),
     attempts      integer NOT NULL DEFAULT 0,
-    dispatched_at timestamptz
+    dispatched_at timestamptz,
+    redispatch_reason text  -- why the reconciler put a dispatched row back (§9)
 );
 
 CREATE INDEX outbox_due ON outbox (available_at) WHERE dispatched_at IS NULL;
