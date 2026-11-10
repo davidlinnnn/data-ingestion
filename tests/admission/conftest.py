@@ -50,7 +50,8 @@ async def conn(dsn):
 
 @pytest.fixture(scope="session")
 def temporal_server():
-    """The Temporal CLI dev server (Server 1.32.0), with the workflow's search attributes."""
+    """The Temporal CLI dev server (Server 1.32.0), with the workflow's search attributes. It runs
+    in a container, unlike tests/conftest.py's, so a test can pause it."""
     attributes = [f"--search-attribute={key.name}=Keyword" for key in SEARCH_ATTRIBUTES.values()]
     container = (
         DockerContainer("temporalio/temporal:1.9.1")

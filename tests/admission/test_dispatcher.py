@@ -13,7 +13,7 @@ import pytest
 from temporalio.common import WorkflowIDReusePolicy
 from temporalio.service import RPCError, RPCStatusCode
 
-from kp_admission.dispatcher import dispatch_due, temporal_start
+from kp_admission.dispatcher import BACKOFF_CAP_S, dispatch_due, temporal_start
 from kp_canonicalization.workflow import SEARCH_ATTRIBUTES
 from tests.admission.crash import CRASHED
 from tests.admission.support import FILES, queue, request, revision, runs
@@ -115,7 +115,8 @@ async def test_rows_wait_through_a_temporal_outage_and_all_start_once_after_it(
         assert await dispatch_due(conn, start) == 0
         # The backoff counts from the failure, not from the claim rpc_timeout before it.
         cursor = await conn.execute(
-            "SELECT available_at > clock_timestamp() FROM outbox WHERE request_id = %s",
+            "SELECT available_at - clock_timestamp() BETWEEN interval '0' AND interval '1 second'"
+            " FROM outbox WHERE request_id = %s",
             (request_ids[1],),
         )
         assert await cursor.fetchone() == (True,)
@@ -160,3 +161,21 @@ async def test_redispatching_an_ended_workflow_starts_nothing_and_a_duplicate_wo
             break
         await asyncio.sleep(0.1)
     assert await runs(temporal, request_id) == 2
+
+
+async def test_a_row_that_failed_many_times_waits_the_cap_and_no_longer(conn):
+    request_id, _ = await request(conn, *await revision(conn))
+    await conn.execute("UPDATE outbox SET attempts = 5000 WHERE request_id = %s", (request_id,))
+
+    async def temporal_down(start_input):
+        raise RuntimeError("Temporal is down")
+
+    assert await dispatch_due(conn, temporal_down) == 0
+
+    cursor = await conn.execute(
+        "SELECT attempts, available_at - clock_timestamp() FROM outbox WHERE request_id = %s",
+        (request_id,),
+    )
+    attempts, wait = await cursor.fetchone()
+    assert attempts == 5001
+    assert timedelta(seconds=BACKOFF_CAP_S - 1) <= wait <= timedelta(seconds=BACKOFF_CAP_S)

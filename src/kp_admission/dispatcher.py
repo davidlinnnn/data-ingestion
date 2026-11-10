@@ -40,10 +40,11 @@ UPDATE outbox SET attempts = attempts + 1, dispatched_at = now() WHERE request_i
 """
 
 # clock_timestamp(), not now(): the backoff starts when the start failed, not when the
-# transaction began, which can be rpc_timeout earlier.
+# transaction began, which can be rpc_timeout earlier. 2 ^ attempts overflows past 1023.
 _RETRY = """
 UPDATE outbox SET attempts = attempts + 1,
-                  available_at = clock_timestamp() + least(%s, 2 ^ attempts) * interval '1 second'
+                  available_at = clock_timestamp()
+                                 + least(%s, 2 ^ least(attempts, 30)) * interval '1 second'
 WHERE request_id = %s
 """
 
@@ -53,9 +54,8 @@ log = logging.getLogger(__name__)
 async def dispatch_due(conn: AsyncConnection, start: StartWorkflow) -> int:
     """Starts the workflow of each due outbox row, oldest first, in one transaction per row on an
     autocommit connection, and returns how many rows it recorded as dispatched. It stops at the
-    first start that fails, since Temporal is likely down: that row is due again 1, 2, 4, …
-    seconds after its 1st, 2nd, 3rd, … failure, at most BACKOFF_CAP_S, and the others keep their
-    place."""
+    first start that fails: that row is due again 1, 2, 4, … seconds after its 1st, 2nd, 3rd, …
+    failure, at most BACKOFF_CAP_S, and the others keep their place."""
     dispatched = 0
     while True:
         async with conn.transaction():
@@ -69,7 +69,7 @@ async def dispatch_due(conn: AsyncConnection, start: StartWorkflow) -> int:
             except Exception:
                 log.warning("starting %s failed; it waits and retries", request_id, exc_info=True)
                 await conn.execute(_RETRY, (BACKOFF_CAP_S, request_id))
-                return dispatched
+                return dispatched  # Temporal is likely down: the next row would fail too
             await conn.execute(_DISPATCHED, (request_id,))
         dispatched += 1
 
