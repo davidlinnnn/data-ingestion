@@ -21,16 +21,36 @@ normally when that workflow exists already and raises when it cannot tell that i
 
 # Provisional until the cluster-tier Temporal outage run (§13).
 BACKOFF_CAP_S = 60
+# In-flight budgets, unmeasured: about 1,000 workflows at the PROD burst (#88); four Sources can
+# each fill a quarter. Per-Source overrides wait for Source configuration (#78).
+IN_FLIGHT = 1000
+PER_SOURCE = 250
 
-# Its columns are the §10 start input, in order.
+# Its columns are the §10 start input, in order. Normal priority goes first; then the Source
+# with the fewest requests in flight, so Sources take turns; then the oldest row.
+# shortcut: dispatchers that claim at once can each take a budget's last place, so a budget can
+# be exceeded by one per extra dispatcher; take an advisory lock if that ever matters.
 _CLAIM = """
+WITH in_flight AS (
+    SELECT d.tenant_id, d.source_id, count(*) AS n
+    FROM request r
+    JOIN outbox o ON o.request_id = r.request_id
+    JOIN document d ON d.document_uid = r.document_uid
+    WHERE r.kind = 'process' AND r.state IN ('queued', 'processing')
+      AND o.dispatched_at IS NOT NULL
+    GROUP BY d.tenant_id, d.source_id
+)
 SELECT r.request_id, r.document_uid, r.source_revision_id, s.files, r.adopted_version,
        r.adoption_sequence, r.initiator, r.priority, r.trace_id
 FROM outbox o
 JOIN request r ON r.request_id = o.request_id
 JOIN source_revision s ON s.source_revision_id = r.source_revision_id
+JOIN document d ON d.document_uid = r.document_uid
+LEFT JOIN in_flight f ON f.tenant_id = d.tenant_id AND f.source_id = d.source_id
 WHERE o.dispatched_at IS NULL AND o.available_at <= now()
-ORDER BY o.available_at
+  AND coalesce(f.n, 0) < %(per_source)s
+  AND (SELECT coalesce(sum(n), 0) FROM in_flight) < %(in_flight)s
+ORDER BY r.priority = 'low', coalesce(f.n, 0), o.available_at
 LIMIT 1
 FOR UPDATE OF o SKIP LOCKED
 """
@@ -51,16 +71,25 @@ WHERE request_id = %s
 log = logging.getLogger(__name__)
 
 
-async def dispatch_due(conn: AsyncConnection, start: StartWorkflow) -> int:
-    """Starts the workflow of each due outbox row, oldest first, in one transaction per row on an
-    autocommit connection, and returns how many rows it recorded as dispatched. It stops at the
-    first start that fails: that row is due again 1, 2, 4, … seconds after its 1st, 2nd, 3rd, …
-    failure, at most BACKOFF_CAP_S, and the others keep their place."""
+async def dispatch_due(
+    conn: AsyncConnection,
+    start: StartWorkflow,
+    *,
+    in_flight: int = IN_FLIGHT,
+    per_source: int = PER_SOURCE,
+) -> int:
+    """Starts the workflow of each due outbox row in _CLAIM's order, in one transaction per row on
+    an autocommit connection, while fewer than in_flight dispatched requests, and fewer than
+    per_source of the row's Source, are still queued or processing. Returns how many rows it
+    recorded as dispatched. It stops at the first start that fails: that row is due again 1, 2,
+    4, … seconds after its 1st, 2nd, 3rd, … failure, at most BACKOFF_CAP_S, and the others keep
+    their place."""
     dispatched = 0
     while True:
         async with conn.transaction():
             cursor = conn.cursor(row_factory=dict_row)
-            start_input = await (await cursor.execute(_CLAIM)).fetchone()
+            claim = {"in_flight": in_flight, "per_source": per_source}
+            start_input = await (await cursor.execute(_CLAIM, claim)).fetchone()
             if start_input is None:
                 return dispatched
             request_id = start_input["request_id"]
