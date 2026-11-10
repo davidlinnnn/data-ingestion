@@ -145,7 +145,8 @@ class PaperPdfWorkflow:
 
     @workflow.run
     async def run(self, start: Any) -> dict[str, Any]:
-        """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}."""
+        """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}, and
+        on failure "error", the failed status report's error block, for admission's reconciler."""
         info = workflow.info()
         self._start = start
         stage: Stage = "prepare"
@@ -214,7 +215,7 @@ class PaperPdfWorkflow:
             )  # fmt: skip
             ref = await self._call("register_failure", failure, str, orchestration)
             self._report(stage, "failed", manifest_ref=ref, error=error)
-            outcome = {"outcome": "failed", "manifest_ref": ref}
+            outcome = {"outcome": "failed", "manifest_ref": ref, "error": error}
         if self._sending:
             await self._sending
         return outcome
