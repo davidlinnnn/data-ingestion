@@ -110,7 +110,7 @@ def temporal_start(
     rpc_timeout: timedelta = timedelta(seconds=10),
 ) -> StartWorkflow:
     """The StartWorkflow of the canonical workflow on `client`, with REJECT_DUPLICATE, on the task
-    queue task_queue(adopted_version) (#135 names the queues), giving up after rpc_timeout."""
+    queue task_queue(adopted_version), giving up after rpc_timeout."""
 
     async def start(start_input: dict[str, Any]) -> None:
         try:

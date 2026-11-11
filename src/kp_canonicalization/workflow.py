@@ -43,17 +43,23 @@ WORKFLOW = "paper-pdf"
 STAGES_VERSION = "1"
 
 
-# Task queues are named after what their workers can run and are shared by every pipeline:
-# the workflow and light Activities on orchestration, docling on inference (one call per
-# worker), the external enrichment services on vlm and summary, the d3 decision model on d3.
-ORCHESTRATION_QUEUE = "orchestration"
-INFERENCE_QUEUE = "inference"
-VLM_QUEUE = "vlm"
-SUMMARY_QUEUE = "summary"
-D3_QUEUE = "d3"
+# Task queues are named after what their workers can run: the workflow and light Activities on
+# orchestration, docling on inference (one call per worker), the external enrichment services on
+# vlm and summary, the d3 decision model on d3. Each Processing Profile version has its own five.
 Queue = Literal["orchestration", "inference", "vlm", "summary", "d3"]
-# One Worker Deployment (#135): the current version is per queue, and pipelines share queues.
-DEPLOYMENT = "canonicalization"
+QUEUES: tuple[Queue, ...] = ("orchestration", "inference", "vlm", "summary", "d3")
+
+
+def deployment_name(profile_id: str) -> str:
+    """The Worker Deployment of a Processing Profile version (#178): `paper-pdf-2` for
+    `paper-pdf@2`. Temporal refuses a `.` in a deployment name."""
+    return profile_id.replace("@", "-")
+
+
+def task_queue(profile_id: str, queue: Queue = "orchestration") -> str:
+    """A task queue of a Processing Profile version: `paper-pdf-2.inference`. A request starts
+    on the orchestration queue of its adopted_version."""
+    return f"{deployment_name(profile_id)}.{queue}"
 
 
 def priority(admission_priority: Any) -> Priority:
@@ -79,8 +85,8 @@ STAGE_DURATION = "kp_canonicalization_stage_duration_seconds"
 
 
 # prepare runs before the plan exists, and register_failure may too: they take these options.
-_BOOTSTRAP = {
-    "task_queue": ORCHESTRATION_QUEUE,
+# Without a task queue an Activity runs on the workflow's own, its version's orchestration queue.
+_BOOTSTRAP: dict[str, Any] = {
     "start_to_close_timeout": timedelta(minutes=2),
     "retry_policy": RetryPolicy(
         initial_interval=timedelta(seconds=2),
@@ -91,8 +97,11 @@ _BOOTSTRAP = {
 }
 
 
-def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dict[str, Any]]:
-    """execute_activity options per task queue from the profile's runtime section:
+def activity_options(
+    runtime: dict[str, Any], deployment: str, items: int = 0
+) -> dict[Queue, dict[str, Any]]:
+    """execute_activity options per task queue of Worker Deployment `deployment`
+    (`<deployment>.<queue>`) from the profile's runtime section:
     activity_retry.<queue> ({initial_s, multiplier, cap_s, max_attempts}; ProcessingFailure
     never retried); start_to_close_s.<queue>, except the external backstops (#93 §3.2): for vlm
     and d3 and a document of `items` inventory items (a check item per inventory item at
@@ -102,8 +111,7 @@ def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dic
     summary); and heartbeat_timeout_s.<queue> for all but orchestration."""
     summary_s = runtime["summary_budget_s"] + runtime["external_start_to_close_slack_s"]
     options: dict[Queue, dict[str, Any]] = {}
-    queue: Queue
-    for queue in ("orchestration", "inference", "vlm", "summary", "d3"):
+    for queue in QUEUES:
         if queue not in runtime["activity_retry"]:
             continue  # a Plan recorded before the queue existed schedules nothing on it
         retry = runtime["activity_retry"][queue]
@@ -120,7 +128,7 @@ def activity_options(runtime: dict[str, Any], items: int = 0) -> dict[Queue, dic
             case _:
                 seconds = runtime["start_to_close_s"][queue]
         options[queue] = {
-            "task_queue": queue,
+            "task_queue": f"{deployment}.{queue}",
             "start_to_close_timeout": timedelta(seconds=seconds),
             "retry_policy": RetryPolicy(
                 initial_interval=timedelta(seconds=retry["initial_s"]),
@@ -160,7 +168,9 @@ class PaperPdfWorkflow:
                 "prepare", PrepareInput(start, info.run_id), Plan, orchestration
             )
             self._report("prepare", "succeeded")
-            options = activity_options(plan.runtime)
+            # The queues of the version this workflow started on, whatever its input says.
+            deployment = info.task_queue.rpartition(".")[0]
+            options = activity_options(plan.runtime, deployment)
             orchestration, inference = options["orchestration"], options["inference"]
 
             stage = "parse"
@@ -185,7 +195,7 @@ class PaperPdfWorkflow:
             self._report("enrich", "running", Progress(0, inventory.items, "items"))
             # #108 screening goes here, before any enrichment.
             enrich_input = EnrichInput(uid, inventory, info.workflow_id, info.run_id)
-            external = activity_options(plan.runtime, inventory.items)
+            external = activity_options(plan.runtime, deployment, inventory.items)
             local, vlm, summary = await asyncio.gather(
                 self._call("enrich_local", enrich_input, list[OutcomeRef], inference),
                 self._call("enrich_vlm", enrich_input, list[OutcomeRef], external["vlm"]),
@@ -273,7 +283,6 @@ class PaperPdfWorkflow:
             self._delivered = await workflow.execute_activity(
                 "report",
                 report,
-                task_queue=ORCHESTRATION_QUEUE,
                 start_to_close_timeout=timedelta(minutes=5),
                 retry_policy=RetryPolicy(maximum_attempts=3),
                 result_type=bool,

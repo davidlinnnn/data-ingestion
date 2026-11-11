@@ -26,35 +26,20 @@ import httpx
 import prometheus_client
 import yaml
 from temporalio.client import Client, WorkflowFailureError
-from temporalio.common import (
-    PinnedVersioningOverride,
-    SearchAttributePair,
-    TypedSearchAttributes,
-    WorkerDeploymentVersion,
-    WorkflowIDReusePolicy,
-)
-from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.runtime import PrometheusConfig, TelemetryConfig
 from temporalio.runtime import Runtime as TemporalRuntime
 
 from kp_canonicalization.ports.inference import Bounded, OpenAIChat, SystemOne
 from kp_canonicalization.ports.object_store import S3ObjectStore
 from kp_canonicalization.ports.status_reporter import HttpStatusReporter
-from kp_canonicalization.profile import PROFILES_DIR, ProfileError, load_profile
+from kp_canonicalization.profile import ProfileError, latest_profile, load_profile
 from kp_canonicalization.stages import Ports, Runtime, finalize
-from kp_canonicalization.workflow import (
-    DEPLOYMENT,
-    ORCHESTRATION_QUEUE,
-    SEARCH_ATTRIBUTES,
-    WORKFLOW,
-    Queue,
-    priority,
-)
+from kp_canonicalization.workflow import QUEUES, Queue, deployment_name, task_queue
 
 
 def main(argv: list[str] | None = None) -> int:
-    """`kp-canonicalization profile [PATH]`: load the profile (default: the bundled
-    paper-pdf@1) and print one line per method:
+    """`kp-canonicalization profile [PATH]`: load the profile (default: the bundled file with
+    the highest version, as for the worker) and print one line per method:
     `<id>@<version>  module_digest=<hex>  components=<c1>,<c2>,...` (components empty when
     none). A ProfileError prints to stderr and exits 1.
 
@@ -62,19 +47,25 @@ def main(argv: list[str] | None = None) -> int:
     [--build-id ID] [--shutdown-grace-s S] [--metrics-port P] [--temporal-metrics-port Q]`:
     serve one task queue until SIGTERM or SIGINT, then stop polling and give running Activities
     S seconds (default 0) to finish before they are cancelled and retried elsewhere; keep S
-    below the pod's termination grace period. With --build-id the worker joins Worker
-    Deployment canonicalization as that build and its workflows stay Pinned to it; without, it is
-    unversioned and its results name build "dev". It refuses to start on a store without
-    write-once. It logs JSON lines to stderr, serves kp_canonicalization.metrics at
-    http://0.0.0.0:P/metrics and the Temporal SDK's metrics, the status-stage durations
-    included, at http://0.0.0.0:Q/metrics; each endpoint is off without its port.
+    below the pod's termination grace period. It polls `<deployment>.<queue>`, where the Worker
+    Deployment is its Processing Profile version's (`paper-pdf-2` for `paper-pdf@2`). With
+    --build-id, or else TEMPORAL_WORKER_BUILD_ID, it joins that deployment as that build and its
+    workflows stay Pinned to it; without either it is unversioned and its results name build
+    "dev". It exits 2 when TEMPORAL_DEPLOYMENT_NAME is set and names another deployment, and
+    refuses to start on a store without write-once. It logs JSON lines to stderr, serves
+    kp_canonicalization.metrics at http://0.0.0.0:P/metrics and the Temporal SDK's metrics, the
+    status-stage durations included, at http://0.0.0.0:Q/metrics; each endpoint is off without
+    its port.
 
-    `kp-canonicalization start-request START.json [--wait] [--builds MAP]`: start the workflow
-    for an admission spec §10 start input, with the workflow ID set to its request_id. Starting
-    a request that already exists counts as success. --wait prints the workflow's outcome.
-    --builds is the dispatcher's map, a yaml mapping of adopted_version to build ID: the
-    workflow starts Pinned to that build of canonicalization; an adopted_version the map lacks
-    exits 2 without starting. The server refuses a build until its workers have polled.
+    `kp-canonicalization start-request START.json [--wait]`: start the workflow for an
+    admission spec §10 start input as admission's dispatcher does, on the orchestration queue of
+    its adopted_version and with the workflow ID set to its request_id. Starting a request that
+    already exists counts as success; an input without a field the start needs exits 2. --wait
+    prints the workflow's outcome.
+
+    `kp-canonicalization promote WANTED.yaml`: one promoter run (promoter.promote) over the
+    deployment values' `profiles` mapping. It prints what it did, then `promoter ok <UTC time>`;
+    or each alarm on stderr and exits 1.
 
     `kp-canonicalization list-service-unavailable`: one JSON line {"document_uid", "request_id"}
     per redrive marker, for #98's redrive; it does not check that the request is still its
@@ -83,20 +74,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kp-canonicalization")
     commands = parser.add_subparsers(dest="command", required=True)
     profile = commands.add_parser("profile")
-    profile.add_argument("path", nargs="?", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
+    profile.add_argument("path", nargs="?", type=Path, default=latest_profile())
     worker = commands.add_parser("worker")
-    worker.add_argument(
-        "--queue", choices=["orchestration", "inference", "vlm", "summary", "d3"], required=True
-    )
-    worker.add_argument("--profile", type=Path, default=PROFILES_DIR / "paper-pdf@1.yaml")
-    worker.add_argument("--build-id")
+    worker.add_argument("--queue", choices=QUEUES, required=True)
+    worker.add_argument("--profile", type=Path, default=latest_profile())
+    worker.add_argument("--build-id", default=os.environ.get("TEMPORAL_WORKER_BUILD_ID"))
     worker.add_argument("--shutdown-grace-s", type=float, default=0)
     worker.add_argument("--metrics-port", type=int)
     worker.add_argument("--temporal-metrics-port", type=int)
     start = commands.add_parser("start-request")
     start.add_argument("start_input", type=Path)
     start.add_argument("--wait", action="store_true")
-    start.add_argument("--builds", type=Path)
+    promote = commands.add_parser("promote")
+    promote.add_argument("wanted", type=Path)
     commands.add_parser("list-service-unavailable")
     args = parser.parse_args(argv)
 
@@ -113,7 +103,9 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "start-request":
         start_input = json.loads(args.start_input.read_text())
-        return asyncio.run(start_request(start_input, args.wait, args.builds))
+        return asyncio.run(start_request(start_input, args.wait))
+    if args.command == "promote":
+        return asyncio.run(run_promoter(yaml.safe_load(args.wanted.read_text())))
     if args.command == "list-service-unavailable":
         for marker in asyncio.run(finalize.service_unavailable(S3ObjectStore.from_env())):
             print(json.dumps(marker))
@@ -193,6 +185,16 @@ async def run_worker(
     if queue == "d3" and not d3_url:
         print("KP_D3_BASE_URL is required for the d3 worker", file=sys.stderr)
         return 2
+    profile = load_profile(profile_path)
+    deployment = os.environ.get("TEMPORAL_DEPLOYMENT_NAME")
+    if deployment not in (None, deployment_name(profile.id)):
+        print(
+            f"TEMPORAL_DEPLOYMENT_NAME is {deployment}, but this worker loads {profile.id}, "
+            f"which belongs to {deployment_name(profile.id)}: the deployment values list this "
+            "image under another Processing Profile version",
+            file=sys.stderr,
+        )
+        return 2
     from kp_canonicalization import metrics
     from kp_canonicalization.stages import enrich_vlm
     from kp_canonicalization.worker import make_worker  # loads docling; other commands stay fast
@@ -212,9 +214,7 @@ async def run_worker(
         temporal_runtime = TemporalRuntime(telemetry=TelemetryConfig(metrics=prometheus))
 
     store = S3ObjectStore.from_env()
-    runtime = Runtime(
-        profile=load_profile(profile_path), build_id=build_id or "dev", custody_bucket=store.bucket
-    )
+    runtime = Runtime(profile=profile, build_id=build_id or "dev", custody_bucket=store.bucket)
     async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as external_http:
         # Only orchestration Activities send status reports, only vlm ones VLM requests, only
         # summary ones summary requests and only d3 ones Quality Check requests.
@@ -255,36 +255,18 @@ async def run_worker(
     os._exit(0)
 
 
-async def start_request(start: dict[str, Any], wait: bool, builds: Path | None = None) -> int:
-    override = None
-    if builds is not None:
-        build_id = (yaml.safe_load(builds.read_text()) or {}).get(start.get("adopted_version"))
-        if not isinstance(build_id, str):
-            print(f"{builds} maps no build for {start.get('adopted_version')}", file=sys.stderr)
-            return 2
-        override = PinnedVersioningOverride(WorkerDeploymentVersion(DEPLOYMENT, build_id))
-    client = await connect()
-    request_id = start["request_id"]
+async def start_request(start: dict[str, Any], wait: bool) -> int:
+    # Admission's own start, so the two cannot drift; imported here to keep workers off psycopg.
+    from kp_admission.dispatcher import temporal_start
+
+    client = await connect(lazy=True)  # a bad input is refused before anything connects
     try:
-        await client.start_workflow(
-            WORKFLOW,
-            start,
-            id=request_id,
-            task_queue=ORCHESTRATION_QUEUE,
-            priority=priority(start.get("priority")),
-            search_attributes=TypedSearchAttributes(
-                [
-                    SearchAttributePair(key, start[field])
-                    for field, key in SEARCH_ATTRIBUTES.items()
-                    if isinstance(start.get(field), str)
-                ]
-            ),
-            id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
-            versioning_override=override,
-        )
-        print(f"started {request_id}")
-    except WorkflowAlreadyStartedError:
-        print(f"{request_id} already started")
+        await temporal_start(client, task_queue)(start)
+    except (KeyError, TypeError) as exc:
+        print(f"not a start input: {exc!r}", file=sys.stderr)
+        return 2
+    request_id = start["request_id"]
+    print(f"started {request_id}")
     if wait:
         try:
             print(json.dumps(await client.get_workflow_handle(request_id).result()))
@@ -292,6 +274,17 @@ async def start_request(start: dict[str, Any], wait: bool, builds: Path | None =
             print(f"{request_id} failed: {exc.cause}", file=sys.stderr)
             return 1
     return 0
+
+
+async def run_promoter(values: Any) -> int:
+    from kp_canonicalization.promoter import promote
+
+    alarms = await promote(await connect(), values["profiles"])
+    for alarm in alarms:
+        print(alarm, file=sys.stderr)
+    if not alarms:
+        print(f"promoter ok {datetime.now(UTC).isoformat(timespec='seconds')}")
+    return 1 if alarms else 0
 
 
 if __name__ == "__main__":

@@ -2,7 +2,8 @@
 heartbeats, cancellation and the runtime; ProcessingFailure crosses Temporal as a
 non-retryable ApplicationError whose details the workflow turns into the failure report.
 
-One worker serves one task queue, so each queue scales as its own deployment: orchestration
+One worker serves one task queue of its Processing Profile version, so each queue scales as its
+own Kubernetes Deployment: orchestration
 runs the workflow and the light Activities, inference runs docling one call at a time and is
 the only one that loads it, vlm sends the VLM requests, summary the Document Summary's and d3
 the Quality Check's."""
@@ -53,16 +54,12 @@ from kp_canonicalization.stages import (
     summary,
 )
 from kp_canonicalization.workflow import (
-    D3_QUEUE,
-    DEPLOYMENT,
     FAILURE_TYPE,
-    INFERENCE_QUEUE,
-    ORCHESTRATION_QUEUE,
     SEARCH_ATTRIBUTES,
-    SUMMARY_QUEUE,
-    VLM_QUEUE,
     PaperPdfWorkflow,
     Queue,
+    deployment_name,
+    task_queue,
     tier,
 )
 
@@ -246,23 +243,25 @@ async def make_worker(
     shutdown_grace_s: float = 0,
     versioned: bool = False,
 ) -> Worker:
-    """The worker of one task queue. The inference worker refuses to start when its profile's
-    model weights differ from the manifest. On shutdown, running Activities get
-    shutdown_grace_s to finish before they are cancelled and retried elsewhere. A versioned
-    worker joins Worker Deployment DEPLOYMENT as build runtime.build_id, and its workflows stay
-    Pinned to that build."""
+    """The worker of one task queue of runtime.profile's version. The inference worker refuses
+    to start when its profile's model weights differ from the manifest. On shutdown, running
+    Activities get shutdown_grace_s to finish before they are cancelled and retried elsewhere. A
+    versioned worker joins the Worker Deployment of its Processing Profile version
+    (deployment_name) as build runtime.build_id, and its workflows stay Pinned to that build."""
     await check_write_once(ports.store)
-    common: dict[str, Any] = {"graceful_shutdown_timeout": timedelta(seconds=shutdown_grace_s)}
+    common: dict[str, Any] = {
+        "task_queue": task_queue(runtime.profile.id, queue),
+        "graceful_shutdown_timeout": timedelta(seconds=shutdown_grace_s),
+    }
     if versioned:
         common["deployment_config"] = WorkerDeploymentConfig(
-            WorkerDeploymentVersion(DEPLOYMENT, runtime.build_id),
+            WorkerDeploymentVersion(deployment_name(runtime.profile.id), runtime.build_id),
             use_worker_versioning=True,
             default_versioning_behavior=VersioningBehavior.PINNED,
         )
     if queue == "vlm":
         return Worker(
             client,
-            task_queue=VLM_QUEUE,
             activities=Vlm(ports, runtime).all(),
             max_concurrent_activities=VLM_SLOTS,
             **common,
@@ -270,7 +269,6 @@ async def make_worker(
     if queue == "summary":
         return Worker(
             client,
-            task_queue=SUMMARY_QUEUE,
             activities=Summary(ports, runtime).all(),
             max_concurrent_activities=SUMMARY_SLOTS,
             **common,
@@ -278,7 +276,6 @@ async def make_worker(
     if queue == "d3":
         return Worker(
             client,
-            task_queue=D3_QUEUE,
             activities=D3(ports, runtime).all(),
             max_concurrent_activities=D3_SLOTS,
             **common,
@@ -290,14 +287,12 @@ async def make_worker(
         # Temporal, visible as backlog, open to other workers and ordered by priority.
         return Worker(
             client,
-            task_queue=INFERENCE_QUEUE,
             activities=Inference(ports, runtime).all(),
             max_concurrent_activities=1,
             **common,
         )
     return Worker(
         client,
-        task_queue=ORCHESTRATION_QUEUE,
         workflows=[PaperPdfWorkflow],
         activities=Orchestration(ports, runtime).all(),
         **common,

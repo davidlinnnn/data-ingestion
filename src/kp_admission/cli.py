@@ -18,7 +18,7 @@ import psycopg
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
 from kp_canonicalization.cli import JsonFormatter, connect
-from kp_canonicalization.workflow import ORCHESTRATION_QUEUE
+from kp_canonicalization.workflow import task_queue
 
 POLL_S = 1.0
 
@@ -48,9 +48,7 @@ async def run_dispatcher(dsn: str) -> int:
     stop = asyncio.Event()
     for sig in (signal.SIGTERM, signal.SIGINT):
         asyncio.get_running_loop().add_signal_handler(sig, stop.set)
-    # shortcut: every adopted_version starts on the shared orchestration queue; #135 part 2
-    # replaces it with the queue of adopted_version.
-    start = temporal_start(await connect(lazy=True), lambda _adopted_version: ORCHESTRATION_QUEUE)
+    start = temporal_start(await connect(lazy=True), task_queue)
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
         while not stop.is_set():
             await dispatch_due(conn, start)

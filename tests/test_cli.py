@@ -3,7 +3,7 @@ import logging
 import re
 
 from kp_canonicalization.cli import JsonFormatter, main
-from kp_canonicalization.profile import PROFILES_DIR
+from kp_canonicalization.profile import latest_profile
 
 
 def test_profile_prints_every_method_identity(capsys):
@@ -20,13 +20,13 @@ def test_profile_prints_every_method_identity(capsys):
 
 
 def test_profile_takes_a_path(capsys):
-    assert main(["profile", str(PROFILES_DIR / "paper-pdf@1.yaml")]) == 0
+    assert main(["profile", str(latest_profile())]) == 0
     assert len(capsys.readouterr().out.splitlines()) == 8
 
 
 def test_a_bad_profile_exits_1_with_the_reason_on_stderr(tmp_path, capsys):
     bad = tmp_path / "bad.yaml"
-    bad.write_text((PROFILES_DIR / "paper-pdf@1.yaml").read_text().replace("code@1:", "code@9:"))
+    bad.write_text(latest_profile().read_text().replace("code@1:", "code@9:"))
 
     assert main(["profile", str(bad)]) == 1
     captured = capsys.readouterr()
@@ -53,6 +53,24 @@ def test_the_orchestration_worker_needs_the_admission_url(monkeypatch, capsys):
 
     assert main(["worker", "--queue", "orchestration"]) == 2
     assert "KP_ADMISSION_URL" in capsys.readouterr().err
+
+
+def test_a_worker_listed_under_another_profile_versions_deployment_refuses_to_start(
+    monkeypatch, capsys
+):
+    monkeypatch.setenv("KP_ADMISSION_URL", "http://admission.invalid")
+    monkeypatch.setenv("TEMPORAL_DEPLOYMENT_NAME", "paper-pdf-2")
+
+    assert main(["worker", "--queue", "orchestration"]) == 2
+    assert "paper-pdf-2, but this worker loads paper-pdf@1" in capsys.readouterr().err
+
+
+def test_a_start_input_without_an_adopted_version_exits_2(tmp_path, capsys):
+    start = tmp_path / "start.json"
+    start.write_text(json.dumps({"request_id": "req_1", "priority": "normal"}))
+
+    assert main(["start-request", str(start)]) == 2
+    assert "adopted_version" in capsys.readouterr().err
 
 
 def test_worker_logs_are_json_lines_that_carry_the_request_id():

@@ -94,11 +94,11 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
         (("outcome", "complete"), normal): 1
     }
     assert d["kp_canonicalization_queue_age_seconds_count"] == {
-        (("task_queue", "orchestration"), normal): ORCHESTRATION_ACTIVITIES,
-        (("task_queue", "inference"), normal): INFERENCE_ACTIVITIES,
-        (("task_queue", "vlm"), normal): 1,
-        (("task_queue", "summary"), normal): 3,
-        (("task_queue", "d3"), normal): 1,
+        (("task_queue", "paper-pdf-1.orchestration"), normal): ORCHESTRATION_ACTIVITIES,
+        (("task_queue", "paper-pdf-1.inference"), normal): INFERENCE_ACTIVITIES,
+        (("task_queue", "paper-pdf-1.vlm"), normal): 1,
+        (("task_queue", "paper-pdf-1.summary"), normal): 3,
+        (("task_queue", "paper-pdf-1.d3"), normal): 1,
     }
     # Two pictures (one VLM request each); the summary of four sections of one sentence each
     # (docling reads sections 1 and 7 as empty; page 6 has no text layer): one map, four

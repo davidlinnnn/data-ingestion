@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from kp_admission.cli import main
-from kp_canonicalization.workflow import ORCHESTRATION_QUEUE
 from tests.admission.support import request, revision, runs
 
 
@@ -44,7 +43,7 @@ async def test_two_dispatcher_processes_start_each_request_once_and_stop_on_sigt
 
     assert [await runs(temporal, request_id) for request_id in request_ids] == [1] * 6
     described = await temporal.get_workflow_handle(request_ids[0]).describe()
-    assert described.task_queue == ORCHESTRATION_QUEUE  # until #135 part 2 names the queues
+    assert described.task_queue == "paper-pdf-1.orchestration"
     reconciler = role("reconcile", env, stdout=subprocess.PIPE, text=True)
     out, _ = reconciler.communicate(timeout=30)
     assert (reconciler.returncode, json.loads(out)) == (0, {"running": 6})
