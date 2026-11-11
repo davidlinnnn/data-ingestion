@@ -498,7 +498,9 @@ object, whatever their paths and Source Revisions; documents share nothing.
 Everything the platform keeps for a document sits under
 `documents/{document_uid}/`, so purging is by that prefix. Removing the files
 of one Source Revision alone first checks the document's other Source
-Revisions for the same digests.
+Revisions for the same digests. The key carries no tenant: a deployment serves
+one tenant. Should one serve several, #57 decides between a bucket and a key
+prefix per tenant; stored references stay valid either way.
 
 Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
