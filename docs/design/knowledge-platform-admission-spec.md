@@ -212,7 +212,9 @@ No body. Response `202` with the batch and every item, admitted items carrying
 `request_id` and `source_revision_id`. Repeating it returns the same response.
 `409 BATCH_EXPIRED` for an expired batch; `422 ALL_ITEMS_REJECTED` when every
 item of the batch ends rejected (the batch is still finalized and no request is
-created). A pause does not block finalization (Q10.1e).
+created). `503 UNAVAILABLE` with `Retry-After` when storage cannot say whether
+the files are in place (§6.2); the batch stays open and nothing changes. A pause
+does not block finalization (Q10.1e).
 
 ### 5.4 Batch: `GET /v1/batches/{batch_id}`
 
@@ -326,8 +328,9 @@ requests they create are committed with their outbox rows before `201`.
    declaration by another batch, so that its `document_uid` is not the declared
    one → `STALE_DECLARATION` (declare again).
 2. Placement re-check → `RESOURCE_NOT_FOUND`.
-3. Every file in `uploads` staged by a `PUT` that returned `204` (§5.2 verified
-   size, digest and media type at that point) → `FILES_MISSING`.
+3. Every file in `uploads` is in place: its object exists in storage, asked
+   before the transaction (§5.2 verified size, digest and media type before the
+   object appeared) → `FILES_MISSING`.
 4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
    or `VERSION_CONFLICT`; same content → §6.4.
 5. Otherwise: create the document on first submission (with the declared `document_uid`),
