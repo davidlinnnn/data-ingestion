@@ -6,6 +6,7 @@ import pytest
 
 SCRIPT = Path(__file__).parents[1] / "scripts/check-method-versions"
 PROFILE = "src/kp_canonicalization/profiles/demo@1.yaml"
+DEV_PROFILE = "tests/profiles/demo-dev.yaml"
 FORMULA = "src/kp_canonicalization/methods/formula/"
 
 
@@ -23,12 +24,9 @@ def repo(tmp_path: Path) -> Path:
     git(tmp_path, "init", "-q", "-b", "dev")
     git(tmp_path, "config", "user.email", "test@example.com")
     git(tmp_path, "config", "user.name", "test")
-    write(tmp_path, PROFILE, "profile: demo@1\nreleased: true\nmethods:\n  formula@1: {}\n")
-    write(
-        tmp_path,
-        "src/kp_canonicalization/profiles/draft@1.yaml",
-        "released: false\nmethods:\n  code@1: {}\n",
-    )
+    write(tmp_path, PROFILE, "profile: demo@1\nmethods:\n  formula@1: {}\n")
+    write(tmp_path, DEV_PROFILE, "profile: demo@1\nmethods:\n  code@1: {}\n")
+    write(tmp_path, "src/kp_canonicalization/profiles/README.md", "How to release.\n")
     write(tmp_path, FORMULA + "__init__.py", 'ID = "formula"\nVERSION = 1\n')
     write(tmp_path, FORMULA + "prompt.txt", "Transcribe.\n")
     write(
@@ -64,7 +62,7 @@ def test_changing_a_released_method_with_a_version_bump_passes(repo):
 
 
 def test_modifying_a_released_profile_fails(repo):
-    write(repo, PROFILE, "profile: demo@1\nreleased: true\nmethods:\n  formula@2: {}\n")
+    write(repo, PROFILE, "profile: demo@1\nmethods:\n  formula@2: {}\n")
 
     result = check(repo)
     assert result.returncode == 1
@@ -81,19 +79,16 @@ def test_adding_a_new_profile_passes(repo):
     write(
         repo,
         "src/kp_canonicalization/profiles/demo@2.yaml",
-        "profile: demo@2\nreleased: true\nmethods:\n  formula@1: {}\n",
+        "profile: demo@2\nmethods:\n  formula@1: {}\n",
     )
 
     assert check(repo).returncode == 0
 
 
-def test_methods_and_profiles_still_in_draft_may_change(repo):
+def test_the_dev_profile_its_methods_and_the_operating_document_may_change(repo):
     write(repo, "src/kp_canonicalization/methods/code/extra.py", "X = 1\n")
-    write(
-        repo,
-        "src/kp_canonicalization/profiles/draft@1.yaml",
-        "released: true\nmethods:\n  code@1: {}\n",
-    )
+    write(repo, DEV_PROFILE, "profile: demo@1\nmethods:\n  code@2: {}\n")
+    write(repo, "src/kp_canonicalization/profiles/README.md", "How to release and retire.\n")
 
     assert check(repo).returncode == 0
 
