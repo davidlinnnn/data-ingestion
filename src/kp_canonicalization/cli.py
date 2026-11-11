@@ -55,7 +55,8 @@ def main(argv: list[str] | None = None) -> int:
     refuses to start on a store without write-once. It logs JSON lines to stderr, serves
     kp_canonicalization.metrics at http://0.0.0.0:P/metrics and the Temporal SDK's metrics, the
     status-stage durations included, at http://0.0.0.0:Q/metrics; each endpoint is off without
-    its port.
+    its port. The labels worker_deployment and build_id name the worker: on
+    kp_canonicalization_build_info at P, on every metric at Q.
 
     `kp-canonicalization start-request START.json [--wait]`: start the workflow for an
     admission spec §10 start input as admission's dispatcher does, on the orchestration queue of
@@ -64,8 +65,8 @@ def main(argv: list[str] | None = None) -> int:
     prints the workflow's outcome.
 
     `kp-canonicalization promote WANTED.yaml`: one promoter run (promoter.promote) over the
-    deployment values' `profiles` mapping. It prints what it did, then `promoter ok <UTC time>`;
-    or each alarm on stderr and exits 1. Values without a profile exit 2.
+    deployment values' `profiles` mapping. It logs JSON lines: what it did, then the message
+    `promoter ok`; or each alarm at level ERROR, and exits 1. Values without a profile exit 2.
 
     `kp-canonicalization list-service-unavailable`: one JSON line {"document_uid", "request_id"}
     per redrive marker, for #98's redrive; it does not check that the request is still its
@@ -123,6 +124,9 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+log = logging.getLogger(__name__)
+
+
 class JsonFormatter(logging.Formatter):
     """One JSON object per log line. The SDK's workflow and Activity loggers add the workflow
     ID, which is the request_id, and the run ID, which is the attempt_id; a record's
@@ -158,6 +162,12 @@ async def connect(runtime: TemporalRuntime | None = None, lazy: bool = False) ->
         runtime=runtime,
         lazy=lazy,
     )
+
+
+def _log_json() -> None:
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
 
 
 async def run_worker(
@@ -199,9 +209,9 @@ async def run_worker(
     from kp_canonicalization.stages import enrich_vlm
     from kp_canonicalization.worker import make_worker  # loads docling; other commands stay fast
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(JsonFormatter())
-    logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
+    _log_json()
+    build = {"worker_deployment": deployment_name(profile.id), "build_id": build_id or "dev"}
+    metrics.build_info.labels(**build).set(1)
     if metrics_port is not None:
         prometheus_client.start_http_server(metrics_port)
     temporal_runtime = None
@@ -211,7 +221,9 @@ async def run_worker(
             durations_as_seconds=True,
             histogram_bucket_overrides={metrics.STAGE_DURATION: metrics.STAGE_BUCKETS},
         )
-        temporal_runtime = TemporalRuntime(telemetry=TelemetryConfig(metrics=prometheus))
+        temporal_runtime = TemporalRuntime(
+            telemetry=TelemetryConfig(metrics=prometheus, global_tags=build)
+        )
 
     store = S3ObjectStore.from_env()
     runtime = Runtime(profile=profile, build_id=build_id or "dev", custody_bucket=store.bucket)
@@ -242,14 +254,15 @@ async def run_worker(
         worker = await make_worker(
             client, ports, runtime, queue, shutdown_grace_s, versioned=bool(build_id)
         )
-        print(f"worker {runtime.profile.id} build {runtime.build_id} on {worker.task_queue}",
-              flush=True)  # fmt: skip
+        log.info(
+            "worker %s build %s on %s", runtime.profile.id, runtime.build_id, worker.task_queue
+        )
         stop = asyncio.Event()
         for sig in (signal.SIGTERM, signal.SIGINT):
             asyncio.get_running_loop().add_signal_handler(sig, stop.set)
         async with worker:  # leaving it shuts the worker down
             await stop.wait()
-    print("worker stopped", flush=True)
+    log.info("worker stopped")
     # A cancelled docling call keeps its thread running; its Activity is already back in
     # Temporal, so exit without waiting for the thread.
     os._exit(0)
@@ -283,11 +296,12 @@ async def run_promoter(values: Any) -> int:
         # An empty mapping would retire every version: a chart that rendered nothing must not.
         print("no profiles in the deployment values", file=sys.stderr)
         return 2
+    _log_json()
     alarms = await promote(await connect(), values["profiles"])
     for alarm in alarms:
-        print(alarm, file=sys.stderr)
+        log.error(alarm)
     if not alarms:
-        print(f"promoter ok {datetime.now(UTC).isoformat(timespec='seconds')}")
+        log.info("promoter ok")
     return 1 if alarms else 0
 
 

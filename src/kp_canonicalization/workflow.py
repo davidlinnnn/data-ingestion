@@ -244,14 +244,21 @@ class PaperPdfWorkflow:
         queue it behind the previous one so that reports leave in seq order."""
         info = workflow.info()
         if state == "running":
-            self._stage_started.setdefault(stage, workflow.now())
-        elif stage in self._stage_started:  # a stage can fail before it reports running
-            seconds = (workflow.now() - self._stage_started[stage]).total_seconds()
-            workflow.metric_meter().create_histogram_float(
-                STAGE_DURATION, "Wall time per status stage", "s"
-            ).with_additional_attributes(
-                {"stage": stage, "tier": tier(info.priority.priority_key)}
-            ).record(seconds)
+            if stage not in self._stage_started:  # later reports of the stage carry progress
+                self._stage_started[stage] = workflow.now()
+                workflow.logger.info("stage %s running", stage)
+        else:
+            if error:  # the reason code only: a platform error's message is an exception's text
+                workflow.logger.warning("stage %s %s: %s", stage, state, error["reason"])
+            else:
+                workflow.logger.info("stage %s %s", stage, state)
+            if stage in self._stage_started:  # a stage can fail before it reports running
+                seconds = (workflow.now() - self._stage_started[stage]).total_seconds()
+                workflow.metric_meter().create_histogram_float(
+                    STAGE_DURATION, "Wall time per status stage", "s"
+                ).with_additional_attributes(
+                    {"stage": stage, "tier": tier(info.priority.priority_key)}
+                ).record(seconds)
         self._seq += 1
         version = self._start.get("adopted_version") if isinstance(self._start, dict) else None
         report = StatusReport(

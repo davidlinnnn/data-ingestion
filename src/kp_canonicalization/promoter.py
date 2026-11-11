@@ -2,6 +2,7 @@
 CronJob runs it every minute (#137); nothing on the Temporal side of an upgrade, a patch, a
 rollback or a retirement is done by hand (profiles/README.md)."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -19,6 +20,8 @@ from temporalio.service import RPCError, RPCStatusCode
 
 from kp_canonicalization.workflow import QUEUES, task_queue
 
+log = logging.getLogger(__name__)
+
 
 async def promote(
     client: Client, wanted: dict[str, Any], stale_after: timedelta = timedelta(minutes=10)
@@ -26,7 +29,7 @@ async def promote(
     """One run over every Worker Deployment of the client's namespace, which must hold nothing
     but Processing Profile versions. `wanted` is the deployment values' `profiles` mapping:
     {deployment name: {"builds": [image tag, ...], "current": image tag}}. Returns the alarms,
-    one line each; a run that returns any must end non-zero. It prints what it did or waits for.
+    one line each; a run that returns any must end non-zero. It logs what it did or waits for.
 
     A listed deployment: `current` becomes the current version once Temporal lists all five
     queues for that build, which it does from each queue's first poll on; until then the run
@@ -97,11 +100,11 @@ async def _follow(
         missing = sorted({task_queue(name, queue) for queue in QUEUES} - polled)
         if not missing:
             await _set_current(client, name, want)
-            print(f"{name}: current {current or 'none'} -> {want}")
+            log.info("%s: current %s -> %s", name, current or "none", want)
             current = want
         else:
             age = datetime.now(UTC) - versions[want].create_time.ToDatetime(UTC)
-            print(f"{name}: {want} does not poll {missing} yet")
+            log.info("%s: %s does not poll %s yet", name, want, missing)
             if age >= stale_after:
                 alarms.append(
                     f"{name}: {want} is not current {int(age.total_seconds())} s after its "
@@ -132,7 +135,7 @@ async def _retire(client: Client, info: WorkerDeploymentInfo) -> list[str]:
         ]
     if info.routing_config.current_deployment_version.build_id:
         await _set_current(client, name, "")
-        print(f"{name}: retiring, set unversioned")
+        log.info("%s: retiring, set unversioned", name)
     remaining = [
         version.deployment_version.build_id
         for version in info.version_summaries
@@ -142,7 +145,7 @@ async def _retire(client: Client, info: WorkerDeploymentInfo) -> list[str]:
         await client.workflow_service.delete_worker_deployment(
             DeleteWorkerDeploymentRequest(namespace=client.namespace, deployment_name=name)
         )
-        print(f"{name}: retired, Worker Deployment deleted")
+        log.info("%s: retired, Worker Deployment deleted", name)
     return []
 
 
@@ -167,7 +170,7 @@ async def _delete_version(client: Client, name: str, build_id: str) -> bool:
     except RPCError as refusal:
         if refusal.status != RPCStatusCode.FAILED_PRECONDITION:
             raise
-        print(f"{name}:{build_id}: not deleted yet: {refusal.message}")
+        log.info("%s:%s: not deleted yet: %s", name, build_id, refusal.message)
         return False
-    print(f"{name}:{build_id}: version deleted")
+    log.info("%s:%s: version deleted", name, build_id)
     return True
