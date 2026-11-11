@@ -8,7 +8,8 @@
     check-method-versions [BASE]            (default origin/dev)
     check-method-versions --released REV    print the id of each profile released at REV
 
-A profile counts as released when its file at the merge base says `released: true`.
+A profile is released once its file is in profiles/ on the base branch: every .yaml file there
+at the merge base counts. Drafts live in tests/profiles/, which these rules do not cover.
 1. A change under the package of a method that a released profile lists needs a higher
    VERSION in that package's __init__.py in the same diff.
 2. A released profile file is never modified, renamed or deleted; new profile files pass.
@@ -45,8 +46,7 @@ def released_profiles(rev: str) -> dict[str, list[str]]:
     for path in git("ls-tree", "--name-only", rev, PROFILES).split():
         if path.endswith(".yaml"):
             doc = yaml.safe_load(git("show", f"{rev}:{path}"))
-            if doc.get("released") is True:
-                released[path] = [ref.rsplit("@", 1)[0] for ref in doc["methods"]]
+            released[path] = [ref.rsplit("@", 1)[0] for ref in doc["methods"]]
     return released
 
 

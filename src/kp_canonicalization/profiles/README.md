@@ -11,10 +11,6 @@ amendment. The Temporal evidence is in
 repo's code on a real paper, in
 [docs/validation/80/t6-seam-b](../../../docs/validation/80/t6-seam-b/README.md).
 
-**Not in force yet.** `paper-pdf@1` is released by the pull request that makes
-`scripts/check-method-versions` count every file in this directory as released (#135). Until it
-merges, CI rules 1 and 2 bind no file and no tag or release branch exists.
-
 In this repo: the routing, the worker's checks, the promoter (`kp-canonicalization promote`), the
 CI rules and the CI that tags a version and opens its release branch. In #137: the Helm chart,
 the promoter's CronJob and its alert route, the image build and the image tag format.
