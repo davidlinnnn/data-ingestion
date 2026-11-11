@@ -1,3 +1,4 @@
+import logging
 import shutil
 from pathlib import Path
 
@@ -15,6 +16,16 @@ from tests.summary import fake_llm
 from tests.vlm import canned_vlm
 
 DEV_PROFILE = Path(__file__).parent / "profiles" / "paper-pdf-dev.yaml"
+
+
+@pytest.fixture
+def root_logging(monkeypatch):
+    """For a test of a command that configures the root logger: pytest gets its own back."""
+    level = logging.root.level
+    with monkeypatch.context() as patch:
+        patch.setattr(logging.root, "handlers", [])  # basicConfig(force=True) closes its victims
+        yield
+    logging.root.setLevel(level)
 
 
 @pytest.fixture

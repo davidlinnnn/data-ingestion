@@ -8,7 +8,6 @@ import argparse
 import asyncio
 import contextlib
 import json
-import logging
 import os
 import signal
 import sys
@@ -17,7 +16,7 @@ import psycopg
 
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
-from kp_canonicalization.cli import JsonFormatter, connect
+from kp_canonicalization.cli import connect, log_json_lines
 from kp_canonicalization.workflow import task_queue
 
 POLL_S = 1.0
@@ -38,9 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     if not dsn:
         print("KP_ADMISSION_DATABASE_URL is required", file=sys.stderr)
         return 2
-    handler = logging.StreamHandler()
-    handler.setFormatter(JsonFormatter())
-    logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
+    log_json_lines()
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
 
 

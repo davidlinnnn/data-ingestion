@@ -361,6 +361,36 @@ async def test_prepare_logs_the_correlation_ids_once(client, ports, runtime, cap
     ]  # fmt: skip
 
 
+async def test_the_workflow_logs_each_stage_transition_once_and_a_failure_by_its_reason_code(
+    client, ports, runtime, caplog
+):
+    caplog.set_level(logging.INFO, logger="temporalio.workflow")
+    good = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+    bad = await start_input(
+        ports, encrypt(write_pdf(paper(2))), request_id=f"req_{uuid.uuid4().hex[:8]}"
+    )
+
+    await process(client, ports, runtime, good)
+    await process(client, ports, runtime, bad)
+
+    def lines(start):
+        return [
+            (r.levelname, r.getMessage().split(" ({")[0])  # the SDK appends the workflow's info
+            for r in caplog.records
+            if getattr(r, "temporal_workflow", {}).get("workflow_id") == start["request_id"]
+        ]
+
+    assert lines(good) == [
+        ("INFO", f"stage {stage} {state}")
+        for stage in ("prepare", "parse", "enrich", "finalize")
+        for state in ("running", "succeeded")
+    ]
+    assert lines(bad) == [
+        ("INFO", "stage prepare running"),
+        ("WARNING", "stage prepare failed: PASSWORD_REQUIRED"),
+    ]
+
+
 async def test_a_request_runs_pinned_to_the_current_build_of_its_adopted_versions_deployment(
     client, monkeypatch, ports, runtime
 ):

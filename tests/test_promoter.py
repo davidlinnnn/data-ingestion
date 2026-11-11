@@ -4,6 +4,8 @@ pollers after 5 s; the defaults are minutes."""
 
 import asyncio
 import contextlib
+import json
+import logging
 import shutil
 from datetime import timedelta
 
@@ -16,6 +18,7 @@ from temporalio.service import RPCError
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker, WorkerDeploymentConfig
 
+from kp_canonicalization import cli
 from kp_canonicalization.promoter import promote
 from kp_canonicalization.workflow import QUEUES
 
@@ -107,7 +110,8 @@ def values(*builds: str, current: str) -> dict:
     return {DEPLOYMENT: {"builds": list(builds), "current": current}}
 
 
-async def test_a_build_becomes_current_once_it_polls_all_five_queues(client):
+async def test_a_build_becomes_current_once_it_polls_all_five_queues(client, caplog):
+    caplog.set_level(logging.INFO, logger="kp_canonicalization.promoter")
     wanted = values("r1", current="r1")
 
     assert await promote(client, wanted) == []  # no pod yet: nothing to do, nothing to report
@@ -121,6 +125,8 @@ async def test_a_build_becomes_current_once_it_polls_all_five_queues(client):
 
     assert "r1" in alarm and f"{DEPLOYMENT}.d3" in alarm
     assert runs[-1] == []
+    assert f"{DEPLOYMENT}: r1 does not poll ['{DEPLOYMENT}.d3'] yet" in caplog.messages
+    assert f"{DEPLOYMENT}: current none -> r1" in caplog.messages
     assert await promote(client, wanted, stale_after=timedelta(0)) == []  # current: no clock runs
 
 
@@ -190,6 +196,30 @@ async def test_a_current_that_is_not_among_the_builds_raises_an_alarm_and_change
 
         assert await state(client) == ("r1", {"r1", "r2"})
     assert "current" in alarm and "builds" in alarm
+
+
+async def test_the_command_logs_json_lines_and_exits_1_on_an_alarm_or_a_failed_run(
+    client, monkeypatch, capsys, root_logging
+):
+    async def connect():
+        return client
+
+    async def unreachable():
+        raise RuntimeError("no Temporal at this address")
+
+    monkeypatch.setattr(cli, "connect", connect)
+    quiet = await cli.run_promoter({"profiles": values("r1", current="r1")})
+    alarmed = await cli.run_promoter({"profiles": values("r1", current="r2")})
+    monkeypatch.setattr(cli, "connect", unreachable)
+    failed = await cli.run_promoter({"profiles": values("r1", current="r1")})
+
+    lines = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    ours = [(line["level"], line["message"]) for line in lines if line["logger"] == cli.__name__]
+    assert (quiet, alarmed, failed) == (0, 1, 1)
+    assert ours[0] == ("INFO", "promoter ok")
+    assert ours[1][0] == "ERROR" and "current is not among builds" in ours[1][1]
+    assert ours[2] == ("ERROR", "promoter run failed: RuntimeError('no Temporal at this address')")
+    assert lines[0]["message"] == f"{DEPLOYMENT}: no pod of it has polled yet"
 
 
 async def visible(client: Client, query: str) -> None:
