@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from kp_canonicalization.methods import InvalidOutput, InventoryItem, MethodOutput
 
 ID = "picture-interpretation"
-VERSION = 1
+VERSION = 2
 ORIGIN = "interpretation"
 TARGET = ("pictures", None)
 INPUTS = ("picture_image", "page_image")
