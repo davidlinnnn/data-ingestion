@@ -1,5 +1,7 @@
 """picture-interpretation: one VLM request per picture, with the whole page and the picture crop,
-answered in a strict JSON schema whose four fields are each their own enrichment (v2 Q3c)."""
+answered in a strict JSON schema whose four fields are each their own enrichment (v2 Q3c).
+
+Rehearsal of the upgrade flow (#135): this line is the method change."""
 
 import base64
 from typing import Any, Literal, get_args
