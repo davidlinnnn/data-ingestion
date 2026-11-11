@@ -1,0 +1,43 @@
+$ temporal worker deployment describe-version --deployment-name paper-pdf-1 --build-id paper-pdf-1-r1 -o json
+# exit 0
+{
+  "deploymentName": "paper-pdf-1",
+  "BuildID": "paper-pdf-1-r1",
+  "createTime": "2026-11-11T10:33:01.831327Z",
+  "routingChangedTime": "2026-11-11T10:33:08.462368Z",
+  "currentSinceTime": "2026-11-11T10:33:08.462368Z",
+  "rampingSinceTime": "1970-01-01T00:00:00Z",
+  "rampPercentage": 0,
+  "drainageInfo": {
+    "drainageStatus": "",
+    "lastChangedTime": "0001-01-01T00:00:00Z",
+    "lastCheckedTime": "0001-01-01T00:00:00Z"
+  },
+  "taskQueuesInfos": [
+    {
+      "name": "paper-pdf-1.inference",
+      "type": "activity"
+    },
+    {
+      "name": "paper-pdf-1.d3",
+      "type": "activity"
+    },
+    {
+      "name": "paper-pdf-1.orchestration",
+      "type": "activity"
+    },
+    {
+      "name": "paper-pdf-1.orchestration",
+      "type": "workflow"
+    },
+    {
+      "name": "paper-pdf-1.summary",
+      "type": "activity"
+    },
+    {
+      "name": "paper-pdf-1.vlm",
+      "type": "activity"
+    }
+  ],
+  "metadata": null
+}

@@ -1,49 +1,69 @@
 # Processing Profile versions: upgrade, patch, retire
 
-**Target flow, implemented by #135 part 2.** None of it is on `dev` yet. #135 part 2 builds the
-routing, the CI rule, the CLI behaviour, the CI that tags a version and opens its release branch,
-and the promoter script. #137 adds the Helm chart, the promoter's CronJob and the image build.
-Until #135 part 2 merges, `paper-pdf@1` is a draft with `released: false`. The design is #178,
+How a Processing Profile version is released, deployed, patched and retired. The design is #178,
 revised on 2026-11-10: nothing here may depend on a Kubernetes operator, so the Temporal Worker
 Controller is out and the rollout uses the commands
 [Temporal documents for the CLI](https://docs.temporal.io/production-deployment/worker-deployments/worker-versioning/roll-out-and-pin)
 ("You don't need the Worker Controller to use Worker Versioning"). The release act is
 [ADR-0010](../../../docs/adr/0010-reuse-key-from-method-identity-and-source-digest.md)'s
-amendment, and the Temporal evidence (P1 to P8 below) is in
-[docs/validation/178](../../../docs/validation/178/README.md).
+amendment. The Temporal evidence is in
+[docs/validation/178](../../../docs/validation/178/README.md) (P1 to P8 below) and, for this
+repo's code on a real paper, in
+[docs/validation/80/t6-seam-b](../../../docs/validation/80/t6-seam-b/README.md).
+
+**Not in force yet.** `paper-pdf@1` is released by the pull request that makes
+`scripts/check-method-versions` count every file in this directory as released (#135). Until it
+merges, CI rules 1 and 2 bind no file and no tag or release branch exists.
+
+In this repo: the routing, the worker's checks, the promoter (`kp-canonicalization promote`), the
+CI rules and the CI that tags a version and opens its release branch. In #137: the Helm chart,
+the promoter's CronJob and its alert route, the image build and the image tag format.
 
 ## Shape
 
-- **Queues.** A Processing Profile version has its own task queues: for `paper-pdf@2`,
-  `paper-pdf-2` plus `orchestration`, `inference`, `vlm`, `summary` and `d3` (#135 part 2 sets the
-  separator). The dispatcher computes the orchestration queue from `adopted_version`, with no map
-  and no override.
+- **Queues.** A Processing Profile version has its own five task queues,
+  `<deployment>.<queue>`: for `paper-pdf@2`, `paper-pdf-2.orchestration`, `paper-pdf-2.inference`,
+  `paper-pdf-2.vlm`, `paper-pdf-2.summary` and `paper-pdf-2.d3`. The dispatcher computes the
+  orchestration queue from `adopted_version` (`workflow.task_queue`), with no map and no
+  override, and a workflow schedules its Activities on the queues of the version it started on.
 - **One Worker Deployment per version.** All five queues of `paper-pdf@<N>` belong to the Temporal
   Worker Deployment `paper-pdf-<N>` (no `.` in the name). A build is one image tag. The chart
-  passes `TEMPORAL_DEPLOYMENT_NAME` and `TEMPORAL_WORKER_BUILD_ID` to every pod, and a worker uses
-  them when `--build-id` is absent. Workflows are Pinned: a workflow and its Activities run on the
-  build they started on
+  passes `TEMPORAL_DEPLOYMENT_NAME` and `TEMPORAL_WORKER_BUILD_ID` to every pod. A worker uses
+  the build ID when `--build-id` is absent, and refuses to start when the deployment name is not
+  the one of the Processing Profile it loads: an image listed under the wrong version stops
+  there, before it polls. Workflows are Pinned: a workflow and its Activities run on the build
+  they started on
   ("[For Pinned Workflows, an Activity starts on the pinned version](https://docs.temporal.io/worker-versioning)").
-- **Deployment list.** The deployment values hold, per version, the builds to run; the last one is
-  the build that should be current:
+- **Deployment list.** The deployment values hold, per version, the builds to run and the one
+  that should be current:
 
   ```yaml
   profiles:
     paper-pdf-2:
       builds: [<old tag>, <new tag>]
+      current: <new tag>
   ```
 
   The chart renders five Deployments per listed build, named with the tag so that two builds run
-  side by side, and a ConfigMap with each version's wanted build. Argo CD syncs with prune, so a
-  tag removed from the list is a Deployment deleted.
-- **Promoter.** A CronJob in the worker namespace runs the promoter every minute. For each version
-  in the ConfigMap: once the wanted build polls all five queues, `set-current-version --yes`. The
-  server refuses a build that does not poll every queue of the current one, and repeating the call
-  for the build that is already current is a no-op. The promoter also deletes a version that reads
-  `drained` once its pollers are forgotten, and deletes a Worker Deployment that has no version
-  and is no longer listed. It must fail visibly when a wanted build is not current ten minutes
-  after its pods are ready: nothing else reports that, and the version's workflows meanwhile wait
-  as backlog without an error (P1).
+  side by side, and a ConfigMap with this mapping for the promoter. The values change by pull
+  request: CI and CD are separate pipelines, so no pipeline writes a tag here. Argo CD syncs with
+  prune, so a tag removed from the list is a Deployment deleted.
+- **Promoter.** A CronJob in the worker namespace runs `kp-canonicalization promote` every minute
+  over that mapping (`promoter.promote`). The namespace holds Processing Profile versions only.
+  - *A listed version.* Once the `current` build polls all five queues, the promoter makes it
+    current; repeating that is a no-op. A build that is off `builds` and no longer current is
+    deleted once Temporal allows it: drained and its pollers forgotten.
+  - *An unlisted version* is retired: when no workflow is open on its orchestration queue, the
+    promoter sets the deployment unversioned, deletes each version once Temporal allows it, then
+    deletes the Worker Deployment. It never skips drainage.
+  - *Alarms.* The run exits non-zero and names the cause when: `current` is not among `builds`
+    (nothing else is done); the `current` build is still not current ten minutes after Temporal
+    first saw it (the version's create time), with the queues it does not poll; workflows are
+    open on a build that is off `builds` (its tag was removed too early); or workflows are open
+    on an unlisted version's orchestration queue (nothing is retired). Nothing else reports the
+    second case: the version's workflows meanwhile wait as backlog without an error (P1).
+  - *Liveness.* A run without alarms ends with the line `promoter ok <UTC time>`. Alert on a
+    failed run and on that line going stale (#137).
 
 Limits and versions. A namespace holds at most 100 Worker Deployments and a deployment 100
 versions (`matching.maxDeployments`, `matching.maxVersionsInDeployment`). Versions are
@@ -62,13 +82,15 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
   (`scripts/check-method-versions`).
 - A change under a method package that any file here lists raises that package's `VERSION` in the
   same diff. CI rule 1 refuses it otherwise.
+- A pull request into a release branch changes nothing under `methods/`, a raised `VERSION`
+  included (CI rule 3): a patch build must reuse what its version registered.
 - Drafts live only in the DEV Processing Profile (`tests/profiles/paper-pdf-dev.yaml`), which is
   not under these rules.
 - One worker image loads one Processing Profile. Once a method's `VERSION` rises on `dev`, `dev` can
   no longer load the older file, and the load error names its release branch. CLI defaults and tests
-  use the file with the highest `N`.
+  use the file with the highest `N` (`profile.latest_profile`).
 
-## Upgrade: one PR, one deployment line and one adoption
+## Upgrade: one PR, one deployment entry and one adoption
 
 1. Open one PR with:
    - **The method.** A new method is a package `kp_canonicalization/methods/<id with _>/` that
@@ -88,11 +110,12 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
 
    Check the file: `kp-canonicalization profile src/kp_canonicalization/profiles/paper-pdf@<N+1>.yaml`
    prints every `<id>@<version>` with its `module_digest`, or the reason it does not load.
-2. Merge it. That is the release. CI tags `profile/paper-pdf@<N+1>`, builds the image and opens
-   the branch `release/paper-pdf-<N+1>`.
-3. Add `paper-pdf-<N+1>` with that image tag to the deployment values and sync. The chart brings up
-   its five Deployments and the promoter makes the build current once all five poll. Nothing on the
-   Temporal side is manual.
+2. Merge it. That is the release. CI tags `profile/paper-pdf@<N+1>` and opens the branch
+   `release/paper-pdf-<N+1>` (`.github/workflows/release-profile.yml`). The image build and its
+   tag format are #137's.
+3. Add `paper-pdf-<N+1>` to the deployment values, with that image tag as its one build and as
+   `current`, and sync. The chart brings up its five Deployments and the promoter makes the build
+   current once all five poll. Nothing on the Temporal side is manual.
 4. The Processing Profile owner adopts `paper-pdf@<N+1>` in admission. The platform then refreshes
    (#98): one `process` request per affected document's current canonical revision, with
    `initiator: platform` and that `adopted_version`. Adoption need not
@@ -103,16 +126,18 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
    - the request's receipts (`requests/<request_id>/attempts/`) hold only that method's requests;
    - every other enrichment says `reused: true`.
 
-## Patch: one PR to the release branch and two deployment lines
+## Patch: one PR to the release branch, one to `dev`, and two changes of the deployment entry
 
-A patch changes shared code or logging only. CI rule 1 refuses method changes, and a `runtime` value
+A patch changes shared code or logging only. CI rule 3 refuses method changes, and a `runtime` value
 is in the released file, so a new value is a new version.
 
-1. Branch from `release/paper-pdf-<N>` and open one PR back into it.
-2. Merge it. CI builds a new image tag. Append the tag to the version's `builds` and sync: the new
-   build's five Deployments start beside the old ones, and the promoter makes it current once all
-   five poll. New workflows ran on the new build 0.1 s after the switch, and the routing state read
-   `COMPLETED` (P8).
+1. Branch from `release/paper-pdf-<N>` and open one PR back into it
+   ([branching](../../../docs/agents/branching.md)). Open a second PR that carries the same fix
+   into `dev`, or the next version ships without it.
+2. Merge the first. The image build (#137) gives a new tag. Append the tag to the version's
+   `builds`, set `current` to it, and sync: the new build's five Deployments start beside the old
+   ones, and the promoter makes it current once all five poll. New workflows ran on the new build
+   0.1 s after the switch, and the routing state read `COMPLETED` (P8).
 3. Nothing in flight moves. A running workflow and its Activities stay on the build they started
    on, so the fix reaches new requests only, and the patch need not replay the histories of the
    build it replaces.
@@ -121,12 +146,13 @@ is in the released file, so a new value is a new version.
    refresh). Then remove its tag from `builds` and sync: Argo CD deletes its five Deployments and the
    promoter deletes the version once the poller window passes (`matching.PollerHistoryTTL`,
    5 minutes by default). Removing the tag earlier strands its open workflows (P7), so read
-   `drained` first.
-5. Rollback: while the old tag is still listed, move it back to the end of `builds` and sync; the
-   promoter switches current back within a minute. Workflows that started on the bad build stay
-   pinned to it: let them finish, or terminate them and redrive the documents.
+   `drained` first. The promoter reports a tag removed too early on its next run: put the tag
+   back.
+5. Rollback: while the old tag is still listed, set `current` back to it and sync; the promoter
+   switches current back within a minute. Workflows that started on the bad build stay pinned to
+   it: let them finish, or terminate them and redrive the documents.
 
-## Retire: one line, required
+## Retire: one entry removed, required
 
 This step is not optional. A version that no adoption names stays current in Temporal, never
 reads `draining`, and so nothing scales it down (P5). Each of its five queues keeps at least one
@@ -135,36 +161,38 @@ pod until the version leaves the deployment values.
 1. Confirm that no adoption names `paper-pdf@<N>`: the owner cancelled it, or adopted a newer
    version. A start that still names it is not refused: it would wait on a queue with no worker
    (P1).
-2. Count the version's open workflows. It must read `Total: 0`. Nothing else guards this: a
-   deleted version's open workflow stays `RUNNING` until the same build returns (P7). A wrong queue
-   name or namespace also reads `Total: 0`, so the first command must name that queue under
-   `taskQueuesInfos` (P5):
+2. Record the "before" column below, then remove the version's entry from the deployment values
+   and sync. Argo CD deletes its Deployments. The file stays in this directory.
+3. The promoter does the rest. It counts the open workflows on the version's orchestration queue;
+   at zero it sets the deployment unversioned, deletes every version once drainage and the poller
+   window have passed, then deletes the Worker Deployment. With the defaults (a 3-minute drainage
+   grace, a 3-minute refresh, a 5-minute poller window) that is several runs; #137 measures how
+   long. If a workflow is still open, the promoter retires nothing and its run fails with the
+   count: put the entry back until the workflows end. The same tag gives the same build.
+4. Confirm the cleanup and record the "after" column.
 
-   ```sh
-   temporal worker deployment describe-version --namespace knowledge-canonicalization-<env> \
-     --deployment-name paper-pdf-<N> --build-id <current build>
-   temporal workflow count --namespace knowledge-canonicalization-<env> --query \
-     'TaskQueue="<orchestration queue>" AND ExecutionStatus="Running"'
-   ```
+Troubleshooting. If `describe` still finds the deployment twenty minutes later and the promoter's
+runs succeed, run the sequence by hand, as P6 measured it. Nothing else guards the count: a deleted
+version's open workflow stays `RUNNING` until the same build returns (P7), and a wrong queue name
+or namespace also reads `Total: 0`, so the first command must name that queue under
+`taskQueuesInfos` (P5):
 
-   If a workflow was stranded anyway, put the version's entry back: the same tag gives the same
-   build.
+```sh
+temporal worker deployment describe-version --namespace knowledge-canonicalization-<env> \
+  --deployment-name paper-pdf-<N> --build-id <current build>
+temporal workflow count --namespace knowledge-canonicalization-<env> --query \
+  'TaskQueue="paper-pdf-<N>.orchestration" AND ExecutionStatus="Running"'
+```
 
-3. Record the "before" column below, then remove the version's entry from the deployment values and
-   sync. Argo CD deletes its Deployments. The file stays in this directory.
-4. Confirm the cleanup and record the "after" column. The promoter deletes every version once the
-   poller window passes, then the Worker Deployment. P6 measured the refusals it waits out: while
-   the version is current, and while pollers are still remembered. No workflow is open, so
-   `--skip-drainage` is never passed. If `describe` still finds the deployment after twice the
-   poller window, run the P6 sequence by hand: `set-current-version --unversioned`,
-   `delete-version` per build, then `delete`.
+Then `set-current-version --unversioned`, `delete-version` per build without `--skip-drainage`,
+and `delete`.
 
-| Field, summed over the five queues | Command | Before step 3 | After step 4 |
+| Field, summed over the five queues | Command | Before step 2 | After step 4 |
 |---|---|---|---|
 | Pods | `kubectl -n <ns> get pods -l kp.profile=paper-pdf-<N>` (the chart sets this label on every pod of the version) | at least 5 | 0 |
 | Replicas | `kubectl -n <ns> get deployment -l kp.profile=paper-pdf-<N>` | at least 5 | 0 |
 | CPU and memory requests | the same Deployments' `spec.template.spec.containers[].resources.requests` × replicas | record | 0 |
 | Version state | `temporal worker deployment describe --namespace knowledge-canonicalization-<env> --name paper-pdf-<N> -o json` | current is the newest build; `drainageStatus` is `unspecified` | `no Worker Deployment found` |
-| Open workflows | the query in step 2 | 0 | 0 |
+| Open workflows | the `workflow count` query under Troubleshooting | 0 | 0 |
 
 An "after" of 0 from `kubectl` proves nothing unless the same selector listed the pods before.
