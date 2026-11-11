@@ -73,7 +73,9 @@ async def promote(
         except RPCError as missing:
             if missing.status != RPCStatusCode.NOT_FOUND:
                 raise
-            continue  # no pod of it has polled yet, or the list still shows a deleted one
+            if name in wanted:  # otherwise the list still shows a deleted one
+                log.info("%s: no pod of it has polled yet", name)
+            continue
         info = described.worker_deployment_info
         if name in wanted:
             alarms += await _follow(client, info, wanted[name], stale_after)
@@ -89,7 +91,9 @@ async def _follow(
     versions = {v.deployment_version.build_id: v for v in info.version_summaries}
     current = info.routing_config.current_deployment_version.build_id
     alarms = []
-    if current != want and want in versions:
+    if current != want and want not in versions:
+        log.info("%s: %s has not polled yet", name, want)
+    elif current != want:
         described = await client.workflow_service.describe_worker_deployment_version(
             DescribeWorkerDeploymentVersionRequest(
                 namespace=client.namespace,

@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import sys
 
 from kp_canonicalization.cli import JsonFormatter, main
 from kp_canonicalization.profile import latest_profile
@@ -73,12 +74,41 @@ def test_a_start_input_without_an_adopted_version_exits_2(tmp_path, capsys):
     assert "adopted_version" in capsys.readouterr().err
 
 
-def test_the_promoter_refuses_deployment_values_without_a_profile(tmp_path, capsys):
+def test_the_promoter_refuses_deployment_values_without_a_profile(tmp_path, capsys, root_logging):
     values = tmp_path / "values.yaml"
     values.write_text("profiles: {}\n")
 
     assert main(["promote", str(values)]) == 2
-    assert "no profiles" in capsys.readouterr().err
+    line = json.loads(capsys.readouterr().err)
+    assert (line["level"], line["message"]) == ("ERROR", "no profiles in the deployment values")
+
+
+def test_a_logged_exception_keeps_its_types_and_frames_and_drops_every_message():
+    cell, answer = "Q3 revenue 4.2M", "the patient is ..."
+
+    def parse():
+        raise ValueError(f"cell text: {cell}")
+
+    try:
+        try:
+            parse()
+        except ValueError as cause:
+            raise RuntimeError(f"model answered: {answer}") from cause
+    except RuntimeError:
+        record = logging.LogRecord(
+            "temporalio.activity", logging.WARNING, __file__, 1, "Completing activity as failed",
+            None, sys.exc_info(),
+        )  # fmt: skip
+
+    line = json.loads(JsonFormatter().format(record))
+
+    assert re.fullmatch(
+        r'RuntimeError\n  File ".*test_cli.py", line \d+, in test_a_logged_.*\n.*\n'
+        r'caused by ValueError\n  File ".*test_cli.py", line \d+, in test_a_logged_.*\n.*\n'
+        r'  File ".*test_cli.py", line \d+, in parse\n.*\n',
+        line["exception"],
+    )
+    assert "revenue" not in json.dumps(line) and "patient" not in json.dumps(line)
 
 
 def test_worker_logs_are_json_lines_that_carry_the_request_id():

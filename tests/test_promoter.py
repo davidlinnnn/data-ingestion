@@ -198,25 +198,28 @@ async def test_a_current_that_is_not_among_the_builds_raises_an_alarm_and_change
     assert "current" in alarm and "builds" in alarm
 
 
-async def test_the_command_logs_json_lines_and_exits_1_on_an_alarm(client, monkeypatch, capsys):
+async def test_the_command_logs_json_lines_and_exits_1_on_an_alarm_or_a_failed_run(
+    client, monkeypatch, capsys, root_logging
+):
     async def connect():
         return client
 
-    monkeypatch.setattr(cli, "connect", connect)
-    # The command configures the root logger; hand pytest's back afterwards.
-    monkeypatch.setattr(logging.root, "handlers", list(logging.root.handlers))
-    monkeypatch.setattr(logging.root, "level", logging.root.level)
+    async def unreachable():
+        raise RuntimeError("no Temporal at this address")
 
+    monkeypatch.setattr(cli, "connect", connect)
     quiet = await cli.run_promoter({"profiles": values("r1", current="r1")})
     alarmed = await cli.run_promoter({"profiles": values("r1", current="r2")})
+    monkeypatch.setattr(cli, "connect", unreachable)
+    failed = await cli.run_promoter({"profiles": values("r1", current="r1")})
 
-    ok, alarm = (json.loads(line) for line in capsys.readouterr().err.splitlines())
-    assert (quiet, alarmed) == (0, 1)
-    assert (ok["level"], ok["logger"], ok["message"]) == (
-        "INFO", "kp_canonicalization.cli", "promoter ok",
-    )  # fmt: skip
-    assert alarm["level"] == "ERROR" and "current is not among builds" in alarm["message"]
-    assert set(ok) == set(alarm) == {"time", "level", "logger", "message"}
+    lines = [json.loads(line) for line in capsys.readouterr().err.splitlines()]
+    ours = [(line["level"], line["message"]) for line in lines if line["logger"] == cli.__name__]
+    assert (quiet, alarmed, failed) == (0, 1, 1)
+    assert ours[0] == ("INFO", "promoter ok")
+    assert ours[1][0] == "ERROR" and "current is not among builds" in ours[1][1]
+    assert ours[2] == ("ERROR", "promoter run failed: RuntimeError('no Temporal at this address')")
+    assert lines[0]["message"] == f"{DEPLOYMENT}: no pod of it has polled yet"
 
 
 async def visible(client: Client, query: str) -> None:

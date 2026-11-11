@@ -64,8 +64,9 @@ the promoter's CronJob and its alert route, the image build and the image tag fo
     on an unlisted version's orchestration queue (nothing is retired). Nothing else reports the
     second case: the version's workflows meanwhile wait as backlog without an error (P1).
   - *Logs and liveness.* It logs JSON lines (`time`, `level`, `logger`, `message`) to stderr:
-    what it did or waits for, and each alarm at level `ERROR`. A run without alarms ends with
-    the message `promoter ok`. Alert on a failed run and on that message going stale (#137).
+    what it did or waits for, and each alarm and a run that raised at level `ERROR`. A run
+    without alarms ends with the message `promoter ok`. Alert on a failed run and on that
+    message going stale (#137).
   - *What it cannot see.* A build no pod of which ever polled (an image that cannot be pulled, a
     worker that refuses to start) does not exist for Temporal, and a queue stays listed after
     its pods die. Both are for the Deployments' readiness alerts (#137).

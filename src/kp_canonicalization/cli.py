@@ -18,6 +18,7 @@ import logging
 import os
 import signal
 import sys
+import traceback
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,8 @@ from kp_canonicalization.ports.status_reporter import HttpStatusReporter
 from kp_canonicalization.profile import ProfileError, latest_profile, load_profile
 from kp_canonicalization.stages import Ports, Runtime, finalize
 from kp_canonicalization.workflow import QUEUES, Queue, deployment_name, task_queue
+
+log = logging.getLogger(__name__)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -55,8 +58,7 @@ def main(argv: list[str] | None = None) -> int:
     refuses to start on a store without write-once. It logs JSON lines to stderr, serves
     kp_canonicalization.metrics at http://0.0.0.0:P/metrics and the Temporal SDK's metrics, the
     status-stage durations included, at http://0.0.0.0:Q/metrics; each endpoint is off without
-    its port. The labels worker_deployment and build_id name the worker: on
-    kp_canonicalization_build_info at P, on every metric at Q.
+    its port.
 
     `kp-canonicalization start-request START.json [--wait]`: start the workflow for an
     admission spec §10 start input as admission's dispatcher does, on the orchestration queue of
@@ -66,7 +68,8 @@ def main(argv: list[str] | None = None) -> int:
 
     `kp-canonicalization promote WANTED.yaml`: one promoter run (promoter.promote) over the
     deployment values' `profiles` mapping. It logs JSON lines: what it did, then the message
-    `promoter ok`; or each alarm at level ERROR, and exits 1. Values without a profile exit 2.
+    `promoter ok`; or each alarm at level ERROR, and exits 1, as does a run that raised. Values
+    without a profile exit 2.
 
     `kp-canonicalization list-service-unavailable`: one JSON line {"document_uid", "request_id"}
     per redrive marker, for #98's redrive; it does not check that the request is still its
@@ -124,14 +127,12 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-log = logging.getLogger(__name__)
-
-
 class JsonFormatter(logging.Formatter):
     """One JSON object per log line. The SDK's workflow and Activity loggers add the workflow
     ID, which is the request_id, and the run ID, which is the attempt_id; a record's
     `correlation` extra adds its fields (prepare logs document_uid, source_revision_id and
-    trace_id once per request)."""
+    trace_id once per request). An exception is logged as the types and stack frames of its
+    chain, without the messages: their text can quote a document, a prompt or a model answer."""
 
     def format(self, record: logging.LogRecord) -> str:
         line: dict[str, Any] = {
@@ -150,8 +151,15 @@ class JsonFormatter(logging.Formatter):
         if workflow:
             line.update(request_id=workflow.get("workflow_id"), attempt_id=workflow.get("run_id"))
         line.update(getattr(record, "correlation", None) or {})
-        if record.exc_info:
-            line["exception"] = self.formatException(record.exc_info)
+        error, chain = record.exc_info[1] if record.exc_info else None, []
+        while error and error not in chain:
+            chain.append(error)
+            error = error.__cause__ or (None if error.__suppress_context__ else error.__context__)
+        if chain:
+            line["exception"] = "caused by ".join(
+                f"{type(error).__qualname__}\n{''.join(traceback.format_tb(error.__traceback__))}"
+                for error in chain
+            )
         return json.dumps(line)
 
 
@@ -164,7 +172,8 @@ async def connect(runtime: TemporalRuntime | None = None, lazy: bool = False) ->
     )
 
 
-def _log_json() -> None:
+def log_json_lines() -> None:
+    """Make the root logger write JsonFormatter lines at INFO and above to stderr."""
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
     logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
@@ -209,9 +218,7 @@ async def run_worker(
     from kp_canonicalization.stages import enrich_vlm
     from kp_canonicalization.worker import make_worker  # loads docling; other commands stay fast
 
-    _log_json()
-    build = {"worker_deployment": deployment_name(profile.id), "build_id": build_id or "dev"}
-    metrics.build_info.labels(**build).set(1)
+    log_json_lines()
     if metrics_port is not None:
         prometheus_client.start_http_server(metrics_port)
     temporal_runtime = None
@@ -221,9 +228,7 @@ async def run_worker(
             durations_as_seconds=True,
             histogram_bucket_overrides={metrics.STAGE_DURATION: metrics.STAGE_BUCKETS},
         )
-        temporal_runtime = TemporalRuntime(
-            telemetry=TelemetryConfig(metrics=prometheus, global_tags=build)
-        )
+        temporal_runtime = TemporalRuntime(telemetry=TelemetryConfig(metrics=prometheus))
 
     store = S3ObjectStore.from_env()
     runtime = Runtime(profile=profile, build_id=build_id or "dev", custody_bucket=store.bucket)
@@ -292,12 +297,16 @@ async def start_request(start: dict[str, Any], wait: bool) -> int:
 async def run_promoter(values: Any) -> int:
     from kp_canonicalization.promoter import promote
 
+    log_json_lines()
     if not isinstance(values, dict) or not values.get("profiles"):
         # An empty mapping would retire every version: a chart that rendered nothing must not.
-        print("no profiles in the deployment values", file=sys.stderr)
+        log.error("no profiles in the deployment values")
         return 2
-    _log_json()
-    alarms = await promote(await connect(), values["profiles"])
+    try:
+        alarms = await promote(await connect(), values["profiles"])
+    except Exception as error:  # Temporal's text or the values': the promoter reads no document
+        log.exception("promoter run failed: %r", error)
+        return 1
     for alarm in alarms:
         log.error(alarm)
     if not alarms:

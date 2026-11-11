@@ -10,19 +10,11 @@ internal Activities.
 
 from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram
+from prometheus_client import Counter, Histogram
 
 from kp_canonicalization.workflow import STAGE_DURATION
 
 STAGE_BUCKETS = (1, 5, 15, 30, 60, 120, 240, 480, 900, 1800)
-
-# Always 1: join on it to split any metric here by Worker Deployment and build. The Temporal
-# runtime's metrics carry the same two labels themselves.
-build_info = Gauge(
-    "kp_canonicalization_build_info",
-    "The worker's Worker Deployment and build ID",
-    ["worker_deployment", "build_id"],
-)
 
 stage_duration = Histogram(
     STAGE_DURATION, "Wall time per internal Activity", ["stage", "tier"], buckets=STAGE_BUCKETS
