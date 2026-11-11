@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from kp_canonicalization.identity import canonical_json, module_digest, reuse_key
-from kp_canonicalization.profile import PROFILES_DIR, load_profile
+from kp_canonicalization.profile import latest_profile, load_profile
 
 
 def test_canonical_json_preserves_compact_sorted_json_bytes():
@@ -105,7 +105,7 @@ def test_no_ambiguity_between_parts():
 
 
 def test_runtime_values_never_change_any_key(tmp_path):
-    original = PROFILES_DIR / "paper-pdf@1.yaml"
+    original = latest_profile()
     changed = tmp_path / "paper-pdf@1.yaml"
     text = original.read_text()
     changed.write_text(

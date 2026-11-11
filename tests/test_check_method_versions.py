@@ -40,11 +40,11 @@ def repo(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def check(repo: Path) -> subprocess.CompletedProcess[str]:
+def check(repo: Path, base: str = "dev") -> subprocess.CompletedProcess[str]:
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "--allow-empty", "-m", "change")
     return subprocess.run(
-        [sys.executable, str(SCRIPT), "dev"], cwd=repo, capture_output=True, text=True
+        [sys.executable, str(SCRIPT), base], cwd=repo, capture_output=True, text=True
     )
 
 
@@ -96,3 +96,29 @@ def test_methods_and_profiles_still_in_draft_may_change(repo):
     )
 
     assert check(repo).returncode == 0
+
+
+def test_a_patch_to_a_release_branch_may_not_touch_a_method_even_with_a_version_bump(repo):
+    git(repo, "branch", "release/demo-1", "dev")
+    write(repo, FORMULA + "prompt.txt", "Transcribe as LaTeX.\n")
+    write(repo, FORMULA + "__init__.py", 'ID = "formula"\nVERSION = 2\n')
+
+    assert check(repo).returncode == 0  # control: the same diff passes against dev
+    result = check(repo, "release/demo-1")
+    assert result.returncode == 1
+    assert FORMULA + "prompt.txt: a release branch takes no method change" in result.stdout
+
+
+def test_a_patch_to_a_release_branch_may_change_shared_code(repo):
+    git(repo, "branch", "release/demo-1", "dev")
+    write(repo, "src/kp_canonicalization/worker.py", "LOG = True\n")
+
+    assert check(repo, "release/demo-1").returncode == 0
+
+
+def test_released_lists_the_ids_of_the_profiles_released_at_a_revision(repo):
+    listed = subprocess.run(
+        [sys.executable, str(SCRIPT), "--released", "dev"], cwd=repo, capture_output=True, text=True
+    )
+
+    assert (listed.returncode, listed.stdout.split()) == (0, ["demo@1"])

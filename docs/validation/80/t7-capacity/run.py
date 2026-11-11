@@ -102,7 +102,7 @@ class Container:
              "-p", f"127.0.0.1:{port}:9480", "-p", f"127.0.0.1:{port + 1}:9481",
              *[a for k, v in env.items() for a in ("-e", f"{k}={v}")],
              IMAGE, "worker", "--queue", "inference", "--profile", "tests/profiles/paper-pdf-dev.yaml",
-             "--build-id", "seamb-r1", "--metrics-port", "9480", "--temporal-metrics-port", "9481"],
+             "--metrics-port", "9480", "--temporal-metrics-port", "9481"],
             check=True, capture_output=True,
         )  # fmt: skip
         self.limits = {
@@ -294,7 +294,7 @@ class Stack:
             log = open(t2.LOGS / f"worker-{queue}.log", "w")
             self.processes.append(subprocess.Popen(
                 [*t2.CLI, "worker", "--queue", queue, "--profile", t2.PROFILE,
-                 "--build-id", "seamb-r1", "--metrics-port", str(port),
+                 "--metrics-port", str(port),
                  "--temporal-metrics-port", str(port + 1)],
                 env={**t2.env(self.bucket), **extra.get(queue, {})},
                 stdout=log, stderr=subprocess.STDOUT, cwd=t2.REPO,

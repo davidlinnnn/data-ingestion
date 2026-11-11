@@ -12,7 +12,9 @@ import logging
 import uuid
 
 import pytest
+from temporalio.api.workflowservice.v1 import DescribeWorkerDeploymentRequest
 from temporalio.client import Client
+from temporalio.service import RPCError
 
 from kp_canonicalization.cli import start_request
 from kp_canonicalization.ports.clock import SystemClock
@@ -23,9 +25,10 @@ from kp_canonicalization.ports.status_reporter import (
     ReportOutcome,
     StatusReport,
 )
+from kp_canonicalization.promoter import promote
 from kp_canonicalization.stages import Ports
 from kp_canonicalization.worker import make_worker
-from kp_canonicalization.workflow import ORCHESTRATION_QUEUE, WORKFLOW, activity_options, priority
+from kp_canonicalization.workflow import QUEUES, WORKFLOW, activity_options, priority, task_queue
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_check import checked_paper, without_check
@@ -35,15 +38,12 @@ pytestmark = pytest.mark.network
 
 
 @contextlib.asynccontextmanager
-async def workers(client: Client, ports: Ports, runtime):
+async def workers(client: Client, ports: Ports, runtime, versioned: bool = False):
     """One worker per task queue, as the deployments run them."""
-    async with (
-        await make_worker(client, ports, runtime, "orchestration"),
-        await make_worker(client, ports, runtime, "inference"),
-        await make_worker(client, ports, runtime, "vlm"),
-        await make_worker(client, ports, runtime, "summary"),
-        await make_worker(client, ports, runtime, "d3"),
-    ):
+    async with contextlib.AsyncExitStack() as stack:
+        for queue in QUEUES:
+            worker = await make_worker(client, ports, runtime, queue, versioned=versioned)
+            await stack.enter_async_context(worker)
         yield
 
 
@@ -53,7 +53,7 @@ async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, s
             WORKFLOW,
             start,
             id=start["request_id"],
-            task_queue=ORCHESTRATION_QUEUE,
+            task_queue=task_queue(runtime.profile.id),
             priority=priority(start.get("priority")),
         )
         outcome = await handle.result()
@@ -64,7 +64,7 @@ async def test_a_non_object_start_input_fails_prepare(client, ports, runtime):
     request_id = f"req_{uuid.uuid4().hex[:8]}"
     async with workers(client, ports, runtime):
         outcome = await client.execute_workflow(
-            WORKFLOW, [1, 2], id=request_id, task_queue=ORCHESTRATION_QUEUE
+            WORKFLOW, [1, 2], id=request_id, task_queue=task_queue(runtime.profile.id)
         )
 
     ref = f"requests/{request_id}/failure.json"
@@ -166,7 +166,7 @@ async def test_the_quality_check_runs_on_the_d3_queue_between_enrichment_and_fin
     assert names.index("check") > max(names.index(n) for n in names if n.startswith("enrich_"))
     assert names[-2:] == ["check", "finalize"]
     (check,) = [a for a in scheduled if a.activity_type.name == "check"]
-    assert check.task_queue.name == "d3"
+    assert check.task_queue.name == "paper-pdf-1.d3"
     # The enrich stage succeeds after the check, counting the inventory's items.
     total = len(json.loads(await ports.store.get(result["inventory"]["ref"]))["items"])
     assert shape(ports.reporter.reports)[-3] == (  # type: ignore[attr-defined]
@@ -306,16 +306,14 @@ async def test_processing_completes_while_the_report_receiver_is_down(client, po
 async def test_starting_the_same_request_twice_counts_as_success(
     client, monkeypatch, capsys, ports, runtime
 ):
-    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
     start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
     async with workers(client, ports, runtime):
         assert await start_request(start, wait=True) == 0
         assert await start_request(start, wait=False) == 0
 
-    out = capsys.readouterr().out
-    assert f"started {start['request_id']}" in out
-    assert f"{start['request_id']} already started" in out
+    assert capsys.readouterr().out.count(f"started {start['request_id']}") == 2
     runs = [w async for w in client.list_workflows(f"WorkflowId = '{start['request_id']}'")]
     assert len(runs) == 1
 
@@ -324,7 +322,7 @@ async def test_starting_the_same_request_twice_counts_as_success(
 async def test_admission_priority_sets_the_temporal_priority_key(
     client, monkeypatch, ports, admission, key
 ):
-    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
     start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
     start["priority"] = admission
 
@@ -337,7 +335,7 @@ async def test_admission_priority_sets_the_temporal_priority_key(
 async def test_start_request_puts_the_correlation_ids_into_search_attributes(
     client, monkeypatch, ports
 ):
-    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda: _resolved(client))
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
     start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
 
     assert await start_request(start, wait=False) == 0
@@ -361,6 +359,75 @@ async def test_prepare_logs_the_correlation_ids_once(client, ports, runtime, cap
         (start["request_id"], {"document_uid": "doc_1", "source_revision_id": "srv_1",
                                "trace_id": "4bf92f3577b34da6"}),
     ]  # fmt: skip
+
+
+async def test_a_request_runs_pinned_to_the_current_build_of_its_adopted_versions_deployment(
+    client, monkeypatch, ports, runtime
+):
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
+    old, new = (dataclasses.replace(runtime, build_id=b) for b in ("r1", "r2"))
+    held = asyncio.Event()
+
+    async def hold(request):
+        await held.wait()
+        return completion("A plot.")
+
+    ports = dataclasses.replace(ports, vlm=FakeInference(hold))
+    pdf = write_pdf(paper(1, picture_on=(1,)))
+    first, second = [
+        await start_input(ports, pdf, request_id=f"req_{uuid.uuid4().hex[:8]}") for _ in range(2)
+    ]
+
+    async with workers(client, ports, old, versioned=True):
+        await promoted(client, "r1", current="r1")
+        assert await start_request(first, wait=False) == 0
+        await scheduled(client, first["request_id"], "enrich_vlm")
+        async with workers(client, ports, new, versioned=True):
+            await promoted(client, "r1", "r2", current="r2")
+            assert await start_request(second, wait=False) == 0
+            held.set()
+            for start in (first, second):
+                await client.get_workflow_handle(start["request_id"]).result()
+
+    builds = []
+    for start in (first, second):
+        result = json.loads(await ports.store.get(f"requests/{start['request_id']}/result.json"))
+        builds.append(result["profile"]["runtime_identity"]["build_id"])
+    # The first started on r1 and finished there, after r2 became current.
+    assert builds == ["r1", "r2"]
+    history = await client.get_workflow_handle(first["request_id"]).fetch_history()
+    assert {a.task_queue.name for a in scheduled_activities(history)} == {
+        f"paper-pdf-1.{queue}" for queue in QUEUES
+    }
+
+
+async def promoted(client: Client, *builds: str, current: str) -> None:
+    """Run the promoter until `current` is the current build of paper-pdf-1: Temporal lists a
+    build's queues only once its workers have polled."""
+    wanted = {"paper-pdf-1": {"builds": list(builds), "current": current}}
+    request = DescribeWorkerDeploymentRequest(
+        namespace=client.namespace, deployment_name="paper-pdf-1"
+    )
+    for _ in range(100):
+        assert await promote(client, wanted) == []
+        with contextlib.suppress(RPCError):
+            info = await client.workflow_service.describe_worker_deployment(request)
+            if info.worker_deployment_info.routing_config.current_deployment_version.build_id == (
+                current
+            ):
+                return
+        await asyncio.sleep(0.1)
+    raise TimeoutError(f"build {current} did not become current")
+
+
+async def scheduled(client: Client, request_id: str, activity: str) -> None:
+    """Wait until the workflow has scheduled the Activity."""
+    for _ in range(300):
+        history = await client.get_workflow_handle(request_id).fetch_history()
+        if any(a.activity_type.name == activity for a in scheduled_activities(history)):
+            return
+        await asyncio.sleep(0.1)
+    raise TimeoutError(f"{request_id} never scheduled {activity}")
 
 
 async def _resolved(value):
@@ -405,14 +472,14 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert finalize.retry_policy.initial_interval.seconds == 3
     assert list(finalize.retry_policy.non_retryable_error_types) == ["ProcessingFailure"]
     vlm = scheduled["enrich_vlm"]
-    assert vlm.task_queue.name == "vlm"
+    assert vlm.task_queue.name == "paper-pdf-1.vlm"
     # ceil(2 items / 4) x 61 s deadline x 3 attempts + 301 s slack (#93 §3.2)
     assert vlm.start_to_close_timeout.seconds == 1 * 61 * 3 + 301
     assert vlm.heartbeat_timeout.seconds == 91
     assert vlm.retry_policy.maximum_attempts == 7
     assert vlm.retry_policy.initial_interval.seconds == 4
     check = scheduled["check"]
-    assert check.task_queue.name == "d3"
+    assert check.task_queue.name == "paper-pdf-1.d3"
     # At most one check item per inventory item (the two and the summary's): ceil(3 / 1) x 31 s
     # deadline x 3 attempts + 301 s slack.
     assert check.start_to_close_timeout.seconds == 3 * 31 * 3 + 301
@@ -421,7 +488,7 @@ async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports
     assert check.retry_policy.initial_interval.seconds == 6
     for name in ("summary_sections", "summary_chunk", "summary_overview"):
         summary = scheduled[name]
-        assert summary.task_queue.name == "summary"
+        assert summary.task_queue.name == "paper-pdf-1.summary"
         # the summary budget + 301 s slack: the budget's timer ends a slow summary (#155)
         assert summary.start_to_close_timeout.seconds == 901 + 301
         assert summary.heartbeat_timeout.seconds == 62
@@ -437,9 +504,14 @@ def test_a_plan_recorded_before_the_d3_queue_replays_with_its_own_queues(runtime
     del recorded["activity_retry"]["d3"], recorded["heartbeat_timeout_s"]["d3"]
     del recorded["d3_request_deadline_s"], recorded["d3_concurrency_per_document"]
 
-    options = activity_options(recorded, 3)
+    options = activity_options(recorded, "paper-pdf-1", 3)
 
-    assert set(options) == {"orchestration", "inference", "vlm", "summary"}
+    assert {queue: o["task_queue"] for queue, o in options.items()} == {
+        "orchestration": "paper-pdf-1.orchestration",
+        "inference": "paper-pdf-1.inference",
+        "vlm": "paper-pdf-1.vlm",
+        "summary": "paper-pdf-1.summary",
+    }
 
 
 async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(

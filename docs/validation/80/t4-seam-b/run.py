@@ -79,7 +79,7 @@ class StandIn(BaseHTTPRequestHandler):
 def vlm_worker(bucket: str, name: str, url: str, key: str) -> subprocess.Popen:
     log = open(t2.LOGS / f"worker-{name}-vlm.log", "w")
     return subprocess.Popen(
-        [*t2.CLI, "worker", "--queue", "vlm", "--profile", t2.PROFILE, "--build-id", "seamb-r1"],
+        [*t2.CLI, "worker", "--queue", "vlm", "--profile", t2.PROFILE],
         env={**t2.env(bucket), "KP_VLM_BASE_URL": url, "KP_VLM_API_KEY": key},
         stdout=log, stderr=subprocess.STDOUT, cwd=t2.REPO,
     )  # fmt: skip

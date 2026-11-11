@@ -1,4 +1,5 @@
-"""Processing Profile: a released, immutable yaml file shipped with the worker (ADR-0010)."""
+"""Processing Profile: a yaml file shipped with the worker, released and immutable once it is on
+`dev` (ADR-0010)."""
 
 import importlib
 import re
@@ -56,6 +57,12 @@ REQUIRED_RUNTIME = (
 )
 
 
+def latest_profile() -> Path:
+    """The bundled paper-pdf file with the highest version: the one this tree's method packages
+    load, since an older file names method versions the tree has moved past."""
+    return max(PROFILES_DIR.glob("paper-pdf@*.yaml"), key=lambda p: int(p.stem.rpartition("@")[2]))
+
+
 class ProfileError(Exception):
     """Malformed profile, or one that disagrees with the method packages: do not start."""
 
@@ -109,7 +116,6 @@ class Limitation:
 @dataclass(frozen=True)
 class ProcessingProfile:
     id: str  # "paper-pdf@1"
-    released: bool
     status_rule: str
     methods: dict[str, Method]  # keyed by method id, in file order
     limitations: tuple[Limitation, ...]
@@ -127,9 +133,10 @@ def load_profile(path: Path) -> ProcessingProfile:
     Raises ProfileError when a required key (profile, status_rule, methods, limitations,
     runtime) is missing, a methods key is not `<id>@<int>`, a method's package
     (kp_canonicalization.methods.<id with _>) does not exist, or the package's ID or VERSION
-    differs from the listed `<id>@<version>`, a method's service is not one of SERVICES, or a
-    REQUIRED_RUNTIME key is missing or not a number.
-    `released` defaults to False.
+    differs from the listed `<id>@<version>`, a method's service is not one of SERVICES, a
+    REQUIRED_RUNTIME key is missing or not a number, or a Quality Check judges a listed method
+    at other versions only. When the package is missing or its VERSION is past the listed one,
+    the error names the profile's release branch, the tree that still loads it.
     """
     try:
         data = yaml.safe_load(path.read_text())
@@ -153,16 +160,22 @@ def load_profile(path: Path) -> ProcessingProfile:
             if method_id in methods:
                 raise ProfileError(f"{path}: duplicate method ID {method_id}")
             package_name = f"kp_canonicalization.methods.{method_id.replace('-', '_')}"
+            branch = f"release/{str(data['profile']).replace('@', '-')}"
             try:
                 package = importlib.import_module(package_name)
             except ImportError as exc:
                 raise ProfileError(
-                    f"{path}: cannot import method {ref} ({package_name}): {exc}"
+                    f"{path}: cannot import method {ref} ({package_name}): {exc}; if this tree "
+                    f"is past {data['profile']}, load it on {branch}"
                 ) from exc
             if getattr(package, "ID", None) != method_id:
                 raise ProfileError(f"{path}: {ref} package ID differs from {method_id}")
             if getattr(package, "VERSION", None) != version:
-                raise ProfileError(f"{path}: {ref} package VERSION differs from {version}")
+                later = isinstance(package.VERSION, int) and package.VERSION > version
+                hint = f"; this tree is past {data['profile']}, load it on {branch}"
+                raise ProfileError(
+                    f"{path}: {ref} package VERSION differs from {version}{hint if later else ''}"
+                )
             if package.__file__ is None:
                 raise ProfileError(f"{path}: {ref} package has no source file")
             method = Method(
@@ -175,9 +188,13 @@ def load_profile(path: Path) -> ProcessingProfile:
             if method.service not in (None, *SERVICES):
                 raise ProfileError(f"{path}: {ref} calls undeclared service {method.service!r}")
             methods[method_id] = method
+        for check in methods.values():
+            judged_ids = {ref.split("@")[0] for ref in check.checks}
+            for method in methods.values():
+                if method.id in judged_ids and method.ref not in check.checks:
+                    raise ProfileError(f"{path}: {check.ref} has no check for {method.ref}")
         return ProcessingProfile(
             id=data["profile"],
-            released=data.get("released", False),
             status_rule=data["status_rule"],
             methods=methods,
             limitations=tuple(Limitation(**entry) for entry in data["limitations"]),

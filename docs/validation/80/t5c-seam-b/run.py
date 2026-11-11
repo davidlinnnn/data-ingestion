@@ -129,7 +129,7 @@ def worker(bucket: str, name: str, queue: str, profile: Path, extra: dict,
         cli = [str(t2.REPO / ".venv/bin/python"), "-m", "kp_canonicalization.cli"]
         env["PYTHONPATH"] = str(tree / "src")
     return subprocess.Popen(
-        [*cli, "worker", "--queue", queue, "--profile", str(profile), "--build-id", "seamb-r1"],
+        [*cli, "worker", "--queue", queue, "--profile", str(profile)],
         env=env, stdout=log, stderr=subprocess.STDOUT, cwd=t2.REPO,
     )  # fmt: skip
 

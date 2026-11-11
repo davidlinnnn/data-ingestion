@@ -82,7 +82,7 @@ class SummaryStandIn(BaseHTTPRequestHandler):
 def worker(bucket: str, name: str, queue: str, extra: dict) -> subprocess.Popen:
     log = open(t2.LOGS / f"worker-{name}-{queue}.log", "w")
     return subprocess.Popen(
-        [*t2.CLI, "worker", "--queue", queue, "--profile", t2.PROFILE, "--build-id", "seamb-r1"],
+        [*t2.CLI, "worker", "--queue", queue, "--profile", t2.PROFILE],
         env={**t2.env(bucket), **extra}, stdout=log, stderr=subprocess.STDOUT, cwd=t2.REPO,
     )  # fmt: skip
 

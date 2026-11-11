@@ -658,6 +658,42 @@ async def test_a_second_run_sends_nothing(ports, runtime):
     assert ports.store.objects == objects  # type: ignore[attr-defined]
 
 
+async def test_v3_bumping_one_vlm_method_recomputes_only_its_items(ports, runtime):
+    """#135 V3: a profile that lists picture-interpretation@2 (new version, new package digest)
+    reuses every parse group, the assembly, the OCR and the formula; only the picture goes to
+    the VLM again, and the inventory, whose key holds the method identities, is rebuilt."""
+    pdf = write_pdf([
+        Page(lines=["1 Architecture", *BODY], picture=True, picture_text=PICTURE_WORDS),
+        Page(lines=["2 Method", *BODY, "", EQUATION, "", "Line after the equation continues."]),
+    ])  # fmt: skip
+    first = await native(ports, runtime, pdf)
+    await enrich_local.run(EnrichInput("doc_1", first.inventory, "req_1", "run_1"), ports, runtime)
+    await run_vlm(ports, runtime, first.inventory)
+    assert len(ports.vlm.requests) == 2  # the picture and the formula
+
+    picture = runtime.profile.methods["picture-interpretation"]
+    bumped = dataclasses.replace(picture, version=2, module_digest="0" * 64)
+    methods = {**runtime.profile.methods, "picture-interpretation": bumped}
+    upgraded = dataclasses.replace(
+        runtime, profile=dataclasses.replace(runtime.profile, methods=methods)
+    )
+
+    again = await native(ports, upgraded, pdf, request_id="req_2")
+    local = await enrich_local.run(
+        EnrichInput("doc_1", again.inventory, "req_2", "run_2"), ports, upgraded
+    )
+    vlm = await run_vlm(ports, upgraded, again.inventory, "req_2", "run_2")
+
+    assert all(group.reused for group in again.groups) and again.assembly.reused
+    assert not again.inventory.reused
+    assert all(outcome.reused for outcome in local)
+    assert len(ports.vlm.requests) == 3
+    assert {o.item_id.split(":")[0]: o.reused for o in vlm} == {
+        "picture-interpretation": False,
+        "formula": True,
+    }
+
+
 async def test_items_run_four_at_a_time(ports, runtime):
     input = await native(ports, runtime, one_picture_paper())
     inv = await clones(ports, input.inventory, 6)

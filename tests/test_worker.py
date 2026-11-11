@@ -37,7 +37,7 @@ from kp_canonicalization.worker import (
     check_write_once,
     make_worker,
 )
-from kp_canonicalization.workflow import INFERENCE_QUEUE
+from kp_canonicalization.workflow import task_queue
 from tests.pdfs import Page, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_enrich_local import enriched_paper, enrichment, native
@@ -196,7 +196,7 @@ class CancelProbe:
                 await workflow.execute_activity(
                     "parse_group",
                     group,
-                    task_queue=INFERENCE_QUEUE,
+                    task_queue=task_queue("paper-pdf@1", "inference"),
                     start_to_close_timeout=timedelta(seconds=3),
                     heartbeat_timeout=timedelta(seconds=2),
                     retry_policy=RetryPolicy(maximum_attempts=1),
