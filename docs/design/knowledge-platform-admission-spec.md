@@ -314,22 +314,25 @@ describes the stages.
    or `unchanged`.
 8. Otherwise `declared`, with an upload entry (§5.2) for each file whose (path,
    digest) differs from the latest Source Revision; the others are
-   `carried_over` (Q10.1d).
+   `carried_over` (Q10.1d), each with its `custody_ref` fixed here from that
+   Source Revision. A new document's `document_uid` is generated here.
 
 Results decided at declaration (`unchanged`, `queued`, `rejected`) are final;
 requests they create are committed with their outbox rows before `201`.
 
 ### 6.2 Finalization, per `declared` item
 
-1. Document deleted since declaration → `DOCUMENT_DELETED`.
+1. Document deleted since declaration → `DOCUMENT_DELETED`; created since
+   declaration by another batch, so that its `document_uid` is not the declared
+   one → `STALE_DECLARATION` (declare again).
 2. Placement re-check → `RESOURCE_NOT_FOUND`.
 3. Every file in `uploads` staged by a `PUT` that returned `204` (§5.2 verified
    size, digest and media type at that point) → `FILES_MISSING`.
 4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
    or `VERSION_CONFLICT`; same content → §6.4.
-5. Otherwise: create the document on first submission (new `document_uid`),
+5. Otherwise: create the document on first submission (with the declared `document_uid`),
    create the Source Revision, record each staged file's `custody_ref` (§10;
-   a carried-over file keeps its reference from the latest Source Revision),
+   a carried-over file keeps the reference fixed at declaration),
    apply catalog fields and metadata,
    create a `process` request and its outbox row.
 
@@ -541,7 +544,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
 | `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `FILES_MISSING` | item, finalization | — |
+| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `FILES_MISSING` | item, finalization | — |
 
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
