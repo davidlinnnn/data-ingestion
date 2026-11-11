@@ -476,7 +476,7 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "document_uid": "doc_7f3…",
   "source_revision_id": "srv_3",
   "files": [
-    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
+    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
   ],
   "adopted_version": "md-standard@2",
   "adoption_sequence": 7,
@@ -491,6 +491,14 @@ object store bucket, so source files and processing results share it.
 Admission creates it once, when finalization puts the file into custody (§6.2).
 Carried-over files, retries, redrive, refresh and the start input copy it
 unchanged. Readers split it into bucket and key and derive nothing from the key.
+
+The key of a source file is `documents/{document_uid}/files/{sha256}`, the
+digest in lowercase hex. Within one document, files with equal bytes are one
+object, whatever their paths and Source Revisions; documents share nothing.
+Everything the platform keeps for a document sits under
+`documents/{document_uid}/`, so purging is by that prefix. Removing the files
+of one Source Revision alone first checks the document's other Source
+Revisions for the same digests.
 
 Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
