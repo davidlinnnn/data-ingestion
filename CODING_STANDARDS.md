@@ -21,6 +21,9 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 - Tests observe behaviour at a seam: given inputs and port state, assert what was
   registered, returned or reported. Exercise the real library (docling, RapidOCR, boto3
   against the S3 stand-in) or swap a whole port for its fake.
+- A service's own PostgreSQL database and Temporal itself have no fake: what they guarantee
+  (constraints, row locks, workflow ID rules) is the behaviour under test, so tests run them
+  for real (Testcontainers, the Temporal dev server).
 - Mark tests that need Docker or a local socket (`s3`, `network`), so the Codex
   sandbox can deselect them.
 

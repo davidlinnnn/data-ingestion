@@ -159,11 +159,12 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(line)
 
 
-async def connect(runtime: TemporalRuntime | None = None) -> Client:
+async def connect(runtime: TemporalRuntime | None = None, lazy: bool = False) -> Client:
     return await Client.connect(
         os.environ.get("TEMPORAL_ADDRESS", "localhost:7233"),
         namespace=os.environ.get("TEMPORAL_NAMESPACE", "default"),
         runtime=runtime,
+        lazy=lazy,
     )
 
 

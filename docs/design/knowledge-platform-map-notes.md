@@ -82,6 +82,18 @@ After the data-security and secret/PII tickets closed, two independent subagent 
 
 **Numbers.** The user confirmed the active-document ceiling at 10,000,000 (#88); the consumption record's E3 said 1,000,000 and was corrected in the same change as this note. Still waiting on information from the company: the GAM specification (research pack topic 3) for #86 and the production peak shape for #88.
 
+## Cloud native as a main design axis — 2026-11-11
+
+The user stated on 2026-11-11 that the Knowledge Platform is to be cloud native and that this is one of the design's main axes, kept in view in every design, specification and review. It extends the charter's "Kubernetes is the deployment target" from where the platform runs to how each part is built. The glossary entry is **Cloud native** in [`CONTEXT.md`](../../CONTEXT.md).
+
+The statement came out of the review of the admission core. Admission's `dispatcher` and reconciler were packaged on the canonicalization image, which carries the PDF parsing and inference libraries, and the `api` role would have followed. The user ruled that admission ships its own image: `api` scales out under the PROD burst, and the size of an image sets how soon a new Pod serves. The ruling and the state of the code are in a [comment on Define the Knowledge Platform deployment topology and operational boundaries](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6792552979).
+
+Working reading, until that ticket fixes the full criteria:
+
+- A deployable role carries only what its own job needs.
+- A role scales by adding Pods and survives the loss of any Pod. Accepted work and durable state live in the database, object storage or Temporal, never only in a Pod.
+- A mismatch found in a design or a review is recorded as a finding with an owner, not as an optional efficiency note.
+
 ## Working method and completion
 
 **Published design checkpoint — 2026-09-30:** [docs: preserve Knowledge Platform overall design checkpoint](https://github.com/davidlinnnn/data-ingestion/pull/65) is a draft PR into `dev`, on `codex/knowledge-platform-design`, starting at commit `d5b191cefa8cd620e1f5f113b888500a9ea8de2c`. It preserves the confirmed overall logical design, independent spike and supporting glossary/direction package. Detailed decision authority and current confirmation status remain in the child issues, including [Define captured-source identity and authorization handoff](https://github.com/davidlinnnn/data-ingestion/issues/53). The draft PR advances with confirmed rounds; its initial commit is a historical checkpoint. The separate direction-review outcomes remain pending. This pointer publishes the artifacts, not a new decision resolution.

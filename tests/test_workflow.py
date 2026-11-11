@@ -80,8 +80,8 @@ async def test_a_non_object_start_input_fails_prepare(client, ports, runtime):
         )
 
     ref = f"requests/{request_id}/failure.json"
-    assert outcome == {"outcome": "failed", "manifest_ref": ref}
     failure = json.loads(await ports.store.get(ref))
+    assert outcome == {"outcome": "failed", "manifest_ref": ref, "error": failure["error"]}
     assert failure["error"]["reason"] == "INVALID_START_INPUT"
     last = ports.reporter.reports[-1]  # type: ignore[attr-defined]
     assert (last.stage, last.state, last.error, last.manifest_ref) == (
@@ -227,8 +227,8 @@ async def test_an_unprocessable_source_ends_with_a_failure_report(client, ports,
     outcome, run_id = await process(client, ports, runtime, start)
 
     ref = f"requests/{start['request_id']}/failure.json"
-    assert outcome == {"outcome": "failed", "manifest_ref": ref}
     failure = json.loads(await ports.store.get(ref))
+    assert outcome == {"outcome": "failed", "manifest_ref": ref, "error": failure["error"]}
     assert (failure["cause"], failure["stage"], failure["error"]["reason"]) == (
         "source", "prepare", "PASSWORD_REQUIRED",
     )  # fmt: skip

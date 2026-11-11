@@ -56,3 +56,21 @@ recording the response's model and fingerprint fields and raising a manual
 version bump. The approach matches how Azure Machine Learning (code snapshot
 hash), Prefect (task source hash) and Dagster (explicit `code_version`)
 decide reuse; see the research summary kept with the #80 decision log.
+
+Amended on 2026-11-09 by
+[#178](https://github.com/davidlinnnn/data-ingestion/issues/178): the release act
+is now the file itself. A Processing Profile file is released once it is in
+`profiles/` on `dev`. The `released` field and its separate commit go away, and
+drafts use only the DEV Processing Profile under `tests/profiles/`, which these
+rules do not cover. `scripts/check-method-versions` treats every `.yaml` file in
+`profiles/` at the base as released: rule 1 covers the methods they list, and
+rule 2 refuses a modification, rename or deletion of any of them. The field needed
+a second PR, and the checks read it only at the merge base, so a version built
+before its release commit merged was not bound. The new rule starts to bind when
+#135 part 2 merges it. `paper-pdf@1.yaml` is already in `profiles/`, so that merge
+releases `paper-pdf@1`, at a time the Processing Profile owner confirms; until
+then the paragraph on `released` above describes what the repository does. The
+field leaves the file in an earlier PR, because the new rule would refuse that
+edit in its own diff. See the
+[operating document](../../src/kp_canonicalization/profiles/README.md) and the
+[#178 probes](../validation/178/README.md).
