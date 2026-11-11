@@ -553,6 +553,9 @@ ended without an error block, such as terminated or timed out (§9).
   (reconciler every 5 minutes, batch expiry hourly, retention daily).
 - Its own CNPG database; staging storage belongs to admission; custody to #57;
   topology and configuration loading to #78.
+- Staging is its own bucket on the same S3 service as custody, so a file passes
+  from staging to custody inside the storage service. Processing workers hold
+  no credential for the staging bucket.
 - The `api` role carries upload bytes (§5.2): it streams each body into staging
   in parts and never holds a whole file in memory. On the upload route the
   ingress must allow bodies up to the maximum file size, pass the body through
