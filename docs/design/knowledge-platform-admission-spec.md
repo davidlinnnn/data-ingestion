@@ -63,7 +63,7 @@ Logical records; the physical schema is I1's.
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields | §5.1 statuses |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → custody reference, `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored response, `created_at` | 24 hours |
@@ -476,7 +476,7 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "document_uid": "doc_7f3…",
   "source_revision_id": "srv_3",
   "files": [
-    { "path": "policy.md", "role": "main", "custody_ref": "custody://…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
+    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
   ],
   "adopted_version": "md-standard@2",
   "adoption_sequence": 7,
@@ -485,6 +485,12 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "trace_id": "4bf92f3577b34da6"
 }
 ```
+
+`custody_ref` is `s3://{bucket}/{key}`; the bucket is the processing worker's
+object store bucket, so source files and processing results share it.
+Admission creates it once, when finalization puts the file into custody (§6.2).
+Carried-over files, retries, redrive, refresh and the start input copy it
+unchanged. Readers split it into bucket and key and derive nothing from the key.
 
 Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
