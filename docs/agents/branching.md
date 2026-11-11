@@ -4,7 +4,7 @@ This repo is **public**: every push publishes.
 
 ## Where work starts
 
-- `dev` is the integration branch. Start every task from `origin/dev`, and merge it back into `dev` by pull request.
+- `dev` is the integration branch. Start every task from `origin/dev`, and merge it back into `dev` by pull request. The one exception is a patch of a released Processing Profile version (Release branches below).
 - `dev` is the GitHub default branch. `main` is a frozen older snapshot, kept because published links point at `blob/main/…`; nothing merges into it.
 - The main checkout (`~/work/data-ingestion`) stays clean on `dev` as the home base. Do task work in a task worktree.
 
@@ -25,6 +25,21 @@ Branch names carry the ticket number:
 | `impl/<issue>-<slug>` | implementation |
 
 Leave out `<issue>-` only when the work has no ticket.
+
+## Release branches
+
+`release/paper-pdf-<N>` holds the tree that loads the released Processing Profile `paper-pdf@<N>`. CI opens it, with the tag `profile/paper-pdf@<N>`, when the profile file reaches `dev` (`.github/workflows/release-profile.yml`). Its patch flow is in [`src/kp_canonicalization/profiles/README.md`](../../src/kp_canonicalization/profiles/README.md).
+
+- Nobody pushes to a release branch or deletes one. It changes only by pull request.
+- A patch branch starts from the release branch, not from `origin/dev`, and its pull request goes back into it:
+
+  ```sh
+  git worktree add --no-track -b impl/<issue>-<slug> ~/work/data-ingestion-<task> origin/release/paper-pdf-<N>
+  ```
+
+- A patch changes nothing under `src/kp_canonicalization/methods/` and no profile file: `scripts/check-method-versions` refuses both.
+- Open a second pull request that carries the same fix into `dev`. Without it the next Processing Profile version ships without the fix.
+- `scripts/check-docs` picks the base by itself (`scripts/default-base`), so the pre-push hook works on a patch branch.
 
 ## Parallel agent sessions
 

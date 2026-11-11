@@ -1,0 +1,37 @@
+# A Processing Profile file that reaches dev is released (ADR-0010). For each released profile
+# without them, this pushes the tag profile/<id> and opens the branch release/<id with ->, which
+# patches of that version go to (src/kp_canonicalization/profiles/README.md). Which files count
+# as released is scripts/check-method-versions' rule, so this job and the pull request check
+# cannot disagree. Building and pushing the image is #137.
+name: release-profile
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - src/kp_canonicalization/profiles/**
+      - scripts/check-method-versions
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.14"
+
+      - name: Tag released profiles and open their release branches
+        run: |
+          set -euo pipefail
+          for id in $(scripts/check-method-versions --released HEAD); do
+            tag="refs/tags/profile/$id"
+            branch="refs/heads/release/${id/@/-}"
+            git ls-remote --exit-code origin "$tag" >/dev/null || git push origin "HEAD:$tag"
+            git ls-remote --exit-code origin "$branch" >/dev/null || git push origin "HEAD:$branch"
+          done

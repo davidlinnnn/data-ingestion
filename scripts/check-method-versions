@@ -5,12 +5,15 @@
 # ///
 """Keep Processing Profile version labels honest (ADR-0010), over what the branch changes.
 
-    check-method-versions [BASE]    (default origin/dev)
+    check-method-versions [BASE]            (default origin/dev)
+    check-method-versions --released REV    print the id of each profile released at REV
 
 A profile counts as released when its file at the merge base says `released: true`.
 1. A change under the package of a method that a released profile lists needs a higher
    VERSION in that package's __init__.py in the same diff.
 2. A released profile file is never modified, renamed or deleted; new profile files pass.
+3. A branch based on release/* changes nothing under methods/: a patch build must reuse what
+   its Processing Profile version registered, so a method change goes to dev as a new version.
 """
 
 import re
@@ -36,14 +39,28 @@ def version(rev: str, package: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def main() -> int:
-    base = git("merge-base", sys.argv[1] if len(sys.argv) > 1 else "origin/dev", "HEAD").strip()
-    released: dict[str, list[str]] = {}  # profile path -> method ids
-    for path in git("ls-tree", "--name-only", base, PROFILES).split():
+def released_profiles(rev: str) -> dict[str, list[str]]:
+    """Profile path -> method ids, for each profile released at rev."""
+    released = {}
+    for path in git("ls-tree", "--name-only", rev, PROFILES).split():
         if path.endswith(".yaml"):
-            doc = yaml.safe_load(git("show", f"{base}:{path}"))
+            doc = yaml.safe_load(git("show", f"{rev}:{path}"))
             if doc.get("released") is True:
                 released[path] = [ref.rsplit("@", 1)[0] for ref in doc["methods"]]
+    return released
+
+
+def main() -> int:
+    if sys.argv[1:2] == ["--released"]:
+        print(
+            "\n".join(
+                path[len(PROFILES) : -len(".yaml")] for path in released_profiles(sys.argv[2])
+            )
+        )
+        return 0
+    base_ref = sys.argv[1] if len(sys.argv) > 1 else "origin/dev"
+    base = git("merge-base", base_ref, "HEAD").strip()
+    released = released_profiles(base)
 
     changes = [
         line.split("\t", 1)
@@ -56,6 +73,13 @@ def main() -> int:
         if path in released
     ]
     changed = {path for _, path in changes}
+    if re.match(r"(origin/)?release/", base_ref):
+        errors += [
+            f"{path}: a release branch takes no method change; raise the method's VERSION on dev "
+            "in a new profile version instead"
+            for path in sorted(changed)
+            if path.startswith(METHODS)
+        ]
     for package in sorted({m.replace("-", "_") for ids in released.values() for m in ids}):
         if any(p.startswith(f"{METHODS}{package}/") for p in changed):
             old, new = version(base, package), version("HEAD", package)

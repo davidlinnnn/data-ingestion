@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Prints the branch this one was started from: of origin/dev and origin/release/*, the one HEAD
+# is the fewest commits ahead of, then the fewest behind. A patch branch starts from its release
+# branch (src/kp_canonicalization/profiles/README.md); everything else starts from origin/dev.
+for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/dev 'refs/remotes/origin/release/*'); do
+  read -r behind ahead < <(git rev-list --left-right --count "$ref...HEAD")
+  echo "$ahead $behind $ref"
+done | sort -s -n -k1,1 -k2,2 | head -1 | cut -d' ' -f3

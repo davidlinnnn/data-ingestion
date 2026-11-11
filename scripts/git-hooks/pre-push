@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Enabled with the pre-commit hook (core.hooksPath). Git's remote arguments are not check-docs' BASE.
+# Enabled with the pre-commit hook (core.hooksPath). Git's remote arguments are not check-docs' BASE:
+# check-docs works it out (scripts/default-base).
 # Branch deletions and tags on commits a remote already has (archive tags) publish no new commit,
 # and check-docs would refuse them once the merged branch is behind its base.
 while read -r local_ref local_sha _ _; do
