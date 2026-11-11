@@ -73,6 +73,14 @@ def test_a_start_input_without_an_adopted_version_exits_2(tmp_path, capsys):
     assert "adopted_version" in capsys.readouterr().err
 
 
+def test_the_promoter_refuses_deployment_values_without_a_profile(tmp_path, capsys):
+    values = tmp_path / "values.yaml"
+    values.write_text("profiles: {}\n")
+
+    assert main(["promote", str(values)]) == 2
+    assert "no profiles" in capsys.readouterr().err
+
+
 def test_worker_logs_are_json_lines_that_carry_the_request_id():
     record = logging.LogRecord(
         "temporalio.activity", logging.WARNING, __file__, 1, "%s: refused", ("PASSWORD_REQUIRED",),

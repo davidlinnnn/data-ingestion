@@ -23,6 +23,7 @@ Branch names carry the ticket number:
 | `research/<issue>-<slug>` | research findings and evidence |
 | `prototype/<issue>-<slug>` | throwaway prototype code that answers one design question |
 | `impl/<issue>-<slug>` | implementation |
+| `patch/paper-pdf-<N>-<issue>-<slug>` | a patch of a released Processing Profile version (Release branches below) |
 
 Leave out `<issue>-` only when the work has no ticket.
 
@@ -31,15 +32,14 @@ Leave out `<issue>-` only when the work has no ticket.
 `release/paper-pdf-<N>` holds the tree that loads the released Processing Profile `paper-pdf@<N>`. CI opens it, with the tag `profile/paper-pdf@<N>`, when the profile file reaches `dev` (`.github/workflows/release-profile.yml`). Its patch flow is in [`src/kp_canonicalization/profiles/README.md`](../../src/kp_canonicalization/profiles/README.md).
 
 - Nobody pushes to a release branch or deletes one. It changes only by pull request.
-- A patch branch starts from the release branch, not from `origin/dev`, and its pull request goes back into it:
+- A patch branch starts from the release branch, not from `origin/dev`, and its pull request goes back into it. Its name carries the version, because `scripts/check-docs` reads its base from the name:
 
   ```sh
-  git worktree add --no-track -b impl/<issue>-<slug> ~/work/data-ingestion-<task> origin/release/paper-pdf-<N>
+  git worktree add --no-track -b patch/paper-pdf-<N>-<issue>-<slug> ~/work/data-ingestion-<task> origin/release/paper-pdf-<N>
   ```
 
-- A patch changes nothing under `src/kp_canonicalization/methods/` and no profile file: `scripts/check-method-versions` refuses both.
+- A patch changes nothing under `src/kp_canonicalization/methods/` and no released profile file: `scripts/check-method-versions` refuses both. A new Processing Profile version is released on `dev`, never on a release branch.
 - Open a second pull request that carries the same fix into `dev`. Without it the next Processing Profile version ships without the fix.
-- `scripts/check-docs` picks the base by itself (`scripts/default-base`), so the pre-push hook works on a patch branch.
 
 ## Parallel agent sessions
 

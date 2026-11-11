@@ -43,9 +43,7 @@ WORKFLOW = "paper-pdf"
 STAGES_VERSION = "1"
 
 
-# Task queues are named after what their workers can run: the workflow and light Activities on
-# orchestration, docling on inference (one call per worker), the external enrichment services on
-# vlm and summary, the d3 decision model on d3. Each Processing Profile version has its own five.
+# Named after what their workers can run (worker.py); each Processing Profile version has its own.
 Queue = Literal["orchestration", "inference", "vlm", "summary", "d3"]
 QUEUES: tuple[Queue, ...] = ("orchestration", "inference", "vlm", "summary", "d3")
 
@@ -57,8 +55,8 @@ def deployment_name(profile_id: str) -> str:
 
 
 def task_queue(profile_id: str, queue: Queue = "orchestration") -> str:
-    """A task queue of a Processing Profile version: `paper-pdf-2.inference`. A request starts
-    on the orchestration queue of its adopted_version."""
+    """A task queue of a Processing Profile version, `paper-pdf-2.inference`, from its id or
+    its deployment name. A request starts on the orchestration queue of its adopted_version."""
     return f"{deployment_name(profile_id)}.{queue}"
 
 
@@ -84,8 +82,7 @@ SEARCH_ATTRIBUTES = {
 STAGE_DURATION = "kp_canonicalization_stage_duration_seconds"
 
 
-# prepare runs before the plan exists, and register_failure may too: they take these options.
-# Without a task queue an Activity runs on the workflow's own, its version's orchestration queue.
+# For prepare and register_failure, which can run before the plan; no queue: the workflow's own.
 _BOOTSTRAP: dict[str, Any] = {
     "start_to_close_timeout": timedelta(minutes=2),
     "retry_policy": RetryPolicy(
@@ -100,8 +97,8 @@ _BOOTSTRAP: dict[str, Any] = {
 def activity_options(
     runtime: dict[str, Any], deployment: str, items: int = 0
 ) -> dict[Queue, dict[str, Any]]:
-    """execute_activity options per task queue of Worker Deployment `deployment`
-    (`<deployment>.<queue>`) from the profile's runtime section:
+    """execute_activity options per task queue of Worker Deployment `deployment` from the
+    profile's runtime section:
     activity_retry.<queue> ({initial_s, multiplier, cap_s, max_attempts}; ProcessingFailure
     never retried); start_to_close_s.<queue>, except the external backstops (#93 §3.2): for vlm
     and d3 and a document of `items` inventory items (a check item per inventory item at
@@ -128,7 +125,7 @@ def activity_options(
             case _:
                 seconds = runtime["start_to_close_s"][queue]
         options[queue] = {
-            "task_queue": f"{deployment}.{queue}",
+            "task_queue": task_queue(deployment, queue),
             "start_to_close_timeout": timedelta(seconds=seconds),
             "retry_policy": RetryPolicy(
                 initial_interval=timedelta(seconds=retry["initial_s"]),

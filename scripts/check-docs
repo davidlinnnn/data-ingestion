@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pre-push and CI checks for this public repo, over what the branch changes relative to BASE.
-#   check-docs [BASE]    (default: scripts/default-base, origin/dev or the release branch a
-#                         patch branch started from)
+#   check-docs [BASE]    (default: scripts/default-base, origin/dev or, for a branch named
+#                         patch/paper-pdf-<N>-..., that version's release branch)
 # 0. up to date: the branch contains BASE, so it carries what parallel sessions merged.
 # 1. gitleaks: secrets in the branch's commits.
 # 2. check-publish: local paths, emails and secrets in added lines; in design records and ADRs
@@ -13,7 +13,6 @@
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 2
 BASE=${1:-$(scripts/default-base)}
-BASE=${BASE:-origin/dev}
 # Outside CI, refresh BASE first so check 0 sees merges from parallel sessions.
 if [ -z "${CI:-}" ] && [[ $BASE == origin/* ]]; then
   git fetch -q origin "${BASE#origin/}" || echo "fetch failed; checking against the local $BASE" >&2

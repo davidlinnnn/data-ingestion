@@ -135,8 +135,8 @@ def load_profile(path: Path) -> ProcessingProfile:
     (kp_canonicalization.methods.<id with _>) does not exist, or the package's ID or VERSION
     differs from the listed `<id>@<version>`, a method's service is not one of SERVICES, a
     REQUIRED_RUNTIME key is missing or not a number, or a Quality Check judges a listed method
-    at other versions only. When the package's VERSION is past the listed one, the error names
-    the profile's release branch, the tree that still loads it.
+    at other versions only. When the package is missing or its VERSION is past the listed one,
+    the error names the profile's release branch, the tree that still loads it.
     """
     try:
         data = yaml.safe_load(path.read_text())
@@ -160,20 +160,21 @@ def load_profile(path: Path) -> ProcessingProfile:
             if method_id in methods:
                 raise ProfileError(f"{path}: duplicate method ID {method_id}")
             package_name = f"kp_canonicalization.methods.{method_id.replace('-', '_')}"
+            branch = f"release/{str(data['profile']).replace('@', '-')}"
             try:
                 package = importlib.import_module(package_name)
             except ImportError as exc:
                 raise ProfileError(
-                    f"{path}: cannot import method {ref} ({package_name}): {exc}"
+                    f"{path}: cannot import method {ref} ({package_name}): {exc}; if this tree "
+                    f"is past {data['profile']}, load it on {branch}"
                 ) from exc
             if getattr(package, "ID", None) != method_id:
                 raise ProfileError(f"{path}: {ref} package ID differs from {method_id}")
             if getattr(package, "VERSION", None) != version:
                 later = isinstance(package.VERSION, int) and package.VERSION > version
-                branch = f"release/{str(data['profile']).replace('@', '-')}"
+                hint = f"; this tree is past {data['profile']}, load it on {branch}"
                 raise ProfileError(
-                    f"{path}: {ref} package VERSION differs from {version}"
-                    + (f"; this tree is past {data['profile']}, load it on {branch}" * later)
+                    f"{path}: {ref} package VERSION differs from {version}{hint if later else ''}"
                 )
             if package.__file__ is None:
                 raise ProfileError(f"{path}: {ref} package has no source file")

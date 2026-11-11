@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
 
     `kp-canonicalization promote WANTED.yaml`: one promoter run (promoter.promote) over the
     deployment values' `profiles` mapping. It prints what it did, then `promoter ok <UTC time>`;
-    or each alarm on stderr and exits 1.
+    or each alarm on stderr and exits 1. Values without a profile exit 2.
 
     `kp-canonicalization list-service-unavailable`: one JSON line {"document_uid", "request_id"}
     per redrive marker, for #98's redrive; it does not check that the request is still its
@@ -240,7 +240,7 @@ async def run_worker(
         ports = Ports(store, reporter, vlm=vlm, summary=summary, d3=d3)
         client = await connect(temporal_runtime)
         worker = await make_worker(
-            client, ports, runtime, queue, shutdown_grace_s, versioned=build_id is not None
+            client, ports, runtime, queue, shutdown_grace_s, versioned=bool(build_id)
         )
         print(f"worker {runtime.profile.id} build {runtime.build_id} on {worker.task_queue}",
               flush=True)  # fmt: skip
@@ -279,6 +279,10 @@ async def start_request(start: dict[str, Any], wait: bool) -> int:
 async def run_promoter(values: Any) -> int:
     from kp_canonicalization.promoter import promote
 
+    if not isinstance(values, dict) or not values.get("profiles"):
+        # An empty mapping would retire every version: a chart that rendered nothing must not.
+        print("no profiles in the deployment values", file=sys.stderr)
+        return 2
     alarms = await promote(await connect(), values["profiles"])
     for alarm in alarms:
         print(alarm, file=sys.stderr)

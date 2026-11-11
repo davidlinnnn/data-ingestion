@@ -17,7 +17,7 @@ from temporalio.api.workflowservice.v1 import (
 from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 
-from kp_canonicalization.workflow import QUEUES
+from kp_canonicalization.workflow import QUEUES, task_queue
 
 
 async def promote(
@@ -28,24 +28,25 @@ async def promote(
     {deployment name: {"builds": [image tag, ...], "current": image tag}}. Returns the alarms,
     one line each; a run that returns any must end non-zero. It prints what it did or waits for.
 
-    A listed deployment: `current` becomes the current version once that build polls all five
-    queues; any other state of the build waits. A build that is off `builds` and not current is
-    deleted once Temporal allows it (drained, pollers forgotten). Alarms: the wanted build is
-    not current stale_after after Temporal first saw it; workflows are still open on a build
-    that is off `builds`.
+    A listed deployment: `current` becomes the current version once Temporal lists all five
+    queues for that build, which it does from each queue's first poll on; until then the run
+    waits. A build that is off `builds` and not current is deleted once Temporal allows it
+    (drained, pollers forgotten). Alarms: the wanted build is not current stale_after after
+    Temporal first saw it; workflows are still open on a build that is off `builds`. A build no
+    pod of which ever polled is unknown to Temporal and raises nothing here.
 
-    An unlisted deployment is retired: when no workflow is open on its orchestration queue, it
-    is set unversioned, then each version is deleted once Temporal allows it, then the
-    deployment. Alarm: workflows are open, and then nothing is touched.
+    An unlisted deployment is retired: when visibility counts no open workflow on its
+    orchestration queue, it is set unversioned, then each version is deleted once Temporal
+    allows it, then the deployment. Alarm: workflows are open, and then nothing is touched.
 
-    An entry whose `current` is not among its `builds` is an alarm, and the run does nothing
-    else. Drainage is never skipped. An RPC failure other than Temporal's refusal to delete
-    raises.
+    An entry that is not a mapping whose `current` is among its `builds` is an alarm, and the
+    run does nothing else. Drainage is never skipped. An RPC failure other than Temporal's
+    refusal to delete raises.
     """
     alarms = [
-        f"{name}: current {entry.get('current')} is not among builds {entry.get('builds')}"
+        f"{name}: current is not among builds in {entry}"
         for name, entry in wanted.items()
-        if entry.get("current") not in entry.get("builds", [])
+        if not isinstance(entry, dict) or entry.get("current") not in (entry.get("builds") or [])
     ]
     if alarms:
         return alarms
@@ -60,8 +61,7 @@ async def promote(
         token = page.next_page_token
         if not token:
             break
-    # The list lags (it missed a deployment just after its current version changed), so listed
-    # deployments are described by name; only retirement depends on the list.
+    # The list lags behind a routing change, so a listed deployment is described by its name.
     for name in sorted({*names, *wanted}):
         try:
             described = await service.describe_worker_deployment(
@@ -94,7 +94,7 @@ async def _follow(
             )
         )
         polled = {queue.name for queue in described.worker_deployment_version_info.task_queue_infos}
-        missing = sorted({f"{name}.{queue}" for queue in QUEUES} - polled)
+        missing = sorted({task_queue(name, queue) for queue in QUEUES} - polled)
         if not missing:
             await _set_current(client, name, want)
             print(f"{name}: current {current or 'none'} -> {want}")
@@ -123,7 +123,7 @@ async def _follow(
 
 async def _retire(client: Client, info: WorkerDeploymentInfo) -> list[str]:
     name = info.name
-    on_queue = f'TaskQueue="{name}.orchestration" AND ExecutionStatus="Running"'
+    on_queue = f'TaskQueue="{task_queue(name)}" AND ExecutionStatus="Running"'
     open_workflows = (await client.count_workflows(on_queue)).count
     if open_workflows:
         return [

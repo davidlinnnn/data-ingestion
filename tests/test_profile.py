@@ -129,3 +129,10 @@ def test_a_file_the_tree_has_moved_past_names_its_release_branch(tmp_path):
 
     with pytest.raises(ProfileError, match="document-summary@1 .* load it on release/paper-pdf-1"):
         load_profile(older)
+
+
+def test_a_file_whose_method_package_is_gone_names_its_release_branch(tmp_path):
+    older = variant(tmp_path, "code@1:", "retired-method@1:")
+
+    with pytest.raises(ProfileError, match="retired-method@1 .* load it on release/paper-pdf-1"):
+        load_profile(older)

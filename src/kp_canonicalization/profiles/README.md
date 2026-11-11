@@ -50,8 +50,9 @@ the promoter's CronJob and its alert route, the image build and the image tag fo
   prune, so a tag removed from the list is a Deployment deleted.
 - **Promoter.** A CronJob in the worker namespace runs `kp-canonicalization promote` every minute
   over that mapping (`promoter.promote`). The namespace holds Processing Profile versions only.
-  - *A listed version.* Once the `current` build polls all five queues, the promoter makes it
-    current; repeating that is a no-op. A build that is off `builds` and no longer current is
+  - *A listed version.* Once Temporal lists all five queues for the `current` build, which it
+    does from each queue's first poll on, the promoter makes it current; repeating that is a
+    no-op. A build that is off `builds` and no longer current is
     deleted once Temporal allows it: drained and its pollers forgotten.
   - *An unlisted version* is retired: when no workflow is open on its orchestration queue, the
     promoter sets the deployment unversioned, deletes each version once Temporal allows it, then
@@ -64,6 +65,9 @@ the promoter's CronJob and its alert route, the image build and the image tag fo
     second case: the version's workflows meanwhile wait as backlog without an error (P1).
   - *Liveness.* A run without alarms ends with the line `promoter ok <UTC time>`. Alert on a
     failed run and on that line going stale (#137).
+  - *What it cannot see.* A build no pod of which ever polled (an image that cannot be pulled, a
+    worker that refuses to start) does not exist for Temporal, and a queue stays listed after
+    its pods die. Both are for the Deployments' readiness alerts (#137).
 
 Limits and versions. A namespace holds at most 100 Worker Deployments and a deployment 100
 versions (`matching.maxDeployments`, `matching.maxVersionsInDeployment`). Versions are
@@ -131,8 +135,8 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
 A patch changes shared code or logging only. CI rule 3 refuses method changes, and a `runtime` value
 is in the released file, so a new value is a new version.
 
-1. Branch from `release/paper-pdf-<N>` and open one PR back into it
-   ([branching](../../../docs/agents/branching.md)). Open a second PR that carries the same fix
+1. Branch from `release/paper-pdf-<N>`, as `patch/paper-pdf-<N>-<issue>-<slug>`, and open one PR
+   back into it ([branching](../../../docs/agents/branching.md)). Open a second PR that carries the same fix
    into `dev`, or the next version ships without it.
 2. Merge the first. The image build (#137) gives a new tag. Append the tag to the version's
    `builds`, set `current` to it, and sync: the new build's five Deployments start beside the old
