@@ -39,6 +39,12 @@ later share a deployment, tenant isolation is enforced in addition to resource
 authorization.
 _Avoid_: Resource, Corpus, access grant
 
+**Cloud native**:
+A main design axis of the Knowledge Platform: each deployable part carries only
+what its own job needs, can be multiplied or replaced at any moment, and keeps
+accepted work outside any single running instance.
+_Avoid_: containerized, runs on Kubernetes
+
 ## Knowledge and its use
 
 **Source**:
