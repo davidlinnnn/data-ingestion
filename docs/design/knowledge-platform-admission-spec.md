@@ -340,8 +340,13 @@ requests they create are committed with their outbox rows before `201`.
    create a `process` request and its outbox row.
 
 All admitted items commit in one transaction before `202`. Finalization writes
-nothing to storage, so that commit alone admits an item. Staged files of
-rejected or expired items are deleted.
+nothing to storage, so that commit alone admits an item. The hourly
+cleanup takes batches finalized or expired at least one hour before, so that
+uploads in flight have ended. It deletes the objects uploaded by items that
+created no Source Revision (rejected, expired, or resolved by §6.4) and aborts
+every upload left incomplete under the batch's keys. Admission never deletes
+the objects of an admitted item. A batch record is not removed (§11) before its
+cleanup.
 
 ### 6.3 Ordering
 
@@ -527,6 +532,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Maximum file size | 50 MB, the PROD requirement ([#88](https://github.com/davidlinnnn/data-ingestion/issues/88#issuecomment-6633160435)); configurable per deployment |
 | Upload | One `PUT` per file (§5.2), accepted until the batch is finalized or expires; a repeated `PUT` changes nothing |
 | Open batch | Expires 24 hours after creation |
+| Uploads not admitted | Removed within 2 hours after the batch is finalized or expires (*unmeasured*) |
 | `Idempotency-Key` | 24 hours |
 | Request | `404` 30 days after its terminal outcome; active requests never expire |
 | Batch | `404` 30 days after all items are terminal, or after expiry |
@@ -561,7 +567,7 @@ ended without an error block, such as terminated or timed out (§9).
 ## 13. Deployment and validation
 
 - One image, three roles: `api` (HPA), `dispatcher` (≥ 2 replicas), CronJobs
-  (reconciler every 5 minutes, batch expiry hourly, retention daily).
+  (reconciler every 5 minutes, batch expiry and upload cleanup hourly, retention daily).
 - Its own CNPG database; custody belongs to #57; topology and configuration
   loading to #78.
 - Uploads are written to the custody bucket (§5.2, §10). Admission writes source
