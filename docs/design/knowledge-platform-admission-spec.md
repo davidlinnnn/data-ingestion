@@ -63,7 +63,7 @@ Logical records; the physical schema is I1's.
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields | §5.1 statuses |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → custody reference, `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored response, `created_at` | 24 hours |
@@ -178,9 +178,11 @@ the declared `size`; `Content-Type` may carry the declared `media_type` (the
 platform detects the type itself). The body is the file's bytes in one request:
 no multipart form, no chunked encoding, no resumption.
 
-The platform streams the body into staging, computing the SHA-256 and counting
+The platform streams the body into storage, computing the SHA-256 and counting
 bytes as it goes, and stops the transfer as soon as the bytes exceed the
-declared `size`. Outcomes:
+declared `size`. The object appears, at its custody key (§10), only once its
+size, SHA-256 and media type are verified. There is no separate staging store:
+a staged file is one in place and not yet admitted. Outcomes:
 
 | Outcome | Response |
 |---|---|
@@ -193,8 +195,8 @@ declared `size`. Outcomes:
 | Batch expired | `409 BATCH_EXPIRED` |
 | Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` |
 
-A repeated `PUT` of the same path replaces the staged file; finalization uses the
-bytes of the last `PUT` that returned `204`. Files of one item, and of different
+A repeated `PUT` of the same path changes nothing: a staged file already holds
+the declared bytes. Files of one item, and of different
 items, may be uploaded in parallel. A client that loses the connection repeats
 the whole request. Uploads are accepted until the batch is finalized or expires
 (§11); staged files of rejected or expired items are deleted (§6.2).
@@ -210,7 +212,9 @@ No body. Response `202` with the batch and every item, admitted items carrying
 `request_id` and `source_revision_id`. Repeating it returns the same response.
 `409 BATCH_EXPIRED` for an expired batch; `422 ALL_ITEMS_REJECTED` when every
 item of the batch ends rejected (the batch is still finalized and no request is
-created). A pause does not block finalization (Q10.1e).
+created). `503 UNAVAILABLE` with `Retry-After` when storage cannot say whether
+the files are in place (§6.2); the batch stays open and nothing changes. A pause
+does not block finalization (Q10.1e).
 
 ### 5.4 Batch: `GET /v1/batches/{batch_id}`
 
@@ -312,26 +316,37 @@ describes the stages.
    or `unchanged`.
 8. Otherwise `declared`, with an upload entry (§5.2) for each file whose (path,
    digest) differs from the latest Source Revision; the others are
-   `carried_over` (Q10.1d).
+   `carried_over` (Q10.1d), each with its `custody_ref` fixed here from that
+   Source Revision. A new document's `document_uid` is generated here.
 
 Results decided at declaration (`unchanged`, `queued`, `rejected`) are final;
 requests they create are committed with their outbox rows before `201`.
 
 ### 6.2 Finalization, per `declared` item
 
-1. Document deleted since declaration → `DOCUMENT_DELETED`.
+1. Document deleted since declaration → `DOCUMENT_DELETED`; created since
+   declaration by another batch, so that its `document_uid` is not the declared
+   one → `STALE_DECLARATION` (declare again).
 2. Placement re-check → `RESOURCE_NOT_FOUND`.
-3. Every file in `uploads` staged by a `PUT` that returned `204` (§5.2 verified
-   size, digest and media type at that point) → `FILES_MISSING`.
+3. Every file in `uploads` is in place: its object exists in storage, asked
+   before the transaction (§5.2 verified size, digest and media type before the
+   object appeared) → `FILES_MISSING`.
 4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
    or `VERSION_CONFLICT`; same content → §6.4.
-5. Otherwise: create the document on first submission (new `document_uid`),
-   create the Source Revision, move staged files into custody (carried-over files
-   reference the existing custody objects), apply catalog fields and metadata,
+5. Otherwise: create the document on first submission (with the declared `document_uid`),
+   create the Source Revision, record each staged file's `custody_ref` (§10;
+   a carried-over file keeps the reference fixed at declaration),
+   apply catalog fields and metadata,
    create a `process` request and its outbox row.
 
-All admitted items commit in one transaction before `202`. Staged files of
-rejected or expired items are deleted.
+All admitted items commit in one transaction before `202`. Finalization writes
+nothing to storage, so that commit alone admits an item. The hourly
+cleanup takes batches finalized or expired at least one hour before, so that
+uploads in flight have ended. It deletes the objects uploaded by items that
+created no Source Revision (rejected, expired, or resolved by §6.4) and aborts
+every upload left incomplete under the batch's keys. Admission never deletes
+the objects of an admitted item. A batch record is not removed (§11) before its
+cleanup.
 
 ### 6.3 Ordering
 
@@ -476,7 +491,7 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "document_uid": "doc_7f3…",
   "source_revision_id": "srv_3",
   "files": [
-    { "path": "policy.md", "role": "main", "custody_ref": "custody://…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
+    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/bat_01J…/0/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
   ],
   "adopted_version": "md-standard@2",
   "adoption_sequence": 7,
@@ -485,6 +500,23 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "trace_id": "4bf92f3577b34da6"
 }
 ```
+
+`custody_ref` is `s3://{bucket}/{key}`; the bucket is the processing worker's
+object store bucket, so source files and processing results share it.
+Admission records it once, at finalization (§6.2), for the object the upload
+wrote. Carried-over files, retries, redrive, refresh and the start input copy
+it unchanged. Readers split it into bucket and key and derive nothing from the
+key.
+
+The key of a source file is
+`documents/{document_uid}/files/{batch_id}/{index}/{sha256}`: the batch item
+that uploaded it and its digest in lowercase hex. Only that item's upload (§5.2)
+writes under its keys. Everything the platform keeps for a document sits under
+`documents/{document_uid}/`, so purging is by that prefix. Removing the files
+of one Source Revision alone first checks the document's other Source
+Revisions for references to the same objects. The key carries no tenant: a deployment serves
+one tenant. Should one serve several, #57 decides between a bucket and a key
+prefix per tenant; stored references stay valid either way.
 
 Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
@@ -498,8 +530,9 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
 | Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |
 | Maximum file size | 50 MB, the PROD requirement ([#88](https://github.com/davidlinnnn/data-ingestion/issues/88#issuecomment-6633160435)); configurable per deployment |
-| Upload | One `PUT` per file (§5.2), accepted until the batch is finalized or expires; a repeated `PUT` replaces the staged file |
+| Upload | One `PUT` per file (§5.2), accepted until the batch is finalized or expires; a repeated `PUT` changes nothing |
 | Open batch | Expires 24 hours after creation |
+| Uploads not admitted | Removed within 2 hours after the batch is finalized or expires (*unmeasured*) |
 | `Idempotency-Key` | 24 hours |
 | Request | `404` 30 days after its terminal outcome; active requests never expire |
 | Batch | `404` 30 days after all items are terminal, or after expiry |
@@ -520,7 +553,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
 | `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `FILES_MISSING` | item, finalization | — |
+| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `FILES_MISSING` | item, finalization | — |
 
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
@@ -534,10 +567,13 @@ ended without an error block, such as terminated or timed out (§9).
 ## 13. Deployment and validation
 
 - One image, three roles: `api` (HPA), `dispatcher` (≥ 2 replicas), CronJobs
-  (reconciler every 5 minutes, batch expiry hourly, retention daily).
-- Its own CNPG database; staging storage belongs to admission; custody to #57;
-  topology and configuration loading to #78.
-- The `api` role carries upload bytes (§5.2): it streams each body into staging
+  (reconciler every 5 minutes, batch expiry and upload cleanup hourly, retention daily).
+- Its own CNPG database; custody belongs to #57; topology and configuration
+  loading to #78.
+- Uploads are written to the custody bucket (§5.2, §10). Admission writes source
+  files there and deletes those of rejected and expired items; it changes
+  nothing else in the bucket.
+- The `api` role carries upload bytes (§5.2): it streams each body into storage
   in parts and never holds a whole file in memory. On the upload route the
   ingress must allow bodies up to the maximum file size, pass the body through
   without buffering it first, and allow several minutes per request; #78 sets
@@ -559,7 +595,7 @@ ended without an error block, such as terminated or timed out (§9).
 | Ticket | Scope | Depends on |
 |---|---|---|
 | I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1–§5.4 including the upload endpoint, §6, staging to custody, idempotency, quota, minimal SDK | I1, #85, #57 |
+| I2 Batch API | §5.1–§5.4 including the upload endpoint, §6, idempotency, quota, minimal SDK | I1, #85, #57 |
 | I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #80 |
 | I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
 | I5 Validation harness | §13 tiers | I1–I4, #78 |

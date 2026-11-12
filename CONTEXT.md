@@ -381,6 +381,13 @@ source. It stops disclosure of that Document; it is neither governance
 withdrawal nor Custody Purge, and omission from a submission never implies it.
 _Avoid_: withdrawal, Custody Purge, omission from a batch
 
+**Custody**:
+The platform's accountable keeping of an admitted Source Revision's files and of
+adopted results: their content is fixed and they stay readable until Custody
+Purge. Custody begins at admission; a file uploaded but not admitted is not in
+custody, wherever it is stored.
+_Avoid_: storage, bucket, staging
+
 **Custody Purge**:
 Destruction that makes the affected retained information unrecoverable in
 platform custody, including its dependent copies.
