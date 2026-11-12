@@ -1,5 +1,8 @@
 # Knowledge Platform admission specification
 
+**Status:** current contract, kept up to date when a decision changes. The implementation
+tickets #95–#99 build from this document.
+
 The buildable contract for
 [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31).
 The decisions and their reasons are in the

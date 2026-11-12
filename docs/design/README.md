@@ -2,6 +2,46 @@
 
 [Documentation guide](../README.md)
 
+## Index
+
+Which document to read. Decisions are made on the
+[wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its
+tickets; where a document differs from them, they win. Each document is one of
+four kinds, and says which in a status line at its top:
+
+- **Contract**: what implementers build from. Kept up to date when a decision changes.
+- **Design result**: the outcome of a closed design ticket. Not revised for later
+  decisions unless a dated note in the text says so.
+- **Design record**: round-by-round notes that keep superseded text in place. Read
+  the contract instead.
+- **Notes**: standing notes, added to over time.
+
+| Document | Kind | Ticket | Covers |
+|---|---|---|---|
+| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99 | Batch API, admission rules, status, deletion, dispatch and durability, limits, error reasons |
+| [File upload](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #184 | Why uploads go through the platform API, architecture and sequence diagrams, failure table, guide for Source developers |
+| [Admission design notes](knowledge-platform-admission.md) | Design record | #31 | Rounds 1–5 and their reasons |
+| [Authorization](knowledge-platform-authorization.md) | Design result | #85 | Decision interface, model and pilot provider |
+| [Canonical consumption](knowledge-platform-canonical-consumption.md) | Design result | #55 | Canonical consumption and publication for Wiki and Retrieval |
+| [Data security](knowledge-platform-data-security.md) (zh-TW) | Design result | #87 | Data-security governance principles and the Agent Platform boundary |
+| [Processing workflow v2](knowledge-platform-processing-workflow-v2.md) | Design result | #91 | Stage graph, durability and retry units, failure semantics, Processing Result |
+| [Processing inference and capacity](knowledge-platform-processing-inference-capacity.md) | Design result | #93 | External inference call rules, worker pools, capacity model |
+| [Canonical design](knowledge-platform-canonical-design.md) | Design result | #32 | Canonical representation, acceptance and lifecycle |
+| [Canonical contract and cases](knowledge-platform-canonical-contract-draft.md) (zh-TW) | Design result | #32 | Logical contract and the three-format cases |
+| [First adoption](knowledge-platform-first-adoption.md) (zh-TW) | Design result | #54 | First-adoption workload and operating envelope |
+| [Source handoff](knowledge-platform-source-handoff.md) | Design result | #53 | Captured-source identity and authorization handoff |
+| [Logical system design](knowledge-platform-logical-design.md) | Design result | #58 | Overall responsibilities, the 2026-09-28 baseline |
+| [Overall design review](knowledge-platform-overall-review.md) | Design result | #58 | Contract outlines, failure walkthroughs, persistence alternatives |
+| [Internal product strategy](knowledge-platform-internal-product-strategy.md) (zh-TW) | Notes | none | Product direction |
+| [Map notes](knowledge-platform-map-notes.md) | Notes | #52 | The map's long-form standing notes |
+
+Decisions that are hard to reverse are also recorded as ADRs in
+[`docs/adr/`](../adr/). Domain terms are in [CONTEXT.md](../../CONTEXT.md). The
+HLD and Architecture Baseline at the repository root are an earlier direction
+package; see the last section.
+
+## Notes on each document
+
 The current [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52)
 started with source-to-publication system design. The user confirmed the overall
 logical decision on 2026-09-28 after Q1–Q25 and independent spike incorporation.

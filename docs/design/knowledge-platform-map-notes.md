@@ -1,5 +1,8 @@
 # Knowledge Platform map notes
 
+**Status:** standing notes of the map. Sections are dated and added over time; an earlier
+section is not rewritten when a later one changes it.
+
 Long-form standing notes of the [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52), moved here verbatim from the map body on 2026-10-21 so the map stays an index. The map's **Notes** section keeps a one-line gist per section and links here. Decisions themselves live in their tickets' resolution comments. When you add a note, write its long form here and its gist in the map.
 
 ## Start with the overall logical system design

@@ -1,6 +1,10 @@
 # Knowledge Platform admission design notes
 
-Active design for [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31),
+**Status:** design record, not the contract. It keeps the decisions of each round and their
+reasons, including text that later decisions superseded (marked "Superseded on"). Build from
+the [admission specification](knowledge-platform-admission-spec.md).
+
+Design notes for [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31),
 within the existing Knowledge Platform wayfinder map. Rounds 1–5 are
 confirmed; the current contract is the
 [admission specification](knowledge-platform-admission-spec.md). Later rounds

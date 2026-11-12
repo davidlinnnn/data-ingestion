@@ -1,5 +1,9 @@
 # PDF processing workflow v2
 
+**Status:** design result of [#91](https://github.com/davidlinnnn/data-ingestion/issues/91), closed 2026-10-21. The text is not revised for later
+decisions unless a dated note in it says so; those decisions are on the
+[wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+
 The design result of
 [設計 PDF processing workflow v2：stage 圖、耐久單位與處理結果 manifest v2](https://github.com/davidlinnnn/data-ingestion/issues/91),
 confirmed with the user on 2026-10-21 and 2026-10-22 (grilling rounds 1–7,

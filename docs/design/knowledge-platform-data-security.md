@@ -1,5 +1,7 @@
 # Knowledge Platform 資料安全治理原則與 Agent Platform 邊界
 
+**狀態：** [#87](https://github.com/davidlinnnn/data-ingestion/issues/87) 的設計結果，該票於 2026-10-27 結案。之後的決定除非文中有標日期的註記，否則不會回頭改寫本文；它們記在 [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) 與各張票上，兩者不一致時以後者為準。
+
 [Define Knowledge Platform data-security governance principles and the Agent Platform boundary](https://github.com/davidlinnnn/data-ingestion/issues/87) 的設計結果。2026-10-26 至 10-27 與使用者以 grilling 第 A–G 組確認。
 
 本文的依據如下：

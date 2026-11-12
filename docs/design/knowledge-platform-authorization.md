@@ -1,5 +1,9 @@
 # Knowledge Platform authorization: decision interface, model and pilot provider
 
+**Status:** design result of [#85](https://github.com/davidlinnnn/data-ingestion/issues/85), closed 2026-10-26. The text is not revised for later
+decisions unless a dated note in it says so; those decisions are on the
+[wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+
 The design result of
 [Define the authorization decision interface, model and built-in provider for the pilot](https://github.com/davidlinnnn/data-ingestion/issues/85),
 confirmed with the user on 2026-10-23 and 2026-10-26 (grilling rounds A–D,
