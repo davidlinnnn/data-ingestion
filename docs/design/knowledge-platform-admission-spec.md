@@ -511,8 +511,12 @@ key.
 The key of a source file is
 `documents/{document_uid}/files/{batch_id}/{index}/{sha256}`: the batch item
 that uploaded it and its digest in lowercase hex. Only that item's upload (§5.2)
-writes under its keys. Everything the platform keeps for a document sits under
-`documents/{document_uid}/`, so purging is by that prefix. Removing the files
+writes under its keys. A document's source files, and the items processing
+registers for it, sit under `documents/{document_uid}/`. That prefix is not
+everything kept for a document: processing writes each request's Processing
+Result, failure report and attempt records under `requests/{request_id}/`, so a
+purge of one document also covers the `requests/` prefixes of that document's
+requests (#57 owns the purge rule). Removing the files
 of one Source Revision alone first checks the document's other Source
 Revisions for references to the same objects. The key carries no tenant: a deployment serves
 one tenant. Should one serve several, #57 decides between a bucket and a key
@@ -595,7 +599,7 @@ ended without an error block, such as terminated or timed out (§9).
 | Ticket | Scope | Depends on |
 |---|---|---|
 | I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1–§5.4 including the upload endpoint, §6, idempotency, quota, minimal SDK | I1, #85, #57 |
+| I2 Batch API | §5.1–§5.4 including the upload endpoint, §6, idempotency, quota, minimal SDK | I1, #113, #184 |
 | I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #80 |
 | I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
 | I5 Validation harness | §13 tiers | I1–I4, #78 |
