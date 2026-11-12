@@ -618,7 +618,8 @@ ended without an error block, such as terminated or timed out (§9).
 | Ticket | Scope | Depends on |
 |---|---|---|
 | I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1–§5.4 including the upload endpoint, §6, idempotency, quota, minimal SDK | I1, #113, #184 |
-| I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #80 |
+| I2 Batch API | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184 |
+| I2b File upload | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
+| I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #126 |
 | I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
 | I5 Validation harness | §13 tiers | I1–I4, #78 |
