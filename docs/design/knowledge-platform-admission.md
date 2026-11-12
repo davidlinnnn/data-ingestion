@@ -338,6 +338,13 @@ platform-verified digest as the artifact's integrity information.
   synchronous replication; this is a pilot go-live condition. No managed
   PostgreSQL service exists in the company today. Provisioning and operation are
   handed to #78 and coordinated with #57.
+  Superseded on 2026-11-12: operators cannot be installed on the company's
+  clusters, and the company lets each application declare its own guarantee
+  (backup or replication inside the cluster both qualify). The database is one
+  PostgreSQL instance with continuous write-ahead-log archiving; the guarantee
+  is restated in the
+  [admission specification](knowledge-platform-admission-spec.md) §9. The same
+  applies to "CNPG" under Deployment (Q9.10) and the validation plan (Q9.11).
 - The dispatcher starts the Temporal workflow with the request ID as workflow ID
   and `REJECT_DUPLICATE`, treating `WorkflowExecutionAlreadyStarted` as success.
   During a Temporal outage outbox rows wait and are dispatched with backoff.
