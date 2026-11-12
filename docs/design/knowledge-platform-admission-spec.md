@@ -31,7 +31,7 @@ Out of scope here, with owners:
 | Canonical processing and the workflow implementation | #80, with the #91 manifest v2 |
 | Projection consumption, the handoff channel, product removal | #55 |
 | Serving results and filtering | #76 |
-| CNPG, Temporal, configuration loading, topology, observability | #78 |
+| Database deployment and backup, Temporal, configuration loading, topology, observability | #78 |
 
 Deferred: callbacks and webhooks, client cancellation, inline content, filterable
 attributes, full-snapshot reconciliation, rename, a Source-facing `reprocess`,
@@ -165,7 +165,7 @@ Whole-request outcomes: `400` (malformed, `TOO_MANY_ITEMS`), `401`, `403`,
 `422 ALL_ITEMS_REJECTED` (no batch is created; the body lists every item's
 error), `422 IDEMPOTENCY_KEY_REUSED`, `409 IDEMPOTENCY_IN_PROGRESS`,
 `429 RATE_LIMITED`, `503 AUTHZ_UNAVAILABLE`, `503 ADMISSION_PAUSED`, `503`
-during database failover. Every `429` and `503` carries `Retry-After`.
+while the database is unavailable. Every `429` and `503` carries `Retry-After`.
 
 A batch in which no item is `declared` is created `finalized`.
 
@@ -476,9 +476,19 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 - Platform refresh after an owner adopts a version: one `process` request per
   affected document's current canonical revision, `initiator: platform`, the
   adoption sequence recorded, low priority, no quota.
-- Durability: a `202` survives a single node failure (CNPG, three instances,
-  quorum synchronous replication; a pilot go-live condition). DEV/POC may run one
-  instance and is marked as not meeting it.
+- Durability: the admission database is one PostgreSQL instance on a
+  network-backed persistent volume, with its write-ahead log archived
+  continuously to storage outside that volume (a pilot go-live condition).
+  - The instance or its node fails: no `202` is lost. Admission answers `503`
+    until the instance runs again; after a node failure that takes an operator
+    action.
+  - The volume is lost: the database is restored from the archive. Requests
+    acknowledged within the archive interval (target: one minute) may be lost,
+    and their Sources submit them again.
+  - Restore time is *unmeasured* until the restore drill (§13).
+
+  Replication inside the cluster is a later deployment change and needs no code
+  change. DEV/POC may run without the archive and is marked as not meeting this.
 - Pilot pause: triggered by backlog depth; rejects new declarations only.
 
 ## 10. Workflow start input
@@ -572,8 +582,10 @@ ended without an error block, such as terminated or timed out (§9).
 
 - One image, three roles: `api` (HPA), `dispatcher` (≥ 2 replicas), CronJobs
   (reconciler every 5 minutes, batch expiry and upload cleanup hourly, retention daily).
-- Its own CNPG database; custody belongs to #57; topology and configuration
-  loading to #78.
+- Its own PostgreSQL database, deployed without an operator: one instance on a
+  persistent volume, continuous write-ahead-log archiving and a scheduled base
+  backup to object storage (§9). Custody belongs to #57; topology and
+  configuration loading to #78.
 - Uploads are written to the custody bucket (§5.2, §10). Admission writes source
   files there and deletes those of rejected and expired items; it changes
   nothing else in the bucket.
@@ -586,13 +598,17 @@ ended without an error block, such as terminated or timed out (§9).
 - **CI tier:** Testcontainers PostgreSQL and Temporal; failpoints around each
   commit and start; an adjustable clock; the prototype's 19 scenarios as
   acceptance tests.
-- **Cluster tier** (before the pilot and after infrastructure changes): CNPG
-  primary kill, API and dispatcher pod kills, a one-hour Temporal outage
-  extrapolated to 24 hours, a backlog pause, capacity runs. All *unmeasured*.
+- **Cluster tier** (before the pilot and after infrastructure changes): database
+  pod kill, loss of the database's node, a restore drill from the archive
+  (measures the restore time and the lost interval), API and dispatcher pod
+  kills, a one-hour Temporal outage extrapolated to 24 hours, a backlog pause,
+  capacity runs. All *unmeasured*.
 - A full 24-hour Temporal outage test before production.
 - **Pass criteria:** every `202` maps to exactly one workflow; no loss or
   duplication; convergence within one reconciler period; deleted documents never
-  return; deletion meets its `applied` and `enforced` targets.
+  return; deletion meets its `applied` and `enforced` targets. The restore drill
+  is the one exception to "no loss": it passes when the lost interval is within
+  the archive interval.
 
 ## 14. Implementation tickets
 
