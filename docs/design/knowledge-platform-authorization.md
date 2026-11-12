@@ -36,6 +36,30 @@ Documents, the exception to #31's visibility rule. Rebind stays: the Document's
 Source moves it between two Resources it created. The affected places below are
 marked; see the [#55 design record](knowledge-platform-canonical-consumption.md).
 
+Amended on 2026-11-13 by
+[#113](https://github.com/davidlinnnn/data-ingestion/issues/113) (user rulings):
+the pilot does no access control, which reverses Q9 for the pilot.
+
+- The pilot provider is **allow-all**. `check` returns `allow` for every action
+  (`read`, `place`, `manage`) and every subject on a Resource that exists. An
+  unknown Resource is still `deny` (`resource_not_found`), and a failed or
+  timed-out lookup is `unavailable`. `list_resources` returns every Resource of
+  the tenant. The `actor` is recorded and not evaluated, as before.
+- Accepted consequences: every authenticated user reads every Document and
+  product of the tenant. Any Source sees every Resource and may place into,
+  rebind into or delete another Source's Resource, so #55's rule that a Source
+  places only into Resources it created is not enforced in the pilot.
+- The allow-all provider is selectable only in pilot configuration; a
+  production deployment refuses to start with it (the marker belongs to #78).
+  SpiceDB (F-1, #115) or the GAM adapter (#86) replaces it before production.
+- No PostgreSQL relation-table provider is built. The `resource` and
+  `relation_change` records stay (§5.1). The `relation` record and the reader
+  endpoints (§6.2) wait for the first real provider.
+- The conformance suite (§5.2) is written and first run by that first real
+  provider. I-A tests the allow-all provider and the authz API.
+- The interface (§4), the authz API (Q12, §4.3) and the normative schema
+  (§3.1) do not change, so no PEP changes when the real provider arrives.
+
 ## 1. Scope and owners
 
 | Topic | Owner |
@@ -62,7 +86,7 @@ marked; see the [#55 design record](knowledge-platform-canonical-consumption.md)
 | Q6 | Wiki and Retrieval products are not object types. A product inherits its Resource's readers (ADR-0007); `read` on a Resource covers all its published products. Projections may narrow, never widen. |
 | Q7 | Tenant takes no part in decisions. Tenant is bound one-to-one to a deployment, so each deployment has one authorization store. The cross-tenant check stays the PEP's structural check before any decision (admission Q3.1 step 1). Isolation for a shared multi-tenant deployment is decided with #78 when one is chosen. |
 | Q8 | Two provider modes behind one interface and one model: (1) a GAM adapter for production (#86) and (2) the built-in provider for the pilot. Mode (3), where the platform defers decisions to a Source's own PDP, is **not opened**, neither as a live callback nor as a named synchronisation mode. A Source system that calls the Resource Service API programmatically is ordinary mode (2) use. A missing relation is always `deny`. Revisits the 2026-10-19 path-3 deferral with the research evidence: none of the surveyed search or RAG products documents a customer PDP callback for search filtering, and a black-box decision leaves the platform accountable for disclosure without the means to compute derived-product audiences, explain decisions or bound revocation. A live callback would be reconsidered only for a real case, limited to single-object reads of that Source's own documents that feed no derived product, with the external allow necessary but not sufficient. This refines #56's reconsideration conditions (handed to #56). |
-| Q9 | The pilot provider is a **PostgreSQL relation table** in a separate schema of the admission database. Deciding facts: the v1 model is one flat table with three relations and no hierarchy or groups, so a check is one indexed lookup; keeping relations in the admission database gives commit-time consistency with the binding and no new service, whereas SpiceDB needs its own deployment, PostgreSQL 15 or newer, commit-timestamp tracking for Watch and ZedToken handling for freshness (§5.3). The model's normative form is a SpiceDB schema file (§3.1); a provider-agnostic conformance suite verifies every provider. An allow-all mock is never selectable in pilot or production configuration; test fakes exist only in tests. After the MVP the built-in provider moves to SpiceDB (user decision, follow-up F-1). |
+| Q9 | The pilot provider is a **PostgreSQL relation table** in a separate schema of the admission database. Deciding facts: the v1 model is one flat table with three relations and no hierarchy or groups, so a check is one indexed lookup; keeping relations in the admission database gives commit-time consistency with the binding and no new service, whereas SpiceDB needs its own deployment, PostgreSQL 15 or newer, commit-timestamp tracking for Watch and ZedToken handling for freshness (§5.3). The model's normative form is a SpiceDB schema file (§3.1); a provider-agnostic conformance suite verifies every provider. An allow-all mock is never selectable in pilot or production configuration; test fakes exist only in tests. After the MVP the built-in provider moves to SpiceDB (user decision, follow-up F-1). **Superseded for the pilot on 2026-11-13 by #113:** the pilot uses an allow-all provider, selectable only in pilot configuration, and no relation-table provider is built (note at the top). |
 | Q10 | Two operations: `check(subject, actor?, action, resource)` and `list_resources(subject, actor?, action, cursor?)`. `list_resources` is paginated from the first version, because adding pagination later would silently truncate existing callers. No batch check and no list-subjects in v1; both are additive later. |
 | Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. |
 | Q12 | The PDP is exposed as an internal **authz API** in the platform API deployment, backed by the admission database. Admission calls it in-process; projection PEPs call it over the network (#55 Q1: projections never connect to the platform database). Only registered PEP service identities may call it. A failed or timed-out query yields `unavailable`. |
@@ -245,6 +269,13 @@ pilot read availability is bounded by theirs (handed to #78).
 
 ## 5. Pilot provider
 
+Superseded on 2026-11-13 by #113: the pilot provider is allow-all (note at the
+top). Of §5.1 the pilot keeps the `resource` and `relation_change` records;
+the `relation` record and the §5.2 suite start with the first real provider.
+That provider's switch exports no relation table: maintainer tuples come from
+`resource.created_by_source`, and readers must be granted before the switch,
+because a missing relation is `deny` (Q8).
+
 ### 5.1 Logical records
 
 Logical records; the physical schema belongs to I-A.
@@ -312,6 +343,9 @@ are added. Every write endpoint requires a `manage_relations` credential.
   relations and Documents; moving the maintainer role is an operator procedure.
 
 ### 6.2 Relations
+
+Deferred on 2026-11-13 by #113 until the first real provider: the allow-all
+pilot provider has no `relation` record to write.
 
 | Operation | Endpoint | Requires |
 |---|---|---|
@@ -437,7 +471,8 @@ Initial values, not SLOs; I-A revises them after measurement.
 
 | Check | Owner |
 |---|---|
-| Decision correctness: every permission, deny cases, delegation, `unavailable`, `list_resources` paging, revocation on the next call | I-A conformance suite |
+| Decision correctness: every permission, deny cases, delegation, `unavailable`, `list_resources` paging, revocation on the next call | Conformance suite of the first real provider, F-1 or #86 (moved from I-A on 2026-11-13 by #113) |
+| Allow-all pilot provider: `resource_not_found`, `unavailable`, paging, refused outside pilot configuration; authz API rejects unregistered callers | I-A |
 | Resource API permissions, `404`/`403`/`409`, idempotent writes, change records, rebind (evict deferred in v1, #55) | I-B |
 | Admission `503 AUTHZ_UNAVAILABLE` and the two placement checks | #99 |
 | Search filtering on `list_resources` | #76 with #55 |
