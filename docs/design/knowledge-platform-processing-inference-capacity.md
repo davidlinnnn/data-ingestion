@@ -1,5 +1,9 @@
 # PDF processing inference calls and capacity
 
+**Status:** design result of [#93](https://github.com/davidlinnnn/data-ingestion/issues/93), closed 2026-10-23. The text is not revised for later
+decisions unless a dated note in it says so; those decisions are on the
+[wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+
 The design result of
 [設計 PDF workflow 的外部推論呼叫規則、併發吞吐與容量模型](https://github.com/davidlinnnn/data-ingestion/issues/93),
 confirmed with the user on 2026-10-22 and 2026-10-23 (grilling rounds 1–3,

@@ -1,5 +1,9 @@
 # Knowledge Platform canonical consumption and publication
 
+**Status:** design result of [#55](https://github.com/davidlinnnn/data-ingestion/issues/55), closed 2026-10-26. The text is not revised for later
+decisions unless a dated note in it says so; those decisions are on the
+[wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+
 The design result of
 [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55),
 confirmed with the user from 2026-10-22 to 2026-10-26 (grilling groups A–E,
