@@ -14,6 +14,18 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
+## Ticket bodies
+
+A ticket's body states its current scope. A session that starts the ticket reads the body and the comments its index lists, and nothing else.
+
+- **First correction**: one dated block at the top of the body, `<!-- scope-adjust-YYYY-MM-DD -->` then `## 範圍調整 — YYYY-MM-DD（<reason>）`, each point linking the comment that overrides the original. The original text stays in place.
+- **Second correction, or implementation about to start**: rewrite the body as the current scope instead of adding a second block. Mark it `<!-- current-scope-YYYY-MM-DD -->`, merge the original, the earlier block and the handoffs into the ticket's usual sections (背景, 範圍, 驗收, 相依), and fold the previous body into a `<details>` at the bottom.
+- **Comment index**: a rewritten body ends with 留言索引, listing the comments that still hold and the comments that are superseded, with what replaced each.
+- **Superseded comments**: once the index lists a comment as superseded as a whole, hide it as outdated: `gh api graphql -f query='mutation($id:ID!){minimizeComment(input:{subjectId:$id,classifier:OUTDATED}){minimizedComment{isMinimized}}}' -f id=<the comment's node_id>`.
+- **Handoff to a rewritten ticket**: post the comment, then add it to the body's index, and to the scope when it changes the scope. Fetch the body right before editing it: another session may have edited it.
+- **Dependency line**: keep 相依 in step with the native edges by editing the line in place, giving the date and reason of a removed edge. This does not count as a correction.
+- **Inbox tickets**: a ticket that collects handoffs from many others, such as the deployment ticket, carries a digest at the top of its body, `<!-- digest-YYYY-MM-DD -->`: per topic the current inputs, what the ticket must decide and what is superseded, then an index of the comments. Whoever posts a handoff there updates the digest in the same turn.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
