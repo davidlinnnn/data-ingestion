@@ -1,17 +1,17 @@
-"""The platform API's HTTP routes. So far the internal authz API (#113, authorization design Q12,
-§4.3): the Authorizer for the PEPs outside this process, open only to registered PEP service
-identities."""
+"""The platform API (#113, authorization design Q12, §4.3), with its OpenAPI document at
+/openapi.json. So far the internal authz API: the Authorizer for the PEPs outside this process,
+open only to registered PEP service identities."""
 
 import hashlib
 import logging
-from collections.abc import Awaitable, Callable, Mapping
-from typing import Literal
+from collections.abc import Mapping
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, ValidationError
-from starlette.applications import Starlette
-from starlette.requests import Request
-from starlette.responses import JSONResponse
-from starlette.routing import Route
+from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, Field
 
 from kp_admission.authz import Action, Authorizer, Decision, Ref
 
@@ -46,50 +46,77 @@ class ListRequest(BaseModel):
     trace_id: str = Field(min_length=1)
 
 
-def app(authorizer: Authorizer, peps: Mapping[str, str]) -> Starlette:
+class ErrorInfo(BaseModel):
+    type: str = Field(default="type.googleapis.com/google.rpc.ErrorInfo", alias="@type")
+    reason: str
+    domain: str = "authz.knowledge-platform"
+
+
+class Status(BaseModel):
+    code: int
+    status: str
+    message: str
+    details: list[ErrorInfo]
+
+
+class Error(BaseModel):
+    """An AIP-193 error, as admission's (admission spec §4)."""
+
+    error: Status
+
+
+class Rejected(Exception):
+    def __init__(self, code: int, status: str, message: str) -> None:
+        self.code, self.status, self.message = code, status, message
+
+
+def app(authorizer: Authorizer, peps: Mapping[str, str]) -> FastAPI:
     """`peps` maps the SHA-256 hex digest of each registered PEP credential to the PEP's service
     identity. A call without a registered credential gets 401, an invalid body 400, and every
     decision 200 whatever its outcome, without the fields that do not apply."""
 
-    def endpoint[T: BaseModel](
-        model: type[T], decide: Callable[[T], Awaitable[Decision]]
-    ) -> Callable[[Request], Awaitable[JSONResponse]]:
-        async def handle(request: Request) -> JSONResponse:
-            scheme, _, token = request.headers.get("authorization", "").partition(" ")
-            if scheme.lower() != "bearer" or _digest(token) not in peps:
-                peer = request.client.host if request.client else None
-                log.warning("authz API call without a registered PEP credential from %s", peer)
-                return _error(401, "UNAUTHENTICATED", "A registered PEP credential is required.")
-            try:
-                body = model.model_validate_json(await request.body())
-            except ValidationError as error:
-                first = error.errors()[0]
-                where = ".".join(map(str, first["loc"]))
-                return _error(400, "INVALID_ARGUMENT", f"{where}: {first['msg']}")
-            return JSONResponse((await decide(body)).model_dump(mode="json", exclude_none=True))
+    async def registered_pep(
+        request: Request,
+        credentials: Annotated[
+            HTTPAuthorizationCredentials | None, Depends(HTTPBearer(auto_error=False))
+        ],
+    ) -> None:
+        if credentials is None or _digest(credentials.credentials) not in peps:
+            peer = request.client.host if request.client else None
+            log.warning("authz API call without a registered PEP credential from %s", peer)
+            raise Rejected(401, "UNAUTHENTICATED", "A registered PEP credential is required.")
 
-        return handle
+    errors = {"model": Error, "description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
+    authz = APIRouter(
+        prefix="/authz/v1", dependencies=[Depends(registered_pep)], responses={"4XX": errors}
+    )
 
+    @authz.post("/check", response_model_exclude_none=True)
     async def check(body: CheckRequest) -> Decision:
         return await authorizer.check(
             body.subject, body.action, body.resource.id, actor=body.actor, trace_id=body.trace_id
         )
 
+    @authz.post("/list_resources", response_model_exclude_none=True)
     async def list_resources(body: ListRequest) -> Decision:
         return await authorizer.list_resources(
             body.subject, body.action, actor=body.actor, cursor=body.cursor, trace_id=body.trace_id
         )
 
-    return Starlette(
-        routes=[
-            Route("/authz/v1/check", endpoint(CheckRequest, check), methods=["POST"]),
-            Route(
-                "/authz/v1/list_resources",
-                endpoint(ListRequest, list_resources),
-                methods=["POST"],
-            ),
-        ]
-    )
+    api = FastAPI(title="Knowledge Platform API", version="1")
+    api.include_router(authz)
+
+    @api.exception_handler(Rejected)
+    async def rejected(request: Request, error: Rejected) -> JSONResponse:
+        return _error(error.code, error.status, error.message)
+
+    @api.exception_handler(RequestValidationError)
+    async def invalid(request: Request, error: RequestValidationError) -> JSONResponse:
+        first = error.errors()[0]
+        where = ".".join(map(str, first["loc"]))
+        return _error(400, "INVALID_ARGUMENT", f"{where}: {first['msg']}")
+
+    return api
 
 
 def _digest(token: str) -> str:
@@ -97,11 +124,6 @@ def _digest(token: str) -> str:
 
 
 def _error(code: int, status: str, message: str) -> JSONResponse:
-    """An AIP-193 error, as admission's (admission spec §4)."""
-    info = {
-        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
-        "reason": status,
-        "domain": "authz.knowledge-platform",
-    }
-    body = {"error": {"code": code, "status": status, "message": message, "details": [info]}}
-    return JSONResponse(body, status_code=code)
+    details = [ErrorInfo(reason=status)]
+    body = Error(error=Status(code=code, status=status, message=message, details=details))
+    return JSONResponse(body.model_dump(by_alias=True), status_code=code)

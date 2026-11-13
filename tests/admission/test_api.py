@@ -95,3 +95,17 @@ async def test_an_unavailable_decision_is_returned_without_resource_ids():
         (200, "unavailable"),
     ]
     assert "resource_ids" not in listed.json()
+
+
+async def test_the_openapi_document_describes_both_operations_with_bearer_and_their_errors():
+    async with client(token=None) as api:
+        document = (await api.get("/openapi.json")).json()
+
+    for path in ("/authz/v1/check", "/authz/v1/list_resources"):
+        operation = document["paths"][path]["post"]
+        assert set(operation["responses"]) == {"200", "4XX"}  # 400 and 401; never a 422
+        assert operation["security"] == [{"HTTPBearer": []}]
+    # Left out when null, as in a check without an actor or any list_resources answer.
+    assert not {"actor", "resource"} & set(
+        document["components"]["schemas"]["Decision"]["required"]
+    )

@@ -38,10 +38,10 @@ class Decision(BaseModel, frozen=True):
     valid_until: datetime  # equal to evaluated_at: no reuse (§8)
     decided_by: str
     subject: Ref
-    actor: Ref | None
+    actor: Ref | None = None
     actor_verified: bool = False  # identity stage P0: the actor is recorded, not evaluated
     action: Action
-    resource: Ref | None
+    resource: Ref | None = None
     trace_id: str
     reason: Reason | None = None
     resource_ids: list[str] | None = None
