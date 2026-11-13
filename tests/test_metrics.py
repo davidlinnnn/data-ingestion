@@ -1,6 +1,6 @@
 """The processing metrics (#93 §6, #136) after a paper runs through the real workflow: the
 Activity-side ones in the prometheus_client registry, the status-stage durations through the
-Temporal runtime's meter. Binds a local port (outside the Codex sandbox)."""
+Temporal runtime's meter. Binds a local port."""
 
 import json
 import shutil
