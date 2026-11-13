@@ -130,6 +130,10 @@ Amended on 2026-10-26 by #55: the v1 schema has no `relation contributor:
 source`, and `place` is `maintainer` alone instead of `maintainer + contributor`.
 Adding the contributor relation back later is an additive schema change.
 
+Since 2026-11-13 (#113) the normative definition is the file
+[`authz.zed`](../../src/kp_admission/authz.zed), model-1; the block above is a
+copy of it, and the file wins where they differ.
+
 ### 3.2 Actions used by enforcement points
 
 | Action | Subject | Used by |
@@ -461,7 +465,7 @@ Initial values, not SLOs; I-A revises them after measurement.
 
 Measured on 2026-11-13 by #113 ([readings](../validation/113/README.md)): the
 allow-all provider's slowest p99, a full `list_resources` page over the authz
-API at 32 calls at once, is 19 ms on one machine, so `authz_timeout` stays
+API at 32 calls at once, is 11 ms on one machine, so `authz_timeout` stays
 500 ms.
 
 ## 9. GAM requirements list (for #86)

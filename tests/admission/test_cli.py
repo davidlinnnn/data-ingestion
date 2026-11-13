@@ -15,7 +15,7 @@ import httpx
 import pytest
 
 from kp_admission.cli import main
-from tests.admission.support import request, revision, runs
+from tests.admission.support import request, resource, revision, runs
 
 
 def role(command: str, env: dict[str, str], **kwargs) -> subprocess.Popen:
@@ -97,10 +97,7 @@ def test_the_api_refuses_the_allow_all_provider_outside_a_pilot(monkeypatch, cap
 async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_on_sigterm(
     conn, dsn
 ):
-    await conn.execute(
-        "INSERT INTO authz.resource (resource_id, tenant_id, name, created_by_source)"
-        " VALUES ('res_01', 't1', 'rd / nlp', 'rd_papers')"
-    )
+    await resource(conn)
     with socket.socket() as probe:  # a free port: fixed ports collide across parallel runs
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
@@ -140,14 +137,20 @@ async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_
     assert unregistered.status_code == 401
 
 
-@pytest.mark.parametrize("credentials", ["not json", "[]"])
-def test_the_api_refuses_pep_credentials_that_are_not_a_json_object(
-    monkeypatch, capsys, credentials
-):
+@pytest.mark.parametrize(
+    "variable, value",
+    [
+        ("KP_AUTHZ_PEP_CREDENTIALS", "not json"),
+        ("KP_AUTHZ_PEP_CREDENTIALS", "[]"),
+        ("KP_AUTHZ_PEP_CREDENTIALS", '{"digest": 1}'),
+        ("KP_ADMISSION_API_PORT", "http"),
+    ],
+)
+def test_the_api_refuses_a_malformed_setting(monkeypatch, capsys, variable, value):
     monkeypatch.setenv("KP_ADMISSION_DATABASE_URL", "host=127.0.0.1 port=9")
     monkeypatch.setenv("KP_AUTHZ_PROVIDER", "allow-all")
     monkeypatch.setenv("KP_DEPLOYMENT", "pilot")
-    monkeypatch.setenv("KP_AUTHZ_PEP_CREDENTIALS", credentials)
+    monkeypatch.setenv(variable, value)
 
     assert main(["api"]) == 2
-    assert "KP_AUTHZ_PEP_CREDENTIALS" in capsys.readouterr().err
+    assert variable in capsys.readouterr().err

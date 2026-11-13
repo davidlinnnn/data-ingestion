@@ -1,6 +1,6 @@
 """An Authorizer for PEP tests (#113); never selectable in a deployment's configuration."""
 
-from kp_admission.authz import Action, Decision, Outcome, Reason, Ref, decision
+from kp_admission.authz import Action, Decision, Outcome, Reason, Ref, new_decision
 
 
 class FakeAuthorizer:
@@ -30,7 +30,7 @@ class FakeAuthorizer:
     ) -> Decision:
         reason = self.reason if self.outcome == "deny" else None
         args = (self.decided_by, subject, action, resource_id, actor, trace_id)
-        return decision(self.outcome, *args, reason=reason)
+        return new_decision(self.outcome, *args, reason=reason)
 
     async def list_resources(
         self,
@@ -43,6 +43,6 @@ class FakeAuthorizer:
     ) -> Decision:
         args = (self.decided_by, subject, action, None, actor, trace_id)
         if self.outcome == "unavailable":
-            return decision("unavailable", *args)
+            return new_decision("unavailable", *args)
         ids = list(self.resource_ids) if self.outcome == "allow" else []
-        return decision("allow", *args, resource_ids=ids)
+        return new_decision("allow", *args, resource_ids=ids)

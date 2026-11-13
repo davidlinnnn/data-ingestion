@@ -7,6 +7,7 @@ from psycopg_pool import AsyncConnectionPool
 from kp_admission.authz import AllowAll, Ref
 from tests.admission.authz_fake import FakeAuthorizer
 from tests.admission.conftest import fresh_database
+from tests.admission.support import resource
 
 ALICE = Ref(type="user", id="alice")
 AGENT = Ref(type="client", id="research-agent")
@@ -37,10 +38,7 @@ async def case(request):
     async with AsyncConnectionPool(dsn, kwargs={"autocommit": True}, open=False) as pool:
         if outcome == "allow":
             async with pool.connection() as conn:
-                await conn.execute(
-                    "INSERT INTO authz.resource (resource_id, tenant_id, name, created_by_source)"
-                    " VALUES ('res_01', 't1', 'rd / nlp', 'rd_papers')"
-                )
+                await resource(conn)
         yield AllowAll(pool), outcome
 
 

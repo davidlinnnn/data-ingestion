@@ -63,11 +63,15 @@ def main(argv: list[str] | None = None) -> int:
             peps = json.loads(os.environ.get("KP_AUTHZ_PEP_CREDENTIALS", "{}"))
         except json.JSONDecodeError:
             peps = None
-        if not isinstance(peps, dict):
-            print("KP_AUTHZ_PEP_CREDENTIALS must be a JSON object", file=sys.stderr)
+        if not isinstance(peps, dict) or not all(isinstance(v, str) for v in peps.values()):
+            print("KP_AUTHZ_PEP_CREDENTIALS must be a JSON object of strings", file=sys.stderr)
+            return 2
+        port = os.environ.get("KP_ADMISSION_API_PORT", "8080")
+        if not port.isdecimal():
+            print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
             return 2
         log_json_lines()
-        return asyncio.run(run_api(dsn, peps, int(os.environ.get("KP_ADMISSION_API_PORT", 8080))))
+        return asyncio.run(run_api(dsn, peps, int(port)))
     log_json_lines()
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
 

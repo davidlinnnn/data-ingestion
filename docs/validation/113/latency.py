@@ -31,6 +31,7 @@ from testcontainers.community.postgres import PostgresContainer
 
 from kp_admission import SCHEMA
 from kp_admission.authz import PAGE_SIZE, TIMEOUT_S, AllowAll, Ref
+from kp_admission.cli import POOL_SIZE
 
 ROOT = Path(__file__).parents[3]
 CALLS, WARMUP, CONCURRENCY = 2000, 100, 32
@@ -43,6 +44,11 @@ CHECK = {
 }
 LIST = {key: value for key, value in CHECK.items() if key != "resource"}
 TOKEN = "pep"
+READINGS = {
+    *(f"{path}_{call}_c{n}" for path in ("in_process", "http") for call in ("check", "list_1000")
+      for n in (1, CONCURRENCY)),
+    "control_locked_table",
+}
 
 
 def summary(samples: list[float], outcomes: list[str]) -> dict:
@@ -137,7 +143,8 @@ async def main() -> int:
             api.wait(timeout=10)
 
     limit_ms = TIMEOUT_S * 1000
-    checks = {
+    checks = {"every expected reading is present": set(readings) == READINGS}
+    checks |= {
         f"{name}: 0 <= p99 <= authz_timeout and every outcome allow": 0
         <= reading["p99_ms"]
         <= limit_ms
@@ -165,7 +172,7 @@ async def main() -> int:
 
 async def in_process(dsn: str) -> dict:
     readings = {}
-    async with AsyncConnectionPool(dsn, max_size=5, kwargs={"autocommit": True}) as pool:
+    async with AsyncConnectionPool(dsn, max_size=POOL_SIZE, kwargs={"autocommit": True}) as pool:
         provider = AllowAll(pool)
 
         async def check():
@@ -203,8 +210,8 @@ async def over_http(port: int) -> dict:
         return {
             "http_check_c1": await timed(check, CALLS, 1),
             "http_list_1000_c1": await timed(page, CALLS // 4, 1),
-            f"http_check_c{CONCURRENCY}_ab": ab(port, "/authz/v1/check", CHECK, CALLS * 2),
-            f"http_list_1000_c{CONCURRENCY}_ab": ab(port, "/authz/v1/list_resources", LIST, CALLS),
+            f"http_check_c{CONCURRENCY}": ab(port, "/authz/v1/check", CHECK, CALLS * 2),
+            f"http_list_1000_c{CONCURRENCY}": ab(port, "/authz/v1/list_resources", LIST, CALLS),
         }
 
 

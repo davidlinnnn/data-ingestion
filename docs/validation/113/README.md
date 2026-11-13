@@ -11,22 +11,22 @@ Python client process saturates first: with httpx it read p99 218 ms while `ab` 
 .venv/bin/python docs/validation/113/latency.py
 ```
 
-All 9 checks passed; the readings are in [evidence.json](evidence.json).
+All 10 checks passed, the expected set of readings among them; the readings are in [evidence.json](evidence.json).
 
 | Path | Calls at once | `check` p50 / p99 / max (ms) | `list_resources`, 1000 ids, p50 / p99 / max (ms) |
 |---|---|---|---|
-| In process | 1 | 0.20 / 0.26 / 0.37 | 0.34 / 0.40 / 0.47 |
-| In process | 32 | 1.64 / 1.88 / 2.75 | 3.65 / 4.04 / 4.15 |
-| HTTP (httpx) | 1 | 1.34 / 1.62 / 9.43 | 1.74 / 2.04 / 2.39 |
-| HTTP (`ab`) | 32 | 5.78 / 8.04 / 12.54, 5467 calls/s | 9.60 / 19.02 / 19.30, 3240 calls/s |
+| In process | 1 | 0.21 / 0.29 / 0.39 | 0.35 / 0.40 / 0.44 |
+| In process | 32 | 1.65 / 1.92 / 2.16 | 3.69 / 4.33 / 4.81 |
+| HTTP (httpx) | 1 | 1.36 / 1.65 / 2.44 | 1.82 / 2.20 / 2.38 |
+| HTTP (`ab`) | 32 | 5.80 / 7.24 / 11.57, 5464 calls/s | 9.48 / 10.83 / 12.91, 3347 calls/s |
 
 Control: with `authz.resource` locked by another transaction, every `check` read `unavailable`
-after 501.5 to 501.6 ms, so the measurement sees a lookup that outlasts the timeout.
+after 502.5 to 502.6 ms, so the measurement sees a lookup that outlasts the timeout.
 
 ## What this settles
 
 - **`authz_timeout` stays 500 ms.** The slowest p99, a full page over HTTP with 32 calls at once,
-  is 19 ms, 26 times below it. The headroom covers what this machine does not have: the network
+  is 11 ms, about 46 times below it; an earlier run of the same script read 19 ms. The headroom covers what this machine does not have: the network
   between nodes, waits for a pool connection once the Batch API's transactions (#96) share the
   pool, and PROD hardware. A longer timeout costs time only while the database is failing, when
   admission is down anyway (§4.3); a shorter one turns a stall into `503 AUTHZ_UNAVAILABLE`.

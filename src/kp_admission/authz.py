@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 class Ref(BaseModel, frozen=True):
     """A subject (user, source, client), an actor (client) or a Resource (resource)."""
 
-    type: str
+    type: Literal["user", "source", "client", "resource"]
     id: str = Field(min_length=1)
 
 
@@ -75,7 +75,7 @@ class Authorizer(Protocol):
         ...
 
 
-def decision(
+def new_decision(
     outcome: Outcome,
     decided_by: str,
     subject: Ref,
@@ -121,16 +121,14 @@ class AllowAll:
         trace_id: str,
     ) -> Decision:
         args = (self.decided_by, subject, action, resource_id, actor, trace_id)
-        try:
-            found = await self._fetch(
-                "SELECT 1 FROM authz.resource WHERE resource_id = %s", (resource_id,)
-            )
-        except Exception as error:
-            log.warning("authz lookup failed: %s", type(error).__name__)
-            return decision("unavailable", *args)
+        found = await self._fetch(
+            "SELECT 1 FROM authz.resource WHERE resource_id = %s", (resource_id,)
+        )
+        if found is None:
+            return new_decision("unavailable", *args)
         if found:
-            return decision("allow", *args)
-        return decision("deny", *args, reason="resource_not_found")
+            return new_decision("allow", *args)
+        return new_decision("deny", *args, reason="resource_not_found")
 
     async def list_resources(
         self,
@@ -142,23 +140,21 @@ class AllowAll:
         trace_id: str,
     ) -> Decision:
         args = (self.decided_by, subject, action, None, actor, trace_id)
-        try:
-            # One tenant per deployment (Q7), so every row is the tenant's.
-            rows = await self._fetch(
-                "SELECT resource_id FROM authz.resource WHERE resource_id > %s"
-                " ORDER BY resource_id LIMIT %s",
-                (cursor or "", PAGE_SIZE + 1),
-            )
-        except Exception as error:
-            log.warning("authz lookup failed: %s", type(error).__name__)
-            return decision("unavailable", *args)
+        # One tenant per deployment (Q7), so every row is the tenant's.
+        rows = await self._fetch(
+            "SELECT resource_id FROM authz.resource WHERE resource_id > %s"
+            " ORDER BY resource_id LIMIT %s",
+            (cursor or "", PAGE_SIZE + 1),
+        )
+        if rows is None:
+            return new_decision("unavailable", *args)
         ids = [row[0] for row in rows[:PAGE_SIZE]]
         more = len(rows) > PAGE_SIZE
-        return decision("allow", *args, resource_ids=ids, next_cursor=ids[-1] if more else None)
+        return new_decision("allow", *args, resource_ids=ids, next_cursor=ids[-1] if more else None)
 
-    async def _fetch(self, query: LiteralString, params: tuple) -> list[tuple]:
-        """The rows of `query`, or TimeoutError after TIMEOUT_S. It does not wait for the cancelled
-        query to end: psycopg waits up to 10 s for a server that stopped answering."""
+    async def _fetch(self, query: LiteralString, params: tuple) -> list[tuple] | None:
+        """The rows of `query`, or None when it fails or outlasts TIMEOUT_S. It does not wait for
+        the cancelled query to end: psycopg waits up to 10 s for a server that stopped answering."""
 
         async def fetch() -> list[tuple]:
             async with self._pool.connection() as conn:
@@ -168,6 +164,9 @@ class AllowAll:
         try:
             async with asyncio.timeout(TIMEOUT_S):
                 return await asyncio.shield(task)
+        except Exception as error:
+            log.warning("authz lookup failed: %s", type(error).__name__)
+            return None
         finally:
             if not task.done():
                 task.cancel()

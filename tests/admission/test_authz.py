@@ -11,6 +11,7 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from psycopg_pool import AsyncConnectionPool
 
 from kp_admission.authz import TIMEOUT_S, AllowAll, Ref
+from tests.admission.support import resource
 
 pytestmark = pytest.mark.docker
 
@@ -21,15 +22,6 @@ ALICE = Ref(type="user", id="alice")
 async def pool(dsn):
     async with AsyncConnectionPool(dsn, kwargs={"autocommit": True}, open=False) as pool:
         yield pool
-
-
-async def resource(conn, resource_id: str = "res_01") -> str:
-    await conn.execute(
-        "INSERT INTO authz.resource (resource_id, tenant_id, name, created_by_source)"
-        " VALUES (%s, 't1', 'rd / nlp', 'rd_papers')",
-        (resource_id,),
-    )
-    return resource_id
 
 
 @pytest.mark.parametrize("action", ["read", "place", "manage"])
