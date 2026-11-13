@@ -1,5 +1,5 @@
 # Runs ruff, pyright and the whole pytest suite on every pull request, including the tests
-# the Codex sandbox cannot run: the S3 contract against tests/s3/compose.yaml (marker `s3`)
+# that need Docker or a local socket: the S3 contract against tests/s3/compose.yaml (marker `s3`)
 # and the local-socket tests (marker `network`, which download the Temporal dev server).
 # The docling tests need the pinned weights, fetched once per manifest and verified against it.
 # pytest runs in parallel shards (scripts/test-shard): docling on the runner's CPU made one job

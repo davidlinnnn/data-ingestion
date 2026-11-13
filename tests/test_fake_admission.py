@@ -1,5 +1,4 @@
-"""HttpStatusReporter against the fake_admission receiver over a real local socket
-(outside the Codex sandbox, which blocks local ports)."""
+"""HttpStatusReporter against the fake_admission receiver over a real local socket."""
 
 import threading
 
