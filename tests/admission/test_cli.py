@@ -1,17 +1,21 @@
 """The kp-admission roles as processes, on Testcontainers PostgreSQL and Temporal (#95)."""
 
 import asyncio
+import contextlib
+import hashlib
 import json
 import os
 import signal
+import socket
 import subprocess
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
 
 from kp_admission.cli import main
-from tests.admission.support import request, revision, runs
+from tests.admission.support import request, resource, revision, runs
 
 
 def role(command: str, env: dict[str, str], **kwargs) -> subprocess.Popen:
@@ -73,3 +77,80 @@ def test_a_role_without_a_database_url_exits_2(monkeypatch, capsys):
 
     assert main(["dispatcher"]) == 2
     assert "KP_ADMISSION_DATABASE_URL" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("deployment", [None, "production", "Pilot"])
+def test_the_api_refuses_the_allow_all_provider_outside_a_pilot(monkeypatch, capsys, deployment):
+    monkeypatch.setenv("KP_ADMISSION_DATABASE_URL", "host=127.0.0.1 port=9")
+    monkeypatch.setenv("KP_AUTHZ_PROVIDER", "allow-all")
+    if deployment:
+        monkeypatch.setenv("KP_DEPLOYMENT", deployment)
+    else:
+        monkeypatch.delenv("KP_DEPLOYMENT", raising=False)
+
+    assert main(["api"]) == 2
+    assert "KP_DEPLOYMENT=pilot" in capsys.readouterr().err
+
+
+@pytest.mark.docker
+@pytest.mark.network
+async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_on_sigterm(
+    conn, dsn
+):
+    await resource(conn)
+    with socket.socket() as probe:  # a free port: fixed ports collide across parallel runs
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+    env = os.environ | {
+        "KP_ADMISSION_DATABASE_URL": dsn,
+        "KP_ADMISSION_API_PORT": str(port),
+        "KP_AUTHZ_PROVIDER": "allow-all",
+        "KP_DEPLOYMENT": "pilot",
+        "KP_AUTHZ_PEP_CREDENTIALS": json.dumps({hashlib.sha256(b"pep-1").hexdigest(): "wiki"}),
+    }
+    check = {
+        "subject": {"type": "user", "id": "alice"},
+        "action": "read",
+        "resource": {"type": "resource", "id": "res_01"},
+        "trace_id": "t",
+    }
+    api = role("api", env, stderr=subprocess.PIPE, text=True)
+    try:
+        async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{port}") as http:
+            for _ in range(100):
+                with contextlib.suppress(httpx.ConnectError):
+                    registered = await http.post(
+                        "/authz/v1/check", json=check, headers={"authorization": "Bearer pep-1"}
+                    )
+                    break
+                await asyncio.sleep(0.1)
+            unregistered = await http.post(
+                "/authz/v1/check", json=check, headers={"authorization": "Bearer pep-2"}
+            )
+    finally:
+        api.send_signal(signal.SIGTERM)
+
+    _, log = api.communicate(timeout=10)
+    assert api.returncode == -signal.SIGTERM
+    assert "Finished server process" in log  # a graceful stop, not the signal's default action
+    assert (registered.status_code, registered.json()["outcome"]) == (200, "allow")
+    assert unregistered.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "variable, value",
+    [
+        ("KP_AUTHZ_PEP_CREDENTIALS", "not json"),
+        ("KP_AUTHZ_PEP_CREDENTIALS", "[]"),
+        ("KP_AUTHZ_PEP_CREDENTIALS", '{"digest": 1}'),
+        ("KP_ADMISSION_API_PORT", "http"),
+    ],
+)
+def test_the_api_refuses_a_malformed_setting(monkeypatch, capsys, variable, value):
+    monkeypatch.setenv("KP_ADMISSION_DATABASE_URL", "host=127.0.0.1 port=9")
+    monkeypatch.setenv("KP_AUTHZ_PROVIDER", "allow-all")
+    monkeypatch.setenv("KP_DEPLOYMENT", "pilot")
+    monkeypatch.setenv(variable, value)
+
+    assert main(["api"]) == 2
+    assert variable in capsys.readouterr().err

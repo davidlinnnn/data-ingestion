@@ -109,3 +109,34 @@ CREATE TABLE idempotency_key (
     created_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, source_id, key)
 );
+
+-- Authorization records (authorization design §5.1, #113), in their own schema so that a
+-- later provider and its database role can own them.
+CREATE SCHEMA authz;
+
+CREATE TABLE authz.resource (
+    resource_id       text PRIMARY KEY,
+    tenant_id         text NOT NULL,
+    name              text NOT NULL,
+    created_by_source text NOT NULL,  -- the maintainer (§3.1)
+    created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- One row per effective write, Resource creation and deletion included. No foreign key to
+-- authz.resource: the history outlives a deleted Resource.
+CREATE TABLE authz.relation_change (
+    change_id           text PRIMARY KEY,
+    tenant_id           text NOT NULL,
+    resource_id         text NOT NULL,
+    op                  text NOT NULL
+                        CHECK (op IN ('create_resource', 'delete_resource', 'grant', 'revoke')),
+    relation            text CHECK (relation IN ('maintainer', 'reader')),
+    subject_type        text CHECK (subject_type IN ('user', 'client', 'source')),
+    subject_id          text,
+    actor_source_id     text NOT NULL,
+    actor_credential_id text NOT NULL,
+    at                  timestamptz NOT NULL DEFAULT now(),
+    -- A grant or revoke names its relation and subject; creation and deletion name neither.
+    CHECK ((op IN ('grant', 'revoke'))
+           = (relation IS NOT NULL AND subject_type IS NOT NULL AND subject_id IS NOT NULL))
+);

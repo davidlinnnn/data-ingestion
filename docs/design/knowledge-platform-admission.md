@@ -820,7 +820,8 @@ belongs to #57, staging to #31 and Temporal to #78.
 
 One image with three roles: `api` (scaled by HPA), `dispatcher` (at least two
 replicas, claiming with `SKIP LOCKED`) and CronJobs (reconciler every 5 minutes,
-batch expiry hourly, retention daily). Admission has its own CNPG database.
+batch expiry hourly, retention daily). Superseded on 2026-11-13 for the `api`
+role: a fixed number of replicas and no HPA, the company's practice (spec §13). Admission has its own CNPG database.
 Staging belongs to admission and custody to #57. The cluster topology belongs to
 #78.
 

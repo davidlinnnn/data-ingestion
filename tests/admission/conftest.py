@@ -30,8 +30,7 @@ def postgres():
         yield url
 
 
-@pytest.fixture
-async def dsn(postgres) -> str:
+async def fresh_database(postgres: str) -> str:
     name = f"test_{uuid.uuid4().hex[:12]}"
     async with await psycopg.AsyncConnection.connect(postgres, autocommit=True) as conn:
         await conn.execute(
@@ -40,6 +39,11 @@ async def dsn(postgres) -> str:
             )
         )
     return make_conninfo(postgres, dbname=name)
+
+
+@pytest.fixture
+async def dsn(postgres) -> str:
+    return await fresh_database(postgres)
 
 
 @pytest.fixture

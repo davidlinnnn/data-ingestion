@@ -43,6 +43,16 @@ async def revision(conn: AsyncConnection, source_id: str = "s1") -> tuple[str, s
     return uid, srv
 
 
+async def resource(conn: AsyncConnection, resource_id: str = "res_01") -> str:
+    """A Resource record, as the Resource Service API (#114) will create one."""
+    await conn.execute(
+        "INSERT INTO authz.resource (resource_id, tenant_id, name, created_by_source)"
+        " VALUES (%s, 't1', 'rd / nlp', 'rd_papers')",
+        (resource_id,),
+    )
+    return resource_id
+
+
 async def request(conn: AsyncConnection, uid: str, srv: str, **fields: Any) -> tuple[str, bool]:
     defaults: dict[str, Any] = {
         "tenant_id": "t1",

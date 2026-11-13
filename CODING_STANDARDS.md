@@ -51,6 +51,14 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
   Workflow code reads state it may not have set (a stage that fails before it starts) with a
   guard, and deployments alert on `temporal_workflow_task_execution_failed`.
 
+## Platform API
+
+- The `api` role runs one uvicorn worker per pod, so one thread serves every request of that
+  pod. A handler is `async def` and awaits its I/O. A blocking call (boto3, any synchronous
+  client) runs in a thread, for example with `asyncio.to_thread`; inline it stalls every
+  request of the pod, health checks included (`docs/validation/113`: 284 requests per second
+  with an awaited wait, 9.6 with the same wait blocking).
+
 ## Validation evidence
 
 - Check each acceptance criterion as a range with a lower bound (0 <= t <= limit), so a

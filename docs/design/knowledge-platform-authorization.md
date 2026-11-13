@@ -130,6 +130,10 @@ Amended on 2026-10-26 by #55: the v1 schema has no `relation contributor:
 source`, and `place` is `maintainer` alone instead of `maintainer + contributor`.
 Adding the contributor relation back later is an additive schema change.
 
+Since 2026-11-13 (#113) the normative definition is the file
+[`authz.zed`](../../src/kp_admission/authz.zed), model-1; the block above is a
+copy of it, and the file wins where they differ.
+
 ### 3.2 Actions used by enforcement points
 
 | Action | Subject | Used by |
@@ -227,6 +231,19 @@ or may not appear.
 
 A deny's decision record also carries an operator-only `reason`
 (`resource_not_found`, `no_relation`); PEPs never return it to callers (E4).
+
+Wire format, set on 2026-11-13 by #113
+([`api.py`](../../src/kp_admission/api.py)): `POST /authz/v1/check` and
+`POST /authz/v1/list_resources` with the shapes above plus a required
+`trace_id`, sent as `Content-Type: application/json`, and `Authorization:
+Bearer` with a registered PEP credential. Every decision is `200`, whatever its
+outcome, and echoes the request with `actor_verified: false`; fields that do
+not apply are left out, never null, `next_cursor` on the last page among them.
+A missing or unregistered credential is `401 UNAUTHENTICATED`, decided before
+the body is read; a body that is not the operation's JSON is `400
+INVALID_ARGUMENT`; both are AIP-193 errors. The platform API is FastAPI. Its
+OpenAPI document is served at `/openapi.json`; `/docs` and `/redoc` are not
+served, because those pages load scripts from another site.
 
 ### 4.2 Outcomes and validity
 
@@ -449,6 +466,11 @@ Initial values, not SLOs; I-A revises them after measurement.
 | `list_resources` page size | 1000 | Pilot readers see a handful of Resources; one page in practice |
 | `gam_max_staleness` | open | G5, from GAM facts |
 | GAM QPS requirement | 2 × admission item rate + search and read rate | G8; read rate from #88 and #76 |
+
+Measured on 2026-11-13 by #113 ([readings](../validation/113/README.md)): the
+allow-all provider's slowest p99, a full `list_resources` page over the authz
+API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
+500 ms.
 
 ## 9. GAM requirements list (for #86)
 
