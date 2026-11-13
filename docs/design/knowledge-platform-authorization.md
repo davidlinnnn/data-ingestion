@@ -235,13 +235,15 @@ A deny's decision record also carries an operator-only `reason`
 Wire format, set on 2026-11-13 by #113
 ([`api.py`](../../src/kp_admission/api.py)): `POST /authz/v1/check` and
 `POST /authz/v1/list_resources` with the shapes above plus a required
-`trace_id`, and `Authorization: Bearer` with a registered PEP credential. Every
-decision is `200`, whatever its outcome, and echoes the request with
-`actor_verified: false`; fields that do not apply are left out, `next_cursor`
-on the last page among them. A missing or unregistered credential is `401
-UNAUTHENTICATED` and an invalid body `400 INVALID_ARGUMENT`, as AIP-193 errors.
-The platform API is FastAPI, and its OpenAPI document is served at
-`/openapi.json`.
+`trace_id`, sent as `Content-Type: application/json`, and `Authorization:
+Bearer` with a registered PEP credential. Every decision is `200`, whatever its
+outcome, and echoes the request with `actor_verified: false`; fields that do
+not apply are left out, never null, `next_cursor` on the last page among them.
+A missing or unregistered credential is `401 UNAUTHENTICATED`, decided before
+the body is read; a body that is not the operation's JSON is `400
+INVALID_ARGUMENT`; both are AIP-193 errors. The platform API is FastAPI. Its
+OpenAPI document is served at `/openapi.json`; `/docs` and `/redoc` are not
+served, because those pages load scripts from another site.
 
 ### 4.2 Outcomes and validity
 
@@ -467,7 +469,7 @@ Initial values, not SLOs; I-A revises them after measurement.
 
 Measured on 2026-11-13 by #113 ([readings](../validation/113/README.md)): the
 allow-all provider's slowest p99, a full `list_resources` page over the authz
-API at 32 calls at once, is 23 ms on one machine, so `authz_timeout` stays
+API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 500 ms.
 
 ## 9. GAM requirements list (for #86)

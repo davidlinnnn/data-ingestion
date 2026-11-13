@@ -1,6 +1,7 @@
 """The internal authz API over HTTP (#113, authorization design Q12, §4.1)."""
 
 import hashlib
+import json
 
 import httpx
 import pytest
@@ -97,15 +98,62 @@ async def test_an_unavailable_decision_is_returned_without_resource_ids():
     assert "resource_ids" not in listed.json()
 
 
+@pytest.mark.parametrize("path", ["/authz/v1/check", "/authz/v1/unknown"])
+async def test_a_caller_without_a_credential_is_rejected_before_its_body_is_read(path):
+    async with client(token=None) as api:
+        response = await api.post(
+            path, content=b"{not json", headers={"content-type": "application/json"}
+        )
+
+    assert response.status_code == 401
+    assert response.json()["error"]["status"] == "UNAUTHENTICATED"
+
+
+@pytest.mark.parametrize(
+    "content, content_type",
+    [
+        (b"{not json", "application/json"),
+        (b'{"subject": "\xff"}', "application/json"),
+        (json.dumps(CHECK).encode(), "text/plain"),
+    ],
+    ids=["malformed-json", "not-utf-8", "not-declared-as-json"],
+)
+async def test_a_body_that_cannot_be_read_as_json_is_an_aip_193_error(content, content_type):
+    async with client() as api:
+        response = await api.post(
+            "/authz/v1/check", content=content, headers={"content-type": content_type}
+        )
+
+    error = response.json()["error"]
+    assert (response.status_code, error["code"], error["status"]) == (400, 400, "INVALID_ARGUMENT")
+    assert error["details"][0]["reason"] == "INVALID_ARGUMENT"
+
+
 async def test_the_openapi_document_describes_both_operations_with_bearer_and_their_errors():
     async with client(token=None) as api:
         document = (await api.get("/openapi.json")).json()
 
+    schemas = document["components"]["schemas"]
     for path in ("/authz/v1/check", "/authz/v1/list_resources"):
         operation = document["paths"][path]["post"]
         assert set(operation["responses"]) == {"200", "4XX"}  # 400 and 401; never a 422
-        assert operation["security"] == [{"HTTPBearer": []}]
-    # Left out when null, as in a check without an actor or any list_resources answer.
-    assert not {"actor", "resource"} & set(
-        document["components"]["schemas"]["Decision"]["required"]
-    )
+        [scheme] = operation["security"][0]
+        assert document["components"]["securitySchemes"][scheme] == {
+            "type": "http",
+            "scheme": "bearer",
+        }
+    assert schemas["ErrorBody"]["properties"]["status"]["enum"] == [
+        "INVALID_ARGUMENT",
+        "UNAUTHENTICATED",
+    ]
+    # Left out when they do not apply, never null: optional and not nullable.
+    decision = schemas["Decision"]
+    for field in ("actor", "resource", "reason", "resource_ids", "next_cursor"):
+        assert field not in decision["required"]
+        assert "null" not in json.dumps(decision["properties"][field])
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc"])
+async def test_no_page_that_loads_scripts_from_another_site_is_served(path):
+    async with client(token=None) as api:
+        assert (await api.get(path)).status_code == 404

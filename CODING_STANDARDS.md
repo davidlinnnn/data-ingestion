@@ -56,8 +56,8 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 - The `api` role runs one uvicorn worker per pod, so one thread serves every request of that
   pod. A handler is `async def` and awaits its I/O. A blocking call (boto3, any synchronous
   client) runs in a thread, for example with `asyncio.to_thread`; inline it stalls every
-  request of the pod, health checks included (measured in #113: 275 requests per second with
-  an awaited wait, 9.6 with the same wait blocking).
+  request of the pod, health checks included (`docs/validation/113`: 284 requests per second
+  with an awaited wait, 9.6 with the same wait blocking).
 
 ## Validation evidence
 

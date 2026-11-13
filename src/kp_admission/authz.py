@@ -9,6 +9,7 @@ from typing import Any, Literal, LiteralString, Protocol
 
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
+from pydantic.json_schema import SkipJsonSchema
 
 Action = Literal["read", "place", "manage"]
 Outcome = Literal["allow", "deny", "unavailable"]
@@ -30,7 +31,8 @@ class Ref(BaseModel, frozen=True):
 class Decision(BaseModel, frozen=True):
     """One decision; the provider keeps no record of it (Q2). `reason` is set on a deny only and
     is for operators, never for a PEP's caller (E4). A `list_resources` decision has no
-    `resource`, and has `resource_ids` unless it is unavailable."""
+    `resource`, and has `resource_ids` unless it is unavailable. A field that does not apply is
+    None here and absent on the wire, so the JSON schema leaves null out."""
 
     decision_id: str
     outcome: Outcome
@@ -38,14 +40,14 @@ class Decision(BaseModel, frozen=True):
     valid_until: datetime  # equal to evaluated_at: no reuse (§8)
     decided_by: str
     subject: Ref
-    actor: Ref | None = None
+    actor: Ref | SkipJsonSchema[None] = None
     actor_verified: bool = False  # identity stage P0: the actor is recorded, not evaluated
     action: Action
-    resource: Ref | None = None
+    resource: Ref | SkipJsonSchema[None] = None
     trace_id: str
-    reason: Reason | None = None
-    resource_ids: list[str] | None = None
-    next_cursor: str | None = None
+    reason: Reason | SkipJsonSchema[None] = None
+    resource_ids: list[str] | SkipJsonSchema[None] = None
+    next_cursor: str | SkipJsonSchema[None] = None
 
 
 class Authorizer(Protocol):

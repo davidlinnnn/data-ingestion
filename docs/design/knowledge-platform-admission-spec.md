@@ -583,16 +583,17 @@ ended without an error block, such as terminated or timed out (§9).
 
 ## 13. Deployment and validation
 
-- One image, three roles: `api` (a fixed number of replicas, ≥ 2), `dispatcher`
-  (≥ 2 replicas), CronJobs (reconciler every 5 minutes, batch expiry and upload cleanup
-  hourly, retention daily).
-- The `api` role is FastAPI on one uvicorn worker per replica, with no HPA: the
-  company sizes a fixed pod count for the peak. The intake quota (§11) bounds that
-  peak and the outbox holds what waits, so the count follows availability; one
-  replica measured about 4,400 authorization checks per second
-  ([#113 readings](../validation/113/README.md)). When a capacity run finds a
-  replica near one full core at peak, add uvicorn workers before replicas, because
-  every pod also carries a mesh sidecar; #78 sets the numbers.
+- One image, three roles: `api` (2 fixed replicas), `dispatcher` (≥ 2 replicas),
+  CronJobs (reconciler every 5 minutes, batch expiry and upload cleanup hourly,
+  retention daily).
+- The `api` role is FastAPI on one uvicorn worker per replica, with no HPA and no
+  worker-count setting: the company sizes a fixed pod count for the peak. This
+  role's peak is the sum of its Sources' intake quotas (§11), estimated at a few
+  requests per second for the PROD burst (#88; *unmeasured*). One replica is
+  expected to carry it and the second is for availability. When a capacity run
+  finds a replica near one full core at peak, add uvicorn workers before replicas,
+  because every pod also carries a mesh sidecar. #78 revises these numbers from
+  the capacity runs.
 - Its own PostgreSQL database, deployed without an operator: one instance on a
   persistent volume, continuous write-ahead-log archiving and a scheduled base
   backup to object storage (§9). Custody belongs to #57; topology and

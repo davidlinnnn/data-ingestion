@@ -5,13 +5,17 @@ open only to registered PEP service identities."""
 import hashlib
 import logging
 from collections.abc import Mapping
-from typing import Annotated, Literal
+from typing import Literal
 
 from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import JSONResponse, Response
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field
+from starlette.datastructures import Headers
+from starlette.exceptions import HTTPException
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from kp_admission.authz import Action, Authorizer, Decision, Ref
 
@@ -46,49 +50,60 @@ class ListRequest(BaseModel):
     trace_id: str = Field(min_length=1)
 
 
+ErrorReason = Literal["INVALID_ARGUMENT", "UNAUTHENTICATED"]
+
+
 class ErrorInfo(BaseModel):
     type: str = Field(default="type.googleapis.com/google.rpc.ErrorInfo", alias="@type")
-    reason: str
+    reason: ErrorReason
     domain: str = "authz.knowledge-platform"
 
 
-class Status(BaseModel):
+class ErrorBody(BaseModel):
     code: int
-    status: str
+    status: ErrorReason
     message: str
     details: list[ErrorInfo]
 
 
-class Error(BaseModel):
+class ErrorResponse(BaseModel):
     """An AIP-193 error, as admission's (admission spec §4)."""
 
-    error: Status
+    error: ErrorBody
 
 
-class Rejected(Exception):
-    def __init__(self, code: int, status: str, message: str) -> None:
-        self.code, self.status, self.message = code, status, message
+class PepOnly:
+    """Answers 401 to a call under /authz/ that carries no registered PEP credential, before
+    anything reads its body."""
+
+    def __init__(self, app: ASGIApp, peps: Mapping[str, str]) -> None:
+        self._app, self._peps = app, peps
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http" and scope["path"].startswith("/authz/"):
+            scheme, _, token = Headers(scope=scope).get("authorization", "").partition(" ")
+            if scheme.lower() != "bearer" or _digest(token) not in self._peps:
+                peer = scope["client"][0] if scope.get("client") else None
+                log.warning("authz API call without a registered PEP credential from %s", peer)
+                rejected = _error(
+                    401, "UNAUTHENTICATED", "A registered PEP credential is required."
+                )
+                await rejected(scope, receive, send)
+                return
+        await self._app(scope, receive, send)
 
 
 def app(authorizer: Authorizer, peps: Mapping[str, str]) -> FastAPI:
     """`peps` maps the SHA-256 hex digest of each registered PEP credential to the PEP's service
-    identity. A call without a registered credential gets 401, an invalid body 400, and every
-    decision 200 whatever its outcome, without the fields that do not apply."""
-
-    async def registered_pep(
-        request: Request,
-        credentials: Annotated[
-            HTTPAuthorizationCredentials | None, Depends(HTTPBearer(auto_error=False))
-        ],
-    ) -> None:
-        if credentials is None or _digest(credentials.credentials) not in peps:
-            peer = request.client.host if request.client else None
-            log.warning("authz API call without a registered PEP credential from %s", peer)
-            raise Rejected(401, "UNAUTHENTICATED", "A registered PEP credential is required.")
-
-    errors = {"model": Error, "description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
+    identity. A call under /authz/ without a registered credential gets 401 whatever else it
+    carries; a body that is not the JSON the operation takes, sent as application/json, gets 400;
+    every decision is 200 whatever its outcome, without the fields that do not apply."""
+    errors = {"model": ErrorResponse, "description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
+    # HTTPBearer only names the scheme in the OpenAPI document; PepOnly enforces it.
     authz = APIRouter(
-        prefix="/authz/v1", dependencies=[Depends(registered_pep)], responses={"4XX": errors}
+        prefix="/authz/v1",
+        dependencies=[Depends(HTTPBearer(auto_error=False))],
+        responses={"4XX": errors},
     )
 
     @authz.post("/check", response_model_exclude_none=True)
@@ -103,18 +118,22 @@ def app(authorizer: Authorizer, peps: Mapping[str, str]) -> FastAPI:
             body.subject, body.action, actor=body.actor, cursor=body.cursor, trace_id=body.trace_id
         )
 
-    api = FastAPI(title="Knowledge Platform API", version="1")
+    # No /docs or /redoc: those pages load their scripts from another site.
+    api = FastAPI(title="Knowledge Platform API", version="1", docs_url=None, redoc_url=None)
     api.include_router(authz)
-
-    @api.exception_handler(Rejected)
-    async def rejected(request: Request, error: Rejected) -> JSONResponse:
-        return _error(error.code, error.status, error.message)
+    api.add_middleware(PepOnly, peps=peps)
 
     @api.exception_handler(RequestValidationError)
     async def invalid(request: Request, error: RequestValidationError) -> JSONResponse:
         first = error.errors()[0]
         where = ".".join(map(str, first["loc"]))
         return _error(400, "INVALID_ARGUMENT", f"{where}: {first['msg']}")
+
+    @api.exception_handler(HTTPException)
+    async def unreadable(request: Request, error: HTTPException) -> Response:
+        if error.status_code == 400:  # FastAPI could not decode the body
+            return _error(400, "INVALID_ARGUMENT", str(error.detail))
+        return await http_exception_handler(request, error)
 
     return api
 
@@ -123,7 +142,9 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _error(code: int, status: str, message: str) -> JSONResponse:
+def _error(code: int, status: ErrorReason, message: str) -> JSONResponse:
     details = [ErrorInfo(reason=status)]
-    body = Error(error=Status(code=code, status=status, message=message, details=details))
+    body = ErrorResponse(
+        error=ErrorBody(code=code, status=status, message=message, details=details)
+    )
     return JSONResponse(body.model_dump(by_alias=True), status_code=code)
