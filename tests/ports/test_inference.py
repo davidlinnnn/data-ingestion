@@ -399,7 +399,7 @@ async def test_a_hung_call_is_cut_at_the_deadline_and_closed(variant):
     assert asyncio.all_tasks() == tasks_before
 
 
-# --- V7 on real sockets (outside the Codex sandbox) ---------------------------------------
+# --- V7 on real sockets -------------------------------------------------------------------
 
 
 class Servers:

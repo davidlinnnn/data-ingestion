@@ -1,7 +1,6 @@
 """The paper-pdf workflow on a real Temporal dev server (#131), with an in-process worker and the
 in-process store and reporter fakes. Uses the local `temporal` CLI when installed, otherwise
-the SDK downloads the dev server; either way it binds a local port (outside the Codex
-sandbox)."""
+the SDK downloads the dev server; either way it binds a local port."""
 
 import asyncio
 import contextlib

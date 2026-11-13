@@ -24,8 +24,8 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 - A service's own PostgreSQL database and Temporal itself have no fake: what they guarantee
   (constraints, row locks, workflow ID rules) is the behaviour under test, so tests run them
   for real (Testcontainers, the Temporal dev server).
-- Mark tests that need Docker or a local socket (`s3`, `network`), so the Codex
-  sandbox can deselect them.
+- Mark tests that need Docker or a local socket (`s3`, `network`), so a run that
+  has neither can deselect them.
 
 ## Comments and contracts
 

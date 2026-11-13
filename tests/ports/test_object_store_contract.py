@@ -1,5 +1,5 @@
 """One contract, two implementations. The S3 run needs the stand-in from tests/s3/compose.yaml
-and KP_S3_* set (see that file); it is skipped otherwise, e.g. inside the Codex sandbox."""
+and KP_S3_* set (see that file); it is skipped otherwise."""
 
 import asyncio
 import os

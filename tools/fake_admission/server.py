@@ -1,6 +1,6 @@
-"""Stand-in for the admission status-report receiver (#97 not built yet), for runs outside
-the Codex sandbox. Kept in the repo as a reference for #97. The HTTP wrapping is the
-provisional one HttpStatusReporter sends:
+"""Stand-in for the admission status-report receiver (#97 not built yet), for local runs.
+Kept in the repo as a reference for #97. The HTTP wrapping is the provisional one
+HttpStatusReporter sends:
 
     POST /v1/requests/{request_id}/status-reports   store a report
     GET  /v1/requests/{request_id}/status-reports   every stored report, in arrival order
