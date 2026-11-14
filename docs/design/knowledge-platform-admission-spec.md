@@ -353,7 +353,9 @@ requests they create are committed with their outbox rows before `201`.
 1. Document deleted since declaration → `DOCUMENT_DELETED`; created since
    declaration by another batch, so that its `document_uid` is not the declared
    one → `STALE_DECLARATION` (declare again).
-2. Placement re-check → `RESOURCE_NOT_FOUND`.
+2. Placement re-check → `RESOURCE_NOT_FOUND`. An unavailable decision service
+   fails the whole request with `503 AUTHZ_UNAVAILABLE`, as at declaration
+   (§6.1 rule 5; authorization design §4.3).
 3. Every file in `uploads` is in place: its object exists in storage, asked
    before the transaction (§5.2 verified size, digest and media type before the
    object appeared) → `FILES_MISSING`.
@@ -461,6 +463,14 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 | `applied` | Agents can no longer find, read or cite the document's own content; readiness `deleted` | Serving-time block keyed by `document_uid` (#56, #76), recorded by #31 | 1 minute, *unmeasured* |
 | `enforced` | Every required projection has removed the document and adjusted products derived from it (for example LLM-wiki pages) | Projection owners via #55; judged by #31 from their reports and serving facts | 10 minutes, *unmeasured* |
 
+- Superseded on 2026-11-15 by [ADR-0014](../adr/0014-removal-by-projection-cleanup.md):
+  there is no serving-time block in v1. `applied` means that admission has
+  recorded the deletion: the status shows `deleted`, the catalog fields are
+  cleared and the event is in the Change Feed. Content stops being served when
+  the projections have removed it, which is `enforced`; until then agents may
+  still find it. This replaces "Agents can no longer find, read or cite the
+  document's own content" and "Serving-time block keyed by `document_uid`" in
+  the `applied` row above. The same holds for a withdrawal and a rebind.
 - The deletion reaches projections through the #55 handoff channel, carrying
   `document_uid`; each projection reports when it has finished.
   Superseded on 2026-10-26 by
@@ -577,7 +587,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Request | `404` 30 days after its terminal outcome; active requests never expire |
 | Batch | `404` 30 days after all items are terminal, or after expiry |
 | Deleted document | `404` 30 days after deletion is applied |
-| Deletion targets | `applied` within 1 minute, `enforced` within 10 minutes (*unmeasured*); custody purge after 30 days |
+| Deletion targets | `applied` within 1 minute, `enforced` within 10 minutes (*unmeasured*); custody purge after 30 days. Since 2026-11-15 (ADR-0014) content stops being served at `enforced`, not at `applied` |
 
 ## 12. Error reasons
 

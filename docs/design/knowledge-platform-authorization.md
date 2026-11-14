@@ -3,6 +3,9 @@
 **Status:** design result of [#85](https://github.com/davidlinnnn/data-ingestion/issues/85), closed 2026-10-26. The text is not revised for later
 decisions unless a dated note in it says so; those decisions are on the
 [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+From 2026-11-14 the current contract of the authz API is the
+[authorization guide](knowledge-platform-authorization-guide.md) (zh-TW); this
+document keeps the decisions and their reasons.
 
 The design result of
 [Define the authorization decision interface, model and built-in provider for the pilot](https://github.com/davidlinnnn/data-ingestion/issues/85),
@@ -75,8 +78,9 @@ its own space keys (path 1), and will not adopt a platform id.
   result, the binding, an index's copy) the identifier carries both. The
   platform does not parse the key. The encoding is #114's.
 - **Registration.** The Source registers each key once, by a call it may
-  repeat: registering a key it already registered changes nothing and returns
-  the same Resource, so the Source keeps no record of what it has registered. A
+  repeat: registering a key it already registered returns the same Resource and
+  creates no change record (a different `name` replaces the display name), so
+  the Source keeps no record of what it has registered. A
   declaration that names an unregistered key is still refused
   (`RESOURCE_NOT_FOUND`).
 - **`place` and `manage`.** Under the GAM adapter the maintainer is the
@@ -157,13 +161,37 @@ changes.
   Source may place into, rebind into or delete another Source's Resource no
   longer arises there. That every authenticated user reads every Document of
   the tenant still holds for the pilot.
+- **A Source's own decision endpoint: a direction, not adopted.** On
+  2026-11-14 the user raised a narrower form of the mode Q8 did not open: a
+  Source hosts an endpoint with the same interface as GAM, and the platform
+  points its GAM adapter at it. Q8 stands. The guide (§2.4) lists the idea as
+  its option (2) with the conditions for adopting it: only the read calls the
+  adapter makes, the conformance suite passed, answers only for the Source's
+  own Resources, an answer to Q8's three objections (derived-product audiences,
+  explaining a decision, a bound on revocation), and one provider per
+  deployment until `list_resources` across providers is designed. The guide
+  numbers the options differently from Q8: its (2) is Q8's mode (3), and its
+  (3) is the built-in provider, Q8's mode (2).
 - Not changed: the two operations, the request shapes apart from `trace_id`,
   the Decision's other fields and the allow-all provider's decisions.
 - The affected places below are marked. Deployment requirements go to #78, the
   PEP rule to #127, the GAM questions to #86 (G4, G5, G14, G15), and rebind moves
   from #114 to [#205](https://github.com/davidlinnnn/data-ingestion/issues/205).
-- A guide for PEP implementers and operators, with system and sequence diagrams
-  and the API as one current text, follows in a separate change.
+- The [authorization guide](knowledge-platform-authorization-guide.md) (zh-TW)
+  states the API as one current text, with system and sequence diagrams for
+  ingestion, Retrieval and LLM-Wiki and the guide for PEP implementers and
+  operators. It is the authz API's contract from this date; where §4 below
+  differs from it, the guide wins.
+
+Amended on 2026-11-15 (user ruling; [ADR-0014](../adr/0014-removal-by-projection-cleanup.md)).
+After a Source Deletion, a withdrawal or a rebind, content stops being served
+when the projections have cleaned up, within a cleanup time limit; v1 has no
+serving-time block. E2's disclosure stop becomes that cleanup, and its rule
+that an index's copy of a Resource is never authority for a read decision is
+withdrawn: a read PEP filters and checks on the Resource its own store records
+for a Document, which the Change Feed keeps current. The evaluation order of
+§3.2 no longer resolves the binding from the platform at query time. #56 keeps
+the time limit and no longer designs a block. E2, §3.2 and §11 are marked.
 
 ## 1. Scope and owners
 
@@ -190,7 +218,7 @@ changes.
 | Q5 | Flat Resources in v1: no hierarchy, no intersection, one Resource per Document. #31's `resources[1..N]` stays limited to one; no combination rule (union or intersection) exists, and relaxing the limit needs a new decision. Hierarchy is an additive later change; its intended semantics are recorded in §3.3 but not adopted. |
 | Q6 | Wiki and Retrieval products are not object types. A product inherits its Resource's readers (ADR-0007); `read` on a Resource covers all its published products. Projections may narrow, never widen. |
 | Q7 | Tenant takes no part in decisions. Tenant is bound one-to-one to a deployment, so each deployment has one authorization store. The cross-tenant check stays the PEP's structural check before any decision (admission Q3.1 step 1). Isolation for a shared multi-tenant deployment is decided with #78 when one is chosen. |
-| Q8 | Two provider modes behind one interface and one model: (1) a GAM adapter for production (#86) and (2) the built-in provider for the pilot. Mode (3), where the platform defers decisions to a Source's own PDP, is **not opened**, neither as a live callback nor as a named synchronisation mode. A Source system that calls the Resource Service API programmatically is ordinary mode (2) use. A missing relation is always `deny`. Revisits the 2026-10-19 path-3 deferral with the research evidence: none of the surveyed search or RAG products documents a customer PDP callback for search filtering, and a black-box decision leaves the platform accountable for disclosure without the means to compute derived-product audiences, explain decisions or bound revocation. A live callback would be reconsidered only for a real case, limited to single-object reads of that Source's own documents that feed no derived product, with the external allow necessary but not sufficient. This refines #56's reconsideration conditions (handed to #56). |
+| Q8 | Two provider modes behind one interface and one model: (1) a GAM adapter for production (#86) and (2) the built-in provider for the pilot. Mode (3), where the platform defers decisions to a Source's own PDP, is **not opened**, neither as a live callback nor as a named synchronisation mode. A Source system that calls the Resource Service API programmatically is ordinary mode (2) use. A missing relation is always `deny`. Revisits the 2026-10-19 path-3 deferral with the research evidence: none of the surveyed search or RAG products documents a customer PDP callback for search filtering, and a black-box decision leaves the platform accountable for disclosure without the means to compute derived-product audiences, explain decisions or bound revocation. A live callback would be reconsidered only for a real case, limited to single-object reads of that Source's own documents that feed no derived product, with the external allow necessary but not sufficient. This refines #56's reconsideration conditions (handed to #56). Noted on 2026-11-14: a narrower form, an endpoint with GAM's interface behind the GAM adapter, is recorded as a direction in the API review amendment; this decision stands. |
 | Q9 | The pilot provider is a **PostgreSQL relation table** in a separate schema of the admission database. Deciding facts: the v1 model is one flat table with three relations and no hierarchy or groups, so a check is one indexed lookup; keeping relations in the admission database gives commit-time consistency with the binding and no new service, whereas SpiceDB needs its own deployment, PostgreSQL 15 or newer, commit-timestamp tracking for Watch and ZedToken handling for freshness (§5.3). The model's normative form is a SpiceDB schema file (§3.1); a provider-agnostic conformance suite verifies every provider. An allow-all mock is never selectable in pilot or production configuration; test fakes exist only in tests. After the MVP the built-in provider moves to SpiceDB (user decision, follow-up F-1). **Superseded for the pilot on 2026-11-13 by #113:** the pilot uses an allow-all provider, selectable only in pilot configuration, and no relation-table provider is built (note at the top). |
 | Q10 | Two operations: `check(subject, actor?, action, resource)` and `list_resources(subject, actor?, action, cursor?)`. `list_resources` is paginated from the first version, because adding pagination later would silently truncate existing callers. No batch check and no list-subjects in v1; both are additive later. |
 | Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. **Restated on 2026-11-14** for a GAM provider: bounded staleness, not every committed relation; see the API review amendment at the top. |
@@ -204,7 +232,7 @@ changes.
 | Q19 | Validation owners as in §10. |
 | Q20 | Outputs: this document, ADR-0008, `CONTEXT.md` terms (Resource Maintainer, Resource Contributor, Resource Reader, Eviction, Authorization Decision) and the handoffs in §11. |
 | E1 | (review F1) Delegation rule: a delegated request is allowed only when `check(user, action, resource)` is `allow` **and** the actor is a client registered as a delegate in platform configuration. The client's own `reader` relations play no part in a delegated request; they apply only when the client reads under its own identity. §12 records a direction, not adopted, that narrows the registration to a scope per Resource. |
-| E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. Eviction is deferred in v1 by #55 (2026-10-26); the disclosure stop for a rebind stays. |
+| E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. Eviction is deferred in v1 by #55 (2026-10-26); the disclosure stop for a rebind stays. Superseded on 2026-11-15 (ADR-0014): no serving-time block in v1; disclosure stops when the projections have cleaned up, within the cleanup time limit, and a PEP uses the Resource its own store records. |
 | E3 | (review F3) Spec §6.1 amendment for a Document without a binding (§6.3). Eviction does not stop the Document's Source from placing it again while it still holds `place`; durable removal is: revoke the contributor, then evict. Deferred in v1 by #55 (2026-10-26) together with eviction and contributors. |
 | E4 | (review F4) A deny's operator-only `reason` is `resource_not_found` or `no_relation`. Admission derives its other internal reasons: other tenant from its structural check, revoked from a placement that passed at declaration and failed at finalization. A GAM adapter derives `resource_not_found` from the platform's own `resource` records. |
 | E5 | (review F8) I-A does not run the conformance suite against SpiceDB; F-1 does. |
@@ -259,6 +287,12 @@ withdrawn Document → no disclosure, without asking the PDP; otherwise
 enterprise restrictions are applied by the PEP in addition to the decision
 (#53 Q12, #56); an `allow` never overrides them. A delegated request follows
 the E1 rule.
+
+Changed on 2026-11-15 (ADR-0014): the PEP takes the Document's Resource from
+its own store, which it keeps current from the Change Feed, and does not ask
+the platform at query time. A Document its store no longer holds is not
+disclosed; one whose removal has not reached the store yet still is, for at
+most the cleanup time limit.
 
 ### 3.3 Worked `{workspace, team}` example
 
@@ -620,6 +654,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | G13 | (2026-11-14) The platform can define an object type and relations of its own in GAM | Where an application scope (§12) would be stored; not needed until §12 is adopted | — |
 | G14 | (2026-11-14) The object type GAM uses for a tSSO user, and that the account id from the tSSO token is the object id unchanged | A user id that is not a valid object id makes every check an engine error | SpiceDB object id pattern, at most 1024 bytes |
 | G15 | (2026-11-14) Whether any Source's schema in GAM uses caveats on the read permission | A conditional result is `deny` and is left out of lists; a Source relying on caveats would lose reads | — |
+| G16 | (2026-11-15) What GAM does when a Source deletes an object and later creates one with the same id: whether relations or cached results of the old object can apply to the new one | A reused key exposes the Documents still bound to it (ADR-0013); the Source's obligation not to reuse a key rests on this | — |
 
 ## 10. Validation owners
 
@@ -631,7 +666,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | Admission `503 AUTHZ_UNAVAILABLE` and the two placement checks | #99 |
 | Search filtering on `list_resources` | #76 with #55 |
 | End-to-end time from a revocation or rebind commit (eviction deferred in v1) to no disclosure, including products | #56 (with #55 for products) |
-| GAM G1–G15 | #86 |
+| GAM G1–G16 | #86 |
 | SpiceDB provider parity | F-1 |
 
 ## 11. Handoffs
@@ -639,11 +674,11 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | To | What |
 |---|---|
 | #31 / #96 | The spec §3 and §6.1 amendment of §6.3 (E3; deferred in v1 with eviction, #55), the Resource API endpoints of §6, the operator-only deny `reason` and the derivation of the other internal reasons (E4); #96 is blocked by I-A |
-| #56 | Decision reuse maximum; delegation proof and the E1 rule; retention and disclosure of decisions, operator-only reasons and change records; the E2 disclosure stop after rebind (and eviction, deferred in v1 by #55) with its 1-minute and 10-minute initial targets; the maintainer document listing as a disclosure exception (§6.3; deferred in v1); the PEP evaluation order (§3.2); no per-Document reader exceptions in v1, so ADR-0007's precondition holds; the Q8 refinement of the path-3 reconsideration conditions |
+| #56 | Decision reuse maximum; delegation proof and the E1 rule; retention and disclosure of decisions, operator-only reasons and change records; the E2 disclosure stop after rebind (and eviction, deferred in v1 by #55) with its 1-minute and 10-minute initial targets; the maintainer document listing as a disclosure exception (§6.3; deferred in v1); the PEP evaluation order (§3.2); no per-Document reader exceptions in v1, so ADR-0007's precondition holds; the Q8 refinement of the path-3 reconsideration conditions. Since 2026-11-15 (ADR-0014): the cleanup time limit in place of the 1-minute block |
 | #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2). In v1 only rebind applies; #55 deferred eviction |
 | #76 | `list_resources` for search, client registration and the E1 delegation rule, the `actor` field; search must not treat its index copy of `resource_id` as authority (E2) |
 | #78 | authz API placement in the platform API deployment, authz schema in the admission database, serving read availability bounded by the platform API deployment and admission database (§4.3), credential configuration and the default-Resource onboarding order (§6.1), F-1 operational facts (§5.3) |
-| #86 | G1–G15, the conformance suite, tuple format |
+| #86 | G1–G16, the conformance suite, tuple format |
 | #114 | (2026-11-14) Registration of the Source's own key in place of *Create*, and the Resource record's key (ADR-0013) |
 | #204 | (2026-11-14) The code of the API review amendment: `503` for `unavailable`, the `list_resources` response, the shared `trace_id` handling, a health route, decision metrics and log fields, a test fake that pages |
 | #205 | (2026-11-14) Rebind (§6.3), split out of #114; blocked by #126 and #114 |

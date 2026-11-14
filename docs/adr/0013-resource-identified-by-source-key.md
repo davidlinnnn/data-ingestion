@@ -32,5 +32,13 @@ the [authorization design](../design/knowledge-platform-authorization.md).
 - The platform does not learn of a space from GAM. A key it has no record of is
   refused at declaration, so registration stays an explicit call, repeatable so
   that the Source keeps no record of what it has registered.
+- A key must keep one audience for as long as Documents are bound to it. The
+  platform binds a Document to the key and asks GAM about that key at read time,
+  so a Source that deletes a space and reuses its key for a wider audience
+  exposes the Documents still bound to it. Before it retires or reuses a key,
+  the Source deletes or rebinds those Documents and deletes the Resource. Added
+  on 2026-11-14 from the review of the authorization guide; what GAM does with a
+  reused object id is for
+  [#86](https://github.com/davidlinnnn/data-ingestion/issues/86) to verify.
 - Each Source's configuration names its GAM object type and the permission that
   means read.
