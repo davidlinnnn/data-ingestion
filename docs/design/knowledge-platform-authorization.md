@@ -3,6 +3,9 @@
 **Status:** design result of [#85](https://github.com/davidlinnnn/data-ingestion/issues/85), closed 2026-10-26. The text is not revised for later
 decisions unless a dated note in it says so; those decisions are on the
 [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+From 2026-11-14 the current contract of the authz API is the
+[authorization guide](knowledge-platform-authorization-guide.md) (zh-TW); this
+document keeps the decisions and their reasons.
 
 The design result of
 [Define the authorization decision interface, model and built-in provider for the pilot](https://github.com/davidlinnnn/data-ingestion/issues/85),
@@ -162,8 +165,11 @@ changes.
 - The affected places below are marked. Deployment requirements go to #78, the
   PEP rule to #127, the GAM questions to #86 (G4, G5, G14, G15), and rebind moves
   from #114 to [#205](https://github.com/davidlinnnn/data-ingestion/issues/205).
-- A guide for PEP implementers and operators, with system and sequence diagrams
-  and the API as one current text, follows in a separate change.
+- The [authorization guide](knowledge-platform-authorization-guide.md) (zh-TW)
+  states the API as one current text, with system and sequence diagrams for
+  ingestion, Retrieval and LLM-Wiki and the guide for PEP implementers and
+  operators. It is the authz API's contract from this date; where §4 below
+  differs from it, the guide wins.
 
 ## 1. Scope and owners
 

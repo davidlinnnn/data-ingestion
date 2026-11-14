@@ -22,6 +22,7 @@ four kinds, and says which in a status line at its top:
 | [File upload](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #184 | Why uploads go through the platform API, architecture and sequence diagrams, failure table, guide for Source developers |
 | [Admission design notes](knowledge-platform-admission.md) | Design record | #31 | Rounds 1–5 and their reasons |
 | [Authorization](knowledge-platform-authorization.md) | Design result | #85 | Decision interface, model and pilot provider |
+| [Authorization guide](knowledge-platform-authorization-guide.md) (zh-TW) | Contract | #204, #114, #127 | The authz API contract; system diagram with the provider options; sequence diagrams for ingestion, Retrieval and LLM-Wiki; guide for PEP implementers and operators |
 | [Canonical consumption](knowledge-platform-canonical-consumption.md) | Design result | #55 | Canonical consumption and publication for Wiki and Retrieval |
 | [Data security](knowledge-platform-data-security.md) (zh-TW) | Design result | #87 | Data-security governance principles and the Agent Platform boundary |
 | [Processing workflow v2](knowledge-platform-processing-workflow-v2.md) | Design result | #91 | Stage graph, durability and retry units, failure semantics, Processing Result |
@@ -161,6 +162,14 @@ records the #85 decisions (Q1–Q20): Resource-level relations with the document
 binding held by the platform, the `check` and `list_resources` interface, the
 pilot PostgreSQL provider with a post-MVP move to SpiceDB, the pilot Resource
 Service API, credential issuance and the GAM requirements list for #86.
+
+[Authorization guide](knowledge-platform-authorization-guide.md) is the current
+contract of the authz API from 2026-11-14 and the account of how authorization
+is used: who calls what, the provider options (the allow-all pilot, company
+GAM, an application's GAM-compatible endpoint, the platform's built-in
+provider), what a Source and a PEP each do when documents are submitted, a
+question is answered and a Wiki page is read, and what operators watch. The
+design result above keeps the decisions and their reasons.
 
 [Canonical consumption and publication](knowledge-platform-canonical-consumption.md)
 records the #55 decisions (A–E, G1–G9, J1, K1–K2): the Change Feed, the inclusion
