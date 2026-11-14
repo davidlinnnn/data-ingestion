@@ -60,6 +60,42 @@ the pilot does no access control, which reverses Q9 for the pilot.
 - The interface (§4), the authz API (Q12, §4.3) and the normative schema
   (§3.1) do not change, so no PEP changes when the real provider arrives.
 
+Amended on 2026-11-14 (user rulings after
+[#113](https://github.com/davidlinnnn/data-ingestion/issues/113);
+[ADR-0013](../adr/0013-resource-identified-by-source-key.md)): a Resource is
+identified by its Source's own key, which reverses Q13's platform-generated id
+and G12. The deciding fact (user, 2026-11-14): the first knowledge-management
+Source already keeps "this user reads this space" in GAM, on objects named by
+its own space keys (path 1), and will not adopt a platform id.
+
+- **Identity.** The Source supplies the key. Within a tenant a Resource is
+  identified by its Source and that key. In its own calls a Source writes the
+  key alone, since its credential gives the Source; wherever a Resource is named
+  without a Source credential (the decision interface, a `list_resources`
+  result, the binding, an index's copy) the identifier carries both. The
+  platform does not parse the key. The encoding is #114's.
+- **Registration.** The Source registers each key once, by a call it may
+  repeat: registering a key it already registered changes nothing and returns
+  the same Resource, so the Source keeps no record of what it has registered. A
+  declaration that names an unregistered key is still refused
+  (`RESOURCE_NOT_FOUND`).
+- **`place` and `manage`.** Under the GAM adapter the maintainer is the
+  platform's own Resource record, the Source that registered the key; GAM holds
+  no relation for a Source. Admission's two placement checks therefore ask GAM
+  nothing.
+- **`read`.** Under the GAM adapter a read decision asks GAM about the Source's
+  existing object. Each Source's configuration names its GAM object type and the
+  permission that means read; #86 verifies both. The Source writes reader
+  relations in GAM itself, so the reader endpoints (§6.2) do not apply to it.
+- Not changed: the interface (§4), the authz API and its wire format, the
+  Decision, the normative schema (§3.1), the allow-all pilot provider and the
+  code #113 delivered, all of which treat a Resource identifier as an opaque
+  string.
+- The affected places below are marked. #114 builds the registration endpoint
+  and the Resource record's key; #86 verifies the GAM facts (G12, G13).
+- §12 records a direction that is not adopted: limiting each agent application
+  to some of a Source's Resources.
+
 ## 1. Scope and owners
 
 | Topic | Owner |
@@ -90,7 +126,7 @@ the pilot does no access control, which reverses Q9 for the pilot.
 | Q10 | Two operations: `check(subject, actor?, action, resource)` and `list_resources(subject, actor?, action, cursor?)`. `list_resources` is paginated from the first version, because adding pagination later would silently truncate existing callers. No batch check and no list-subjects in v1; both are additive later. |
 | Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. |
 | Q12 | The PDP is exposed as an internal **authz API** in the platform API deployment, backed by the admission database. Admission calls it in-process; projection PEPs call it over the network (#55 Q1: projections never connect to the platform database). Only registered PEP service identities may call it. A failed or timed-out query yields `unavailable`. |
-| Q13 | Resource lifecycle API: create, list, get, delete (§6.1). `resource_id` is platform-generated and opaque; `name` is display text. The default Resource stays a Source registration field (spec §2). API only with curl examples; no CLI before #79. |
+| Q13 | Resource lifecycle API: create, list, get, delete (§6.1). `resource_id` is platform-generated and opaque; `name` is display text. The default Resource stays a Source registration field (spec §2). API only with curl examples; no CLI before #79. **Superseded on 2026-11-14** (ADR-0013): the Source supplies the key, and creation is a registration the Source may repeat; see the amendment at the top. |
 | Q14 | Relation management: readers and contributors only; the maintainer is fixed in v1 and a transfer is an operator procedure. Subject IDs are opaque and not checked against any directory. Writes are idempotent, effective on commit, and return a change record. Superseded on 2026-10-26 by #55: readers only in v1; contributors are deferred. |
 | Q15 | A maintainer may list the catalog fields of the Documents in its Resource and **evict** a Document. An evicted Document belongs to no Resource and gets no processing request; disclosure stops on the E2 path; its Source binds it again by rebind or by its next submission (E3). Rebind requires the Document's Source to hold `place` on both the current and the new Resource, as #31 decided. Superseded on 2026-10-26 by #55: the listing and eviction are deferred; rebind stays, and in v1 `place` on both means the Source created both. |
 | Q16 | Service-account credentials are registered by the platform operator in deployment configuration and delivered out of band. Each belongs to one Source; decisions use `source:<id>` as subject and records also keep the credential ID. A Source may hold several credentials for overlapping rotation; removal from configuration revokes. Agent clients register the same way as `client:<id>`. No mandatory expiry in the pilot. |
@@ -98,7 +134,7 @@ the pilot does no access control, which reverses Q9 for the pilot.
 | Q18 | Implementation tickets I-A (#113: provider, authz API, conformance suite) and I-B (#114: Resource Service API, blocked by I-A); follow-up F-1 (#115: post-MVP SpiceDB migration, outside the map). #96 is re-blocked from this ticket to I-A. |
 | Q19 | Validation owners as in §10. |
 | Q20 | Outputs: this document, ADR-0008, `CONTEXT.md` terms (Resource Maintainer, Resource Contributor, Resource Reader, Eviction, Authorization Decision) and the handoffs in §11. |
-| E1 | (review F1) Delegation rule: a delegated request is allowed only when `check(user, action, resource)` is `allow` **and** the actor is a client registered as a delegate in platform configuration. The client's own `reader` relations play no part in a delegated request; they apply only when the client reads under its own identity. |
+| E1 | (review F1) Delegation rule: a delegated request is allowed only when `check(user, action, resource)` is `allow` **and** the actor is a client registered as a delegate in platform configuration. The client's own `reader` relations play no part in a delegated request; they apply only when the client reads under its own identity. §12 records a direction, not adopted, that narrows the registration to a scope per Resource. |
 | E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. Eviction is deferred in v1 by #55 (2026-10-26); the disclosure stop for a rebind stays. |
 | E3 | (review F3) Spec §6.1 amendment for a Document without a binding (§6.3). Eviction does not stop the Document's Source from placing it again while it still holds `place`; durable removal is: revoke the contributor, then evict. Deferred in v1 by #55 (2026-10-26) together with eviction and contributors. |
 | E4 | (review F4) A deny's operator-only `reason` is `resource_not_found` or `no_relation`. Admission derives its other internal reasons: other tenant from its structural check, revoked from a placement that passed at declaration and failed at finalization. A GAM adapter derives `resource_not_found` from the platform's own `resource` records. |
@@ -141,6 +177,10 @@ copy of it, and the file wins where they differ.
 | `place` | source | Admission declaration and finalization (spec §6.1 rule 5, §6.2 rule 2); rebind, on both Resources; Resource list/get visibility |
 | `read` | user, client (or user with actor client) | Document and product reads, search filtering via `list_resources`, agent access |
 | `manage` | source | Resource deletion, relation changes; document listing and eviction are deferred in v1 (#55) |
+
+Changed on 2026-11-14 (ADR-0013): under the GAM adapter `place` and `manage`
+are decided from the platform's Resource record, the Source that registered
+the key, and not from a relation in GAM.
 
 Evaluation order at a read PEP: the structural tenant check; resolve the
 Document's current binding from the admission record or the serving-time block
@@ -359,6 +399,11 @@ are added. Every write endpoint requires a `manage_relations` credential.
 - When a Source is removed from configuration, its Resources keep their
   relations and Documents; moving the maintainer role is an operator procedure.
 
+Changed on 2026-11-14 (ADR-0013): *Create* becomes a registration of the
+Source's own key, which the Source may repeat, and returns no generated id;
+`{id}` in the other rows is that key. The default-Resource onboarding no longer
+waits for a returned id. #114 fixes the endpoint's shape.
+
 ### 6.2 Relations
 
 Deferred on 2026-11-13 by #113 until the first real provider: the allow-all
@@ -477,17 +522,18 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | # | Requirement | Why | Parameter or check |
 |---|---|---|---|
 | G1 | GAM can express or map the §3.1 model: `resource` with maintainer, reader; subjects user, source, client. `parent` inheritance, asked in the #31 checklist on #86, is no longer required in v1; nor, since #55 on 2026-10-26, is `contributor`, which a later additive change would add | Semantic-level compatibility | Compare against the schema file |
-| G2 | Service identities (Source, client) can be subjects, not only tSSO users | Placement checks use the Source; delegation checks the client | #31 checklist on #86 |
+| G2 | Service identities (Source, client) can be subjects, not only tSSO users | Placement checks use the Source; delegation checks the client. Since 2026-11-14 placement asks GAM nothing (ADR-0013), so only the client remains | #31 checklist on #86 |
 | G3 | A check distinguishes deny from error | Q2: an error must never read as deny or allow | p99 latency ≤ `authz_timeout` |
 | G4 | Lists the Resources a subject can read (LookupResources or equivalent), paginated | Search filtering; the Zanzibar paper defines no such API | Limit ≥ the largest number of Resources one user can read |
 | G5 | Freshness: a freshness token (`at_least_as_fresh`) or fully consistent reads, or a documented maximum staleness | Q11 revocation guarantee | `gam_max_staleness`; #56 decides what is acceptable |
 | G6 | Path-1 writes made directly in GAM are attributable (who, when) and their audit is available to the platform | #53 Q12: authorization relations set by an authorized, attributable actor | — |
 | G7 | Change feed (Watch or changelog) | Optional; needed only if PEPs reuse decisions, which v1 does not | — |
-| G8 | Availability, SLA, outage behaviour, QPS limits | Authorization is an admission dependency; fail-closed on outage | GAM QPS requirement (§8) |
+| G8 | Availability, SLA, outage behaviour, QPS limits | Authorization is an admission dependency; fail-closed on outage. Since 2026-11-14 admission's placement checks do not call GAM (ADR-0013); reads still depend on it | GAM QPS requirement (§8) |
 | G9 | Delegation is one relation check for the user plus the platform's own delegate-registration check for the client | E1; GAM needs nothing beyond G2 | — |
 | G10 | The project's objects are isolated from other projects (namespace) | Q7 | — |
 | G11 | Tuple export and import | Migration between the built-in provider and GAM (#86 scope 4) | — |
-| G12 | A platform-generated Resource ID can be registered as a GAM object with its initial maintainer | Who creates Resource objects under path 1; #31 expects the GAM administrator | — |
+| G12 | A platform-generated Resource ID can be registered as a GAM object with its initial maintainer | Who creates Resource objects under path 1; #31 expects the GAM administrator. **Superseded on 2026-11-14** (ADR-0013): the platform registers no object. Instead, given a Source's object type and read permission, the platform can check and list on the objects that Source already keeps in GAM under its own keys | — |
+| G13 | (2026-11-14) The platform can define an object type and relations of its own in GAM | Where an application scope (§12) would be stored; not needed until §12 is adopted | — |
 
 ## 10. Validation owners
 
@@ -499,7 +545,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | Admission `503 AUTHZ_UNAVAILABLE` and the two placement checks | #99 |
 | Search filtering on `list_resources` | #76 with #55 |
 | End-to-end time from a revocation or rebind commit (eviction deferred in v1) to no disclosure, including products | #56 (with #55 for products) |
-| GAM G1–G12 | #86 |
+| GAM G1–G13 | #86 |
 | SpiceDB provider parity | F-1 |
 
 ## 11. Handoffs
@@ -511,8 +557,58 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2). In v1 only rebind applies; #55 deferred eviction |
 | #76 | `list_resources` for search, client registration and the E1 delegation rule, the `actor` field; search must not treat its index copy of `resource_id` as authority (E2) |
 | #78 | authz API placement in the platform API deployment, authz schema in the admission database, serving read availability bounded by the platform API deployment and admission database (§4.3), credential configuration and the default-Resource onboarding order (§6.1), F-1 operational facts (§5.3) |
-| #86 | G1–G12, the conformance suite, tuple format |
+| #86 | G1–G13, the conformance suite, tuple format |
+| #114 | (2026-11-14) Registration of the Source's own key in place of *Create*, and the Resource record's key (ADR-0013) |
 | #87 | Aspects 1 (identity and delegation), 2 (access control, fail-closed), 11 (knowledge poisoning: contributor grants, `place` not inherited, eviction; in v1, after #55, only that a Source places solely into Resources it created) and 14 (decision and change records) |
+
+## 12. Application scope: a direction, not adopted
+
+Recorded on 2026-11-14 with the user. Nothing here is built or scheduled, and
+no ticket is opened; this section is the record to start from when the need is
+confirmed.
+
+**Need.** Several agent applications may serve one Source's Documents to users,
+and each application may be allowed only some of that Source's Resources. An
+application is a concept of this platform: the Source keeps user-to-Resource
+relations only (in GAM, per the 2026-11-14 amendment) and knows nothing of
+applications.
+
+**Rule.** A user reads a Resource through an application only when both hold:
+the user may read the Resource, as today, and the application's scope covers
+the Resource. This narrows E1, whose delegate registration covers every Resource
+of the deployment. A client's own `reader` relations still play no part in a
+delegated request.
+
+| Point | Direction |
+|---|---|
+| Where the two halves meet | Inside the PDP. A PEP makes one call, `check(user, actor = client, read, resource)` or `list_resources` with the actor, and receives one Decision that names both. Either half unavailable makes the Decision `unavailable` |
+| Default | Closed. An application with no scope reads nothing, and a newly registered Resource is covered only by a Source-wide grant |
+| Grant levels | Every Resource of a Source, present and future; or named Resources |
+| Who writes a grant | The Source, with its own credential, through the platform API (`manage`); each change is a `relation_change` record. The operator registers the client, as now (§7) |
+| Store | GAM, if the platform can define an object type of its own there (G13); otherwise one table in the authz schema. No policy engine of the platform's own. A table would be an exception to the 2026-11-13 ruling against a PostgreSQL relation-table provider and needs the user's ruling |
+| Precondition | Identity stage P1 (#87 F1): the application's identity is verified and the user's token is one the platform can verify. Until then `actor_verified` is false and a scope would limit nothing |
+| No user present | Not opened for agent applications. A consumer that builds its own index reads under its own identity and enforces per user when it serves (#126, #127); that case is separate |
+
+**Open.** For grants of named Resources, someone on the Source side decides each
+one: a space attribute in the Source system, or an administration tool that
+calls the API with the Source's credential.
+
+**Steps when adopted**, in order:
+
+1. Confirm identity stage P1 is in service.
+2. Add the relation and the Source-wide grant to the model as model-2, and
+   revise E1.
+3. Add the grant and revoke endpoints.
+4. Choose the store (G13).
+5. Compute the intersection in `check` and `list_resources`.
+6. Extend the conformance suite with the four combinations of the two halves.
+
+**Evidence.** A survey of vendor documentation on 2026-11-14 found this
+two-sided bound stated as a rule by Microsoft Graph (Selected permissions),
+GitHub Apps, Snowflake, Databricks and RFC 9700 §2.3, and found that defaults
+which were open when a scope or a user token was missing have since been changed
+or carry warnings:
+[application scope and user entitlement](../research/knowledge-platform-application-scope-csp-practices-2026-11-14.md).
 
 ## Sources
 
@@ -524,6 +620,9 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 - PDP provisioning research (search and RAG products, external PDP patterns,
   AuthZEN 1.0):
   [knowledge-platform-pdp-modes-csp-practices-2026-10-26.md](../research/knowledge-platform-pdp-modes-csp-practices-2026-10-26.md)
+- Application scope survey (delegated access as an intersection, defaults,
+  search), 2026-11-14:
+  [knowledge-platform-application-scope-csp-practices-2026-11-14.md](../research/knowledge-platform-application-scope-csp-practices-2026-11-14.md)
 - Engine facts, checked 2026-10-23:
   - SpiceDB consistency and ZedTokens: <https://authzed.com/docs/spicedb/concepts/consistency>
   - SpiceDB datastores (PostgreSQL requirements): <https://authzed.com/docs/spicedb/concepts/datastores>
