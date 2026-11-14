@@ -52,7 +52,7 @@ these fields:
 | credentials | Each belongs to exactly one Source and holds `submit` and/or `manage_relations` |
 | `projections` | The Knowledge Profile: required Projection Types for readiness |
 | `ordering` | `source_version` (default) or `arrival` (§6.3) |
-| `default_resource_id` | Optional |
+| `default_resource_id` | Optional; one of the Source's own Resource keys (§5.1) |
 | quota overrides | Optional overrides of §11 |
 
 Requests never carry a tenant or Source; both come from the credential.
@@ -100,10 +100,24 @@ Constraints:
         "metadata": { "batch_id": "bat_01J…" } }
     ]
   },
-  "trace_id": "4bf92f3577b34da6"
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
 }
 ```
 
+- `trace_id`: every request to the platform API has one, the internal authz
+  API included. It is the trace id of the request's `traceparent` header (W3C
+  Trace Context: 32 lowercase hexadecimal characters); when the header is
+  absent or invalid, the platform generates one. A caller is not required to
+  send the header. Every response returns the value in the `X-Trace-Id` header,
+  and an error returns it in its body as well. The platform writes it on each
+  log line and on every request record the call creates (§3), so one value
+  joins the caller's log, the platform's log and the workflow. It is not
+  `request_id`, which names one accepted processing or deletion request.
+  W3C Trace Context defines no response header, so `X-Trace-Id` is the
+  platform's own name. An `x-request-id` header is logged when present and is
+  not part of this contract.
+  [#204](https://github.com/davidlinnnn/data-ingestion/issues/204) builds the
+  shared handling.
 - Item errors inside results use `{ "reason": "…", "message": "…" }`.
 - Protected things the caller cannot see return `404`; a missing permission of
   the caller's own credential returns `403` (Q3.7).
@@ -122,7 +136,7 @@ Header `Idempotency-Key` (optional, recommended). Body:
       "source_version": "3",
       "title": "Leave policy",
       "source_url": "https://km.example/hr/leave-policy",
-      "resources": ["res_hr_all"],
+      "resources": ["hr-all"],
       "uploaded_by": "tsso:alice",
       "metadata": { "km_folder": "HR/Policies", "owner_team": "hr-ops" },
       "files": [
@@ -151,6 +165,13 @@ Response `201`:
 
 Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
 valid until the batch is finalized or expires.
+
+A `resources` value is the Source's own key for a Resource it has registered
+through the Resource API
+([ADR-0013](../adr/0013-resource-identified-by-source-key.md),
+[#114](https://github.com/davidlinnnn/data-ingestion/issues/114)). Under a
+Source credential the key appears alone, in requests and in responses. The
+platform's records hold the full identifier, which names the Source as well.
 
 Item `status` after declaration:
 
@@ -259,7 +280,7 @@ Returns the current generation (Q10.1f):
 ```json
 {
   "document_id": "hr/leave-policy", "document_uid": "doc_7f3…",
-  "resource_id": "res_hr_all", "title": "Leave policy", "source_url": "https://…",
+  "resource_id": "hr-all", "title": "Leave policy", "source_url": "https://…",
   "metadata": { "km_folder": "HR/Policies" },
   "readiness": "ready_stale", "since": "2026-10-15T09:12:00Z",
   "latest": { "source_revision_id": "srv_3", "source_version": "3", "request_id": "req_…" },
@@ -313,6 +334,8 @@ describes the stages.
    may place documents only into Resources it created; the contributor grant is
    deferred. See the
    [#55 design record](knowledge-platform-canonical-consumption.md).
+   Since 2026-11-14 (ADR-0013) the Resource is named by the Source's own key,
+   registered beforehand; an unregistered key is `RESOURCE_NOT_FOUND`.
 6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION` or
    `VERSION_CONFLICT`.
 7. Same content (§6.4) → `queued` with the active request, a new retry request,
