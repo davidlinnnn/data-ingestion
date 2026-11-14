@@ -15,11 +15,18 @@
 
 | 名詞 | 意思 |
 |---|---|
-| Source | 把文件交給平台的系統，例如公司的 KM。每個 Source 有自己的憑證 |
+| Source | 把文件交給平台的系統，例如 KM（知識管理系統）。每個 Source 有自己的憑證 |
 | Resource | 權限的單位。每份文件屬於一個 Resource，例如 KM 的一個 space |
 | 讀取端 | 把內容給使用者的服務：Retrieval、LLM-Wiki、MCP。它負責照判定結果給或不給 |
-| authz API | 平台內唯一做授權判定的 API |
+| agent 應用 | 代替使用者向讀取端發出請求的程式。在授權介面裡它的型別是 `client` |
+| authz API | 讀取端經 HTTP 取得授權判定的 API |
 | 授權來源（provider） | authz API 後面實際算出答案的地方，可以更換 |
+| GAM | 公司集中管理授權的服務 |
+| tSSO | 公司的單一登入。使用者的身分來自它發的 token |
+| admission | 平台收文件的入口。交文件分三步：宣告（列出要交的文件）、上傳檔案、finalize（確認交付） |
+| Canonical | 文件經平台處理後的標準內容。讀取端用它建立索引與頁面 |
+| Change Feed | 平台給讀取端的事件流：哪些文件新增、更新、刪除、改綁 |
+| pilot | 第一個試行的部署。授權全部放行，不能當成正式環境 |
 
 ## 1. 摘要
 
@@ -31,15 +38,17 @@
 | `manage` | 這個 Source 能不能管理這個 Resource？ | Source | 平台的 Resource API |
 | `read` | 這個使用者能不能讀這個 Resource 的內容？ | 使用者 | 讀取端，在每次查詢或開頁面時 |
 
-**權限的單位是 Resource，不是單份文件。** 能讀一個 Resource 的人，就能讀裡面所有文件，以及由這些文件產生的內容（搜尋片段、Wiki 頁面）。第一版沒有單份文件的例外（[ADR-0008](../adr/0008-resource-level-authorization-relations.md)、[ADR-0007](../adr/0007-derived-product-readers-within-input-intersection.md)）。
+**權限的單位是 Resource，不是單份文件。** 能讀一個 Resource 的人，就能讀裡面所有文件，以及由這些文件產生的內容（搜尋片段、Wiki 頁面）。第一版沒有單份文件的權限（[ADR-0008](../adr/0008-resource-level-authorization-relations.md)、[ADR-0007](../adr/0007-derived-product-readers-within-input-intersection.md)）。所以 Source 要把讀者相同的文件放在同一個 Resource，讀者比較少的文件另外登記一個 Resource（§3.2）。
+
+跨 Source 的文件複本會是例外：讀複本的人還必須能讀原件所在的 Resource（ADR-0007）。這個功能還沒有設計，今天不會發生。
 
 **Resource 用 Source 自己的 key 命名。** KM 的 space `hr-all` 在平台上就叫 `hr-all`，平台不另外產生 id（[ADR-0013](../adr/0013-resource-identified-by-source-key.md)）。
 
 **判定集中在一處，執行分散在各讀取端。** 所有讀取端都問同一支 authz API，自己不保存權限。更換授權來源時，讀取端與 Source 都不用改。
 
-**pilot 現況：全部放行。** pilot 不做存取控制，後果是每個通過身分驗證的使用者都讀得到這套部署裡的所有文件。這是 2026-11-13 接受的後果。全放行只能在 pilot 設定下啟動，正式環境用這個設定會拒絕啟動。
+**pilot 現況：全部放行。** pilot 不做存取控制，後果是每個通過身分驗證的使用者都讀得到這套部署裡的所有文件。這是 2026-11-13 接受的後果。部署設定不是 `pilot` 時，全放行會拒絕啟動；這個防護只和設定一樣可靠。
 
-**正式環境之前要換成真正的授權來源。** 選項見 §2.4：公司的 GAM、application 自己提供的 GAM 相容端點、平台內建授權。
+**正式環境之前要換成真正的授權來源。** 預定的路線是公司的 GAM，目前在等 GAM 的 API 資訊（#86）。全部的選項見 §2.4。
 
 各項目做到哪裡，見 §7。
 
@@ -47,7 +56,7 @@
 
 ### 2.1 系統圖
 
-實線是已經存在或已排入實作的路徑，虛線是還沒實作的授權來源。一套部署只選一種授權來源。
+粗線是今天已經在 `dev` 上的部分。實線是已經開票、還沒實作的部分。虛線是還沒實作的授權來源，其中 (2) 只是方向。一套部署只選一種授權來源。
 
 ```mermaid
 flowchart LR
@@ -60,17 +69,16 @@ flowchart LR
       ADM["Resource 登記<br/>Batch API 與 admission"]
       AZ["authz API<br/>授權判定"]
     end
-    DB[("Admission DB<br/>Resource 紀錄、文件綁定")]
+    DB[("Admission DB（PostgreSQL）<br/>Resource 紀錄、文件綁定")]
     PROC["處理流程"]
     PEP["讀取端<br/>Retrieval、LLM-Wiki、MCP"]
   end
   subgraph prov["授權來源"]
-    direction TB
-    P0["pilot：全部放行"]
+    P3["(3) 平台內建授權<br/>（pilot 之後）"]
     GA["GAM 介面的 adapter"]
-    P1["(1) 公司的 GAM"]
-    P2["(2) application 自己的<br/>GAM 相容端點"]
-    P3["(3) 平台內建授權"]
+    P1["(1) 公司的 GAM<br/>正式環境的預定路線"]
+    P2["(2) Source 自己的<br/>GAM 相容端點（方向）"]
+    P0["pilot：全部放行<br/>沒有權限資料"]
   end
   S -- "登記 Resource、交文件<br/>（Source 憑證）" --> ADM
   ADM -- "check(source, place)<br/>同一個 process" --> AZ
@@ -80,28 +88,30 @@ flowchart LR
   U -- "問答、看頁面<br/>（使用者的 tSSO token）" --> PEP
   PEP -- "驗證 token<br/>取得帳號 id" --> AUTH
   PEP -- "check、list_resources<br/>（HTTP，讀取端憑證）" --> AZ
-  AZ --> DB
-  AZ --> P0
+  AZ ==> DB
+  AZ -.-> P3
   AZ -.-> GA
   GA -.-> P1
   GA -.-> P2
-  AZ -.-> P3
+  AZ ==> P0
 ```
 
-圖上要注意兩件事：
+圖上要注意四件事：
 
-- **Source 與使用者都不呼叫 authz API。** Source 只呼叫平台 API 登記 Resource 和交文件；使用者只接觸讀取端。authz API 只在內部網路，只接受登錄過的讀取端。
+- **今天存在的只有 authz API、全放行與 Admission DB。** Resource 登記、交文件、Change Feed 與各讀取端都還沒實作，進度見 §7。
+- **Source 與使用者都不呼叫 authz API。** Source 只呼叫平台 API 登記 Resource 和交文件；使用者只接觸讀取端。authz API 不對外開放（§6.1），只接受登錄過的讀取端。
 - **讀取端不知道後面接的是哪一種授權來源。** request 與 response 的格式不因授權來源而變。
+- **走 GAM 路線時，誰能讀由 Source 自己在 GAM 設定，不經過平台。** 圖上沒有畫這條線；流程見 §3.2。
 
 ### 2.2 元件與職責
 
 | 元件 | 職責 | 在授權裡的角色 |
 |---|---|---|
-| Source 的 client | 登記 Resource、交文件。走 GAM 路線時，在 GAM 設定誰能讀 | 不呼叫 authz API |
+| Source 的系統 | 登記 Resource、交文件。走 GAM 路線時，在 GAM 設定誰能讀 | 不呼叫 authz API |
 | Resource 登記 | 記下每個 Source 登記過哪些 key | 「Resource 存不存在、是誰登記的」的來源 |
-| admission | 宣告與 finalize 時檢查 Source 能不能放進該 Resource | 執行點，在同一個 process 內呼叫 |
-| authz API | 回答 `check` 與 `list_resources` | 判定點，全平台只有這一個 |
-| 授權來源 | 算出答案 | 在 authz API 後面，可以更換 |
+| admission | 宣告與 finalize 時檢查 Source 能不能放進該 Resource | 執行點，在同一個 process 內呼叫授權介面 |
+| authz API | 回答 `check` 與 `list_resources` | 讀取端取得判定的唯一入口。它是授權介面的 HTTP 包裝（§4.8） |
+| 授權來源 | 算出答案 | 在授權介面後面，可以更換 |
 | 讀取端 | 驗證使用者身分，問 authz API，照結果給或不給內容 | 執行點，經 HTTP 呼叫 |
 | 身分驗證元件 | 驗證 tSSO token，解出使用者的帳號 id | 授權的主體從這裡來 |
 | Admission DB | Resource 紀錄、文件屬於哪個 Resource | authz API 的依賴 |
@@ -118,24 +128,31 @@ flowchart LR
 
 ### 2.4 授權來源的選項
 
+本節的 Source 指擁有文件的應用系統，不是 agent 應用。
+
 | 選項 | 權限資料放在哪裡 | 誰設定「誰能讀」 | 平台怎麼判定 `read` | 適合誰 | 狀態 |
 |---|---|---|---|---|---|
 | pilot：全部放行 | 沒有權限資料。PostgreSQL 只記登記過哪些 Resource | 沒有人 | Resource 有登記就放行 | 只限 pilot | 已完成（#113） |
-| (1) 公司的 GAM | GAM | Source 自己，用它自己的 key | 問 GAM：這個使用者對這個 Source 的這個物件有沒有讀取權限 | 已經用 GAM 管權限的系統，例如 KM | 已規劃（#86） |
-| (2) application 自己的 GAM 相容端點 | application 自己的權限表 | application 自己 | 和 (1) 用同一個 adapter，位址指到 application 的端點 | 覺得接 GAM 太重的小型 application | 方向，未排入實作 |
-| (3) 平台內建授權 | 平台（SpiceDB） | application 呼叫平台 API 設定 | 平台自己判定 | 不接 GAM、也不想自己維護端點的 application | 已規劃（#115），MVP 之後 |
+| (1) 公司的 GAM | GAM | Source 自己，用它自己的 key | 問 GAM：這個使用者對這個 Source 的這個物件有沒有讀取權限 | 已經用 GAM 管權限的系統，例如 KM | 正式環境的預定路線。等 GAM 的 API 資訊（#86） |
+| (2) Source 自己的 GAM 相容端點 | Source 自己的權限表 | Source 自己 | 和 (1) 用同一個 adapter，位址指到 Source 的端點 | 覺得接 GAM 太重的小型系統 | 方向，未採用（2026-11-14） |
+| (3) 平台內建授權 | 平台（SpiceDB，開源的授權引擎） | Source 呼叫平台 API 設定 | 平台自己判定 | 不接 GAM、也不想自己維護端點的系統 | 已開票（#115），pilot 之後 |
 
 `place` 與 `manage` 在 (1) 與 (2) 都不問外部：平台看自己的 Resource 紀錄，登記這個 key 的 Source 才有權限。所以交文件的流程不依賴 GAM 的可用性。
 
-選項 (2) 的條件：
+選項 (3) 就是 `CONTEXT.md` 與早期文件所稱的「GAM-compatible Authorization」：平台內建、語意和 GAM 一致的機制。它和選項 (2) 的「GAM 相容端點」是兩件事。
 
-- **相容的範圍是平台會呼叫的讀取操作**：「這個使用者能不能讀這個物件」與「這個使用者能讀哪些物件」。application 不需要實作 GAM 的寫入與 schema 管理。
+**選項 (2) 只記為方向，沒有採用。** 授權設計的 Q8（2026-10-26）決定不開放「由 Source 自己的端點做判定」，理由是平台要為揭露負責，卻算不出衍生內容的讀者、解釋不了判定、也保證不了撤權的時限。這個決定沒有改變。2026-11-14 提出的是它較窄的一種做法：端點和 GAM 的介面相同，平台沿用 GAM 的 adapter。授權設計的編號和本文不同：它的 mode (2) 是平台內建，mode (3) 才是 Source 自己的端點。
+
+要採用選項 (2)，至少要滿足：
+
+- **相容的範圍是平台會呼叫的讀取操作**：「這個使用者能不能讀這個物件」與「這個使用者能讀哪些物件」。Source 不需要實作 GAM 的寫入與 schema 管理。
 - **介面細節要等 #86**：GAM 實際的 API 確認後，才寫得出相容的規格。
 - **行為也要一樣，不只是格式**：出錯不能被當成拒絕；列表必須等於逐一檢查會放行的全部；使用者 id 用同一個帳號 id。啟用前由平台對這個端點跑一致性測試，通過才接。
-- **可用性由 application 負責**：端點無法回應時，這套部署的文件讀不到。
-- **公司規定**：application 自己維護的權限表算不算「GAM 相容機制」，要先確認。
-
-一套部署只接一種授權來源。同一套部署裡不同 Source 用不同的授權來源時，`list_resources` 要跨來源合併結果，這部分還沒有設計。
+- **端點只回答自己的 Resource**：它只決定這個 Source 登記的 Resource 由誰讀。
+- **Q8 的三個理由要有解法**：衍生內容的讀者、判定的解釋、撤權的時限。
+- **可用性由 Source 負責**：端點無法回應時，這套部署的文件讀不到。
+- **一套部署只有這一個 Source 時才簡單**：和走 GAM 的 Source 共用一套部署時，`list_resources` 要跨來源合併結果，這部分還沒有設計。
+- **先確認自行維護的權限表符合組織對授權機制的要求。**
 
 ## 3. 情境流程
 
@@ -152,7 +169,7 @@ flowchart LR
 
 | 誰 | 做什麼 | 備註 |
 |---|---|---|
-| 平台維運 | 登錄 Source（`km`）與它的憑證，交給 KM 的開發者 | 設定格式由 #78 定 |
+| 平台維運 | 登錄 Source（`km`）與它的憑證，交給 KM 的開發者 | 憑證的權限有兩種：`submit`（交文件）與 `manage_relations`（登記與刪除 Resource）。設定格式由 #78 定 |
 | 平台維運 | 登錄每個讀取端的憑證與名稱，交給讀取端的維運 | 設定裡只放憑證的 SHA-256，不放憑證本身 |
 | 平台維運 | 登錄 agent 應用（`research-agent`） | 供稽核紀錄使用 |
 | 平台維運（GAM 路線） | 在 Source 的設定寫明：它在 GAM 用的物件型別，以及代表「讀」的權限名稱 | #86 確認 |
@@ -195,17 +212,28 @@ sequenceDiagram
 | 步驟 | KM（Source）要做的 | 平台做的 |
 |---|---|---|
 | 設定讀者（GAM 路線） | 照原本的做法，在 GAM 設定誰能讀這個 space | 不參與。pilot 沒有這一步 |
-| 登記 Resource | 呼叫 `PUT /v1/resources/hr-all`。可以重複呼叫，不用記自己登記過什麼 | 記下這個 key 屬於 `km`。重複登記不產生任何變更 |
-| 宣告 | 在每份文件的 `resources` 填 `hr-all` | 把憑證的 Source 與 key 組成完整識別碼，做放置檢查。key 沒登記時，這份文件回 `RESOURCE_NOT_FOUND` |
+| 登記 Resource | 呼叫 `PUT /v1/resources/hr-all`，憑證要有 `manage_relations`。可以重複呼叫，不用記自己登記過什麼 | 記下這個 key 屬於 `km`。重複登記不產生變更紀錄；帶不同的 `name` 時更新顯示名稱 |
+| 宣告 | 憑證要有 `submit`。每份文件的 `resources` 填一個 key（`hr-all`），只能填一個。沒填時用 Source 登錄的預設 Resource | 把憑證的 Source 與 key 組成完整識別碼，做放置檢查。錯誤見下表 |
 | 上傳 | 逐檔 `PUT` | 驗證大小與 SHA-256 |
 | finalize | 呼叫 finalize，記下回傳的 `request_id` | 再做一次放置檢查，受理後啟動處理 |
 | 查進度 | 用 `request_id` 或 `document_id` 查詢 | 回報處理狀態，以及各讀取端是否已經可以提供這份文件 |
+
+和 Resource 有關的錯誤：
+
+| 錯誤 | 原因 | Source 要做的 |
+|---|---|---|
+| `403` | 憑證沒有這個操作需要的權限 | 請平台維運確認憑證的權限 |
+| `RESOURCE_NOT_FOUND` | key 沒有登記 | 先登記，再宣告 |
+| `RESOURCE_REQUIRED` | 新文件沒填 `resources`，Source 也沒有預設 Resource | 填上 key |
+| `BINDING_CONFLICT` | 既有的文件填了和現在不同的 key | 文件要換 Resource 時用改綁（#205），不是重新宣告。不換的話不用填，平台沿用原本的綁定 |
+| `503 AUTHZ_UNAVAILABLE` | 授權判定無法完成 | 依 `Retry-After` 稍後重試整個 request |
 
 要點：
 
 - **Source 只碰得到自己的 key。** request 裡只寫 key，Source 由憑證決定。兩個 Source 可以有相同的 key，平台視為兩個不同的 Resource。
 - **誰按下上傳不影響權限。** 交文件用的是 Source 憑證，不是使用者的身分。
-- **授權判定無法完成時**，整個宣告或 finalize 回 `503 AUTHZ_UNAVAILABLE` 並帶 `Retry-After`，Source 稍後重試即可。
+- **同一個 Resource 裡的文件，讀者必須相同。** 平台以 Resource 為單位判定，分不出 space 裡個別頁面的權限。讀者比較少的頁面要放進另一個 Resource，也就是另一個 key，並在授權來源為它設定讀者。
+- **key 不可以換一批讀者重用。** 平台上的文件一直綁在登記時的 key。Source 刪掉一個 space、之後用同一個 key 建新的 space，舊文件就會被新 space 的讀者讀到。刪除或改名 space 之前，先刪除或改綁平台上的文件，再刪除 Resource。
 - 上傳本身的細節在[檔案上傳](knowledge-platform-file-upload.md)，規則在 [admission 規格](knowledge-platform-admission-spec.md) §5、§6。
 
 ### 3.3 RAG：使用者透過 agent 應用問問題（Retrieval）
@@ -218,7 +246,8 @@ sequenceDiagram
   participant R as Retrieval（讀取端）
   participant I as 身分驗證元件
   participant Z as authz API
-  participant X as 索引與文件現況
+  participant X as Retrieval 的索引
+  participant P as 平台的封鎖檢查
   U->>A: 請假規定是什麼
   A->>R: 查詢，帶 Alice 的 tSSO token
   R->>I: 驗證 token
@@ -227,25 +256,29 @@ sequenceDiagram
   Z-->>R: 200：Alice 能讀的 Resource 清單，有 next_cursor 就再問下一頁
   R->>X: 搜尋，只在這些 Resource 裡找
   X-->>R: 命中的段落
-  R->>X: 確認這些文件現在還在（已刪除、已撤回、已改綁的去掉）
-  R-->>A: 段落與出處
+  R->>P: 命中的文件有沒有被封鎖
+  P-->>R: 已刪除、已撤回、已改綁的文件
+  Note over R,P: 封鎖檢查的機制還沒定案，見 §7
+  R-->>A: 去掉被封鎖的文件，回傳段落與出處
   A-->>U: 用這些段落產生的回答
 ```
 
-| 步驟 | agent 應用要做的 | Retrieval（讀取端）要做的 | 平台（authz API）做的 |
+| 步驟 | agent 應用要做的 | Retrieval（讀取端）要做的 | 平台做的 |
 |---|---|---|---|
 | 發出查詢 | 帶上使用者自己的 tSSO token，不要用一個共用帳號替所有人查 | | |
 | 確認身分 | | 把 token 交給身分驗證元件，用解出的帳號 id 當主體。不接受呼叫方自己宣稱的使用者 id | |
-| 取得可讀範圍 | | 呼叫 `list_resources`，跟著 `next_cursor` 讀到最後一頁 | 回傳這個使用者能讀的 Resource。pilot 回傳所有登記過的 Resource |
+| 取得可讀範圍 | | 呼叫 `list_resources`，帶上 `actor`，跟著 `next_cursor` 讀到最後一頁 | authz API 回傳這個使用者能讀的 Resource。pilot 回傳所有登記過的 Resource |
 | 搜尋 | | 只在清單內的 Resource 裡搜尋。清單是空的就直接回「沒有結果」 | |
-| 揭露前確認 | | 去掉已刪除、已撤回、已改綁到別的 Resource 的文件。依據是平台提供的文件現況，不是索引裡的舊副本 | 提供文件現況（#126） |
-| 回傳 | 只用拿到的段落產生回答。結果不跨使用者快取 | 回傳段落與出處。結果不跨使用者快取 | |
+| 揭露前確認 | | 去掉被封鎖的文件：已刪除、已撤回、已改綁到別的 Resource。依據是平台的封鎖檢查，不是索引裡的舊副本 | 提供封鎖檢查。機制由 #56 定，**還沒定案**；在那之前讀取端做不到這一步（§7） |
+| 回傳 | 只用拿到的段落產生回答 | 回傳段落與出處。結果不跨使用者快取 | |
 
 要點：
 
 - **authz API 回 `200` 以外的任何結果，Retrieval 都不給內容**，見 §3.5。
 - **`actor` 目前只記錄，不影響結果。** 它讓稽核紀錄看得出這次查詢是經由哪個 agent 應用。
 - **回答由 agent 應用產生時**，權限已經在取得段落的那一步把關：使用者讀不到的文件不會進入 LLM 的輸入。
+- **判定不能重用。** 同一個使用者的快取結果，再次送出前也要重新判定，並重做揭露前確認。
+- **MCP 的流程和本節相同。** 它是另一種入口，規則一樣。
 
 ### 3.4 LLM-Wiki：建頁面與讀頁面
 
@@ -275,19 +308,25 @@ sequenceDiagram
     Z-->>W: 503
     W-->>U: 錯誤訊息，不含內容
   end
+  Note over F,W: 文件被刪除：背景清理，有時限
+  F-->>W: km 的 hr-all 有文件被刪除
+  W->>W: 在清理時限內，重建或移除用到這份文件的頁面
 ```
 
 | 階段 | LLM-Wiki 要做的 | 平台做的 |
 |---|---|---|
-| 建頁面 | 一個 Resource 的文件只用來產生這個 Resource 的頁面，不跨 Resource 合成。每個頁面記下它所屬 Resource 的識別碼 | 經 Change Feed 提供文件與它所屬的 Resource |
+| 建頁面 | 一個 Resource 的文件只用來產生這個 Resource 的頁面，不跨 Resource 合成。每個頁面記下它所屬 Resource 的識別碼，以及它用了哪些文件 | 經 Change Feed 提供文件與它所屬的 Resource |
 | 讀單一頁面 | 驗證使用者身分，對頁面所屬的 Resource 呼叫 `check`，`allow` 才給內容 | 回傳判定 |
 | 列出或搜尋頁面 | 做法和 §3.3 相同：先呼叫 `list_resources`，只列出清單內 Resource 的頁面 | 回傳可讀範圍 |
-| 文件被刪除或改綁 | 從 Change Feed 收到事件後，重建或移除受影響的頁面 | 送出事件 |
+| 文件被刪除 | 從 Change Feed 收到事件後，在清理時限內重建或移除用到這份文件的頁面。清理完成前，頁面可以照常提供；讀頁面時不用逐一檢查來源文件 | 送出事件，並判斷每個讀取端是否已經清理完成 |
+| 文件被撤回或改綁 | 同樣要重建或移除受影響的頁面。清理完成前要不要先隱藏頁面，還沒裁決（§8） | 送出事件 |
 
 要點：
 
 - **為什麼不跨 Resource 合成**：一個頁面如果用了兩個 Resource 的文件，只能讀其中一個的人就會透過頁面看到另一個的內容（ADR-0007）。需要跨讀者群的主題時，由 Source 建一個涵蓋目標讀者的 Resource。
+- **刪除不必立即下架頁面（2026-11-14 裁決）。** 文件被刪除後，用到它的頁面由 LLM-Wiki 的流程在清理時限內清掉。時限的目標是 10 分鐘，還沒量測，由 #56 定案。這取代了[consumption 設計](knowledge-platform-canonical-consumption.md) B5 原本「查詢當下就隱藏頁面」的要求。
 - **拒絕與不存在要長得一樣。** 回 `404`，不要讓使用者從回應分辨「沒有這一頁」和「你沒有權限」。
+- **無法判定時，回應會透露頁面存在。** 頁面不存在回 `404`，頁面存在但無法判定回錯誤，兩者分得出來。這是接受的殘餘：要消除它，讀取端得對不存在的頁面也呼叫 authz API。
 - **建頁面時不問授權**，因為頁面的讀者就是它所屬 Resource 的讀者，在讀取時才判定。
 
 ### 3.5 無法判定時
@@ -312,22 +351,22 @@ sequenceDiagram
 | 主體有權限 | `200`，`outcome` 是 `allow` | 給內容 | 內容 |
 | 主體沒有權限 | `200`，`outcome` 是 `deny` | 不給 | 和「不存在」相同 |
 | Resource 沒有登記 | `200`，`outcome` 是 `deny` | 不給 | 和「不存在」相同 |
-| 授權來源或資料庫失敗、逾時 | `503` | 可以重試一次，仍失敗就不給 | 錯誤訊息，不含內容 |
+| 授權來源或資料庫失敗、逾時 | `503` | 可以重試一次，仍失敗就不給。記下 `trace_id`；`503` 沒有 `decision_id` | 錯誤訊息，不含內容 |
 | 連不上 authz API，例如部署替換中 | 沒有回應 | 和 `503` 相同 | 錯誤訊息，不含內容 |
 | 讀取端憑證沒登錄 | `401` | 不給，這是設定問題，要告警 | 錯誤訊息，不含內容 |
 
-規則只有一條：**只有 `200` 而且 `outcome` 是 `allow` 才給內容**；列表則是只有 `200` 才使用清單。其他一律不給。
+規則只有一條，規範在 §5 第 5 點：**只有 `200` 而且 `outcome` 是 `allow` 才給內容**；列表則是只有 `200` 才使用清單。其他一律不給。
 
 ### 3.6 權限與文件變動之後
 
 | 事件 | 誰做什麼 | 讀取端要做的 | 多久生效 |
 |---|---|---|---|
-| 使用者被移出 space（GAM 路線） | KM 在 GAM 移除，不用通知平台 | 不用做事，下一次判定就會反映 | GAM 的延遲上限以內，數值待 #86 確認、#56 接受 |
-| 文件改綁到另一個 Resource | Source 呼叫改綁（#205） | 從 Change Feed 收到事件後，更新索引、重建頁面 | 先封鎖再移除：目標分別是 1 分鐘與 10 分鐘，由 #56 定案 |
-| 文件被刪除 | Source 呼叫刪除（規格 §8） | 同上 | 同上 |
+| 使用者被移出 space（GAM 路線） | KM 在 GAM 移除，不用通知平台 | 不用做事 | GAM 的延遲上限過後，判定就會反映。數值待 #86 確認、#56 接受 |
+| 文件被刪除 | Source 呼叫刪除（規格 §8） | 從 Change Feed 收到事件後，移除索引裡的內容，重建或移除用到它的頁面 | 文件本身的內容：目標是 1 分鐘內查不到，靠封鎖檢查（#56）。頁面等衍生內容：在清理時限內清掉，不必立即下架（2026-11-14 裁決）；時限目標是 10 分鐘 |
+| 文件被撤回，或改綁到另一個 Resource | 撤回的做法由 #56 定；改綁由 Source 呼叫（#205） | 同上 | 設計的目標是 1 分鐘內封鎖、10 分鐘內清理完成。衍生內容是否比照刪除，還沒裁決（§8） |
 | 刪除 Resource | Source 先刪除或搬走裡面的文件，再呼叫 `DELETE /v1/resources/{key}`。還有文件時回 `409` | 無 | 立即 |
 
-pilot 沒有權限資料，所以第一列不適用。
+pilot 沒有權限資料，所以第一列不適用。各項時限都還沒量測，由 #56 定案。
 
 ### 3.7 換成 GAM 之後
 
@@ -339,19 +378,23 @@ sequenceDiagram
   participant R as 讀取端
   participant Z as authz API
   participant DB as Admission DB
-  participant G as GAM（或 application 的 GAM 相容端點）
+  participant G as GAM
   R->>Z: POST /authz/v1/check（和 pilot 完全相同的 request）
-  Z->>DB: km 的 hr-all 有沒有登記，km 在 GAM 用哪個物件型別與讀取權限
+  Z->>DB: km 的 hr-all 有沒有登記
   alt 沒有登記
     Z-->>R: 200 deny
   else 有登記
+    Note over Z: 物件型別與讀取權限的名稱，來自 km 的 Source 設定
     Z->>G: alice 對 km 的物件 hr-all 有沒有讀取權限
     alt 有
       G-->>Z: 有權限
       Z-->>R: 200 allow
-    else 沒有，或只在特定條件下才有
+    else 沒有
       G-->>Z: 沒有權限
       Z-->>R: 200 deny
+    else 只在特定條件下才有
+      G-->>Z: 有條件的結果
+      Z-->>R: 200 deny（平台無法評估條件）
     else 錯誤或逾時
       Z-->>R: 503 UNAVAILABLE
     end
@@ -363,28 +406,30 @@ sequenceDiagram
 | Source | 沒有差別。讀者關係本來就由它寫在 GAM，平台不複製 |
 | admission | 沒有差別。放置檢查看平台自己的 Resource 紀錄，不問 GAM |
 | 讀取端 | 程式不用改。結果從「一律放行」變成依 GAM 的權限 |
-| 時效 | 權限變更在 GAM 的延遲上限以內生效，不再是下一次判定就保證反映 |
+| 時效 | 權限變更在 GAM 的延遲上限過後才保證反映，不再是下一次判定就反映 |
 | 可用性 | 讀取多依賴一個服務：GAM 無法回應時，讀取端拿到 `503` |
 
 ## 4. API 規格
 
-本節是 authz API 的契約。服務啟動後，機器可讀的版本在 `/openapi.json`。
+本節是 authz API 的契約。#204 完成後，機器可讀的版本在服務的 `/openapi.json`；在那之前，它描述的是舊的格式。
 
-**目前 `dev` 上的程式（#113）和本節有三處不同，由 #204 改成本節的形式：**
+**目前 `dev` 上的程式（#113）和本節有五處不同，由 #204 改成本節的形式：**
 
 | 項目 | 目前的程式 | 本節（#204 之後） |
 |---|---|---|
 | 無法判定 | `200`，`outcome` 是 `unavailable` | `503` |
 | `list_resources` 的回應 | 帶 `outcome: "allow"` | 不帶 `outcome` |
 | `trace_id` | request body 的必填欄位 | 取自 `traceparent` header，body 不帶 |
+| `X-Trace-Id` header | 回應沒有 | 每個回應都帶 |
+| `400`、`401` 的錯誤 body | 沒有 `trace_id` | 帶 `trace_id` |
 
-目前還沒有讀取端接上，所以這三處改動不影響任何呼叫方。
+所以照本節的範例呼叫目前的 `dev` 會得到 `400`：`trace_id` 還是 body 的必填欄位。目前還沒有讀取端接上，這些改動不影響任何呼叫方。
 
 ### 4.1 通則
 
 | 項目 | 規定 |
 |---|---|
-| 路徑 | `/authz/v1`，只在內部網路 |
+| 路徑 | `/authz/v1`，不對外開放（§6.1） |
 | 驗證 | `Authorization: Bearer` 加讀取端憑證。沒帶或沒登錄回 `401`，在讀取 body 之前就判斷 |
 | 格式 | `Content-Type: application/json`，欄位用 snake_case，時間用 RFC 3339 UTC |
 | 追蹤 | request 可以帶 `traceparent`（W3C Trace Context），不強制。每個回應都帶 `X-Trace-Id` |
@@ -402,7 +447,7 @@ Request：
 |---|---|---|---|
 | `subject.type` | 是 | `user`、`client`、`source` | 誰要做這個動作。讀取端替使用者查詢時用 `user` |
 | `subject.id` | 是 | 字串 | `user`：身分驗證元件從 tSSO token 解出的帳號 id。`client`、`source`：平台登錄的 id |
-| `actor` | 否 | `{"type": "client", "id": …}` | 代替使用者發出請求的 agent 應用。目前只記錄，不影響結果 |
+| `actor` | 請求經由 agent 應用時必填 | `{"type": "client", "id": …}` | 代替使用者發出請求的 agent 應用。目前只記錄，不影響結果，id 由 agent 應用自己提供、沒有經過驗證。之後的委派規則會用到它，所以現在就要帶 |
 | `action` | 是 | `read`、`place`、`manage` | 讀取端用 `read` |
 | `resource.type` | 是 | `resource` | 固定值 |
 | `resource.id` | 是 | 字串 | Resource 的完整識別碼，見 §4.6 |
@@ -464,7 +509,7 @@ Response `200`：
 
 | 欄位 | 說明 |
 |---|---|
-| `resource_ids` | 這一頁的 Resource 完整識別碼。空清單是正常結果，代表一個都不能讀 |
+| `resource_ids` | 這一頁的 Resource 完整識別碼。一頁可以是空的。所有頁都是空的，代表一個都不能讀，這是正常結果 |
 | `next_cursor` | 還有下一頁時才出現 |
 | `decision_id`、`evaluated_at`、`valid_until`、`decided_by`、`subject`、`actor`、`actor_verified`、`action`、`trace_id` | 意義和 `check` 相同 |
 
@@ -474,7 +519,8 @@ Response `200`：
 
 - **一頁可以少於上限，甚至是空的。** 只有回應裡沒有 `next_cursor` 才代表結束。
 - **cursor 不透明。** 不要自己組，不要解析。它只在主體、動作、`actor` 都和上一次相同時有效，而且可能過期。
-- **授權來源無法使用某個 cursor 時回 `400`**，呼叫方從第一頁重新開始。全放行不會拒絕 cursor。
+- **授權來源無法使用某個 cursor 時回 `400`**，呼叫方從第一頁重新開始。`400` 不分原因，所以帶著 cursor 的呼叫收到 `400` 時，先從第一頁重來一次，仍然是 `400` 才當成 request 有錯。
+- **全放行不檢查 cursor**：任何字串它都接受。所以對 pilot 做測試，證明不了讀取端有遵守上面兩條。
 - **所有頁合起來，就是 `check` 會放行的全部 Resource**，包含經由授權來源內部的群組或階層得到的權限。
 - **各頁之間不保證是同一個時間點的結果。** 分頁期間新增或移除的權限，可能出現也可能不出現。
 
@@ -509,7 +555,7 @@ X-Trace-Id: 7d3c1e0a9b2f4c5d8e6f7a1b2c3d4e5f
 | 狀態碼 | 意思 | 呼叫方要做的 |
 |---|---|---|
 | `200` | 有判定結果 | `check` 看 `outcome`；`list_resources` 使用清單 |
-| `400 INVALID_ARGUMENT` | body 不是這個操作的 JSON，或 cursor 無法使用 | 修正 request。cursor 的情況從第一頁重來 |
+| `400 INVALID_ARGUMENT` | body 不是這個操作的 JSON，或 cursor 無法使用 | 帶著 cursor 的呼叫先從第一頁重來一次；其他情況修正 request |
 | `401 UNAUTHENTICATED` | 沒帶讀取端憑證，或憑證沒登錄 | 檢查設定 |
 | `503 UNAVAILABLE` | 無法做出判定：授權來源或資料庫失敗、逾時 | 不給內容。可以重試一次 |
 
@@ -529,6 +575,8 @@ X-Trace-Id: 7d3c1e0a9b2f4c5d8e6f7a1b2c3d4e5f
   "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
 }
 ```
+
+`503` 的回應沒有 `decision_id`，因為沒有做出判定；讀取端記下 `trace_id`。
 
 `404`、`405`、`500` 目前不是這個格式。呼叫方不需要分辨：`200` 以外一律當成沒有判定。
 
@@ -561,11 +609,13 @@ X-Trace-Id: 7d3c1e0a9b2f4c5d8e6f7a1b2c3d4e5f
 
 | 操作 | 端點 | 結果 |
 |---|---|---|
-| 登記 | `PUT /v1/resources/{key}`，body 可帶顯示用的 `name` | 第一次 `201`，重複 `200`，不產生變更 |
+| 登記 | `PUT /v1/resources/{key}`，body 可帶顯示用的 `name` | 第一次 `201`，重複 `200`。重複登記不產生變更紀錄；帶不同的 `name` 時更新顯示名稱 |
 | 列出 | `GET /v1/resources` | 呼叫方 Source 登記過的 key |
 | 取得 | `GET /v1/resources/{key}` | 沒登記回 `404` |
 | 刪除 | `DELETE /v1/resources/{key}` | `204`；還有文件時回 `409 RESOURCE_NOT_EMPTY` |
 | 交文件時指定 | 宣告的 `resources` 填 key | 見 admission 規格 §5.1 |
+
+登記與刪除需要憑證有 `manage_relations`；列出與取得需要 `submit` 或 `manage_relations`。權限不足回 `403`。
 
 key 是 1 到 200 個字元，放在路徑時做 URL 編碼。平台不解析 key 的內容，比對時逐字相符。細節以 #114 完成後的內容為準。
 
@@ -578,18 +628,20 @@ admission 和 authz API 在同一個 process，直接呼叫[授權介面](../../
 讀取端必須做到下列各項。SDK（#127）會把它們包起來；不用 SDK 的讀取端照 HTTP 契約自己實作。
 
 1. **驗證使用者。** 把 tSSO token 交給身分驗證元件，用解出的帳號 id 當 `subject.id`。不接受呼叫方在參數裡宣稱的使用者 id。
-2. **單一文件或頁面，照這個順序判斷：**
-   1. 文件已刪除、已撤回，或現在不屬於任何 Resource：不給，不必問 authz API。
-   2. 從平台提供的文件現況取得它現在屬於哪個 Resource。不要用索引裡建立時留下的副本。
-   3. 對這個 Resource 呼叫 `check`，`outcome` 等於 `allow` 才給。
-3. **搜尋與列表：** 呼叫 `list_resources` 讀完所有頁，只在清單內搜尋，揭露前再做第 2 點的第 1、2 步。
-4. **`200` 以外一律不給內容。** 包含 `503`、其他狀態碼、連線錯誤、逾時。可以重試一次；列表的重試從第一頁重來。
-5. **拒絕和不存在要長得一樣。** `reason` 只寫進自己的 log，不回給使用者。
-6. **不重用判定，結果不跨使用者快取。**
-7. **留下紀錄。** 每次判定記下 `decision_id` 與 `trace_id`。平台不保存判定紀錄，查問題時靠讀取端的紀錄和平台的 log 對照。
-8. **轉發追蹤用的 header。** 把收到的 `traceparent` 與 `x-request-id` 帶到對 authz API 的呼叫上。
-9. **逾時設定。** 建議讀取端對 authz API 的逾時設為 1 秒左右，比平台的 500 ms 長，這樣收到的會是平台的 `503`，而不是自己先逾時。這是建議值，不是契約。
-10. **測試。** 至少涵蓋：`deny`、`503`、空清單、多頁清單。測試用的 fake 能分頁（#204），用它證明只讀第一頁會漏資料。
+2. **單一文件（搜尋命中、引用的段落），照這個順序判斷：**
+   1. 向平台的封鎖檢查取得這份文件的現況：有沒有被刪除或撤回，現在屬於哪個 Resource。不要用索引裡建立時留下的副本。這個機制由 #56 定，還沒定案（§7）。
+   2. 已刪除、已撤回，或現在不屬於任何 Resource：不給，不必問 authz API。
+   3. 對它現在的 Resource 呼叫 `check`，`outcome` 等於 `allow` 才給。
+3. **Wiki 頁面。** 對頁面所屬的 Resource 呼叫 `check`，`allow` 才給。來源文件被刪除時，頁面由建頁的流程在清理時限內重建或移除，讀頁面時不用逐一檢查來源文件（§3.4）。
+4. **搜尋與列表。** 呼叫 `list_resources` 讀完所有頁，只在清單內搜尋。揭露前對每份命中的文件做第 2 點的第 1、2 步；它現在的 Resource 不在清單內時，也要去掉。
+5. **`200` 以外一律不給內容。** 包含 `503`、其他狀態碼、連線錯誤、逾時。可以重試一次；列表的重試從第一頁重來。
+6. **拒絕和不存在要長得一樣。** `reason` 只寫進自己的 log，不回給使用者。無法判定時的錯誤會透露內容存在，這是接受的殘餘（§3.4）。
+7. **不重用判定。** 結果不跨使用者快取。同一個使用者的快取結果，再次送出前也要重新判定，並重做第 2 點的第 1、2 步。
+8. **請求經由 agent 應用時，帶上 `actor`。**
+9. **留下紀錄。** `200` 的回應記下 `decision_id` 與 `trace_id`；`503` 沒有 `decision_id`，記下 `trace_id`。平台不保存 `allow` 與 `deny` 的逐筆紀錄，查問題時靠讀取端自己的紀錄，用 `trace_id` 和平台的 log 對照。
+10. **轉發追蹤用的 header。** 把收到的 `traceparent` 與 `x-request-id` 帶到對 authz API 的呼叫上。
+11. **逾時設定。** 建議讀取端對 authz API 的逾時設為 1 秒左右，比平台的 500 ms 長，這樣收到的會是平台的 `503`，而不是自己先逾時。這是建議值，不是契約。
+12. **測試。** 至少涵蓋：`deny`、`503`、空清單、後面還有下一頁的空頁、多頁清單。測試用的 fake 能分頁（#204），用它證明只讀第一頁會漏資料。
 
 讀完所有頁的寫法：
 
@@ -601,11 +653,11 @@ while True:
         body["cursor"] = cursor
     response = post("/authz/v1/list_resources", json=body)
     if response.status_code != 200:
-        raise NoDecision  # 不給內容
+        raise NoDecision  # 不給內容；要重試的話，整個迴圈從第一頁重來
     page = response.json()
     ids += page["resource_ids"]
     cursor = page.get("next_cursor")
-    if cursor is None:
+    if not cursor:
         break
 ```
 
@@ -613,7 +665,8 @@ while True:
 
 ### 6.1 部署形態與依賴
 
-- authz API 在平台 API 的 `api` 角色裡，和 Resource 登記、Batch API 同一個 process。固定 2 個 pod，每個 pod 一個 uvicorn worker。
+- authz API 在平台 API 的 `api` 角色裡，和 Resource 登記、Batch API 同一個 process、同一個 port。固定 2 個 pod，每個 pod 一個 uvicorn worker。
+- **對外的路由只開放 `/v1/`。** `/authz/`、`/openapi.json`、`/healthz` 與 metrics 不對外。authz API「不對外開放」靠的是這條路由規則，由 #78 落實。
 - 依賴 Admission DB。所以讀取的可用性不會高於平台 API 與 Admission DB 的可用性；走 GAM 路線時再加上 GAM。
 - 資料庫連不上時 `api` 仍然能啟動，判定一律回無法判定，資料庫恢復後自動回復。
 
@@ -623,38 +676,46 @@ while True:
 
 | 設定 | 內容 |
 |---|---|
+| `KP_ADMISSION_DATABASE_URL` | Admission DB 的連線字串。沒有設定時，程式直接結束（exit code 2） |
 | `KP_AUTHZ_PROVIDER` | 授權來源。目前只有 `allow-all` |
 | `KP_DEPLOYMENT` | 必須是 `pilot`，`allow-all` 才能啟動 |
-| `KP_AUTHZ_PEP_CREDENTIALS` | JSON：讀取端憑證的 SHA-256 對應到讀取端的名稱。只放 digest，不放憑證本身。一個讀取端放兩筆就能重疊輪替。改了之後要重啟 pod |
+| `KP_AUTHZ_PEP_CREDENTIALS` | JSON 物件：key 是讀取端憑證的 SHA-256，value 是讀取端的名稱。只放 digest，不放憑證本身。一個讀取端放兩筆就能重疊輪替。改了之後要重啟 pod |
 | `KP_ADMISSION_API_PORT` | 預設 8080 |
+
+`KP_AUTHZ_PEP_CREDENTIALS` 要注意三件事：
+
+- digest 是 64 個小寫的十六進位字元，計算時憑證不含結尾的換行：`printf '%s' "$TOKEN" | sha256sum`。
+- 預設值是 `{}`，也就是沒有任何讀取端能呼叫。
+- 程式不檢查 digest 的格式。寫錯時 `api` 照常啟動，那個讀取端的每個呼叫都得到 `401`。
 
 ### 6.3 健康檢查、metrics 與 log（#204）
 
 | 項目 | 內容 |
 |---|---|
-| 健康檢查 | `GET /healthz`，不需憑證、不碰資料庫。liveness 與 readiness 都用 HTTP probe 打它。pod 帶 sidecar 時，TCP probe 只要 sidecar 活著就會通過，不能用 |
-| metrics | 判定次數，依操作、結果（`allow`、`deny`、`unavailable`）、讀取端區分；判定耗時的 histogram。用 `--metrics-port` 開啟 |
-| log | JSON，寫到 stderr。每一行帶 `trace_id`。無法判定時另外記 `decision_id`、操作、讀取端名稱、例外的型別。log 不含憑證，也不含使用者帳號 |
+| 健康檢查 | `GET /healthz`，不需憑證、不碰資料庫。liveness 與 readiness 都用 HTTP probe 打它。pod 帶 sidecar 時，TCP probe 只要 sidecar 活著就會通過，不能用。路徑是暫定的，#78 可以調整 |
+| metrics | 判定次數，依操作、結果（`allow`、`deny`、`unavailable`）、讀取端區分；判定耗時的 histogram。用 `--metrics-port` 開啟。`401` 不算判定，不在這裡 |
+| log | JSON，寫到 stderr。每一行帶 `trace_id`。無法判定時另外記 `decision_id`、操作、讀取端名稱、例外的型別。`allow` 與 `deny` 沒有逐筆的 log。log 不含憑證，也不含使用者帳號 |
 
 ### 6.4 要看什麼
 
 | 訊號 | 代表什麼 |
 |---|---|
 | `503` 或 `unavailable` 的比例上升 | 資料庫或授權來源有問題。這時所有讀取端都不給內容 |
-| `401` 出現 | 某個讀取端的憑證設定錯誤 |
+| `401` 出現 | 某個讀取端的憑證設定錯誤。從 service mesh 的狀態碼統計或 `api` 的 warning log 看 |
 | `deny` 的比例突然改變 | 權限被大量調整，或 Resource 沒有登記 |
 | 判定耗時接近 500 ms | 快要開始出現無法判定。量測值：全放行在單機、32 個同時呼叫下，最慢的 p99 是 22 ms（[量測紀錄](../validation/113/README.md)） |
 
-### 6.5 部署替換（交給 #78）
+### 6.5 部署替換
 
-- `api` 加 `preStop` 延遲，rollout 用 surge 1、unavailable 0。pod 收到停止訊號和它從 Service 移除是同時發生的，沒有延遲時，每次部署都有一小段時間請求會打到已關閉的 pod，讀取端會把它當成無法判定。
-- mesh 對 `503` 的重試與 outlier 設定要一起決定：資料庫故障時兩個 pod 都回 `503`，如果兩個都被移出，呼叫方收到的是 mesh 的 `503`。讀取端的處理相同，但告警要分得出這兩種情況。
+部署替換期間，讀取端可能短暫收到無法判定。要把這段時間縮到最短，需要 `preStop` 延遲、逐一替換，以及 service mesh 對 `503` 的重試設定。這些要求已經交給 #78（[交接](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6875922904)）。
 
 ### 6.6 追查一次請求
 
-1. 使用者或讀取端回報問題時，取得那次回應的 `X-Trace-Id`。
-2. 用它在平台的 log 找到那次呼叫；無法判定的那一行有 `decision_id` 與讀取端名稱。
-3. 用 `decision_id` 在讀取端自己的紀錄找到對應的使用者與內容。
+兩邊對得上的鍵是 `trace_id`。
+
+1. 使用者或讀取端回報問題時，取得那次回應的 `X-Trace-Id`，或讀取端紀錄裡的 `trace_id`。
+2. 用它在平台的 log 找到那次呼叫。無法判定的呼叫有一行紀錄，帶讀取端名稱與例外的型別。`allow` 與 `deny` 在平台沒有逐筆紀錄，只有 metrics。
+3. 用同一個 `trace_id` 在讀取端自己的紀錄找到對應的使用者與內容。`200` 的回應還可以用 `decision_id` 對照。
 
 `trace_id` 和 `request_id`（`req_…`）不同：前者識別一次呼叫鏈，後者是平台受理的一件文件處理工作。定義在 admission 規格 §4。
 
@@ -663,17 +724,20 @@ while True:
 | 項目 | 狀態 | 票 |
 |---|---|---|
 | `check`、`list_resources`、全放行、authz API | 已完成，在 `dev` | #113 |
-| `503`、列表回應、`trace_id` 取自 header、健康檢查、metrics、log、能分頁的 fake | 未實作，下一個做 | #204 |
+| `503`、列表回應、`trace_id` 取自 header、`X-Trace-Id`、健康檢查、metrics、log、能分頁的 fake | 未實作，下一個做 | #204 |
 | Resource 登記（Source 的 key）、憑證登錄 | 未實作，在 #204 之後 | #114 |
 | 宣告與 finalize 的放置檢查 | 未實作，在 #114 之後 | #96 |
 | 改綁 | 未實作 | #205 |
-| 讀取端 SDK 與第一個讀取端（reference projection） | 未實作 | #127 |
+| Change Feed 與文件現況的讀取 | 未實作 | #126 |
+| 封鎖檢查：讀取端在揭露前向平台確認文件有沒有被封鎖 | 設計中，機制未定。完成之前，讀取端做不到 §5 第 2 點的第 1 步 | #56 |
+| 封鎖與清理的時限、判定可重用的上限 | 設計中 | #56 |
+| 讀取端 SDK 與第一個示範用的讀取端 | 未實作 | #127 |
 | Retrieval 與 LLM-Wiki 對外的契約 | 設計中 | #76 |
-| 封鎖與移除的時限、判定可重用的上限 | 設計中 | #56 |
 | (1) GAM adapter | 等 GAM 的 API 資訊 | #86 |
-| (2) application 的 GAM 相容端點 | 方向，未排入；介面等 #86 | 無 |
-| (3) 平台內建授權 | MVP 之後 | #115 |
-| 部署設定、probe、告警 | 設計中 | #78 |
+| (2) Source 自己的 GAM 相容端點 | 方向，未採用；介面等 #86 | 無 |
+| (3) 平台內建授權 | pilot 之後 | #115 |
+| 部署設定、路由規則、probe、告警 | 設計中 | #78 |
+| 跨 Source 的文件複本 | 未設計 | 無 |
 | 限制每個 agent 應用能讀的 Resource | 方向，未採納（[授權設計 §12](knowledge-platform-authorization.md#12-application-scope-a-direction-not-adopted)） | 無 |
 
 ## 8. 還沒確定的事
@@ -682,9 +746,13 @@ while True:
 |---|---|---|
 | GAM 實際的 API：查詢方式、分頁、一致性、使用者的物件型別 | §2.4 的 (1) 與 (2)、§3.7、時效 | #86 |
 | GAM 的延遲上限是多少 | §3.6 第一列 | #86、#56 |
-| KM 的 space 裡有沒有單頁的權限 | 有的話，以 space 為單位會讓部分使用者多看到內容 | 待向 KM 確認 |
-| KM 的 space key 的格式 | §4.7 的長度上限 | #114 |
-| 公司的 gateway 是否保留 `traceparent` 與 `x-request-id` | §6.6 能不能從使用者一路對到平台 | #78 |
+| Source 重用 key 時，GAM 那一側會發生什麼 | §3.2 的 key 義務 | #86 |
+| 文件被刪除後，它本身的內容是否也只需要在清理時限內移除，不做 1 分鐘的封鎖 | §3.3 的揭露前確認、§3.6 | 待裁決，#56 |
+| 文件被撤回或改綁後，頁面等衍生內容是否比照刪除 | §3.4、§3.6 | 待裁決，#56 |
+| 清理時限的數值 | §3.4、§3.6 | #56 |
+| 第一個 Source 的 space 裡有沒有單頁的權限 | 有的話，Source 要把受限的頁面放進另一個 Resource（§3.2） | 接入第一個 Source 時確認 |
+| 第一個 Source 的 key 格式 | §4.7 的長度上限 | #114 |
+| 入口的 gateway 是否保留 `traceparent` 與 `x-request-id` | §6.6 能不能從使用者一路對到平台 | #78 |
 
 ## 參考
 

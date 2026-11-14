@@ -353,7 +353,9 @@ requests they create are committed with their outbox rows before `201`.
 1. Document deleted since declaration → `DOCUMENT_DELETED`; created since
    declaration by another batch, so that its `document_uid` is not the declared
    one → `STALE_DECLARATION` (declare again).
-2. Placement re-check → `RESOURCE_NOT_FOUND`.
+2. Placement re-check → `RESOURCE_NOT_FOUND`. An unavailable decision service
+   fails the whole request with `503 AUTHZ_UNAVAILABLE`, as at declaration
+   (§6.1 rule 5; authorization design §4.3).
 3. Every file in `uploads` is in place: its object exists in storage, asked
    before the transaction (§5.2 verified size, digest and media type before the
    object appeared) → `FILES_MISSING`.

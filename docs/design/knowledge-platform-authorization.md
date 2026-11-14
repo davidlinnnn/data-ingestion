@@ -78,8 +78,9 @@ its own space keys (path 1), and will not adopt a platform id.
   result, the binding, an index's copy) the identifier carries both. The
   platform does not parse the key. The encoding is #114's.
 - **Registration.** The Source registers each key once, by a call it may
-  repeat: registering a key it already registered changes nothing and returns
-  the same Resource, so the Source keeps no record of what it has registered. A
+  repeat: registering a key it already registered returns the same Resource and
+  creates no change record (a different `name` replaces the display name), so
+  the Source keeps no record of what it has registered. A
   declaration that names an unregistered key is still refused
   (`RESOURCE_NOT_FOUND`).
 - **`place` and `manage`.** Under the GAM adapter the maintainer is the
@@ -160,6 +161,17 @@ changes.
   Source may place into, rebind into or delete another Source's Resource no
   longer arises there. That every authenticated user reads every Document of
   the tenant still holds for the pilot.
+- **A Source's own decision endpoint: a direction, not adopted.** On
+  2026-11-14 the user raised a narrower form of the mode Q8 did not open: a
+  Source hosts an endpoint with the same interface as GAM, and the platform
+  points its GAM adapter at it. Q8 stands. The guide (§2.4) lists the idea as
+  its option (2) with the conditions for adopting it: only the read calls the
+  adapter makes, the conformance suite passed, answers only for the Source's
+  own Resources, an answer to Q8's three objections (derived-product audiences,
+  explaining a decision, a bound on revocation), and one provider per
+  deployment until `list_resources` across providers is designed. The guide
+  numbers the options differently from Q8: its (2) is Q8's mode (3), and its
+  (3) is the built-in provider, Q8's mode (2).
 - Not changed: the two operations, the request shapes apart from `trace_id`,
   the Decision's other fields and the allow-all provider's decisions.
 - The affected places below are marked. Deployment requirements go to #78, the
@@ -196,7 +208,7 @@ changes.
 | Q5 | Flat Resources in v1: no hierarchy, no intersection, one Resource per Document. #31's `resources[1..N]` stays limited to one; no combination rule (union or intersection) exists, and relaxing the limit needs a new decision. Hierarchy is an additive later change; its intended semantics are recorded in §3.3 but not adopted. |
 | Q6 | Wiki and Retrieval products are not object types. A product inherits its Resource's readers (ADR-0007); `read` on a Resource covers all its published products. Projections may narrow, never widen. |
 | Q7 | Tenant takes no part in decisions. Tenant is bound one-to-one to a deployment, so each deployment has one authorization store. The cross-tenant check stays the PEP's structural check before any decision (admission Q3.1 step 1). Isolation for a shared multi-tenant deployment is decided with #78 when one is chosen. |
-| Q8 | Two provider modes behind one interface and one model: (1) a GAM adapter for production (#86) and (2) the built-in provider for the pilot. Mode (3), where the platform defers decisions to a Source's own PDP, is **not opened**, neither as a live callback nor as a named synchronisation mode. A Source system that calls the Resource Service API programmatically is ordinary mode (2) use. A missing relation is always `deny`. Revisits the 2026-10-19 path-3 deferral with the research evidence: none of the surveyed search or RAG products documents a customer PDP callback for search filtering, and a black-box decision leaves the platform accountable for disclosure without the means to compute derived-product audiences, explain decisions or bound revocation. A live callback would be reconsidered only for a real case, limited to single-object reads of that Source's own documents that feed no derived product, with the external allow necessary but not sufficient. This refines #56's reconsideration conditions (handed to #56). |
+| Q8 | Two provider modes behind one interface and one model: (1) a GAM adapter for production (#86) and (2) the built-in provider for the pilot. Mode (3), where the platform defers decisions to a Source's own PDP, is **not opened**, neither as a live callback nor as a named synchronisation mode. A Source system that calls the Resource Service API programmatically is ordinary mode (2) use. A missing relation is always `deny`. Revisits the 2026-10-19 path-3 deferral with the research evidence: none of the surveyed search or RAG products documents a customer PDP callback for search filtering, and a black-box decision leaves the platform accountable for disclosure without the means to compute derived-product audiences, explain decisions or bound revocation. A live callback would be reconsidered only for a real case, limited to single-object reads of that Source's own documents that feed no derived product, with the external allow necessary but not sufficient. This refines #56's reconsideration conditions (handed to #56). Noted on 2026-11-14: a narrower form, an endpoint with GAM's interface behind the GAM adapter, is recorded as a direction in the API review amendment; this decision stands. |
 | Q9 | The pilot provider is a **PostgreSQL relation table** in a separate schema of the admission database. Deciding facts: the v1 model is one flat table with three relations and no hierarchy or groups, so a check is one indexed lookup; keeping relations in the admission database gives commit-time consistency with the binding and no new service, whereas SpiceDB needs its own deployment, PostgreSQL 15 or newer, commit-timestamp tracking for Watch and ZedToken handling for freshness (§5.3). The model's normative form is a SpiceDB schema file (§3.1); a provider-agnostic conformance suite verifies every provider. An allow-all mock is never selectable in pilot or production configuration; test fakes exist only in tests. After the MVP the built-in provider moves to SpiceDB (user decision, follow-up F-1). **Superseded for the pilot on 2026-11-13 by #113:** the pilot uses an allow-all provider, selectable only in pilot configuration, and no relation-table provider is built (note at the top). |
 | Q10 | Two operations: `check(subject, actor?, action, resource)` and `list_resources(subject, actor?, action, cursor?)`. `list_resources` is paginated from the first version, because adding pagination later would silently truncate existing callers. No batch check and no list-subjects in v1; both are additive later. |
 | Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. **Restated on 2026-11-14** for a GAM provider: bounded staleness, not every committed relation; see the API review amendment at the top. |
