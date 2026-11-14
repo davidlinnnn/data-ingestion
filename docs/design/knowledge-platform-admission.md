@@ -933,7 +933,11 @@ backfill complete, and the document keeps its previous readiness meanwhile;
   | Custody Purge | Retained bytes and derived data are erased | 30 days |
 
   `applied` is reached by a serving-time block keyed by `document_uid` (#56 and
-  #76), without waiting for index removal.
+  #76), without waiting for index removal. Superseded on 2026-11-15 by
+  [ADR-0014](../adr/0014-removal-by-projection-cleanup.md): there is no serving-time
+  block in v1; content stops being served at `enforced`, and `applied` is the
+  deletion recorded in admission. Q10.8's "unreadable within a minute" no longer
+  holds: the incident path is a deletion followed by cleanup within the limit.
 - **Q10.6 and Q10.6a:** each projection owner adjusts products derived from a
   deleted document, such as LLM-wiki pages that combine several documents,
   within the `enforced` target. The deletion reaches projections through the #55

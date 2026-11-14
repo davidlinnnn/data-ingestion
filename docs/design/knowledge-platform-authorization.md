@@ -183,6 +183,16 @@ changes.
   operators. It is the authz API's contract from this date; where §4 below
   differs from it, the guide wins.
 
+Amended on 2026-11-15 (user ruling; [ADR-0014](../adr/0014-removal-by-projection-cleanup.md)).
+After a Source Deletion, a withdrawal or a rebind, content stops being served
+when the projections have cleaned up, within a cleanup time limit; v1 has no
+serving-time block. E2's disclosure stop becomes that cleanup, and its rule
+that an index's copy of a Resource is never authority for a read decision is
+withdrawn: a read PEP filters and checks on the Resource its own store records
+for a Document, which the Change Feed keeps current. The evaluation order of
+§3.2 no longer resolves the binding from the platform at query time. #56 keeps
+the time limit and no longer designs a block. E2, §3.2 and §11 are marked.
+
 ## 1. Scope and owners
 
 | Topic | Owner |
@@ -222,7 +232,7 @@ changes.
 | Q19 | Validation owners as in §10. |
 | Q20 | Outputs: this document, ADR-0008, `CONTEXT.md` terms (Resource Maintainer, Resource Contributor, Resource Reader, Eviction, Authorization Decision) and the handoffs in §11. |
 | E1 | (review F1) Delegation rule: a delegated request is allowed only when `check(user, action, resource)` is `allow` **and** the actor is a client registered as a delegate in platform configuration. The client's own `reader` relations play no part in a delegated request; they apply only when the client reads under its own identity. §12 records a direction, not adopted, that narrows the registration to a scope per Resource. |
-| E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. Eviction is deferred in v1 by #55 (2026-10-26); the disclosure stop for a rebind stays. |
+| E2 | (review F2) Eviction and a rebind that moves a Document out of a Resource stop disclosure on the Source Deletion path (spec §8): a serving-time block by `document_uid`, then product removal through #55. Initial targets 1 minute and 10 minutes, as for Source Deletion; #56 owns them. A search index's copy of `resource_id` is never authority for a read decision. Eviction is deferred in v1 by #55 (2026-10-26); the disclosure stop for a rebind stays. Superseded on 2026-11-15 (ADR-0014): no serving-time block in v1; disclosure stops when the projections have cleaned up, within the cleanup time limit, and a PEP uses the Resource its own store records. |
 | E3 | (review F3) Spec §6.1 amendment for a Document without a binding (§6.3). Eviction does not stop the Document's Source from placing it again while it still holds `place`; durable removal is: revoke the contributor, then evict. Deferred in v1 by #55 (2026-10-26) together with eviction and contributors. |
 | E4 | (review F4) A deny's operator-only `reason` is `resource_not_found` or `no_relation`. Admission derives its other internal reasons: other tenant from its structural check, revoked from a placement that passed at declaration and failed at finalization. A GAM adapter derives `resource_not_found` from the platform's own `resource` records. |
 | E5 | (review F8) I-A does not run the conformance suite against SpiceDB; F-1 does. |
@@ -277,6 +287,12 @@ withdrawn Document → no disclosure, without asking the PDP; otherwise
 enterprise restrictions are applied by the PEP in addition to the decision
 (#53 Q12, #56); an `allow` never overrides them. A delegated request follows
 the E1 rule.
+
+Changed on 2026-11-15 (ADR-0014): the PEP takes the Document's Resource from
+its own store, which it keeps current from the Change Feed, and does not ask
+the platform at query time. A Document its store no longer holds is not
+disclosed; one whose removal has not reached the store yet still is, for at
+most the cleanup time limit.
 
 ### 3.3 Worked `{workspace, team}` example
 
@@ -657,7 +673,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | To | What |
 |---|---|
 | #31 / #96 | The spec §3 and §6.1 amendment of §6.3 (E3; deferred in v1 with eviction, #55), the Resource API endpoints of §6, the operator-only deny `reason` and the derivation of the other internal reasons (E4); #96 is blocked by I-A |
-| #56 | Decision reuse maximum; delegation proof and the E1 rule; retention and disclosure of decisions, operator-only reasons and change records; the E2 disclosure stop after rebind (and eviction, deferred in v1 by #55) with its 1-minute and 10-minute initial targets; the maintainer document listing as a disclosure exception (§6.3; deferred in v1); the PEP evaluation order (§3.2); no per-Document reader exceptions in v1, so ADR-0007's precondition holds; the Q8 refinement of the path-3 reconsideration conditions |
+| #56 | Decision reuse maximum; delegation proof and the E1 rule; retention and disclosure of decisions, operator-only reasons and change records; the E2 disclosure stop after rebind (and eviction, deferred in v1 by #55) with its 1-minute and 10-minute initial targets; the maintainer document listing as a disclosure exception (§6.3; deferred in v1); the PEP evaluation order (§3.2); no per-Document reader exceptions in v1, so ADR-0007's precondition holds; the Q8 refinement of the path-3 reconsideration conditions. Since 2026-11-15 (ADR-0014): the cleanup time limit in place of the 1-minute block |
 | #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2). In v1 only rebind applies; #55 deferred eviction |
 | #76 | `list_resources` for search, client registration and the E1 delegation rule, the `actor` field; search must not treat its index copy of `resource_id` as authority (E2) |
 | #78 | authz API placement in the platform API deployment, authz schema in the admission database, serving read availability bounded by the platform API deployment and admission database (§4.3), credential configuration and the default-Resource onboarding order (§6.1), F-1 operational facts (§5.3) |
