@@ -20,8 +20,10 @@ the [authorization design](../design/knowledge-platform-authorization.md).
 ## Consequences
 
 - Reader relations exist once, in GAM, written by the Source. The platform
-  writes none for such a Source, and a revocation in GAM holds at the platform's
-  next decision.
+  writes none for such a Source, so no copy has to catch up with a revocation:
+  it reaches the platform's decisions within GAM's own staleness bound, which
+  [#86](https://github.com/davidlinnnn/data-ingestion/issues/86) verifies (G5
+  of the authorization design).
 - GAM holds no relation for a Source, so `place` and `manage` are decided from
   the platform's own Resource record, the Source that registered the key.
   Admission then asks GAM nothing.

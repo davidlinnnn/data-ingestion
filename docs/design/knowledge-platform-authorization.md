@@ -96,6 +96,75 @@ its own space keys (path 1), and will not adopt a platform id.
 - §12 records a direction that is not adopted: limiting each agent application
   to some of a Source's Resources.
 
+Amended on 2026-11-14 (API review; user rulings the same day). An
+[independent review](../research/knowledge-platform-authz-api-review-2026-11-14.md)
+checked the authz API against SpiceDB, OpenFGA and AuthZEN, and against
+operation in the company cluster. No PEP had integrated with the API, so the
+wire changes below break no caller.
+[#204](https://github.com/davidlinnnn/data-ingestion/issues/204) builds the code
+changes.
+
+- **`unavailable` is `503`.** Over HTTP a decision that cannot be made is
+  `503 UNAVAILABLE`, an AIP-193 error that carries `trace_id`. `allow` and
+  `deny` stay `200`. Mesh telemetry sees status codes only, so while every
+  outcome was `200` an authorization outage read as full success. The
+  in-process interface does not change: it returns the three outcomes and never
+  raises.
+- **`list_resources` response.** Its `200` response no longer carries
+  `outcome`: the list is the answer, and an empty list is a normal result.
+  `check` keeps `outcome` as a string, which in a `200` is `allow` or `deny`.
+- **`trace_id`.** It is the trace id of the request's `traceparent` header, or
+  one the platform generates when the header is absent or invalid. The request
+  body no longer carries it. The convention covers the whole platform API and is
+  in the [admission specification](knowledge-platform-admission-spec.md) §4.
+- **Paging.** A page may hold fewer ids than the page size, or none; only a
+  missing `next_cursor` ends the list. A cursor is opaque, is valid only with
+  the same subject, action and actor, and may expire. A cursor the provider
+  cannot use is answered `400 INVALID_ARGUMENT`, and the caller starts again
+  from the first page; the allow-all provider never refuses one. The pages
+  together are the complete set of Resources on which `check` with the same
+  subject, action and actor allows, including access gained through nesting
+  inside the provider.
+- **PEP rule.** Any answer other than `200` is no decision, and the PEP fails
+  closed. It may repeat the call once, since both operations are safe to repeat;
+  a repeated list starts from the first page. A PEP forwards the `traceparent`
+  and `x-request-id` headers of the request it is serving.
+- **Freshness.** Q11 and §4.2 promise that a decision reflects every relation
+  committed before the call. A GAM provider cannot promise that: SpiceDB's
+  default consistency for checks and lookups is `minimize_latency`, and the
+  platform holds no freshness token for relations that a Source writes in GAM
+  itself (ADR-0013). For a GAM provider the guarantee is that a decision
+  reflects every relation committed more than `gam_max_staleness` before the
+  call; #56 accepts the value (G5). The allow-all provider and a provider the
+  platform writes to keep Q11 as written.
+- **User ids.** The subject of a user decision is the account id that the
+  company's authentication component extracts from the verified tSSO token. It
+  is not an email address (user, 2026-11-14), so the `@` and `.` that SpiceDB
+  object ids do not admit do not arise from that. #86 verifies the id against
+  SpiceDB's object id pattern and the object type GAM uses for a user (G14).
+- **Conditional results.** When a provider reports that a permission holds only
+  under a condition it cannot evaluate (a SpiceDB caveat), `check` is `deny`
+  and `list_resources` leaves the Resource out (G15).
+- **Schema file under GAM.** With a GAM provider the schema file (§3.1) is the
+  semantic reference and not what GAM evaluates: `maintainer` is the platform's
+  Resource record, and `read` is the Source's own permission on its own object
+  type. The conformance suite (§5.2) is stated as interface behaviour, with
+  fixtures per provider. `decided_by` is an opaque string that a PEP records
+  and never parses.
+- **Reach of a Source.** A Source names a Resource by its own key and its
+  credential supplies the Source (ADR-0013), so through the Source-facing API it
+  reaches only the Resources it registered. The 2026-11-13 consequence that a
+  Source may place into, rebind into or delete another Source's Resource no
+  longer arises there. That every authenticated user reads every Document of
+  the tenant still holds for the pilot.
+- Not changed: the two operations, the request shapes apart from `trace_id`,
+  the Decision's other fields and the allow-all provider's decisions.
+- The affected places below are marked. Deployment requirements go to #78, the
+  PEP rule to #127, the GAM questions to #86 (G4, G5, G14, G15), and rebind moves
+  from #114 to [#205](https://github.com/davidlinnnn/data-ingestion/issues/205).
+- A guide for PEP implementers and operators, with system and sequence diagrams
+  and the API as one current text, follows in a separate change.
+
 ## 1. Scope and owners
 
 | Topic | Owner |
@@ -124,7 +193,7 @@ its own space keys (path 1), and will not adopt a platform id.
 | Q8 | Two provider modes behind one interface and one model: (1) a GAM adapter for production (#86) and (2) the built-in provider for the pilot. Mode (3), where the platform defers decisions to a Source's own PDP, is **not opened**, neither as a live callback nor as a named synchronisation mode. A Source system that calls the Resource Service API programmatically is ordinary mode (2) use. A missing relation is always `deny`. Revisits the 2026-10-19 path-3 deferral with the research evidence: none of the surveyed search or RAG products documents a customer PDP callback for search filtering, and a black-box decision leaves the platform accountable for disclosure without the means to compute derived-product audiences, explain decisions or bound revocation. A live callback would be reconsidered only for a real case, limited to single-object reads of that Source's own documents that feed no derived product, with the external allow necessary but not sufficient. This refines #56's reconsideration conditions (handed to #56). |
 | Q9 | The pilot provider is a **PostgreSQL relation table** in a separate schema of the admission database. Deciding facts: the v1 model is one flat table with three relations and no hierarchy or groups, so a check is one indexed lookup; keeping relations in the admission database gives commit-time consistency with the binding and no new service, whereas SpiceDB needs its own deployment, PostgreSQL 15 or newer, commit-timestamp tracking for Watch and ZedToken handling for freshness (§5.3). The model's normative form is a SpiceDB schema file (§3.1); a provider-agnostic conformance suite verifies every provider. An allow-all mock is never selectable in pilot or production configuration; test fakes exist only in tests. After the MVP the built-in provider moves to SpiceDB (user decision, follow-up F-1). **Superseded for the pilot on 2026-11-13 by #113:** the pilot uses an allow-all provider, selectable only in pilot configuration, and no relation-table provider is built (note at the top). |
 | Q10 | Two operations: `check(subject, actor?, action, resource)` and `list_resources(subject, actor?, action, cursor?)`. `list_resources` is paginated from the first version, because adding pagination later would silently truncate existing callers. No batch check and no list-subjects in v1; both are additive later. |
-| Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. |
+| Q11 | A decision reflects all relations committed before the call. `valid_until` bounds reuse; the pilot default is no reuse (`valid_until = evaluated_at`), and #56 sets the maximum. No consistency parameter in v1; a GAM freshness token, if needed, is an optional field added later. **Restated on 2026-11-14** for a GAM provider: bounded staleness, not every committed relation; see the API review amendment at the top. |
 | Q12 | The PDP is exposed as an internal **authz API** in the platform API deployment, backed by the admission database. Admission calls it in-process; projection PEPs call it over the network (#55 Q1: projections never connect to the platform database). Only registered PEP service identities may call it. A failed or timed-out query yields `unavailable`. |
 | Q13 | Resource lifecycle API: create, list, get, delete (§6.1). `resource_id` is platform-generated and opaque; `name` is display text. The default Resource stays a Source registration field (spec §2). API only with curl examples; no CLI before #79. **Superseded on 2026-11-14** (ADR-0013): the Source supplies the key, and creation is a registration the Source may repeat; see the amendment at the top. |
 | Q14 | Relation management: readers and contributors only; the maintainer is fixed in v1 and a transfer is an operator procedure. Subject IDs are opaque and not checked against any directory. Writes are idempotent, effective on commit, and return a change record. Superseded on 2026-10-26 by #55: readers only in v1; contributors are deferred. |
@@ -285,6 +354,11 @@ INVALID_ARGUMENT`; both are AIP-193 errors. The platform API is FastAPI. Its
 OpenAPI document is served at `/openapi.json`; `/docs` and `/redoc` are not
 served, because those pages load scripts from another site.
 
+Changed on 2026-11-14 (API review amendment at the top): `unavailable` is
+`503` and no longer a `200`; the `list_resources` response carries no
+`outcome`; `trace_id` comes from the `traceparent` header and is no longer a
+body field. The paging rules and the rule for PEPs are in the same amendment.
+
 ### 4.2 Outcomes and validity
 
 | Situation | Outcome |
@@ -309,6 +383,11 @@ tenant check rejects it first (Q7).
   path, not on the next decision.
 - A provider with caches (GAM) must meet the same guarantee through a freshness
   token or a bounded staleness that #56 accepts (G5).
+
+Changed on 2026-11-14 (API review amendment at the top): for a GAM provider the
+first bullet reads "every relation committed more than `gam_max_staleness`
+before the call", because the platform holds no freshness token for relations
+a Source writes in GAM itself. A conditional result of the provider is `deny`.
 
 ### 4.3 Deployment and availability
 
@@ -401,8 +480,9 @@ are added. Every write endpoint requires a `manage_relations` credential.
 
 Changed on 2026-11-14 (ADR-0013): *Create* becomes a registration of the
 Source's own key, which the Source may repeat, and returns no generated id;
-`{id}` in the other rows is that key. The default-Resource onboarding no longer
-waits for a returned id. #114 fixes the endpoint's shape.
+`{id}` in the other rows is that key, and *List* returns the keys the caller's
+Source registered. The default-Resource onboarding no longer waits for a
+returned id. #114 fixes the endpoint's shape.
 
 ### 6.2 Relations
 
@@ -423,6 +503,10 @@ pilot provider has no `relation` record to write.
 - The maintainer relation has no endpoint in v1.
 
 ### 6.3 Documents in a Resource
+
+Rebind is built by
+[#205](https://github.com/davidlinnnn/data-ingestion/issues/205) (split out of
+#114 on 2026-11-14); its request names the new Resource by the Source's key.
 
 Superseded on 2026-10-26 by #55: v1 offers only Rebind. List and Evict, the
 listing exception, the scenario table and the spec amendment for a Document
@@ -524,8 +608,8 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | G1 | GAM can express or map the §3.1 model: `resource` with maintainer, reader; subjects user, source, client. `parent` inheritance, asked in the #31 checklist on #86, is no longer required in v1; nor, since #55 on 2026-10-26, is `contributor`, which a later additive change would add | Semantic-level compatibility | Compare against the schema file |
 | G2 | Service identities (Source, client) can be subjects, not only tSSO users | Placement checks use the Source; delegation checks the client. Since 2026-11-14 placement asks GAM nothing (ADR-0013), so only the client remains | #31 checklist on #86 |
 | G3 | A check distinguishes deny from error | Q2: an error must never read as deny or allow | p99 latency ≤ `authz_timeout` |
-| G4 | Lists the Resources a subject can read (LookupResources or equivalent), paginated | Search filtering; the Zanzibar paper defines no such API | Limit ≥ the largest number of Resources one user can read |
-| G5 | Freshness: a freshness token (`at_least_as_fresh`) or fully consistent reads, or a documented maximum staleness | Q11 revocation guarantee | `gam_max_staleness`; #56 decides what is acceptable |
+| G4 | Lists the Resources a subject can read (LookupResources or equivalent), paginated. Widened on 2026-11-14: LookupResources with cursor and limit, or CheckBulkPermissions over the platform's own Resource records; whether GAM limits or rate-limits either; how long a cursor stays valid | Search filtering; the Zanzibar paper defines no such API. LookupResources takes one object type, so the adapter makes one lookup per Source and drops keys the platform has no record of | Limit ≥ the largest number of Resources one user can read |
+| G5 | Freshness: a freshness token (`at_least_as_fresh`) or fully consistent reads, or a documented maximum staleness. Added on 2026-11-14: which consistency GAM applies to check and lookup, and whether a caller can choose `fully_consistent` | Q11 revocation guarantee. The platform holds no token for relations a Source writes in GAM itself, so only the staleness bound or a fully consistent read can serve | `gam_max_staleness`; #56 decides what is acceptable |
 | G6 | Path-1 writes made directly in GAM are attributable (who, when) and their audit is available to the platform | #53 Q12: authorization relations set by an authorized, attributable actor | — |
 | G7 | Change feed (Watch or changelog) | Optional; needed only if PEPs reuse decisions, which v1 does not | — |
 | G8 | Availability, SLA, outage behaviour, QPS limits | Authorization is an admission dependency; fail-closed on outage. Since 2026-11-14 admission's placement checks do not call GAM (ADR-0013); reads still depend on it | GAM QPS requirement (§8) |
@@ -534,6 +618,8 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | G11 | Tuple export and import | Migration between the built-in provider and GAM (#86 scope 4) | — |
 | G12 | A platform-generated Resource ID can be registered as a GAM object with its initial maintainer | Who creates Resource objects under path 1; #31 expects the GAM administrator. **Superseded on 2026-11-14** (ADR-0013): the platform registers no object. Instead, given a Source's object type and read permission, the platform can check and list on the objects that Source already keeps in GAM under its own keys | — |
 | G13 | (2026-11-14) The platform can define an object type and relations of its own in GAM | Where an application scope (§12) would be stored; not needed until §12 is adopted | — |
+| G14 | (2026-11-14) The object type GAM uses for a tSSO user, and that the account id from the tSSO token is the object id unchanged | A user id that is not a valid object id makes every check an engine error | SpiceDB object id pattern, at most 1024 bytes |
+| G15 | (2026-11-14) Whether any Source's schema in GAM uses caveats on the read permission | A conditional result is `deny` and is left out of lists; a Source relying on caveats would lose reads | — |
 
 ## 10. Validation owners
 
@@ -545,7 +631,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | Admission `503 AUTHZ_UNAVAILABLE` and the two placement checks | #99 |
 | Search filtering on `list_resources` | #76 with #55 |
 | End-to-end time from a revocation or rebind commit (eviction deferred in v1) to no disclosure, including products | #56 (with #55 for products) |
-| GAM G1–G13 | #86 |
+| GAM G1–G15 | #86 |
 | SpiceDB provider parity | F-1 |
 
 ## 11. Handoffs
@@ -557,8 +643,13 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2). In v1 only rebind applies; #55 deferred eviction |
 | #76 | `list_resources` for search, client registration and the E1 delegation rule, the `actor` field; search must not treat its index copy of `resource_id` as authority (E2) |
 | #78 | authz API placement in the platform API deployment, authz schema in the admission database, serving read availability bounded by the platform API deployment and admission database (§4.3), credential configuration and the default-Resource onboarding order (§6.1), F-1 operational facts (§5.3) |
-| #86 | G1–G13, the conformance suite, tuple format |
+| #86 | G1–G15, the conformance suite, tuple format |
 | #114 | (2026-11-14) Registration of the Source's own key in place of *Create*, and the Resource record's key (ADR-0013) |
+| #204 | (2026-11-14) The code of the API review amendment: `503` for `unavailable`, the `list_resources` response, the shared `trace_id` handling, a health route, decision metrics and log fields, a test fake that pages |
+| #205 | (2026-11-14) Rebind (§6.3), split out of #114; blocked by #126 and #114 |
+| #96, #194 | (2026-11-14) A declared `resources` value is the Source's key, turned into the full identifier by #114's function; `trace_id` from the shared handling of #204 |
+| #127 | (2026-11-14) The PEP rule of the API review amendment: no decision unless `200`, one repeat, `next_cursor` followed to the end, `traceparent` and `x-request-id` forwarded |
+| #78 | (2026-11-14) A `preStop` delay and a surge-one, unavailable-zero rollout for the platform API; HTTP probes on the health route, since a TCP probe passes on the sidecar alone; scraping of the decision metrics; mesh retry and outlier settings for a `503` from the authz API |
 | #87 | Aspects 1 (identity and delegation), 2 (access control, fail-closed), 11 (knowledge poisoning: contributor grants, `place` not inherited, eviction; in v1, after #55, only that a Source places solely into Resources it created) and 14 (decision and change records) |
 
 ## 12. Application scope: a direction, not adopted
