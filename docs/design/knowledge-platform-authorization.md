@@ -654,6 +654,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | G13 | (2026-11-14) The platform can define an object type and relations of its own in GAM | Where an application scope (§12) would be stored; not needed until §12 is adopted | — |
 | G14 | (2026-11-14) The object type GAM uses for a tSSO user, and that the account id from the tSSO token is the object id unchanged | A user id that is not a valid object id makes every check an engine error | SpiceDB object id pattern, at most 1024 bytes |
 | G15 | (2026-11-14) Whether any Source's schema in GAM uses caveats on the read permission | A conditional result is `deny` and is left out of lists; a Source relying on caveats would lose reads | — |
+| G16 | (2026-11-15) What GAM does when a Source deletes an object and later creates one with the same id: whether relations or cached results of the old object can apply to the new one | A reused key exposes the Documents still bound to it (ADR-0013); the Source's obligation not to reuse a key rests on this | — |
 
 ## 10. Validation owners
 
@@ -665,7 +666,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | Admission `503 AUTHZ_UNAVAILABLE` and the two placement checks | #99 |
 | Search filtering on `list_resources` | #76 with #55 |
 | End-to-end time from a revocation or rebind commit (eviction deferred in v1) to no disclosure, including products | #56 (with #55 for products) |
-| GAM G1–G15 | #86 |
+| GAM G1–G16 | #86 |
 | SpiceDB provider parity | F-1 |
 
 ## 11. Handoffs
@@ -677,7 +678,7 @@ API at 32 calls at once, is 22 ms on one machine, so `authz_timeout` stays
 | #55 | Eviction, like rebind, removes a Document from its Resource's products; the handoff channel must carry it (E2). In v1 only rebind applies; #55 deferred eviction |
 | #76 | `list_resources` for search, client registration and the E1 delegation rule, the `actor` field; search must not treat its index copy of `resource_id` as authority (E2) |
 | #78 | authz API placement in the platform API deployment, authz schema in the admission database, serving read availability bounded by the platform API deployment and admission database (§4.3), credential configuration and the default-Resource onboarding order (§6.1), F-1 operational facts (§5.3) |
-| #86 | G1–G15, the conformance suite, tuple format |
+| #86 | G1–G16, the conformance suite, tuple format |
 | #114 | (2026-11-14) Registration of the Source's own key in place of *Create*, and the Resource record's key (ADR-0013) |
 | #204 | (2026-11-14) The code of the API review amendment: `503` for `unavailable`, the `list_resources` response, the shared `trace_id` handling, a health route, decision metrics and log fields, a test fake that pages |
 | #205 | (2026-11-14) Rebind (§6.3), split out of #114; blocked by #126 and #114 |
