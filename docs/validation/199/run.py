@@ -1,7 +1,7 @@
 """#199: paper-pdf@1 end to end on the Temporal workflow, every paper with the real DEV models,
 then its enrichments scored against the gold and its requests and tokens tabled.
 
-    set -a; . ~/.config/kp-dev/anthropic.env; . ~/.config/kp-dev/openai.env; set +a
+    set -a; . ~/.config/kp-dev/anthropic.env; set +a
     scripts/heavy-lock 199-e2e -- env HF_HUB_OFFLINE=1 .venv/bin/python \\
         docs/validation/199/run.py OUT CORPUS_MANIFEST ARCHIVE D3_PACKAGE D3_PYTHON INDEX...
 
@@ -15,17 +15,22 @@ OUT/s3), Temporal 7314/7315, fake_admission 8161, VLM stand-in 8162, summary sta
 d3 server 8164. It refuses to start when any is taken.
 
 The workers load paper-pdf@1.yaml with two changes, asserted: the components of the methods that
-call a company service are the DEV profile's (openai/gpt-6-luna, anthropic/claude-sonnet-5-5,
-d3-mini on d3_server.py), and RELAXED. Each paper is started with start-request, admission's
-start, on one bucket for the run, one paper at a time. The corpus papers call gpt-6-luna and
-Sonnet 5.5 at the providers; `w2` is not a corpus paper (#129: only those may be sent), so it
-runs with the VLM stand-in (t5c's replay of the recordings) and the DEV summary fake.
+call a company service are the DEV profile's (anthropic/claude-sonnet-5-5 for the summary,
+d3-mini on d3_server.py) but for the VLM methods, which use VLM_COMPONENT, and RELAXED. Each
+paper is started with start-request, admission's start, on one bucket for the run, one paper at
+a time. The corpus papers call Sonnet 5.5 through Anthropic's OpenAI-compatible endpoint, for
+the VLM methods and the summary alike; `w2` is not a corpus paper (#129: only those may be
+sent), so it runs with the VLM stand-in (t5c's replay of the recordings) and the DEV summary
+fake. Before any corpus paper starts, the API key is checked on the models endpoint (free).
 
 A paper already in OUT/requests.json is not run again, so a scorer change reruns only the
 scoring: without a paper to run, no stack but the S3 stand-in starts. Writes papers/INDEX.json
 (counts, statuses, timings, receipts without content), tokens.json and tokens.md for the corpus
-papers run, and accuracy.json (score.py). The run stops starting papers once the requests'
-tokens priced at PRICE_PER_MTOK reach STOP_AT_USD.
+papers run, and accuracy.json (score.py), after the VLM methods ran alone on t4's targets of
+the corpus papers run (score.alone_answers; needs t4-seam-b's runs on the S3 stand-in of
+tests/s3/compose.yaml, port 9100). The run stops starting papers once the requests'
+tokens priced at PRICE_PER_MTOK reach STOP_AT_USD, and at once when a provider refuses the
+credentials (a broken environment, not a finding about the paper).
 """
 
 import asyncio
@@ -39,13 +44,17 @@ import signal
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from collections import Counter
 from datetime import UTC
 from pathlib import Path
 
+import httpx
 import yaml
 from temporalio.client import Client
+
+from kp_canonicalization.ports.inference import OpenAIChat
 
 HERE = Path(__file__).resolve().parent
 V80 = HERE.parent / "80"
@@ -69,6 +78,7 @@ import tokens  # noqa: E402
 S3_PORT, TEMPORAL_PORT, ADMISSION_PORT, VLM_PORT, SUMMARY_PORT, D3_PORT = (
     9199, 7314, 8161, 8162, 8163, 8164)  # fmt: skip
 t2.TEMPORAL, t2.ADMISSION = f"127.0.0.1:{TEMPORAL_PORT}", f"http://127.0.0.1:{ADMISSION_PORT}"
+t5c.D3_PORT = D3_PORT  # wait_for_d3 reads it
 t2.BASE_ENV.update(TEMPORAL_ADDRESS=t2.TEMPORAL, KP_ADMISSION_URL=t2.ADMISSION,
                    KP_S3_ENDPOINT=f"http://127.0.0.1:{S3_PORT}")  # fmt: skip
 RELEASED = t2.REPO / "src/kp_canonicalization/profiles/paper-pdf@1.yaml"
@@ -76,16 +86,19 @@ DEV = t2.REPO / "tests/profiles/paper-pdf-dev.yaml"
 # d3_server.py with --batch-size 1 runs one forward at a time: with 4 requests in flight the
 # 30 s deadline would time the server's queue. One request took at most 12 s in #161.
 RELAXED = {"d3_concurrency_per_document": 1}
-OPENAI, ANTHROPIC = "https://api.openai.com/v1", t5b.ANTHROPIC
-# USD per million input and output tokens, as t4-seam-b and t5b-seam-b priced them
-PRICE_PER_MTOK = {"vlm": (0.10, 0.50), "summary": (2.0, 10.0)}
+ANTHROPIC = t5b.ANTHROPIC
+# The user, 2026-11-15: Claude Sonnet 5.5 is the VLM candidate, in place of the DEV profile's
+# gpt-6-luna. Its endpoint ignores reasoning_effort; thinking is on, at the default effort high.
+VLM_COMPONENT = "anthropic/claude-sonnet-5-5"
+PRICE_PER_MTOK = (2.0, 10.0)  # Sonnet 5.5, USD per million input and output tokens
 STOP_AT_USD = 20.0
 W2 = "docs/research/pdf-core-w2-native-coverage-2026-10-20/corpus/arxiv_gradientdescent/pdf.pdf"
 VLM_METHODS = ("picture-interpretation", "formula", "code")
 
 
 def run_profile(out: Path) -> tuple[Path, dict]:
-    """paper-pdf@1 with the DEV components and RELAXED, and what differs from the released file."""
+    """paper-pdf@1 with the DEV components, VLM_COMPONENT and RELAXED, and what differs from the
+    released file."""
     released, dev = yaml.safe_load(RELEASED.read_text()), yaml.safe_load(DEV.read_text())
     assert released["methods"].keys() == dev["methods"].keys(), "method sets differ"
     assert RELAXED.keys() <= released["runtime"].keys()
@@ -93,8 +106,9 @@ def run_profile(out: Path) -> tuple[Path, dict]:
     differs: dict = {"components": {}, "runtime": {}}
     for name, method in profile["methods"].items():
         if any(c.startswith("company-") for c in method["components"]):
-            differs["components"][name] = [method["components"], dev["methods"][name]["components"]]
-            method["components"] = dev["methods"][name]["components"]
+            now = [VLM_COMPONENT] if name.partition("@")[0] in VLM_METHODS else dev["methods"][name]["components"]
+            differs["components"][name] = [method["components"], now]
+            method["components"] = now
     for key, value in RELAXED.items():
         differs["runtime"][key] = [released["runtime"][key], value]
         profile["runtime"][key] = value
@@ -121,15 +135,38 @@ def s3_up(out: Path) -> str:
 
 
 def priced(sent: list[dict]) -> float:
-    usd = 0.0
+    """USD of the provider requests; d3 runs locally."""
+    (into, out), usd = PRICE_PER_MTOK, 0.0
     for r in sent:
-        if r["method"].startswith("d3-check"):
-            continue
-        service = "summary" if r["method"].startswith("document-summary") else "vlm"
-        usage, (into, out) = r.get("usage") or {}, PRICE_PER_MTOK[service]
-        usd += ((usage.get("prompt_tokens") or 0) * into
-                + (usage.get("completion_tokens") or 0) * out) / 1e6  # fmt: skip
+        if not r["method"].startswith("d3-check"):
+            usage = r.get("usage") or {}
+            usd += ((usage.get("prompt_tokens") or 0) * into
+                    + (usage.get("completion_tokens") or 0) * out) / 1e6  # fmt: skip
     return usd
+
+
+def check_key() -> None:
+    """Refuse to start when the provider refuses the key: the models endpoint costs nothing."""
+    request = urllib.request.Request(f"{ANTHROPIC}/models/{VLM_COMPONENT.partition('/')[2]}", headers={
+        "x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"})  # fmt: skip
+    try:
+        urllib.request.urlopen(request, timeout=10).close()
+    except urllib.error.HTTPError as exc:
+        raise SystemExit(f"the provider refuses the API key: HTTP {exc.code}") from exc
+
+
+async def run_case(store, bucket: str, sha: str, data: bytes, request_id: str) -> tuple[int, dict, float]:
+    """t4-seam-b's run_case, but a workflow that ended failed has no result.json: start-request
+    exits 0 then too, and only failure.json is written."""
+    start = t2.start_input(sha, data, bucket, request_id)
+    begin = time.monotonic()
+    code, out = t2.start_request(bucket, start)
+    seconds = round(time.monotonic() - begin, 1)
+    if code != 0:
+        print(out, file=sys.stderr)
+    ref = f"requests/{request_id}/result.json"
+    found = code == 0 and await store.head(ref) is not None
+    return code, json.loads(await store.get(ref)) if found else {}, seconds
 
 
 async def stages(client: Client, request_id: str) -> dict:
@@ -169,8 +206,7 @@ async def observe(client, store, out: Path, index: str, request_id: str, code: i
     if await store.head(f"requests/{request_id}/failure.json") is not None:
         failure = json.loads(await store.get(f"requests/{request_id}/failure.json"))
         evidence["failure"] = {"stage": failure["stage"], "cause": failure["cause"],
-                               "reason": failure["error"]["reason"],
-                               "category": failure["error"]["metadata"].get("category")}  # fmt: skip
+                               "reason": failure["error"]["reason"], **failure["error"]["metadata"]}  # fmt: skip
     try:
         evidence["stages"] = await stages(client, request_id)
     except Exception as exc:  # a start that never reached the server
@@ -179,14 +215,19 @@ async def observe(client, store, out: Path, index: str, request_id: str, code: i
         return evidence
     inventory = json.loads(await store.get(result["inventory"]["ref"]))
     methods, _ = await t5c.judged(store, result)
-    found, record = await t5b.summary_of(store, result)
-    plan_key = found["enrichment"]["result_ref"].split("/")[3]
-    sections = json.loads(await store.get(f"documents/{result['request']['document_uid']}/items/"
-                                          f"{plan_key}/sections.json"))  # fmt: skip
-    (out / "summaries").mkdir(exist_ok=True)
-    (out / "summaries" / f"summary-{index}.json").write_text(json.dumps(
-        {"paper": index, "content": found["outcome"]["content"], "record": record,
-         "sections": sections}, indent=1, ensure_ascii=False))  # fmt: skip
+    try:
+        found, record = await t5b.summary_of(store, result)
+        plan_key = found["enrichment"]["result_ref"].split("/")[3]
+        sections = json.loads(await store.get(f"documents/{result['request']['document_uid']}/items/"
+                                              f"{plan_key}/sections.json"))  # fmt: skip
+    except (KeyError, ValueError) as exc:  # no summary enrichment or no sections.json: say so
+        summary = {"error": repr(exc)}
+    else:
+        summary = t5b.shape(found, record, sections)
+        (out / "summaries").mkdir(exist_ok=True)
+        (out / "summaries" / f"summary-{index}.json").write_text(json.dumps(
+            {"paper": index, "content": found["outcome"]["content"], "record": record,
+             "sections": sections}, indent=1, ensure_ascii=False))  # fmt: skip
     declared = result["profile"]
     evidence |= {
         "outcome": result["outcome"],
@@ -195,7 +236,7 @@ async def observe(client, store, out: Path, index: str, request_id: str, code: i
         "inventory_counts": result["inventory"]["counts"],
         "statuses": t4.per_method(result),
         "d3": methods,
-        "summary": t5b.shape(found, record, sections),
+        "summary": summary,
         "limitations": [limitation["code"] for limitation in result["limitations"]],
         "profile": {"id": declared["id"], "runtime_identity": declared["runtime_identity"],
                     "methods": {f"{m['id']}@{m['version']}": {"components": m["components"],
@@ -212,10 +253,37 @@ async def observe(client, store, out: Path, index: str, request_id: str, code: i
     return evidence
 
 
+GOLD = (  # globs under ARCHIVE: the gold and scorers score.py reads
+    f"{score.t3.OCR_GOLD}/round2/evaluator/*.json", f"{score.t3.OCR_GOLD}/round4-local-ocr/*",
+    f"{score.t3.OCR_GOLD}/round5-strict/*.py", f"{score.t3.OCR_GOLD}/round3-luna/*.py",
+    f"{score.t3.CODE_GOLD}/per-unit.*", f"{score.t3.CODE_GOLD}/metrics.py",
+    f"{score.t3.CODE_GOLD}/native-evidence/*.json",
+    f"{score.t3.TABLE_GOLD}/cell-matching-confirm/per-table-final.json",
+    f"{score.t3.TABLE_GOLD}/table/results/E0-v4.json", f"{score.t3.E0_JOBS}/*/document.json",
+)  # fmt: skip
+
+
+def hashes(out: Path, ran: dict, archive: Path, package: Path, profile: Path) -> dict:
+    """sha256 of what stays out of git: the papers, the gold, the d3 package's manifest, the
+    profile the workers loaded and the raw outputs under OUT."""
+    digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()  # noqa: E731
+    raw = [p for pattern in ("requests.json", "summaries/*.json", "judging/*")
+           for p in sorted(out.glob(pattern)) if p.is_file()]  # fmt: skip
+    return {
+        "papers": {i: {"file": Path(p["file"]).name if i != "w2" else W2, "sha256": p["sha256"]}
+                   for i, p in sorted(ran.items())},
+        "profile": {"file": profile.name, "sha256": digest(profile)},
+        "d3_package_manifest": digest(package / "MODEL_MANIFEST.json"),
+        "gold": {str(p.relative_to(archive)): digest(p) for pattern in GOLD
+                 for p in sorted(archive.glob(pattern)) if p.is_file()},
+        "outputs": {str(p.relative_to(out)): digest(p) for p in raw},
+    }  # fmt: skip
+
+
 def worker_env(real: bool, d3_env: dict) -> dict[str, dict]:
     """Per task queue, the variables of its worker: the providers, or the local stand-ins."""
     if real:
-        vlm = {"KP_VLM_BASE_URL": OPENAI, "KP_VLM_API_KEY": os.environ["OPENAI_API_KEY"]}
+        vlm = {"KP_VLM_BASE_URL": ANTHROPIC, "KP_VLM_API_KEY": os.environ["ANTHROPIC_API_KEY"]}
         summary = {"KP_SUMMARY_BASE_URL": ANTHROPIC,
                    "KP_SUMMARY_API_KEY": os.environ["ANTHROPIC_API_KEY"]}  # fmt: skip
     else:
@@ -242,6 +310,9 @@ async def main(argv: list[str]) -> int:
     bucket = state["bucket"]
     profile, differs = run_profile(out)
     corpus = {str(p["index"]): p for p in json.loads(manifest.read_text())["papers"]}
+    todo = [i for i in indices if i not in state["papers"]]
+    if any(i != "w2" for i in todo):
+        check_key()
 
     def paper_of(index: str) -> tuple[dict, bytes]:
         if index == "w2":
@@ -260,7 +331,6 @@ async def main(argv: list[str]) -> int:
     servers = []
     try:
         store = t2.store(bucket)
-        todo = [i for i in indices if i not in state["papers"]]
         client = d3_env = None
         real = None
         for index in todo:
@@ -310,17 +380,26 @@ async def main(argv: list[str]) -> int:
             sha = hashlib.sha256(data).hexdigest()
             await store.put_if_absent(f"custody/{sha}", data)
             request_id = f"req_{t2.RUN}_p{index}"
-            code, result, seconds = await t4.run_case(bucket, sha, data, request_id)
+            row = HERE / "papers" / f"{index}.json"
+            row.unlink(missing_ok=True)  # a row of an earlier run is not this run's
+            code, result, seconds = await run_case(store, bucket, sha, data, request_id)
+            # saved before observe(), so that an observe error never sends a paper twice
+            state["papers"][index] = {"request_id": request_id, "sha256": sha, "file": paper["file"],
+                                      "usd": round(priced(await t4.receipts(store, request_id)), 4)}  # fmt: skip
+            state_path.write_text(json.dumps(state, indent=2) + "\n")
             evidence = await observe(client, store, out, index, request_id, code, result, seconds)
             evidence |= {"paper": {k: paper[k] for k in ("index", "sha256", "pages")},
-                         "services": "providers" if real else "stand-ins",
+                         "bucket": bucket, "services": "providers" if real else "stand-ins",
                          "profile_differs_from_released": differs}  # fmt: skip
-            (HERE / "papers" / f"{index}.json").write_text(json.dumps(evidence, indent=2) + "\n")
-            state["papers"][index] = {"request_id": request_id, "sha256": sha, "usd": evidence["usd"],
-                                      "file": paper["file"]}  # fmt: skip
-            state_path.write_text(json.dumps(state, indent=2) + "\n")
+            row.write_text(json.dumps(evidence, indent=2) + "\n")
             print(index, json.dumps({k: evidence.get(k) for k in
                                      ("pass", "seconds", "outcome", "failure", "usd")}), flush=True)  # fmt: skip
+            failure = evidence.get("failure", {})
+            if failure.get("reason") == "INFERENCE_REQUEST_REJECTED" and failure.get("status") in ("401", "403"):
+                print(f"stop: the provider refused the credentials on paper {index}", flush=True)
+                del state["papers"][index]  # not the paper's fault: a rerun starts it again
+                state_path.write_text(json.dumps(state, indent=2) + "\n")
+                break
         t5c.stop([*workers.values(), *processes])
         workers, processes = {}, []
         for server in servers:
@@ -329,12 +408,19 @@ async def main(argv: list[str]) -> int:
 
         ran = {i: p for i, p in state["papers"].items() if i in indices}
         corpus_ids = {p["request_id"]: f"paper {i}" for i, p in ran.items() if i != "w2"}
-        found = tokens.report(await tokens.from_store(store, list(corpus_ids)))
-        (HERE / "tokens.json").write_text(json.dumps(found, indent=1) + "\n")
-        (HERE / "tokens.md").write_text(tokens.markdown(found, corpus_ids))
-        accuracy = await score.accuracy(store, ran, archive, out / "judging")
+        if corpus_ids:
+            found = tokens.report(await tokens.from_store(store, list(corpus_ids)))
+            (HERE / "tokens.json").write_text(json.dumps(found, indent=1) + "\n")
+            (HERE / "tokens.md").write_text(tokens.markdown(found, corpus_ids))
+        async with httpx.AsyncClient() as http:
+            chat = OpenAIChat(http, ANTHROPIC, os.environ["ANTHROPIC_API_KEY"],
+                              VLM_COMPONENT.partition("/")[2], 5, 600)  # fmt: skip
+            answered = await score.alone_answers(out, {int(i) for i in ran if i != "w2"}, profile, chat)
+        accuracy = await score.accuracy(store, ran, archive, out / "judging", answered)
         (HERE / "accuracy.json").write_text(json.dumps(accuracy, indent=1) + "\n")
         print(json.dumps(accuracy["summary"], indent=1), flush=True)
+        (HERE / "manifest.json").write_text(json.dumps(
+            hashes(out, ran, archive, package, profile), indent=1) + "\n")  # fmt: skip
     finally:
         t5c.stop([*workers.values(), *processes])
         for server in servers:

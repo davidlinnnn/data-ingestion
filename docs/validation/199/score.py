@@ -8,19 +8,24 @@ calls accuracy() with the S3 stand-in up; no paper text leaves OUT.
            pages, joined in inventory order, against the unit's source text with #84's
            metrics.compare. t3 ran the method on the unit's fixed region instead
   pictures t4's gold pictures matched to a picture-interpretation item as t4 matched them (page,
-           box overlap >= 0.5): chart values with t4's comparator in both views; a description
-           equal to t4's recorded one keeps t4's verdict, any other is judged blind
-  formulas t4's 46 sampled formulas, by item_id: a LaTeX equal to t4's recorded one (whitespace
-           aside) keeps t4's verdict, any other is judged blind
-  Every scored VLM item says whether its request body is one the method-alone runs sent
-  (recorded): the same request with another answer is the model's run-to-run variation.
+           box overlap >= 0.5): chart values with t4's comparator in both views, and descriptions
+  formulas t4's 46 sampled formulas, by item_id
 
-Blind judging: OUT/judging/sheets.json holds each pending item with the recorded and the
-workflow answer as A and B in a seeded order (key.json beside it), with the gold obligations or
-the formula crop; the judge writes OUT/judging/verdicts.json, {label: {"A", "B", "note"}}, by
-t4-accuracy's rules. accuracy() unblinds it into judgments.json here.
+The VLM methods ran alone (alone_answers): t4's targets, the very request bodies t4-seam-b's
+runs sent, to the workflow's VLM model through its transport, outside the workflow; answers in
+OUT/alone. Each scored VLM item has three answers: recorded (t4's gpt-6-luna answer, with t4's
+verdict), alone and workflow. An answer equal to the recorded one (whitespace aside) keeps t4's
+verdict, none is FAIL, any other is judged blind. Every item says whether the workflow sent the
+alone request body (same_request) and whether it is one the recordings hold (recorded): the
+same request with another answer is the model's run-to-run variation.
 
-    set -a; . ~/.config/kp-dev/anthropic.env; . ~/.config/kp-dev/openai.env; set +a
+Blind judging: OUT/judging/sheets.json holds each item with an answer to judge, its distinct
+answers and the recorded one (the control) as A, B, C in a seeded order (key.json beside it),
+with the gold obligations or the formula crop; the judge writes OUT/judging/verdicts.json,
+{label: {"A", "B", ..., "note"}}, by t4-accuracy's rules. accuracy() unblinds it into
+judgments.json here, each verdict under the sha256 of its answer, so a new answer is judged anew.
+
+    set -a; . ~/.config/kp-dev/anthropic.env; set +a
     .venv/bin/python docs/validation/199/score.py summary OUT SET_NAME N INDEX...
 
 runs t5b-accuracy's planted-error check unchanged on OUT/summaries (written by run.py); it writes
@@ -33,10 +38,18 @@ import importlib.util
 import json
 import random
 import re
+import statistics
 import sys
+import time
 from pathlib import Path
 
+import boto3
+from botocore.config import Config
+
 HERE = Path(__file__).resolve().parent
+# t4-seam-b's runs, on the shared S3 stand-in of tests/s3/compose.yaml
+SEAMB_S3 = {"endpoint_url": "http://127.0.0.1:9100", "aws_access_key_id": "kpdev",
+            "aws_secret_access_key": "kpdev-secret"}  # fmt: skip
 V80 = HERE.parent / "80"
 REPO = HERE.parents[2]
 FIXTURES = REPO / "tests/fixtures/vlm"
@@ -83,15 +96,80 @@ async def outputs(store, request_id: str) -> dict:
     last = {}
     for key in keys:
         receipt = json.loads(await store.get(key))
-        last[receipt["item_id"]] = receipt
+        if not receipt["method"].startswith(("document-summary", "d3-check")):
+            last[receipt["item_id"]] = receipt
     return {"result": result, "items": items, "records": records, "provider": provider,
             "enrichments": {e["item_id"]: e for e in result["enrichments"]},
-            "recorded": {item_id: recorded(r) for item_id, r in last.items()
-                         if not r["method"].startswith(("document-summary", "d3-check"))}}  # fmt: skip
+            "recorded": {item_id: recorded(r) for item_id, r in last.items()},
+            "digests": {item_id: r["params_digest"] for item_id, r in last.items()}}  # fmt: skip
 
 
 def alone(name: str) -> dict:
     return json.loads((V80 / name).read_text())
+
+
+def seamb_store(bucket: str):
+    from kp_canonicalization.ports.object_store import S3ObjectStore
+
+    client = boto3.client("s3", region_name="us-east-1", config=Config(s3={"addressing_style": "path"}),
+                          **SEAMB_S3)  # fmt: skip
+    return S3ObjectStore(client, bucket)
+
+
+async def seamb_inputs(t: dict) -> list[bytes]:
+    store = seamb_store(t4.runs()[t["paper"]][0])
+    return [await store.get(source["ref"]) for source in t["item"]["input_refs"]]
+
+
+async def alone_answers(out: Path, papers: set[int], profile: Path, chat) -> dict[str, dict]:
+    """OUT/alone/<label>.json for t4's targets in the papers given, each sent once and kept: the
+    method's request on t4's item and inputs through chat, the workflow's VLM transport, with
+    up to 3 tries on ServiceUnavailable; parsed with the method's parse."""
+    from kp_canonicalization.identity import canonical_json
+    from kp_canonicalization.methods import InvalidOutput
+    from kp_canonicalization.ports.inference import ServiceUnavailable
+    from kp_canonicalization.profile import load_profile
+
+    methods = load_profile(profile).methods
+    folder = out / "alone"
+    folder.mkdir(parents=True, exist_ok=True)
+    targets = [t for t in json.loads(t4.TARGETS.read_text())
+               if t["paper"] in papers and t.get("matched", True)]  # fmt: skip
+    limit = asyncio.Semaphore(4)
+
+    async def one(t: dict) -> None:
+        path = folder / f"{t['label']}.json"
+        if path.exists():
+            return
+        item, inputs = t["item"], await seamb_inputs(t)
+        package = methods[item["method"]].package
+        request = package.request(item, inputs)
+        found: dict = {"label": t["label"], "params_digest": sha(canonical_json(request))}
+        async with limit:
+            for attempt in range(3):
+                begin = time.perf_counter()
+                try:
+                    answer = await chat.complete(request)
+                    break
+                except ServiceUnavailable as exc:
+                    found["error"] = exc.reason
+                    await asyncio.sleep(5 * (attempt + 1))
+            else:
+                path.write_text(json.dumps(found | {"parsed": {"outcome": "unavailable"}}, indent=1) + "\n")
+                return
+        found |= {"model": answer.model, "elapsed_s": round(time.perf_counter() - begin, 1),
+                  "finish_reason": json.loads(answer.body)["choices"][0].get("finish_reason"),
+                  "usage": answer.usage, "content": answer.content}  # fmt: skip
+        try:
+            output = package.parse(item, inputs, answer.content or "")
+            found["parsed"] = {"outcome": output.outcome, "content": output.content}
+        except InvalidOutput as exc:
+            found["parsed"] = {"outcome": "invalid", "reason": exc.reason}
+        path.write_text(json.dumps(found, indent=1, ensure_ascii=False) + "\n")
+        print("alone", t["label"], found["elapsed_s"], found["parsed"]["outcome"], flush=True)
+
+    await asyncio.gather(*(one(t) for t in targets))
+    return {p.stem: json.loads(p.read_text()) for p in sorted(folder.glob("*.json"))}
 
 
 def score_code(archive: Path, by_sha: dict[str, dict]) -> dict:
@@ -124,8 +202,8 @@ def score_code(archive: Path, by_sha: dict[str, dict]) -> dict:
                                                       "inventory_covers_region")}})  # fmt: skip
     cers = [r["cer"] for r in rows if r["cer"] is not None]
     return {"units": len(rows), "of": len(method_alone),
-            "cer_median": sorted(cers)[len(cers) // 2] if cers else None,
-            "cer_median_alone": sorted(r["alone"]["cer"] for r in rows)[len(rows) // 2] if rows else None,
+            "cer_median": statistics.median(cers) if cers else None,
+            "cer_median_alone": statistics.median(r["alone"]["cer"] for r in rows) if rows else None,
             "operators_exact": sum(r["operators_exact"] for r in rows),
             "numbers_exact": sum(r["numbers_exact"] for r in rows),
             "operators_exact_alone": sum(r["alone"]["operators_exact"] for r in rows),
@@ -146,6 +224,30 @@ def same(a: str | None, b: str | None) -> bool:
     return a is not None and b is not None and re.sub(r"\s+", "", a) == re.sub(r"\s+", "", b)
 
 
+def answer_sha(text: str) -> str:
+    return sha(re.sub(r"\s+", "", text).encode())
+
+
+def verdicts(label: str, answers: dict[str, dict | None], text: str, t4_verdict: str,
+             judgments: dict) -> tuple[dict[str, str | None], list[tuple[str, dict]]]:  # fmt: skip
+    """Per role ("alone", "workflow") its verdict: FAIL without an answer, t4's verdict for the
+    recorded answer's text, else this run's verdict on that answer (None: not judged yet); and
+    the distinct answers still to judge, as (sha256, answer)."""
+    judged = judgments.get(label, {}).get("verdicts", {})
+    found, pending = {}, {}
+    for role in ("alone", "workflow"):
+        answer = answers[role]
+        if answer is None or not answer.get(text):
+            found[role] = "FAIL"
+        elif same(answer[text], answers["recorded"][text]):
+            found[role] = t4_verdict
+        else:
+            found[role] = judged.get(answer_sha(answer[text]))
+            if found[role] is None:
+                pending.setdefault(answer_sha(answer[text]), answer)
+    return found, list(pending.items())
+
+
 def chart_scorer(gold_root: Path):
     """t4-accuracy's numeric(): PASS states of a chart against #84's frozen comparator."""
     sys.path[:0] = [str(gold_root / "round5-strict"), str(gold_root / "round3-luna"), str(gold_root)]
@@ -164,9 +266,10 @@ def chart_scorer(gold_root: Path):
     return golds, numeric
 
 
-async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path) -> dict:
-    """ran: {index: {"request_id", "sha256", ...}} of the papers run; the scores and the sheets
-    of the answers still to judge."""
+async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path,
+                   answered: dict[str, dict]) -> dict:  # fmt: skip
+    """ran: {index: {"request_id", "sha256", ...}} of the papers run, answered: alone_answers();
+    the scores and the sheets of the answers still to judge."""
     papers = {}
     for index, paper in ran.items():
         if await store.head(f"requests/{paper['request_id']}/result.json") is not None:
@@ -190,86 +293,100 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path) ->
     t4_charts = {c["gold_index"]: c for c in t4_evidence["charts"]}
     judgments = unblind(judging)
     pending, charts, descriptions, formulas = [], [], [], []
-    targets = json.loads(t4.TARGETS.read_text())
-    for t in targets:
+    for t in json.loads(t4.TARGETS.read_text()):
         paper = papers.get(str(t["paper"]))
         if paper is None or (t["kind"] == "picture" and not t["matched"]):
             continue
+        by_alone = answered.get(t["label"], {})
+        content = by_alone.get("parsed", {}).get("content")
         if t["kind"] == "picture":
             index, box = t["gold_index"], crops[t["gold_index"]]["crop"]["mapping"]["native_bbox"]
             pictures = [i for i in paper["items"] if i["method"] == "picture-interpretation"
                         and i["page"] == golds[index]["physical_page"]]  # fmt: skip
             item = max(pictures, key=lambda i: t4.iou(i["bbox"], box), default=None)
-            if item is None or t4.iou(item["bbox"], box) < 0.5:
-                descriptions.append({"gold_index": index, "label": t["label"], "matched": False})
-                continue
-            ours = {f: paper["enrichments"][f"{item['item_id']}/{f}"]["content"]
-                    for f in ("description", "figure_type", "chart_values")}  # fmt: skip
-            row = {"gold_index": index, "label": t["label"], "matched": True,
-                   "recorded_request": paper["recorded"].get(item["item_id"]),
-                   "same_answer": same(ours["description"], t["luna"]["description"])}  # fmt: skip
+            if item is not None and t4.iou(item["bbox"], box) < 0.5:
+                item = None
+            fields = ("description", "figure_type", "chart_values")
+            ours = ({f: paper["enrichments"][f"{item['item_id']}/{f}"]["content"] for f in fields}
+                    if item else {f: None for f in fields})  # fmt: skip
+            answers = {"recorded": {f: t["luna"][f] for f in fields[:2]},
+                       "alone": {f: content[f] for f in fields[:2]} if content else None,
+                       "workflow": {f: ours[f] for f in fields[:2]} if item else None}  # fmt: skip
+            found, todo = verdicts(t["label"], answers, "description", t4_judged[t["label"]]["luna"],
+                                   judgments)  # fmt: skip
+            row = {"gold_index": index, "label": t["label"], "matched": item is not None,
+                   "verdict": found["workflow"], "alone": found["alone"],
+                   "recorded": t4_judged[t["label"]]["luna"]}  # fmt: skip
+            if item:
+                row |= {"same_request": paper["digests"].get(item["item_id"]) == by_alone.get("params_digest"),
+                        "recorded_request": paper["recorded"].get(item["item_id"]),
+                        "same_answer": same(ours["description"], (content or {}).get("description")),
+                        "status": {f: paper["enrichments"][f"{item['item_id']}/{f}"]["status_reason"]
+                                   for f in ("description", "chart_values")}}  # fmt: skip
             if golds[index].get("numeric_points"):
+                values_alone = (content or {}).get("chart_values")
                 charts.append({"gold_index": index, "points": golds[index]["numeric_points"],
                                "formal": numeric(ours["chart_values"], index, False),
                                "diagnosis": numeric(ours["chart_values"], index, True),
-                               "formal_alone": t4_charts[index]["luna_formal"],
-                               "diagnosis_alone": t4_charts[index]["luna_diagnosis"],
-                               "recorded_request": row["recorded_request"]})  # fmt: skip
-            row["alone"] = t4_judged[t["label"]]["luna"]
-            row["verdict"] = row["alone"] if row["same_answer"] else judgments.get(t["label"], {}).get("workflow")
-            if row["verdict"] is None:
+                               "formal_alone": numeric(values_alone, index, False),
+                               "diagnosis_alone": numeric(values_alone, index, True),
+                               "formal_recorded": t4_charts[index]["luna_formal"],
+                               "diagnosis_recorded": t4_charts[index]["luna_diagnosis"],
+                               "same_request": row.get("same_request")})  # fmt: skip
+            if todo:
                 pending.append({"label": t["label"], "kind": "picture", "gold_index": index,
-                                "recorded": {"description": t["luna"]["description"],
-                                             "figure_type": t["luna"]["figure_type"]},
-                                "workflow": {"description": ours["description"],
-                                             "figure_type": ours["figure_type"]}})  # fmt: skip
+                                "recorded": answers["recorded"], "answers": todo})  # fmt: skip
             descriptions.append(row)
         else:
             e = paper["enrichments"].get(t["item"]["item_id"])
-            if e is None:
-                formulas.append({"label": t["label"], "found": False})
-                continue
-            row = {"label": t["label"], "paper": t["paper"], "found": True,
-                   "recorded_request": paper["recorded"].get(t["item"]["item_id"]),
-                   "same_answer": same(e["content"], t["luna"]["latex"]),
-                   "status": [e["status"], e["status_reason"]],
-                   "status_alone": [t["luna"]["status"], t["luna"]["status_reason"]],
-                   "d3": {k: e["signals"].get("d3", {}).get(k) for k in ("score", "p", "t_d", "state")},
-                   "alone": t4_judged[t["label"]]["luna"]}  # fmt: skip
-            row["verdict"] = row["alone"] if row["same_answer"] else judgments.get(t["label"], {}).get("workflow")
-            if row["verdict"] is None:
-                item = next(i for i in paper["items"] if i["item_id"] == t["item"]["item_id"])
-                pending.append({"label": t["label"], "kind": "formula", "item": item,
-                                "recorded": {"latex": t["luna"]["latex"]},
-                                "workflow": {"latex": e["content"]}})  # fmt: skip
+            answers = {"recorded": {"latex": t["luna"]["latex"]},
+                       "alone": {"latex": content} if content else None,
+                       "workflow": {"latex": e["content"]} if e else None}  # fmt: skip
+            found, todo = verdicts(t["label"], answers, "latex", t4_judged[t["label"]]["luna"], judgments)
+            row = {"label": t["label"], "paper": t["paper"], "found": e is not None,
+                   "verdict": found["workflow"], "alone": found["alone"],
+                   "recorded": t4_judged[t["label"]]["luna"]}  # fmt: skip
+            if e is not None:
+                row |= {"same_request": paper["digests"].get(e["item_id"]) == by_alone.get("params_digest"),
+                        "recorded_request": paper["recorded"].get(e["item_id"]),
+                        "same_answer": same(e["content"], content),
+                        "status": [e["status"], e["status_reason"]],
+                        "status_recorded": [t["luna"]["status"], t["luna"]["status_reason"]],
+                        "d3": {k: e["signals"].get("d3", {}).get(k) for k in ("score", "p", "t_d", "state")}}  # fmt: skip
+            if todo:
+                pending.append({"label": t["label"], "kind": "formula", "t": t,
+                                "recorded": answers["recorded"], "answers": todo})  # fmt: skip
             formulas.append(row)
-    await write_sheets(store, judging, pending, golds)
+    await write_sheets(judging, pending, golds, archive)
 
     def passed(rows: list[dict], key: str) -> int:
         return sum(r.get(key) in PASSES for r in rows)
 
+    def counts(rows: list[dict]) -> dict:
+        return {"pass": passed(rows, "verdict"), "pass_alone": passed(rows, "alone"),
+                "pass_recorded": passed(rows, "recorded"),
+                "not_judged": sum(r["verdict"] is None or r["alone"] is None for r in rows),
+                "same_answer": sum(r.get("same_answer", False) for r in rows),
+                "same_request": sum(r.get("same_request", False) for r in rows)}  # fmt: skip
+
     code = score_code(archive, by_sha)
-    judged = [judgments[r["label"]] for r in descriptions + formulas if r.get("label") in judgments]
+    control = [j for j in judgments.values() if j.get("control")]
     return {
         "summary": {
             "picture_ocr": {k: ocr[k] for k in ("items", "of", "images", "literal_pass", "alone")},
             "code": {k: v for k, v in code.items() if k != "rows"},
             "table_status": {k: tables[k] for k in ("tables", "of", "identical", "alone")},
             "charts": {"images": len(charts), "points": sum(c["points"] for c in charts),
-                       **{k: sum(c[k] for c in charts) for k in ("formal", "diagnosis",
-                                                                 "formal_alone", "diagnosis_alone")}},
-            "descriptions": {"matched": sum(r["matched"] for r in descriptions),
-                             "pass": passed(descriptions, "verdict"),
-                             "pass_alone": passed(descriptions, "alone"),
-                             "same_answer": sum(r.get("same_answer", False) for r in descriptions)},
-            "formulas": {"found": sum(r["found"] for r in formulas),
-                         "pass": passed(formulas, "verdict"), "pass_alone": passed(formulas, "alone"),
-                         "same_answer": sum(r.get("same_answer", False) for r in formulas),
+                       **{k: sum(c[k] for c in charts) for k in (
+                           "formal", "diagnosis", "formal_alone", "diagnosis_alone",
+                           "formal_recorded", "diagnosis_recorded")}},  # fmt: skip
+            "descriptions": {"matched": sum(r["matched"] for r in descriptions), **counts(descriptions)},
+            "formulas": {"found": sum(r["found"] for r in formulas), **counts(formulas),
                          "disputed": sum(r.get("status", [None])[0] == "disputed" for r in formulas),
                          "disputed_and_wrong": sum(r.get("status", [None])[0] == "disputed"
-                                                   and r.get("verdict") == "FAIL" for r in formulas)},
-            "judge_control": {"judged": len(judged),
-                              "agrees_with_t4": sum(j["recorded"] == j["recorded_t4"] for j in judged)},
+                                                   and r["verdict"] == "FAIL" for r in formulas)},
+            "judge_control": {"judged": len(control),
+                              "agrees_with_t4": sum(j["control"] == j["recorded_t4"] for j in control)},
             "pending_judgments": len(pending),
         },  # fmt: skip
         "picture_ocr": ocr, "code": code, "table_status": tables, "charts": charts,
@@ -277,41 +394,56 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path) ->
     }  # fmt: skip
 
 
-async def write_sheets(store, judging: Path, pending: list[dict], golds: dict) -> None:
-    """The blind sheets of the pending items, the key to unblind them beside."""
+async def write_sheets(judging: Path, pending: list[dict], golds: dict, archive: Path) -> None:
+    """The blind sheets of the pending items, each with its image (the gold crop of a picture,
+    the formula crop t4 judged), and the key to unblind them beside: per letter the sha256 of
+    its answer, or "recorded"."""
     from kp_canonicalization.methods.formula import _crop
 
     judging.mkdir(parents=True, exist_ok=True)
     sheets, key = [], {}
     for p in pending:
-        order = ["recorded", "workflow"]
-        random.Random(f"{p['label']} 199").shuffle(order)
-        key[p["label"]] = {"A": order[0], "B": order[1]}
-        sheet = {"label": p["label"], "kind": p["kind"], "A": p[order[0]], "B": p[order[1]]}
+        shown = [("recorded", p["recorded"]), *p["answers"]]
+        random.Random(f"{p['label']} 199").shuffle(shown)
+        letters = "ABCDEFGH"[: len(shown)]
+        key[p["label"]] = {letter: name for letter, (name, _) in zip(letters, shown, strict=True)}
+        sheet = {"label": p["label"], "kind": p["kind"],
+                 **{letter: answer for letter, (_, answer) in zip(letters, shown, strict=True)}}  # fmt: skip
+        image = judging / f"{p['label']}.png"
         if p["kind"] == "picture":
-            sheet |= {"gold_index": p["gold_index"],
-                      "obligations": golds[p["gold_index"]]["description_obligations"]}  # fmt: skip
+            gold = golds[p["gold_index"]]
+            image.write_bytes((archive / gold["input_asset"]).read_bytes())
+            sheet |= {"gold_index": p["gold_index"], "obligations": gold["description_obligations"]}
         else:
-            inputs = [await store.get(s["ref"]) for s in p["item"]["input_refs"]]
-            (judging / f"{p['label']}.png").write_bytes(_crop(p["item"], inputs))
-            sheet["crop"] = f"{p['label']}.png"
+            image.write_bytes(_crop(p["t"]["item"], await seamb_inputs(p["t"])))
+        sheet["image"] = image.name
         sheets.append(sheet)
     (judging / "sheets.json").write_text(json.dumps(sheets, indent=2, ensure_ascii=False) + "\n")
     (judging / "key.json").write_text(json.dumps(key, indent=2) + "\n")
 
 
 def unblind(judging: Path) -> dict:
-    """judgments.json with the verdicts of judging/verdicts.json added, unblinded by its key; each
-    {"workflow", "recorded", "recorded_t4", "note"}."""
+    """judgments.json with the verdicts of judging/verdicts.json added, unblinded by its key;
+    each {"verdicts": {answer sha256: verdict}, "control": the verdict on the recorded answer,
+    "recorded_t4": t4's verdict on it, "note"}."""
     judgments = json.loads(JUDGMENTS.read_text()) if JUDGMENTS.exists() else {}
     if (judging / "verdicts.json").exists():
         key = json.loads((judging / "key.json").read_text())
         t4_judged = json.loads(t4.JUDGMENTS.read_text())
         for label, verdict in json.loads((judging / "verdicts.json").read_text()).items():
-            if label in key:
-                judgments[label] = {key[label]["A"]: verdict["A"], key[label]["B"]: verdict["B"],
-                                    "recorded_t4": t4_judged[label]["luna"], "note": verdict.get("note")}  # fmt: skip
+            if label not in key:
+                continue
+            entry = judgments.setdefault(label, {"verdicts": {}})
+            for letter, name in key[label].items():
+                if name == "recorded":
+                    entry["control"] = verdict[letter]
+                else:
+                    entry["verdicts"][name] = verdict[letter]
+            entry |= {"recorded_t4": t4_judged[label]["luna"], "note": verdict.get("note")}
         JUDGMENTS.write_text(json.dumps(judgments, indent=2, sort_keys=True) + "\n")
+        # merged: the next sheets get a new key, which these letters do not follow
+        merged = len(list(judging.glob("verdicts-*.json")))
+        (judging / "verdicts.json").rename(judging / f"verdicts-{merged + 1}.json")
     return judgments
 
 
