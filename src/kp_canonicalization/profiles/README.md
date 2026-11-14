@@ -137,6 +137,18 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
 A patch changes shared code or logging only. CI rule 3 refuses method changes, and a `runtime` value
 is in the released file, so a new value is a new version.
 
+**Where only images built from the default branch may go to production** (the pilot's target
+environment, #137, stated on 2026-11-14), an image built from a release branch cannot be deployed
+there, and step 1 becomes:
+
+- While `dev` still loads `paper-pdf@<N>`, the patch is one PR into `dev`, and the image built
+  from it is the patch build. Steps 2 to 5 apply unchanged. When a newer file exists, the worker
+  is started with `--profile` naming the `<N>` file. No method can have changed: `dev` would no
+  longer load the file.
+- Once a method's `VERSION` has risen on `dev`, `paper-pdf@<N>` cannot be patched on its own. The
+  fix ships with `paper-pdf@<N+1>`: adopt it, then retire `<N>`. This gap lasts from the merge of
+  `<N+1>` to its adoption, so merge a new version when its adoption is near.
+
 1. Branch from `release/paper-pdf-<N>`, as `patch/paper-pdf-<N>-<issue>-<slug>`, and open one PR
    back into it ([branching](../../../docs/agents/branching.md)). Open a second PR that carries the same fix
    into `dev`, or the next version ships without it.
