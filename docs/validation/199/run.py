@@ -226,7 +226,8 @@ async def observe(client, store, out: Path, index: str, request_id: str, code: i
         summary = t5b.shape(found, record, sections)
         (out / "summaries").mkdir(exist_ok=True)
         (out / "summaries" / f"summary-{index}.json").write_text(json.dumps(
-            {"paper": index, "content": found["outcome"]["content"], "record": record,
+            {"paper": int(index) if index.isdigit() else index,  # t5b-accuracy keys papers by int
+             "content": found["outcome"]["content"], "record": record,
              "sections": sections}, indent=1, ensure_ascii=False))  # fmt: skip
     declared = result["profile"]
     evidence |= {

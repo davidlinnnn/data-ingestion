@@ -28,14 +28,15 @@ judgments.json here, each verdict under the sha256 of its answer, so a new answe
     set -a; . ~/.config/kp-dev/anthropic.env; set +a
     .venv/bin/python docs/validation/199/score.py summary OUT SET_NAME N INDEX...
 
-runs t5b-accuracy's planted-error check unchanged on OUT/summaries (written by run.py); it writes
-evidence-SET_NAME.json here.
+runs t5b-accuracy's planted-error check on OUT/summaries (written by run.py), unchanged but for
+its planter when PLANTER is set; it writes evidence-SET_NAME.json here.
 """
 
 import asyncio
 import hashlib
 import importlib.util
 import json
+import os
 import random
 import re
 import statistics
@@ -55,6 +56,9 @@ REPO = HERE.parents[2]
 FIXTURES = REPO / "tests/fixtures/vlm"
 JUDGMENTS = HERE / "judgments.json"
 PASSES = ("PASS", "PASS_MEANING_SLICE")
+# t5b-accuracy plants its errors with gpt-6-luna, whose DEV key expired (2026-11-15): Sonnet 5.5,
+# the judge's model, plants instead. None runs t5b-accuracy unchanged.
+PLANTER = "claude-sonnet-5-5"
 
 
 def load(name: str, path: Path):
@@ -248,6 +252,15 @@ def verdicts(label: str, answers: dict[str, dict | None], text: str, t4_verdict:
     return found, list(pending.items())
 
 
+def swapped(values: list | None) -> list:
+    """x and category exchanged where both are strings: a label-only view that explains a
+    difference (t4's diagnosis view maps gpt-6-luna's label layout, Sonnet 5.5 can put the two
+    labels the other way round); it replaces neither of t4's views."""
+    return [p | {"x": p["category"], "category": p["x"]}
+            if isinstance(p.get("x"), str) and isinstance(p.get("category"), str) else p
+            for p in values or []]  # fmt: skip
+
+
 def chart_scorer(gold_root: Path):
     """t4-accuracy's numeric(): PASS states of a chart against #84's frozen comparator."""
     sys.path[:0] = [str(gold_root / "round5-strict"), str(gold_root / "round3-luna"), str(gold_root)]
@@ -332,6 +345,8 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path,
                                "diagnosis_alone": numeric(values_alone, index, True),
                                "formal_recorded": t4_charts[index]["luna_formal"],
                                "diagnosis_recorded": t4_charts[index]["luna_diagnosis"],
+                               "diagnosis_swapped": numeric(swapped(ours["chart_values"]), index, True),
+                               "diagnosis_swapped_alone": numeric(swapped(values_alone), index, True),
                                "same_request": row.get("same_request")})  # fmt: skip
             if todo:
                 pending.append({"label": t["label"], "kind": "picture", "gold_index": index,
@@ -379,7 +394,8 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path,
             "charts": {"images": len(charts), "points": sum(c["points"] for c in charts),
                        **{k: sum(c[k] for c in charts) for k in (
                            "formal", "diagnosis", "formal_alone", "diagnosis_alone",
-                           "formal_recorded", "diagnosis_recorded")}},  # fmt: skip
+                           "formal_recorded", "diagnosis_recorded", "diagnosis_swapped",
+                           "diagnosis_swapped_alone")}},  # fmt: skip
             "descriptions": {"matched": sum(r["matched"] for r in descriptions), **counts(descriptions)},
             "formulas": {"found": sum(r["found"] for r in formulas), **counts(formulas),
                          "disputed": sum(r.get("status", [None])[0] == "disputed" for r in formulas),
@@ -451,7 +467,20 @@ async def summary_check(argv: list[str]) -> int:
     t5b = load("t5b_accuracy", V80 / "t5b-accuracy/run.py")
     t5b.HERE = HERE  # its evidence goes here, not into #155's folder
     out, name, rest = Path(argv[0]).expanduser(), argv[1], argv[2:]
-    return await t5b.main([str(out / "summaries"), name, *rest])
+    if PLANTER:
+        chat = t5b.OpenAIChat
+
+        def planter(http, base_url, api_key, model, connect_s, total_s):
+            if model == "gpt-6-luna":
+                base_url, api_key, model = "https://api.anthropic.com/v1", os.environ["ANTHROPIC_API_KEY"], PLANTER
+            return chat(http, base_url, api_key, model, connect_s, total_s)
+
+        t5b.OpenAIChat = planter
+    code = await t5b.main([str(out / "summaries"), name, *rest])
+    evidence = HERE / f"evidence-{name}.json"
+    if PLANTER and evidence.exists():
+        evidence.write_text(json.dumps(json.loads(evidence.read_text()) | {"planter": PLANTER}, indent=2) + "\n")
+    return code
 
 
 if __name__ == "__main__":
