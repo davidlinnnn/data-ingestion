@@ -419,19 +419,7 @@ sequenceDiagram
 
 ## 4. API 規格
 
-本節是 authz API 的契約。#204 完成後，機器可讀的版本在服務的 `/openapi.json`；在那之前，它描述的是舊的格式。
-
-**目前 `dev` 上的程式（#113）和本節有五處不同，由 #204 改成本節的形式：**
-
-| 項目 | 目前的程式 | 本節（#204 之後） |
-|---|---|---|
-| 無法判定 | `200`，`outcome` 是 `unavailable` | `503` |
-| `list_resources` 的回應 | 帶 `outcome: "allow"` | 不帶 `outcome` |
-| `trace_id` | request body 的必填欄位 | 取自 `traceparent` header，body 不帶 |
-| `X-Trace-Id` header | 回應沒有 | 每個回應都帶 |
-| `400`、`401` 的錯誤 body | 沒有 `trace_id` | 帶 `trace_id` |
-
-所以照本節的範例呼叫目前的 `dev` 會得到 `400`：`trace_id` 還是 body 的必填欄位。目前還沒有讀取端接上，這些改動不影響任何呼叫方。
+本節是 authz API 的契約，機器可讀的版本在服務的 `/openapi.json`。
 
 ### 4.1 通則
 
@@ -725,13 +713,13 @@ while True:
 
 `trace_id` 和 `request_id`（`req_…`）不同：前者識別一次呼叫鏈，後者是平台受理的一件文件處理工作。定義在 admission 規格 §4。
 
-## 7. 實作狀態（2026-11-14）
+## 7. 實作狀態（2026-11-15）
 
 | 項目 | 狀態 | 票 |
 |---|---|---|
 | `check`、`list_resources`、全放行、authz API | 已完成，在 `dev` | #113 |
-| `503`、列表回應、`trace_id` 取自 header、`X-Trace-Id`、健康檢查、metrics、log、能分頁的 fake | 未實作，下一個做 | #204 |
-| Resource 登記（Source 的 key）、憑證登錄 | 未實作，在 #204 之後 | #114 |
+| `503`、列表回應、`trace_id` 取自 header、`X-Trace-Id`、健康檢查、metrics、log、能分頁的 fake | 已完成，在 `dev` | #204 |
+| Resource 登記（Source 的 key）、憑證登錄 | 未實作，下一個做 | #114 |
 | 宣告與 finalize 的放置檢查 | 未實作，在 #114 之後 | #96 |
 | 改綁 | 未實作 | #205 |
 | Change Feed 與文件現況的讀取 | 未實作 | #126 |
