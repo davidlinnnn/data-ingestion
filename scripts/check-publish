@@ -13,6 +13,9 @@ if [ "${1:-}" = "--no-placeholders" ]; then placeholders=0; shift; fi
 # Draft placeholders are written {UPPER_CASE} or {#N}, N a number or an UPPER_CASE name such as {#COPY_TICKET};
 # route templates such as {document_id} stay allowed.
 PLACEHOLDER='\{([A-Z][A-Z0-9_]*|#[0-9A-Z_]+)\}'
+# The arguments of a LaTeX command or script (\mathcal{C}, \frac{N}{K}, x^{T}) and a shell expansion (${NAME})
+# are no placeholders.
+BRACED='(\\[A-Za-z]+|[$^_])(\{[^{}]*\})+'
 LOCAL_PATH='(/Users/[^/[:space:]]+/|/home/[^/[:space:]]+/|/private/(tmp|var)/|/var/folders/)'
 # The local part starts alphanumeric, so a diff's leading "+" before a decorator (+@pytest.fixture) is no email;
 # Processing Profile files are named <profile>@<n>.yaml.
@@ -33,7 +36,10 @@ report() { # rule, file, grep -n output
 
 for f in "$@"; do
   if [ "$f" = "-" ]; then text=$(cat); name=stdin; else text=$(cat "$f") || exit 2; name=$f; fi
-  [ $placeholders -eq 1 ] && report placeholder "$name" "$(printf '%s\n' "$text" | grep -nE "$PLACEHOLDER")"
+  if [ $placeholders -eq 1 ]; then # search without the BRACED groups, report the lines as written
+    hits=$(printf '%s\n' "$text" | sed -E "s/$BRACED//g" | grep -nE "$PLACEHOLDER" | sed 's/:.*/p/')
+    [ -n "$hits" ] && report placeholder "$name" "$(printf '%s\n' "$text" | grep -n '' | sed -n "$hits")"
+  fi
   report local-path "$name" "$(printf '%s\n' "$text" | grep -nE "$LOCAL_PATH")"
   report email "$name" "$(printf '%s\n' "$text" | grep -noE "$EMAIL" | grep -vE ":[^:]*$EMAIL_OK$")"
   report hostname "$name" "$(printf '%s\n' "$text" | grep -nE "$HOST")"

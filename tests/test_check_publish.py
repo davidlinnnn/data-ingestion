@@ -55,3 +55,24 @@ def test_placeholders_are_refused_only_where_checked():
 
     assert check(text).returncode == 1
     assert check(text, "--no-placeholders").returncode == 0
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "the plain C is read as `\\mathcal{C}`",  # the argument of a LaTeX command
+        "\\frac{N}{K} with x^{T} and a_{N}",  # several arguments, scripts
+        "the hook expands ${NAME} and ${S}",  # shell expansions
+    ],
+)
+def test_latex_arguments_and_shell_expansions_are_no_placeholders(line):
+    assert check(line).returncode == 0
+
+
+def test_a_placeholder_beside_a_latex_argument_is_reported_with_its_line():
+    line = "`\\mathcal{C}` is fixed by {#COPY" + "_TICKET}"
+
+    result = check("first line\n" + line)
+
+    assert result.returncode == 1
+    assert f":2: placeholder: {line}" in result.stdout
