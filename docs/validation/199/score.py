@@ -29,7 +29,8 @@ judgments.json here, each verdict under the sha256 of its answer, so a new answe
     .venv/bin/python docs/validation/199/score.py summary OUT SET_NAME N INDEX...
 
 runs t5b-accuracy's planted-error check on OUT/summaries (written by run.py), unchanged but for
-its planter when PLANTER is set; it writes evidence-SET_NAME.json here.
+its error types (SEVERITY, by tier) and its planter when PLANTER is set; it writes
+evidence-SET_NAME.json here, with the catch rate by tier.
 """
 
 import asyncio
@@ -71,6 +72,33 @@ def load(name: str, path: Path):
 
 t3 = load("t3_accuracy", V80 / "t3-accuracy/run.py")
 t4 = load("t4_accuracy", V80 / "t4-accuracy/run.py")
+t5b = load("t5b_accuracy", V80 / "t5b-accuracy/run.py")
+# A7's planted errors in three tiers by how far they mislead a reader (user, 2026-11-15): severe
+# gets the paper's finding wrong, moderate one fact of it (t5b-accuracy's five types), subtle
+# shifts a claim's strength by one word and keeps its facts.
+SEVERITY = {
+    "severe": {
+        "fabrication": "add a specific result, dataset, number or named entity that the sentence "
+                       "does not mention, stated as a finding of the paper",
+        "reversal": "reverse the claim's direction or polarity (improves -> degrades, "
+                    "outperforms -> underperforms, holds -> fails)",
+    },
+    "moderate": dict(t5b.ERRORS),
+    "subtle": {
+        "modality": "change the strength of one modal or normative word (must -> may, "
+                    "should -> can, required -> optional, or the reverse), or add one",
+        "certainty": "change how certain the claim is by one step (suggests -> shows, "
+                     "can improve -> improves, or the reverse)",
+    },
+}  # fmt: skip
+
+
+def kind_of(number: int, text: str) -> str:
+    """The error type of the number-th sampled case: the tiers take turns, each rotating through
+    its types (number only for a sentence with a digit, as in t5b-accuracy)."""
+    errors = list(SEVERITY.values())[number % len(SEVERITY)]
+    kinds = [k for k in errors if k != "number" or any(ch.isdigit() for ch in text)]
+    return kinds[number // len(SEVERITY) % len(kinds)]
 
 
 def sha(data: bytes) -> str:
@@ -464,8 +492,9 @@ def unblind(judging: Path) -> dict:
 
 
 async def summary_check(argv: list[str]) -> int:
-    t5b = load("t5b_accuracy", V80 / "t5b-accuracy/run.py")
     t5b.HERE = HERE  # its evidence goes here, not into #155's folder
+    t5b.ERRORS = {k: v for errors in SEVERITY.values() for k, v in errors.items()}
+    t5b.kind_of = kind_of
     out, name, rest = Path(argv[0]).expanduser(), argv[1], argv[2:]
     if PLANTER:
         chat = t5b.OpenAIChat
@@ -478,8 +507,12 @@ async def summary_check(argv: list[str]) -> int:
         t5b.OpenAIChat = planter
     code = await t5b.main([str(out / "summaries"), name, *rest])
     evidence = HERE / f"evidence-{name}.json"
-    if PLANTER and evidence.exists():
-        evidence.write_text(json.dumps(json.loads(evidence.read_text()) | {"planter": PLANTER}, indent=2) + "\n")
+    if evidence.exists():
+        found = json.loads(evidence.read_text())
+        found["by_severity"] = {tier: {"types": list(errors),
+                                       **{f: sum(found["by_error"][k][f] for k in errors) for f in ("n", "caught")}}
+                                for tier, errors in SEVERITY.items()}  # fmt: skip
+        evidence.write_text(json.dumps(found | ({"planter": PLANTER} if PLANTER else {}), indent=2) + "\n")
     return code
 
 

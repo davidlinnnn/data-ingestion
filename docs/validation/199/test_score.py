@@ -22,3 +22,10 @@ def test_each_answer_gets_t4s_verdict_this_runs_verdict_fail_or_waits_for_judgin
                                            "workflow": {"latex": "2 a"}}, "latex", "PASS", judged)  # fmt: skip
     assert found == {"alone": None, "workflow": None}
     assert todo == [(score.answer_sha("2a"), {"latex": "2a"})]
+
+
+def test_planted_error_tiers_take_turns_and_number_needs_a_digit():
+    kinds = [score.kind_of(n, "a 3% gain") for n in range(6)]
+    assert kinds == ["fabrication", "number", "modality", "reversal", "causation", "certainty"]
+    assert score.kind_of(1, "a gain") == "causation"
+    assert (score.kind_of(16, "a 3% gain"), score.kind_of(16, "a gain")) == ("number", "subject")
