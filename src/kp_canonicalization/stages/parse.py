@@ -11,7 +11,13 @@ JSON last so that its presence means the item is complete:
                     "picture_images": [{"picture_id", "page", "bbox", "ref", "sha256"}],
                     "document": DoclingDocument JSON without embedded images, where a
                     formula whose text layer (orig) is one identifier, such as
-                    "· django__django-12754", is a text item whose text is its orig (#212)}
+                    "· django__django-12754", is a text item whose text is its orig (#212);
+                    a text, list item or heading whose most common font is a code node's
+                    monospaced font, in an unbroken run of such nodes and code nodes beside
+                    that code node in reading order (page headers and footers skipped), is a
+                    code node whose text is its orig, and a code node has one provenance:
+                    one with several is one code node per provenance, in document order
+                    (#210)}
     pictures/{sha256}.png                  one image per picture
 
 picture_id is the DoclingDocument self_ref ("#/pictures/0"); bbox is the picture's first
@@ -54,6 +60,15 @@ def _incomplete() -> ProcessingFailure:
     )
 
 
+def _source_mismatch() -> ProcessingFailure:
+    return ProcessingFailure(
+        "platform",
+        "integrity",
+        "SOURCE_DIGEST_MISMATCH",
+        "Source bytes differ from declared digest",
+    )
+
+
 async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupRef:
     """Parse pages [first, last] of the source with the docling-parse method and register the
     group. key = reuse_key(document_uid, "docling-parse@<version>", the method's components,
@@ -76,12 +91,7 @@ async def run_group(input: GroupInput, ports: Ports, runtime: Runtime) -> GroupR
         return GroupRef(input.pages, existing.ref, existing.digest, existing.reused)
     data = await ports.store.get(input.source_key)
     if sha256(data) != input.source_sha256:
-        raise ProcessingFailure(
-            "platform",
-            "integrity",
-            "SOURCE_DIGEST_MISMATCH",
-            "Source bytes differ from declared digest",
-        )
+        raise _source_mismatch()
     try:
         count, captured = await in_thread(pipeline.parse_group, data, input.pages)
     except Exception as exc:
@@ -117,7 +127,8 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
     module_digest, [group digests in page order]). When assembly.json exists, returns it with
     reused=True. A group whose stored bytes do not match its digest, or groups that do not
     cover pages 1..N contiguously, raise ProcessingFailure(platform, integrity,
-    NATIVE_COVERAGE_INCOMPLETE).
+    NATIVE_COVERAGE_INCOMPLETE). The source, read for its fonts, is checked against
+    source_sha256 (mismatch: platform, integrity, SOURCE_DIGEST_MISMATCH).
     """
     method = runtime.profile.methods["docling-parse"]
     key = method.reuse_key(
@@ -165,7 +176,10 @@ async def run_assemble(input: AssembleInput, ports: Ports, runtime: Runtime) -> 
         next_page = last + 1
     if count is None or next_page != count + 1:
         raise _incomplete()
-    document, pictures = await in_thread(pipeline.assemble, groups, pages)
+    source = await ports.store.get(input.source_key)
+    if sha256(source) != input.source_sha256:
+        raise _source_mismatch()
+    document, pictures = await in_thread(pipeline.assemble, groups, pages, source)
     picture_refs = []
     files = {}
     for picture, png in pictures:
