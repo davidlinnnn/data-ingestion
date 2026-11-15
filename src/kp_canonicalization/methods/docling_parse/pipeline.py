@@ -40,10 +40,13 @@ from kp_canonicalization.methods.docling_parse.serialization import (
     png_bytes,
 )
 
+# One identifier such as "· django__django-12754" (#212): math joins no word with _ . / or -
+IDENTIFIER = re.compile(
+    r"(?:[·•]\s+)?(?=[\w./-]*[A-Za-z]{3})(?=[\w./-]*[A-Za-z0-9][_./-]+[A-Za-z0-9])[\w./-]+",
+    re.ASCII,
+)
+
 _lock = threading.Lock()
-# One word-like token, with a list bullet before it: no math in it (a SWE-bench id such as
-# "· django__django-12754"); a run of 3 letters leaves short math like "x-1" a formula.
-IDENTIFIER = re.compile(r"(?:[·•]\s+)?(?=[\w./-]*[A-Za-z]{3})[\w./-]+", re.ASCII)
 _converter: DocumentConverter | None = None
 
 

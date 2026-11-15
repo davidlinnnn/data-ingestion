@@ -186,8 +186,8 @@ async def test_the_assembled_text_equals_a_single_pass_conversion(ports, runtime
 def test_a_formula_whose_text_layer_is_one_identifier_becomes_a_text_line():
     """#212: the layout labels a list of SWE-bench ids as formulas; real formulas stay."""
     document = DoclingDocument(name="paper")
-    identifiers = ["· django__django-12754", "sphinx-doc__sphinx-10449", "where"]
-    formulas = ["L = 2x + 3y", "x-1", "correct total", "αi", "softmax(x)", "a t i", ""]
+    identifiers = ["· django__django-12754", "sphinx-doc__sphinx-10449", "config.yaml"]
+    formulas = ["L = 2x + 3y", "x-1", "xij", "softmax", "a t i", "αi", "softmax(x)", ""]
     for orig in identifiers + formulas:
         document.add_text(label=DocItemLabel.FORMULA, text="", orig=orig)
 

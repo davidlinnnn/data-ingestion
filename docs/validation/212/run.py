@@ -26,10 +26,12 @@ paper 16, which source ids are missing from the text of page 25's nodes, before 
 manifest.json here: each paper's sha256 and the sha256 of OUT/before.json and OUT/after.json.
 
 e2e reads paper 16's request from E2E_OUT, the OUT of #199's run.py, through #199's S3 stand-in
-(started on E2E_OUT/s3 and stopped again), and writes NAME.json here: the formula enrichments'
-statuses, the formula@1 receipts by result, the inventory items and receipts of page 25, and
-which source ids of page 25 (from the custody copy of the PDF) are missing from the text of
-that page's nodes in the Processing Result's assembly. Paper text other than the ids stays out.
+(started on E2E_OUT/s3 and stopped again), and writes NAME.json here: the failed formula
+enrichments and all formula statuses, the formula@1 receipts by result, page 25's inventory
+items per method and its receipts by result, and which source ids of page 25 (from the custody
+copy of the PDF) are missing from the text of that page's nodes in the Processing Result's
+assembly. Every result in RESULTS and every method in ITEM_METHODS is counted, 0 included, and
+one outside them stops the check. Paper text other than the ids stays out.
 """
 
 import asyncio
@@ -69,6 +71,8 @@ PROFILE = REPO / "src/kp_canonicalization/profiles/paper-pdf@1.yaml"
 FIXTURES = REPO / "tests/fixtures/vlm/formula"
 W2 = "docs/research/pdf-core-w2-native-coverage-2026-10-20/corpus/arxiv_gradientdescent/pdf.pdf"
 INSTANCE_ID = re.compile(r"[a-z][\w.-]*__[\w.-]+-\d+")  # django__django-12754
+RESULTS = ("ok", "unavailable", "invalid", "refused", None)  # a receipt's result; None: incomplete
+ITEM_METHODS = ("picture-ocr", "picture-interpretation", "formula", "code", "table-status")
 
 
 class FileStore:
@@ -107,7 +111,7 @@ class FileStore:
         )
 
 
-def digest(item: dict, inputs: list[bytes]) -> str:
+def request_digest(item: dict, inputs: list[bytes]) -> str:
     return hashlib.sha256(canonical_json(formula.request(item, inputs))).hexdigest()
 
 
@@ -119,6 +123,15 @@ def source_ids(data: bytes, page: int) -> list[str]:
     with pdfium.PdfDocument(data) as document, closing(document[page - 1]) as source:
         with closing(source.get_textpage()) as text:
             return INSTANCE_ID.findall(text.get_text_range())
+
+
+def on_page(node: dict, page: int) -> bool:
+    return bool(node["prov"]) and node["prov"][0]["page_no"] == page
+
+
+def missing(ids: list[str], nodes: list[dict]) -> list[str]:
+    """The ids that are in no node's text."""
+    return [i for i in ids if not any(i in node["text"] for node in nodes)]
 
 
 async def paper(ports: Ports, runtime: Runtime, data: bytes, uid: str) -> dict:
@@ -145,22 +158,19 @@ async def paper(ports: Ports, runtime: Runtime, data: bytes, uid: str) -> dict:
             continue
         inputs = [await ports.store.get(source["ref"]) for source in item["input_refs"]]
         moved = {**item, "bbox": {**item["bbox"], "l": item["bbox"]["l"] + 1}}
-        params_digest = digest(item, inputs)
+        params_digest = request_digest(item, inputs)
         formulas.append({"target_ref": item["target_ref"], "page": item["page"],
                          "orig": nodes[item["target_ref"]]["orig"], "params_digest": params_digest,
                          "recorded": recorded(params_digest),
-                         "control_recorded": recorded(digest(moved, inputs))})  # fmt: skip
+                         "control_recorded": recorded(request_digest(moved, inputs))})  # fmt: skip
     found = {
         "sha256": plan.source_sha256,
         "parse_module_digest": runtime.profile.methods["docling-parse"].module_digest,
         "formula_items": formulas,
     }
     if uid == "doc_16":
-        found["page_25"] = [
-            {key: node[key] for key in ("label", "text", "orig")}
-            for node in document["texts"]
-            if node["prov"] and node["prov"][0]["page_no"] == 25
-        ]
+        found["page_25"] = [{key: node[key] for key in ("label", "text", "orig")}
+                            for node in document["texts"] if on_page(node, 25)]  # fmt: skip
         found["page_25_source_ids"] = source_ids(data, 25)
     return found
 
@@ -189,14 +199,14 @@ def compare(out: Path) -> None:
         old, new = before[index], after[index]
         assert old["sha256"] == new["sha256"]
         kept = {i["target_ref"] for i in new["formula_items"]}
-        sent = {i["target_ref"]: i["params_digest"] for i in old["formula_items"]}
+        old_digests = {i["target_ref"]: i["params_digest"] for i in old["formula_items"]}
         row = {
             "before": len(old["formula_items"]),
             "after": len(new["formula_items"]),
             "removed": [{k: i[k] for k in ("target_ref", "page", "orig")}
                         for i in old["formula_items"] if i["target_ref"] not in kept],  # fmt: skip
-            "added": sorted(kept - sent.keys()),
-            "same_request": sum(sent.get(i["target_ref"]) == i["params_digest"]
+            "added": sorted(kept - old_digests.keys()),
+            "same_request": sum(old_digests.get(i["target_ref"]) == i["params_digest"]
                                 for i in new["formula_items"]),  # fmt: skip
             "recorded": sum(i["recorded"] for i in new["formula_items"]),
             "control_recorded": sum(i["control_recorded"] for i in new["formula_items"]),
@@ -206,13 +216,8 @@ def compare(out: Path) -> None:
             totals[key] += row[key] if isinstance(row[key], int) else len(row[key])
     ids = before["16"]["page_25_source_ids"]
     assert ids == after["16"]["page_25_source_ids"]
-
-    def missing(run: dict) -> list[str]:
-        texts = [node["text"] for node in run["16"]["page_25"]]
-        return [i for i in ids if not any(i in text for text in texts)]
-
-    page_25 = {"source_ids": len(ids), "missing_before": missing(before),
-               "missing_after": missing(after),
+    page_25 = {"source_ids": len(ids), "missing_before": missing(ids, before["16"]["page_25"]),
+               "missing_after": missing(ids, after["16"]["page_25"]),
                "labels_after": sorted({n["label"] for n in after["16"]["page_25"]
                                        if INSTANCE_ID.search(n["text"])})}  # fmt: skip
     digests = {label: sorted({p["parse_module_digest"] for p in run.values()})
@@ -242,23 +247,31 @@ async def e2e(out: Path, name: str) -> None:
         items = json.loads(await store.get(result["inventory"]["ref"]))["items"]
         document = json.loads(await store.get(result["native"]["assembly_ref"]))["document"]
         pdf = await store.get(result["request"]["files"][0]["custody_ref"].split("/", 3)[3])
-        sent = await run199.t4.receipts(store, request_id)
+        receipts = await run199.t4.receipts(store, request_id)
     finally:
         subprocess.run(["docker", "stop", container], capture_output=True)
+    assert all(r.get("result") in RESULTS for r in receipts)
+    assert {i["method"] for i in items} <= {*ITEM_METHODS, "document-summary"}
     pages = {item["item_id"]: item.get("page") for item in items}
+    formulas = [e for e in result["enrichments"] if e["method_ref"]["id"] == "formula"]
+    on_25 = [r for r in receipts if pages.get(r["item_id"]) == 25]
+
+    def by_result(sent: list[dict]) -> dict[str, int]:
+        return {str(k): sum(r.get("result") == k for r in sent) for k in RESULTS}
+
     ids = source_ids(pdf, 25)
-    texts = [n["text"] for n in document["texts"] if n["prov"] and n["prov"][0]["page_no"] == 25]
     report = {
         "request_id": request_id,
-        "formula_statuses": Counter(f"{e['status']} {e['status_reason']}" for e in result["enrichments"]
-                                    if e["method_ref"]["id"] == "formula"),  # fmt: skip
-        "formula_receipts": Counter(r.get("result") for r in sent if r["method"] == "formula@1"),
+        "formula_failed": sum(e["status"] == "failed" for e in formulas),
+        "formula_statuses": Counter(f"{e['status']} {e['status_reason']}" for e in formulas),
+        "formula_receipts": by_result([r for r in receipts if r["method"] == "formula@1"]),
         "page_25": {
-            "inventory_items": Counter(i["method"] for i in items if i.get("page") == 25),
-            "receipts": Counter(f"{r['method']} {r.get('result')}" for r in sent
-                                if pages.get(r["item_id"]) == 25),  # fmt: skip
+            "inventory_items": {m: sum(i["method"] == m and i.get("page") == 25 for i in items)
+                                for m in ITEM_METHODS},  # fmt: skip
+            "receipts": len(on_25),
+            "receipts_by_result": by_result(on_25),
             "source_ids": len(ids),
-            "missing_from_text": [i for i in ids if not any(i in text for text in texts)],
+            "missing_from_text": missing(ids, [n for n in document["texts"] if on_page(n, 25)]),
         },
     }
     (HERE / f"{name}.json").write_text(json.dumps(report, indent=1) + "\n")
