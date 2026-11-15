@@ -2,6 +2,8 @@
 
 Input for #76 A1: one platform serving layer in front of the Retrieval and Wiki projections, or one external API per projection plus a shared SDK. Evidence only, no recommendation. **V** = read in a primary source fetched this session; **I** = inference by this note.
 
+**Status (2026-11-15):** written during the first round of #76 (2026-10-27 to 2026-10-31). That round was restarted on 2026-11-15, so the decision labels here (A1, B0 to B15) name questions of that round, not adopted decisions. The evidence stands on its own.
+
 ## Summary
 
 - V: Every product checked exposes **one user-facing query API over many sources** [1][2][8][21]. Azure is per index, but the app sits in front [4].
