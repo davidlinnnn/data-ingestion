@@ -12,10 +12,12 @@ JSON last so that its presence means the item is complete:
                     "document": DoclingDocument JSON without embedded images, where a
                     formula whose text layer (orig) is one identifier, such as
                     "· django__django-12754", is a text item whose text is its orig (#212);
-                    a text, list item or heading next to a code node in reading order,
-                    whose most common font is that code node's monospaced font, is a code
-                    node whose text is its orig, and a code node has one provenance: one
-                    across pages is one code node per page (#210)}
+                    a text, list item or heading whose most common font is a code node's
+                    monospaced font, in an unbroken run of such nodes and code nodes beside
+                    that code node in reading order (page headers and footers skipped), is a
+                    code node whose text is its orig, and a code node has one provenance:
+                    one with several is one code node per provenance, in document order
+                    (#210)}
     pictures/{sha256}.png                  one image per picture
 
 picture_id is the DoclingDocument self_ref ("#/pictures/0"); bbox is the picture's first

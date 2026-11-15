@@ -228,13 +228,14 @@ def page_characters(document: pdfium.PdfDocument, number: int) -> list[Character
     characters = []
     with closing(document[number - 1]) as page, closing(page.get_textpage()) as text:
         for index in range(text.count_chars()):
-            pdfium_c.FPDFText_GetFontInfo(text, index, font, len(font), flags)
+            size = pdfium_c.FPDFText_GetFontInfo(text, index, font, len(font), flags)
             pdfium_c.FPDFText_GetCharOrigin(text, index, x, y)
             left, bottom, right, top = text.get_charbox(index)
             characters.append(
                 Character(
                     text.get_text_range(index, 1),
-                    font.value.decode(errors="replace"),
+                    # 0: no font; above the buffer: not written, the last name is stale
+                    font.value.decode(errors="replace") if 0 < size <= len(font) else "",
                     (left + right) / 2,
                     (bottom + top) / 2,
                     x.value,
@@ -245,9 +246,10 @@ def page_characters(document: pdfium.PdfDocument, number: int) -> list[Character
 
 
 def monospaced(characters: list[Character], font: str) -> bool:
-    """At least half of the runs of `font` advance evenly, a run being the characters between
-    spaces on one baseline with at least 5 steps and 4 distinct glyphs, and even meaning every
-    step within 4 % of the run's median. Origins, not font sizes: a scaled font reports size 1."""
+    """There are at least 5 runs of `font` and at least half of them advance evenly, a run
+    being the characters between spaces on one baseline with at least 5 steps and 4 distinct
+    glyphs, and even meaning every step within 4 % of the run's median. Origins, not font
+    sizes: a scaled font reports size 1."""
     runs: list[list[Character]] = []
     run: list[Character] = []
     for character in characters:
@@ -314,6 +316,8 @@ def whole_listings(data: dict[str, Any], source: bytes) -> None:
     """Relabel as code the text, list item and heading nodes next to a code node in reading
     order whose most common font is that code node's, when that font is monospaced on the code
     node's pages; then split each code node into one node per provenance (#210)."""
+    if not any(node["label"] == "code" for node in data["texts"]):
+        return
     order = reading_order(data)
     listing = set()
     with pypdfium2_lock, pdfium.PdfDocument(source) as document:
@@ -348,34 +352,35 @@ def whole_listings(data: dict[str, Any], source: bytes) -> None:
                 node.pop(key, None)
             node.update(label="code", text=node["orig"], captions=[], references=[],
                         footnotes=[], code_language="unknown")  # fmt: skip
-    split_pages(data)
+    split_provenances(data)
 
 
-def split_pages(data: dict[str, Any]) -> None:
+def split_provenances(data: dict[str, Any]) -> None:
     """Give each provenance but the first of a code node a new code node right after it in
-    texts and in its parent's children, with the part of orig its charspan names, then
-    renumber every text reference, so that texts stays in document order."""
+    texts and in its parent's children, with its part of orig (as long as its charspan, from
+    the end), then renumber every text reference, so that texts stays in document order."""
     texts, renamed = [], {}
     for node in data["texts"]:
         renamed[node["self_ref"]] = f"#/texts/{len(texts)}"
         texts.append(node)
         if node["label"] != "code" or len(node["prov"]) < 2:
             continue
-        orig = node["orig"]
-        parts = []
-        for provenance in node["prov"]:
-            start, end = provenance["charspan"]
-            parts.append((orig[start:end], {**provenance, "charspan": [0, end - start]}))
-        (text, provenance), *rest = parts
-        node.update(orig=text, text=text, prov=[provenance])
+        # Only the lengths: docling's charspan offsets are off where it joins a hyphenated word.
+        orig, end, rest = node["orig"], len(node["orig"]), []
+        for provenance in reversed(node["prov"][1:]):
+            start = max(0, end - (provenance["charspan"][1] - provenance["charspan"][0]))
+            rest.insert(0, (orig[start:end], {**provenance, "charspan": [0, end - start]}))
+            end = start - (orig[start - 1 : start] == " ")
+        head = orig[:end].rstrip()
+        node.update(orig=head, text=head, prov=[{**node["prov"][0], "charspan": [0, len(head)]}])
         siblings = resolve(data, node["parent"]["$ref"])["children"]
         at = next(i for i, c in enumerate(siblings) if c["$ref"] == node["self_ref"])
         for offset, (text, provenance) in enumerate(rest, start=1):
             ref = f"split:{len(texts)}"
             renamed[ref] = f"#/texts/{len(texts)}"
-            texts.append({**node, "self_ref": ref, "children": [], "orig": text, "text": text,
-                          "prov": [provenance], "captions": [], "references": [],
-                          "footnotes": []})  # fmt: skip
+            texts.append({**node, "self_ref": ref, "parent": dict(node["parent"]),
+                          "children": [], "orig": text, "text": text, "prov": [provenance],
+                          "captions": [], "references": [], "footnotes": []})  # fmt: skip
             siblings.insert(at + offset, {"$ref": ref})
     data["texts"] = texts
 

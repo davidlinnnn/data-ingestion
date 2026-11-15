@@ -253,15 +253,23 @@ def test_the_lines_around_a_monospaced_code_node_in_its_font_become_code():
     ]
 
 
-def test_a_code_node_across_pages_becomes_one_code_node_per_page():
+@pytest.mark.parametrize(
+    ("first", "second", "joined"),
+    [
+        ("for item in items:", "    print(item)", "for item in items:     print(item)"),
+        # docling joins a hyphen and a lowercase continuation without the hyphen and the space
+        # but keeps the charspan it computed for " " (ReadingOrderModel._merge_elements).
+        ("total = base -", "offset", "total = base offset"),
+    ],
+)
+def test_a_code_node_across_pages_becomes_one_code_node_per_page(first, second, joined):
     """#210: the inventory reads a node's first provenance only, which missed the second page."""
-    first, second = "for item in items:", "    print(item)"
     pages = [Page(lines=["Listing", [("Courier", first)]]),
              Page(lines=[[("Courier", second)], "Body text after the listing."])]  # fmt: skip
     pdf = write_pdf(pages)
     document = DoclingDocument(name="paper")
     document.add_heading("Listing", prov=line(1, 0, "Listing"))
-    code = document.add_code(f"{first} {second}", prov=line(1, 1, first))
+    code = document.add_code(joined, prov=line(1, 1, first))
     start = len(first) + 1
     code.prov.append(
         line(2, 0, second).model_copy(update={"charspan": (start, start + len(second))})
@@ -274,7 +282,7 @@ def test_a_code_node_across_pages_becomes_one_code_node_per_page():
 
     assert [(n["label"], n["orig"], [p["page_no"] for p in n["prov"]]) for n in order] == [
         ("section_header", "Listing", [1]),
-        ("code", first, [1]),
+        ("code", first.removesuffix(" -"), [1]),
         ("code", second, [2]),
         ("text", "Body text after the listing.", [2]),
     ]
