@@ -112,7 +112,6 @@ async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_
         "subject": {"type": "user", "id": "alice"},
         "action": "read",
         "resource": {"type": "resource", "id": "res_01"},
-        "trace_id": "t",
     }
     api = role("api", env, stderr=subprocess.PIPE, text=True)
     try:
@@ -154,3 +153,63 @@ def test_the_api_refuses_a_malformed_setting(monkeypatch, capsys, variable, valu
 
     assert main(["api"]) == 2
     assert variable in capsys.readouterr().err
+
+
+def free_port() -> int:
+    with socket.socket() as probe:  # fixed ports collide across parallel runs
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
+@pytest.mark.network
+async def test_the_api_without_a_database_stays_healthy_and_its_503s_reach_metrics_and_logs():
+    port, metrics_port = free_port(), free_port()
+    env = os.environ | {
+        "KP_ADMISSION_DATABASE_URL": "host=127.0.0.1 port=9",
+        "KP_ADMISSION_API_PORT": str(port),
+        "KP_AUTHZ_PROVIDER": "allow-all",
+        "KP_DEPLOYMENT": "pilot",
+        "KP_AUTHZ_PEP_CREDENTIALS": json.dumps({hashlib.sha256(b"pep-1").hexdigest(): "wiki"}),
+    }
+    trace = "4bf92f3577b34da6a3ce929d0e0e4736"
+    check = {
+        "subject": {"type": "user", "id": "alice"},
+        "action": "read",
+        "resource": {"type": "resource", "id": "res_01"},
+    }
+    api = subprocess.Popen(
+        [sys.executable, "-m", "kp_admission.cli", "api", "--metrics-port", str(metrics_port)],
+        env=env,
+        cwd=Path(__file__).parents[2],
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{port}") as http:
+            for _ in range(100):
+                with contextlib.suppress(httpx.ConnectError):
+                    health = await http.get("/healthz")
+                    break
+                await asyncio.sleep(0.1)
+            checked = await http.post(
+                "/authz/v1/check",
+                json=check,
+                headers={
+                    "authorization": "Bearer pep-1",
+                    "traceparent": f"00-{trace}-00f067aa0ba902b7-01",
+                },
+            )
+            metrics = (await http.get(f"http://127.0.0.1:{metrics_port}/metrics")).text
+    finally:
+        api.send_signal(signal.SIGTERM)
+
+    _, log = api.communicate(timeout=10)
+    assert health.status_code == 200
+    assert (checked.status_code, checked.headers["x-trace-id"]) == (503, trace)
+    counted = 'kp_authz_decisions_total{operation="check",outcome="unavailable",pep="wiki"} 1.0'
+    assert counted in metrics.splitlines()
+    lines = [json.loads(line) for line in log.splitlines()]
+    [no_decision] = [line for line in lines if line["message"] == "no decision"]
+    assert (no_decision["trace_id"], no_decision["pep"]) == (trace, "wiki")
+    [access] = [line for line in lines if "/authz/v1/check" in line["message"]]
+    assert (access["logger"], access["trace_id"]) == ("uvicorn.access", trace)
