@@ -9,7 +9,9 @@ JSON last so that its presence means the item is complete:
     assembly.json  {"schema": "docling-parse-assembly/v1",
                     "groups": [{"pages", "ref", "digest"}],
                     "picture_images": [{"picture_id", "page", "bbox", "ref", "sha256"}],
-                    "document": DoclingDocument JSON without embedded images}
+                    "document": DoclingDocument JSON without embedded images, where a
+                    formula whose text layer (orig) is one identifier, such as
+                    "· django__django-12754", is a text item whose text is its orig (#212)}
     pictures/{sha256}.png                  one image per picture
 
 picture_id is the DoclingDocument self_ref ("#/pictures/0"); bbox is the picture's first

@@ -1,6 +1,8 @@
-"""Capture completed pages and assemble registered evidence with the stock document assembler."""
+"""Capture completed pages and assemble registered evidence with the stock document assembler,
+then relabel as text each formula whose text layer is one identifier (#212)."""
 
 import io
+import re
 import threading
 from pathlib import PurePath
 from typing import Any
@@ -39,6 +41,9 @@ from kp_canonicalization.methods.docling_parse.serialization import (
 )
 
 _lock = threading.Lock()
+# One word-like token, with a list bullet before it: no math in it (a SWE-bench id such as
+# "· django__django-12754"); a run of 3 letters leaves short math like "x-1" a formula.
+IDENTIFIER = re.compile(r"(?:[·•]\s+)?(?=[\w./-]*[A-Za-z]{3})[\w./-]+", re.ASCII)
 _converter: DocumentConverter | None = None
 
 
@@ -184,4 +189,8 @@ def document_json(document: DoclingDocument) -> dict[str, Any]:
         page.image = None
     for picture in copy.pictures:
         picture.image = None
-    return copy.export_to_dict()
+    data = copy.export_to_dict()
+    for node in data["texts"]:
+        if node["label"] == "formula" and IDENTIFIER.fullmatch(node["orig"]):
+            node.update(label="text", text=node["orig"])
+    return data
