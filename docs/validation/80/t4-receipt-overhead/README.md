@@ -20,9 +20,13 @@ shared CI runner read 193.3 ms. The number of calls is what a code change can ra
 runner changes it.
 
 Until 2026-11-15 the time counted the two writes and left the listing out. On the quiet
-machine the listing takes 6 ms at p50 and 10 ms at p95 (31 listings, 3 runs), about as long as
-the two writes. With the S3 adapter's listing made 120 ms slower, the old time read 20.0 ms
-and passed; the time of the three calls reads 155.5 ms and fails.
+machine the listing took 6 ms at p50 and 10 ms at p95 (31 listings, 3 runs), about as long as
+the two writes. With a 0.12 s sleep in `S3ObjectStore.list_prefix`, the old time read 20.0 ms
+and passed (one run); the time of the three calls read 155.5 and 158.4 ms and failed.
+
+The time is the duration of the three calls. `Sends.send` holds a lock over the listing and
+the first write, so a request also waits for those two calls of the document's other requests;
+that wait is not in the time.
 
 ## Run
 
@@ -41,7 +45,7 @@ It prints `V9 p95 receipt overhead <n> ms over 30 requests` for each store and f
 
 ## When to run
 
-- Before merging a pull request that changes the receipt writes (`Sends.send`) or the S3
+- Before merging a pull request that changes the calls on the receipts (`Sends`) or the S3
   adapter (`src/kp_canonicalization/ports/object_store.py`). The reading goes into the pull
   request and into the table below.
 - When the object store behind the adapter changes. Today it is the stand-in; #57 decides the
@@ -58,4 +62,4 @@ p95 over 30 requests, in ms.
 | 2026-11-14 | shared CI runner | two writes | not printed | 193.3 | `code-checks` run 43614736805, attempt 1 |
 | 2026-11-15 | dev machine, quiet | two writes | 0.0 | 10.2 to 14.3 (10 runs) | #216 |
 | 2026-11-15 | dev machine, 36 busy loops on 18 cores | two writes | not run | 144.4 to 416.9 (16 runs) | #216 |
-| 2026-11-15 | dev machine, quiet | listing and two writes | 0.0 | 16.8 to 36.3 (10 runs, nine of them at most 18.7) | #216, follow-up |
+| 2026-11-15 | dev machine, quiet | listing and two writes | 0.0 | 16.6 to 36.3 (20 runs, 19 of them at most 20.5) | #216, follow-up |
