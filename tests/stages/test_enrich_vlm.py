@@ -837,12 +837,12 @@ async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports,
 
 
 class TimingStore:
-    """Wraps a store and records each call on an attempt's receipts, (method, seconds), under
-    the receipt's item, or under "" for a listing of them all."""
+    """Wraps a store and records each call on an attempt's receipts, (method, key, seconds),
+    under the task that made it: the stage's own task, or the task that sends one item."""
 
     def __init__(self, store) -> None:
         self.store = store
-        self.per_item: dict[str, list[tuple[str, float]]] = {}
+        self.per_task: dict[asyncio.Task | None, list[tuple[str, str, float]]] = {}
 
     def __getattr__(self, name: str):
         call = getattr(self.store, name)
@@ -853,9 +853,8 @@ class TimingStore:
                 return await call(key, *args)
             finally:
                 if "/receipts" in key:
-                    item = key.split("/receipts", 1)[1].rpartition("/")[0].lstrip("/")
                     taken = time.perf_counter() - started
-                    self.per_item.setdefault(item, []).append((name, taken))
+                    self.per_task.setdefault(asyncio.current_task(), []).append((name, key, taken))
 
         return timed
 
@@ -872,8 +871,9 @@ async def v9_store(request):
     return store
 
 
-async def receipt_calls(ports, runtime, store) -> dict[str, list[tuple[str, float]]]:
-    """One document's 30 requests on `store`: what TimingStore recorded."""
+async def receipt_calls(ports, runtime, store):
+    """One document's 30 requests on `store`, one per item: the calls TimingStore recorded in
+    the stage's own task, and those in each item's task."""
     input = await native(ports, runtime, one_picture_paper())
     inv = await clones(ports, input.inventory, 30)
     for key, data in ports.store.objects.items():  # type: ignore[attr-defined]
@@ -886,20 +886,21 @@ async def receipt_calls(ports, runtime, store) -> dict[str, list[tuple[str, floa
     await run_vlm(ports, runtime, inv, run_id=f"run_{fresh}", document_uid=f"doc_{fresh}")
 
     assert len(ports.vlm.requests) == 30
-    return timing.per_item
+    stage = timing.per_task.pop(asyncio.current_task())
+    return stage, list(timing.per_task.values())
 
 
 async def test_v9_each_request_lists_the_receipts_once_and_writes_its_own_twice(
     ports, runtime, v9_store
 ):
     """What the pull request gate holds of V9: the calls, whose number no runner changes."""
-    per_item = await receipt_calls(ports, runtime, v9_store)
+    stage, sends = await receipt_calls(ports, runtime, v9_store)
 
-    listings = per_item.pop("")  # one when the stage starts, then the request cap of each send
-    assert [method for method, _ in listings] == ["list_prefix"] * 31
-    assert len(per_item) == 30
-    for calls in per_item.values():  # written before the send, completed after it
-        assert [method for method, _ in calls] == ["put_if_absent", "put"]
+    assert [method for method, _, _ in stage] == ["list_prefix"]  # once, when the stage starts
+    for calls in sends:  # the request cap, then its receipt written before the send and after
+        assert [method for method, _, _ in calls] == ["list_prefix", "put_if_absent", "put"]
+        assert calls[1][1] == calls[2][1]
+    assert len(sends) == len({calls[1][1] for calls in sends}) == 30
 
 
 @pytest.mark.skipif(
@@ -907,8 +908,8 @@ async def test_v9_each_request_lists_the_receipts_once_and_writes_its_own_twice(
     reason="asserts wall-clock time: docs/validation/80/t4-receipt-overhead says when to run it",
 )
 async def test_v9_receipts_add_under_100_ms_per_request_at_p95(ports, runtime, v9_store):
-    per_item = await receipt_calls(ports, runtime, v9_store)
-    per_request = [sum(seconds for _, seconds in calls) for item, calls in per_item.items() if item]
+    _, sends = await receipt_calls(ports, runtime, v9_store)
+    per_request = [sum(seconds for _, _, seconds in calls) for calls in sends]
 
     assert len(per_request) == 30
     p95 = statistics.quantiles(per_request, n=20)[-1]

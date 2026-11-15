@@ -10,16 +10,23 @@ Each request makes three object store calls on its attempt's receipts (`Sends` i
 
 | Part | Test | Runs |
 |---|---|---|
-| Each request makes exactly those calls: 31 listings (one more when the stage starts), and a `put_if_absent` and a `put` per receipt | `test_v9_each_request_lists_the_receipts_once_and_writes_its_own_twice` | every pull request (`code-checks`) |
-| The two writes take more than 0 and less than 100 ms per request at p95 | `test_v9_receipts_add_under_100_ms_per_request_at_p95` | on request, with `KP_WALLCLOCK=1`; skipped otherwise |
+| Each request makes exactly those three calls, and the stage one more listing when it starts | `test_v9_each_request_lists_the_receipts_once_and_writes_its_own_twice` | every pull request (`code-checks`) |
+| The three calls take more than 0 and less than 100 ms per request at p95 | `test_v9_receipts_add_under_100_ms_per_request_at_p95` | on request, with `KP_WALLCLOCK=1`; skipped otherwise |
 
 The time is not asserted on pull requests because it measures the machine as much as the code
-(#216). With the same code and the same calls, without a retry, p95 was 10 to 14 ms on a quiet
-machine and 144 to 417 ms on the same machine with every core busy; a shared CI runner read
-193.3 ms. The number of calls is what a code change can raise, and no runner changes it.
+(#216). With the same code and the same calls, without a retry, the p95 of the two writes was
+10 to 14 ms on a quiet machine and 144 to 417 ms on the same machine with every core busy; a
+shared CI runner read 193.3 ms. The number of calls is what a code change can raise, and no
+runner changes it.
 
-The time has never included the listing, only the two writes. On the quiet machine the listing
-took 6 ms at p50 and 10 ms at p95 (31 listings, 3 runs), about as long as the two writes.
+Until 2026-11-15 the time counted the two writes and left the listing out. On the quiet
+machine the listing took 6 ms at p50 and 10 ms at p95 (31 listings, 3 runs), about as long as
+the two writes. With a 0.12 s sleep in `S3ObjectStore.list_prefix`, the old time read 20.0 ms
+and passed (one run); the time of the three calls read 155.5 and 158.4 ms and failed.
+
+The time is the duration of the three calls. `Sends.send` holds a lock over the listing and
+the first write, so a request also waits for those two calls of the document's other requests;
+that wait is not in the time.
 
 ## Run
 
@@ -38,7 +45,7 @@ It prints `V9 p95 receipt overhead <n> ms over 30 requests` for each store and f
 
 ## When to run
 
-- Before merging a pull request that changes the receipt writes (`Sends.send`) or the S3
+- Before merging a pull request that changes the calls on the receipts (`Sends`) or the S3
   adapter (`src/kp_canonicalization/ports/object_store.py`). The reading goes into the pull
   request and into the table below.
 - When the object store behind the adapter changes. Today it is the stand-in; #57 decides the
@@ -48,10 +55,11 @@ It prints `V9 p95 receipt overhead <n> ms over 30 requests` for each store and f
 
 p95 over 30 requests, in ms.
 
-| Date | Machine | In-memory store | S3 stand-in | Source |
-|---|---|---|---|---|
-| 2026-11-01 | dev machine | 0.0 | 16.5 | pull request #149 |
-| 2026-11-13 | dev machine | 0.0 | 18.1 | #80, closing comment |
-| 2026-11-14 | shared CI runner | not printed | 193.3 | `code-checks` run 43614736805, attempt 1 |
-| 2026-11-15 | dev machine, quiet | 0.0 | 10.2 to 14.3 (10 runs) | #216 |
-| 2026-11-15 | dev machine, 36 busy loops on 18 cores | not run | 144.4 to 416.9 (16 runs) | #216 |
+| Date | Machine | Calls timed | In-memory store | S3 stand-in | Source |
+|---|---|---|---|---|---|
+| 2026-11-01 | dev machine | two writes | 0.0 | 16.5 | pull request #149 |
+| 2026-11-13 | dev machine | two writes | 0.0 | 18.1 | #80, closing comment |
+| 2026-11-14 | shared CI runner | two writes | not printed | 193.3 | `code-checks` run 43614736805, attempt 1 |
+| 2026-11-15 | dev machine, quiet | two writes | 0.0 | 10.2 to 14.3 (10 runs) | #216 |
+| 2026-11-15 | dev machine, 36 busy loops on 18 cores | two writes | not run | 144.4 to 416.9 (16 runs) | #216 |
+| 2026-11-15 | dev machine, quiet | listing and two writes | 0.0 | 16.6 to 36.3 (20 runs, 19 of them at most 20.5) | #216, follow-up |
