@@ -12,12 +12,15 @@ transport, answers in OUT/run<n>/alone, kept while the request and the model sta
 a rerun only rescores. No workflow and none of #199's ports.
 
   charts        each run: t4's comparator in the formal and the diagnosis view, and the
-                diagnosis view with x and category swapped (score.swapped)
+                diagnosis view with two label fields exchanged: x and category (score.swapped;
+                x is a number now, so this is the same score by construction) and series and
+                category, the exchange the schema still allows, which must score lower
   descriptions  run 1, judged blind by t4's rules as #199 did: an answer equal to Luna's keeps
                 t4's verdict, any other goes to OUT/judging/sheets.json (letters.json beside
                 it); a judge writes verdicts.json there and the next run merges it into
                 judgments.json here; beside #199's workflow and alone verdicts
-  figure types  run 1 beside Luna's recorded answer; captions have no gold
+  figure types  run 1 against the gold (a chart or not) and beside Luna's recorded answer,
+                which #199's Sonnet answers equal on all 18; captions have no gold: not blank
 
 Writes evidence.json and manifest.json (sha256 of the gold files read and of everything in OUT).
 """
@@ -49,6 +52,7 @@ def load(name: str, path: Path):
 score = load("score_199", HERE.parent / "199/score.py")
 score.JUDGMENTS = HERE / "judgments.json"  # this ticket's verdicts; #199's file stays as it is
 BEFORE = HERE.parent / "199/accuracy.json"
+TARGETS = score.t4.TARGETS  # t4's own list; main points score.t4.TARGETS at each run's part of it
 
 ANTHROPIC = "https://api.anthropic.com/v1"
 MODEL = "claude-sonnet-5-5"
@@ -57,6 +61,7 @@ PROFILE = REPO / "src/kp_canonicalization/profiles/paper-pdf@1.yaml"
 CHARTS = (6, 16, 17, 21, 22)
 RUNS = 3
 BAR = 83  # t4's bar: not below #84's Luna on the diagnosis view
+PICTURES = 18  # t4's gold pictures; the bar for their descriptions is #199's workflow count
 FIELDS = ("description", "figure_type")  # what #199 put on a description sheet
 # read by t4's comparator (#84's frozen evaluator and contracts), under ARCHIVE
 COMPARATOR = ("round3-luna/evaluate_v1.py", "round5-strict/evaluate.py",
@@ -69,9 +74,16 @@ def content(answer: dict | None) -> dict | None:
     return ((answer or {}).get("parsed") or {}).get("content")
 
 
+def roles_swapped(values: list | None) -> list:
+    """series and category exchanged where both are strings, as score.swapped does for x."""
+    return [p | {"series": p["category"], "category": p["series"]}
+            if isinstance(p.get("series"), str) and isinstance(p.get("category"), str) else p
+            for p in values or []]  # fmt: skip
+
+
 async def main(argv: list[str]) -> int:
     out, archive = Path(argv[0]), Path(argv[1])
-    targets = [t for t in json.loads(score.t4.TARGETS.read_text())
+    targets = [t for t in json.loads(TARGETS.read_text())
                if t["kind"] == "picture" and t["matched"]]  # fmt: skip
     runs = []
     async with httpx.AsyncClient() as http:
@@ -96,12 +108,14 @@ async def main(argv: list[str]) -> int:
                 rows.append({"gold_index": i, "points": golds[i]["numeric_points"],
                              "formal": numeric(values, i, False),
                              "diagnosis": numeric(values, i, True),
-                             "diagnosis_swapped": numeric(score.swapped(values), i, True)})
-        keys = ("points", "formal", "diagnosis", "diagnosis_swapped")
+                             "diagnosis_swapped": numeric(score.swapped(values), i, True),
+                             "diagnosis_roles_swapped": numeric(roles_swapped(values), i, True)})
+        keys = ("points", "formal", "diagnosis", "diagnosis_swapped", "diagnosis_roles_swapped")
         total = {k: sum(r[k] for r in rows) for k in keys}
         total["pass"] = (len(rows) == len(CHARTS) and total["points"] == 88
                          and BAR <= total["diagnosis"] <= total["points"]
-                         and total["diagnosis_swapped"] <= total["diagnosis"])  # fmt: skip
+                         and total["diagnosis_swapped"] <= total["diagnosis"]
+                         and total["diagnosis_roles_swapped"] < total["diagnosis"])  # fmt: skip
         charts.append({"run": n, "rows": rows, "total": total})
 
     t4_judged = json.loads(score.t4.JUDGMENTS.read_text())
@@ -122,6 +136,7 @@ async def main(argv: list[str]) -> int:
                              "recorded": t4_judged[t["label"]]["luna"],
                              "figure_type": (ours or {}).get("figure_type"),
                              "figure_type_recorded": t["luna"]["figure_type"],
+                             "chart_gold": golds[i]["chart_expected"] != "not_chart",
                              "caption": bool((ours or {}).get("caption", "").strip())})  # fmt: skip
         if todo:
             pending.append({"label": t["label"], "kind": "picture", "gold_index": i,
@@ -135,6 +150,12 @@ async def main(argv: list[str]) -> int:
         assert score.sha(image) == golds[s["gold_index"]]["source_crop_sha256"]
 
     passed = sum(d["verdict"] in score.PASSES for d in descriptions)
+    bar = sum(d["workflow_199"] in score.PASSES for d in descriptions)
+    kept = {"figure_type_as_recorded": sum(d["figure_type"] == d["figure_type_recorded"]
+                                           for d in descriptions),
+            "chart_as_gold": sum((d["figure_type"] == "chart") == d["chart_gold"]
+                                 for d in descriptions),
+            "captions": sum(d["caption"] for d in descriptions)}  # fmt: skip
     usage = [a["usage"] for run in runs for a in run.values() if a.get("usage")]
     tokens = [sum(u["prompt_tokens"] for u in usage), sum(u["completion_tokens"] for u in usage)]
     method = load_profile(PROFILE).methods["picture-interpretation"]
@@ -145,14 +166,12 @@ async def main(argv: list[str]) -> int:
         "descriptions": {
             "rows": descriptions, "pass": passed, "of": len(descriptions),
             "not_judged": sum(d["verdict"] is None for d in descriptions),
-            "workflow_199": sum(d["workflow_199"] in score.PASSES for d in descriptions),
-            "pass_bar": passed >= 15 and len(descriptions) == 18,
-            "figure_type_as_recorded": sum(d["figure_type"] == d["figure_type_recorded"]
-                                           for d in descriptions),
-            "captions": sum(d["caption"] for d in descriptions)},
+            "workflow_199": bar,
+            "pass_bar": len(descriptions) == PICTURES and 0 < bar <= passed <= PICTURES,
+            **kept, "pass_kept": all(n == PICTURES for n in kept.values())},
         "requests": {
-            "sent": len(usage),
-            "invalid": sum(content(a) is None for run in runs for a in run.values()),
+            "answered": len(usage),
+            "without_content": sum(content(a) is None for run in runs for a in run.values()),
             "tokens_in_out": tokens,
             "usd": round(sum(t * p for t, p in zip(tokens, PRICE_PER_MTOK, strict=True)) / 1e6, 2)},
     }  # fmt: skip
@@ -168,7 +187,8 @@ async def main(argv: list[str]) -> int:
     shown = {k: v for k, v in evidence["descriptions"].items() if k != "rows"}
     print(json.dumps({"charts": [c["total"] for c in charts], "descriptions": shown,
                       "requests": evidence["requests"], "to_judge": len(pending)}, indent=1))
-    passing = all(c["total"]["pass"] for c in charts) and evidence["descriptions"]["pass_bar"]
+    passing = (all(c["total"]["pass"] for c in charts) and evidence["descriptions"]["pass_bar"]
+               and evidence["descriptions"]["pass_kept"])  # fmt: skip
     return 0 if passing else 1
 
 

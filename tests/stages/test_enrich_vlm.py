@@ -950,11 +950,11 @@ def test_chart_value_roles_are_defined_in_the_schema_and_the_prompt():
     request = picture_interpretation.request({}, [b"crop", b"page"])  # type: ignore[typeddict-item]
 
     schema = request["response_format"]["json_schema"]["schema"]
-    point = schema["$defs"]["ChartValue"]["properties"]
-    assert point["x"]["type"] == ["number", "null"]
+    properties = schema["$defs"]["ChartValue"]["properties"]
+    assert properties["x"]["type"] == ["number", "null"]
     (system,) = [m["content"] for m in request["messages"] if m["role"] == "system"]
-    for role in ("series", "category", "x"):
-        assert point[role]["description"] in system
+    for field in ("series", "category", "x"):
+        assert properties[field]["description"] in system
 
 
 def test_recorded_picture_interpretations_parse_field_by_field():
