@@ -138,9 +138,11 @@ async def judged(
     answers that wrote a reason first, and, given plants, every pipeline drop judged again."""
     usage = {"prompt_tokens": 0, "completion_tokens": 0, "answers": 0, "reason_first": 0}
     async with httpx.AsyncClient() as http:
-        judge = OpenAIChat(http, "https://api.anthropic.com/v1", os.environ["ANTHROPIC_API_KEY"],
+        judge = OpenAIChat(http, "https://api.anthropic.com/v1",
+                           {"Authorization": f"Bearer {os.environ['ANTHROPIC_API_KEY']}"},
                            "claude-sonnet-5-5", 10, 300)  # fmt: skip
-        luna = OpenAIChat(http, "https://api.openai.com/v1", os.environ.get("OPENAI_API_KEY", ""),
+        luna = OpenAIChat(http, "https://api.openai.com/v1",
+                          {"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY', '')}"},
                           "gpt-6-luna", 10, 120)  # fmt: skip
         gate = asyncio.Semaphore(8)
 

@@ -858,10 +858,12 @@ async def test_a_configured_header_is_sent_and_stays_out_of_receipts_and_logs(
     ports = dataclasses.replace(ports, vlm=chat)
     caplog.set_level(logging.DEBUG)
 
-    try:
+    if status == 200:
         await run_vlm(ports, runtime, input.inventory)
-    except ProcessingFailure as failure:
-        assert status != 200 and SECRET not in repr(failure) + repr(failure.__cause__)
+    else:
+        with pytest.raises(ProcessingFailure) as caught:
+            await run_vlm(ports, runtime, input.inventory)
+        assert SECRET not in repr(caught.value) + repr(caught.value.__cause__)
 
     assert sent and set(sent) == {SECRET}
     keys = await ports.store.list_prefix("")

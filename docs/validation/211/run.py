@@ -88,7 +88,8 @@ async def main(argv: list[str]) -> int:
                if t["kind"] == "picture" and t["matched"]]  # fmt: skip
     runs = []
     async with httpx.AsyncClient() as http:
-        chat = OpenAIChat(http, ANTHROPIC, os.environ.get("ANTHROPIC_API_KEY", ""), MODEL, 5, 600)
+        bearer = {"Authorization": f"Bearer {os.environ.get('ANTHROPIC_API_KEY', '')}"}
+        chat = OpenAIChat(http, ANTHROPIC, bearer, MODEL, 5, 600)
         for n in range(1, RUNS + 1):
             folder = out / f"run{n}"
             folder.mkdir(parents=True, exist_ok=True)
