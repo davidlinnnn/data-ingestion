@@ -31,11 +31,13 @@ fix first.** Two more findings go to the tickets that already own them.
      66/88. With x and category swapped back it scores 84. Owner: `picture-interpretation@1`
      (prompt or schema).
   3. **Non-formula lines are inventoried as formulas.** Page 25 of paper 16 lists SWE-bench
-     instance ids (`django__django-…`). docling labels 44 of them as formulas. Sonnet returns an
+     instance ids (`django__django-…`). docling labels 35 of them as formulas. Sonnet returns an
      empty LaTeX string for 24 of them, so they are `failed EMPTY_OUTPUT` and cost 49 invalid
-     requests. Luna had wrapped them in `\text`. One of these ids is in t4's formula sample,
-     where t4 judged Luna's `\text` answer PASS. Owner: the native parse and the inventory, or
-     the formula prompt.
+     requests. Luna had wrapped them in `\text` or `\texttt`. Two of these ids are in t4's formula sample
+     (p16-e1d8a234b6b9, p16-35fa058a6093), where t4 judged Luna's answers PASS. Owner: the
+     native parse and the inventory, or the formula prompt. *Corrected 2026-11-15: this item
+     said 44 ids and one in t4's sample. 44 is paper 16's whole formula count, the 35 ids plus
+     9 real formulas on page 22. Fixed by #212 ([report](../212/README.md)).*
 - **Not a fix: descriptions are one short of t4's bar.** The workflow passes 15/18 descriptions,
   against #84's Luna at 16/18. It sent the same request as the method run alone, and the method
   alone meets the bar (16/18). The one extra miss (image 3) is the model's run-to-run variation.
@@ -165,6 +167,8 @@ corpus; it carries 3 of the code units. "Alone" means the method run outside the
   - p01-a5304a07488e: Sonnet writes a plain C for the calligraphic C (#152's font evidence).
     The workflow marks it `disputed FORMULA_NATIVE_MISMATCH`.
   - p16-e1d8a234b6b9: one of paper 16's instance ids. Sonnet answers an empty string both times.
+    p16-35fa058a6093 is the other id in the sample; Sonnet's answers pass both times (alone:
+    `\texttt{…}`, as Luna's).
   - Statuses on the 46: 4 are `disputed`. One of them is the wrong p01 formula; the other 3 are
     right (p17-ae7b5caad363 by d3, p19-4350684380ca and p20-e5976e29bae2 by the native rule).
     The empty answer is `failed`, so both wrong answers carry a status other than `unverified`.
