@@ -9,6 +9,9 @@ ruling. The pull request's Evidence states the number of findings and how they w
 
 ## Dispatch
 
+Render the document's diagrams first with `scripts/render-mermaid <path>` and look at each
+PNG: the reviewer checks what a diagram says, not how it is laid out.
+
 Give the reviewer the brief below and these facts. Keep your own conclusions out, so its
 read is independent of yours.
 
