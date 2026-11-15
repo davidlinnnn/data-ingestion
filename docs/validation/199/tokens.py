@@ -21,9 +21,9 @@ from kp_canonicalization.ports.object_store import S3ObjectStore
 
 COMPONENTS = {"picture-interpretation": "vlm", "formula": "vlm", "code": "vlm",
               "document-summary": "summary", "d3-check": "d3"}  # fmt: skip
-# Documents per minute: the pilot's peak, 5 per 10 minutes (#93 section 8.1), and PROD's burst,
-# 50 per minute for 10 minutes (the user, 2026-11-04).
-RATES = {"pilot": 0.5, "prod_peak": 50.0}
+# Documents per minute: the pilot's peak and PROD's mean and peak in #93 section 8.1, and PROD's
+# burst (the user, 2026-11-04)
+RATES = {"pilot": 0.5, "prod_mean_93": 6.94, "prod_peak_93": 20.82, "prod_peak": 50.0}
 
 
 def counts(usage: dict | None) -> tuple[int, int, int | None] | None:
@@ -54,7 +54,8 @@ def row(paper: dict, component: str) -> dict:
 def report(papers: list[dict]) -> dict:
     """papers: [{"request_id", "pages", "receipts"}]. A request's tokens are input + output;
     an OpenAI-style output count already holds the reasoning tokens. TPM at an arrival rate is
-    the mean tokens per document times documents per minute."""
+    the mean tokens per document times documents per minute; vlm_summary is the VLM and the
+    summary together, which share one endpoint in the released profile."""
     rows = [row(paper, component) for paper in papers for component in COMPONENTS]
     tokens = lambda r: r["input_tokens"] + r["output_tokens"]  # noqa: E731
     documents = []
@@ -69,6 +70,8 @@ def report(papers: list[dict]) -> dict:
     by_service = {s: sum(tokens(r) for r in rows if COMPONENTS[r["component"]] == s) / len(papers)
                   for s in ("vlm", "summary", "d3")}  # fmt: skip
     by_service["total"] = sum(by_service.values())
+    by_service["vlm_summary"] = by_service["vlm"] + by_service["summary"]
+    sent = {c: sum(r["requests"] for r in rows if r["component"] == c) for c in COMPONENTS}
     return {
         "rows": rows,
         "documents": documents,
@@ -79,6 +82,9 @@ def report(papers: list[dict]) -> dict:
             "shares": {c: round(sum(tokens(r) for r in rows if r["component"] == c)
                                 / (everything or 1), 3) for c in COMPONENTS},
         },  # fmt: skip
+        "per_component": {c: {"requests_per_document": n / len(papers),
+                              "tokens_per_request": sum(tokens(r) for r in rows if r["component"] == c) / n
+                              if n else None} for c, n in sent.items()},
         "tpm": {name: {s: round(n * rate) for s, n in by_service.items()}
                 for name, rate in RATES.items()},
     }  # fmt: skip
@@ -124,10 +130,14 @@ def markdown(report: dict, labels: dict[str, str] | None = None) -> str:
               if a["per_page"] else "| Tokens per page | — | — |",
               "", "| Component | Share of tokens |", "|---|---|"]  # fmt: skip
     lines += [f"| {c} | {share:.1%} |" for c, share in a["shares"].items()]
-    lines += ["", "| TPM | VLM | Summary | d3 | Total |", "|---|---|---|---|---|"]
+    lines += ["", "| Component | Requests per document | Tokens per request |", "|---|---|---|"]
+    for c, p in report["per_component"].items():
+        per_request = "—" if p["tokens_per_request"] is None else f"{p['tokens_per_request']:,.0f}"
+        lines.append(f"| {c} | {p['requests_per_document']:.1f} | {per_request} |")
+    lines += ["", "| TPM | VLM | Summary | d3 | Total | VLM + summary |", "|---|---|---|---|---|---|"]
     for rate, tpm in report["tpm"].items():
         lines.append(f"| {rate} ({RATES[rate]:g} documents/min) | {tpm['vlm']:,} | "
-                     f"{tpm['summary']:,} | {tpm['d3']:,} | {tpm['total']:,} |")  # fmt: skip
+                     f"{tpm['summary']:,} | {tpm['d3']:,} | {tpm['total']:,} | {tpm['vlm_summary']:,} |")  # fmt: skip
     return "\n".join(lines) + "\n"
 
 

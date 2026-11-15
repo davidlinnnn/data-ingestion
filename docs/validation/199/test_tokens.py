@@ -75,8 +75,21 @@ def test_aggregates_and_tpm_at_the_pilot_and_prod_peak_arrival_rates():
     assert report["aggregate"]["shares"] == {
         "picture-interpretation": 0.267, "formula": 0.133, "code": 0.0,
         "document-summary": 0.4, "d3-check": 0.2}  # fmt: skip
-    # mean tokens per document x documents per minute: 0.5 (pilot), 50 (PROD peak)
+    # per document and per request, the units of #93's R and T
+    assert report["per_component"] == {
+        "picture-interpretation": {"requests_per_document": 0.5, "tokens_per_request": 4000.0},
+        "formula": {"requests_per_document": 0.5, "tokens_per_request": 2000.0},
+        "code": {"requests_per_document": 0.0, "tokens_per_request": None},
+        "document-summary": {"requests_per_document": 1.0, "tokens_per_request": 3000.0},
+        "d3-check": {"requests_per_document": 1.0, "tokens_per_request": 1500.0}}  # fmt: skip
+    # mean tokens per document x documents per minute: 0.5 (pilot), #93's PROD mean 6.94 and
+    # peak 20.82, 50 (PROD peak); the VLM and the summary share one endpoint
     assert report["tpm"] == {
-        "pilot": {"vlm": 1500, "summary": 1500, "d3": 750, "total": 3750},
-        "prod_peak": {"vlm": 150000, "summary": 150000, "d3": 75000, "total": 375000},
-    }
+        "pilot": {"vlm": 1500, "summary": 1500, "d3": 750, "total": 3750, "vlm_summary": 3000},
+        "prod_mean_93": {"vlm": 20820, "summary": 20820, "d3": 10410, "total": 52050,
+                         "vlm_summary": 41640},
+        "prod_peak_93": {"vlm": 62460, "summary": 62460, "d3": 31230, "total": 156150,
+                         "vlm_summary": 124920},
+        "prod_peak": {"vlm": 150000, "summary": 150000, "d3": 75000, "total": 375000,
+                      "vlm_summary": 300000},
+    }  # fmt: skip

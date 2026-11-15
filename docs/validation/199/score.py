@@ -57,8 +57,7 @@ REPO = HERE.parents[2]
 FIXTURES = REPO / "tests/fixtures/vlm"
 JUDGMENTS = HERE / "judgments.json"
 PASSES = ("PASS", "PASS_MEANING_SLICE")
-# t5b-accuracy plants its errors with gpt-6-luna, whose DEV key expired (2026-11-15): Sonnet 5.5,
-# the judge's model, plants instead. None runs t5b-accuracy unchanged.
+# gpt-6-luna's DEV key expired (2026-11-15), so Sonnet 5.5 plants; None plants with t5b's gpt-6-luna
 PLANTER = "claude-sonnet-5-5"
 
 
@@ -73,9 +72,7 @@ def load(name: str, path: Path):
 t3 = load("t3_accuracy", V80 / "t3-accuracy/run.py")
 t4 = load("t4_accuracy", V80 / "t4-accuracy/run.py")
 t5b = load("t5b_accuracy", V80 / "t5b-accuracy/run.py")
-# A7's planted errors in three tiers by how far they mislead a reader (user, 2026-11-15): severe
-# gets the paper's finding wrong, moderate one fact of it (t5b-accuracy's five types), subtle
-# shifts a claim's strength by one word and keeps its facts.
+# A7's planted errors by how far they mislead a reader (user, 2026-11-15); moderate is t5b's five
 SEVERITY = {
     "severe": {
         "fabrication": "add a specific result, dataset, number or named entity that the sentence "
@@ -154,9 +151,10 @@ async def seamb_inputs(t: dict) -> list[bytes]:
 
 
 async def alone_answers(out: Path, papers: set[int], profile: Path, chat) -> dict[str, dict]:
-    """OUT/alone/<label>.json for t4's targets in the papers given, each sent once and kept: the
-    method's request on t4's item and inputs through chat, the workflow's VLM transport, with
-    up to 3 tries on ServiceUnavailable; parsed with the method's parse."""
+    """OUT/alone/<label>.json for t4's targets in the papers given, each sent once and kept while
+    its request (params_digest) and chat's model stay the same: the method's request on t4's
+    item and inputs through chat, the workflow's VLM transport, with up to 3 tries on
+    ServiceUnavailable; parsed with the method's parse."""
     from kp_canonicalization.identity import canonical_json
     from kp_canonicalization.methods import InvalidOutput
     from kp_canonicalization.ports.inference import ServiceUnavailable
@@ -171,12 +169,13 @@ async def alone_answers(out: Path, papers: set[int], profile: Path, chat) -> dic
 
     async def one(t: dict) -> None:
         path = folder / f"{t['label']}.json"
-        if path.exists():
-            return
         item, inputs = t["item"], await seamb_inputs(t)
         package = methods[item["method"]].package
         request = package.request(item, inputs)
         found: dict = {"label": t["label"], "params_digest": sha(canonical_json(request))}
+        kept = json.loads(path.read_text()) if path.exists() else {}
+        if (kept.get("params_digest"), kept.get("model")) == (found["params_digest"], chat.model):
+            return
         async with limit:
             for attempt in range(3):
                 begin = time.perf_counter()

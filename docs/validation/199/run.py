@@ -23,7 +23,8 @@ the VLM methods and the summary alike; `w2` is not a corpus paper (#129: only th
 sent), so it runs with the VLM stand-in (t5c's replay of the recordings) and the DEV summary
 fake. Before any corpus paper starts, the API key is checked on the models endpoint (free).
 
-A paper already in OUT/requests.json is not run again, so a scorer change reruns only the
+A paper already in OUT/requests.json with the same sha256 is not run again, and OUT refuses a
+profile or method code other than its own (run_key), so a scorer change reruns only the
 scoring: without a paper to run, no stack but the S3 stand-in starts. Writes papers/INDEX.json
 (counts, statuses, timings, receipts without content), tokens.json and tokens.md for the corpus
 papers run, and accuracy.json (score.py), after the VLM methods ran alone on t4's targets of
@@ -83,12 +84,10 @@ t2.BASE_ENV.update(TEMPORAL_ADDRESS=t2.TEMPORAL, KP_ADMISSION_URL=t2.ADMISSION,
                    KP_S3_ENDPOINT=f"http://127.0.0.1:{S3_PORT}")  # fmt: skip
 RELEASED = t2.REPO / "src/kp_canonicalization/profiles/paper-pdf@1.yaml"
 DEV = t2.REPO / "tests/profiles/paper-pdf-dev.yaml"
-# d3_server.py with --batch-size 1 runs one forward at a time: with 4 requests in flight the
-# 30 s deadline would time the server's queue. One request took at most 12 s in #161.
+# d3_server.py serves one forward at a time: with 4 in flight the 30 s deadline would time its queue
 RELAXED = {"d3_concurrency_per_document": 1}
 ANTHROPIC = t5b.ANTHROPIC
-# The user, 2026-11-15: Claude Sonnet 5.5 is the VLM candidate, in place of the DEV profile's
-# gpt-6-luna. Its endpoint ignores reasoning_effort; thinking is on, at the default effort high.
+# The user's VLM candidate (2026-11-15), for gpt-6-luna; its endpoint ignores reasoning_effort
 VLM_COMPONENT = "anthropic/claude-sonnet-5-5"
 PRICE_PER_MTOK = (2.0, 10.0)  # Sonnet 5.5, USD per million input and output tokens
 STOP_AT_USD = 20.0
@@ -115,6 +114,17 @@ def run_profile(out: Path) -> tuple[Path, dict]:
     path = out / "paper-pdf@1-199.yaml"
     path.write_text(yaml.safe_dump(profile, sort_keys=False))
     return path, differs
+
+
+def run_key(profile: Path) -> str:
+    """sha256 of the profile the workers load and of every method package's module digest: OUT's
+    papers are reused only under the same key."""
+    from kp_canonicalization.identity import module_digest
+
+    methods = t2.REPO / "src/kp_canonicalization/methods"
+    digests = sorted(f"{p.name} {module_digest(p)}" for p in methods.iterdir()
+                     if p.is_dir() and not p.name.startswith(("_", ".")))  # fmt: skip
+    return hashlib.sha256(profile.read_bytes() + "\n".join(digests).encode()).hexdigest()
 
 
 def s3_up(out: Path) -> str:
@@ -192,13 +202,27 @@ async def stages(client: Client, request_id: str) -> dict:
     return out
 
 
+def receipt_table(sent: list[dict], methods: set[str]) -> dict:
+    """Per method, t4's receipt summary with its tokens read as tokens.py reads them: d3 counts
+    input_tokens, and a send without counts is unmeasured, not 0."""
+    table = {}
+    for m in sorted(methods | {r["method"] for r in sent}):
+        mine = [r for r in sent if r["method"] == m]
+        measured = [tokens.counts(r.get("usage")) for r in mine]
+        table[m] = t4.receipt_summary(mine) | {"tokens": {
+            "input": sum(c[0] for c in measured if c), "output": sum(c[1] for c in measured if c),
+            "unmeasured": sum(c is None for c in measured)}}  # fmt: skip
+    return table
+
+
 async def observe(client, store, out: Path, index: str, request_id: str, code: int, result: dict,
                   seconds: float) -> dict:  # fmt: skip
     """One paper's row: no paper text, which goes to OUT/summaries for the summary check."""
     sent = await t4.receipts(store, request_id)
+    expected = {f"{m['id']}@{m['version']}" for m in (result or {}).get("profile", {}).get("methods", [])
+                if m["id"] in tokens.COMPONENTS}  # fmt: skip
     evidence: dict = {"request_id": request_id, "exit": code, "seconds": seconds,
-                      "receipts": {m: t4.receipt_summary([r for r in sent if r["method"] == m])
-                                   for m in sorted({r["method"] for r in sent})},
+                      "receipts": receipt_table(sent, expected),
                       "usd": round(priced(sent), 4)}  # fmt: skip
     last = {r["item_id"]: r for r in sent if r["method"].rpartition("@")[0] in VLM_METHODS}
     evidence["vlm_requests_recorded"] = dict(Counter(
@@ -323,10 +347,10 @@ async def main(argv: list[str]) -> int:
              else {"bucket": f"e2e-199-{t2.RUN}", "papers": {}})  # fmt: skip
     bucket = state["bucket"]
     profile, differs = run_profile(out)
+    if state.setdefault("run_key", run_key(profile)) != run_key(profile):
+        raise SystemExit("OUT holds runs of another profile or method code: use a new OUT")
+    state_path.write_text(json.dumps(state, indent=2) + "\n")
     corpus = {str(p["index"]): p for p in json.loads(manifest.read_text())["papers"]}
-    todo = [i for i in indices if i not in state["papers"]]
-    if any(i != "w2" for i in todo):
-        check_key()
 
     def paper_of(index: str) -> tuple[dict, bytes]:
         if index == "w2":
@@ -337,6 +361,11 @@ async def main(argv: list[str]) -> int:
         data = (manifest.parent / paper["file"]).read_bytes()
         assert hashlib.sha256(data).hexdigest() == paper["sha256"], "paper differs from manifest"
         return paper, data
+
+    todo = [i for i in indices
+            if state["papers"].get(i, {}).get("sha256") != paper_of(i)[0]["sha256"]]  # fmt: skip
+    if any(i != "w2" for i in todo):
+        check_key()
 
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))  # end the children, which hold the lock
     s3 = s3_up(out)
@@ -421,6 +450,14 @@ async def main(argv: list[str]) -> int:
         servers = []
 
         ran = {i: p for i, p in state["papers"].items() if i in indices}
+        for i, p in ran.items():  # a kept paper's row follows the current receipt_table too
+            path = HERE / "papers" / f"{i}.json"
+            if path.exists():
+                row = json.loads(path.read_text())
+                expected = {m for m in row.get("profile", {}).get("methods", {})
+                            if m.partition("@")[0] in tokens.COMPONENTS}  # fmt: skip
+                row["receipts"] = receipt_table(await t4.receipts(store, p["request_id"]), expected)
+                path.write_text(json.dumps(row, indent=2) + "\n")
         corpus_ids = {p["request_id"]: f"paper {i}" for i, p in ran.items() if i != "w2"}
         if corpus_ids:
             found = tokens.report(await tokens.from_store(store, list(corpus_ids)))
