@@ -6,7 +6,7 @@ SystemOne serves a d3 decision model's System One service (#161)."""
 import asyncio
 import inspect
 import json
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 
@@ -54,7 +54,7 @@ class InferenceTransport(Protocol):
 async def _post(
     client: httpx.AsyncClient,
     url: str,
-    api_key: str,
+    headers: Mapping[str, str],
     request: dict[str, Any],
     connect_s: float,
     total_s: float,
@@ -65,7 +65,7 @@ async def _post(
                 "POST",
                 url,
                 json=request,
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers=headers,
                 timeout=httpx.Timeout(total_s, connect=connect_s),
                 follow_redirects=False,
             ) as response:
@@ -85,7 +85,7 @@ async def _post(
 
 
 class OpenAIChat:
-    """POST {base_url}/chat/completions with {**request, "model": model}, bearer api_key.
+    """POST {base_url}/chat/completions with {**request, "model": model} and headers.
 
     The whole call (connect, headers, body) runs under an in-code deadline of total_s; on expiry
     the call is cancelled, its connection closed, and ServiceUnavailable("TIMEOUT") raised
@@ -103,14 +103,14 @@ class OpenAIChat:
         self,
         client: httpx.AsyncClient,
         base_url: str,
-        api_key: str,
+        headers: Mapping[str, str],
         model: str,
         connect_s: float,
         total_s: float,
     ) -> None:
         self.client = client
         self.base_url = base_url.rstrip("/")
-        self.api_key = api_key
+        self.headers = headers
         self.model = model
         self.connect_s = connect_s
         self.total_s = total_s
@@ -119,7 +119,7 @@ class OpenAIChat:
         body = await _post(
             self.client,
             f"{self.base_url}/chat/completions",
-            self.api_key,
+            self.headers,
             {**request, "model": self.model},
             self.connect_s,
             self.total_s,
@@ -142,7 +142,7 @@ class OpenAIChat:
 
 
 class SystemOne:
-    """POST {base_url}/v1/systemone with the request as given, bearer api_key: the System One
+    """POST {base_url}/v1/systemone with the request as given and headers: the System One
     service of a d3 decision model, as vLLM Semantic Router's Engine mode and the model package's
     d3_server.py serve it. The request names its own model.
 
@@ -155,19 +155,19 @@ class SystemOne:
         self,
         client: httpx.AsyncClient,
         base_url: str,
-        api_key: str,
+        headers: Mapping[str, str],
         connect_s: float,
         total_s: float,
     ) -> None:
         self.client = client
         self.url = f"{base_url.rstrip('/')}/v1/systemone"
-        self.api_key = api_key
+        self.headers = headers
         self.connect_s = connect_s
         self.total_s = total_s
 
     async def complete(self, request: dict[str, Any]) -> Completion:
         body = await _post(
-            self.client, self.url, self.api_key, request, self.connect_s, self.total_s
+            self.client, self.url, self.headers, request, self.connect_s, self.total_s
         )
         try:
             data = json.loads(body)

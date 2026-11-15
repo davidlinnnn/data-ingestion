@@ -9,6 +9,11 @@ KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the OpenAI-compatible endpoint of th
 Summary's model, which only the summary worker needs (the model comes from the profile);
 KP_D3_BASE_URL and KP_D3_API_KEY, the root of the d3 decision model's System One service and
 its bearer key, which only the d3 worker needs (the model comes from the d3-check package).
+Without its API_KEY a service's requests carry no Authorization header. KP_VLM_HEADERS,
+KP_SUMMARY_HEADERS and KP_D3_HEADERS, each optional and mounted from a Secret, are a JSON object
+of fixed header names to values, such as {"X-Policy-Token": "..."}, sent on every request to
+that service; an entry replaces the header of the same name, Authorization included. A worker
+whose variable is not such an object exits 2 naming the variable (see service_headers).
 """
 
 import argparse
@@ -16,6 +21,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import signal
 import sys
 import traceback
@@ -182,6 +188,34 @@ def log_json_lines(*filters: logging.Filter) -> None:
     logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
 
 
+HEADER_NAME = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+")
+HEADER_VALUE = re.compile(r"[\t\x20-\x7e]*")
+
+
+def service_headers(service: str) -> httpx.Headers:
+    """The headers of every request to service (vlm, summary or d3): `Authorization: Bearer
+    <KP_<SERVICE>_API_KEY>` when the key is set, then each entry of KP_<SERVICE>_HEADERS, a JSON
+    object of header names to string values, which replaces a header of the same name. Raises
+    ValueError naming the variable, never its value, when that is not such an object."""
+    key = os.environ.get(f"KP_{service.upper()}_API_KEY")
+    headers = httpx.Headers({"Authorization": f"Bearer {key}"} if key else {})
+    variable = f"KP_{service.upper()}_HEADERS"
+    error = ValueError(
+        f"{variable} must be a JSON object of header names to printable ASCII string values"
+    )
+    try:
+        extra = json.loads(os.environ.get(variable, "{}"))
+    except ValueError:
+        raise error from None
+    if not isinstance(extra, dict) or not all(
+        isinstance(value, str) and HEADER_NAME.fullmatch(name) and HEADER_VALUE.fullmatch(value)
+        for name, value in extra.items()
+    ):
+        raise error
+    headers.update(extra)
+    return headers
+
+
 async def run_worker(
     queue: Queue,
     profile_path: Path,
@@ -194,18 +228,22 @@ async def run_worker(
     if queue == "orchestration" and not admission:
         print("KP_ADMISSION_URL is required for the orchestration worker", file=sys.stderr)
         return 2
-    vlm_url, vlm_key = os.environ.get("KP_VLM_BASE_URL"), os.environ.get("KP_VLM_API_KEY", "")
+    vlm_url = os.environ.get("KP_VLM_BASE_URL")
     if queue == "vlm" and not vlm_url:
         print("KP_VLM_BASE_URL is required for the vlm worker", file=sys.stderr)
         return 2
     summary_url = os.environ.get("KP_SUMMARY_BASE_URL")
-    summary_key = os.environ.get("KP_SUMMARY_API_KEY", "")
     if queue == "summary" and not summary_url:
         print("KP_SUMMARY_BASE_URL is required for the summary worker", file=sys.stderr)
         return 2
-    d3_url, d3_key = os.environ.get("KP_D3_BASE_URL"), os.environ.get("KP_D3_API_KEY", "")
+    d3_url = os.environ.get("KP_D3_BASE_URL")
     if queue == "d3" and not d3_url:
         print("KP_D3_BASE_URL is required for the d3 worker", file=sys.stderr)
+        return 2
+    try:
+        headers = service_headers(queue) if queue in ("vlm", "summary", "d3") else httpx.Headers()
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
         return 2
     profile = load_profile(profile_path)
     deployment = os.environ.get("TEMPORAL_DEPLOYMENT_NAME")
@@ -242,20 +280,20 @@ async def run_worker(
         vlm = summary = d3 = None
         if queue == "vlm":
             deadline = runtime.profile.runtime["vlm_request_deadline_s"]
-            vlm = OpenAIChat(external_http, vlm_url or "", vlm_key,
+            vlm = OpenAIChat(external_http, vlm_url or "", headers,
                              enrich_vlm.model(runtime.profile), deadline["connect"],
                              deadline["total"])  # fmt: skip
         if queue == "summary":
             settings = runtime.profile.runtime
             deadline = settings["summary_request_deadline_s"]
             # #155: a chunk's calls run in parallel, so slots alone do not bound the requests.
-            summary = Bounded(OpenAIChat(external_http, summary_url or "", summary_key,
+            summary = Bounded(OpenAIChat(external_http, summary_url or "", headers,
                                          enrich_vlm.model(runtime.profile, "summary"),
                                          deadline["connect"], deadline["total"]),
                               settings["summary_requests_per_worker"])  # fmt: skip
         if queue == "d3":
             deadline = runtime.profile.runtime["d3_request_deadline_s"]
-            d3 = SystemOne(external_http, d3_url or "", d3_key, deadline["connect"],
+            d3 = SystemOne(external_http, d3_url or "", headers, deadline["connect"],
                            deadline["total"])  # fmt: skip
         ports = Ports(store, reporter, vlm=vlm, summary=summary, d3=d3)
         client = await connect(temporal_runtime)

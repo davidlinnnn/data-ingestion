@@ -3,7 +3,9 @@ import logging
 import re
 import sys
 
-from kp_canonicalization.cli import JsonFormatter, main
+import pytest
+
+from kp_canonicalization.cli import JsonFormatter, main, service_headers
 from kp_canonicalization.profile import latest_profile
 
 
@@ -47,6 +49,62 @@ def test_the_d3_worker_needs_the_d3_url(monkeypatch, capsys):
 
     assert main(["worker", "--queue", "d3"]) == 2
     assert "KP_D3_BASE_URL is required for the d3 worker" in capsys.readouterr().err
+
+
+def test_a_service_key_is_sent_as_a_bearer_token(monkeypatch):
+    monkeypatch.setenv("KP_VLM_API_KEY", "sk-vlm")
+    monkeypatch.delenv("KP_VLM_HEADERS", raising=False)
+
+    assert dict(service_headers("vlm")) == {"authorization": "Bearer sk-vlm"}
+
+
+def test_without_a_key_no_authorization_is_sent(monkeypatch):
+    monkeypatch.delenv("KP_D3_API_KEY", raising=False)
+    monkeypatch.delenv("KP_D3_HEADERS", raising=False)
+
+    assert dict(service_headers("d3")) == {}
+
+
+def test_configured_headers_are_added_and_may_replace_authorization(monkeypatch):
+    monkeypatch.setenv("KP_SUMMARY_API_KEY", "sk-summary")
+    monkeypatch.setenv(
+        "KP_SUMMARY_HEADERS", '{"authorization": "Token gw-1", "X-Policy-Id": "p-7"}'
+    )
+
+    assert dict(service_headers("summary")) == {
+        "authorization": "Token gw-1",
+        "x-policy-id": "p-7",
+    }
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "not json s3cr3t",
+        '["s3cr3t"]',
+        '{"X-Policy": 7}',
+        '{"X Policy": "s3cr3t"}',
+        '{"X-Policy": "s3cr3t\\r\\nHost: evil"}',
+        '{"X-Policy": "s3cr3t\u00e9"}',
+    ],
+)
+def test_malformed_headers_name_the_variable_and_never_the_value(monkeypatch, value):
+    monkeypatch.setenv("KP_VLM_HEADERS", value)
+
+    with pytest.raises(ValueError) as caught:
+        service_headers("vlm")
+
+    assert "KP_VLM_HEADERS" in str(caught.value)
+    assert "s3cr3t" not in str(caught.value) and caught.value.__cause__ is None
+
+
+def test_a_worker_with_malformed_headers_refuses_to_start(monkeypatch, capsys):
+    monkeypatch.setenv("KP_D3_BASE_URL", "http://d3.invalid")
+    monkeypatch.setenv("KP_D3_HEADERS", '{"X-Policy": ["s3cr3t"]}')
+
+    assert main(["worker", "--queue", "d3"]) == 2
+    err = capsys.readouterr().err
+    assert "KP_D3_HEADERS" in err and "s3cr3t" not in err
 
 
 def test_the_orchestration_worker_needs_the_admission_url(monkeypatch, capsys):

@@ -8,6 +8,7 @@ import dataclasses
 import hashlib
 import io
 import json
+import logging
 import os
 import re
 import statistics
@@ -812,7 +813,7 @@ async def test_the_redrive_list_names_every_marked_request(ports):
 async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports, runtime, variant):
     total_s = 0.3
     hang = Hang(variant)
-    chat = OpenAIChat(httpx.AsyncClient(transport=hang), "http://vlm.test/v1", "k", "gpt-6-luna",
+    chat = OpenAIChat(httpx.AsyncClient(transport=hang), "http://vlm.test/v1", {}, "gpt-6-luna",
                       connect_s=5, total_s=total_s)  # fmt: skip
     input = await native(ports, runtime, one_picture_paper())
     ports = dataclasses.replace(ports, vlm=chat)
@@ -831,6 +832,43 @@ async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports,
     assert await finalize.service_unavailable(ports.store) == [
         {"document_uid": "doc_1", "request_id": "req_1"}
     ]
+
+
+# --- #202: configured headers stay out of receipts and logs -----------------------------------
+
+SECRET = "hdr-s3cr3t-value"
+
+
+@pytest.mark.parametrize("status", [200, 401])
+async def test_a_configured_header_is_sent_and_stays_out_of_receipts_and_logs(
+    ports, runtime, caplog, status
+):
+    sent = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(request.headers["x-policy-token"])
+        if status != 200:
+            return httpx.Response(status, content=b"unauthorized")
+        return httpx.Response(200, content=canned(json.loads(request.content)).body)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    chat = OpenAIChat(client, "http://vlm.test/v1", {"X-Policy-Token": SECRET}, "gpt-6-luna",
+                      connect_s=5, total_s=60)  # fmt: skip
+    input = await native(ports, runtime, one_picture_paper())
+    ports = dataclasses.replace(ports, vlm=chat)
+    caplog.set_level(logging.DEBUG)
+
+    try:
+        await run_vlm(ports, runtime, input.inventory)
+    except ProcessingFailure as failure:
+        assert status != 200 and SECRET not in repr(failure) + repr(failure.__cause__)
+
+    assert sent and set(sent) == {SECRET}
+    keys = await ports.store.list_prefix("")
+    assert any("/receipts/" in key for key in keys)
+    stored = [await ports.store.get(key) for key in keys]
+    assert all(SECRET.encode() not in body for body in stored)
+    assert caplog.records and SECRET not in caplog.text
 
 
 # --- V9: receipt overhead --------------------------------------------------------------------

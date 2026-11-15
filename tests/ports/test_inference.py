@@ -64,10 +64,13 @@ def response_body(content: str | None = '{"latex": "x"}', refusal: str | None = 
     }
 
 
+HEADERS = {"Authorization": "Token gw-1", "X-Policy-Id": "p-7"}
+
+
 def adapter(transport: httpx.AsyncBaseTransport, total_s: float = 60) -> OpenAIChat:
     """OpenAIChat over transport; a test of its deadline passes a small total_s."""
     client = httpx.AsyncClient(transport=transport)
-    return OpenAIChat(client, BASE, "sk-test", "gpt-6-luna", connect_s=5, total_s=total_s)
+    return OpenAIChat(client, BASE, HEADERS, "gpt-6-luna", connect_s=5, total_s=total_s)
 
 
 def answering(status: int, body: bytes | dict) -> OpenAIChat:
@@ -91,7 +94,7 @@ SYSTEM_ONE_REPLY = {
 
 def system_one(transport: httpx.AsyncBaseTransport, total_s: float = 60) -> SystemOne:
     client = httpx.AsyncClient(transport=transport, follow_redirects=True)
-    return SystemOne(client, D3_BASE, "sk-d3", connect_s=5, total_s=total_s)
+    return SystemOne(client, D3_BASE, HEADERS, connect_s=5, total_s=total_s)
 
 
 def judging(status: int, body: bytes | dict) -> SystemOne:
@@ -148,7 +151,7 @@ async def test_an_unavailable_service_raises_service_unavailable(transport):
 # --- adapter ------------------------------------------------------------------------------
 
 
-async def test_the_request_carries_the_model_and_the_key():
+async def test_the_request_carries_the_model_and_the_headers():
     seen = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -159,7 +162,7 @@ async def test_the_request_carries_the_model_and_the_key():
 
     (request,) = seen
     assert (request.method, str(request.url)) == ("POST", f"{BASE}/chat/completions")
-    assert request.headers["authorization"] == "Bearer sk-test"
+    assert {k: request.headers[k] for k in HEADERS} == HEADERS
     assert json.loads(request.content) == {**REQUEST, "model": "gpt-6-luna"}
     assert answer.body == json.dumps(response_body()).encode()
     assert answer.system_fingerprint == "fp_abc"
@@ -220,7 +223,7 @@ async def test_other_statuses_are_rejected_requests(status):
 # --- SystemOne: the d3 service (#161) ------------------------------------------------------
 
 
-async def test_system_one_posts_the_request_as_given_with_the_key():
+async def test_system_one_posts_the_request_as_given_with_the_headers():
     seen = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -231,7 +234,7 @@ async def test_system_one_posts_the_request_as_given_with_the_key():
 
     (request,) = seen
     assert (request.method, str(request.url)) == ("POST", f"{D3_BASE}/v1/systemone")
-    assert request.headers["authorization"] == "Bearer sk-d3"
+    assert {k: request.headers[k] for k in HEADERS} == HEADERS
     assert json.loads(request.content) == SYSTEM_ONE_REQUEST
     assert json.loads(answer.content or "")["answers"]["Q2"]["noul"] == 0.25
     assert answer.body == json.dumps(SYSTEM_ONE_REPLY).encode()
@@ -321,7 +324,7 @@ async def test_a_redirect_elsewhere_is_never_followed():
 
     # The client would follow redirects; the adapter must not.
     client = httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=True)
-    sender = OpenAIChat(client, BASE, "sk-test", "gpt-6-luna", connect_s=5, total_s=60)
+    sender = OpenAIChat(client, BASE, HEADERS, "gpt-6-luna", connect_s=5, total_s=60)
 
     with pytest.raises(RequestRejected) as caught:
         await sender.complete(REQUEST)
@@ -470,7 +473,7 @@ async def test_a_hung_server_is_cut_at_the_deadline_and_its_socket_closed(varian
         # The client's read timeout (10 s) is longer than the drip interval (0.2 s), so for the
         # drip only the in-code deadline can end the call.
         client = httpx.AsyncClient(timeout=httpx.Timeout(10, connect=5))
-        chat = OpenAIChat(client, servers.url(variant), "k", "m", connect_s=5, total_s=total_s)
+        chat = OpenAIChat(client, servers.url(variant), {}, "m", connect_s=5, total_s=total_s)
         started = time.monotonic()
 
         with pytest.raises(ServiceUnavailable) as caught:
