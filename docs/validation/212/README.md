@@ -75,6 +75,28 @@ No removed item is a real formula: the rule matches nothing else in the 257. The
 outside it is a page-50 formula of paper 20 whose text layer is `|I| i i i`, which stays a
 formula. In `after`, page 25's ids sit in `list_item` and `text` nodes.
 
+## Held-out papers
+
+The rule was written while looking at the 257 formula items above, so they cannot show that it
+generalizes. [heldout.py](heldout.py) took 32 papers it was never tuned on: the 2 newest arXiv
+submissions (2026-11) of at most 40 pages in each of 16 categories, from `math.PR` and `hep-th`
+to `cs.SE` and `q-fin.MF`, 729 pages in all. It parsed them with the relabel switched off, so
+every node docling labels formula stays one, and applied `IDENTIFIER` to each
+([heldout.json](heldout.json)).
+
+| Check | Result |
+|---|---|
+| Formula nodes | 1,951 |
+| Matched by `IDENTIFIER`, so they would become text | 0 |
+| Matched by the first, broader rule (no joining character) | 0 |
+| Nodes whose text layer is one token | 7, all symbols: `□` (3), `ˆ`, `⊗(r−1)`, `O(1)`, `g` |
+| Positive control: the same code on paper 16 | 44 formula nodes, 35 matched, all on page 25 |
+
+This is structural. docling joins a formula's text-layer cells with spaces, as in
+`A t = {a t t 1 , ...}`, so a real formula's text layer is almost never one token: 1,944 of the
+1,951 held-out nodes and all 222 real formulas of the 21 papers have a space. The rule acts
+only on a one-token text layer, and on all 2,208 formula nodes seen it matches only the 35 ids.
+
 ## Paper 16 end to end
 
 #199's `run.py` ran paper 16 on the Temporal workflow in a new OUT, with #199's models (Sonnet
@@ -138,6 +160,12 @@ scripts/heavy-lock 212-e2e -- env HF_HUB_OFFLINE=1 .venv/bin/python docs/validat
 # then move the files run.py wrote under docs/validation/199 to e2e/ and restore #199's
 PYTHONPATH=. .venv/bin/python docs/validation/212/run.py e2e $OUT/e2e e2e
 PYTHONPATH=. .venv/bin/python docs/validation/212/run.py e2e ~/archive/research/199-e2e/pilot2 e2e-199
+
+PYTHONPATH=. .venv/bin/python docs/validation/212/heldout.py fetch ~/archive/research/212-heldout
+scripts/heavy-lock 212-heldout -- env HF_HUB_OFFLINE=1 PYTHONPATH=. .venv/bin/python \
+    docs/validation/212/heldout.py parse ~/archive/research/212-heldout
+scripts/heavy-lock 212-heldout -- env HF_HUB_OFFLINE=1 PYTHONPATH=. .venv/bin/python \
+    docs/validation/212/heldout.py control ~/archive/research/212-heldout "$M"
 ```
 
 OUT (`~/archive/research/212-formula`, outside the repo) holds the file-backed store of the
@@ -147,6 +175,8 @@ end-to-end run's S3 stand-in data, Temporal database and logs.
 ## Files
 
 - [run.py](run.py): parse and inventory of the 21 papers, the comparison, the end-to-end check.
+- [heldout.py](heldout.py), [heldout.json](heldout.json): the held-out papers (arXiv ids,
+  sha256), their formula nodes and the matches.
 - [inventory.json](inventory.json): per paper, the formula items before and after, the removed
   items, request and recording counts; page 25's ids.
 - [manifest.json](manifest.json): each paper's sha256 and the sha256 of OUT/before.json and
