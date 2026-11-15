@@ -18,7 +18,8 @@ a rerun only rescores. No workflow and none of #199's ports.
   descriptions  run 1, judged blind by t4's rules as #199 did: an answer equal to Luna's keeps
                 t4's verdict, any other goes to OUT/judging/sheets.json (letters.json beside
                 it); a judge writes verdicts.json there and the next run merges it into
-                judgments.json here; beside #199's workflow and alone verdicts
+                judgments.json here; beside #199's workflow and alone verdicts. A verdict
+                changed by hand carries "reversed": {"from", "why"} in judgments.json
   figure types  run 1 against the gold (a chart or not) and beside Luna's recorded answer,
                 which #199's Sonnet answers equal on all 18; captions have no gold: not blank
 
@@ -134,6 +135,9 @@ async def main(argv: list[str]) -> int:
         descriptions.append({"gold_index": i, "label": t["label"], "verdict": found["alone"],
                              "workflow_199": before[i]["verdict"], "alone_199": before[i]["alone"],
                              "recorded": t4_judged[t["label"]]["luna"],
+                             "control": judgments.get(t["label"], {}).get("control"),
+                             "reversed_from": judgments.get(t["label"], {}).get(
+                                 "reversed", {}).get("from"),
                              "figure_type": (ours or {}).get("figure_type"),
                              "figure_type_recorded": t["luna"]["figure_type"],
                              "chart_gold": golds[i]["chart_expected"] != "not_chart",
@@ -165,6 +169,11 @@ async def main(argv: list[str]) -> int:
         "charts": charts,
         "descriptions": {
             "rows": descriptions, "pass": passed, "of": len(descriptions),
+            # a verdict reversed by hand (judgments.json "reversed") counts as the judge gave it
+            "pass_as_judged": sum((d["reversed_from"] or d["verdict"]) in score.PASSES
+                                  for d in descriptions),
+            "control_as_t4": sum(d["control"] in score.PASSES and d["recorded"] in score.PASSES
+                                 or d["control"] == d["recorded"] for d in descriptions),
             "not_judged": sum(d["verdict"] is None for d in descriptions),
             "workflow_199": bar,
             "pass_bar": len(descriptions) == PICTURES and 0 < bar <= passed <= PICTURES,
