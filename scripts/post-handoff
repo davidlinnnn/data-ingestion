@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Post a handoff comment on a ticket and add it to the ticket's body
+# (docs/agents/issue-tracker.md § Ticket bodies). Two commands, run one at a time, so a
+# refused write never hides a step that did not run:
+#   post-handoff comment ISSUE FILE         post FILE as a comment; gh prints the comment's URL
+#   post-handoff insert ISSUE ANCHOR FILE   insert FILE's lines after the one line of the body,
+#                                           as it is now, that contains ANCHOR (a fixed string)
+# Both run scripts/check-publish on FILE first. insert refuses unless exactly one line of the
+# body contains ANCHOR: a rewritten body keeps its previous text, index included, in <details>.
+set -euo pipefail
+
+usage() { echo "usage: post-handoff comment ISSUE FILE | insert ISSUE ANCHOR FILE" >&2; exit 2; }
+here=$(cd "$(dirname "$0")" && pwd)
+
+case "${1:-}" in
+  comment)
+    [ $# -eq 3 ] || usage
+    "$here/check-publish" "$3"
+    gh issue comment "$2" --body-file "$3"
+    ;;
+  insert)
+    [ $# -eq 4 ] || usage
+    issue=$2 anchor=$3 file=$4
+    "$here/check-publish" "$file"
+    body=$(mktemp)
+    trap 'rm -f "$body" "$body.new"' EXIT
+    gh issue view "$issue" --json body --jq .body > "$body"
+    lines=$(grep -cF -- "$anchor" "$body" || true)
+    if [ "$lines" != 1 ]; then
+      echo "post-handoff: $lines lines of #$issue contain the anchor; exactly 1 is needed" >&2
+      exit 1
+    fi
+    ANCHOR="$anchor" awk -v file="$file" '
+      { print }
+      index($0, ENVIRON["ANCHOR"]) { while ((getline line < file) > 0) print line }
+    ' "$body" > "$body.new"
+    gh issue edit "$issue" --body-file "$body.new"
+    ;;
+  *) usage ;;
+esac
