@@ -23,6 +23,8 @@ from docling.models.stages.page_preprocessing.page_preprocessing_model import (
 )
 from docling.models.stages.table_structure.table_structure_model import TableStructureModel
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
+from docling_core.types.doc.base import BoundingBox, CoordOrigin
+from docling_core.types.doc.common.reference import ProvenanceItem
 from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.text import FormulaItem, TextItem
 from docling_core.types.doc.labels import DocItemLabel
@@ -191,11 +193,111 @@ def test_a_formula_whose_text_layer_is_one_identifier_becomes_a_text_line():
     for orig in identifiers + formulas:
         document.add_text(label=DocItemLabel.FORMULA, text="", orig=orig)
 
-    texts = DoclingDocument.model_validate(pipeline.document_json(document)).texts
+    texts = DoclingDocument.model_validate(
+        pipeline.document_json(document, write_pdf([Page()]))
+    ).texts
 
     assert [(type(t), t.text) for t in texts] == [
         *[(TextItem, orig) for orig in identifiers],
         *[(FormulaItem, "") for _ in formulas],
+    ]
+
+
+def line(page: int, index: int, text: str) -> ProvenanceItem:
+    """The box of line `index` as tests.pdfs.write_pdf draws it on a 612 x 792 pt page."""
+    y = 720 if index == 0 else 696 - 16 * (index - 1)
+    box = BoundingBox(l=70, t=y + 12, r=560, b=y - 4, coord_origin=CoordOrigin.BOTTOMLEFT)
+    return ProvenanceItem(page_no=page, bbox=box, charspan=(0, len(text)))
+
+
+def labels(document: DoclingDocument, pdf: bytes) -> list[tuple[str, str]]:
+    texts = DoclingDocument.model_validate(pipeline.document_json(document, pdf)).texts
+    return [(t.label.value, t.orig) for t in texts]
+
+
+def test_the_lines_around_a_monospaced_code_node_in_its_font_become_code():
+    """#210: the layout labels part of a prompt listing as code and the rest as body text."""
+    mono = [
+        "You are an assistant for questions.",
+        "## Task",
+        "1. Answer the question briefly.",
+        "Respond with JSON only: {answer}",
+        "Return nothing else, please.",
+    ]
+    pdf = write_pdf([Page(lines=[
+        "Prompts", "The agent receives this prompt.", *[[("Courier", m)] for m in mono],
+        "Figure 1: the prompt template.", [("Courier", "Courier after the caption stays.")],
+    ])])  # fmt: skip
+    document = DoclingDocument(name="paper")
+    document.add_heading("Prompts", prov=line(1, 0, "Prompts"))
+    document.add_text(DocItemLabel.TEXT, "The agent receives this prompt.",
+                      prov=line(1, 1, "The agent receives this prompt."))  # fmt: skip
+    document.add_text(DocItemLabel.TEXT, mono[0], prov=line(1, 2, mono[0]))
+    document.add_heading(mono[1], prov=line(1, 3, mono[1]))
+    group = document.add_list_group()
+    document.add_list_item(mono[2], enumerated=True, parent=group, prov=line(1, 4, mono[2]))
+    document.add_code(mono[3], prov=line(1, 5, mono[3]))
+    document.add_text(DocItemLabel.TEXT, mono[4], prov=line(1, 6, mono[4]))
+    caption = "Figure 1: the prompt template."
+    document.add_text(DocItemLabel.CAPTION, caption, prov=line(1, 7, caption))
+    after = "Courier after the caption stays."
+    document.add_text(DocItemLabel.TEXT, after, prov=line(1, 8, after))
+
+    assert labels(document, pdf) == [
+        ("section_header", "Prompts"),
+        ("text", "The agent receives this prompt."),
+        *[("code", m) for m in mono],
+        ("caption", caption),
+        ("text", after),
+    ]
+
+
+def test_a_code_node_across_pages_becomes_one_code_node_per_page():
+    """#210: the inventory reads a node's first provenance only, which missed the second page."""
+    first, second = "for item in items:", "    print(item)"
+    pages = [Page(lines=["Listing", [("Courier", first)]]),
+             Page(lines=[[("Courier", second)], "Body text after the listing."])]  # fmt: skip
+    pdf = write_pdf(pages)
+    document = DoclingDocument(name="paper")
+    document.add_heading("Listing", prov=line(1, 0, "Listing"))
+    code = document.add_code(f"{first} {second}", prov=line(1, 1, first))
+    start = len(first) + 1
+    code.prov.append(
+        line(2, 0, second).model_copy(update={"charspan": (start, start + len(second))})
+    )
+    document.add_text(DocItemLabel.TEXT, "Body text after the listing.",
+                      prov=line(2, 1, "Body text after the listing."))  # fmt: skip
+
+    data = pipeline.document_json(document, pdf)
+    order = pipeline.reading_order(data)
+
+    assert [(n["label"], n["orig"], [p["page_no"] for p in n["prov"]]) for n in order] == [
+        ("section_header", "Listing", [1]),
+        ("code", first, [1]),
+        ("code", second, [2]),
+        ("text", "Body text after the listing.", [2]),
+    ]
+    assert DoclingDocument.model_validate(data).texts[-1].prov[0].charspan == (0, len(second))
+
+
+def test_a_code_node_in_a_proportional_font_takes_no_neighbour():
+    """Pseudocode set in the body font: its neighbours are body text in that font."""
+    body = [
+        f"Then the model {word} converges quickly on benchmark number {n}."
+        for n, word in enumerate(("always", "usually", "rarely", "sometimes", "never"))
+    ]
+    pdf = write_pdf([Page(lines=["Method", "for each step do update the weights", *body])])
+    document = DoclingDocument(name="paper")
+    document.add_heading("Method", prov=line(1, 0, "Method"))
+    document.add_code("for each step do update the weights",
+                      prov=line(1, 1, "for each step do update the weights"))  # fmt: skip
+    for n, text in enumerate(body, start=2):
+        document.add_text(DocItemLabel.TEXT, text, prov=line(1, n, text))
+
+    assert labels(document, pdf) == [
+        ("section_header", "Method"),
+        ("code", "for each step do update the weights"),
+        *[("text", text) for text in body],
     ]
 
 
