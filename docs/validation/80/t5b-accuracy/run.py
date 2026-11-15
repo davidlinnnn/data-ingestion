@@ -61,6 +61,12 @@ async def plant(luna: OpenAIChat, sentence: str, kind: str) -> str:
     return json.loads(answer.content or "{}")["sentence"].strip()
 
 
+def kind_of(number: int, text: str) -> str:
+    """The error type of the number-th sampled case, in rotation."""
+    kinds = [k for k in ERRORS if k != "number" or any(ch.isdigit() for ch in text)]
+    return kinds[number % len(kinds)]
+
+
 async def verdicts(judge: OpenAIChat, document: dict, indices: list[int], sentences: list[str]):
     """The verdicts, the usage, and whether the answer wrote a reason before its verdict."""
     answer = await judge.complete(ds.verify_request(document, indices, sentences))
@@ -160,8 +166,7 @@ async def judged(
 
         async def case(number: int, c: dict) -> dict:
             async with gate:
-                kinds = [k for k in ERRORS if k != "number" or any(ch.isdigit() for ch in c["text"])]
-                kind = kinds[number % len(kinds)]
+                kind = kind_of(number, c["text"])
                 document = summaries[c["paper"]]["sections"]
                 planted = plants[number] if plants else await plant(luna, c["text"], kind)
                 batch = list(c["batch"])
