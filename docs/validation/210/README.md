@@ -114,8 +114,34 @@ without it comes from one parse ([heldout.json](heldout.json)).
 - **Negative control** (tests): a code node in Helvetica, with 5 Helvetica lines after it, takes
   no neighbour; the same lines in Courier pass the monospace test.
 
-What the held-out set cannot show is recall: it has no gold, so a listing line the rule missed
-there is not counted.
+What the held-out set cannot show by itself is recall: it has no gold. The overfit check below
+counts the candidates.
+
+## Overfit check
+
+[overfit.py](overfit.py) reran the rule on the rule-off assemblies of all 51 papers, without
+parsing, to see whether its thresholds fit the 21 papers only ([overfit.json](overfit.json)).
+
+- **Margin.** On every page that holds a code node, each font with at least 5 runs has an
+  even-run share below 0.1 or of 0.9 and above: none of the 284 corpus and 121 held-out
+  (page, font) pairs lies between 0.15 and 0.65. The 0.5 threshold sits in an empty gap.
+- **Sensitivity.** With the even-run share at 0.3 or 0.7, the step tolerance at 2 % or 6 %, or
+  the minimum at 3 or 8 runs, the rule relabels exactly the same nodes on all 51 papers (92 on
+  the corpus, 58 held out). A replica of `monospaced` with the shipped values reproduces the
+  shipped result on every paper, a check of the variants.
+- **Misses next to a code node.** Text, list item and heading nodes in a monospaced font next
+  to a code node that the rule leaves: 0 on the 30 held-out papers (11 with the rule off, the
+  positive control). On the corpus, 27 with the rule off and 5 with it on, none a listing
+  line:
+  - Paper 1's 3 are prompt box titles ("SealQA Inference Agent System Prompt"), set in a
+    second monospaced font (`LMMonoLt10-Bold`) and outside #84's code regions too.
+  - Paper 16's 2 are items of a bulleted list of benchmark task ids (`· go__crypto-square`) in
+    `SFTT1000`, next to a diff listing in `SFTT0800`.
+- **Listings docling labels nowhere as code** (#210's limit, below) are common in general
+  papers: 11 of the 30 held-out papers have monospaced text, list item or heading nodes with
+  no code node next to them. They mix listing lines (a shell command, a stack trace, a Potts
+  model table) with references, URLs and e-mail addresses set in `\texttt`, so a rule without
+  a code node to start from would absorb those.
 
 ## End to end
 
@@ -159,6 +185,9 @@ PYTHONPATH=. .venv/bin/python docs/validation/210/heldout.py fetch ~/archive/res
 scripts/heavy-lock 210-heldout -- env HF_HUB_OFFLINE=1 PYTHONPATH=. .venv/bin/python \
     docs/validation/210/heldout.py parse ~/archive/research/210-heldout "$M"
 
+PYTHONPATH=. .venv/bin/python docs/validation/210/overfit.py "$M" \
+    ~/archive/research/212-formula/store/documents ~/archive/research/210-heldout
+
 set -a; . ~/.config/kp-dev/anthropic.env; set +a
 scripts/heavy-lock 210-e2e -- env HF_HUB_OFFLINE=1 .venv/bin/python docs/validation/199/run.py \
     $OUT/e2e "$M" "$A" ~/models/issue84/w4b-d3-models/d3-mini \
@@ -174,6 +203,8 @@ held-out papers and the end-to-end run's S3 stand-in data, Temporal database and
 
 - [run.py](run.py): parse and inventory of the 21 papers, and the comparison.
 - [heldout.py](heldout.py): the held-out fetch and parse.
+- [overfit.py](overfit.py), [overfit.json](overfit.json): threshold margin, sensitivity and
+  misses on the 51 rule-off assemblies.
 - [inventory.json](inventory.json): per paper the items each method gained and lost.
 - [codes.json](codes.json): the 13 units, before and after.
 - [heldout.json](heldout.json): the held-out papers with their sha256, the counts and every
