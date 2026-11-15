@@ -390,3 +390,28 @@ scripts/heavy-lock 199-e2e -- env HF_HUB_OFFLINE=1 .venv/bin/python docs/validat
 Papers already in `OUT/requests.json` are not run again, so the first command, rerun, only
 rescores. When it leaves answers to judge, it writes them to `OUT/judging/sheets.json`. A judge
 then writes `verdicts.json` beside them, and the next rescore merges it into `judgments.json`.
+
+## Reuse
+
+For a ticket that reruns part of this validation or reads its results (#203, #210). Import the
+scripts as modules, the way [#211's run.py](../211/run.py) and [#212's run.py](../212/run.py)
+do, and start from the entry point for the need:
+
+| Need | Entry point | It needs |
+|---|---|---|
+| This run's objects: results, inventories, receipts | `run.py archive OUT --keep` serves them; then `score.outputs(store, request_id)` and `t4.receipts(store, request_id)`. `OUT/requests.json` holds the bucket and each paper's request id | Docker |
+| The numbers to compare against | `accuracy.json`: per chart, description and formula, the workflow's verdict and the alone one. `papers/<index>.json`: `inventory_counts`, `statuses`, `receipts` | nothing |
+| A method alone on t4's targets, outside the workflow | `score.alone_answers(out, papers, profile, chat)` | the API key |
+| The same scoring | `score.chart_scorer`, `score.swapped`, `score.score_code`, `score.verdicts`, `score.PASSES`; blind judging with `score.write_sheets` and `score.unblind` | the gold under ARCHIVE |
+| Tokens and TPM from a bucket's receipts | `tokens.py OUT_JSON [REQUEST_ID ...]`, or `tokens.from_store`, `tokens.report` and `tokens.markdown` | the bucket's endpoint and credentials in the environment |
+| Papers through the workflow again | `run.py NEW_OUT … INDEX…`, as under Run | a new OUT once a method or the profile changed (`run_key` refuses the old one); ports 9199, 7314, 7315 and 8161–8164 free; `scripts/heavy-lock` |
+
+Two things to know before a rerun:
+
+- **`run.py` and `score.py` write their evidence into this folder**: `papers/`, `tokens.json`,
+  `tokens.md`, `accuracy.json`, `manifest.json`, `judgments.json` and `evidence-*.json`. After
+  a rerun for another ticket, move what it wrote into that ticket's folder and restore this
+  one with `git checkout docs/validation/199`, as #212 did. A module that imports `score`
+  points `score.JUDGMENTS` at its own file, as #211 did.
+- **One workflow run at a time.** The ports are fixed, and `run.py` refuses to start while
+  another session holds one.
