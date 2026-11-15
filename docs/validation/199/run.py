@@ -4,6 +4,10 @@ then its enrichments scored against the gold and its requests and tokens tabled.
     set -a; . ~/.config/kp-dev/anthropic.env; set +a
     scripts/heavy-lock 199-e2e -- env HF_HUB_OFFLINE=1 .venv/bin/python \\
         docs/validation/199/run.py OUT CORPUS_MANIFEST ARCHIVE D3_PACKAGE D3_PYTHON INDEX...
+    .venv/bin/python docs/validation/199/run.py archive OUT [--keep]
+
+`archive` checks a kept OUT against manifest.json without changing it, and with --keep leaves
+an S3 stand-in serving a copy of its objects (for later tickets that read this run's results).
 
 OUT (outside the repo) keeps the S3 stand-in's data, the Temporal database, the logs, each
 summary's text and the judging sheets. ARCHIVE is the untracked tree with the #84 gold and the
@@ -41,9 +45,12 @@ import importlib.util
 import json
 import os
 import secrets
+import shutil
 import signal
+import socket
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -127,17 +134,17 @@ def run_key(profile: Path) -> str:
     return hashlib.sha256(profile.read_bytes() + "\n".join(digests).encode()).hexdigest()
 
 
-def s3_up(out: Path) -> str:
-    """The S3 stand-in on S3_PORT with its data under OUT/s3; the container's name."""
+def s3_up(out: Path, port: int = S3_PORT) -> str:
+    """The S3 stand-in on port with its data under OUT/s3; the container's name."""
     image = yaml.safe_load((t2.REPO / "tests/s3/compose.yaml").read_text())["services"]["rustfs"]
-    name = f"kp-s3-199-{t2.RUN}"
+    name = f"kp-s3-199-{port}-{t2.RUN}"
     (out / "s3").mkdir(exist_ok=True)
-    subprocess.run(["docker", "run", "-d", "--rm", "--name", name, "-p", f"127.0.0.1:{S3_PORT}:9000",
+    subprocess.run(["docker", "run", "-d", "--rm", "--name", name, "-p", f"127.0.0.1:{port}:9000",
                     *[a for k, v in image["environment"].items() for a in ("-e", f"{k}={v}")],
                     "-v", f"{out / 's3'}:/data", image["image"]], check=True, capture_output=True)  # fmt: skip
     for _ in range(60):
         try:
-            with urllib.request.urlopen(f"http://127.0.0.1:{S3_PORT}/health", timeout=2):
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2):
                 return name
         except OSError:
             time.sleep(1)
@@ -298,6 +305,35 @@ async def stored(store, ran: dict) -> dict:
         found[p["request_id"]] = {"objects": len(keys),
                                   "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest()}  # fmt: skip
     return found
+
+
+async def archive(out: Path, keep: bool) -> int:
+    """OUT against manifest.json: each raw output's sha256, then each request's objects, read
+    through an S3 stand-in on a free port over a copy of OUT/s3 (RustFS's own disk format, which
+    the server also writes to). With keep, that stand-in stays up for reading."""
+    manifest = json.loads((HERE / "manifest.json").read_text())
+    bucket = json.loads((out / "requests.json").read_text())["bucket"]
+    bad = [rel for rel, sha in manifest["outputs"].items()
+           if not (out / rel).is_file() or hashlib.sha256((out / rel).read_bytes()).hexdigest() != sha]  # fmt: skip
+    clone = Path(tempfile.mkdtemp(prefix="kp-s3-199-"))
+    shutil.copytree(out / "s3", clone / "s3")
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+    name = s3_up(clone, port)
+    try:
+        t2.BASE_ENV["KP_S3_ENDPOINT"] = f"http://127.0.0.1:{port}"
+        found = await stored(t2.store(bucket), {r: {"request_id": r} for r in manifest["requests"]})
+        bad += [r for r, want in manifest["requests"].items() if found[r] != want]
+    finally:
+        if not keep:
+            subprocess.run(["docker", "stop", name], capture_output=True)
+            shutil.rmtree(clone)
+    print("differs from manifest.json:", bad or "none", flush=True)
+    if keep:
+        print(f"serving KP_S3_ENDPOINT=http://127.0.0.1:{port} KP_S3_BUCKET={bucket}"
+              f" (credentials: tests/s3/compose.yaml)\nstop: docker stop {name} && rm -rf {clone}")  # fmt: skip
+    return 1 if bad else 0
 
 
 def hashes(out: Path, ran: dict, archive: Path, package: Path, profile: Path, requests: dict) -> dict:
@@ -485,4 +521,6 @@ async def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["archive"]:
+        sys.exit(asyncio.run(archive(Path(sys.argv[2]).expanduser(), "--keep" in sys.argv[3:])))
     sys.exit(asyncio.run(main(sys.argv[1:])))

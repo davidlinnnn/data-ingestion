@@ -367,6 +367,11 @@ TPM is the mean tokens per document times documents per minute (`tokens.RATES`):
 - **OUT is `~/archive/research/199-e2e/pilot2`, outside the repo.** It holds the S3 stand-in's
   data, the Temporal database, the logs, the alone answers, the summaries with their text, A7's
   cases and spot checks, and the judging sheets with their crops.
+- **Reading OUT later.** `OUT/s3` is RustFS's own disk format, so its objects can be read only
+  through a running stand-in, and that stand-in writes its own state into the data directory.
+  `run.py archive OUT` checks OUT against `manifest.json` (`differs from manifest.json: none`
+  on 2026-11-15) and leaves OUT unchanged. `--keep` leaves a stand-in serving a copy, on a free
+  port so it does not collide with a run's 9199, and prints how to stop it.
 
 ## Run
 
