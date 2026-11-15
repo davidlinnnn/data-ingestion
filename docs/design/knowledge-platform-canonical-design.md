@@ -2,6 +2,10 @@
 
 [Design index](README.md) · [Domain glossary](../../CONTEXT.md)
 
+**Status:** design result of [#32](https://github.com/davidlinnnn/data-ingestion/issues/32), closed 2026-10-10. The text is not revised for later
+decisions unless a dated note in it says so; those decisions are on the
+[wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
+
 This checkpoint follows
 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32).
 The user confirmed the complete logical contract, cases, validation plan and owner

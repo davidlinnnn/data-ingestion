@@ -1,6 +1,10 @@
 # Knowledge Platform admission design notes
 
-Active design for [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31),
+**Status:** design record, not the contract. It keeps the decisions of each round and their
+reasons, including text that later decisions superseded (marked "Superseded on"). Build from
+the [admission specification](knowledge-platform-admission-spec.md).
+
+Design notes for [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31),
 within the existing Knowledge Platform wayfinder map. Rounds 1–5 are
 confirmed; the current contract is the
 [admission specification](knowledge-platform-admission-spec.md). Later rounds
@@ -283,6 +287,10 @@ platform-verified digest as the artifact's integrity information.
   declared size (and digest where supported). Default lifetime is one hour;
   grants may be reissued while the session is open. The concrete form is a
   storage-native presigned URL or SAS, chosen with the storage product.
+  Superseded on 2026-10-30: company policy excludes this form; the upload
+  endpoint that replaced it on 2026-11-07 is in the
+  [file upload design](knowledge-platform-file-upload.md) and specification
+  §5.2 (see [Upload path](#upload-path-policy-change-on-2026-10-30-and-decision-on-2026-11-07)).
 - An upload session not finalized within 24 hours expires: its items are not
   admitted and staged files are deleted. Finalizing an expired session fails
   explicitly.
@@ -334,6 +342,13 @@ platform-verified digest as the artifact's integrity information.
   synchronous replication; this is a pilot go-live condition. No managed
   PostgreSQL service exists in the company today. Provisioning and operation are
   handed to #78 and coordinated with #57.
+  Superseded on 2026-11-12: operators cannot be installed on the company's
+  clusters, and the company lets each application declare its own guarantee
+  (backup or replication inside the cluster both qualify). The database is one
+  PostgreSQL instance with continuous write-ahead-log archiving; the guarantee
+  is restated in the
+  [admission specification](knowledge-platform-admission-spec.md) §9. The same
+  applies to "CNPG" under Deployment (Q9.10) and the validation plan (Q9.11).
 - The dispatcher starts the Temporal workflow with the request ID as workflow ID
   and `REJECT_DUPLICATE`, treating `WorkflowExecutionAlreadyStarted` as success.
   During a Temporal outage outbox rows wait and are dispatched with backoff.
@@ -805,7 +820,8 @@ belongs to #57, staging to #31 and Temporal to #78.
 
 One image with three roles: `api` (scaled by HPA), `dispatcher` (at least two
 replicas, claiming with `SKIP LOCKED`) and CronJobs (reconciler every 5 minutes,
-batch expiry hourly, retention daily). Admission has its own CNPG database.
+batch expiry hourly, retention daily). Superseded on 2026-11-13 for the `api`
+role: a fixed number of replicas and no HPA, the company's practice (spec §13). Admission has its own CNPG database.
 Staging belongs to admission and custody to #57. The cluster topology belongs to
 #78.
 
@@ -917,7 +933,11 @@ backfill complete, and the document keeps its previous readiness meanwhile;
   | Custody Purge | Retained bytes and derived data are erased | 30 days |
 
   `applied` is reached by a serving-time block keyed by `document_uid` (#56 and
-  #76), without waiting for index removal.
+  #76), without waiting for index removal. Superseded on 2026-11-15 by
+  [ADR-0014](../adr/0014-removal-by-projection-cleanup.md): there is no serving-time
+  block in v1; content stops being served at `enforced`, and `applied` is the
+  deletion recorded in admission. Q10.8's "unreadable within a minute" no longer
+  holds: the incident path is a deletion followed by cleanup within the limit.
 - **Q10.6 and Q10.6a:** each projection owner adjusts products derived from a
   deleted document, such as LLM-wiki pages that combine several documents,
   within the `enforced` target. The deletion reaches projections through the #55
@@ -986,6 +1006,19 @@ becomes its own ticket only once the pilot client's language is known.
   `document_uid`.
 - The round-3 status reporting contract's "exhausted retries become
   `product_failed`": they become `processing_failed`.
+
+## Upload path: policy change on 2026-10-30 and decision on 2026-11-07
+
+Company policy, confirmed by the user's manager on 2026-10-30, forbids clients
+from uploading files through presigned URLs (SAS with them); this superseded the
+concrete grant form in Q5. On 2026-11-07 the user chose push through a platform
+upload endpoint, authenticated with the Source credential and without a
+separate grant; specification §5.2 holds the contract. The account of this
+topic, with the options compared, the architecture, the sequence diagrams and
+the Source-facing guide, is the
+[file upload design](knowledge-platform-file-upload.md). Passages above written
+before the policy (Q4b "signed into the upload grant", Q5, and the principle
+below) stand as history.
 
 ## Principle for later architecture documentation
 

@@ -1,6 +1,10 @@
 # Enterprise AI Data Foundation
 ## Architecture Baseline for Direction Review
 
+> **Standing (2026-11-12):** an earlier direction package, kept for reference. Current design is
+> not recorded here: decisions since 2026-09-28 are on the [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and in the
+> [design index](docs/design/README.md). Where this document differs from them, they win.
+
 **Status:** Proposed high-level direction; reviewer outcomes pending
 
 **Related confirmed work:** the [Knowledge Platform logical design](docs/design/knowledge-platform-logical-design.md)

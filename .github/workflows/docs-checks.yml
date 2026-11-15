@@ -1,7 +1,8 @@
 # Runs scripts/check-docs on every pull request: secrets (gitleaks), local paths and
 # emails in added lines (check-publish), unfilled placeholders in design records and
-# ADRs, relative links and anchors in changed Markdown (lychee, offline), and unique
-# ADR numbers. The repo is public, so these gate what gets published.
+# ADRs, relative links and anchors in changed Markdown (lychee, offline), unique ADR
+# numbers, and released Processing Profiles and method versions (needs uv). The repo is
+# public, so these gate what gets published.
 name: docs-checks
 
 on:
@@ -38,6 +39,10 @@ jobs:
           install -m 0755 gitleaks "$RUNNER_TEMP/bin/gitleaks"
           install -m 0755 "$(find . -type f -name lychee | head -1)" "$RUNNER_TEMP/bin/lychee"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.14"
 
       - name: check-docs
         run: scripts/check-docs "origin/${{ github.base_ref }}"

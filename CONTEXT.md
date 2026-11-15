@@ -39,6 +39,12 @@ later share a deployment, tenant isolation is enforced in addition to resource
 authorization.
 _Avoid_: Resource, Corpus, access grant
 
+**Cloud native**:
+A main design axis of the Knowledge Platform: each deployable part carries only
+what its own job needs, can be multiplied or replaced at any moment, and keeps
+accepted work outside any single running instance.
+_Avoid_: containerized, runs on Kubernetes
+
 ## Knowledge and its use
 
 **Source**:
@@ -103,6 +109,20 @@ It is platform-owned and format-specific; method changes, including Enrichment
 Methods, enter Canonical Knowledge only through a newly adopted version.
 _Avoid_: profile (alone), caller-defined feature switches, Canonical Acceptance
 
+**Processing Result**:
+The complete durable output of one processing request for one Source Revision
+under one Processing Profile version: the native extraction evidence, every
+Enrichment item with its Enrichment Status, and the limitations the profile
+declares or the document shows. Its registration is the handoff point to
+Canonical Acceptance and custody; a registered result is not yet accepted.
+_Avoid_: Canonical Revision, checkpoint, processing completion as acceptance
+
+**Enrichment Status**:
+The outcome a versioned status rule assigns to one Enrichment item when
+processing finalizes: `failed`, `disputed`, `unverified` or `verified`.
+Canonical keeps it unchanged and consumers check it before relying on the item.
+_Avoid_: quality acceptance, verification of source truth
+
 **Knowledge Profile**:
 A Source-level setting naming the Projection Types whose products that Source's
 Documents go into, and therefore the projections Context Readiness waits for. It
@@ -138,6 +158,12 @@ A versioned component of a Processing Profile that produces one or more kinds of
 Enrichment for a declared scope from its actual inputs.
 _Avoid_: enrichment plugin, per-Source enrichment option
 
+**Quality Check**:
+A versioned method of a Processing Profile that judges another Enrichment
+Method's output after enrichment and contributes signals or contradictions to
+that output's Enrichment Status; it produces no Enrichment of its own (ADR-0011).
+_Avoid_: verification, validation step, judge (alone)
+
 **Picture Interpretation**:
 Enrichment generated from a picture, such as a caption, description, figure type
 or chart values, each attributable to its producing method.
@@ -149,11 +175,19 @@ It is source content, not Enrichment.
 _Avoid_: generated caption
 
 **Document Summary**:
-Enrichment interpreting a whole Document into a short summary whose statements
-are expected to cite their supporting Source Evidence; a statement without
-support is recorded as such. It is distinct from a summary or abstract present
-in the source itself.
+Enrichment interpreting a whole Document into a short overview and summaries of
+its Sections, whose every statement cites the Source Evidence that supports it.
+A statement found unsupported is revised or removed before publication, and the
+removal is recorded in the processing record rather than shown to consumers. It
+is distinct from a summary or abstract present in the source itself.
 _Avoid_: abstract
+
+**Section**:
+A contiguous part of a Document that the Document's own structure marks and that
+Source Evidence can point to: a headed section in a paper or markdown file, a
+slide or PowerPoint section in a deck, a chapter in a video. A Document without
+such marks is one Section.
+_Avoid_: chunk (a processing unit, not part of the Document)
 
 **Document Category**:
 Enrichment assigning a Document to platform-defined categories of document type,
@@ -346,6 +380,13 @@ A Source's attributable statement that a Document no longer exists at the
 source. It stops disclosure of that Document; it is neither governance
 withdrawal nor Custody Purge, and omission from a submission never implies it.
 _Avoid_: withdrawal, Custody Purge, omission from a batch
+
+**Custody**:
+The platform's accountable keeping of an admitted Source Revision's files and of
+adopted results: their content is fixed and they stay readable until Custody
+Purge. Custody begins at admission; a file uploaded but not admitted is not in
+custody, wherever it is stored.
+_Avoid_: storage, bucket, staging
 
 **Custody Purge**:
 Destruction that makes the affected retained information unrecoverable in

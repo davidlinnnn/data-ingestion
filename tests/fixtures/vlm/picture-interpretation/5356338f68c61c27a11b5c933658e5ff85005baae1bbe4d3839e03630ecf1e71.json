@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfiNFNJViELlyWwhilZbehRaITLJT",
+  "object": "chat.completion",
+  "created": 1793610729,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"Architecture and data-flow diagram of a master-orchestrated agent training system.\",\"description\":\"A system architecture diagram arranged around a Master box at the top. Curved arrows from Master point to Task Manager at left, labelled “A. Get Tasks”; to Rollout Workers, labelled “B. Explore Trajectories”; to Experience Manager, labelled “C. Summarize Experiences”; and to Sample Construction at right, labelled “D. Update Models.” The Task Manager contains “Task Synthesis” and “Task Filtering.” Below it, an Environment Server contains multiple “Env. Worker” boxes, with an ellipsis indicating additional workers. An upward arrow from Environment Server to Task Manager is labelled “A.1 Explore.” Rollout Workers is depicted as several offset, overlapping boxes to indicate parallel workers; the front box contains “Context Manager.” A diagonal two-way connection between the context manager and Environment Server is labelled “B.1 Create/Get State.” A downward connection from Context Manager to the Async LLM Server is labelled “B.3 Get Action.” Async LLM Server contains two “LLM Worker” boxes. A horizontal arrow from Experience Manager points left into Context Manager, labelled “B.2 Get Exp.” Experience Manager contains “Exp. Recall” and “Semantic Summary.” Sample Construction contains “Context Organization” and “Advantage computing.” A downward arrow from Sample Construction to Trainer Workers is labelled “D.1 Training Batch.” Trainer Workers contains “Loss compute” and “Param. update”; a left-pointing arrow from Trainer Workers to Async LLM Server is labelled “D.2 Updating Weights.”\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3303,
+    "completion_tokens": 3128,
+    "total_tokens": 6431,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2748,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

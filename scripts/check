@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# The code-checks CI job, locally; CI runs this script too. Default: lint, format and type
+# check, as the pre-commit hook runs them. --all: also start the S3 stand-in and run the whole
+# pytest suite with CI's environment, so `s3` tests run instead of skipping.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/ruff check --select F,B --no-force-exclude docs/validation  # bug rules only
+.venv/bin/pyright
+if [ "${1:-}" = "--all" ]; then
+  docker compose -f tests/s3/compose.yaml up -d --wait
+  env HF_HUB_OFFLINE=1 KP_S3_ENDPOINT=http://127.0.0.1:9100 KP_S3_BUCKET=kp-dev \
+    AWS_ACCESS_KEY_ID=kpdev AWS_SECRET_ACCESS_KEY=kpdev-secret .venv/bin/pytest
+fi

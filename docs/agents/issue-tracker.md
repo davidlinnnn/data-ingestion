@@ -8,11 +8,23 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Before any write with a body** (create, comment, edit, close comment): write the body to a file, mark draft placeholders as `{UPPER_CASE}` or `{#N}` (N a number or an UPPER_CASE name, such as `{#COPY_TICKET}`), and run `scripts/check-publish <file>`. Post with `--body-file` once it passes; it refuses unfilled placeholders, local paths, emails and secrets.
+- **Before any write with a body** (create, comment, edit, close comment): write the body to a file, mark draft placeholders as `{UPPER_CASE}` or `{#N}` (N a number or an UPPER_CASE name, such as `{#COPY_TICKET}`), and run `scripts/check-publish <file>`. Post with `--body-file` once it passes; it refuses unfilled placeholders, local paths, host names, emails and secrets. `scripts/check-publish-hook` enforces this as a Claude Code PreToolUse hook on Bash; since `.claude/settings.json` is per-checkout, register it once in user settings with the command `f="$(git rev-parse --show-toplevel 2>/dev/null)/scripts/check-publish-hook"; [ ! -x "$f" ] || "$f"`.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
+
+## Ticket bodies
+
+A ticket's body states its current scope. A session that starts the ticket reads the body and the comments its index lists, and nothing else.
+
+- **First correction**: one dated block at the top of the body, `<!-- scope-adjust-YYYY-MM-DD -->` then `## 範圍調整 — YYYY-MM-DD（<reason>）`, each point linking the comment that overrides the original. The original text stays in place.
+- **Second correction, or implementation about to start**: rewrite the body as the current scope instead of adding a second block. Mark it `<!-- current-scope-YYYY-MM-DD -->`, merge the original, the earlier block and the handoffs into the ticket's usual sections (背景, 範圍, 驗收, 相依), and fold the previous body into a `<details>` at the bottom.
+- **Comment index**: a rewritten body ends with 留言索引, listing the comments that still hold and the comments that are superseded, with what replaced each.
+- **Superseded comments**: once the index lists a comment as superseded as a whole, hide it as outdated: `gh api graphql -f query='mutation($id:ID!){minimizeComment(input:{subjectId:$id,classifier:OUTDATED}){minimizedComment{isMinimized}}}' -f id=<the comment's node_id>`.
+- **Handoff to a rewritten ticket**: post the comment, then add it to the body's index, and to the scope when it changes the scope. Fetch the body right before editing it: another session may have edited it.
+- **Dependency line**: keep 相依 in step with the native edges by editing the line in place, giving the date and reason of a removed edge. This does not count as a correction.
+- **Inbox tickets**: a ticket that collects handoffs from many others, such as the deployment ticket, carries a digest at the top of its body, `<!-- digest-YYYY-MM-DD -->`: per topic the current inputs, what the ticket must decide and what is superseded, then an index of the comments. Whoever posts a handoff there updates the digest in the same turn.
 
 ## Pull requests as a triage surface
 
@@ -43,5 +55,5 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Blocking**: GitHub's **native issue dependencies**, the canonical, UI-visible representation. Add an edge with `gh api --method POST repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`, where `<blocker-db-id>` is the blocker's numeric **database id** (`gh api repos/<owner>/<repo>/issues/<n> --jq .id`, _not_ the `#number` or `node_id`). GitHub reports `issue_dependencies_summary.blocked_by` (open blockers only, the live gate). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
 - **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
 - **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
-- **Cross-ticket decision**: when the user confirms a decision that changes an assumption of another open ticket, post a handoff comment on that ticket at once. Parallel sessions resolve sibling tickets meanwhile, and a handoff held until close arrives after they have built on the old assumption.
+- **Cross-ticket decision**: when the user confirms a decision that changes an assumption of another open ticket, post a handoff comment on that ticket at once. Parallel sessions resolve sibling tickets meanwhile, and a handoff held until close arrives after they have built on the old assumption. List the candidates with `gh issue list --state open --search "<term>"` for each term the decision changes, and give every hit a disposition: a handoff, or not affected and why.
 - **Resolve**: first re-read the ticket's comments (`gh issue view <n> --comments`) and reconcile every handoff posted since the session began: parallel sessions post to open tickets mid-session. Then record a disposition on every row of the map's Not-yet-specified table that names the ticket. New tickets exist already: the design record cannot merge before them (see `docs/agents/branching.md` § Merging). Then `gh issue comment <n> --body-file <answer>`, `gh issue close <n>`, and append a context pointer (gist + link) to the map's Decisions-so-far.

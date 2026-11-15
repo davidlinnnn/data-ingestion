@@ -1,0 +1,588 @@
+"""The paper-pdf workflow on a real Temporal dev server (#131), with an in-process worker and the
+in-process store and reporter fakes. Uses the local `temporal` CLI when installed, otherwise
+the SDK downloads the dev server; either way it binds a local port."""
+
+import asyncio
+import contextlib
+import copy
+import dataclasses
+import json
+import logging
+import uuid
+
+import pytest
+from temporalio.api.workflowservice.v1 import DescribeWorkerDeploymentRequest
+from temporalio.client import Client
+from temporalio.service import RPCError
+
+from kp_canonicalization.cli import start_request
+from kp_canonicalization.ports.clock import SystemClock
+from kp_canonicalization.ports.inference import FakeInference, completion
+from kp_canonicalization.ports.status_reporter import (
+    Progress,
+    RecordingStatusReporter,
+    ReportOutcome,
+    StatusReport,
+)
+from kp_canonicalization.promoter import promote
+from kp_canonicalization.stages import Ports
+from kp_canonicalization.worker import make_worker
+from kp_canonicalization.workflow import QUEUES, WORKFLOW, activity_options, priority, task_queue
+from tests.pdfs import Page, encrypt, paper, write_pdf
+from tests.stages.conftest import start_input, with_runtime
+from tests.stages.test_check import checked_paper, without_check
+from tests.stages.test_parse import seven_pages
+
+pytestmark = pytest.mark.network
+
+
+@contextlib.asynccontextmanager
+async def workers(client: Client, ports: Ports, runtime, versioned: bool = False):
+    """One worker per task queue, as the deployments run them."""
+    async with contextlib.AsyncExitStack() as stack:
+        for queue in QUEUES:
+            worker = await make_worker(client, ports, runtime, queue, versioned=versioned)
+            await stack.enter_async_context(worker)
+        yield
+
+
+async def process(client: Client, ports: Ports, runtime, start) -> tuple[dict, str]:
+    async with workers(client, ports, runtime):
+        handle = await client.start_workflow(
+            WORKFLOW,
+            start,
+            id=start["request_id"],
+            task_queue=task_queue(runtime.profile.id),
+            priority=priority(start.get("priority")),
+        )
+        outcome = await handle.result()
+    return outcome, handle.result_run_id or ""
+
+
+async def test_a_non_object_start_input_fails_prepare(client, ports, runtime):
+    request_id = f"req_{uuid.uuid4().hex[:8]}"
+    async with workers(client, ports, runtime):
+        outcome = await client.execute_workflow(
+            WORKFLOW, [1, 2], id=request_id, task_queue=task_queue(runtime.profile.id)
+        )
+
+    ref = f"requests/{request_id}/failure.json"
+    failure = json.loads(await ports.store.get(ref))
+    assert outcome == {"outcome": "failed", "manifest_ref": ref, "error": failure["error"]}
+    assert failure["error"]["reason"] == "INVALID_START_INPUT"
+    last = ports.reporter.reports[-1]  # type: ignore[attr-defined]
+    assert (last.stage, last.state, last.error, last.manifest_ref) == (
+        "prepare", "failed", failure["error"], ref,
+    )  # fmt: skip
+
+
+def shape(reports: list[StatusReport]) -> list[tuple]:
+    return [(r.seq, r.stage, r.state, r.progress) for r in reports]
+
+
+async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, runtime):
+    start = await start_input(ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, run_id = await process(client, ports, runtime, start)
+
+    ref = f"requests/{start['request_id']}/result.json"
+    assert outcome == {"outcome": "complete", "manifest_ref": ref}
+    result = json.loads(await ports.store.get(ref))
+    assert result["outcome"] == "complete"
+    # Two pictures without text, OCR'd on the inference worker and interpreted on the vlm
+    # worker, and the paragraphs docling reads as tables.
+    enrichments = result["enrichments"]
+    assert [(e["item_id"], e["status"], e["status_reason"]) for e in enrichments[:2]] == [
+        ("picture-ocr:#/pictures/0", "unverified", "NO_TEXT"),
+        ("picture-ocr:#/pictures/1", "unverified", "NO_TEXT"),
+    ]
+    assert [e["item_id"] for e in enrichments[2:10]] == [
+        f"picture-interpretation:#/pictures/{n}/{field}"
+        for n in (0, 1)
+        for field in ("caption", "chart_values", "description", "figure_type")
+    ]
+    assert {e["item_id"].split(":")[0] for e in enrichments[10:-1]} <= {"table-status"}
+    # The Document Summary from the summary worker, against the DEV fake.
+    summary = enrichments[-1]
+    assert (summary["item_id"], summary["scope"], summary["target_refs"]) == (
+        "document-summary:#",
+        "document",
+        ["#"],
+    )
+    assert (summary["status"], summary["status_reason"]) == ("unverified", None)
+    assert {"code": "NO_TEXT_LAYER_PAGES", "scope": "document",
+            "detail": "no text layer on pages 6"} in result["limitations"]  # fmt: skip
+
+    reports = ports.reporter.reports  # type: ignore[attr-defined]
+    total = len(json.loads(await ports.store.get(result["inventory"]["ref"]))["items"])
+    pages, items = (lambda n: Progress(n, 7, "pages")), (lambda n: Progress(n, total, "items"))
+    assert shape(reports) == [
+        (1, "prepare", "running", None),
+        (2, "prepare", "succeeded", None),
+        (3, "parse", "running", pages(0)),
+        (4, "parse", "running", pages(5)),
+        (5, "parse", "running", pages(7)),
+        (6, "parse", "succeeded", pages(7)),
+        (7, "enrich", "running", items(0)),
+        (8, "enrich", "succeeded", items(total)),
+        (9, "finalize", "running", None),
+        (10, "finalize", "succeeded", None),
+    ]
+    assert {(r.request_id, r.attempt_id, r.method_version, r.stages_version) for r in reports} == {
+        (start["request_id"], run_id, "paper-pdf@1", "1")
+    }
+    assert [r.manifest_ref for r in reports][-1] == ref
+    assert all(r.error is None for r in reports)
+
+
+def scheduled_activities(history) -> list:
+    """The ActivityTaskScheduled attributes of a workflow history, in order."""
+    return [
+        e.activity_task_scheduled_event_attributes
+        for e in history.events
+        if e.HasField("activity_task_scheduled_event_attributes")
+    ]
+
+
+async def test_the_quality_check_runs_on_the_d3_queue_between_enrichment_and_finalize(
+    client, ports, runtime
+):
+    start = await start_input(ports, checked_paper(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    result = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    # The picture with words, the formula and the table carry the d3 fake's score.
+    assert [
+        e["item_id"].split(":")[0]
+        for e in result["enrichments"]
+        if e["signals"].get("d3", {}).get("score") == 0.99
+    ] == ["picture-ocr", "formula", "table-status"]
+    history = await client.get_workflow_handle(start["request_id"]).fetch_history()
+    scheduled = scheduled_activities(history)
+    names = [a.activity_type.name for a in scheduled if a.activity_type.name != "report"]
+    assert names.index("check") > max(names.index(n) for n in names if n.startswith("enrich_"))
+    assert names[-2:] == ["check", "finalize"]
+    (check,) = [a for a in scheduled if a.activity_type.name == "check"]
+    assert check.task_queue.name == "paper-pdf-1.d3"
+    # The enrich stage succeeds after the check, counting the inventory's items.
+    total = len(json.loads(await ports.store.get(result["inventory"]["ref"]))["items"])
+    assert shape(ports.reporter.reports)[-3] == (  # type: ignore[attr-defined]
+        len(ports.reporter.reports) - 2, "enrich", "succeeded", Progress(total, total, "items"),  # type: ignore[attr-defined]
+    )  # fmt: skip
+
+
+async def test_a_profile_without_a_quality_check_schedules_no_check_activity(
+    client, ports, runtime
+):
+    start = await start_input(ports, checked_paper(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, without_check(runtime), start)
+
+    assert outcome["outcome"] == "complete"
+    history = await client.get_workflow_handle(start["request_id"]).fetch_history()
+    names = {a.activity_type.name for a in scheduled_activities(history)}
+    assert "check" not in names and "finalize" in names
+
+
+async def test_a_second_request_for_the_same_document_reuses_every_registered_item(
+    client, ports, runtime
+):
+    pdf = seven_pages()
+    first = await start_input(ports, pdf, request_id=f"req_{uuid.uuid4().hex[:8]}")
+    second = {**first, "request_id": f"req_{uuid.uuid4().hex[:8]}"}
+    await process(client, ports, runtime, first)
+    items = {k for k in ports.store.objects if k.startswith("documents/")}  # type: ignore[attr-defined]
+
+    outcome, _ = await process(client, ports, runtime, second)
+
+    assert outcome["outcome"] == "complete"
+    assert {k for k in ports.store.objects if k.startswith("documents/")} == items  # type: ignore[attr-defined]
+    one, two = [
+        json.loads(await ports.store.get(f"requests/{s['request_id']}/result.json"))
+        for s in (first, second)
+    ]
+    assert one["native"] == two["native"]
+
+
+async def test_an_unprocessable_source_ends_with_a_failure_report(client, ports, runtime):
+    start = await start_input(
+        ports, encrypt(write_pdf(paper(2))), request_id=f"req_{uuid.uuid4().hex[:8]}"
+    )
+
+    outcome, run_id = await process(client, ports, runtime, start)
+
+    ref = f"requests/{start['request_id']}/failure.json"
+    failure = json.loads(await ports.store.get(ref))
+    assert outcome == {"outcome": "failed", "manifest_ref": ref, "error": failure["error"]}
+    assert (failure["cause"], failure["stage"], failure["error"]["reason"]) == (
+        "source", "prepare", "PASSWORD_REQUIRED",
+    )  # fmt: skip
+    assert failure["error"]["support_ref"] == f"temporal:{start['request_id']}/{run_id}"
+    reports = ports.reporter.reports  # type: ignore[attr-defined]
+    assert shape(reports) == [(1, "prepare", "running", None), (2, "prepare", "failed", None)]
+    assert reports[-1].manifest_ref == ref
+    assert reports[-1].error == failure["error"]
+    assert reports[-1].message == failure["error"]["message"]
+
+
+def _poster() -> bytes:
+    pages = paper(1)
+    pages.append(Page(lines=["Poster"], size=(5000, 4001)))
+    return write_pdf(pages)
+
+
+@pytest.mark.parametrize(
+    "pdf, limits, reason",
+    [
+        (lambda: write_pdf(paper(2))[:300], {}, "CORRUPT_PDF"),
+        (lambda: write_pdf(paper(65)), {}, "PAGE_LIMIT_EXCEEDED"),
+        (lambda: write_pdf(paper(2)), {"max_bytes": 100}, "SIZE_LIMIT_EXCEEDED"),
+        (_poster, {}, "PIXEL_LIMIT_EXCEEDED"),
+    ],
+)
+async def test_every_source_rejection_ends_with_a_source_failure_report(
+    client, ports, runtime, pdf, limits, reason
+):
+    preflight = {**runtime.profile.runtime["preflight"], **limits}
+    start = await start_input(ports, pdf(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, with_runtime(runtime, preflight=preflight), start)
+
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert (failure["cause"], failure["stage"], failure["error"]["reason"]) == (
+        "source", "prepare", reason,
+    )  # fmt: skip
+    assert failure["error"]["retryable"] is False
+    last = ports.reporter.reports[-1]  # type: ignore[attr-defined]
+    assert (last.state, last.error, last.manifest_ref) == (
+        "failed", failure["error"], outcome["manifest_ref"],
+    )  # fmt: skip
+
+
+async def test_an_adopted_version_other_than_the_worker_profile_fails_integrity(
+    client, ports, runtime
+):
+    start = await start_input(
+        ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}",
+        adopted_version="paper-pdf@2",
+    )  # fmt: skip
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert failure["cause"] == "platform"
+    assert failure["error"]["metadata"]["category"] == "integrity"
+    assert failure["error"]["reason"] == "ADOPTED_VERSION_MISMATCH"
+    assert ports.reporter.reports[-1].method_version == "paper-pdf@2"  # type: ignore[attr-defined]
+
+
+class DownReporter(RecordingStatusReporter):
+    async def report(self, report: StatusReport) -> ReportOutcome:
+        self.reports.append(report)
+        return ReportOutcome(delivered=False, error="ConnectError: connection refused")
+
+
+async def test_processing_completes_while_the_report_receiver_is_down(client, ports, runtime):
+    # Skipping depends on reports piling up while one spends its budget in real time.
+    ports = dataclasses.replace(ports, reporter=DownReporter(), clock=SystemClock())
+    start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    assert await ports.store.head(outcome["manifest_ref"])
+    attempted = ports.reporter.reports  # type: ignore[attr-defined]
+    # Superseded reports are skipped while the receiver is down; first and last are tried.
+    assert attempted[0].seq == 1
+    assert (attempted[-1].seq, attempted[-1].stage, attempted[-1].state) == (
+        9, "finalize", "succeeded",
+    )  # fmt: skip
+    assert len(attempted) < 9
+
+
+async def test_starting_the_same_request_twice_counts_as_success(
+    client, monkeypatch, capsys, ports, runtime
+):
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
+    start = await start_input(ports, write_pdf(paper(2)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    async with workers(client, ports, runtime):
+        assert await start_request(start, wait=True) == 0
+        assert await start_request(start, wait=False) == 0
+
+    assert capsys.readouterr().out.count(f"started {start['request_id']}") == 2
+    runs = [w async for w in client.list_workflows(f"WorkflowId = '{start['request_id']}'")]
+    assert len(runs) == 1
+
+
+@pytest.mark.parametrize("admission, key", [("normal", 2), ("low", 4)])
+async def test_admission_priority_sets_the_temporal_priority_key(
+    client, monkeypatch, ports, admission, key
+):
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+    start["priority"] = admission
+
+    assert await start_request(start, wait=False) == 0
+
+    described = await client.get_workflow_handle(start["request_id"]).describe()
+    assert described.raw_description.workflow_execution_info.priority.priority_key == key
+
+
+async def test_start_request_puts_the_correlation_ids_into_search_attributes(
+    client, monkeypatch, ports
+):
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    assert await start_request(start, wait=False) == 0
+
+    described = await client.get_workflow_handle(start["request_id"]).describe()
+    assert {pair.key.name: pair.value for pair in described.typed_search_attributes} == {
+        "DocumentUid": "doc_1",
+        "SourceRevisionId": "srv_1",
+        "TraceId": "4bf92f3577b34da6",
+    }
+
+
+async def test_prepare_logs_the_correlation_ids_once(client, ports, runtime, caplog):
+    caplog.set_level(logging.INFO, logger="temporalio.activity")
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    await process(client, ports, runtime, start)
+
+    lines = [r for r in caplog.records if getattr(r, "correlation", None)]
+    assert [(r.temporal_activity["workflow_id"], r.correlation) for r in lines] == [
+        (start["request_id"], {"document_uid": "doc_1", "source_revision_id": "srv_1",
+                               "trace_id": "4bf92f3577b34da6"}),
+    ]  # fmt: skip
+
+
+async def test_the_workflow_logs_each_stage_transition_once_and_a_failure_by_its_reason_code(
+    client, ports, runtime, caplog
+):
+    caplog.set_level(logging.INFO, logger="temporalio.workflow")
+    good = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+    bad = await start_input(
+        ports, encrypt(write_pdf(paper(2))), request_id=f"req_{uuid.uuid4().hex[:8]}"
+    )
+
+    await process(client, ports, runtime, good)
+    await process(client, ports, runtime, bad)
+
+    def lines(start):
+        return [
+            (r.levelname, r.getMessage().split(" ({")[0])  # the SDK appends the workflow's info
+            for r in caplog.records
+            if getattr(r, "temporal_workflow", {}).get("workflow_id") == start["request_id"]
+        ]
+
+    assert lines(good) == [
+        ("INFO", f"stage {stage} {state}")
+        for stage in ("prepare", "parse", "enrich", "finalize")
+        for state in ("running", "succeeded")
+    ]
+    assert lines(bad) == [
+        ("INFO", "stage prepare running"),
+        ("WARNING", "stage prepare failed: PASSWORD_REQUIRED"),
+    ]
+
+
+async def test_a_request_runs_pinned_to_the_current_build_of_its_adopted_versions_deployment(
+    client, monkeypatch, ports, runtime
+):
+    monkeypatch.setattr("kp_canonicalization.cli.connect", lambda **_: _resolved(client))
+    old, new = (dataclasses.replace(runtime, build_id=b) for b in ("r1", "r2"))
+    held = asyncio.Event()
+
+    async def hold(request):
+        await held.wait()
+        return completion("A plot.")
+
+    ports = dataclasses.replace(ports, vlm=FakeInference(hold))
+    pdf = write_pdf(paper(1, picture_on=(1,)))
+    first, second = [
+        await start_input(ports, pdf, request_id=f"req_{uuid.uuid4().hex[:8]}") for _ in range(2)
+    ]
+
+    async with workers(client, ports, old, versioned=True):
+        await promoted(client, "r1", current="r1")
+        assert await start_request(first, wait=False) == 0
+        await scheduled(client, first["request_id"], "enrich_vlm")
+        async with workers(client, ports, new, versioned=True):
+            await promoted(client, "r1", "r2", current="r2")
+            assert await start_request(second, wait=False) == 0
+            held.set()
+            for start in (first, second):
+                await client.get_workflow_handle(start["request_id"]).result()
+
+    builds = []
+    for start in (first, second):
+        result = json.loads(await ports.store.get(f"requests/{start['request_id']}/result.json"))
+        builds.append(result["profile"]["runtime_identity"]["build_id"])
+    # The first started on r1 and finished there, after r2 became current.
+    assert builds == ["r1", "r2"]
+    history = await client.get_workflow_handle(first["request_id"]).fetch_history()
+    assert {a.task_queue.name for a in scheduled_activities(history)} == {
+        f"paper-pdf-1.{queue}" for queue in QUEUES
+    }
+
+
+async def promoted(client: Client, *builds: str, current: str) -> None:
+    """Run the promoter until `current` is the current build of paper-pdf-1: Temporal lists a
+    build's queues only once its workers have polled."""
+    wanted = {"paper-pdf-1": {"builds": list(builds), "current": current}}
+    request = DescribeWorkerDeploymentRequest(
+        namespace=client.namespace, deployment_name="paper-pdf-1"
+    )
+    for _ in range(100):
+        assert await promote(client, wanted) == []
+        with contextlib.suppress(RPCError):
+            info = await client.workflow_service.describe_worker_deployment(request)
+            if info.worker_deployment_info.routing_config.current_deployment_version.build_id == (
+                current
+            ):
+                return
+        await asyncio.sleep(0.1)
+    raise TimeoutError(f"build {current} did not become current")
+
+
+async def scheduled(client: Client, request_id: str, activity: str) -> None:
+    """Wait until the workflow has scheduled the Activity."""
+    for _ in range(300):
+        history = await client.get_workflow_handle(request_id).fetch_history()
+        if any(a.activity_type.name == activity for a in scheduled_activities(history)):
+            return
+        await asyncio.sleep(0.1)
+    raise TimeoutError(f"{request_id} never scheduled {activity}")
+
+
+async def _resolved(value):
+    return value
+
+
+async def test_activity_timeouts_and_retries_come_from_the_profile(client, ports, runtime):
+    runtime = with_runtime(
+        runtime,
+        heartbeat_timeout_s={"inference": 61, "vlm": 91, "summary": 62, "d3": 63},
+        start_to_close_s={"orchestration": 121, "inference": 901},
+        activity_retry={
+            "orchestration": {"initial_s": 3, "multiplier": 2, "cap_s": 31, "max_attempts": 6},
+            "inference": {"initial_s": 2, "multiplier": 3, "cap_s": 99, "max_attempts": 2},
+            "vlm": {"initial_s": 4, "multiplier": 2, "cap_s": 29, "max_attempts": 7},
+            "summary": {"initial_s": 5, "multiplier": 2, "cap_s": 28, "max_attempts": 4},
+            "d3": {"initial_s": 6, "multiplier": 2, "cap_s": 27, "max_attempts": 5},
+        },
+        vlm_request_deadline_s={"connect": 5, "total": 61},
+        d3_request_deadline_s={"connect": 5, "total": 31},
+        d3_concurrency_per_document=1,
+        summary_budget_s=901,
+        external_start_to_close_slack_s=301,
+    )
+    # One picture: a picture-ocr and a picture-interpretation item.
+    pdf = write_pdf(paper(1, picture_on=(1,)))
+    start = await start_input(ports, pdf, request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    history = await client.get_workflow_handle(start["request_id"]).fetch_history()
+    scheduled = {a.activity_type.name: a for a in scheduled_activities(history)}
+    parse_group, finalize = scheduled["parse_group"], scheduled["finalize"]
+    assert parse_group.start_to_close_timeout.seconds == 901
+    assert parse_group.heartbeat_timeout.seconds == 61
+    assert parse_group.retry_policy.maximum_attempts == 2
+    assert parse_group.retry_policy.backoff_coefficient == 3
+    assert parse_group.retry_policy.maximum_interval.seconds == 99
+    assert finalize.start_to_close_timeout.seconds == 121
+    assert finalize.retry_policy.maximum_attempts == 6
+    assert finalize.retry_policy.initial_interval.seconds == 3
+    assert list(finalize.retry_policy.non_retryable_error_types) == ["ProcessingFailure"]
+    vlm = scheduled["enrich_vlm"]
+    assert vlm.task_queue.name == "paper-pdf-1.vlm"
+    # ceil(2 items / 4) x 61 s deadline x 3 attempts + 301 s slack (#93 §3.2)
+    assert vlm.start_to_close_timeout.seconds == 1 * 61 * 3 + 301
+    assert vlm.heartbeat_timeout.seconds == 91
+    assert vlm.retry_policy.maximum_attempts == 7
+    assert vlm.retry_policy.initial_interval.seconds == 4
+    check = scheduled["check"]
+    assert check.task_queue.name == "paper-pdf-1.d3"
+    # At most one check item per inventory item (the two and the summary's): ceil(3 / 1) x 31 s
+    # deadline x 3 attempts + 301 s slack.
+    assert check.start_to_close_timeout.seconds == 3 * 31 * 3 + 301
+    assert check.heartbeat_timeout.seconds == 63
+    assert check.retry_policy.maximum_attempts == 5
+    assert check.retry_policy.initial_interval.seconds == 6
+    for name in ("summary_sections", "summary_chunk", "summary_overview"):
+        summary = scheduled[name]
+        assert summary.task_queue.name == "paper-pdf-1.summary"
+        # the summary budget + 301 s slack: the budget's timer ends a slow summary (#155)
+        assert summary.start_to_close_timeout.seconds == 901 + 301
+        assert summary.heartbeat_timeout.seconds == 62
+        assert summary.retry_policy.maximum_attempts == 4
+        assert summary.retry_policy.initial_interval.seconds == 5
+    # Chunks share the summary queue fairly between documents (#155).
+    assert scheduled["summary_chunk"].priority.fairness_key == "doc_1"
+    assert scheduled["summary_sections"].priority.fairness_key == ""
+
+
+def test_a_plan_recorded_before_the_d3_queue_replays_with_its_own_queues(runtime):
+    recorded = copy.deepcopy(runtime.profile.runtime)
+    del recorded["activity_retry"]["d3"], recorded["heartbeat_timeout_s"]["d3"]
+    del recorded["d3_request_deadline_s"], recorded["d3_concurrency_per_document"]
+
+    options = activity_options(recorded, "paper-pdf-1", 3)
+
+    assert {queue: o["task_queue"] for queue, o in options.items()} == {
+        "orchestration": "paper-pdf-1.orchestration",
+        "inference": "paper-pdf-1.inference",
+        "vlm": "paper-pdf-1.vlm",
+        "summary": "paper-pdf-1.summary",
+    }
+
+
+async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
+    client, ports, runtime, monkeypatch
+):
+    async def broken(input, ports, runtime):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr("kp_canonicalization.stages.inventory.run", broken)
+    retry = {"initial_s": 1, "multiplier": 2, "cap_s": 1, "max_attempts": 1}
+    runtime = with_runtime(
+        runtime,
+        activity_retry={**runtime.profile.runtime["activity_retry"], "orchestration": retry},
+    )
+    start = await start_input(ports, write_pdf(paper(1)), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "failed"
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert (failure["cause"], failure["stage"]) == ("platform", "enrich")
+    error = failure["error"]
+    assert (error["reason"], error["retryable"]) == ("PLATFORM_ERROR", True)
+    assert error["metadata"] == {"category": "platform", "activity": "inventory"}
+
+
+async def test_a_summary_past_its_budget_does_not_hold_the_document(client, ports, runtime):
+    async def hang(request: dict):
+        await asyncio.sleep(60)
+        return completion("{}")
+
+    ports = dataclasses.replace(ports, summary=FakeInference(hang))
+    runtime = with_runtime(runtime, summary_budget_s=2)
+    start = await start_input(ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    result = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    summary = result["enrichments"][-1]
+    assert (summary["item_id"], summary["status"], summary["status_reason"]) == (
+        "document-summary:#", "failed", "SERVICE_UNAVAILABLE",
+    )  # fmt: skip
+    marker = f"documents/doc_1/service-unavailable/{start['request_id']}"
+    assert await ports.store.head(marker) is not None

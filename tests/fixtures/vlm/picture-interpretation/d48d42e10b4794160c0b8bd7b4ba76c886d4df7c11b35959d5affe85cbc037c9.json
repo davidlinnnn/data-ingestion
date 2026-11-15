@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-EfiLmmTEnqnvNtDFqc2zq3wE5ZYZ5",
+  "object": "chat.completion",
+  "created": 1793610638,
+  "model": "gpt-6-luna",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"caption\":\"Diagram of Agent0’s co-evolving curriculum and executor training loop, showing task generation, response voting, tool use, data filtering, and policy updates.\",\"description\":\"A two-stage process diagram. In the pale-green upper section, a Curriculum Agent sends tasks labeled x₁, …, xᵢ to an Executor Agent. The executor produces sets of sampled responses, illustrated with colored blocks and labels such as {y₁,₁, …, y₁,ₘ} and {yᵢ,₁, …, yᵢ,ₘ}; an ellipsis indicates other sets. Majority Voting sends these responses rightward to outputs ŷ₁, …, ŷᵢ. A line labeled “Policy Update by GRPO” runs from the right across the top and turns down with an arrow into the Curriculum Agent. Along the left, cartoon agents with boards are arranged from top to bottom and connected by a blue downward arrow.\\n\\nA central oval labeled “Environment” is linked to response sequences by green downward arrows for tool calls and orange upward arrows for tool responses. A legend identifies blue as Model Response, green as Tool Calling, orange as Tool Response, and purple as Final Answer. The response examples include sequences with only blue and purple blocks and sequences containing all four colors. A small central illustration also shows a green right-pointing arrow from a blue-hooded figure to a bear-like figure, and a pale-green diagonal arrow from the lower Executor Agent toward the blue-hooded figure.\\n\\nIn the pale-blue lower section, Data passes right through “Self-Consistency,” marked p̂(x), to Filtered Data, which is sent to a second Executor Agent. A downward arrow from the Curriculum Agent and a diagonal down-left arrow from the upper Executor Agent also lead toward the data/filtering area. The lower executor produces further sampled response sequences, including colored response blocks and labels {yᵢ,₁, …, yᵢ,ₘ}; Majority Voting sends these rightward to another set of outputs, ŷ₁, …, ŷᵢ. A yellow warning triangle marks the “Ambiguity Signal” near p̂(x); its line joins the lower feedback path. The path labeled “Policy Update by ADPO” runs along the bottom from the output side and turns upward into the lower Executor Agent.\",\"figure_type\":\"diagram\",\"chart_values\":[]}",
+        "refusal": null,
+        "annotations": []
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3213,
+    "completion_tokens": 3433,
+    "total_tokens": 6646,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2887,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": null
+}

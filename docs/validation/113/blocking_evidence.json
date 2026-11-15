@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-13",
+  "host": "macOS; one uvicorn worker and ab on the same machine",
+  "wait_ms": 100.0,
+  "requests": 320,
+  "at_once": 32,
+  "to_thread_threads": 22,
+  "readings": {
+    "awaited": {
+      "requests_per_s": 283.54,
+      "p99_ms": 104.0,
+      "complete": 320.0,
+      "failed": 0.0
+    },
+    "in_thread": {
+      "requests_per_s": 192.78,
+      "p99_ms": 208.0,
+      "complete": 320.0,
+      "failed": 0.0
+    },
+    "blocking": {
+      "requests_per_s": 9.63,
+      "p99_ms": 4155.0,
+      "complete": 320.0,
+      "failed": 0.0
+    }
+  },
+  "checks": {
+    "every expected reading is present": true,
+    "awaited: 160 <= requests per second <= 320, none failed": true,
+    "in_thread: 110 <= requests per second <= 220, none failed": true,
+    "blocking: 5 <= requests per second <= 10, none failed": true
+  }
+}

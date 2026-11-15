@@ -1,5 +1,8 @@
 # Knowledge Platform map notes
 
+**Status:** standing notes of the map. Sections are dated and added over time; an earlier
+section is not rewritten when a later one changes it.
+
 Long-form standing notes of the [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52), moved here verbatim from the map body on 2026-10-21 so the map stays an index. The map's **Notes** section keeps a one-line gist per section and links here. Decisions themselves live in their tickets' resolution comments. When you add a note, write its long form here and its gist in the map.
 
 ## Start with the overall logical system design
@@ -81,6 +84,18 @@ After the data-security and secret/PII tickets closed, two independent subagent 
 **Bodies.** Seventeen open tickets carried statements that later handoff comments had overturned (delegation rules, serving-fact shape, the `enforced` rule, the number of screening classes, cloud guard services, single-parser capacity, entry-point ownership). Each received a "範圍調整 — 2026-10-27" block at the top of its body that corrects the statement with a link to the overriding comment and names one owner for each item two tickets had claimed; the original text was left in place. Two titles changed: the Resource Service ticket dropped evict (J1) and the Canonical mapping ticket dropped "uninterpreted" (#84).
 
 **Numbers.** The user confirmed the active-document ceiling at 10,000,000 (#88); the consumption record's E3 said 1,000,000 and was corrected in the same change as this note. Still waiting on information from the company: the GAM specification (research pack topic 3) for #86 and the production peak shape for #88.
+
+## Cloud native as a main design axis — 2026-11-11
+
+The user stated on 2026-11-11 that the Knowledge Platform is to be cloud native and that this is one of the design's main axes, kept in view in every design, specification and review. It extends the charter's "Kubernetes is the deployment target" from where the platform runs to how each part is built. The glossary entry is **Cloud native** in [`CONTEXT.md`](../../CONTEXT.md).
+
+The statement came out of the review of the admission core. Admission's `dispatcher` and reconciler were packaged on the canonicalization image, which carries the PDF parsing and inference libraries, and the `api` role would have followed. The user ruled that admission ships its own image: `api` scales out under the PROD burst, and the size of an image sets how soon a new Pod serves. The ruling and the state of the code are in a [comment on Define the Knowledge Platform deployment topology and operational boundaries](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6792552979).
+
+Working reading, until that ticket fixes the full criteria:
+
+- A deployable role carries only what its own job needs.
+- A role scales by adding Pods and survives the loss of any Pod. Accepted work and durable state live in the database, object storage or Temporal, never only in a Pod.
+- A mismatch found in a design or a review is recorded as a finding with an owner, not as an optional efficiency note.
 
 ## Working method and completion
 

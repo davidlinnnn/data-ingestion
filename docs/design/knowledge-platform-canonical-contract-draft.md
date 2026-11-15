@@ -2,6 +2,8 @@
 
 [設計索引](README.md) · [已確認決策](knowledge-platform-canonical-design.md) · [領域術語](../../CONTEXT.md)
 
+**狀態：** [#32](https://github.com/davidlinnnn/data-ingestion/issues/32) 的設計結果，該票於 2026-10-10 結案。之後的決定除非文中有標日期的註記，否則不會回頭改寫本文；它們記在 [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) 與各張票上，兩者不一致時以後者為準。
+
 **2026-10-10 最終共同確認完成。** [Resolution](https://github.com/davidlinnnn/data-ingestion/issues/32#issuecomment-6096650145) 採納本文件的邏輯契約、完整案例、驗證計畫及 owner 交接。
 檔名保留原 draft 路徑，以維持既有連結；正式 wire encoding 與實作規格依後續設計輸入落實。
 本文件服務 [Design canonical representation, acceptance and lifecycle across PDF, Markdown, and PPTX](https://github.com/davidlinnnn/data-ingestion/issues/32)。

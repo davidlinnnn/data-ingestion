@@ -1,5 +1,8 @@
 # Knowledge Platform admission specification
 
+**Status:** current contract, kept up to date when a decision changes. The implementation
+tickets #95–#99 build from this document.
+
 The buildable contract for
 [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31).
 The decisions and their reasons are in the
@@ -7,15 +10,18 @@ The decisions and their reasons are in the
 question numbers such as Q9.4). This document states only the current result.
 The rules in §6 are also modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html), whose
-19 scenarios pass. Domain terms follow `CONTEXT.md`.
+19 scenarios pass. Domain terms follow `CONTEXT.md`. The file upload path (why
+it is a platform endpoint, the architecture, the sequence diagrams and the
+Source-facing guide) is the [file upload design](knowledge-platform-file-upload.md);
+§5.2 here stays its contract.
 
 Sizing figures marked *unmeasured* are provisional until the cluster-tier
 validation (§13) measures them.
 
 ## 1. Scope
 
-In scope: document submission through batches, direct upload, durable
-admission, dispatch to Temporal, request and document status, Source Deletion,
+In scope: document submission through batches, file upload through the
+platform, durable admission, dispatch to Temporal, request and document status, Source Deletion,
 application retry and platform redrive, retention, and the validation plan.
 
 Out of scope here, with owners:
@@ -28,7 +34,7 @@ Out of scope here, with owners:
 | Canonical processing and the workflow implementation | #80, with the #91 manifest v2 |
 | Projection consumption, the handoff channel, product removal | #55 |
 | Serving results and filtering | #76 |
-| CNPG, Temporal, configuration loading, topology, observability | #78 |
+| Database deployment and backup, Temporal, configuration loading, topology, observability | #78 |
 
 Deferred: callbacks and webhooks, client cancellation, inline content, filterable
 attributes, full-snapshot reconciliation, rename, a Source-facing `reprocess`,
@@ -46,7 +52,7 @@ these fields:
 | credentials | Each belongs to exactly one Source and holds `submit` and/or `manage_relations` |
 | `projections` | The Knowledge Profile: required Projection Types for readiness |
 | `ordering` | `source_version` (default) or `arrival` (§6.3) |
-| `default_resource_id` | Optional |
+| `default_resource_id` | Optional; one of the Source's own Resource keys (§5.1) |
 | quota overrides | Optional overrides of §11 |
 
 Requests never carry a tenant or Source; both come from the credential.
@@ -60,7 +66,7 @@ Logical records; the physical schema is I1's.
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields | §5.1 statuses |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → custody reference, `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored response, `created_at` | 24 hours |
@@ -94,10 +100,24 @@ Constraints:
         "metadata": { "batch_id": "bat_01J…" } }
     ]
   },
-  "trace_id": "4bf92f3577b34da6"
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
 }
 ```
 
+- `trace_id`: every request to the platform API has one, the internal authz
+  API included. It is the trace id of the request's `traceparent` header (W3C
+  Trace Context: 32 lowercase hexadecimal characters); when the header is
+  absent or invalid, the platform generates one. A caller is not required to
+  send the header. Every response returns the value in the `X-Trace-Id` header,
+  and an error returns it in its body as well. The platform writes it on each
+  log line and on every request record the call creates (§3), so one value
+  joins the caller's log, the platform's log and the workflow. It is not
+  `request_id`, which names one accepted processing or deletion request.
+  W3C Trace Context defines no response header, so `X-Trace-Id` is the
+  platform's own name. An `x-request-id` header is logged when present and is
+  not part of this contract.
+  [#204](https://github.com/davidlinnnn/data-ingestion/issues/204) builds the
+  shared handling.
 - Item errors inside results use `{ "reason": "…", "message": "…" }`.
 - Protected things the caller cannot see return `404`; a missing permission of
   the caller's own credential returns `403` (Q3.7).
@@ -116,7 +136,7 @@ Header `Idempotency-Key` (optional, recommended). Body:
       "source_version": "3",
       "title": "Leave policy",
       "source_url": "https://km.example/hr/leave-policy",
-      "resources": ["res_hr_all"],
+      "resources": ["hr-all"],
       "uploaded_by": "tsso:alice",
       "metadata": { "km_folder": "HR/Policies", "owner_team": "hr-ops" },
       "files": [
@@ -137,11 +157,21 @@ Response `201`:
   "expires_at": "2026-10-22T09:00:00Z",
   "items": [
     { "index": 0, "document_id": "hr/leave-policy", "document_uid": "doc_7f3…", "status": "declared",
-      "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://…", "expires_at": "2026-10-21T10:00:00Z" } ],
+      "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://kp.example/v1/batches/bat_01J…/items/0/files/assets/flow.png" } ],
       "carried_over": ["policy.md"] }
   ]
 }
 ```
+
+Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
+valid until the batch is finalized or expires.
+
+A `resources` value is the Source's own key for a Resource it has registered
+through the Resource API
+([ADR-0013](../adr/0013-resource-identified-by-source-key.md),
+[#114](https://github.com/davidlinnnn/data-ingestion/issues/114)). Under a
+Source credential the key appears alone, in requests and in responses. The
+platform's records hold the full identifier, which names the Source as well.
 
 Item `status` after declaration:
 
@@ -159,17 +189,46 @@ Whole-request outcomes: `400` (malformed, `TOO_MANY_ITEMS`), `401`, `403`,
 `422 ALL_ITEMS_REJECTED` (no batch is created; the body lists every item's
 error), `422 IDEMPOTENCY_KEY_REUSED`, `409 IDEMPOTENCY_IN_PROGRESS`,
 `429 RATE_LIMITED`, `503 AUTHZ_UNAVAILABLE`, `503 ADMISSION_PAUSED`, `503`
-during database failover. Every `429` and `503` carries `Retry-After`.
+while the database is unavailable. Every `429` and `503` carries `Retry-After`.
 
 A batch in which no item is `declared` is created `finalized`.
 
-### 5.2 Reissue grants: `POST /v1/batches/{batch_id}/grants`
+### 5.2 Upload: `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`
 
-Body `{ "items": [ { "index": 0, "paths": ["assets/flow.png"] } ] }`; an empty
-body reissues every grant not yet used. Only for `open` batches; returns the same
-`uploads` shape. Each grant allows one `PUT` of one file to its staging
-location, limited to the declared size (and digest where storage supports it),
-valid for one hour.
+One request per file listed in the item's `uploads`, authenticated with the
+Source credential like every other call; there is no separate upload grant.
+`{path}` is the declared file path. `Content-Length` is required and must equal
+the declared `size`; `Content-Type` may carry the declared `media_type` (the
+platform detects the type itself). The body is the file's bytes in one request:
+no multipart form, no chunked encoding, no resumption.
+
+The platform streams the body into storage, computing the SHA-256 and counting
+bytes as it goes, and stops the transfer as soon as the bytes exceed the
+declared `size`. The object appears, at its custody key (§10), only once its
+size, SHA-256 and media type are verified. There is no separate staging store:
+a staged file is one in place and not yet admitted. Outcomes:
+
+| Outcome | Response |
+|---|---|
+| Bytes staged; size, SHA-256 and detected media type equal the declaration | `204` |
+| `Content-Length` absent | `411 LENGTH_REQUIRED` |
+| `Content-Length`, or the bytes received, differ from the declared `size` | `400 SIZE_MISMATCH`; nothing is staged |
+| SHA-256 differs from the declaration | `422 DIGEST_MISMATCH`; nothing is staged |
+| Detected media type differs from the declaration | `422 MEDIA_TYPE_MISMATCH`; nothing is staged |
+| Batch finalized | `409 BATCH_FINALIZED` |
+| Batch expired | `409 BATCH_EXPIRED` |
+| Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` |
+
+A repeated `PUT` of the same path changes nothing: a staged file already holds
+the declared bytes. Files of one item, and of different
+items, may be uploaded in parallel. A client that loses the connection repeats
+the whole request. Uploads are accepted until the batch is finalized or expires
+(§11); staged files of rejected or expired items are deleted (§6.2).
+
+Changed on 2026-11-07: this endpoint replaces the storage-native upload grant
+(presigned URL or SAS) that company policy excluded on 2026-10-30. The reasons
+and the options compared are in the
+[file upload design](knowledge-platform-file-upload.md).
 
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 
@@ -177,7 +236,9 @@ No body. Response `202` with the batch and every item, admitted items carrying
 `request_id` and `source_revision_id`. Repeating it returns the same response.
 `409 BATCH_EXPIRED` for an expired batch; `422 ALL_ITEMS_REJECTED` when every
 item of the batch ends rejected (the batch is still finalized and no request is
-created). A pause does not block finalization (Q10.1e).
+created). `503 UNAVAILABLE` with `Retry-After` when storage cannot say whether
+the files are in place (§6.2); the batch stays open and nothing changes. A pause
+does not block finalization (Q10.1e).
 
 ### 5.4 Batch: `GET /v1/batches/{batch_id}`
 
@@ -219,7 +280,7 @@ Returns the current generation (Q10.1f):
 ```json
 {
   "document_id": "hr/leave-policy", "document_uid": "doc_7f3…",
-  "resource_id": "res_hr_all", "title": "Leave policy", "source_url": "https://…",
+  "resource_id": "hr-all", "title": "Leave policy", "source_url": "https://…",
   "metadata": { "km_folder": "HR/Policies" },
   "readiness": "ready_stale", "since": "2026-10-15T09:12:00Z",
   "latest": { "source_revision_id": "srv_3", "source_version": "3", "request_id": "req_…" },
@@ -256,7 +317,8 @@ describes the stages.
 
 1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`), exactly one
    `main` file, unique paths, valid `metadata` (§11) →
-   `INVALID_ARGUMENT`.
+   `INVALID_ARGUMENT`; every file's `size` within the maximum file size (§11) →
+   `FILE_TOO_LARGE`.
 2. Main-file format supported (pilot: PDF, Markdown, PPTX) →
    `UNSUPPORTED_FORMAT`.
 3. Under `ordering: source_version`, `source_version` present →
@@ -272,32 +334,47 @@ describes the stages.
    may place documents only into Resources it created; the contributor grant is
    deferred. See the
    [#55 design record](knowledge-platform-canonical-consumption.md).
+   Since 2026-11-14 (ADR-0013) the Resource is named by the Source's own key,
+   registered beforehand; an unregistered key is `RESOURCE_NOT_FOUND`.
 6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION` or
    `VERSION_CONFLICT`.
 7. Same content (§6.4) → `queued` with the active request, a new retry request,
    or `unchanged`.
-8. Otherwise `declared`, with grants for files whose (path, digest) differs from
-   the latest Source Revision; the others are `carried_over` (Q10.1d).
+8. Otherwise `declared`, with an upload entry (§5.2) for each file whose (path,
+   digest) differs from the latest Source Revision; the others are
+   `carried_over` (Q10.1d), each with its `custody_ref` fixed here from that
+   Source Revision. A new document's `document_uid` is generated here.
 
 Results decided at declaration (`unchanged`, `queued`, `rejected`) are final;
 requests they create are committed with their outbox rows before `201`.
 
 ### 6.2 Finalization, per `declared` item
 
-1. Document deleted since declaration → `DOCUMENT_DELETED`.
-2. Placement re-check → `RESOURCE_NOT_FOUND`.
-3. Every file to upload present in staging → `FILES_MISSING`.
-4. Recomputed SHA-256 equals the declaration → `DIGEST_MISMATCH`; detected media
-   type matches → `MEDIA_TYPE_MISMATCH`.
-5. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
+1. Document deleted since declaration → `DOCUMENT_DELETED`; created since
+   declaration by another batch, so that its `document_uid` is not the declared
+   one → `STALE_DECLARATION` (declare again).
+2. Placement re-check → `RESOURCE_NOT_FOUND`. An unavailable decision service
+   fails the whole request with `503 AUTHZ_UNAVAILABLE`, as at declaration
+   (§6.1 rule 5; authorization design §4.3).
+3. Every file in `uploads` is in place: its object exists in storage, asked
+   before the transaction (§5.2 verified size, digest and media type before the
+   object appeared) → `FILES_MISSING`.
+4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
    or `VERSION_CONFLICT`; same content → §6.4.
-6. Otherwise: create the document on first submission (new `document_uid`),
-   create the Source Revision, move staged files into custody (carried-over files
-   reference the existing custody objects), apply catalog fields and metadata,
+5. Otherwise: create the document on first submission (with the declared `document_uid`),
+   create the Source Revision, record each staged file's `custody_ref` (§10;
+   a carried-over file keeps the reference fixed at declaration),
+   apply catalog fields and metadata,
    create a `process` request and its outbox row.
 
-All admitted items commit in one transaction before `202`. Staged files of
-rejected or expired items are deleted.
+All admitted items commit in one transaction before `202`. Finalization writes
+nothing to storage, so that commit alone admits an item. The hourly
+cleanup takes batches finalized or expired at least one hour before, so that
+uploads in flight have ended. It deletes the objects uploaded by items that
+created no Source Revision (rejected, expired, or resolved by §6.4) and aborts
+every upload left incomplete under the batch's keys. Admission never deletes
+the objects of an admitted item. A batch record is not removed (§11) before its
+cleanup.
 
 ### 6.3 Ordering
 
@@ -386,6 +463,14 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 | `applied` | Agents can no longer find, read or cite the document's own content; readiness `deleted` | Serving-time block keyed by `document_uid` (#56, #76), recorded by #31 | 1 minute, *unmeasured* |
 | `enforced` | Every required projection has removed the document and adjusted products derived from it (for example LLM-wiki pages) | Projection owners via #55; judged by #31 from their reports and serving facts | 10 minutes, *unmeasured* |
 
+- Superseded on 2026-11-15 by [ADR-0014](../adr/0014-removal-by-projection-cleanup.md):
+  there is no serving-time block in v1. `applied` means that admission has
+  recorded the deletion: the status shows `deleted`, the catalog fields are
+  cleared and the event is in the Change Feed. Content stops being served when
+  the projections have removed it, which is `enforced`; until then agents may
+  still find it. This replaces "Agents can no longer find, read or cite the
+  document's own content" and "Serving-time block keyed by `document_uid`" in
+  the `applied` row above. The same holds for a withdrawal and a rebind.
 - The deletion reaches projections through the #55 handoff channel, carrying
   `document_uid`; each projection reports when it has finished.
   Superseded on 2026-10-26 by
@@ -427,9 +512,19 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 - Platform refresh after an owner adopts a version: one `process` request per
   affected document's current canonical revision, `initiator: platform`, the
   adoption sequence recorded, low priority, no quota.
-- Durability: a `202` survives a single node failure (CNPG, three instances,
-  quorum synchronous replication; a pilot go-live condition). DEV/POC may run one
-  instance and is marked as not meeting it.
+- Durability: the admission database is one PostgreSQL instance on a
+  network-backed persistent volume, with its write-ahead log archived
+  continuously to storage outside that volume (a pilot go-live condition).
+  - The instance or its node fails: no `202` is lost. Admission answers `503`
+    until the instance runs again; after a node failure that takes an operator
+    action.
+  - The volume is lost: the database is restored from the archive. Requests
+    acknowledged within the archive interval (target: one minute) may be lost,
+    and their Sources submit them again.
+  - Restore time is *unmeasured* until the restore drill (§13).
+
+  Replication inside the cluster is a later deployment change and needs no code
+  change. DEV/POC may run without the archive and is marked as not meeting this.
 - Pilot pause: triggered by backlog depth; rejects new declarations only.
 
 ## 10. Workflow start input
@@ -442,7 +537,7 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "document_uid": "doc_7f3…",
   "source_revision_id": "srv_3",
   "files": [
-    { "path": "policy.md", "role": "main", "custody_ref": "custody://…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
+    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/bat_01J…/0/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
   ],
   "adopted_version": "md-standard@2",
   "adoption_sequence": 7,
@@ -451,6 +546,27 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "trace_id": "4bf92f3577b34da6"
 }
 ```
+
+`custody_ref` is `s3://{bucket}/{key}`; the bucket is the processing worker's
+object store bucket, so source files and processing results share it.
+Admission records it once, at finalization (§6.2), for the object the upload
+wrote. Carried-over files, retries, redrive, refresh and the start input copy
+it unchanged. Readers split it into bucket and key and derive nothing from the
+key.
+
+The key of a source file is
+`documents/{document_uid}/files/{batch_id}/{index}/{sha256}`: the batch item
+that uploaded it and its digest in lowercase hex. Only that item's upload (§5.2)
+writes under its keys. A document's source files, and the items processing
+registers for it, sit under `documents/{document_uid}/`. That prefix is not
+everything kept for a document: processing writes each request's Processing
+Result, failure report and attempt records under `requests/{request_id}/`, so a
+purge of one document also covers the `requests/` prefixes of that document's
+requests (#57 owns the purge rule). Removing the files
+of one Source Revision alone first checks the document's other Source
+Revisions for references to the same objects. The key carries no tenant: a deployment serves
+one tenant. Should one serve several, #57 decides between a bucket and a key
+prefix per tenant; stored references stay valid either way.
 
 Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
@@ -462,55 +578,90 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Intake quota per Source | Token bucket, 50 declared items per minute (provisional) |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
-| Files per item, file size, open batches per Source | Set in I2 configuration, *unmeasured* |
-| Upload grant | 1 hour, reissuable while the batch is open |
+| Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |
+| Maximum file size | 50 MB, the PROD requirement ([#88](https://github.com/davidlinnnn/data-ingestion/issues/88#issuecomment-6633160435)); configurable per deployment |
+| Upload | One `PUT` per file (§5.2), accepted until the batch is finalized or expires; a repeated `PUT` changes nothing |
 | Open batch | Expires 24 hours after creation |
+| Uploads not admitted | Removed within 2 hours after the batch is finalized or expires (*unmeasured*) |
 | `Idempotency-Key` | 24 hours |
 | Request | `404` 30 days after its terminal outcome; active requests never expire |
 | Batch | `404` 30 days after all items are terminal, or after expiry |
 | Deleted document | `404` 30 days after deletion is applied |
-| Deletion targets | `applied` within 1 minute, `enforced` within 10 minutes (*unmeasured*); custody purge after 30 days |
+| Deletion targets | `applied` within 1 minute, `enforced` within 10 minutes (*unmeasured*); custody purge after 30 days. Since 2026-11-15 (ADR-0014) content stops being served at `enforced`, not at `applied` |
 
 ## 12. Error reasons
 
 | Reason | Level | HTTP |
 |---|---|---|
-| `INVALID_ARGUMENT`, `TOO_MANY_ITEMS` | request | 400 |
+| `INVALID_ARGUMENT`, `TOO_MANY_ITEMS`, `SIZE_MISMATCH` | request | 400 |
 | `UNAUTHENTICATED` | request | 401 |
 | `PERMISSION_DENIED` | request | 403 |
 | `NOT_FOUND` | request | 404 |
-| `BATCH_EXPIRED`, `IDEMPOTENCY_IN_PROGRESS` | request | 409 |
-| `ALL_ITEMS_REJECTED`, `IDEMPOTENCY_KEY_REUSED` | request | 422 |
+| `BATCH_EXPIRED`, `BATCH_FINALIZED`, `IDEMPOTENCY_IN_PROGRESS` | request | 409 |
+| `LENGTH_REQUIRED` | request | 411 |
+| `ALL_ITEMS_REJECTED`, `IDEMPOTENCY_KEY_REUSED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` | request | 422 |
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
-| `INVALID_ARGUMENT`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `FILES_MISSING`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` | item, finalization | — |
+| `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
+| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `FILES_MISSING` | item, finalization | — |
+
+`SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
+`BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
+
+`WORKFLOW_ENDED_WITHOUT_RESULT` (domain `admission.knowledge-platform`,
+retryable) is a failed request's `error` when the reconciler finds its workflow
+ended without an error block, such as terminated or timed out (§9).
 
 `RESOURCE_NOT_EMPTY` (`409`) belongs to the Resource API (#85).
 
 ## 13. Deployment and validation
 
-- One image, three roles: `api` (HPA), `dispatcher` (≥ 2 replicas), CronJobs
-  (reconciler every 5 minutes, batch expiry hourly, retention daily).
-- Its own CNPG database; staging storage belongs to admission; custody to #57;
-  topology and configuration loading to #78.
+- One image, three roles: `api` (2 fixed replicas), `dispatcher` (≥ 2 replicas),
+  CronJobs (reconciler every 5 minutes, batch expiry and upload cleanup hourly,
+  retention daily).
+- The `api` role is FastAPI on one uvicorn worker per replica, with no HPA and no
+  worker-count setting: the company sizes a fixed pod count for the peak. This
+  role's peak is the sum of its Sources' intake quotas (§11), estimated at a few
+  requests per second for the PROD burst (#88; *unmeasured*). One replica is
+  expected to carry it and the second is for availability. When a capacity run
+  finds a replica near one full core at peak, add uvicorn workers before replicas,
+  because every pod also carries a mesh sidecar. #78 revises these numbers from
+  the capacity runs.
+- Its own PostgreSQL database, deployed without an operator: one instance on a
+  persistent volume, continuous write-ahead-log archiving and a scheduled base
+  backup to object storage (§9). Custody belongs to #57; topology and
+  configuration loading to #78.
+- Uploads are written to the custody bucket (§5.2, §10). Admission writes source
+  files there and deletes those of rejected and expired items; it changes
+  nothing else in the bucket.
+- The `api` role carries upload bytes (§5.2): it streams each body into storage
+  in parts and never holds a whole file in memory. On the upload route the
+  ingress must allow bodies up to the maximum file size, pass the body through
+  without buffering it first, and allow several minutes per request; #78 sets
+  these values. Capacity runs include the PROD burst (#88) through the upload
+  route.
 - **CI tier:** Testcontainers PostgreSQL and Temporal; failpoints around each
   commit and start; an adjustable clock; the prototype's 19 scenarios as
   acceptance tests.
-- **Cluster tier** (before the pilot and after infrastructure changes): CNPG
-  primary kill, API and dispatcher pod kills, a one-hour Temporal outage
-  extrapolated to 24 hours, a backlog pause, capacity runs. All *unmeasured*.
+- **Cluster tier** (before the pilot and after infrastructure changes): database
+  pod kill, loss of the database's node, a restore drill from the archive
+  (measures the restore time and the lost interval), API and dispatcher pod
+  kills, a one-hour Temporal outage extrapolated to 24 hours, a backlog pause,
+  capacity runs. All *unmeasured*.
 - A full 24-hour Temporal outage test before production.
 - **Pass criteria:** every `202` maps to exactly one workflow; no loss or
   duplication; convergence within one reconciler period; deleted documents never
-  return; deletion meets its `applied` and `enforced` targets.
+  return; deletion meets its `applied` and `enforced` targets. The restore drill
+  is the one exception to "no loss": it passes when the lost interval is within
+  the archive interval.
 
 ## 14. Implementation tickets
 
 | Ticket | Scope | Depends on |
 |---|---|---|
 | I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1–§5.4, §6, staging to custody, idempotency, quota, minimal SDK | I1, #85, #57 |
-| I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #80 |
+| I2 Batch API | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184 |
+| I2b File upload | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
+| I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #126 |
 | I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
 | I5 Validation harness | §13 tiers | I1–I4, #78 |

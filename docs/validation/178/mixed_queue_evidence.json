@@ -1,0 +1,49 @@
+{
+  "r1_set_current": {
+    "ok": true,
+    "wait_s": 0.1,
+    "first_error": null
+  },
+  "w1": {
+    "ran_on": "r1",
+    "wait_s": 0.3
+  },
+  "r2_set_current": {
+    "ok": true,
+    "wait_s": 1.2,
+    "first_error": null
+  },
+  "after_switch": {
+    "current": "r2",
+    "routing_config_update_state": 2,
+    "versions": {
+      "r2": "unspecified",
+      "r1": "draining"
+    }
+  },
+  "w2": {
+    "ran_on": "r2",
+    "wait_s": 0.0
+  },
+  "r1_wait_drained_s": 1.2,
+  "after_drain": {
+    "current": "r2",
+    "routing_config_update_state": 2,
+    "versions": {
+      "r2": "unspecified",
+      "r1": "drained"
+    }
+  },
+  "w3": {
+    "ran_on": "r2",
+    "wait_s": 0.0
+  },
+  "pass": {
+    "P8 control: before the switch a workflow ran on r1": true,
+    "P8 both switches succeeded within the limit": true,
+    "P8 current is r2 and the routing state reads COMPLETED, not IN_PROGRESS": true,
+    "P8 new workflows ran on r2": true,
+    "P8 r1 read draining at the switch, then drained; r2 unspecified": true,
+    "P8 the routing state stays COMPLETED after drainage": true
+  }
+}

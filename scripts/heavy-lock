@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Run a heavy local job under the machine-wide lock, or refuse while another job holds it.
+
+    scripts/heavy-lock NAME -- COMMAND...
+
+Heavy jobs are docling (Seam B inference workers, measurements), d3 inference and vllm-sr:
+the 48 GiB dev machine fits one at a time, and parallel agent sessions cannot see each
+other's jobs. COMMAND holds the lock for as long as it runs, so it must stay in the
+foreground for the job's whole life (`docker run -d` would release it at once).
+Exit 75 and print the holder when the lock is taken; otherwise exit with COMMAND's status.
+"""
+
+import fcntl
+import os
+import sys
+import time
+from pathlib import Path
+
+LOCK = Path(os.environ.get("KP_HEAVY_LOCK", "~/.local/state/kp-dev/heavy.lock")).expanduser()
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) < 3 or argv[1] != "--":
+        print("usage: heavy-lock NAME -- COMMAND...", file=sys.stderr)
+        return 2
+    name, command = argv[0], argv[2:]
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(LOCK, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        holder = os.pread(fd, 4096, 0).decode(errors="replace").strip()
+        print(f"heavy-lock: taken by {holder}; wait until it ends", file=sys.stderr)
+        return 75
+    started = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    os.ftruncate(fd, 0)
+    os.pwrite(fd, f"{name} (pid {os.getpid()}, since {started}, in {os.getcwd()})\n".encode(), 0)
+    # exec keeps the pid and the open lock, so the lock ends when COMMAND exits
+    os.set_inheritable(fd, True)
+    try:
+        os.execvp(command[0], command)
+    except OSError as error:
+        print(f"heavy-lock: {command[0]}: {error.strerror}", file=sys.stderr)
+        return 127
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

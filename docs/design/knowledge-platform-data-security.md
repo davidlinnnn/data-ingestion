@@ -1,5 +1,7 @@
 # Knowledge Platform 資料安全治理原則與 Agent Platform 邊界
 
+**狀態：** [#87](https://github.com/davidlinnnn/data-ingestion/issues/87) 的設計結果，該票於 2026-10-27 結案。之後的決定除非文中有標日期的註記，否則不會回頭改寫本文；它們記在 [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) 與各張票上，兩者不一致時以後者為準。
+
 [Define Knowledge Platform data-security governance principles and the Agent Platform boundary](https://github.com/davidlinnnn/data-ingestion/issues/87) 的設計結果。2026-10-26 至 10-27 與使用者以 grilling 第 A–G 組確認。
 
 本文的依據如下：
@@ -38,6 +40,7 @@
 - **推論服務**（B4）：別的 team 的摘要 API 和公司 VLM 都已確認四個條件：on-prem；不留存內容，或留存符合公司規定；不用於訓練；log 不含正文，或 log 存取受控。
 - **特權存取**（D1）：公司有既有的特權存取機制，使用時會留下身分紀錄。
 - **agent 身分**（A3、F1）：公司原則是「agent 代表人做事」，A2A 和 MCP 呼叫會帶身分。候選做法（待進公司確認）是以 workload 身分（例如 K8s ServiceAccount token）作為 agent 身分、tSSO 作為使用者身分。Agent Platform 對資料面還沒有定義，由本文提出準則（F3、F5）。
+- **client 上傳**（2026-10-30 主管確認後補記；範圍由使用者於 2026-11-07 確認）：公司政策禁止 client 以 presigned URL 上傳檔案，不限定其他傳輸管道。admission 因此改為經平台 API 上傳，契約見 [admission 規格](knowledge-platform-admission-spec.md) §5.2，論述見[檔案上傳設計](knowledge-platform-file-upload.md)。
 
 ## 3. 決策
 
@@ -101,6 +104,7 @@
 |---|---|---|---|
 | 公司 VLM（Qwen3.8-27B） | 公司 | Picture Interpretation 的圖片裁切和整頁影像、公式區塊、沒有文字層的程式碼；Document Category 可能送正文和標題（[workflow v2](knowledge-platform-processing-workflow-v2.md) §4） | 四個條件已確認（2026-10-26） |
 | 摘要 API（Document Summary） | 別的 team | 原生正文和標題 | 四個條件已確認（2026-10-26） |
+| d3 決策模型（vLLM Semantic Router 上的 `vllm-sr/d3-mini`） | LLM/d3 provider team | Quality Check（[ADR-0011](../adr/0011-model-judged-strong-signals-d3-quality-check.md)、#161）：公式和表格的裁圖、含文字的圖片，以及要判讀的重建文字（LaTeX、表格的 Markdown、OCR 文字） | 尚未登錄：四個條件由 #137 向 provider team 確認。確認前只在 DEV 用公開論文執行；`paper-pdf@1`（草稿）列有 `d3-check`，登錄完成前不在 PROD 啟用 |
 | 以 Docling 為基礎的 OCR 和解析 | 平台內 | 不送出平台 | 不適用 |
 | embedding 服務 | 未選定 | chunk 文字 | 選定前要先登錄並符合條件；選型由 #55 負責 |
 | 篩檢模型（#105 的候選，例如 Prompt Guard 2、d3-mini；#121 的候選） | 未選定 | 文字或影像 | 由 #108 採用時登錄 |

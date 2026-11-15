@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-13",
+  "host": "macOS, Docker Desktop PostgreSQL 17.10; client, api and database on one machine",
+  "authz_timeout_ms": 500.0,
+  "page_size": 1000,
+  "resources": 1000,
+  "readings": {
+    "in_process_check_c1": {
+      "calls": 2000,
+      "p50_ms": 0.21,
+      "p99_ms": 0.28,
+      "max_ms": 0.35,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "in_process_list_1000_c1": {
+      "calls": 500,
+      "p50_ms": 0.35,
+      "p99_ms": 0.42,
+      "max_ms": 0.44,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "in_process_check_c32": {
+      "calls": 2000,
+      "p50_ms": 1.67,
+      "p99_ms": 2.42,
+      "max_ms": 2.91,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "in_process_list_1000_c32": {
+      "calls": 500,
+      "p50_ms": 3.68,
+      "p99_ms": 4.47,
+      "max_ms": 4.57,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "control_locked_table": {
+      "calls": 5,
+      "p50_ms": 502.15,
+      "p99_ms": 502.59,
+      "max_ms": 502.61,
+      "outcomes": [
+        "unavailable"
+      ]
+    },
+    "http_check_c1": {
+      "calls": 2000,
+      "p50_ms": 0.93,
+      "p99_ms": 1.31,
+      "max_ms": 2.68,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "http_list_1000_c1": {
+      "calls": 500,
+      "p50_ms": 1.27,
+      "p99_ms": 1.48,
+      "max_ms": 1.71,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "http_check_c32": {
+      "calls": 4000,
+      "p50_ms": 6.828,
+      "p99_ms": 17.537,
+      "max_ms": 23.736,
+      "requests_per_s": 4565.37,
+      "outcomes": [
+        "allow"
+      ]
+    },
+    "http_list_1000_c32": {
+      "calls": 2000,
+      "p50_ms": 10.391,
+      "p99_ms": 22.116,
+      "max_ms": 23.068,
+      "requests_per_s": 2963.13,
+      "outcomes": [
+        "allow"
+      ]
+    }
+  },
+  "checks": {
+    "every expected reading is present": true,
+    "in_process_check_c1: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "in_process_list_1000_c1: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "in_process_check_c32: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "in_process_list_1000_c32: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "http_check_c1: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "http_list_1000_c1: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "http_check_c32: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "http_list_1000_c32: 0 <= p99 <= authz_timeout and every outcome allow": true,
+    "control: a locked table reads unavailable after authz_timeout": true
+  }
+}
