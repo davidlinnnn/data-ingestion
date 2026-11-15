@@ -13,7 +13,10 @@ repo's code on a real paper, in
 
 **Not in force yet.** `paper-pdf@1` is released by the pull request that makes
 `scripts/check-method-versions` count every file in this directory as released (#135). Until it
-merges, CI rules 1 and 2 bind no file and no tag or release branch exists.
+merges, CI rules 1 and 2 bind no file and no tag or release branch exists. That pull request
+(#186) merges only once the end-to-end validation on the Temporal workflow passes. Its run in
+[docs/validation/199](../../../docs/validation/199/README.md) holds the release on three output
+defects: #210 (code listings), #211 (chart value roles) and #212 (non-formula lines).
 
 In this repo: the routing, the worker's checks, the promoter (`kp-canonicalization promote`), the
 CI rules and the CI that tags a version and opens its release branch. In #137: the Helm chart,
