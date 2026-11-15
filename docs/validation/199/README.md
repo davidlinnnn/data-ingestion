@@ -36,6 +36,10 @@ fix first.** Two more findings go to the tickets that already own them.
      requests. Luna had wrapped them in `\text`. One of these ids is in t4's formula sample,
      where t4 judged Luna's `\text` answer PASS. Owner: the native parse and the inventory, or
      the formula prompt.
+- **Not a fix: descriptions are one short of t4's bar.** The workflow passes 15/18 descriptions,
+  against #84's Luna at 16/18. It sent the same request as the method run alone, and the method
+  alone meets the bar (16/18). The one extra miss (image 3) is the model's run-to-run variation.
+  The bar for the released model (Qwen3.8-27B) is measured in #203.
 - **Handed to the tickets that own them, not fixed here:**
   - The d3 table check flags 117 of 167 tables, including 4 of the 6 tables that #84's human
     review judged PASS. The threshold retest belongs to #83/#203 (t5c-seam-b).
@@ -68,38 +72,38 @@ Effects of the endpoint, from Anthropic's
 
 Every paper has the same `limitations`: `READING_ORDER_DEFECTS`, `CAPTION_INTERRUPTS_BODY`,
 `INLINE_MATH_NOT_RECONSTRUCTED` and `INLINE_CODE_NOT_RECONSTRUCTED`. Every summary has outcome
-`success`. Times are activity seconds. Full rows are in `papers/INDEX.json`: status per
+`success`. Times are activity seconds. Full rows are in `papers/<index>.json`: status per
 enrichment, d3 per check kind, receipts per method, summary steps and sections, and stages.
 
-| Paper | Pages | Items | Outcome | Time (s) | Parse / VLM / summary / check (s) | VLM requests (invalid) | Summary requests (not ok) | d3 scored / `not_run` / flagged | `disputed` | `failed` | Cost (US$) |
+| Paper | Pages | Items | Outcome | Time (s) | Parse / VLM / summary / check (s) | VLM requests (invalid) | Summary requests (not ok) | d3 scored / `not_run` / unjudged / flagged | `disputed` | `failed` | Cost (US$) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| W2 | 14 | 49 | complete | 46 | 6 / 2 / 1 / 35 | 40 | 32 | 39 / 0 / 35 | formula native 35 | — | 0.00 |
-| 1 | 28 | 42 | complete | 93 | 15 / 18 / 39 / 36 | 19 | 52 | 24 / 0 / 6 | formula native 4, table d3 6 | — | 0.53 |
-| 2 | 22 | 23 | complete | 37 | 8 / 10 / 21 / 5 | 2 | 32 | 3 / 0 / 1 | table d3 1 | — | 0.23 |
-| 3 | 25 | 42 | complete | 100 | 16 / 19 / 34 / 47 | 14 | 51 | 28 / 0 / 12 | table d3 12 | — | 0.47 |
-| 4 | 27 | 34 | complete | 93 | 15 / 15 / 43 / 33 | 7 | 56 (1 SCHEMA_INVALID) | 13 / 0 / 6 | table d3 6 | — | 0.51 |
-| 5 | 31 | 39 | complete | 221 | 14 / 15 / 153 / 51 | 15 | 75 (7 TIMEOUT) | 30 / 0 / 15 | formula d3 1, table d3 14 | — | 0.49 |
-| 6 | 29 | 49 | complete | 123 | 17 / 22 / 54 / 48 | 11 | 65 (1 SCHEMA_INVALID) | 32 / 0 / 16 | table d3 16 | — | 0.64 |
-| 7 | 18 | 20 | complete | 56 | 5 / 11 / 34 / 14 | 8 | 39 | 9 / 0 / 1 | table d3 1 | — | 0.35 |
-| 8 | 12 | 12 | complete | 38 | 5 / 7 / 21 / 11 | 3 | 33 | 7 / 0 / 3 | table d3 3 | — | 0.25 |
-| 9 | 28 | 48 | complete | 123 | 24 / 21 / 29 / 67 | 30 | 59 | 39 / 0 / 6 | table d3 6 | — | 0.46 |
-| 10 | 30 | 38 | complete | 90 | 13 / 25 / 38 / 36 | 15 | 57 | 22 / 0 / 6 | table d3 6 | — | 0.63 |
-| 11 | 20 | 41 | complete | 87 | 10 / 32 / 38 / 37 | 17 | 44 | 22 / 0 / 3 | table d3 3 | — | 0.55 |
-| 12 | 28 | 48 | complete | 105 | 13 / 29 / 32 / 57 | 32 | 49 | 41 / 0 / 8 | formula native 7, table d3 8 | — | 0.56 |
-| 13 | 27 | 71 | complete | 113 | 10 / 27 / 47 / 53 | 37 | 71 | 45 / 0 / 7 | formula d3 1, formula native 2, table d3 6 | — | 0.65 |
-| 14 | 16 | 31 | complete | 73 | 7 / 17 / 27 / 36 | 18 | 37 | 21 / 0 / 3 | table d3 3 | — | 0.38 |
-| 15 | 27 | 34 | complete | 115 | 14 / 15 / 43 / 56 | 7 | 63 | 27 / 0 / 9 | table d3 9 | — | 0.53 |
-| 16 | 64 | 123 | complete | 113 | 16 / 50 / 28 / 41 | 77 (49) | 42 | 31 / 0 / 2 | formula d3 1, table d3 1 | formula EMPTY_OUTPUT 24 | 0.56 |
-| 17 | 22 | 28 | complete | 56 | 8 / 18 / 25 / 21 | 10 | 38 | 19 / 0 / 2 | formula d3 1, table d3 1 | — | 0.36 |
-| 18 | 18 | 30 | complete | 74 | 9 / 14 / 32 / 31 | 15 | 38 | 23 / 0 / 3 | table d3 3 | — | 0.36 |
-| 19 | 29 | 58 | complete | 109 | 10 / 38 / 40 / 56 | 36 | 71 | 42 / 0 / 8 | formula d3 1, formula native 1, table d3 7 | — | 0.80 |
-| 20 | 50 | 108 | complete | 169 | 19 / 48 / 69 / 77 | 38 | 92 | 47 / 0 / 5 | formula native 2, table d3 5 | — | 1.19 |
+| W2 | 14 | 49 | complete | 46 | 6 / 2 / 1 / 35 | 40 | 32 | 39 / 0 / 0 / 35 | formula native 35 | — | 0.00 |
+| 1 | 28 | 42 | complete | 93 | 15 / 18 / 39 / 36 | 19 | 52 | 24 / 0 / 0 / 6 | formula native 4, table d3 6 | — | 0.53 |
+| 2 | 22 | 23 | complete | 37 | 8 / 10 / 21 / 5 | 2 | 32 | 3 / 0 / 0 / 1 | table d3 1 | — | 0.23 |
+| 3 | 25 | 42 | complete | 100 | 16 / 19 / 34 / 47 | 14 | 51 | 28 / 0 / 0 / 12 | table d3 12 | — | 0.47 |
+| 4 | 27 | 34 | complete | 93 | 15 / 15 / 43 / 33 | 7 | 56 (1 SCHEMA_INVALID) | 13 / 0 / 0 / 6 | table d3 6 | — | 0.51 |
+| 5 | 31 | 39 | complete | 221 | 14 / 15 / 153 / 51 | 15 | 75 (7 TIMEOUT) | 30 / 0 / 0 / 15 | formula d3 1, table d3 14 | — | 0.49 |
+| 6 | 29 | 49 | complete | 123 | 17 / 22 / 54 / 48 | 11 | 65 (1 SCHEMA_INVALID) | 32 / 0 / 0 / 16 | table d3 16 | — | 0.64 |
+| 7 | 18 | 20 | complete | 56 | 5 / 11 / 34 / 14 | 8 | 39 | 9 / 0 / 0 / 1 | table d3 1 | — | 0.35 |
+| 8 | 12 | 12 | complete | 38 | 5 / 7 / 21 / 11 | 3 | 33 | 7 / 0 / 0 / 3 | table d3 3 | — | 0.25 |
+| 9 | 28 | 48 | complete | 123 | 24 / 21 / 29 / 67 | 30 | 59 | 39 / 0 / 0 / 6 | table d3 6 | — | 0.46 |
+| 10 | 30 | 38 | complete | 90 | 13 / 25 / 38 / 36 | 15 | 57 | 22 / 0 / 0 / 6 | table d3 6 | — | 0.63 |
+| 11 | 20 | 41 | complete | 87 | 10 / 32 / 38 / 37 | 17 | 44 | 22 / 0 / 0 / 3 | table d3 3 | — | 0.55 |
+| 12 | 28 | 48 | complete | 105 | 13 / 29 / 32 / 57 | 32 | 49 | 41 / 0 / 0 / 8 | formula native 7, table d3 8 | — | 0.56 |
+| 13 | 27 | 71 | complete | 113 | 10 / 27 / 47 / 53 | 37 | 71 | 45 / 0 / 0 / 7 | formula d3 1, formula native 2, table d3 6 | — | 0.65 |
+| 14 | 16 | 31 | complete | 73 | 7 / 17 / 27 / 36 | 18 | 37 | 21 / 0 / 0 / 3 | table d3 3 | — | 0.38 |
+| 15 | 27 | 34 | complete | 115 | 14 / 15 / 43 / 56 | 7 | 63 | 27 / 0 / 0 / 9 | table d3 9 | — | 0.53 |
+| 16 | 64 | 123 | complete | 113 | 16 / 50 / 28 / 41 | 77 (49) | 42 | 31 / 0 / 0 / 2 | formula d3 1, table d3 1 | formula EMPTY_OUTPUT 24 | 0.56 |
+| 17 | 22 | 28 | complete | 56 | 8 / 18 / 25 / 21 | 10 | 38 | 19 / 0 / 0 / 2 | formula d3 1, table d3 1 | — | 0.36 |
+| 18 | 18 | 30 | complete | 74 | 9 / 14 / 32 / 31 | 15 | 38 | 23 / 0 / 0 / 3 | table d3 3 | — | 0.36 |
+| 19 | 29 | 58 | complete | 109 | 10 / 38 / 40 / 56 | 36 | 71 | 42 / 0 / 0 / 8 | formula d3 1, formula native 1, table d3 7 | — | 0.80 |
+| 20 | 50 | 108 | complete | 169 | 19 / 48 / 69 / 77 | 38 | 92 | 47 / 0 / 0 / 5 | formula native 2, table d3 5 | — | 1.19 |
 
 Notes on the table:
 
 - **"flagged"** counts d3 contradictions. A `FORMULA_NATIVE_MISMATCH` comes from the rule, not
   from d3. W2's 35 are the stand-in's canned answers, and catching them is the right outcome.
-- **No item is `not_run`.** Every check item got a d3 score. The 24 failed formulas and the
+- **No item is `not_run` or unjudged.** Every check item got a d3 score. The 24 failed formulas and the
   pictures without text are not judged.
 - **Paper 5's summary.** The 7 overview verify requests hit the 120 s deadline together and
   succeeded on their retry. This is provider latency; the paper still finished in 221 s. The 2
@@ -195,7 +199,9 @@ corpus; it carries 3 of the code units. "Alone" means the method run outside the
   - p01-a5304a07488e: the judge passed Sonnet's plain C. It was reversed to FAIL, following
     t4's documented font evidence; the note is in `judgments.json`.
   - Image 18: the judge passed Luna. The verdict on Sonnet was FAIL either way.
-- **Judgement calls.** The notes record two, both passed:
+- **Judgement calls.** The notes record 9 on this run's answers, all passed: 7 in the pilot
+  round and 2 now. Examples:
+  - Several p01 descriptions convey a table cell's role without naming the table.
   - p10-06d7a06c831b names an untitled axis "scaling factor k".
   - p09-ede3d51fae44 writes a hyphen as a math minus.
 
@@ -223,7 +229,8 @@ production verify request on Sonnet 5.5. Two changes from t5b:
 | False drops | 1/100 | 1/50 | 2/150 |
 | Judge cost | US$1.11 | US$0.78 | US$1.88 |
 
-The subtle tier, read plant by plant (`OUT/summaries/subtle-direction.json`):
+The subtle tier, read plant by plant ([subtle-direction.json](subtle-direction.json): case,
+type, direction and caught, with no paper text):
 
 | Direction | Caught | Examples |
 |---|---|---|
@@ -241,10 +248,23 @@ The subtle tier, read plant by plant (`OUT/summaries/subtle-direction.json`):
 - **Moderate tier vs #155.** 48/49 is in line with #155's held-out 80/86 (93.0 %) on the same
   five types. The planter differs, so the numbers do not compare directly.
 
+What the pipeline itself did to its sentences, summed from `papers/<index>.json`, against
+t5b-seam-b's `frozen-1` run of the same prompts:
+
+| Sentences kept / rewritten / dropped | Held-out, this run | Held-out, frozen-1 | Dev, this run | Dev, frozen-1 |
+|---|---|---|---|---|
+| Section | 636 / 44 / 1 (6.5 %, 0.1 % of 681) | 638 / 38 / 3 (5.6 %, 0.4 % of 679) | 227 / 27 / 3 (10.5 %, 1.2 % of 257) | 231 / 20 / 3 (7.9 %, 1.2 % of 254) |
+| Overview | 93 / 7 / 0 (7.0 % of 100) | 98 / 2 / 0 (2.0 % of 100) | 37 / 2 / 0 (5.1 % of 39) | 38 / 1 / 0 (2.6 % of 39) |
+
+Rewrites run slightly higher than in frozen-1, with the same prompts and model; drops stay rare.
+The two runs differ only by the model's run-to-run variation.
+
 ## Tokens and TPM
 
 [tokens.md](tokens.md) has every paper × component row (requests, input, output, reasoning,
-model) and the aggregates. Over the 20 corpus papers:
+model), the aggregates, requests per document and tokens per request per component, and TPM
+at every rate below; `tokens.py` writes all of it, so #203's rerun reproduces these tables.
+Over the 20 corpus papers:
 
 | | Median | Max |
 |---|---|---|
@@ -256,21 +276,21 @@ Shares of all tokens: `document-summary` 65.7 %, `picture-interpretation` 21.5 %
 
 | Per document (mean) | #93 estimate | Measured |
 |---|---|---|
-| VLM requests | ≈ 30 (pictures ~10, formulas ~15, category 1, slack) | 20.6 (pictures 8.2, formulas 12.3, code 0) |
-| Tokens per VLM request | ≈ 2.5k | 2,265 (pictures 4,915, formulas 505) |
+| VLM requests (R) | ≈ 30 (pictures ~10, formulas ~15, category 1, slack) | 20.6 (pictures 8.2, formulas 12.3, code 0) |
+| Tokens per VLM request (T) | ≈ 2.5k | 2,265, the VLM's tokens over its requests (pictures 4,915, formulas 505) |
 | VLM tokens | ≈ 75k | 46,537 |
 | Summary | 1 request, left out of TPM | 53.2 requests, 123,394 tokens |
 | d3 | not in TPM | 26.2 requests, 17,944 input tokens (d3 generates no text) |
 | Pages | 20 | 27.6 |
 
-TPM is the mean tokens per document times documents per minute:
+TPM is the mean tokens per document times documents per minute (`tokens.RATES`):
 
-| TPM | VLM | Summary | d3 | VLM + summary (one endpoint in the released profile) | #93 |
+| TPM (`tokens.md` row) | VLM | Summary | d3 | VLM + summary (one endpoint in the released profile) | #93 |
 |---|---|---|---|---|---|
-| Pilot, 0.5 documents/min | 23,268 | 61,697 | 8,972 | 84,965 | VLM 37.5k → request 50k |
-| PROD mean, 6.94/min | 322,965 | 856,352 | 124,530 | 1,179,317 | mean ~520k |
-| PROD peak in #93, 20.82/min (k = 3) | 968,894 | 2,569,057 | 373,591 | 3,537,951 | peak ~1.56M → the 0.5–1.5M tier |
-| PROD burst, 50/min for 10 min | 2,326,835 | 6,169,685 | 897,192 | 8,496,520 | — |
+| Pilot, 0.5/min (`pilot`) | 23,268 | 61,697 | 8,972 | 84,965 | VLM 37.5k → request 50k |
+| #93's PROD mean, 6.94/min (`prod_mean_93`) | 322,965 | 856,352 | 124,530 | 1,179,317 | mean ~520k |
+| #93's PROD peak, 20.82/min, k = 3 (`prod_peak_93`) | 968,894 | 2,569,057 | 373,591 | 3,537,951 | peak ~1.56M → the 0.5–1.5M tier |
+| PROD peak, 50/min for 10 min (`prod_peak`, the ticket's) | 2,326,835 | 6,169,685 | 897,192 | 8,496,520 | — |
 
 - **VLM alone is under #93's estimate.** It has fewer requests than #93 assumed, with heavier
   pictures.
@@ -324,11 +344,12 @@ TPM is the mean tokens per document times documents per minute:
 ## Files
 
 - In the repo, alongside the scripts and their tests (`test_score.py`, `test_tokens.py`):
-  - `papers/INDEX.json`
+  - `papers/<index>.json`
   - `accuracy.json`
   - `tokens.json` and `tokens.md`
   - `judgments.json`: verdicts by answer sha256, with notes
   - `evidence-held-out.json` and `evidence-dev.json`: A7 counts, no text
+  - `subtle-direction.json`: the direction of each subtle A7 plant, by manual review
   - `manifest.json`
 - **`manifest.json`** holds the sha256 of everything kept outside git:
   - the papers;

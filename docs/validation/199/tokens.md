@@ -137,7 +137,17 @@
 | document-summary | 65.7% |
 | d3-check | 9.6% |
 
-| TPM | VLM | Summary | d3 | Total |
-|---|---|---|---|---|
-| pilot (0.5 documents/min) | 23,268 | 61,697 | 8,972 | 93,937 |
-| prod_peak (50 documents/min) | 2,326,835 | 6,169,685 | 897,192 | 9,393,712 |
+| Component | Requests per document | Tokens per request |
+|---|---|---|
+| picture-interpretation | 8.2 | 4,915 |
+| formula | 12.3 | 505 |
+| code | 0.0 | — |
+| document-summary | 53.2 | 2,319 |
+| d3-check | 26.2 | 684 |
+
+| TPM | VLM | Summary | d3 | Total | VLM + summary |
+|---|---|---|---|---|---|
+| pilot (0.5 documents/min) | 23,268 | 61,697 | 8,972 | 93,937 | 84,965 |
+| prod_mean_93 (6.94 documents/min) | 322,965 | 856,352 | 124,530 | 1,303,847 | 1,179,317 |
+| prod_peak_93 (20.82 documents/min) | 968,894 | 2,569,057 | 373,591 | 3,911,542 | 3,537,951 |
+| prod_peak (50 documents/min) | 2,326,835 | 6,169,685 | 897,192 | 9,393,712 | 8,496,520 |
