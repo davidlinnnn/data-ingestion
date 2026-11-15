@@ -39,9 +39,13 @@ Why the native parse and not the formula prompt:
   item from the inventory alone would leave an empty formula in the canonical document.
 
 The rule: after an optional list bullet (`·` or `•`) and whitespace, the whole text layer is one
-token of ASCII letters, digits and `_ . / -`, with a run of three letters. Spaces, operators,
-parentheses or non-ASCII characters keep the node a formula; the three-letter run keeps short
-math such as `x-1`. The test is `test_a_formula_whose_text_layer_is_one_identifier_becomes_a_text_line`
+token of ASCII letters, digits and `_ . / -` that has a run of three letters and joins two
+letters or digits with `_ . / -`. Spaces, operators, parentheses or non-ASCII characters keep the
+node a formula; so does a lone word or run-together subscripts (`softmax`, `xij`), and so does
+short math such as `x-1`, which has no three-letter run. The code review found the first version
+of the rule, without the joining character, too broad: it would have turned `xij` into text with
+no status. The rule left matches a math display only if its text layer is a single hyphenated
+or dotted word such as `log-sum-exp`, as text without a status; none of the 257 items is one. The test is `test_a_formula_whose_text_layer_is_one_identifier_becomes_a_text_line`
 ([test_parse.py](../../../tests/stages/test_parse.py)); it builds the document by hand and asserts
 no docling layout result (PR #168).
 
@@ -53,15 +57,16 @@ sentence to 2.
 
 `run.py` ran prepare, parse, assemble and inventory in process on `paper-pdf@1.yaml`, without
 the VLM: once on the code before the change (`before`, `docling-parse@1` module digest
-`6cb4374d…`, the one #199 ran) and once after it (`after`, `55c11be8…`). Both runs used the
-final script; `before` reused the parse it had cached under the old digest.
+`6cb4374d…`, the one #199 ran) and once after it (`after`, `565aeae5…`). Both runs used the
+final script; `before` reused the parse it had cached under the old digest. The figures below are
+the second round, after the code review narrowed the rule; the first round gave the same counts.
 [inventory.json](inventory.json) holds the comparison.
 
 | Check | Predicate | Result | Negative control |
 |---|---|---|---|
 | Same papers and items as #199 | `before` formula items per paper = #199's `inventory_counts` | 21 of 21 papers equal, 257 items | — |
 | Items no longer sent to `formula@1` | `before` items whose target is not an `after` item | 35, all on page 25 of paper 16, all `· <instance id>` | `before` has them: the comparison sees them |
-| No new formula item | `after` items not in `before` | 0 | — |
+| No new formula item | `after` items not in `before` | 0 | the same difference the other way round finds the 35 |
 | Real formulas unchanged | per kept item, the `formula@1` request digest equals `before`'s | 222 of 222 | — |
 | The same request as #199 | the digest names a response t4-seam-b recorded (`tests/fixtures/vlm/formula`), which #199's workflow sent for every corpus formula item | 187 of 187 corpus items (W2's 35 come from t5c's replay, not this folder) | the item's bbox moved 1 pt: 0 of 222 recorded |
 | Page 25's ids in the canonical text | each id in page 25's text layer (pypdfium2, not docling; 60 ids) is a substring of a page-25 node's `text` | `after`: 0 missing | `before`: 35 missing, the formula-labeled ones |
@@ -90,7 +95,7 @@ receipts from the S3 stand-in of this run ([e2e.json](e2e.json)) and of #199's
 | Inventory items on page 25 | 35 formulas, 1 table | 1 table |
 | Requests for page-25 items | 60 `formula@1`: 11 ok, 49 invalid | 0 |
 | Page 25's 60 ids in the assembly's text | 25 (35 missing) | 60 |
-| Cost | US$0.56 | US$0.45 |
+| Cost | US$0.56 | US$0.46 |
 
 The 9 formulas left are page 22's real ones. #199's record is
 [../199/papers/16.json](../199/papers/16.json); #212's is [e2e/paper-16.json](e2e/paper-16.json).
@@ -101,11 +106,12 @@ The 9 formulas left are page 22's real ones. #199's record is
   is still a formula item, and its `formula@1` request has the same digest before and after the
   fix and is one t4-seam-b recorded (44 of 44), as #199's was: the model gets the same input.
   Paper 16's real formula, p16-80a4d936a5d2, ran again: same request, PASS, an answer #199 had
-  already judged ([e2e/accuracy.json](e2e/accuracy.json)).
+  already judged ([e2e/accuracy.json](e2e/accuracy.json)). The first round's rerun gave the same.
 - **The two ids are no longer formulas.** #199's scorer finds no formula enrichment for them and
-  counts them FAIL (`found: false` in e2e/accuracy.json); its "alone" column still sends t4's old
-  formula request, so p16-e1d8a234b6b9 again gets an empty answer there. In the canonical
-  document both are text items whose text is the source line:
+  counts them FAIL (`found: false` in e2e/accuracy.json). Its "alone" column still sends t4's old
+  formula request, which the workflow no longer sends: p16-e1d8a234b6b9 again got an empty answer
+  there, and p16-35fa058a6093 a new answer, left unjudged (`pending_judgments: 1`). In the
+  canonical document both are text items whose text is the source line:
 
   | Label | Text in the assembly | t4's Luna answer |
   |---|---|---|
