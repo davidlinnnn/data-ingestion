@@ -837,11 +837,12 @@ async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports,
 
 
 class TimingStore:
-    """Wraps a store and adds the time of each receipt call to its item's total."""
+    """Wraps a store and records each call on an attempt's receipts, (method, seconds), under
+    the receipt's item, or under "" for a listing of them all."""
 
     def __init__(self, store) -> None:
         self.store = store
-        self.per_item: dict[str, list[float]] = {}
+        self.per_item: dict[str, list[tuple[str, float]]] = {}
 
     def __getattr__(self, name: str):
         call = getattr(self.store, name)
@@ -851,9 +852,10 @@ class TimingStore:
             try:
                 return await call(key, *args)
             finally:
-                if "/receipts/" in key:
-                    item = key.split("/receipts/", 1)[1].rsplit("/", 1)[0]
-                    self.per_item.setdefault(item, []).append(time.perf_counter() - started)
+                if "/receipts" in key:
+                    item = key.split("/receipts", 1)[1].rpartition("/")[0].lstrip("/")
+                    taken = time.perf_counter() - started
+                    self.per_item.setdefault(item, []).append((name, taken))
 
         return timed
 
@@ -870,12 +872,13 @@ async def v9_store(request):
     return store
 
 
-async def test_v9_receipts_add_under_100_ms_per_request_at_p95(ports, runtime, v9_store):
+async def receipt_calls(ports, runtime, store) -> dict[str, list[tuple[str, float]]]:
+    """One document's 30 requests on `store`: what TimingStore recorded."""
     input = await native(ports, runtime, one_picture_paper())
     inv = await clones(ports, input.inventory, 30)
     for key, data in ports.store.objects.items():  # type: ignore[attr-defined]
-        await v9_store.put(key, data)
-    timing = TimingStore(v9_store)
+        await store.put(key, data)
+    timing = TimingStore(store)
     ports = dataclasses.replace(ports, store=timing)
 
     # A fresh document and attempt, so that nothing in a shared store is reused.
@@ -883,9 +886,31 @@ async def test_v9_receipts_add_under_100_ms_per_request_at_p95(ports, runtime, v
     await run_vlm(ports, runtime, inv, run_id=f"run_{fresh}", document_uid=f"doc_{fresh}")
 
     assert len(ports.vlm.requests) == 30
-    per_request = [sum(calls) for calls in timing.per_item.values()]
+    return timing.per_item
+
+
+async def test_v9_each_request_lists_the_receipts_once_and_writes_its_own_twice(
+    ports, runtime, v9_store
+):
+    """What the pull request gate holds of V9: the calls, whose number no runner changes."""
+    per_item = await receipt_calls(ports, runtime, v9_store)
+
+    listings = per_item.pop("")  # one when the stage starts, then the request cap of each send
+    assert [method for method, _ in listings] == ["list_prefix"] * 31
+    assert len(per_item) == 30
+    for calls in per_item.values():  # written before the send, completed after it
+        assert [method for method, _ in calls] == ["put_if_absent", "put"]
+
+
+@pytest.mark.skipif(
+    not os.environ.get("KP_WALLCLOCK"),
+    reason="asserts wall-clock time: docs/validation/80/t4-receipt-overhead says when to run it",
+)
+async def test_v9_receipts_add_under_100_ms_per_request_at_p95(ports, runtime, v9_store):
+    per_item = await receipt_calls(ports, runtime, v9_store)
+    per_request = [sum(seconds for _, seconds in calls) for item, calls in per_item.items() if item]
+
     assert len(per_request) == 30
-    assert all(len(calls) >= 2 for calls in timing.per_item.values())  # written, completed
     p95 = statistics.quantiles(per_request, n=20)[-1]
     print(f"V9 p95 receipt overhead {p95 * 1000:.1f} ms over {len(per_request)} requests")
     assert 0 < p95 < 0.1
