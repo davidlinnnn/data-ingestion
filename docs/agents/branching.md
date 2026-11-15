@@ -13,7 +13,10 @@ This repo is **public**: every push publishes.
 ```sh
 git fetch origin
 git worktree add --no-track -b <branch> ~/work/data-ingestion-<task> origin/dev
+cd ~/work/data-ingestion-<task> && uv sync --frozen
 ```
+
+A new worktree has no `.venv`. `uv sync --frozen` creates it from the lockfile, as CI does; the pre-commit hook, `scripts/check` and the tests run from it, so without it the first commit fails.
 
 Branch names carry the ticket number:
 
@@ -36,6 +39,7 @@ Leave out `<issue>-` only when the work has no ticket.
 
   ```sh
   git worktree add --no-track -b patch/paper-pdf-<N>-<issue>-<slug> ~/work/data-ingestion-<task> origin/release/paper-pdf-<N>
+  cd ~/work/data-ingestion-<task> && uv sync --frozen
   ```
 
 - A patch changes nothing under `src/kp_canonicalization/methods/` and no released profile file: `scripts/check-method-versions` refuses both. A new Processing Profile version is released on `dev`, never on a release branch.
