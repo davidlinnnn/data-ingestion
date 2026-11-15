@@ -75,9 +75,10 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
 
 ## Deployment
 
-- The platform is cloud native: a role's image holds that role's dependencies only, and a role
-  keeps its durable state in the database or the object store, so a new pod starts fast and
-  any pod serves any request. A heavy image, a slow start or state held in a pod is a finding.
+- The platform is cloud native: an image holds the dependencies of its own package only
+  (admission ships without the parsing libraries), and a role keeps its durable state in the
+  database or the object store, so a new pod starts fast and any pod serves any request. A
+  heavy image, a slow start or state held in a pod is a finding.
 
 ## Validation evidence
 
