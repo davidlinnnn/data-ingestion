@@ -294,12 +294,13 @@ def resolve(data: dict[str, Any], ref: str) -> dict[str, Any]:
 
 
 def reading_order(data: dict[str, Any]) -> list[dict[str, Any]]:
-    """The body's items depth first; groups are containers, not items."""
+    """The body's items depth first; groups are containers, not items, and page headers and
+    footers, which docling may attach to the body, are furniture, not items."""
     order = []
 
     def visit(ref: str) -> None:
         node = resolve(data, ref)
-        if not ref.startswith("#/groups/"):
+        if not ref.startswith("#/groups/") and node.get("content_layer", "body") == "body":
             order.append(node)
         for child in node.get("children", []):
             visit(child["$ref"])

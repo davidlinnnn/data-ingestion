@@ -24,6 +24,7 @@ from docling.models.stages.page_preprocessing.page_preprocessing_model import (
 from docling.models.stages.table_structure.table_structure_model import TableStructureModel
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 from docling_core.types.doc.base import BoundingBox, CoordOrigin
+from docling_core.types.doc.common.content_layer import ContentLayer
 from docling_core.types.doc.common.reference import ProvenanceItem
 from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.text import FormulaItem, TextItem
@@ -278,6 +279,28 @@ def test_a_code_node_across_pages_becomes_one_code_node_per_page():
         ("text", "Body text after the listing.", [2]),
     ]
     assert DoclingDocument.model_validate(data).texts[-1].prov[0].charspan == (0, len(second))
+
+
+def test_a_listing_continues_past_the_page_footer_the_layout_puts_between():
+    """#210: docling attaches page furniture to the body, inside the reading order."""
+    lines = [f"step {n}: call tool_{n} with argument {n}" for n in range(6)]
+    pdf = write_pdf([Page(lines=["Prompt", *[[("Courier", t)] for t in lines[:5]], "12"]),
+                     Page(lines=[[("Courier", lines[5])]])])  # fmt: skip
+    document = DoclingDocument(name="paper")
+    document.add_heading("Prompt", prov=line(1, 0, "Prompt"))
+    for n in range(4):
+        document.add_text(DocItemLabel.TEXT, lines[n], prov=line(1, n + 1, lines[n]))
+    document.add_code(lines[4], prov=line(1, 5, lines[4]))
+    document.add_text(DocItemLabel.PAGE_FOOTER, "12", prov=line(1, 6, "12"),
+                      content_layer=ContentLayer.FURNITURE)  # fmt: skip
+    document.add_text(DocItemLabel.TEXT, lines[5], prov=line(2, 0, lines[5]))
+
+    assert labels(document, pdf) == [
+        ("section_header", "Prompt"),
+        *[("code", t) for t in lines[:5]],
+        ("page_footer", "12"),
+        ("code", lines[5]),
+    ]
 
 
 def test_a_code_node_in_a_proportional_font_takes_no_neighbour():
