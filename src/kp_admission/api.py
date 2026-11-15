@@ -22,9 +22,9 @@ import time
 import uuid
 from collections.abc import Awaitable, Mapping
 from contextvars import ContextVar
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
@@ -195,13 +195,15 @@ def app(authorizer: Authorizer, peps: Mapping[str, str]) -> FastAPI:
     carries; a body that is not the JSON the operation takes, sent as application/json, gets 400;
     a decision is 200, without the fields that do not apply, and no decision is 503. /healthz
     answers 200 to anyone without reading the database."""
-    errors = {"model": ErrorResponse, "description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
-    unavailable = {"model": ErrorResponse, "description": "UNAVAILABLE: no decision could be made"}
-    # HTTPBearer only names the scheme in the OpenAPI document; PepOnly enforces it.
+    traced = {"headers": {"X-Trace-Id": {"description": "trace_id", "schema": {"type": "string"}}}}
+    error = traced | {"model": ErrorResponse}
+    errors = error | {"description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
+    unavailable = error | {"description": "UNAVAILABLE: no decision could be made"}
+    # Both only name what a caller sends in the OpenAPI document; PepOnly and Traced read it.
     authz = APIRouter(
         prefix="/authz/v1",
-        dependencies=[Depends(HTTPBearer(auto_error=False))],
-        responses={"4XX": errors, "503": unavailable},
+        dependencies=[Depends(HTTPBearer(auto_error=False)), Depends(_traceparent)],
+        responses={"200": traced, "4XX": errors, "503": unavailable},
     )
 
     @authz.post("/check", response_model=CheckResponse, response_model_exclude_none=True)
@@ -245,6 +247,10 @@ def app(authorizer: Authorizer, peps: Mapping[str, str]) -> FastAPI:
         return await http_exception_handler(request, error)
 
     return api
+
+
+async def _traceparent(traceparent: Annotated[str | None, Header()] = None) -> None:
+    pass
 
 
 async def _decide(operation: Operation, decision: Awaitable[Decision]) -> Decision | JSONResponse:

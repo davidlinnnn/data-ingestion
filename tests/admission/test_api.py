@@ -207,6 +207,10 @@ async def test_the_openapi_document_describes_both_operations_with_bearer_and_th
         operation = document["paths"][path]["post"]
         # 400 and 401, and 503; never a 422
         assert set(operation["responses"]) == {"200", "4XX", "503"}
+        for response in operation["responses"].values():
+            assert response["headers"]["X-Trace-Id"]["schema"] == {"type": "string"}
+        [traceparent] = [p for p in operation["parameters"] if p["name"] == "traceparent"]
+        assert (traceparent["in"], traceparent["required"]) == ("header", False)
         [scheme] = operation["security"][0]
         assert document["components"]["securitySchemes"][scheme] == {
             "type": "http",
@@ -354,3 +358,17 @@ async def test_a_pep_reads_every_page_by_sending_back_each_next_cursor():
                 break
 
     assert pages == [["res_01", "res_02"], ["res_03", "res_04"], ["res_05"]]
+
+
+async def test_an_empty_page_with_a_next_cursor_is_not_the_end_of_the_list():
+    pages, cursor = [], None
+    async with client(FakeAuthorizer("allow", pages=(("res_01",), (), ("res_02",)))) as api:
+        while True:
+            body = (
+                await api.post("/authz/v1/list_resources", json=LIST | {"cursor": cursor})
+            ).json()
+            pages.append((body["resource_ids"], "next_cursor" in body))
+            if not (cursor := body.get("next_cursor")):
+                break
+
+    assert pages == [(["res_01"], True), ([], True), (["res_02"], False)]
