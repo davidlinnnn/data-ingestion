@@ -1,4 +1,5 @@
-# Runs ruff, pyright and the whole pytest suite on every pull request, including the tests
+# Runs ruff, pyright and the whole pytest suite on every pull request that changes more than
+# Markdown (docs-checks covers Markdown; no test reads the repo's Markdown), including the tests
 # that need Docker or a local socket: the S3 contract against tests/s3/compose.yaml (marker `s3`)
 # and the local-socket tests (marker `network`, which download the Temporal dev server).
 # The docling tests need the pinned weights, fetched once per manifest and verified against it.
@@ -8,6 +9,8 @@ name: code-checks
 
 on:
   pull_request:
+    paths-ignore:
+      - "**/*.md"
 
 permissions:
   contents: read

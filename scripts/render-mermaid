@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Render the Mermaid blocks of Markdown files, to check that each parses and to look at it.
+
+    scripts/render-mermaid [-o DIR] FILE.md...
+
+For every ```mermaid block it prints `FILE block N: ok PNG`, or the parse error, and writes
+the PNG under DIR (default: a new temporary directory). Exit 1 when a block fails to parse.
+A block that parses can still be unreadable, so open the PNGs.
+Needs Google Chrome (CHROME names another binary) and network access.
+"""
+
+import argparse
+import html
+import os
+import pathlib
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+# shortcut: mermaid comes from a CDN at a pinned version, which GitHub's renderer may not
+# match; vendor it when renders must work offline.
+MERMAID = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"
+MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+PAGE = """<!doctype html><meta charset="utf-8">
+<body style="margin:16px;background:#fff;font-family:sans-serif">
+<pre class="mermaid" id="d">{block}</pre><div id="status">pending</div>
+<script src="{mermaid}"></script>
+<script>
+mermaid.initialize({{startOnLoad: false, securityLevel: 'strict'}});
+mermaid.run({{querySelector: '#d'}})
+  .then(() => {{ document.getElementById('status').textContent = 'RENDER-OK'; }})
+  .catch(e => {{ document.getElementById('status').textContent = 'RENDER-ERROR ' + e.message; }});
+</script></body>"""
+
+
+def chrome() -> str:
+    found = os.environ.get("CHROME") or (MAC_CHROME if os.path.exists(MAC_CHROME) else None)
+    found = found or shutil.which("google-chrome") or shutil.which("chromium")
+    if not found:
+        sys.exit("render-mermaid: no Chrome found; set CHROME to its binary")
+    return found
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(usage="render-mermaid [-o DIR] FILE.md...")
+    parser.add_argument("-o", dest="out")
+    parser.add_argument("files", nargs="+", type=pathlib.Path)
+    args = parser.parse_args()
+    out = pathlib.Path(args.out or tempfile.mkdtemp(prefix="render-mermaid-")).resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    run = [chrome(), "--headless=new", "--disable-gpu", "--virtual-time-budget=20000"]
+    failed = 0
+    for file in args.files:
+        blocks = re.findall(r"^[ \t]*```mermaid\n(.*?)^[ \t]*```", file.read_text(), re.S | re.M)
+        if not blocks:
+            print(f"{file}: no mermaid block")
+        for n, block in enumerate(blocks, 1):
+            page = out / f"{file.stem}-{n}.html"
+            page.write_text(PAGE.format(block=html.escape(block, quote=False), mermaid=MERMAID))
+            dom = subprocess.run(
+                [*run, "--dump-dom", page.as_uri()], capture_output=True, text=True
+            ).stdout
+            status = re.search(r"RENDER-(OK|ERROR[^<]*)", dom)
+            if not status or status.group(1) != "OK":
+                failed += 1
+                reason = html.unescape(status.group(1)) if status else "ERROR no result from Chrome"
+                print(f"{file} block {n}: {reason}")
+                continue
+            # The window fits the diagram, so a tall sequence diagram is not cut off.
+            box = re.search(r'<svg[^>]*viewBox="\S+ \S+ ([\d.]+) ([\d.]+)"', dom)
+            width, height = (float(v) for v in box.groups()) if box else (1900, 1300)
+            png = page.with_suffix(".png")
+            size = f"--window-size={int(max(width, 600)) + 60},{int(height) + 120}"
+            subprocess.run([*run, size, f"--screenshot={png}", page.as_uri()], capture_output=True)
+            print(f"{file} block {n}: ok {png}")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
