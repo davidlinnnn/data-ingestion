@@ -56,13 +56,17 @@ the promoter's CronJob and its alert route, the image build and the image tag fo
   - *A listed version.* Once Temporal lists all five queues for the `current` build, which it
     does from each queue's first poll on, the promoter makes it current; repeating that is a
     no-op. A build that is off `builds` and no longer current is
-    deleted once Temporal allows it: drained and its pollers forgotten.
+    deleted once Temporal allows it: drained and its pollers forgotten. Right after a build's
+    first poll, Temporal lists the build before it finds its version (for about 4 ms on a dev
+    machine): a run that lands there logs `has no version in Temporal yet`, changes nothing in
+    that deployment and leaves it to the next run.
   - *An unlisted version* is retired: when no workflow is open on its orchestration queue, the
     promoter sets the deployment unversioned, deletes each version once Temporal allows it, then
     deletes the Worker Deployment. It never skips drainage.
   - *Alarms.* The run exits non-zero and names the cause when: `current` is not among `builds`
     (nothing else is done); the `current` build is still not current ten minutes after Temporal
-    first saw it (the version's create time), with the queues it does not poll; workflows are
+    first saw it (the version's create time), with what it waits for: the queues the build
+    does not poll, or its version in Temporal; workflows are
     open on a build that is off `builds` (its tag was removed too early); or workflows are open
     on an unlisted version's orchestration queue (nothing is retired). Nothing else reports the
     second case: the version's workflows meanwhile wait as backlog without an error (P1).

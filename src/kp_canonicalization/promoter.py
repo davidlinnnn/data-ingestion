@@ -33,18 +33,20 @@ async def promote(
 
     A listed deployment: `current` becomes the current version once Temporal lists all five
     queues for that build, which it does from each queue's first poll on; until then the run
-    waits. A build that is off `builds` and not current is deleted once Temporal allows it
-    (drained, pollers forgotten). Alarms: the wanted build is not current stale_after after
-    Temporal first saw it; workflows are still open on a build that is off `builds`. A build no
-    pod of which ever polled is unknown to Temporal and raises nothing here.
+    waits. Temporal lists a build in the deployment shortly before it finds the build's version;
+    a run in between changes nothing in that deployment and leaves it to the next run. A build
+    that is off `builds` and not current is deleted once Temporal allows it (drained, pollers
+    forgotten). Alarms: the wanted build is not current stale_after after Temporal first saw it;
+    workflows are still open on a build that is off `builds`. A build no pod of which ever polled
+    is unknown to Temporal and raises nothing here.
 
     An unlisted deployment is retired: when visibility counts no open workflow on its
     orchestration queue, it is set unversioned, then each version is deleted once Temporal
     allows it, then the deployment. Alarm: workflows are open, and then nothing is touched.
 
     An entry that is not a mapping whose `current` is among its `builds` is an alarm, and the
-    run does nothing else. Drainage is never skipped. An RPC failure other than Temporal's
-    refusal to delete raises.
+    run does nothing else. Drainage is never skipped. An RPC failure raises, except Temporal's
+    refusal to delete and its not finding the version of a build it lists.
     """
     alarms = [
         f"{name}: current is not among builds in {entry}"
@@ -94,26 +96,18 @@ async def _follow(
     if current != want and want not in versions:
         log.info("%s: %s has not polled yet", name, want)
     elif current != want:
-        described = await client.workflow_service.describe_worker_deployment_version(
-            DescribeWorkerDeploymentVersionRequest(
-                namespace=client.namespace,
-                deployment_version=WorkerDeploymentVersion(deployment_name=name, build_id=want),
-            )
-        )
-        polled = {queue.name for queue in described.worker_deployment_version_info.task_queue_infos}
+        first_seen = versions[want].create_time.ToDatetime(UTC)
+        polled = await _polled(client, name, want)
+        if polled is None:
+            # Temporal creates a version after it lists the build (#216): the next run decides.
+            return _waits(name, want, "has no version in Temporal", first_seen, stale_after)
         missing = sorted({task_queue(name, queue) for queue in QUEUES} - polled)
         if not missing:
             await _set_current(client, name, want)
             log.info("%s: current %s -> %s", name, current or "none", want)
             current = want
         else:
-            age = datetime.now(UTC) - versions[want].create_time.ToDatetime(UTC)
-            log.info("%s: %s does not poll %s yet", name, want, missing)
-            if age >= stale_after:
-                alarms.append(
-                    f"{name}: {want} is not current {int(age.total_seconds())} s after its "
-                    f"first poll; it does not poll {missing}"
-                )
+            alarms += _waits(name, want, f"does not poll {missing}", first_seen, stale_after)
     for build_id in sorted(set(versions) - set(entry["builds"]) - {current}):
         version = f"{name}:{build_id}"
         pinned = f'TemporalWorkerDeploymentVersion="{version}" AND ExecutionStatus="Running"'
@@ -126,6 +120,35 @@ async def _follow(
         else:
             await _delete_version(client, name, build_id)
     return alarms
+
+
+def _waits(
+    name: str, want: str, why: str, first_seen: datetime, stale_after: timedelta
+) -> list[str]:
+    """Logs why the wanted build is not current yet; the alarm once that has lasted stale_after."""
+    log.info("%s: %s %s yet", name, want, why)
+    age = datetime.now(UTC) - first_seen
+    if age < stale_after:
+        return []
+    seconds = int(age.total_seconds())
+    return [f"{name}: {want} is not current {seconds} s after its first poll; it {why}"]
+
+
+async def _polled(client: Client, name: str, build_id: str) -> set[str] | None:
+    """The queues Temporal lists for a build the deployment lists; None while it does not find
+    the build's version, which it creates after adding the build to the deployment."""
+    try:
+        described = await client.workflow_service.describe_worker_deployment_version(
+            DescribeWorkerDeploymentVersionRequest(
+                namespace=client.namespace,
+                deployment_version=WorkerDeploymentVersion(deployment_name=name, build_id=build_id),
+            )
+        )
+    except RPCError as missing:
+        if missing.status != RPCStatusCode.NOT_FOUND:
+            raise
+        return None
+    return {queue.name for queue in described.worker_deployment_version_info.task_queue_infos}
 
 
 async def _retire(client: Client, info: WorkerDeploymentInfo) -> list[str]:

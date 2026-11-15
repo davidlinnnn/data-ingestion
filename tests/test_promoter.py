@@ -14,7 +14,7 @@ from temporalio import workflow
 from temporalio.api.workflowservice.v1 import DescribeWorkerDeploymentRequest
 from temporalio.client import Client
 from temporalio.common import VersioningBehavior, WorkerDeploymentVersion
-from temporalio.service import RPCError
+from temporalio.service import RPCError, RPCStatusCode
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker, WorkerDeploymentConfig
 
@@ -113,10 +113,11 @@ def values(*builds: str, current: str) -> dict:
 async def test_a_build_becomes_current_once_it_polls_all_five_queues(client, caplog):
     caplog.set_level(logging.INFO, logger="kp_canonicalization.promoter")
     wanted = values("r1", current="r1")
+    waits_for_d3 = f"{DEPLOYMENT}: r1 does not poll ['{DEPLOYMENT}.d3'] yet"
 
     assert await promote(client, wanted) == []  # no pod yet: nothing to do, nothing to report
     async with build(client, "r1", queues=QUEUES[:4]):
-        await asyncio.sleep(2)
+        await promoted(client, wanted, lambda _: waits_for_d3 in caplog.messages)
         assert await promote(client, wanted) == []  # younger than ten minutes
         (alarm,) = await promote(client, wanted, stale_after=timedelta(0))
         assert await state(client) == (None, {"r1"})
@@ -125,9 +126,39 @@ async def test_a_build_becomes_current_once_it_polls_all_five_queues(client, cap
 
     assert "r1" in alarm and f"{DEPLOYMENT}.d3" in alarm
     assert runs[-1] == []
-    assert f"{DEPLOYMENT}: r1 does not poll ['{DEPLOYMENT}.d3'] yet" in caplog.messages
     assert f"{DEPLOYMENT}: current none -> r1" in caplog.messages
     assert await promote(client, wanted, stale_after=timedelta(0)) == []  # current: no clock runs
+
+
+async def test_a_build_temporal_lists_but_does_not_find_yet_is_left_to_the_next_run(
+    client, caplog, monkeypatch
+):
+    """Temporal lists a build in its deployment before it finds the build's version (#216; the
+    server's answer is in code-checks run 43672624662). The dev server gives that answer for
+    about 4 ms, too short to place a run in, so here the client gives it until the test lets
+    the server answer; all else is the server's."""
+    caplog.set_level(logging.INFO, logger="kp_canonicalization.promoter")
+    with_old, wanted = values("r0", "r1", current="r1"), values("r1", current="r1")
+
+    async def not_found(request):
+        raise RPCError("Worker Deployment Version not found", RPCStatusCode.NOT_FOUND, b"")
+
+    async with build(client, "r0", queues=QUEUES[:1]):
+        await promoted(client, with_old, lambda s: s[1] == {"r0"})
+    monkeypatch.setattr(client.workflow_service, "describe_worker_deployment_version", not_found)
+    async with build(client, "r1"):
+        await promoted(client, with_old, lambda s: s[1] == {"r0", "r1"})  # Temporal lists r1
+        for _ in range(14):  # 7 s; r0, off the list, can be deleted 5 s after its pod left
+            assert await promote(client, wanted) == []
+            assert await state(client) == (None, {"r0", "r1"})  # no run changed anything
+            await asyncio.sleep(0.5)
+        (alarm,) = await promote(client, wanted, stale_after=timedelta(0))
+        monkeypatch.undo()
+        runs = await promoted(client, wanted, lambda s: s == ("r1", {"r1"}))
+
+    assert f"{DEPLOYMENT}: r1 has no version in Temporal yet" in caplog.messages
+    assert "r1 is not current" in alarm and "has no version in Temporal" in alarm
+    assert runs[-1] == []
 
 
 async def test_changing_current_switches_new_workflows_and_changing_it_back_rolls_back(client):
