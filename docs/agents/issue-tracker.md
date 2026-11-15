@@ -4,15 +4,32 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
+- **Create an issue**: `gh issue create --title "..." --body-file <file>`. An implementation ticket follows § Implementation tickets.
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
+- **Comment on an issue**: `gh issue comment <number> --body-file <file>`
 - **Before any write with a body** (create, comment, edit, close comment): write the body to a file, mark draft placeholders as `{UPPER_CASE}` or `{#N}` (N a number or an UPPER_CASE name, such as `{#COPY_TICKET}`), and run `scripts/check-publish <file>`. Post with `--body-file` once it passes; it refuses unfilled placeholders, local paths, host names, emails and secrets. `scripts/check-publish-hook` enforces this as a Claude Code PreToolUse hook on Bash; since `.claude/settings.json` is per-checkout, register it once in user settings with the command `f="$(git rev-parse --show-toplevel 2>/dev/null)/scripts/check-publish-hook"; [ ! -x "$f" ] || "$f"`.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+- **Close**: post the closing comment with `--body-file`, then `gh issue close <number>`.
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
+
+## Implementation tickets
+
+An implementation ticket hands work to an agent session, so it is opened ready to start. Before `gh issue create`, read one sibling ticket of the same track and match it:
+
+- **Sections**: 背景, 範圍 (closing with 不在本票), 驗收, 相依.
+- **驗收**: a checklist of observable behaviour. Each box names what a run, a test or a reader can check.
+- **References**: another ticket by its title and number; code by module or behaviour, since a path goes stale.
+- **相依**: decide the edges yourself and state both directions: what blocks this ticket, and which tickets wait for it. "沒有未結案的 blocker" is an answer.
+- **Labels**: `enhancement` or `bug`, plus `ready-for-agent` (`ready-for-human` when only a person can do the work). Check any other label against `gh label list`.
+
+After creating it, in separate commands:
+
+- **Edges**: add each one as a native dependency (§ Wayfinding operations, Blocking).
+- **Parent**: link the ticket as a native sub-issue of the design ticket it was carved from or implements: `gh api --method POST repos/<owner>/<repo>/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>`, with the database id as for Blocking. The map's own children are design decisions only. A chore that no design ticket owns stays without a parent.
+
+Opening is done when `gh issue view <n> --json labels,parent,blockedBy,blocking` shows the labels, the parent and every edge 相依 names. Open tickets still without a parent: `gh issue list --state open --limit 200 --json number,title,parent --jq '.[] | select(.parent == null) | "#\(.number) \(.title)"'`.
 
 ## Ticket bodies
 
