@@ -946,11 +946,28 @@ def recorded(method: str) -> list[str]:
             for path in sorted((RECORDED / method).glob("*.json"))]  # fmt: skip
 
 
+def test_chart_value_roles_are_defined_in_the_schema_and_the_prompt():
+    request = picture_interpretation.request({}, [b"crop", b"page"])  # type: ignore[typeddict-item]
+
+    schema = request["response_format"]["json_schema"]["schema"]
+    point = schema["$defs"]["ChartValue"]["properties"]
+    assert point["x"]["type"] == ["number", "null"]
+    (system,) = [m["content"] for m in request["messages"] if m["role"] == "system"]
+    for role in ("series", "category", "x"):
+        assert point[role]["description"] in system
+
+
 def test_recorded_picture_interpretations_parse_field_by_field():
     contents = recorded("picture-interpretation")
     assert contents
 
     for content in contents:
+        if any(isinstance(v["x"], str) for v in json.loads(content)["chart_values"]):
+            # answered before #211, when x could hold a label
+            with pytest.raises(InvalidOutput) as caught:
+                picture_interpretation.parse({}, [], content)  # type: ignore[typeddict-item]
+            assert caught.value.reason == "SCHEMA_INVALID"
+            continue
         output = picture_interpretation.parse({}, [], content)  # type: ignore[typeddict-item]
 
         assert output.outcome == "success"
