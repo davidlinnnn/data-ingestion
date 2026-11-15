@@ -24,8 +24,11 @@ from docling.models.stages.page_preprocessing.page_preprocessing_model import (
 from docling.models.stages.table_structure.table_structure_model import TableStructureModel
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 from docling_core.types.doc.document import DoclingDocument
+from docling_core.types.doc.items.text import FormulaItem, TextItem
+from docling_core.types.doc.labels import DocItemLabel
 
 from kp_canonicalization.identity import reuse_key
+from kp_canonicalization.methods.docling_parse import pipeline
 from kp_canonicalization.stages import (
     AssembleInput,
     GroupInput,
@@ -178,6 +181,22 @@ async def test_the_assembled_text_equals_a_single_pass_conversion(ports, runtime
     body = json.loads(await ports.store.get(assembly.ref))
     assembled = DoclingDocument.model_validate(body["document"])
     assert assembled.export_to_markdown() == single.export_to_markdown()
+
+
+def test_a_formula_whose_text_layer_is_one_identifier_becomes_a_text_line():
+    """#212: the layout labels a list of SWE-bench ids as formulas; real formulas stay."""
+    document = DoclingDocument(name="paper")
+    identifiers = ["· django__django-12754", "sphinx-doc__sphinx-10449", "config.yaml"]
+    formulas = ["L = 2x + 3y", "x-1", "xij", "softmax", "a t i", "αi", "softmax(x)", ""]
+    for orig in identifiers + formulas:
+        document.add_text(label=DocItemLabel.FORMULA, text="", orig=orig)
+
+    texts = DoclingDocument.model_validate(pipeline.document_json(document)).texts
+
+    assert [(type(t), t.text) for t in texts] == [
+        *[(TextItem, orig) for orig in identifiers],
+        *[(FormulaItem, "") for _ in formulas],
+    ]
 
 
 async def test_groups_that_do_not_cover_every_page_fail_integrity(ports, runtime):
