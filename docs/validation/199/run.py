@@ -111,7 +111,7 @@ def run_profile(out: Path) -> tuple[Path, dict]:
     for key, value in RELAXED.items():
         differs["runtime"][key] = [released["runtime"][key], value]
         profile["runtime"][key] = value
-    path = out / "paper-pdf@1-199.yaml"
+    path = out / "profile-199.yaml"  # no "@": check-publish reads a@b.c as an email
     path.write_text(yaml.safe_dump(profile, sort_keys=False))
     return path, differs
 
