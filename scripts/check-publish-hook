@@ -4,11 +4,27 @@
 cmd=$(jq -r '.tool_input.command // empty')
 case "$cmd" in *gh\ *--body-file*) ;; *) exit 0 ;; esac
 dir=$(dirname "$0")
+
+# Expand $NAME and ${NAME} that the same command assigns exactly one literal value (S=/path && gh ...).
+expand() {
+  local f=$1 use name values
+  while [[ $f =~ \$\{?([A-Za-z_][A-Za-z0-9_]*)\}? ]]; do
+    use=${BASH_REMATCH[0]} name=${BASH_REMATCH[1]}
+    values=$(printf '%s\n' "$cmd" |
+      grep -oE "(^|[[:space:];&|])$name=(\"[^\"\$\`]*\"|'[^']*'|[^[:space:];&|\"'\$\`]+)([[:space:];&|]|$)" |
+      sed -E "s/^[[:space:];&|]?$name=//; s/[[:space:];&|]$//; s/^[\"']//; s/[\"']$//" | sort -u)
+    [ -n "$values" ] && [ "$(printf '%s\n' "$values" | wc -l)" -eq 1 ] || break
+    f=${f/"$use"/${values/#\~/$HOME}}
+  done
+  printf '%s\n' "$f"
+}
+
 status=0
 while IFS= read -r f; do
   [ -n "$f" ] && [ "$f" != "-" ] || continue
+  f=$(expand "$f")
   if [[ $f == *'$'* ]]; then
-    echo "check-publish-hook: $f: give the body file's literal path; the hook reads the command text and cannot expand shell variables" >&2
+    echo "check-publish-hook: $f: give the body file's literal path, or assign the variable a literal value in the same command; the hook reads the command text and cannot run it" >&2
     status=2
   elif [ ! -f "$f" ]; then
     echo "check-publish-hook: $f does not exist; write the body first, then post it in a separate command" >&2
