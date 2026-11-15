@@ -278,7 +278,10 @@ def test_a_code_node_across_pages_becomes_one_code_node_per_page():
         ("code", second, [2]),
         ("text", "Body text after the listing.", [2]),
     ]
-    assert DoclingDocument.model_validate(data).texts[-1].prov[0].charspan == (0, len(second))
+    # The inventory lists items in the order of texts, which is document order.
+    assert [n["self_ref"] for n in order] == [f"#/texts/{i}" for i in range(4)]
+    assert all(pipeline.resolve(data, n["parent"]["$ref"])["children"] for n in order)
+    assert DoclingDocument.model_validate(data).texts[2].prov[0].charspan == (0, len(second))
 
 
 def test_a_listing_continues_past_the_page_footer_the_layout_puts_between():

@@ -348,26 +348,46 @@ def whole_listings(data: dict[str, Any], source: bytes) -> None:
                 node.pop(key, None)
             node.update(label="code", text=node["orig"], captions=[], references=[],
                         footnotes=[], code_language="unknown")  # fmt: skip
-    for node in list(data["texts"]):
-        if node["label"] == "code" and len(node["prov"]) > 1:
-            split_pages(data, node)
+    split_pages(data)
 
 
-def split_pages(data: dict[str, Any], node: dict[str, Any]) -> None:
-    """Keep the first provenance on the node and give each other one a new code node after it,
-    with the part of orig its charspan names."""
-    orig = node["orig"]
-    parent = resolve(data, node["parent"]["$ref"])
-    at = next(i for i, c in enumerate(parent["children"]) if c["$ref"] == node["self_ref"])
-    parts = []
-    for provenance in node["prov"]:
-        start, end = provenance["charspan"]
-        parts.append((orig[start:end], {**provenance, "charspan": [0, end - start]}))
-    (text, provenance), *rest = parts
-    node.update(orig=text, text=text, prov=[provenance])
-    for offset, (text, provenance) in enumerate(rest, start=1):
-        ref = f"#/texts/{len(data['texts'])}"
-        data["texts"].append({**node, "self_ref": ref, "children": [], "orig": text, "text": text,
-                              "prov": [provenance], "captions": [], "references": [],
-                              "footnotes": []})  # fmt: skip
-        parent["children"].insert(at + offset, {"$ref": ref})
+def split_pages(data: dict[str, Any]) -> None:
+    """Give each provenance but the first of a code node a new code node right after it in
+    texts and in its parent's children, with the part of orig its charspan names, then
+    renumber every text reference, so that texts stays in document order."""
+    texts, renamed = [], {}
+    for node in data["texts"]:
+        renamed[node["self_ref"]] = f"#/texts/{len(texts)}"
+        texts.append(node)
+        if node["label"] != "code" or len(node["prov"]) < 2:
+            continue
+        orig = node["orig"]
+        parts = []
+        for provenance in node["prov"]:
+            start, end = provenance["charspan"]
+            parts.append((orig[start:end], {**provenance, "charspan": [0, end - start]}))
+        (text, provenance), *rest = parts
+        node.update(orig=text, text=text, prov=[provenance])
+        siblings = resolve(data, node["parent"]["$ref"])["children"]
+        at = next(i for i, c in enumerate(siblings) if c["$ref"] == node["self_ref"])
+        for offset, (text, provenance) in enumerate(rest, start=1):
+            ref = f"split:{len(texts)}"
+            renamed[ref] = f"#/texts/{len(texts)}"
+            texts.append({**node, "self_ref": ref, "children": [], "orig": text, "text": text,
+                          "prov": [provenance], "captions": [], "references": [],
+                          "footnotes": []})  # fmt: skip
+            siblings.insert(at + offset, {"$ref": ref})
+    data["texts"] = texts
+
+    def renumber(value: Any) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in ("$ref", "self_ref") and item in renamed:
+                    value[key] = renamed[item]
+                else:
+                    renumber(item)
+        elif isinstance(value, list):
+            for item in value:
+                renumber(item)
+
+    renumber(data)
