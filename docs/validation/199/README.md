@@ -1,6 +1,6 @@
 # #199 paper-pdf@1 end to end on the Temporal workflow: accuracy and tokens
 
-Run 2026-11-15 with [run.py](run.py) (harness commits `1708d7f`..`78f7ad2`). All 20 corpus papers
+Run 2026-11-15 with [run.py](run.py) (harness commits `1708d7f`..`3ddfb3f`; the last rescore ran on `3ddfb3f`). All 20 corpus papers
 (551 pages) and W2 went through the `paper-pdf` workflow on a real Temporal server, the S3
 stand-in and real model endpoints, without admission, one paper at a time. No paper was
 replaced or skipped, and all 21 completed. The enrichments were scored against the gold of
