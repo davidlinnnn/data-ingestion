@@ -13,11 +13,12 @@ import os
 import signal
 import sys
 
+import prometheus_client
 import psycopg
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission.api import app
+from kp_admission.api import RequestLog, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
@@ -29,8 +30,9 @@ POOL_SIZE = 5  # per api pod; the connection budget (#78 C14) counts it
 
 
 def main(argv: list[str] | None = None) -> int:
-    """`kp-admission api`: serve the platform API on KP_ADMISSION_API_PORT (default 8080) until
-    SIGTERM or SIGINT; it finishes open requests, then ends by that signal, as uvicorn does.
+    """`kp-admission api [--metrics-port P]`: serve the platform API on KP_ADMISSION_API_PORT
+    (default 8080) until SIGTERM or SIGINT; it finishes open requests, then ends by that signal, as
+    uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics.
     KP_AUTHZ_PROVIDER selects the authz provider: `allow-all`, the only one, which it refuses
     unless KP_DEPLOYMENT is `pilot` (#113; the marker is #78's). KP_AUTHZ_PEP_CREDENTIALS registers
     the PEPs that may call the authz API, as a JSON object from the SHA-256 hex digest of each
@@ -46,7 +48,10 @@ def main(argv: list[str] | None = None) -> int:
     All three log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
     configuration error."""
     parser = argparse.ArgumentParser(prog="kp-admission")
-    parser.add_argument("role", choices=["api", "dispatcher", "reconcile"])
+    roles = parser.add_subparsers(dest="role", required=True)
+    roles.add_parser("api").add_argument("--metrics-port", type=int)
+    roles.add_parser("dispatcher")
+    roles.add_parser("reconcile")
     args = parser.parse_args(argv)
     dsn = os.environ.get("KP_ADMISSION_DATABASE_URL")
     if not dsn:
@@ -70,7 +75,9 @@ def main(argv: list[str] | None = None) -> int:
         if not port.isdecimal():
             print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
             return 2
-        log_json_lines()
+        log_json_lines(RequestLog())
+        if args.metrics_port is not None:
+            prometheus_client.start_http_server(args.metrics_port)
         return asyncio.run(run_api(dsn, peps, int(port)))
     log_json_lines()
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))

@@ -13,6 +13,7 @@ from pydantic.json_schema import SkipJsonSchema
 
 Action = Literal["read", "place", "manage"]
 Outcome = Literal["allow", "deny", "unavailable"]
+Operation = Literal["check", "list_resources"]
 Reason = Literal["resource_not_found", "no_relation"]
 
 TIMEOUT_S = 0.5  # authz_timeout (§8)
@@ -72,8 +73,10 @@ class Authorizer(Protocol):
         cursor: str | None = None,
         trace_id: str,
     ) -> Decision:
-        """The Resources on which `subject` may take `action`, PAGE_SIZE at a time; `next_cursor`
-        asks for the next page and is None on the last. Pages share no snapshot (§4.1)."""
+        """The Resources on which `subject` may take `action`, at most PAGE_SIZE per page, with
+        `next_cursor` for the next page. A page may hold fewer ids, or none; only a page without
+        `next_cursor` ends the list. A cursor is opaque, valid only with the same subject, action
+        and actor, and may expire. Pages share no snapshot (§4.1; authorization guide §4.3)."""
         ...
 
 
@@ -105,7 +108,8 @@ def new_decision(
 
 class AllowAll:
     """The pilot provider: every subject may take every action on every Resource that exists.
-    Selectable only in pilot configuration (#113)."""
+    Selectable only in pilot configuration (#113). A decision it cannot make is logged once, with
+    its trace_id, decision_id, operation and the type of the error behind it."""
 
     decided_by = "allow-all/model-1"
 
@@ -123,11 +127,12 @@ class AllowAll:
         trace_id: str,
     ) -> Decision:
         args = (self.decided_by, subject, action, resource_id, actor, trace_id)
-        found = await self._fetch(
-            "SELECT 1 FROM authz.resource WHERE resource_id = %s", (resource_id,)
-        )
-        if found is None:
-            return new_decision("unavailable", *args)
+        try:
+            found = await self._fetch(
+                "SELECT 1 FROM authz.resource WHERE resource_id = %s", (resource_id,)
+            )
+        except Exception as error:
+            return _logged("check", error, new_decision("unavailable", *args))
         if found:
             return new_decision("allow", *args)
         return new_decision("deny", *args, reason="resource_not_found")
@@ -142,21 +147,22 @@ class AllowAll:
         trace_id: str,
     ) -> Decision:
         args = (self.decided_by, subject, action, None, actor, trace_id)
-        # One tenant per deployment (Q7), so every row is the tenant's.
-        rows = await self._fetch(
-            "SELECT resource_id FROM authz.resource WHERE resource_id > %s"
-            " ORDER BY resource_id LIMIT %s",
-            (cursor or "", PAGE_SIZE + 1),
-        )
-        if rows is None:
-            return new_decision("unavailable", *args)
+        try:
+            # One tenant per deployment (Q7), so every row is the tenant's.
+            rows = await self._fetch(
+                "SELECT resource_id FROM authz.resource WHERE resource_id > %s"
+                " ORDER BY resource_id LIMIT %s",
+                (cursor or "", PAGE_SIZE + 1),
+            )
+        except Exception as error:
+            return _logged("list_resources", error, new_decision("unavailable", *args))
         ids = [row[0] for row in rows[:PAGE_SIZE]]
         more = len(rows) > PAGE_SIZE
         return new_decision("allow", *args, resource_ids=ids, next_cursor=ids[-1] if more else None)
 
-    async def _fetch(self, query: LiteralString, params: tuple) -> list[tuple] | None:
-        """The rows of `query`, or None when it fails or outlasts TIMEOUT_S. It does not wait for
-        the cancelled query to end: psycopg waits up to 10 s for a server that stopped answering."""
+    async def _fetch(self, query: LiteralString, params: tuple) -> list[tuple]:
+        """The rows of `query`; TimeoutError when it outlasts TIMEOUT_S. It does not wait for the
+        cancelled query to end: psycopg waits up to 10 s for a server that stopped answering."""
 
         async def fetch() -> list[tuple]:
             async with self._pool.connection() as conn:
@@ -166,11 +172,15 @@ class AllowAll:
         try:
             async with asyncio.timeout(TIMEOUT_S):
                 return await asyncio.shield(task)
-        except Exception as error:
-            log.warning("authz lookup failed: %s", type(error).__name__)
-            return None
         finally:
             if not task.done():
                 task.cancel()
                 self._cancelled.add(task)  # held until it ends, as asyncio asks of its caller
                 task.add_done_callback(self._cancelled.discard)
+
+
+def _logged(operation: Operation, error: Exception, decision: Decision) -> Decision:
+    fields = {"trace_id": decision.trace_id, "decision_id": decision.decision_id}
+    fields |= {"operation": operation, "error": type(error).__name__}
+    log.warning("no decision", extra={"correlation": fields})
+    return decision

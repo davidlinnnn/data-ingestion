@@ -172,10 +172,13 @@ async def connect(runtime: TemporalRuntime | None = None, lazy: bool = False) ->
     )
 
 
-def log_json_lines() -> None:
-    """Make the root logger write JsonFormatter lines at INFO and above to stderr."""
+def log_json_lines(*filters: logging.Filter) -> None:
+    """Make the root logger write JsonFormatter lines at INFO and above to stderr, each record
+    passed through `filters` first."""
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
+    for each in filters:
+        handler.addFilter(each)
     logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
 
 
