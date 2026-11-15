@@ -9,7 +9,6 @@ import argparse
 import asyncio
 import contextlib
 import json
-import logging
 import os
 import signal
 import sys
@@ -49,8 +48,10 @@ def main(argv: list[str] | None = None) -> int:
     All three log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
     configuration error."""
     parser = argparse.ArgumentParser(prog="kp-admission")
-    parser.add_argument("role", choices=["api", "dispatcher", "reconcile"])
-    parser.add_argument("--metrics-port", type=int)
+    roles = parser.add_subparsers(dest="role", required=True)
+    roles.add_parser("api").add_argument("--metrics-port", type=int)
+    roles.add_parser("dispatcher")
+    roles.add_parser("reconcile")
     args = parser.parse_args(argv)
     dsn = os.environ.get("KP_ADMISSION_DATABASE_URL")
     if not dsn:
@@ -74,8 +75,7 @@ def main(argv: list[str] | None = None) -> int:
         if not port.isdecimal():
             print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
             return 2
-        log_json_lines()
-        logging.getLogger().handlers[0].addFilter(RequestLog())
+        log_json_lines(RequestLog())
         if args.metrics_port is not None:
             prometheus_client.start_http_server(args.metrics_port)
         return asyncio.run(run_api(dsn, peps, int(port)))

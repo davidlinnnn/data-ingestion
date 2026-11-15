@@ -13,6 +13,7 @@ from pydantic.json_schema import SkipJsonSchema
 
 Action = Literal["read", "place", "manage"]
 Outcome = Literal["allow", "deny", "unavailable"]
+Operation = Literal["check", "list_resources"]
 Reason = Literal["resource_not_found", "no_relation"]
 
 TIMEOUT_S = 0.5  # authz_timeout (§8)
@@ -51,9 +52,7 @@ class Decision(BaseModel, frozen=True):
 
 
 class Authorizer(Protocol):
-    """The PDP (§4.1). Neither call raises: a decision that cannot be made is `unavailable`, and
-    the provider logs it once, with its trace_id, decision_id, operation and the type of the error
-    behind it, never a credential or a subject's id."""
+    """The PDP (§4.1). Neither call raises: a decision that cannot be made is `unavailable`."""
 
     async def check(
         self,
@@ -77,8 +76,7 @@ class Authorizer(Protocol):
         """The Resources on which `subject` may take `action`, at most PAGE_SIZE per page, with
         `next_cursor` for the next page. A page may hold fewer ids, or none; only a page without
         `next_cursor` ends the list. A cursor is opaque, valid only with the same subject, action
-        and actor, and may expire. Pages share no snapshot (§4.1, and the 2026-11-14 API review
-        amendment)."""
+        and actor, and may expire. Pages share no snapshot (§4.1; authorization guide §4.3)."""
         ...
 
 
@@ -110,7 +108,8 @@ def new_decision(
 
 class AllowAll:
     """The pilot provider: every subject may take every action on every Resource that exists.
-    Selectable only in pilot configuration (#113)."""
+    Selectable only in pilot configuration (#113). A decision it cannot make is logged once, with
+    its trace_id, decision_id, operation and the type of the error behind it."""
 
     decided_by = "allow-all/model-1"
 
@@ -133,7 +132,7 @@ class AllowAll:
                 "SELECT 1 FROM authz.resource WHERE resource_id = %s", (resource_id,)
             )
         except Exception as error:
-            return _unavailable("check", error, *args)
+            return _logged("check", error, new_decision("unavailable", *args))
         if found:
             return new_decision("allow", *args)
         return new_decision("deny", *args, reason="resource_not_found")
@@ -156,7 +155,7 @@ class AllowAll:
                 (cursor or "", PAGE_SIZE + 1),
             )
         except Exception as error:
-            return _unavailable("list_resources", error, *args)
+            return _logged("list_resources", error, new_decision("unavailable", *args))
         ids = [row[0] for row in rows[:PAGE_SIZE]]
         more = len(rows) > PAGE_SIZE
         return new_decision("allow", *args, resource_ids=ids, next_cursor=ids[-1] if more else None)
@@ -180,8 +179,7 @@ class AllowAll:
                 task.add_done_callback(self._cancelled.discard)
 
 
-def _unavailable(operation: str, error: Exception, *args: Any) -> Decision:
-    decision = new_decision("unavailable", *args)
+def _logged(operation: Operation, error: Exception, decision: Decision) -> Decision:
     fields = {"trace_id": decision.trace_id, "decision_id": decision.decision_id}
     fields |= {"operation": operation, "error": type(error).__name__}
     log.warning("no decision", extra={"correlation": fields})

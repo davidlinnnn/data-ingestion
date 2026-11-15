@@ -36,7 +36,7 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission.authz import Action, Authorizer, Decision, Outcome, Ref
+from kp_admission.authz import Action, Authorizer, Decision, Operation, Outcome, Ref
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ decision_duration = Histogram(
     "kp_authz_decision_duration_seconds", "Authorizer time per authz API decision", ["operation"]
 )
 
-# The request being served: trace_id, and x_request_id and pep when known.
+# Keyed by log field (trace_id, x_request_id, pep): RequestLog writes it onto each line as it is.
 _request: ContextVar[dict[str, str]] = ContextVar("request")
 # W3C Trace Context §3.2: version 00 has exactly these fields; a later one may append more (§3.2.4).
 _TRACEPARENT = re.compile(
@@ -144,7 +144,7 @@ class Traced:
         # A version-4 UUID is 32 lowercase hex characters and never all zeros.
         request = {"trace_id": match[2] if match and valid else uuid.uuid4().hex}
         if request_id := headers.get("x-request-id"):
-            request["x_request_id"] = request_id[:128]
+            request["x_request_id"] = request_id[:128]  # the caller's text, on every log line
         token, started = _request.set(request), False
 
         async def traced(message: Message) -> None:
@@ -247,7 +247,7 @@ def app(authorizer: Authorizer, peps: Mapping[str, str]) -> FastAPI:
     return api
 
 
-async def _decide(operation: str, decision: Awaitable[Decision]) -> Decision | JSONResponse:
+async def _decide(operation: Operation, decision: Awaitable[Decision]) -> Decision | JSONResponse:
     start = time.monotonic()
     made = await decision
     decision_duration.labels(operation).observe(time.monotonic() - start)

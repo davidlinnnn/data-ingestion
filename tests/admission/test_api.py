@@ -317,6 +317,15 @@ async def test_no_decision_is_logged_once_with_its_ids_the_pep_and_the_error_typ
     assert TOKEN not in json.dumps(json_log()) and "alice" not in json.dumps(json_log())
 
 
+async def test_a_generated_trace_id_is_the_one_in_the_header_the_body_and_the_log(json_log):
+    async with AsyncConnectionPool("host=127.0.0.1 port=9", open=False) as pool:
+        async with client(AllowAll(pool)) as api:
+            response = await api.post("/authz/v1/check", json=CHECK)
+
+    [line] = [line for line in json_log() if line["message"] == "no decision"]
+    assert response.headers["x-trace-id"] == response.json()["trace_id"] == line["trace_id"]
+
+
 class Failing:
     async def check(self, *args, **kwargs):
         raise RuntimeError("a bug")
@@ -332,7 +341,7 @@ async def test_an_unhandled_error_is_a_500_whose_trace_id_is_in_the_header_and_t
     assert line["trace_id"] == TRACE and "RuntimeError" in line["exception"]
 
 
-async def test_with_a_page_size_the_fake_pages_and_only_following_next_cursor_reads_them_all():
+async def test_a_pep_reads_every_page_by_sending_back_each_next_cursor():
     ids = tuple(f"res_{i:02}" for i in range(1, 6))
     pages, cursor = [], None
     async with client(FakeAuthorizer("allow", resource_ids=ids, page_size=2)) as api:

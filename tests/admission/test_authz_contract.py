@@ -4,6 +4,7 @@
 import pytest
 from psycopg_pool import AsyncConnectionPool
 
+from kp_admission import authz
 from kp_admission.authz import AllowAll, Ref
 from tests.admission.authz_fake import FakeAuthorizer
 from tests.admission.conftest import fresh_database
@@ -69,3 +70,33 @@ async def test_list_resources_returns_ids_unless_unavailable(case):
     assert (page.resource is None, page.reason, page.actor_verified) == (True, None, False)
     assert (page.resource_ids is None) == (outcome == "unavailable")
     assert page.valid_until == page.evaluated_at
+
+
+@pytest.fixture(params=[pytest.param("allow-all", marks=pytest.mark.docker), "fake"])
+async def paged(request, monkeypatch):
+    """(an Authorizer with five Resources, two per page; their ids)."""
+    ids = [f"res_{i:02}" for i in range(1, 6)]
+    if request.param == "fake":
+        yield FakeAuthorizer("allow", resource_ids=tuple(ids), page_size=2), ids
+        return
+    monkeypatch.setattr(authz, "PAGE_SIZE", 2)
+    dsn = await fresh_database(request.getfixturevalue("postgres"))
+    async with AsyncConnectionPool(dsn, kwargs={"autocommit": True}, open=False) as pool:
+        async with pool.connection() as conn:
+            for resource_id in ids:
+                await resource(conn, resource_id)
+        yield AllowAll(pool), ids
+
+
+async def test_only_following_next_cursor_to_the_end_reads_every_resource(paged):
+    authorizer, ids = paged
+    pages, cursor = [], None
+
+    while True:
+        page = await authorizer.list_resources(ALICE, "read", cursor=cursor, trace_id="t")
+        pages.append(page.resource_ids)
+        if not (cursor := page.next_cursor):
+            break
+
+    assert len(pages) > 1 and pages[0] != ids
+    assert sum(pages, []) == ids
