@@ -264,11 +264,23 @@ GOLD = (  # globs under ARCHIVE: the gold and scorers score.py reads
 )  # fmt: skip
 
 
-def hashes(out: Path, ran: dict, archive: Path, package: Path, profile: Path) -> dict:
+async def stored(store, ran: dict) -> dict:
+    """Per request, the count of its objects in the S3 stand-in (result and receipts, whose refs
+    pin the documents' objects) and the sha256 of their sorted "key sha256" lines."""
+    found = {}
+    for p in ran.values():
+        keys = sorted(await store.list_prefix(f"requests/{p['request_id']}/"))
+        lines = [f"{k} {hashlib.sha256(await store.get(k)).hexdigest()}" for k in keys]
+        found[p["request_id"]] = {"objects": len(keys),
+                                  "sha256": hashlib.sha256("\n".join(lines).encode()).hexdigest()}  # fmt: skip
+    return found
+
+
+def hashes(out: Path, ran: dict, archive: Path, package: Path, profile: Path, requests: dict) -> dict:
     """sha256 of what stays out of git: the papers, the gold, the d3 package's manifest, the
-    profile the workers loaded and the raw outputs under OUT."""
+    profile the workers loaded, the requests' objects and the raw outputs under OUT."""
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()  # noqa: E731
-    raw = [p for pattern in ("requests.json", "summaries/*.json", "judging/*")
+    raw = [p for pattern in ("requests.json", "alone/*.json", "summaries/*.json", "judging/*")
            for p in sorted(out.glob(pattern)) if p.is_file()]  # fmt: skip
     return {
         "papers": {i: {"file": Path(p["file"]).name if i != "w2" else W2, "sha256": p["sha256"]}
@@ -277,6 +289,7 @@ def hashes(out: Path, ran: dict, archive: Path, package: Path, profile: Path) ->
         "d3_package_manifest": digest(package / "MODEL_MANIFEST.json"),
         "gold": {str(p.relative_to(archive)): digest(p) for pattern in GOLD
                  for p in sorted(archive.glob(pattern)) if p.is_file()},
+        "requests": requests,
         "outputs": {str(p.relative_to(out)): digest(p) for p in raw},
     }  # fmt: skip
 
@@ -421,7 +434,7 @@ async def main(argv: list[str]) -> int:
         (HERE / "accuracy.json").write_text(json.dumps(accuracy, indent=1) + "\n")
         print(json.dumps(accuracy["summary"], indent=1), flush=True)
         (HERE / "manifest.json").write_text(json.dumps(
-            hashes(out, ran, archive, package, profile), indent=1) + "\n")  # fmt: skip
+            hashes(out, ran, archive, package, profile, await stored(store, ran)), indent=1) + "\n")  # fmt: skip
     finally:
         t5c.stop([*workers.values(), *processes])
         for server in servers:

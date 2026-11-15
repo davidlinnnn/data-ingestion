@@ -20,7 +20,7 @@ alone request body (same_request) and whether it is one the recordings hold (rec
 same request with another answer is the model's run-to-run variation.
 
 Blind judging: OUT/judging/sheets.json holds each item with an answer to judge, its distinct
-answers and the recorded one (the control) as A, B, C in a seeded order (key.json beside it),
+answers and the recorded one (the control) as A, B, C in a seeded order (letters.json beside it),
 with the gold obligations or the formula crop; the judge writes OUT/judging/verdicts.json,
 {label: {"A", "B", ..., "note"}}, by t4-accuracy's rules. accuracy() unblinds it into
 judgments.json here, each verdict under the sha256 of its answer, so a new answer is judged anew.
@@ -321,9 +321,14 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path,
     ocr = side_by_side(t3.score_ocr(archive, by_name), before["picture_ocr"]["rows"], "unit",
                        "ours", lambda state: state == "PASS_LITERAL")  # fmt: skip
     ocr["of"] = len(before["picture_ocr"]["rows"])
-    tables = side_by_side(t3.score_tables(archive, by_name), before["table_status"]["rows"],
-                          "table", "identical", bool)  # fmt: skip
+    found = t3.score_tables(archive, by_name)
+    tables = side_by_side(found, before["table_status"]["rows"], "table", "identical", bool)
     tables["of"] = len(before["table_status"]["rows"])
+    # d3's flag beside #84's human verdict on the same tables; a table id starts with its job
+    flagged = [r["verdict_84"] for r in found["rows"] if r["item_id"] and by_name[
+        r["table"].split(":")[0].removeprefix("P-") + ".pdf"]["enrichments"][r["item_id"]][
+        "status_reason"] == "TABLE_D3_UNFAITHFUL"]  # fmt: skip
+    tables["d3_flagged"] = {"pass_84": flagged.count("PASS"), "fail_84": flagged.count("FAIL")}
 
     gold_root = archive / t3.OCR_GOLD
     golds, numeric = chart_scorer(gold_root)
@@ -418,7 +423,8 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path,
         "summary": {
             "picture_ocr": {k: ocr[k] for k in ("items", "of", "images", "literal_pass", "alone")},
             "code": {k: v for k, v in code.items() if k != "rows"},
-            "table_status": {k: tables[k] for k in ("tables", "of", "identical", "alone")},
+            "table_status": {k: tables[k] for k in ("tables", "of", "identical", "alone", "pass_84",
+                                                     "fail_84", "d3_flagged")},  # fmt: skip
             "charts": {"images": len(charts), "points": sum(c["points"] for c in charts),
                        **{k: sum(c[k] for c in charts) for k in (
                            "formal", "diagnosis", "formal_alone", "diagnosis_alone",
@@ -440,8 +446,8 @@ async def accuracy(store, ran: dict[str, dict], archive: Path, judging: Path,
 
 async def write_sheets(judging: Path, pending: list[dict], golds: dict, archive: Path) -> None:
     """The blind sheets of the pending items, each with its image (the gold crop of a picture,
-    the formula crop t4 judged), and the key to unblind them beside: per letter the sha256 of
-    its answer, or "recorded"."""
+    the formula crop t4 judged), and the letters to unblind them beside (letters.json, a name
+    gitleaks leaves alone): per letter the sha256 of its answer, or "recorded"."""
     from kp_canonicalization.methods.formula import _crop
 
     judging.mkdir(parents=True, exist_ok=True)
@@ -463,7 +469,7 @@ async def write_sheets(judging: Path, pending: list[dict], golds: dict, archive:
         sheet["image"] = image.name
         sheets.append(sheet)
     (judging / "sheets.json").write_text(json.dumps(sheets, indent=2, ensure_ascii=False) + "\n")
-    (judging / "key.json").write_text(json.dumps(key, indent=2) + "\n")
+    (judging / "letters.json").write_text(json.dumps(key, indent=2) + "\n")
 
 
 def unblind(judging: Path) -> dict:
@@ -472,7 +478,7 @@ def unblind(judging: Path) -> dict:
     "recorded_t4": t4's verdict on it, "note"}."""
     judgments = json.loads(JUDGMENTS.read_text()) if JUDGMENTS.exists() else {}
     if (judging / "verdicts.json").exists():
-        key = json.loads((judging / "key.json").read_text())
+        key = json.loads((judging / "letters.json").read_text())
         t4_judged = json.loads(t4.JUDGMENTS.read_text())
         for label, verdict in json.loads((judging / "verdicts.json").read_text()).items():
             if label not in key:
