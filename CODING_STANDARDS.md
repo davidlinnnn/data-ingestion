@@ -58,6 +58,27 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
   client) runs in a thread, for example with `asyncio.to_thread`; inline it stalls every
   request of the pod, health checks included (`docs/validation/113`: 284 requests per second
   with an awaited wait, 9.6 with the same wait blocking).
+- A role that serves HTTP is operable from outside its process: a health route answered on
+  the event loop, a counter per operation and outcome, and every failure visible as a status
+  code or a metric. The log line of a failed call carries the trace id and the calling
+  service's name.
+
+## Logs and metrics
+
+- A log line carries ids, counts and reason codes. Document text, prompts, model answers,
+  file names and credentials stay out, on every route into the log: the Temporal SDK logs a
+  failed Activity with its whole exception chain, so the text of an exception is log content.
+- Reuse the metrics a library or the infrastructure already gives (Temporal's SDK metrics, the
+  pod and namespace labels the cluster's Prometheus adds) before adding one. Add
+  instrumentation for a business stage that nothing else shows, without build or deployment
+  labels.
+
+## Deployment
+
+- The platform is cloud native: an image holds the dependencies of its own package only
+  (admission ships without the parsing libraries), and a role keeps its durable state in the
+  database or the object store, so a new pod starts fast and any pod serves any request. A
+  heavy image, a slow start or state held in a pod is a finding.
 
 ## Validation evidence
 
