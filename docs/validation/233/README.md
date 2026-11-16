@@ -93,11 +93,11 @@ The other fields of `compare.json` that differ:
 
 | Field | Cause | Why |
 |---|---|---|
-| `descriptions.pass_alone` 16 → 17 | variation | image 5 alone, the same item as the workflow's change |
+| `summary/descriptions/pass_alone` 16 → 17 | variation | image 5 alone, the same item as the workflow's change |
 | `recorded_request` true → false on the 18 descriptions | #211 | the prompt changed, so the request no longer has the digest of Luna's recording; #211 recorded this and did not re-record |
-| `charts.diagnosis_swapped` 84 → 83, `diagnosis_swapped_alone` 53 → 82 | #211 | `x` is a number or null, so swapping x and category changes no answer: the column equals diagnosis, as #211 noted |
+| `summary/charts/diagnosis_swapped` 84 → 83, `diagnosis_swapped_alone` 53 → 82 | #211 | `x` is a number or null, so swapping x and category changes no answer: the column equals diagnosis, as #211 noted |
 | Image 17 alone 7 → 6 | variation | a read-off of the unprinted line chart, out of scope by #211's ruling 1 |
-| `formulas.same_answer` 33 → 31 (12 items flip either way) | variation, and #212 for the two page-25 ids | whether Sonnet's answer equals Luna's character for character; the request is the same on all 44 (`same_request`) |
+| `summary/formulas/same_answer` 33 → 31 (12 items flip either way) | variation, and #212 for the two page-25 ids | whether Sonnet's answer equals Luna's character for character; the request is the same on all 44 (`same_request`) |
 
 **Judging.** The 29 answers that differ from Luna's were judged blind by two Claude Opus 5.5
 subagents (effort high) with t4's rules, as in #199: 18 descriptions, 11 formulas. Self-check

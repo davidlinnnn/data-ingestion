@@ -26,11 +26,12 @@ def baseline(path: str) -> dict:
 
 
 def diff(before, after, path: str = "") -> dict:
-    """{dotted path: [before, after]} for every leaf that differs."""
+    """{slash-separated path: [before, after]} for every leaf that differs ("/": check-publish
+    reads a dotted path through a method ref, a.b@c.d, as an email)."""
     if isinstance(before, dict) and isinstance(after, dict):
         found: dict = {}
         for key in sorted((before.keys() | after.keys()) - {"latency_ms"}):  # timing, not compared
-            found |= diff(before.get(key), after.get(key), f"{path}.{key}" if path else key)
+            found |= diff(before.get(key), after.get(key), f"{path}/{key}" if path else key)
         return found
     return {} if before == after else {path: [before, after]}
 
