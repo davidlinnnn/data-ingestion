@@ -38,13 +38,13 @@ def feed_entry(client, mode, session, uid):
     return seq
 
 
-def writer(major, mode, worker, seed, count, scale, rate, out):
+def writer(major, mode, run, worker, seed, count, scale, rate, out):
     rng = random.Random(seed * 1009 + worker)
     client = MongoClient(uri(major), w='majority')
     db = client.kp236
     with open(out, 'w') as f:
         for i in range(count):
-            uid = '%d-%d' % (worker, i)
+            uid = '%s-%d-%d' % (run, worker, i)
             is_long = worker < 3 and i % 2000 == 25 + 20 * worker
             rollback = rng.random() < .05
             pause = rng.uniform(0, .050) * scale, (3.0 if is_long else rng.uniform(0, .200) * scale)
@@ -144,12 +144,14 @@ def main():
     for f in (cursor_file, deliveries):
         f.unlink(missing_ok=True)
 
+    # a per-run prefix: a stray writer from another run shows up as foreign, never as a collision
+    run = os.urandom(4).hex()
     ctx = mp.get_context('spawn')
     start_reader = lambda: ctx.Process(target=reader, args=(a.major, a.mode, deliveries, cursor_file))
     rd = start_reader()
     rd.start()
     time.sleep(2)  # the stream must be open before the first write when there is no token yet
-    writers = [ctx.Process(target=writer, args=(a.major, a.mode, w, a.seed, a.transactions, a.scale, a.rate,
+    writers = [ctx.Process(target=writer, args=(a.major, a.mode, run, w, a.seed, a.transactions, a.scale, a.rate,
                                                  out / ('writer-%d.jsonl' % w))) for w in range(a.writers)]
     t0 = time.time()
     for w in writers:
@@ -168,8 +170,9 @@ def main():
             print('reader killed and restarted at %.1f s' % (restarted_at - t0), flush=True)
     errors = ['writer %d exit %s' % (i, w.exitcode) for i, w in enumerate(writers) if w.exitcode != 0]
 
-    truth = {d['_id'] for d in client.kp236.get_collection(
+    every = {d['_id'] for d in client.kp236.get_collection(
         'feed', read_concern=ReadConcern('majority')).find({}, {'_id': 1})}
+    truth = {u for u in every if u.startswith(run + '-')}
     deadline = time.time() + 60
     while time.time() < deadline:  # drain: stop when every committed event arrived or nothing new for 10 s
         got = lines(deliveries)
@@ -194,7 +197,7 @@ def main():
         version=version, mode=a.mode, seed=a.seed, writers=a.writers, transactions=a.transactions,
         scale=a.scale, rate_per_writer=a.rate, restarted=restarted_at is not None,
         wall_seconds=round(time.time() - t0, 1), errors=errors,
-        committed=len(committed), in_db=len(truth), db_matches_writers=truth == set(committed),
+        run=run, foreign_in_db=len(every - truth), committed=len(committed), in_db=len(truth), db_matches_writers=truth == set(committed),
         missed=len(set(committed) - set(delivered)),
         duplicated=len(got) - len(delivered), unexpected=len(set(delivered) - set(committed)),
         long_transactions=len(long_end),
