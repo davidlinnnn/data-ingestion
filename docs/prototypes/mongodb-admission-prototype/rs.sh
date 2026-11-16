@@ -11,15 +11,16 @@
 #   rs.sh primary <7|9>        print the primary's port
 set -eu
 
-major=${2:?major version: 7 or 9}
+major=${2:?major version: 7, 9 or s}
 case $major in
-    7) image=mongo:7.0.48 ;;
-    9) image=mongo:9.0.8 ;;
+    7) image=mongo:7.0.48 base=3707 ;;
+    9) image=mongo:9.0.8 base=3709 ;;
+    s) image=mongo:9.0.8 base=3706 ;;  # scratch set for developing a script while full runs hold 7 and 9
     *) echo "unknown major $major" >&2; exit 2 ;;
 esac
 name=kp236-mongo-$major
-ports="370${major}1 370${major}2 370${major}3"
-first=370${major}1
+ports="${base}1 ${base}2 ${base}3"
+first=${base}1
 
 mongod_args() {
     echo "--replSet rs0 --port $1 --bind_ip_all --dbpath /data/$1 --fork --logpath /data/$1.log --pidfilepath /data/$1.pid"
