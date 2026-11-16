@@ -123,7 +123,7 @@ def main():
                                            'attempts': 0, 'dispatched_at': None}} for i in range(a.requests)])
 
     ctx = mp.get_context('spawn')
-    crashes = {0: ('claimed', 100), 1: ('started', 300)}  # (phase, n-th claim of that dispatcher)
+    crashes = {0: ('claimed', 100), 1: ('started', 150)}  # 4 dispatchers make about 250 claims each  # (phase, n-th claim of that dispatcher)
     procs = {}
 
     def spawn(i, crash):

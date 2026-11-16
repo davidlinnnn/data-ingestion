@@ -25,6 +25,7 @@ def uri(major):
 
 
 def rs(*args):
+    args = ['s' if a == 6 else a for a in args]  # the scratch set is 6 here, s in rs.sh
     return subprocess.run([str(HERE / 'rs.sh'), *map(str, args)], check=True,
                           capture_output=True, text=True).stdout.strip()
 
@@ -81,12 +82,13 @@ def main():
 
     stop = threading.Event()
     acks, errors, faults = [], [], []
-    threads = [threading.Thread(target=writer, args=(client, w, stop, acks, errors)) for w in range(a.writers)]
+    threads = [threading.Thread(target=writer, args=(client, w, stop, acks, errors), daemon=True) for w in range(a.writers)]
     for t in threads:
         t.start()
     time.sleep(3)
     for r in range(a.rounds):
         old = rs('primary', a.major)
+        print('round %d: fault on %s' % (r, old), flush=True)
         t_fault = time.time()
         if a.mode == 'kill':
             rs('kill', a.major, old)
@@ -95,8 +97,10 @@ def main():
         else:
             rs('stepdown', a.major)
         wait_healthy(client)
-        time.sleep(3)
+        # a stepped-down member cannot run for 10 s (rs.sh); wait it out so the next round has a choice
+        time.sleep(3 if a.mode == 'kill' else 12)
         faults.append(dict(round=r, old_primary=old, new_primary=rs('primary', a.major), at=t_fault))
+        print('round %d: %s -> %s' % (r, old, faults[-1]['new_primary']), flush=True)
     stop.set()
     for t in threads:
         t.join()
@@ -106,23 +110,27 @@ def main():
     present = {d['_id'] for d in requests.find({}, {'_id': 1})}
     acked = {rid for rid, _, _ in acks}
     errored = {rid for rid, *_ in errors}
-    for f in faults:
-        done = sorted(end for _, _, end in acks if end > f['at'])
+    ends = [f['at'] for f in faults[1:]] + [max(end for _, _, end in acks)]
+    for f, until in zip(faults, ends):  # a round's window ends where the next fault starts
+        done = sorted(end for _, _, end in acks if f['at'] < end <= until)
         before = max((end for _, _, end in acks if end <= f['at']), default=f['at'])
-        window = [before] + [e for e in done if e <= f['at'] + 60]
+        window = [before] + done
         f['max_ack_gap_seconds'] = round(max(b - a_ for a_, b in zip(window, window[1:])), 3) if len(window) > 1 else None
-        f['errors_in_60s'] = sum(1 for _, s, e, *_ in errors if f['at'] - 1 <= e <= f['at'] + 60)
+        f['errors'] = sum(1 for _, s, e, *_ in errors if f['at'] - 1 <= e <= until)
+        f['failed_over'] = f['old_primary'] != f['new_primary']
         print(json.dumps(f), flush=True)
     summary = dict(version=version, mode=a.mode, rounds=a.rounds, writers=a.writers,
                    acked=len(acked), acked_missing=len(acked - present),
                    errored=len(errored), errored_but_present=len(errored & present),
                    present=len(present), error_types=sorted({e[3] for e in errors}),
-                   max_ack_gap_seconds=max((f['max_ack_gap_seconds'] or 0) for f in faults))
+                   max_ack_gap_seconds=max((f['max_ack_gap_seconds'] or 0) for f in faults),
+                   rounds_without_failover=sum(1 for f in faults if not f['failed_over']))
     print(json.dumps(summary), flush=True)
     if a.out:
         Path(a.out).write_text(json.dumps(dict(summary=summary, faults=faults, errors=errors,
                                                acks=acks, missing=sorted(acked - present)), indent=1))
     assert summary['acked_missing'] == 0, 'acknowledged writes lost'
+    assert summary['rounds_without_failover'] == 0, 'a fault did not move the primary'
 
 
 if __name__ == '__main__':

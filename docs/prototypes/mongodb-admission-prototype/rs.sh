@@ -73,7 +73,7 @@ down) docker rm -f "$name" >/dev/null ;;
 kill) sh_in "kill -9 \$(cat /data/$3.pid)" ;;
 start) sh_in "mongod $(mongod_args "$3") >/dev/null" ;;
 stepdown)
-    docker exec "$name" mongosh --quiet --port "$(primary_port)" --eval 'rs.stepDown(60)' >/dev/null 2>&1 || true
+    docker exec "$name" mongosh --quiet --port "$(primary_port)" --eval 'rs.stepDown(10)' >/dev/null 2>&1 || true  # the connection drops on success
     ;;
 primary) primary_port ;;
 *) echo "unknown command $1" >&2; exit 2 ;;
