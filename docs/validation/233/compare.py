@@ -35,20 +35,27 @@ def diff(before, after, path: str = "") -> dict:
     return {} if before == after else {path: [before, after]}
 
 
-def by(rows: list[dict], key: str) -> dict:
-    return {str(r[key]): r for r in rows}
+def keyed(rows: list[dict], key: str) -> dict:
+    found = {str(r[key]): r for r in rows}
+    assert len(found) == len(rows), f"rows share a {key}"
+    return found
 
 
 def main() -> None:
+    listed = subprocess.run(["git", "ls-tree", "--full-tree", "--name-only", f"{BASELINE}:docs/validation/199/papers"],
+                            check=True, capture_output=True, text=True, cwd=HERE).stdout.split()  # fmt: skip
+    paths = sorted((HERE / "papers").glob("*.json"))
+    assert sorted(p.name for p in paths) == sorted(listed), "papers differ from pilot2's"
     papers = {}
-    for row in sorted((HERE / "papers").glob("*.json")):
-        new, old = json.loads(row.read_text()), baseline(f"papers/{row.name}")
-        papers[row.stem] = diff({k: old.get(k) for k in PAPER_FIELDS}, {k: new.get(k) for k in PAPER_FIELDS})
+    for path in paths:
+        new, old = json.loads(path.read_text()), baseline(f"papers/{path.name}")
+        assert set(PAPER_FIELDS) <= new.keys() & old.keys(), f"{path.name} lacks a compared field"
+        papers[path.stem] = diff({k: old[k] for k in PAPER_FIELDS}, {k: new[k] for k in PAPER_FIELDS})
     old, new = baseline("accuracy.json"), json.loads((HERE / "accuracy.json").read_text())
     items = {"summary": diff(old["summary"], new["summary"])}
     for kind, key in (("charts", "gold_index"), ("descriptions", "label"), ("formulas", "label")):
-        items[kind] = {k: d for k, d in diff(by(old[kind], key), by(new[kind], key)).items()}
-    items["code"] = diff(by(old["code"]["rows"], "unit"), by(new["code"]["rows"], "unit"))
+        items[kind] = diff(keyed(old[kind], key), keyed(new[kind], key))
+    items["code"] = diff(keyed(old["code"]["rows"], "unit"), keyed(new["code"]["rows"], "unit"))
     (HERE / "compare.json").write_text(json.dumps({"baseline": BASELINE, "papers": papers, "accuracy": items},
                                                   indent=1) + "\n")  # fmt: skip
     for name, found in papers.items():

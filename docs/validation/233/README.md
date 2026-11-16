@@ -20,7 +20,7 @@ paper or item got worse.** Merging #186 is the user's call.
 
 | Fix | Criterion (#233 scope 4) | Result |
 |---|---|---|
-| Code (#210) | #84's 13 code units: region covered by code items, operators and numbers 13/13 | **Holds.** Operators 13/13, numbers 13/13 (pilot2 9/9 of 13); CER median 0.35 % (0.42 %). The four split listings: CER 79, 76, 71, 81 % → 0.86, 0.36, 0.45, 0.30 %, 1 → 9, 8, 9, 8 items. `docling-parse@1` is `57a4415f`, the digest of #210's 21-paper inventory where the gold characters of all 13 lie in code items' boxes ([#210](../210/README.md)); code items here: +92 on the corpus, the count #210 found |
+| Code (#210) | #84's 13 code units: region covered by code items, operators and numbers 13/13 | **Holds.** Operators 13/13, numbers 13/13 (pilot2 9/9 of 13); CER median 0.35 % (0.42 %). The four split listings: CER 79, 76, 71, 81 % → 0.86, 0.36, 0.45, 0.30 %, 1 → 9, 8, 9, 8 items. Coverage is not remeasured here: `docling-parse@1` is `57a4415f`, the digest of #210's 21-paper inventory where the gold characters of all 13 lie in code items' boxes ([#210](../210/README.md)), and this run's inventory has the same items per paper and method as that one on all 21 papers (code, formula, table, picture OCR, summary; picture interpretation counts 4 enrichments per item there) |
 | Charts (#211) | t4's bar on the workflow, diagnosis ≥ 83/88; images 16 and 21 not swapped; image 17's read-off not counted (#211 ruling 1) | **Holds.** Diagnosis 83/88 and formal 83/88 (pilot2 66 and 66), alone 82. Image 16 0 → 18/18, image 21 30/30 in the workflow and 0 → 30/30 alone; images 6, 16, 21, 22 76/76. Image 17 7/12 (pilot2 8); the bar is met even counting it |
 | Formulas (#212) | Paper 16 page 25: no SWE-bench id in the formula inventory, no `failed EMPTY_OUTPUT` | **Holds.** Page 25: 0 formula items, 0 requests; paper 16: 0 failed formulas, `formula@1` 9 requests, 0 invalid (pilot2 69, 49 invalid). Also #212's own checks: all 60 ids of page 25 verbatim in the assembly ([formula-p16.json](formula-p16.json), #212's `run.py e2e`) |
 
@@ -89,12 +89,23 @@ Same sample, gold and scorer as #199. "Alone" is the method run outside the work
 | Descriptions | 15/18 | 16/18 | variation: image 5 (p01-2fe0065e348a) FAIL → PASS; images 3 and 18 fail in both |
 | Formulas | 44/46 | 43/44 | #212: the two t4 ids are text lines now (p16-35fa058a6093 was PASS, p16-e1d8a234b6b9 FAIL); on the 44 real formulas the verdicts are the same, the one FAIL p01-a5304a07488e in both |
 
+The other fields of `compare.json` that differ:
+
+| Field | Cause | Why |
+|---|---|---|
+| `descriptions.pass_alone` 16 → 17 | variation | image 5 alone, the same item as the workflow's change |
+| `recorded_request` true → false on the 18 descriptions | #211 | the prompt changed, so the request no longer has the digest of Luna's recording; #211 recorded this and did not re-record |
+| `charts.diagnosis_swapped` 84 → 83, `diagnosis_swapped_alone` 53 → 82 | #211 | `x` is a number or null, so swapping x and category changes no answer: the column equals diagnosis, as #211 noted |
+| Image 17 alone 7 → 6 | variation | a read-off of the unprinted line chart, out of scope by #211's ruling 1 |
+| `formulas.same_answer` 33 → 31 (12 items flip either way) | variation, and #212 for the two page-25 ids | whether Sonnet's answer equals Luna's character for character; the request is the same on all 44 (`same_request`) |
+
 **Judging.** The 29 answers that differ from Luna's were judged blind by two Claude Opus 5.5
 subagents (effort high) with t4's rules, as in #199: 18 descriptions, 11 formulas. Self-check
 before judging: each item once, each picture image's sha256 the gold crop's, each formula crop's
 equal to pilot2's crop of the same item, each sheet's letters those of `letters.json` with one
 `recorded`. **Control:** Luna's answer was on every sheet and the judges agreed with t4 on 29 of
-29. Judgement calls are in `judgments.json` notes; the closest: on p09-ede3d51fae44 a hyphen
+29; with #199's 60 sheets that `judgments.json` keeps, 59 of 60 labels agree (`judge_control`;
+pilot2 58), the one left being #199's p01-a5304a07488e. Judgement calls are in `judgments.json` notes; the closest: on p09-ede3d51fae44 a hyphen
 outside `\mathrm` was passed as the same character, and three paper-1 answers on a table cell's
 symbol that never say "table" were passed.
 
@@ -136,7 +147,7 @@ more per request). Formula requests per paper fall by paper 16's 60 (#212). Per-
 | Item | US$ |
 |---|---|
 | Workflow, 20 papers | 10.18 |
-| Methods alone, 64 requests | 0.37 |
+| Methods alone, 64 requests (usage summed over OUT/alone: 96,974 input, 17,787 output tokens) | 0.37 |
 | A7 judge, 150 cases (held-out 1.07, dev 0.77) | 1.84 |
 | **Total** | **12.39** (estimate US$12–14, stop line US$20) |
 
@@ -145,8 +156,9 @@ more per request). Formula requests per paper fall by paper 16's 60 (#212). Per-
 The first A7 run stopped before its first request: #202 (`19b92af`) changed `OpenAIChat`'s third
 argument from an API key to a headers mapping and updated t5b's callers, but not the planter that
 `docs/validation/199/score.py` substitutes for t5b's Luna client. `52da203` passes the bearer as a
-header. Nothing was sent before the error. It is the only change under `docs/validation/199`; the
-evidence there is pilot2's.
+header. Nothing was sent before the error. It is the only change under `docs/validation/199`, a
+deliberate exception to the ticket's "199 not changed": the evidence there is pilot2's, and the
+fix restores the script #203 also reruns.
 
 ## Files
 
