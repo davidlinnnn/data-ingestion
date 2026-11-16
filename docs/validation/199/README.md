@@ -13,6 +13,10 @@ environment).
 **The integration is correct, but `paper-pdf@1` is not ready to release: 3 output defects need a
 fix first.** Two more findings go to the tickets that already own them.
 
+*Superseded 2026-11-16: the three defects are fixed (#210, #211, #212), and #233 reran this
+validation with all three together and judged `paper-pdf@1` releasable, with no regression
+against this run ([report](../233/README.md)).*
+
 - **Integration.** For every scored VLM item the workflow sent the same request body as the
   method run alone (64 of 64). The local methods give the same results (picture OCR 304 = 304
   units, tables 15 = 15). Every difference in score is explained below: the model's run-to-run
