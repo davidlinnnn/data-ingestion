@@ -500,7 +500,8 @@ async def main(argv: list[str]) -> int:
             (HERE / "tokens.json").write_text(json.dumps(found, indent=1) + "\n")
             (HERE / "tokens.md").write_text(tokens.markdown(found, corpus_ids))
         async with httpx.AsyncClient() as http:
-            chat = OpenAIChat(http, ANTHROPIC, os.environ["ANTHROPIC_API_KEY"],
+            bearer = {"Authorization": f"Bearer {os.environ['ANTHROPIC_API_KEY']}"}
+            chat = OpenAIChat(http, ANTHROPIC, bearer,
                               VLM_COMPONENT.partition("/")[2], 5, 600)  # fmt: skip
             answered = await score.alone_answers(out, {int(i) for i in ran if i != "w2"}, profile, chat)
         accuracy = await score.accuracy(store, ran, archive, out / "judging", answered)

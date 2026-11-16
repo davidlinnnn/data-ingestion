@@ -129,7 +129,8 @@ async def main(argv: list[str]) -> int:
             ends = [[r for r in by_score if r["category"] == c] for c in JUDGED]
             tests = [r for of_category in ends for r in (of_category[0], of_category[-1])]
         async with httpx.AsyncClient() as http:
-            d3 = SystemOne(http, argv[1], argv[2] if len(argv) > 2 else "", 5, 120)
+            key = argv[2] if len(argv) > 2 else ""
+            d3 = SystemOne(http, argv[1], {"Authorization": f"Bearer {key}"}, 5, 120)
             for row in tests:
                 begin = time.monotonic()
                 answer = await d3.complete(requests[row["id"]])
