@@ -1,0 +1,179 @@
+{
+ "version": "8.2.12",
+ "position": "seq",
+ "control": "none",
+ "faults": "kill@60,stop@150,reader@240,oplog@330,kill@480,stop@560,reader@620",
+ "seed": 24001,
+ "writers": 8,
+ "transactions": 13500,
+ "docs": 2000,
+ "scale": 0.1,
+ "rate_per_writer": 20.0,
+ "wall_seconds": 688.7,
+ "errors": [],
+ "run": "686b920b",
+ "committed": 125732,
+ "revisions_match_writers": true,
+ "foreign_in_feed": 0,
+ "feed_entries": 125732,
+ "feed_missed": 0,
+ "feed_duplicates": 0,
+ "feed_unexpected": 0,
+ "feed_order_violations": 0,
+ "read_missed": 0,
+ "read_duplicates": 0,
+ "read_order_violations": 0,
+ "read_position_regressions": 0,
+ "read_redelivered": 0,
+ "reader_incarnations": 3,
+ "epochs": 6,
+ "fenced": 2,
+ "lease_lost": 0,
+ "tailer_errors": [],
+ "zombie_entries_accepted": 0,
+ "failover": [
+  {
+   "fault": "kill",
+   "acquired_after": 3.97,
+   "first_write_after": 3.97
+  },
+  {
+   "fault": "stop",
+   "acquired_after": 4.79,
+   "first_write_after": 4.8
+  },
+  {
+   "fault": "kill",
+   "acquired_after": 4.38,
+   "first_write_after": 4.38
+  },
+  {
+   "fault": "stop",
+   "acquired_after": 4.8,
+   "first_write_after": 4.81
+  }
+ ],
+ "txn_with_split_cluster_time": 0,
+ "multi_change_txns": 15414,
+ "recovery_seconds": 0.5,
+ "backfilled": 10641,
+ "backfill_read": 10641,
+ "backfill_read_window": [
+  0.38,
+  0.5
+ ],
+ "recovery_log": [
+  {
+   "ev": "history_lost",
+   "epoch": 4,
+   "error": "Executor error during aggregate command on namespace: kp240.revisions :: caused by :: Resume of change stream was not possible, as the resume point may no longer be in the oplog., full error: {'errorL",
+   "tailer": "B:41824",
+   "t": 1794924228.6596339
+  },
+  {
+   "ev": "recovery_start",
+   "epoch": 4,
+   "t_rec": [
+    1794924228,
+    123
+   ],
+   "tailer": "B:41824",
+   "t": 1794924228.660685
+  },
+  {
+   "ev": "recovery_scanned",
+   "epoch": 4,
+   "scanned": 71862,
+   "feed_had": 61221,
+   "missing": 10641,
+   "tailer": "B:41824",
+   "t": 1794924229.012065
+  },
+  {
+   "ev": "reopened",
+   "epoch": 4,
+   "t_rec": [
+    1794924228,
+    123
+   ],
+   "backfilled": 10641,
+   "tailer": "B:41824",
+   "t": 1794924229.160322
+  }
+ ],
+ "faults_log": [
+  {
+   "fault": "kill",
+   "victim": "B:41564",
+   "epoch": 1,
+   "at": 1794923900.5298629,
+   "next_epoch": 2,
+   "t": 1794923904.530896
+  },
+  {
+   "fault": "stop",
+   "victim": "A:41563",
+   "epoch": 2,
+   "at": 1794923990.506418,
+   "next_epoch": 3,
+   "resumed": 1794923997.310046,
+   "t": 1794923997.310255
+  },
+  {
+   "fault": "reader",
+   "at": 1794924080.524941,
+   "t": 1794924082.53323
+  },
+  {
+   "fault": "oplog",
+   "at": 1794924170.57138,
+   "stopped_at": [
+    1794924170,
+    115
+   ],
+   "filler_bytes": 3266314240,
+   "filled": 1794924228.5714948,
+   "restarted": 1794924228.579183,
+   "oldest": [
+    "Timestamp(1794924210, 44)",
+    "Timestamp(1794924179, 32)",
+    "Timestamp(1794924179, 32)"
+   ],
+   "t": 1794924228.581223
+  },
+  {
+   "fault": "kill",
+   "victim": "B:41824",
+   "epoch": 4,
+   "at": 1794924320.51361,
+   "next_epoch": 5,
+   "t": 1794924324.9419148
+  },
+  {
+   "fault": "stop",
+   "victim": "B:41851",
+   "epoch": 5,
+   "at": 1794924400.557879,
+   "next_epoch": 6,
+   "resumed": 1794924407.394679,
+   "t": 1794924407.39488
+  },
+  {
+   "fault": "reader",
+   "at": 1794924460.523875,
+   "t": 1794924462.535597
+  }
+ ],
+ "tries_max": 1381,
+ "tries_mean": 1.02,
+ "events_per_second": 182.8,
+ "behind_schedule_p50": 0.004,
+ "behind_schedule_p99": 1.45,
+ "behind_schedule_max": 3.946,
+ "commit_to_feed_p50": 0.034,
+ "commit_to_feed_p99": 52.007,
+ "commit_to_feed_max": 58.592,
+ "commit_to_read_p50": 0.049,
+ "commit_to_read_p99": 52.027,
+ "commit_to_read_max": 58.608
+}
