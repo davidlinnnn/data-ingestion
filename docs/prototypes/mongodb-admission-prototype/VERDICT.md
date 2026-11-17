@@ -8,7 +8,7 @@ control failed as designed, so the checks can see a failure.
 
 | Guarantee | Verdict | Condition |
 |---|---|---|
-| 1. Change Feed skips no committed event | Holds, both approaches | Change stream: the oplog must still hold the reader's resume point. Sequence in the transaction: all feed writers serialize on one counter document. |
+| 1. Change Feed skips no committed event | Holds, both approaches | Change stream: the oplog must still hold the reader's resume point. Sequence in the transaction: all feed writers serialize on one counter document, so a transaction must hold it for well under 80 ms to carry 12 events a second. |
 | 2. An accepted request is dispatched and starts one workflow | Holds | The claim filters on the dispatch fields only; the start is idempotent by `request_id`. |
 | 3. One active request per Document and Source Revision | Holds | Concurrent finalizes of one Document retry instead of queueing. |
 | 4. A majority-acknowledged write survives primary failure | Holds | Writes stall for about one election timeout on primary loss, once twice that. |
@@ -18,11 +18,20 @@ control failed as designed, so the checks can see a failure.
 102,640 committed events per run (8 writers, 21 transactions held open 3 s,
 5% rolled back), reader SIGKILLed halfway and resumed from its saved cursor:
 
-| Approach | 7.0 missed | 9.0 missed | Duplicates | Retries mean / max | At 12 events/s: delay p50 / p99 |
-|---|---:|---:|---:|---|---|
-| Change stream, resume token | 0 | 0 | 0 | none | 25–26 ms / 128 ms |
-| `$inc` sequence inside the transaction | 0 | 0 | 0 | 16.5–16.7 / 1,038–1,309 | 13–14 ms / 30 ms |
-| Positive control: sequence outside the transaction | 17,245 | 19,395 | 0 | none | — |
+| Approach | 7.0 missed | 9.0 missed | Duplicates | Retries mean / max |
+|---|---:|---:|---:|---|
+| Change stream, resume token | 0 | 0 | 0 | none |
+| `$inc` sequence inside the transaction | 0 | 0 | 0 | 16.5–16.7 / 1,038–1,309 |
+| Positive control: sequence outside the transaction | 17,245 | 19,395 | 0 | none |
+
+At 12 transactions offered a second (8 writers on a fixed schedule, 5% rolled
+back, three 3 s transactions), the same on both majors:
+
+| Approach | Committed/s | Behind schedule p50 / p99 | Delay commit to delivery p50 / p99 | Retries mean / max |
+|---|---:|---|---|---|
+| Change stream | 11.05 | 4 ms / 0.28 s | 23 ms / 127–129 ms | none |
+| Sequence, counter held about 100 ms | 7.1 | 76–101 s / 250 s | 12 ms / 25 ms | 16–17 / 1,622–2,035 |
+| Sequence, counter held about 10 ms | 11.06 | 4 ms / 1.8 s | 12–13 ms / 26 ms | 3.8–4.1 / 569–730 |
 
 - The change stream reports only majority-committed changes in commit order,
   which is why it does not skip: "Change streams only notify on data changes
@@ -36,7 +45,12 @@ control failed as designed, so the checks can see a failure.
   update the counter until the first one commits: commit order equals sequence
   order. Feed writers therefore commit one at a time. The 100k run took 33–35
   minutes against 4–4.5 for the change stream, and every 3 s transaction made
-  the other writers retry, up to 1,498 times for one transaction at 12 events/s.
+  the other writers retry, up to 2,035 times for one transaction. Its throughput
+  is one over the time a transaction holds the counter: holding it about 100 ms
+  (#55's sleeps) it committed 7.1 events a second against 12 offered and fell
+  minutes behind; holding it about 10 ms it kept up. The sequence approach holds
+  at 12 events a second only if the counter update is the transaction's last
+  step, or nearly.
   ADR-0009's xmin wait is replaced by write conflicts and retries.
 - Which one the port builds on is the port ticket's design choice; both hold.
 

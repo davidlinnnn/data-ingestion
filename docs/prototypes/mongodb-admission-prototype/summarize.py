@@ -25,15 +25,18 @@ def main():
 
     out += ['## Experiment 1: feed order', '',
             row('Major', 'Run', 'Committed', 'Missed', 'Duplicated', 'Foreign', 'Reader restarted',
-                'Tries mean / max', 'Delay p50 / p99 / max (s)', 'Wall (s)'),
-            row(*['---'] * 10)]
+                'Tries mean / max', 'Delay p50 / p99 / max (s)', 'Wall (s)',
+                'Committed/s', 'Behind schedule p50 / p99 / max (s)'),
+            row(*['---'] * 12)]
     for m in majors:
-        for run in ('stream-100k', 'seq-100k', 'control-100k', 'stream-12ps', 'seq-12ps'):
+        for run in ('stream-100k', 'seq-100k', 'control-100k', 'stream-12ps', 'seq-12ps', 'seq-12ps-short'):
             s = load(EV / m / ('exp1-' + run) / 'summary.json')
             assert not s['errors'] and s['db_matches_writers'], (m, run)
             out.append(row(s['version'], run, s['committed'], s['missed'], s['duplicated'], s['foreign_in_db'],
                            s['restarted'], '%s / %s' % (s['tries_mean'], s['tries_max']),
-                           '%s / %s / %s' % (s['delay_p50'], s['delay_p99'], s['delay_max']), s['wall_seconds']))
+                           '%s / %s / %s' % (s['delay_p50'], s['delay_p99'], s['delay_max']), s['wall_seconds'],
+                           *((s['events_per_second'], '%s / %s / %s' % (s['behind_schedule_p50'], s['behind_schedule_p99'], s['behind_schedule_max']))
+                             if s['rate_per_writer'] else ('-', '-'))))
 
     out += ['', '## Experiment 2: dispatcher claim', '',
             row('Major', 'Dispatchers', 'Workflows', 'All dispatched', 'Start duplicates', 'Crashed claims (re-claimed after s)',

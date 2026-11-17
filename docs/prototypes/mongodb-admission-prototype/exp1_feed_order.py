@@ -42,8 +42,12 @@ def writer(major, mode, run, worker, seed, count, scale, rate, out):
     rng = random.Random(seed * 1009 + worker)
     client = MongoClient(uri(major), w='majority')
     db = client.kp236
+    due = time.time()
     with open(out, 'w') as f:
         for i in range(count):
+            if rate:  # arrivals on a schedule of their own: a slow transaction does not lower the offered rate
+                due += rng.expovariate(rate)
+                time.sleep(max(0.0, due - time.time()))
             uid = '%s-%d-%d' % (run, worker, i)
             is_long = worker < 3 and i % 2000 == 25 + 20 * worker
             rollback = rng.random() < .05
@@ -68,9 +72,7 @@ def writer(major, mode, run, worker, seed, count, scale, rate, out):
                     if not exc.has_error_label('TransientTransactionError') or time.time() - first > 120:
                         raise
             f.write(json.dumps(dict(uid=uid, seq=seq, start=start, end=time.time(), tries=tries,
-                                    rollback=rollback, long=is_long)) + '\n')
-            if rate:
-                time.sleep(max(0.0, rng.expovariate(rate)))
+                                    rollback=rollback, long=is_long, behind=first - due if rate else 0)) + '\n')
 
 
 def reader(major, mode, out, cursor_file):
@@ -192,6 +194,8 @@ def main():
     for d in got:
         delivered.setdefault(d['uid'], d['at'])
     delays = [delivered[u] - x['end'] for u, x in committed.items() if u in delivered]
+    behind = [x['behind'] for x in attempts]
+    span = max(x['end'] for x in attempts) - min(x['start'] for x in attempts)
     long_end = [(x['start'], x['end']) for x in attempts if x['long']]
     summary = dict(
         version=version, mode=a.mode, seed=a.seed, writers=a.writers, transactions=a.transactions,
@@ -203,6 +207,8 @@ def main():
         long_transactions=len(long_end),
         tries_max=max(x['tries'] for x in attempts), tries_mean=round(sum(x['tries'] for x in attempts) / len(attempts), 2),
         retried=sum(1 for x in attempts if x['tries'] > 1),
+        events_per_second=round(len(committed) / span, 2),  # achieved, to hold against the offered rate
+        behind_schedule_p50=percentile(behind, .5), behind_schedule_p99=percentile(behind, .99), behind_schedule_max=percentile(behind, 1),
         delay_p50=percentile(delays, .5), delay_p99=percentile(delays, .99), delay_max=percentile(delays, 1),
     )
     (out / 'summary.json').write_text(json.dumps(summary, indent=1))
