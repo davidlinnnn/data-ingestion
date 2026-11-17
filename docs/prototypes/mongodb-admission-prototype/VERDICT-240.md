@@ -7,39 +7,59 @@ company's major), PyMongo 4.20.0. Script `exp5_feed_tailer.py`, runs
 [#240](https://github.com/davidlinnnn/data-ingestion/issues/240); the harness is
 #236's ([README.md](README.md)).
 
-**Holds, with conditions.** In two runs of 125,732 committed changes, one per
-position scheme, each with seven faults (two SIGKILLs and two SIGSTOPs of the
-lease holder, two SIGKILLs of the projection reader, one oplog loss), the feed
-and the reader missed 0 changes, repeated 0 and put 0 out of commit order for
-their Document. The two positive controls failed as designed. The conditions:
+A side track. The December pilot runs on PostgreSQL as built, the outbox queue
+and ADR-0009's feed included
+([#78](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6949497546)).
+This verdict feeds the post-pilot port to MongoDB,
+[#239](https://github.com/davidlinnnn/data-ingestion/issues/239), a gate for
+PROD; it changes nothing the pilot builds.
 
-1. **Every feed write is fenced.** One transaction updates the lease document
-   where `epoch` is the holder's, then inserts the entries. A takeover increments
-   `epoch`. Each of the four woken holders was fenced and wrote nothing.
+**Holds, with conditions.** In three runs of 125,732 committed changes, one per
+position scheme, each with seven faults (two SIGKILLs and two SIGSTOPs of the
+lease holder, two SIGKILLs of the projection reader, one oplog loss; the third
+run two in-transaction freezes more), the feed and the reader missed 0 changes,
+repeated 0 and put 0 out of commit order for their Document. The two positive
+controls failed as designed. The conditions:
+
+1. **Every feed write is fenced.** One transaction inserts the entries and
+   updates the lease document where `epoch` is the holder's. A takeover
+   increments `epoch`. Each of the 17 woken holders was fenced and wrote nothing.
 2. **The resume token is saved in that transaction**, so a crash can neither
    lose nor repeat a batch.
 3. **Lost history is recovered from the records, not skipped.** The scan reads
    the revision records at one recorded cluster time, and the stream reopens at
    that time (below).
-4. **The feed's delay is bounded by the lease, except when a holder freezes
-   inside its feed transaction.** A takeover took 4.0–5.1 s with a 5 s lease in
-   13 of 14 SIGKILLs and SIGSTOPs. One SIGSTOP froze the holder between its fence
-   update and its commit. The takeover then waited 80.2 s, until the server
-   aborted the open transaction ("Aborting transaction because it has been
-   running for longer than 'transactionLifetimeLimitSeconds'", logged 80.07 s
-   after the stop; the limit is 60 s here).
+4. **The feed's delay is bounded by the lease only if a frozen holder's open
+   transaction blocks nothing the new holder writes.** A holder frozen inside its
+   feed transaction keeps that transaction's writes locked until the server
+   aborts it ("Aborting transaction because it has been running for longer than
+   'transactionLifetimeLimitSeconds'"; the limit is 60 s here, and the abort came
+   60–88 s after the freeze). With the lease update first, the new holder cannot
+   take the lease until then. With the lease update last but positions the new
+   holder also computes, it takes the lease in 4–5 s and then conflicts on those
+   positions until then. With the lease update last and the epoch in front of
+   each position, a frozen holder held up nothing: the new holder's first entries
+   were readable 4.1–5.1 s after each of five freezes, as after a SIGKILL.
 
 ## Runs
 
 | Run | Committed | Missed / repeated / out of order | Takeover (s) | Recovery |
 |---|---:|---|---|---|
-| Tailer's sequence, 7 faults | 125,732 | 0 / 0 / 0 | 3.97, 4.80, 4.38, 4.81 | 0.50 s, 10,641 backfilled |
-| Derived position, 7 faults | 125,732 | 0 / 0 / 0 | 4.12, **80.16**, 4.65, 5.02 | 0.43 s, 6,615 backfilled |
+| Sequence, lease update first, 7 faults | 125,732 | 0 / 0 / 0 | 4.00, 4.81, 4.39, 4.83 | 0.50 s, 10,641 backfilled |
+| Derived, lease update first, 7 faults | 125,732 | 0 / 0 / 0 | 4.15, **80.16**, 4.66, 5.03 | 0.43 s, 6,615 backfilled |
+| Sequence behind the epoch, lease update last, 7 faults and 2 freezes | 125,732 | 0 / 0 / 0 | 4.03, 4.77, 4.08, 4.67, 5.11, 5.06 | 0.45 s, 6,110 backfilled |
+| 3 freezes, sequence, lease update first | 37,273 | 0 / 0 / 0 | **60.68, 80.69, 70.81** | - |
+| 3 freezes, sequence, lease update last | 37,273 | 0 / 0 / 0 | **87.71, 77.66, 67.55** (lease after 4.2–4.7) | - |
+| 3 freezes, sequence behind the epoch, lease update last | 37,273 | 0 / 0 / 0 | 4.77, 4.94, 4.23 | - |
 | Control: no fence, 3 SIGSTOPs, sequence | 18,646 | 0 / **16 / 16** | 4.4–5.0 | - |
 | Control: no fence, 3 SIGSTOPs, derived | 18,646 | 0 / 0 / 0 | 4.5–5.1 | - |
 | Control: no recovery, sequence | 18,646 | **5,618** / 0 / 0 | - | stream reopened at now |
 | Control: no recovery, derived | 18,646 | **2,318** / 0 / 0 | - | stream reopened at now |
 
+- Takeover is the time from the fault to the reader's first entry from the new
+  holder. A freeze is the holder stopping itself (SIGSTOP) inside its feed
+  transaction right after the transaction's first write, staying stopped until the
+  new holder's entries are in the feed, waking 2 s later.
 - Writers: 8 processes, each on an absolute schedule of 20 transactions a
   second. 5% roll back and 21 transactions hold 3 s. 15% touch two or three
   Documents, so 15,414 committed transactions carried more than one change.
@@ -53,11 +73,11 @@ their Document. The two positive controls failed as designed. The conditions:
   five stayed within 0.05–0.06 s (p99).
 
 At about 12 changes a second (11.64 achieved, #55's full sleeps, no fault), the
-same for both position schemes:
+same for the sequence and the derived position (the epoch in front was not run at this rate):
 
 | From commit to | p50 | p99 |
 |---|---:|---:|
-| feed entry written | 58–59 ms | 139–140 ms |
+| picked up by the tailer (batch formed; its commit follows) | 58–59 ms | 139–140 ms |
 | read by the projection | 76 ms | 160 ms |
 
 ## Oplog loss and recovery
@@ -66,7 +86,7 @@ The oplog was resized to its minimum (990 MB; "The minimum size you can specify
 is 990 megabytes",
 [replSetResizeOplog](https://www.mongodb.com/docs/manual/reference/command/replsetresizeoplog/)).
 Both tailers were SIGKILLed and filler was written until every member's oldest
-oplog entry was newer than the time they stopped (1.9–3.3 GB in 36–58 s). Then
+oplog entry was newer than the time they stopped (1.7–3.3 GB in 33–58 s). Then
 both restarted.
 
 - Resuming from the saved token failed with code 286 (`ChangeStreamHistoryLost`):
@@ -78,7 +98,7 @@ both restarted.
   lacks, in Document and revision order and under the fence, saves `t_rec` as
   the resume point and reopens the stream at `t_rec`. Records committed by
   `t_rec` come from the scan, later ones from the stream.
-- It took 0.43–0.50 s, scanning 67,818–71,862 records. The projection read the first
+- It took 0.43–0.50 s in the three runs, scanning 67,328–71,862 records. The projection read the first
   backfilled entry 0.34–0.38 s and the last one 0.43–0.50 s after the tailer
   detected the loss. During that time it saw each Document's missed revisions in
   order, but not interleaved with other Documents in commit order. The feed gives
@@ -90,10 +110,15 @@ both restarted.
   missed past events", quoted in #240) and resumed at the current time: every
   change committed during the outage was missing for good.
 
-## Position: the tailer's own sequence
+## Position: the tailer's own sequence, behind the lease epoch
 
-Both schemes held, and they cost the same. The sequence is the one to build on:
+All three schemes held, and they cost the same. A position is the epoch and then
+the sequence, as fixed-width digits (`'%06d%012d' % (epoch, seq)`):
 
+- **The epoch keeps a frozen holder from stalling the feed.** A new holder's
+  positions never equal the ones a frozen holder has inserted but not committed,
+  so the new holder does not wait for the server to abort them (condition 4).
+  The positions still rise: an epoch only grows.
 - **Neither is "free" of tailer state.** The documented event fields include no
   index within the transaction, and the manual does not say that
   resume tokens sort in event order. The derived position therefore had to be
@@ -107,20 +132,21 @@ Both schemes held, and they cost the same. The sequence is the one to build on:
   duplicate keys, which is why that control passed. That holds only while the
   woken holder is behind the new one. If it got ahead and both wrote, a reader
   could pass a position before the lower one became visible, and skip it.
-- **A dense sequence lets a reader see a gap.** Positions are integers, one per
-  change, so a missing number is visible. Cluster-time positions have no such
-  property.
+- **A dense sequence lets a reader see a gap.** The sequence part counts one per
+  change across epochs, so a missing number is visible. Cluster-time positions
+  have no such property.
 
 ## For #239: what ADR-0009 and the port take from this
 
-- The feed write: one transaction that updates the lease where `epoch` matches,
-  setting the resume token and the last position, and inserts the batch. A
-  takeover increments `epoch` and reads the token and position from the lease.
-- The fence update locks the lease document until the commit. A holder frozen
-  inside that window delays the takeover by up to `transactionLifetimeLimitSeconds`
-  plus the server's abort sweep (80 s measured at the default 60 s). Moving the
-  fence update to the last step narrows the window; a duplicate position before
-  the fence must then count as fenced. That ordering was not measured.
+- The feed write: one transaction that inserts the batch at positions behind
+  the holder's epoch, then updates the lease where `epoch` matches, setting the
+  resume token and the last sequence number. A duplicate position counts as
+  fenced. A takeover increments `epoch` and reads the token and sequence from the
+  lease.
+- Either half alone does not help. Only the lease update last, measured three
+  times, still stalled the feed 68–88 s per freeze; only the epoch in front, with
+  the lease update first, still leaves the lease locked: the lease-first freezes
+  waited 61–81 s for the lease itself.
 - Save the post-batch resume token even when no event arrives, so a quiet
   revision collection does not fall off an oplog that other collections fill.
   The tailer here does so on each lease renewal; no run isolated it.
@@ -155,8 +181,10 @@ Both schemes held, and they cost the same. The sequence is the one to build on:
   writes. The default is 0: "By default MongoDB does not set a minimum oplog
   retention period"
   ([Replica Set Oplog](https://www.mongodb.com/docs/manual/core/replica-set-oplog/)).
-- **`transactionLifetimeLimitSeconds`**: it bounds the worst takeover (condition
-  4).
+- **`transactionLifetimeLimitSeconds`**: how long a frozen client's open
+  transaction keeps its locks (60–88 s measured at 60). With the lease update
+  last and the epoch in each position, it bounds the takeover only when a holder
+  freezes in the round trip between its lease update and its commit.
 - **`minSnapshotHistoryWindowInSeconds`**: the recovery scan reads one snapshot,
   and "A read operation that lasts longer than `minSnapshotHistoryWindowInSeconds`
   may terminate"
@@ -169,6 +197,11 @@ Both schemes held, and they cost the same. The sequence is the one to build on:
 
 ## Limits
 
+- A holder frozen between its last write (the lease update) and its commit still
+  locks the lease until the server aborts the transaction. That window is one
+  round trip; no freeze was placed there.
+- The derived position was not run with the lease update last; its positions are
+  the same for both holders, so it would conflict as the sequence did.
 - One host, one clock. No primary failover ran while the tailer streamed; #236's
   experiment 4 covered acknowledged writes across one, not a stream across one.
 - No SIGKILL landed inside a feed transaction. Whether a dead client's open

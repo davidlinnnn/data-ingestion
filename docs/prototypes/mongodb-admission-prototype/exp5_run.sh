@@ -1,6 +1,7 @@
 #!/bin/sh
-# PROTOTYPE (#240): every full run of experiment 5 on the 8.2 set, in order; about 55 minutes.
+# PROTOTYPE (#240): every full run of experiment 5 on the 8.2 set, in order; about 55 minutes, and 36 more for the freeze runs.
 #   exp5_run.sh [first-step [stop-before-step]]   steps: seq-100k derived-100k seq-12ps derived-12ps seq-nofence derived-nofence seq-norecover derived-norecover
+#     freeze-seq-first freeze-seq-last freeze-epochseq-last epochseq-last-100k
 set -eu
 cd "$(dirname "$0")"
 from=${1:-seq-100k}
@@ -27,4 +28,10 @@ done
 for m in seq derived; do
     step "$m-norecover" && run "$m-norecover" --position "$m" --control norecover --transactions 2000 --rate 10 --scale 0.1 --faults oplog@10
 done
+# a holder frozen inside its feed transaction: does the fence order, or a position behind the epoch, shorten the takeover?
+for v in seq-first seq-last epochseq-last; do
+    step "freeze-$v" && run "freeze-$v" --position "${v%-*}" --fence "${v#*-}" --transactions 4000 --rate 10 --scale 0.1 --faults freeze@20,freeze@150,freeze@280
+done
+step epochseq-last-100k && run epochseq-last-100k --position epochseq --fence last --transactions 13500 --rate 20 --scale 0.1 \
+    --faults kill@60,stop@150,freeze@200,reader@240,oplog@330,kill@480,stop@560,freeze@590,reader@620
 echo "exp5 done"

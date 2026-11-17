@@ -83,13 +83,30 @@ def main():
     print('\n'.join(out))
 
 
+def takeover(d, s):
+    """Per kill, stop or freeze: seconds to the new lease, and to the reader's first entry under it (the raw record)."""
+    first = {}
+    for x in (d / 'deliveries.jsonl').read_text().splitlines():
+        r = json.loads(x)
+        if 'epoch' in r:
+            first.setdefault(r['epoch'], r['at'])
+    acquired = {}
+    for x in (d / 'tailers.jsonl').read_text().splitlines():
+        r = json.loads(x)
+        if r['ev'] == 'acquired':
+            acquired[r['epoch']] = r['t']
+    return [(round(acquired[f['next_epoch']] - f['at'], 2), round(first[f['next_epoch']] - f['at'], 2))
+            for f in s['faults_log'] if f['fault'] in ('kill', 'stop', 'freeze') and f.get('next_epoch')]
+
+
 def exp5():
     out = ['', '## Experiment 5 (#240): change stream copied into a feed collection', '',
            row('Major', 'Run', 'Faults', 'Committed', 'Feed missed / dup / order', 'Read missed / dup / order / regressed',
-               'Zombie fenced / lease lost / accepted', 'Takeover (s)', 'Recovery (s) / backfilled', 'Commit to feed p50 / p99 (s)',
+               'Zombie fenced / lease lost / accepted', 'Takeover: lease / readable (s)', 'Recovery (s) / backfilled', 'Commit to feed p50 / p99 (s)',
                'Commit to read p50 / p99 (s)', 'Changes/s', 'Behind p99 all / writers 3-7 (s)', 'Oplog B per change writers / tailer'),
            row(*['---'] * 14)]
-    for run in ('seq-100k', 'derived-100k', 'seq-12ps', 'derived-12ps', 'seq-nofence', 'derived-nofence', 'seq-norecover', 'derived-norecover'):
+    for run in ('seq-100k', 'derived-100k', 'seq-12ps', 'derived-12ps', 'seq-nofence', 'derived-nofence', 'seq-norecover', 'derived-norecover',
+                'freeze-seq-first', 'freeze-seq-last', 'freeze-epochseq-last', 'epochseq-last-100k'):
         d = EV / '8' / ('exp5-' + run)
         s = load(d / 'summary.json')
         assert not s['errors'] and s['revisions_match_writers'] and not s['foreign_in_feed'] and not s['tailer_errors'], run
@@ -99,7 +116,7 @@ def exp5():
                        '%s / %s / %s' % (s['feed_missed'], s['feed_duplicates'], s['feed_order_violations']),
                        '%s / %s / %s / %s' % (s['read_missed'], s['read_duplicates'], s['read_order_violations'], s['read_position_regressions']),
                        '%s / %s / %s' % (s['fenced'], s['lease_lost'], s['zombie_entries_accepted']),
-                       ' '.join(str(f['first_write_after']) for f in s['failover']) or '-',
+                       ' '.join('%s/%s' % x for x in takeover(d, s)) or '-',
                        '%s / %s' % (s['recovery_seconds'], s['backfilled']) if s['recovery_seconds'] is not None else '-',
                        '%s / %s' % (s['commit_to_feed_p50'], s['commit_to_feed_p99']),
                        '%s / %s' % (s['commit_to_read_p50'], s['commit_to_read_p99']), s['events_per_second'],
@@ -108,7 +125,7 @@ def exp5():
                        if 'oplog_bytes_per_change_writers' in s else '-'))
     out += ['', 'Oplog faults: ' + '; '.join(
         '%s %.1f GB of filler in %.0f s' % (run, f['filler_bytes'] / 1e9, f['filled'] - f['at'])
-        for run in ('seq-100k', 'derived-100k', 'seq-norecover', 'derived-norecover')
+        for run in ('seq-100k', 'derived-100k', 'epochseq-last-100k', 'seq-norecover', 'derived-norecover')
         for f in load(EV / '8' / ('exp5-' + run) / 'summary.json')['faults_log'] if f['fault'] == 'oplog') + '.']
     return out
 

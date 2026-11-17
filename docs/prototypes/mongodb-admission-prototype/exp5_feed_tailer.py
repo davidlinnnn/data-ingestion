@@ -10,6 +10,8 @@ Faults (--faults), each at a fixed time after the writers' schedule starts:
 
   kill    SIGKILL the lease holder and restart it, so two tailers run again
   stop    SIGSTOP the holder until the other one takes over, then SIGCONT it
+  freeze  the holder SIGSTOPs itself inside its feed transaction, after the transaction's first
+          write; it stays stopped until the other one has written to the feed (150 s cap)
   reader  SIGKILL the reader and restart it from its saved cursor
   oplog   SIGKILL both tailers, write filler until every member's oplog has dropped
           the resume point, restart them: the holder must recover from the documents
@@ -17,6 +19,11 @@ Faults (--faults), each at a fixed time after the writers' schedule starts:
 Positions (--position):
   seq      the tailer's own counter, saved with the token under the fence
   derived  the event's cluster time plus its index within that cluster time
+  epochseq the tailer's counter behind the lease epoch: a new holder's positions never equal an old one's
+
+Fence order (--fence):
+  first    the lease update is the transaction's first write, before the inserts
+  last     the inserts come first; a duplicate position counts as fenced
 
 Positive controls (--control):
   nofence    the batch is written without the epoch check, positions from a shared counter
@@ -41,6 +48,7 @@ from exp4_durability import uri
 
 TTL, RENEW = 5.0, 1.0  # lease seconds; the holder renews (and saves an idle resume token) this often
 FILL_LIMIT = 300  # seconds of filler after which the oplog fault gives up
+FREEZE = []  # set by SIGUSR1: the holder stops itself inside its next feed transaction
 
 
 class Fenced(Exception):
@@ -112,17 +120,20 @@ def op_time(db, epoch, **fields):
         return s.operation_time
 
 
-def position(mode, seq, last, ct):
+def position(mode, seq, last, ct, epoch):
     """The next position after (seq, last) for an event at cluster time ct; last is [time, inc, index]."""
     if mode == 'seq':
         return seq + 1, seq + 1, last
+    if mode == 'epochseq':
+        return '%06d%012d' % (epoch, seq + 1), seq + 1, last
     k = last[2] + 1 if last and (last[0], last[1]) == (ct.time, ct.inc) else 0
     last = [ct.time, ct.inc, k]
     return '%010d%010d%06d' % tuple(last), seq, last
 
 
-def tailer(major, slot, mode, control, parent, out):
+def tailer(major, slot, mode, control, fence, parent, out):
     name = '%s:%d' % (slot, os.getpid())
+    signal.signal(signal.SIGUSR1, lambda *_: FREEZE.append(1))
     client = MongoClient(uri(major), w='majority')
     db = client.kp240
     log = open(out, 'a')
@@ -142,7 +153,7 @@ def tailer(major, slot, mode, control, parent, out):
             continue
         note(ev='acquired', epoch=st['epoch'])
         try:
-            follow(db, st, name, mode, control, note, parent)
+            follow(db, st, name, mode, control, fence, note, parent)
         except Fenced:
             note(ev='fenced', epoch=st['epoch'])
         except LeaseLost:
@@ -152,16 +163,32 @@ def tailer(major, slot, mode, control, parent, out):
             time.sleep(1)
 
 
-def follow(db, st, name, mode, control, note, parent):
+def follow(db, st, name, mode, control, fence, note, parent):
     epoch, seq, last = st['epoch'], st['seq'], st['last']
     renewed = time.time()
 
-    def save(s, entries, token):  # the fence first: a tailer that lost the lease writes nothing
+    def hold():  # the freeze fault: stop inside the open transaction, after its first write
+        if FREEZE:
+            FREEZE.clear()
+            note(ev='frozen', epoch=epoch)
+            os.kill(os.getpid(), signal.SIGSTOP)
+
+    def save(s, entries, token):  # either order: a tailer that lost the lease commits nothing
+        if fence == 'last':
+            try:
+                db.feed.insert_many(entries, session=s)
+            except BulkWriteError as e:  # a newer holder already wrote this position
+                if any(x['code'] == 11000 for x in e.details['writeErrors']):
+                    raise Fenced()
+                raise
+            hold()
         r = db.lease.update_one({'_id': 'tailer', 'epoch': epoch}, {'$set': dict(
             token=token, start_at=None, seq=seq_after, last=last_after)}, session=s)
         if r.matched_count == 0:
             raise Fenced()
-        db.feed.insert_many(entries, session=s)
+        if fence == 'first':
+            hold()
+            db.feed.insert_many(entries, session=s)
 
     while True:  # one pass per stream opening: the first, and again after a recovery
         kw = dict(resume_after=st['token']) if st['token'] else dict(start_at_operation_time=st['start_at'])
@@ -186,7 +213,7 @@ def follow(db, st, name, mode, control, note, parent):
                             seq_cur, last_cur = seq, last
                         entries = []
                         for ev in batch:
-                            pos, seq_cur, last_cur = position(mode, seq_cur, last_cur, ev['clusterTime'])
+                            pos, seq_cur, last_cur = position(mode, seq_cur, last_cur, ev['clusterTime'], epoch)
                             d = ev['fullDocument']
                             entries.append(dict(_id=pos, change=d['_id'], doc=d['doc'], rev=d['rev'], epoch=epoch,
                                                 ct=ev['clusterTime'], txn='%s:%s' % (bytes(ev['lsid']['id']).hex() if 'lsid' in ev else None, ev.get('txnNumber')),
@@ -247,8 +274,8 @@ def recover(db, epoch, mode, seq, last, t_rec, note):
     for i, chunk in enumerate(chunks):
         at, entries, seq_cur, last_cur = time.time(), [], seq, last
         for d in chunk:
-            if mode == 'seq':
-                pos, seq_cur, last_cur = position(mode, seq_cur, last_cur, None)
+            if mode != 'derived':
+                pos, seq_cur, last_cur = position(mode, seq_cur, last_cur, None, epoch)
             else:
                 last_cur = [last_cur[0], last_cur[1], last_cur[2] + 1]
                 pos = '%010d%010d%06d' % tuple(last_cur)
@@ -306,8 +333,9 @@ def oldest_oplog(m):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--major', type=int, default=8)
-    p.add_argument('--position', choices=['seq', 'derived'], required=True)
+    p.add_argument('--position', choices=['seq', 'derived', 'epochseq'], required=True)
     p.add_argument('--control', choices=['none', 'nofence', 'norecover'], default='none')
+    p.add_argument('--fence', choices=['first', 'last'], default='first')
     p.add_argument('--faults', default='', help='comma list of fault@seconds, e.g. kill@20,stop@40,reader@60,oplog@80')
     p.add_argument('--seed', type=int, default=24001)
     p.add_argument('--writers', type=int, default=8)
@@ -371,7 +399,7 @@ def main():
     try:
         start('reader', reader, a.major, parent, deliveries, cursor_file)
         for slot in 'AB':
-            start('tailer' + slot, tailer, a.major, slot, a.position, a.control, parent, tlog)
+            start('tailer' + slot, tailer, a.major, slot, a.position, a.control, a.fence, parent, tlog)
         time.sleep(2)
         t0 = time.time() + 1
         writers = [start('writer%d' % w, writer, a.major, run, w, a.seed, a.transactions, a.docs, a.scale, a.rate, t0,
@@ -388,7 +416,7 @@ def main():
                 os.kill(procs[key].pid, signal.SIGKILL)
                 t = time.time()
                 procs[key].join()
-                start(key, tailer, a.major, key[-1], a.position, a.control, parent, tlog)
+                start(key, tailer, a.major, key[-1], a.position, a.control, a.fence, parent, tlog)
                 fault_note(fault='kill', victim=owner, epoch=epoch, at=t, next_epoch=wait_epoch_change(epoch))
             elif kind == 'stop':
                 key, owner = holder()
@@ -398,6 +426,21 @@ def main():
                 time.sleep(2)  # the new holder writes for a while before the old one wakes
                 os.kill(procs[key].pid, signal.SIGCONT)
                 fault_note(fault='stop', victim=owner, epoch=epoch, at=t, next_epoch=nxt, resumed=time.time())
+            elif kind == 'freeze':
+                key, owner = holder()
+                os.kill(procs[key].pid, signal.SIGUSR1)
+                t, until = None, time.time() + 10
+                while t is None and time.time() < until:
+                    time.sleep(.05)
+                    t = next((x['t'] for x in lines(tlog)[::-1] if x['ev'] == 'frozen' and x['tailer'] == owner), None)
+                    t = t if t and t > until - 10 else None
+                nxt = wait_epoch_change(epoch, limit=150) if t else None
+                until = time.time() + 150
+                while nxt and time.time() < until and not db.feed.find_one({'epoch': nxt}):
+                    time.sleep(.05)
+                time.sleep(2)
+                os.kill(procs[key].pid, signal.SIGCONT)
+                fault_note(fault='freeze', victim=owner, epoch=epoch, at=t, next_epoch=nxt, resumed=time.time())
             elif kind == 'reader':
                 os.kill(procs['reader'].pid, signal.SIGKILL)
                 t = time.time()
@@ -426,7 +469,7 @@ def main():
                 filled = time.time()
                 client.drop_database('kp240_filler')
                 for slot in 'AB':
-                    start('tailer' + slot, tailer, a.major, slot, a.position, a.control, parent, tlog)
+                    start('tailer' + slot, tailer, a.major, slot, a.position, a.control, a.fence, parent, tlog)
                 fault_note(fault='oplog', at=t, stopped_at=[stopped_at.time, stopped_at.inc], filler_bytes=written,
                            filled=filled, restarted=time.time(), oldest=[str(oldest_oplog(m)) for m in ms])
         errors = ['%s exit %s' % (k, pr.exitcode) for k, pr in procs.items() if k.startswith('writer') and pr.exitcode != 0]
@@ -450,7 +493,7 @@ def main():
                 os.kill(pr.pid, signal.SIGCONT)
                 os.kill(pr.pid, signal.SIGKILL)
                 pr.join()
-    summary = dict(version=version, position=a.position, control=a.control, faults=a.faults, seed=a.seed,
+    summary = dict(version=version, position=a.position, control=a.control, fence=a.fence, faults=a.faults, seed=a.seed,
                    writers=a.writers, transactions=a.transactions, docs=a.docs, scale=a.scale, rate_per_writer=a.rate,
                    wall_seconds=round(time.time() - t0, 1), errors=errors, run=run,
                    **check(db, run, attempts, committed, lines(deliveries), lines(tlog), lines(flog)),
@@ -508,10 +551,13 @@ def check(db, run, attempts, committed, deliveries, tlog, flog):
     zombie = sum(1 for e in ours if e['epoch'] + 1 in acquired and e['at'] > acquired[e['epoch'] + 1])
     failover = []
     for f in flog:
-        if f['fault'] in ('kill', 'stop') and f.get('next_epoch'):
+        if f['fault'] in ('kill', 'stop', 'freeze') and f.get('next_epoch'):
             firsts = [e['at'] for e in ours if e['epoch'] == f['next_epoch']]
+            reads = [d['at'] for d in read if d['epoch'] == f['next_epoch']]
+            # first_write_after is when the new holder formed its first batch, first_read_after when that batch was readable
             failover.append(dict(fault=f['fault'], acquired_after=round(acquired[f['next_epoch']] - f['at'], 2),
-                                 first_write_after=round(min(firsts) - f['at'], 2) if firsts else None))
+                                 first_write_after=round(min(firsts) - f['at'], 2) if firsts else None,
+                                 first_read_after=round(min(reads) - f['at'], 2) if reads else None))
     txn_ct = defaultdict(set)
     for e in ours:
         if e['src'] == 'stream':
