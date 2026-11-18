@@ -1,9 +1,12 @@
 """The platform API (#113, authorization design Q12, §4.3), with its OpenAPI document at
 /openapi.json and a health route at /healthz. So far the internal authz API: the Authorizer for
-the PEPs outside this process, open only to registered PEP service identities; and under /v1/,
-open only to registered credentials (§7), the Resource registration of a Source (#114,
-authorization design §6.1) and its batches: declare, finalize and get_batch (#96, admission spec
-§5.1, §5.3, §5.4).
+the PEPs outside this process, open only to registered PEP service identities; under /v1/, open
+only to registered credentials (§7), the Resource registration of a Source (#114, authorization
+design §6.1) and its batches: declare, finalize and get_batch (#96, admission spec §5.1, §5.3,
+§5.4); and under /read/v1/ the governed read API (#126, canonical consumption DR §3):
+the Change Feed, cursors, Document state and bootstrap listings that kp_admission.feed describes,
+open only to the same registered service identities as the authz API. It has its own prefix
+because /v1/ is the Source-facing surface that an ingress exposes.
 
 Every request has a trace id (admission spec §4): the trace id of its `traceparent` header, or a
 generated one when the header is absent or invalid. Every response returns it in X-Trace-Id and
@@ -16,11 +19,12 @@ conventions:
   deny, unavailable) and `pep`, the calling PEP's service identity.
 - `kp_authz_decision_duration_seconds` (histogram, seconds), the Authorizer's time per decision, by
   `operation`.
-- `kp_api_calls_total` (count) of the /v1/ calls that reached an operation, by `operation` (its
-  route's name, such as register_resource) and `status`, the HTTP status code.
+- `kp_api_calls_total` (count) of the /v1/ and /read/v1/ calls that reached an operation, by
+  `operation` (its route's name, such as register_resource) and `status`, the HTTP status code.
 - `kp_admission_items_total` (count) of the batch items decided, by `operation` (declare,
   finalize), `status` (declared, unchanged, queued, rejected) and `reason`, a rejection's reason
   code (admission spec §12), empty otherwise.
+- kp_admission.feed's gauges.
 """
 
 import hashlib
@@ -46,7 +50,7 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission import batches, resources
+from kp_admission import batches, feed, resources
 from kp_admission.authz import PAGE_SIZE, Action, Authorizer, Decision, Operation, Outcome, Ref
 from kp_admission.errors import ErrorStatus, Refused
 from kp_admission.resources import Resource
@@ -62,6 +66,7 @@ calls = Counter("kp_api_calls", "platform API /v1/ calls", ["operation", "status
 AUTHZ = "authz.knowledge-platform"
 ADMISSION = "admission.knowledge-platform"
 V1 = "/v1/"  # the Source-facing routes
+READ = "/read/"  # the governed reads, for projections
 RETRY_AFTER_S = 1
 
 # Keyed by log field (trace_id, x_request_id, pep, source_id or client_id, credential_id):
@@ -115,6 +120,7 @@ class ErrorInfo(BaseModel):
     type: str = Field(default="type.googleapis.com/google.rpc.ErrorInfo", alias="@type")
     reason: str
     domain: str
+    metadata: dict[str, str] | SkipJsonSchema[None] = None
 
 
 class ErrorBody(BaseModel):
@@ -223,6 +229,26 @@ class BatchView(BaseModel):
     next_page_token: str = ""
 
 
+class CursorReport(BaseModel):
+    cursor: str
+
+
+class FeedPage(BaseModel):
+    events: list[feed.Event]
+    next_cursor: str
+
+
+class SourceList(BaseModel):
+    source_ids: list[str]
+
+
+class DocumentPage(BaseModel):
+    document_uids: list[str]
+    next_after: str | None  # null on the last page
+
+
+_Limit = Annotated[int, Query(ge=1, le=1000)]
+
 Key = Annotated[
     str, Path(min_length=1, max_length=200, description="The Source's own key, URL-encoded")
 ]
@@ -281,21 +307,22 @@ class Traced:
 
 
 class PepOnly:
-    """Answers 401 to a call under /authz/ that carries no registered PEP credential, before
-    anything reads its body, and records the PEP of the others as the request's `pep`."""
+    """Answers 401 to a call under /authz/ or /read/ that carries no registered PEP credential,
+    before anything reads its body, and records the PEP of the others as the request's `pep`."""
 
     def __init__(self, app: ASGIApp, peps: Mapping[str, str]) -> None:
         self._app, self._peps = app, peps
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] == "http" and scope["path"].startswith("/authz/"):
+        if scope["type"] == "http" and scope["path"].startswith(("/authz/", READ)):
             pep = self._peps.get(_bearer_digest(scope))
             if pep is None:
-                log.warning(
-                    "authz API call without a registered PEP credential from %s", _peer(scope)
-                )
+                log.warning("call without a registered PEP credential from %s", _peer(scope))
                 rejected = _error(
-                    401, "UNAUTHENTICATED", "A registered PEP credential is required."
+                    401,
+                    "UNAUTHENTICATED",
+                    "A registered PEP credential is required.",
+                    domain=_domain(scope["path"]),
                 )
                 await rejected(scope, receive, send)
                 return
@@ -337,13 +364,14 @@ class Credentialed:
 
 
 class Counted:
-    """Counts each call under /v1/ that reached a route, by the route's name and status code."""
+    """Counts each call under /v1/ or /read/ that reached a route, by the route's name and status
+    code."""
 
     def __init__(self, app: ASGIApp) -> None:
         self._app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http" or not scope["path"].startswith(V1):
+        if scope["type"] != "http" or not scope["path"].startswith((V1, READ)):
             await self._app(scope, receive, send)
             return
         status = 500  # unless a response starts
@@ -377,7 +405,9 @@ def app(
 
     Under /v1/ a Source reaches only the keys it registered; `pool` holds them. A key it did not
     register is 404, a credential without the scope an operation needs 403, and a client
-    credential holds none. A batch is the Source's own too: another Source's is 404."""
+    credential holds none. A batch is the Source's own too: another Source's is 404.
+
+    Under /read/v1/ a registered PEP reads the Change Feed and reports only its own cursor."""
     traced = {"headers": {"X-Trace-Id": {"description": "trace_id", "schema": {"type": "string"}}}}
     error = traced | {"model": ErrorResponse}
     errors = error | {"description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
@@ -538,10 +568,107 @@ def app(
         """The batch and each item's outcome (admission spec §5.4)."""
         return JSONResponse(await batches.view(pool, _caller(), batch_id))
 
+    read = APIRouter(
+        prefix="/read/v1",
+        dependencies=declared,
+        responses={
+            "200": traced,
+            "4XX": error | {"description": "400, 401, 403, 404, 409 or 410"},
+            "503": error | {"description": "STATE_BEHIND or UNAVAILABLE: retry"},
+        },
+    )
+
+    @read.get("/feed", response_model=FeedPage, response_model_exclude_none=True)
+    async def read_feed(cursor: str | None = None, limit: _Limit = 100) -> FeedPage:
+        """Without a cursor: no events and the position to start from before enumerating
+        Documents (A4). An expired cursor is 410 CURSOR_EXPIRED: bootstrap again."""
+        async with pool.connection() as conn:
+            if cursor is None:
+                return FeedPage(events=[], next_cursor=await feed.head(conn))
+            try:
+                events, next_cursor = await feed.read(conn, cursor, limit)
+            except ValueError:
+                raise _invalid("cursor: not a feed position") from None
+            except feed.CursorExpired:
+                raise Refused(
+                    410,
+                    "FAILED_PRECONDITION",
+                    "CURSOR_EXPIRED",
+                    "Retention dropped entries after this cursor.",
+                ) from None
+        return FeedPage(events=events, next_cursor=next_cursor)
+
+    @read.put("/consumers/{projection}/cursor", status_code=204, response_class=Response)
+    async def report_cursor(projection: str, body: CursorReport) -> None:
+        """Only forward: a step back is 409 CURSOR_BACKWARDS with the platform's cursor, which
+        wins (A3)."""
+        if projection != _request.get()["pep"]:
+            raise Refused(
+                403,
+                "PERMISSION_DENIED",
+                "PERMISSION_DENIED",
+                "A projection reports only its own cursor.",
+            )
+        async with pool.connection() as conn:
+            try:
+                await feed.report_cursor(conn, projection, body.cursor)
+            except ValueError:
+                raise _invalid("cursor: not a position of the feed") from None
+            except feed.Backwards as backwards:
+                raise Refused(
+                    409,
+                    "FAILED_PRECONDITION",
+                    "CURSOR_BACKWARDS",
+                    "The cursor only moves forward.",
+                    {"cursor": backwards.position},
+                ) from None
+
+    @read.get("/documents/{document_uid}/state", response_model=feed.State)
+    async def document_state(document_uid: str, at_least: str | None = None) -> feed.State:
+        """At least as new as at_least, else 503 STATE_BEHIND to retry (A6); a deleted Document
+        answers `deleted` (A4 R-a), a uid the platform never had 404."""
+        async with pool.connection() as conn:
+            try:
+                state = await feed.document_state(conn, document_uid, at_least)
+            except ValueError:
+                raise _invalid("at_least: not a feed position") from None
+            except feed.Behind:
+                raise Refused(
+                    503,
+                    "UNAVAILABLE",
+                    "STATE_BEHIND",
+                    "The state does not include at_least yet; retry.",
+                ) from None
+        if state is None:
+            raise Refused(404, "NOT_FOUND", "DOCUMENT_NOT_FOUND", "No such Document.")
+        return state
+
+    @read.get("/sources", response_model=SourceList)
+    async def list_sources() -> SourceList:
+        async with pool.connection() as conn:
+            return SourceList(source_ids=await feed.list_sources(conn))
+
+    @read.get("/sources/{source_id}/profile", response_model=feed.Profile)
+    async def source_profile(source_id: str) -> feed.Profile:
+        async with pool.connection() as conn:
+            if found := await feed.profile(conn, source_id):
+                return found
+        raise Refused(404, "NOT_FOUND", "SOURCE_NOT_FOUND", "No such Source.")
+
+    @read.get("/sources/{source_id}/documents", response_model=DocumentPage)
+    async def list_documents(
+        source_id: str, after: str | None = None, limit: _Limit = 100
+    ) -> DocumentPage:
+        """The Source's Documents that are not deleted, by uid after `after`."""
+        async with pool.connection() as conn:
+            uids = await feed.list_documents(conn, source_id, after, limit)
+        return DocumentPage(document_uids=uids, next_after=uids[-1] if len(uids) == limit else None)
+
     # No /docs or /redoc: those pages load their scripts from another site.
     api = FastAPI(title="Knowledge Platform API", version="1", docs_url=None, redoc_url=None)
     api.include_router(authz)
     api.include_router(v1)
+    api.include_router(read)
     api.add_middleware(Counted)
     api.add_middleware(Credentialed, credentials=credentials)
     api.add_middleware(PepOnly, peps=peps)
@@ -556,12 +683,14 @@ def app(
         first = error.errors()[0]
         where = ".".join(map(str, first["loc"]))
         message = f"{where}: {first['msg']}"
-        return _error(400, "INVALID_ARGUMENT", message, domain=_domain(request))
+        return _error(400, "INVALID_ARGUMENT", message, domain=_domain(request.url.path))
 
     @api.exception_handler(HTTPException)
     async def unreadable(request: Request, error: HTTPException) -> Response:
         if error.status_code == 400:  # FastAPI could not decode the body
-            return _error(400, "INVALID_ARGUMENT", str(error.detail), domain=_domain(request))
+            return _error(
+                400, "INVALID_ARGUMENT", str(error.detail), domain=_domain(request.url.path)
+            )
         return await http_exception_handler(request, error)
 
     @api.exception_handler(Refused)
@@ -572,6 +701,7 @@ def app(
             error.message,
             error.reason,
             ADMISSION,
+            error.metadata,
             error.retry_after,
             error.items,
         )
@@ -580,7 +710,7 @@ def app(
     async def database_down(request: Request, error: psycopg.OperationalError) -> JSONResponse:
         log.warning("database unavailable", extra={"correlation": {"error": type(error).__name__}})
         message = "The database is unavailable."
-        return _error(503, "UNAVAILABLE", message, domain=_domain(request))
+        return _error(503, "UNAVAILABLE", message, domain=_domain(request.url.path))
 
     return api
 
@@ -622,8 +752,12 @@ def _peer(scope: Scope) -> str | None:
     return scope["client"][0] if scope.get("client") else None
 
 
-def _domain(request: Request) -> str:
-    return ADMISSION if request.url.path.startswith(V1) else AUTHZ
+def _domain(path: str) -> str:
+    return AUTHZ if path.startswith("/authz/") else ADMISSION
+
+
+def _invalid(message: str) -> Refused:
+    return Refused(400, "INVALID_ARGUMENT", "INVALID_ARGUMENT", message)
 
 
 def _error(
@@ -632,11 +766,12 @@ def _error(
     message: str,
     reason: str | None = None,
     domain: str = AUTHZ,
+    metadata: dict[str, str] | None = None,
     retry_after: int | None = None,
     items: list[dict[str, Any]] | None = None,
 ) -> JSONResponse:
-    details = [ErrorInfo(reason=reason or status, domain=domain)]
-    # Every /v1/ 429 and 503 says when to retry (admission spec §5.1).
+    details = [ErrorInfo(reason=reason or status, domain=domain, metadata=metadata)]
+    # Every /v1/ and /read/v1/ 429 and 503 says when to retry (admission spec §5.1).
     if code == 503 and domain == ADMISSION:
         retry_after = retry_after or RETRY_AFTER_S
     retry = {"Retry-After": str(retry_after)} if retry_after else None

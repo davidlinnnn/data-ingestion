@@ -14,6 +14,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from kp_admission import feed
 from kp_admission.cli import main
 from tests.admission.support import request, resource, revision, runs
 
@@ -305,7 +306,7 @@ async def test_the_api_serves_registered_sources_and_clients_and_logs_and_counts
 
 
 async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn, conn):
-    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn, "KP_TENANT_ID": "t1"}
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
 
     def run(*args: str) -> tuple[int, dict]:
         done = subprocess.run(
@@ -316,14 +317,55 @@ async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn,
         )
         return done.returncode, json.loads(done.stdout)
 
-    assert run("adopt", "application/pdf", "paper-pdf@1") == (
+    assert run("adopt", "--tenant", "t1", "application/pdf", "paper-pdf@1") == (
         0,
         {"adopted_version": "paper-pdf@1", "adoption_sequence": 1},
     )
-    assert run("cancel-adoption", "application/pdf", "paper-pdf@2") == (1, {"cancelled": False})
-    assert run("cancel-adoption", "application/pdf", "paper-pdf@1") == (0, {"cancelled": True})
+    cancel = ("cancel-adoption", "--tenant", "t1", "application/pdf")
+    assert run(*cancel, "paper-pdf@2") == (1, {"cancelled": False})
+    assert run(*cancel, "paper-pdf@1") == (0, {"cancelled": True})
     await conn.execute(
         "INSERT INTO batch (batch_id, tenant_id, source_id, state, expires_at)"
         " VALUES ('bat_1', 't1', 'km', 'open', now() - interval '1 minute')"
     )
     assert run("expire") == (0, {"expired": 1})
+
+
+@pytest.mark.docker
+async def test_set_profile_and_feed_retention_are_one_shot_runs_that_print_json(conn, dsn):
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
+    runs_ = [
+        role(
+            "set-profile", env, "--tenant", "t1", "s1", "retrieval", "wiki", stdout=subprocess.PIPE
+        ),
+        role("feed-retention", env, stdout=subprocess.PIPE),
+    ]
+    outs = [json.loads(run.communicate(timeout=30)[0]) for run in runs_]
+
+    assert [run.returncode for run in runs_] == [0, 0]
+    assert await feed.profile(conn, "s1") == feed.Profile(
+        source_id="s1", projections=["retrieval", "wiki"], profile_seq=outs[0]["profile_seq"]
+    )
+    assert outs[1] == {"created": [], "dropped": []}
+
+
+@pytest.mark.docker
+@pytest.mark.network
+async def test_the_api_exports_the_feed_guard_gauges_on_its_metrics_port(conn, dsn):
+    await feed.report_cursor(conn, "wiki", await feed.head(conn))
+    port, metrics_port = free_port(), free_port()
+    api = role("api", api_env(dsn, port), "--metrics-port", str(metrics_port))
+    try:
+        async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{metrics_port}") as http:
+            for _ in range(100):
+                with contextlib.suppress(httpx.ConnectError):
+                    page = (await http.get("/metrics")).text
+                    if 'kp_feed_consumer_lag_seconds{projection="wiki"}' in page:
+                        break
+                await asyncio.sleep(0.1)
+    finally:
+        api.send_signal(signal.SIGTERM)
+        api.wait(timeout=10)
+
+    assert 'kp_feed_consumer_lag_seconds{projection="wiki"} 0.0' in page
+    assert "kp_feed_oldest_xmin_age_seconds " in page

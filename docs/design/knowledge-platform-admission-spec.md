@@ -89,8 +89,9 @@ Constraints:
 The adoption record (#96) names the Processing Profile version that new
 `process` requests run, by the media type of the main file: the pilot has one
 profile per file format. A Processing Profile owner changes it with two operator
-commands, `kp-admission adopt <media_type> <version>` and `kp-admission
-cancel-adoption <media_type> <version>`, which open no request themselves (the
+commands, `kp-admission adopt --tenant <tenant> <media_type> <version>` and
+`kp-admission cancel-adoption --tenant <tenant> <media_type> <version>`, which
+open no request themselves (the
 refresh after an adoption is #98's command).
 
 - Each adoption is a row with the next `sequence` of the deployment. A request
@@ -482,6 +483,16 @@ readiness. `serving[]` (§5.6) carries each projection's state: `ready`,
 `building` or `stale`. See the
 [#55 design record](knowledge-platform-canonical-consumption.md).
 
+Not in the pilot (user ruling, 2026-11-18,
+[#56](https://github.com/davidlinnnn/data-ingestion/issues/56#issuecomment-6982506436)): the pilot (MVP) supports Source Deletion only and builds no
+governance withdrawal or reinstatement. No withdrawal record exists, so
+readiness `withdrawn` and the `withdrawn` attention of §7.2 never occur; both
+stay in the contract for the release that adds withdrawal:
+[#97](https://github.com/davidlinnnn/data-ingestion/issues/97) keeps the two
+values and builds no rule that produces them, and #78 routes no `governance`
+attention. To take a document out of serving during the pilot, its Source
+deletes it; a deletion cannot be undone (§8).
+
 ### 7.2 Attention
 
 | Kind | Action owner | When |
@@ -494,7 +505,8 @@ readiness. `serving[]` (§5.6) carries each projection's state: `ready`,
 | `withdrawn` | `governance` | Governance withdrawal |
 
 Method-version changes and failed platform refreshes affect neither readiness
-nor attention; the owner is alerted (#78).
+nor attention; the owner is alerted (#78). `withdrawn` does not occur in the
+pilot (§7.1).
 
 ### 7.3 Reports
 

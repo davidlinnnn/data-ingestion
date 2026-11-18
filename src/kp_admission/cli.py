@@ -1,5 +1,6 @@
-"""kp-admission command line: the api, dispatcher and reconciler roles, batch expiry and the two
-adoption commands (#95, #113, #96, admission spec §3, §13).
+"""kp-admission command line: the api, dispatcher and reconciler roles (#95, #113, admission
+spec §13), Change Feed retention and the Knowledge Profile write point (#126), batch expiry and
+the two adoption commands (#96, admission spec §3).
 
 The database comes from KP_ADMISSION_DATABASE_URL; Temporal from TEMPORAL_ADDRESS (default
 localhost:7233) and TEMPORAL_NAMESPACE (default "default"), as for kp-canonicalization.
@@ -9,9 +10,12 @@ import argparse
 import asyncio
 import contextlib
 import json
+import logging
 import os
 import signal
 import sys
+from datetime import UTC, datetime
+from typing import Any
 
 import prometheus_client
 import psycopg
@@ -19,7 +23,7 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, batches
+from kp_admission import adoption, batches, feed
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -31,13 +35,17 @@ from kp_canonicalization.workflow import task_queue
 POLL_S = 1.0
 POOL_SIZE = 5  # per api pod; the connection budget (#78 C14) counts it
 POOL_WAIT_S = 2.0  # a /v1/ call waits this long for a connection, then answers 503
+OBSERVE_S = 15.0
+
+log = logging.getLogger(__name__)
 SOURCES = pydantic.TypeAdapter(dict[str, batches.SourceSettings])
 
 
 def main(argv: list[str] | None = None) -> int:
     """`kp-admission api [--metrics-port P]`: serve the platform API on KP_ADMISSION_API_PORT
     (default 8080) until SIGTERM or SIGINT; it finishes open requests, then ends by that signal, as
-    uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics.
+    uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics, and
+    kp_admission.feed's gauges, measured every OBSERVE_S seconds.
     KP_AUTHZ_PROVIDER selects the authz provider: `allow-all`, the only one, which it refuses
     unless KP_DEPLOYMENT is `pilot` (#113; the marker is #78's). KP_AUTHZ_PEP_CREDENTIALS registers
     the PEPs that may call the authz API, as a JSON object from the SHA-256 hex digest of each
@@ -61,27 +69,39 @@ def main(argv: list[str] | None = None) -> int:
     `kp-admission reconcile`: one reconciler run. It prints how many requests went each way, as
     JSON, and fails when Temporal is unreachable.
 
+    `kp-admission feed-retention`: one Change Feed retention run (kp_admission.feed.retain), daily
+    at least. It prints the partitions it created and dropped, as JSON.
+
+    `kp-admission set-profile --tenant T SOURCE [PROJECTION ...]`: set the Source's Knowledge
+    Profile, the Projection Types it requires, and print its profile_seq as JSON.
+
     `kp-admission expire`: one batch expiry run, the hourly CronJob: every batch open 24 hours is
     expired (§11). It prints how many, as JSON.
 
-    `kp-admission adopt <media_type> <version>` and `kp-admission cancel-adoption <media_type>
-    <version>`: the Processing Profile owner's adoption commands (§3), for the tenant
-    KP_TENANT_ID. Adopting supersedes the version adopted before for that media type; cancelling
-    the adopted version leaves none, and fails (exit 1) for a version that is not the adopted
-    one. Each prints the result as JSON and opens no refresh request (#98 does).
+    `kp-admission adopt --tenant T MEDIA_TYPE VERSION` and `kp-admission cancel-adoption --tenant
+    T MEDIA_TYPE VERSION`: the Processing Profile owner's adoption commands (§3). Adopting
+    supersedes the version adopted before for that media type; cancelling the adopted version
+    leaves none, and fails (exit 1) for a version that is not the adopted one. Each prints the
+    result as JSON and opens no refresh request (#98 does).
 
-    All of them log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
+    All log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
     configuration error."""
     parser = argparse.ArgumentParser(prog="kp-admission")
     roles = parser.add_subparsers(dest="role", required=True)
     roles.add_parser("api").add_argument("--metrics-port", type=int)
     roles.add_parser("dispatcher")
     roles.add_parser("reconcile")
+    roles.add_parser("feed-retention")
+    profile = roles.add_parser("set-profile")
+    profile.add_argument("--tenant", required=True)
+    profile.add_argument("source")
+    profile.add_argument("projections", nargs="*")
     roles.add_parser("expire")
     for command in ("adopt", "cancel-adoption"):
-        parser_of = roles.add_parser(command)
-        parser_of.add_argument("media_type")
-        parser_of.add_argument("version")
+        adopting = roles.add_parser(command)
+        adopting.add_argument("--tenant", required=True)
+        adopting.add_argument("media_type")
+        adopting.add_argument("version")
     args = parser.parse_args(argv)
     dsn = os.environ.get("KP_ADMISSION_DATABASE_URL")
     if not dsn:
@@ -140,12 +160,12 @@ def main(argv: list[str] | None = None) -> int:
             prometheus_client.start_http_server(args.metrics_port)
         return asyncio.run(run_api(dsn, peps, credentials, intake, int(port)))
     log_json_lines()
+    if args.role == "feed-retention":
+        return asyncio.run(run_feed_retention(dsn))
+    if args.role == "set-profile":
+        return asyncio.run(run_set_profile(dsn, args.tenant, args.source, args.projections))
     if args.role in ("adopt", "cancel-adoption"):
-        tenant_id = os.environ.get("KP_TENANT_ID")
-        if not tenant_id:
-            print("KP_TENANT_ID is required", file=sys.stderr)
-            return 2
-        return asyncio.run(run_adoption(dsn, tenant_id, args.role, args.media_type, args.version))
+        return asyncio.run(run_adoption(dsn, args.tenant, args.role, args.media_type, args.version))
     if args.role == "expire":
         return asyncio.run(run_expiry(dsn))
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
@@ -168,7 +188,34 @@ async def run_api(
             port=port,
             log_config=None,
         )
+        observing = asyncio.create_task(observe(pool))
         await uvicorn.Server(config).serve()
+        observing.cancel()
+    return 0
+
+
+async def observe(pool: AsyncConnectionPool[Any]) -> None:
+    while True:
+        try:
+            async with pool.connection() as conn:
+                await feed.observe(conn)
+        except Exception as error:  # the gauges keep their last values; the api keeps serving
+            log.warning("feed metrics not measured: %s", type(error).__name__)
+        await asyncio.sleep(OBSERVE_S)
+
+
+async def run_feed_retention(dsn: str) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        print(json.dumps(await feed.retain(conn, datetime.now(UTC))))
+    return 0
+
+
+async def run_set_profile(dsn: str, tenant: str, source: str, projections: list[str]) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        seq = await feed.set_profile(
+            conn, tenant_id=tenant, source_id=source, projections=projections
+        )
+    print(json.dumps({"profile_seq": seq}))
     return 0
 
 
