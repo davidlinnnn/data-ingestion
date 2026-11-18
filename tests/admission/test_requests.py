@@ -109,7 +109,8 @@ async def test_every_admission_record_carries_a_tenant(conn):
 
     assert dict(await cursor.fetchall()) == dict.fromkeys(
         ["batch", "batch_item", "document", "source_revision", "request", "outbox",
-         "idempotency_key", "source", "change_feed"], "NO",
+         "idempotency_key", "source", "change_feed", "adoption",
+         "intake_quota"], "NO",
     ) | {
         # Platform-wide: a projection reads every tenant's feed (#126).
         "consumer_cursor": None, "change_feed_horizon": None,

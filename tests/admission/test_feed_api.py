@@ -11,7 +11,7 @@ from psycopg_pool import AsyncConnectionPool
 from kp_admission import feed
 from kp_admission.api import app
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import revision
+from tests.admission.support import INTAKE, revision
 from tests.admission.test_api import PEPS, TOKEN
 
 pytestmark = pytest.mark.docker
@@ -25,7 +25,7 @@ async def pool(dsn):
 
 def client(pool: AsyncConnectionPool, token: str | None = TOKEN) -> httpx.AsyncClient:
     headers = {"authorization": f"Bearer {token}"} if token else {}
-    transport = httpx.ASGITransport(app(FakeAuthorizer(), PEPS, {}, pool))
+    transport = httpx.ASGITransport(app(FakeAuthorizer(), PEPS, {}, pool, INTAKE))
     return httpx.AsyncClient(transport=transport, base_url="http://api/read", headers=headers)
 
 

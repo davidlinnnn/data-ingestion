@@ -25,7 +25,9 @@ CREATE TABLE document (
     delete_request_id text,
     -- Written by status intake (#97) with the current_revision_changed event; null until then.
     current_source_revision_id    text,
-    current_canonical_revision_id text
+    current_canonical_revision_id text,
+    -- Set with each Source Revision finalization creates; §6.3 orders against it.
+    latest_source_revision_id     text
 );
 
 -- A source_id is unique per tenant, so a Source is (tenant_id, source_id).
@@ -79,6 +81,7 @@ CREATE UNIQUE INDEX request_one_active ON request (document_uid, source_revision
 
 ALTER TABLE document ADD FOREIGN KEY (delete_request_id) REFERENCES request;
 ALTER TABLE document ADD FOREIGN KEY (current_source_revision_id) REFERENCES source_revision;
+ALTER TABLE document ADD FOREIGN KEY (latest_source_revision_id) REFERENCES source_revision;
 
 CREATE TABLE outbox (
     request_id    text PRIMARY KEY REFERENCES request,
@@ -104,6 +107,9 @@ CREATE TABLE batch_item (
     source_revision_id text REFERENCES source_revision,
     error              jsonb,
     declared           jsonb NOT NULL,  -- the item as declared: files and catalog fields (§5.1)
+    -- The placement decisions (#85) under declaration and finalization: decision_id,
+    -- evaluated_at, and a deny's reason.
+    placement          jsonb,
     PRIMARY KEY (batch_id, index)
 );
 
@@ -112,7 +118,9 @@ CREATE TABLE idempotency_key (
     source_id   text NOT NULL,
     key         text NOT NULL,
     body_sha256 text NOT NULL,
-    response    jsonb,  -- null while the first request is in progress (IDEMPOTENCY_IN_PROGRESS)
+    -- Written in the declaration's own transaction: a repeat waits for it, then replays it.
+    status      integer NOT NULL,
+    response    jsonb NOT NULL,
     created_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, source_id, key)
 );
@@ -180,6 +188,26 @@ CREATE TABLE consumer_cursor (
     projection text PRIMARY KEY,
     position   text NOT NULL,
     updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Each Source's intake quota, a token bucket (§11).
+CREATE TABLE intake_quota (
+    tenant_id   text NOT NULL,
+    source_id   text NOT NULL,
+    tokens      double precision NOT NULL,
+    refilled_at timestamptz NOT NULL,
+    PRIMARY KEY (tenant_id, source_id)
+);
+
+-- The adoption record (§3): the Processing Profile version new process requests of a main-file
+-- media type run. The highest sequence of a media type is its adopted version unless cancelled.
+CREATE TABLE adoption (
+    sequence        bigint PRIMARY KEY,  -- the adoption_sequence of the requests made under it
+    tenant_id       text NOT NULL,
+    media_type      text NOT NULL,
+    adopted_version text NOT NULL,
+    adopted_at      timestamptz NOT NULL DEFAULT now(),
+    cancelled_at    timestamptz
 );
 
 -- Authorization records (authorization design §5.1, #113), in their own schema so that a

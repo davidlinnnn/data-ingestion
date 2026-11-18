@@ -14,7 +14,7 @@ from kp_admission.api import ClientCredential, SourceCredential, app
 from kp_admission.authz import AllowAll, Ref
 from kp_admission.resources import resource_id, source_and_key
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import bind, changes
+from tests.admission.support import INTAKE, bind, changes
 
 pytestmark = pytest.mark.docker
 
@@ -55,7 +55,7 @@ async def pool(dsn):
 def api(pool):
     def connect(token: str | None = "km-1", authorizer=None) -> httpx.AsyncClient:
         headers = {"authorization": f"Bearer {token}"} if token else {}
-        application = app(authorizer or FakeAuthorizer(), {}, CREDENTIALS, pool)
+        application = app(authorizer or FakeAuthorizer(), {}, CREDENTIALS, pool, INTAKE)
         transport = httpx.ASGITransport(application)
         return httpx.AsyncClient(transport=transport, base_url="http://api", headers=headers)
 
@@ -314,7 +314,7 @@ async def test_a_call_while_the_database_is_down_is_a_503_that_says_when_to_retr
     down = AsyncConnectionPool("host=127.0.0.1 port=9", timeout=0.5, open=False)
     await down.open(wait=False)
     try:
-        application = app(FakeAuthorizer(), {}, CREDENTIALS, down)
+        application = app(FakeAuthorizer(), {}, CREDENTIALS, down, INTAKE)
         transport = httpx.ASGITransport(application)
         headers = {"authorization": "Bearer km-1"}
         async with httpx.AsyncClient(

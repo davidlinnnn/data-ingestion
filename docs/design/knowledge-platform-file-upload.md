@@ -16,7 +16,7 @@
 
 - 上傳者是 Data Owner 的系統（`CONTEXT.md` 的 **Source**），用平台核發的 Source credential 呼叫 API；人只是觸發者，平台不以人的身分授權這個操作（設計筆記 2026-10-18 的 client 釐清）。
 - 一次提交是一個 **Batch**，最多 50 個 item；每個 item 是一份 Document 的一個版本，含一個 `main` 檔與零到多個附件，每個檔案宣告 `sha256`、`size`、`media_type`。
-- pilot 支援的主檔格式是 PDF、Markdown、PPTX；pilot 實際只收論文 PDF。
+- 主檔格式要有採用中的 Processing Profile 版本才收（admission 規格 §3、§6.1 第 2 條）；pilot 只有 PDF（`paper-pdf`）。
 
 ### 1.2 不變的邊界
 
@@ -325,7 +325,6 @@ curl -X DELETE https://kp.example/v1/documents/hr:leave-policy -H "Authorization
 | `400 TOO_MANY_ITEMS`、`400 INVALID_ARGUMENT` | 宣告超過 50 個 item，或 body 不合格式 | 修正後重送 |
 | `422 ALL_ITEMS_REJECTED` | 每個 item 都被拒；宣告時不建立 batch | 看 body 裡每個 item 的 `error` |
 | `422 IDEMPOTENCY_KEY_REUSED` | 同一個 `Idempotency-Key` 配了不同的 body | 新的宣告換一個 key |
-| `409 IDEMPOTENCY_IN_PROGRESS` | 同一個 key 的前一次宣告還在處理 | 稍後用同一個 key 重試 |
 | `400 SIZE_MISMATCH`、`411 LENGTH_REQUIRED` | 長度不符或缺 `Content-Length` | 修正後重送 |
 | `422 DIGEST_MISMATCH`、`422 MEDIA_TYPE_MISMATCH` | 內容與宣告不符 | 檢查檔案；需要時重新宣告 |
 | `409 BATCH_EXPIRED`、`409 BATCH_FINALIZED` | batch 已結束 | 重新宣告 |
@@ -341,11 +340,11 @@ curl -X DELETE https://kp.example/v1/documents/hr:leave-policy -H "Authorization
 | 項目 | 值 | 出處 |
 |---|---|---|
 | 每次宣告的 item 數 | 50（暫定） | 規格 §11 |
-| 每個 Source 的進件配額 | 每分鐘 50 個宣告 item（暫定） | 規格 §11 |
+| 每個 Source 的進件配額 | token bucket：最多 50 個宣告 item，每分鐘補回 50（暫定） | 規格 §11 |
 | 單檔大小上限 | 50 MB，部署可調 | 規格 §11、#88 |
 | 上傳方式 | 每檔一個 `PUT`，單一 request；無分段、無續傳 | 規格 §5.2 |
 | batch 有效期 | 建立後 24 小時 | 規格 §11 |
-| `Idempotency-Key` | 24 小時內同一 key 回同一結果 | 規格 §11 |
+| `Idempotency-Key` | 最長 255 字元；24 小時內同一 key 回同一結果，前一次還在處理時等它 commit | 規格 §5.1、§11 |
 | `document_id` | 1 到 256 個字元，`[A-Za-z0-9-_.~:]`，區分大小寫；不能含 `/` | 規格 §11 |
 | Resource 的 key | 1 到 200 個字元，區分大小寫 | 授權指南 §4.7 |
 | `metadata` | 最多 50 個 key、總共 8 KB | 規格 §11 |

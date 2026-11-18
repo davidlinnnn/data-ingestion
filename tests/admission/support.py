@@ -8,13 +8,17 @@ from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
 from temporalio.client import Client
 
+from kp_admission.batches import Intake
 from kp_admission.requests import create_process_request
+from kp_admission.storage import FakeObjectStore
+
+INTAKE = Intake(FakeObjectStore())  # for tests that call no batch route
 
 FILES = [
     {
         "path": "paper.pdf",
         "role": "main",
-        "custody_ref": "custody://kp-dev/sources/s1/paper.pdf",
+        "custody_ref": f"s3://kp-custody/documents/doc_1/files/bat_1/0/{'a' * 64}",
         "sha256": "a" * 64,
         "size": 18342,
         "media_type": "application/pdf",

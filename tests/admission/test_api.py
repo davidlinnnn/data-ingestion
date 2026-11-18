@@ -15,6 +15,7 @@ from kp_admission.api import RequestLog, app
 from kp_admission.authz import AllowAll
 from kp_canonicalization.cli import JsonFormatter
 from tests.admission.authz_fake import FakeAuthorizer
+from tests.admission.support import INTAKE
 
 TOKEN = "retrieval-credential-1"
 PEPS = {hashlib.sha256(TOKEN.encode()).hexdigest(): "retrieval"}
@@ -31,7 +32,7 @@ def client(authorizer=None, token: str | None = TOKEN) -> httpx.AsyncClient:
     headers = {"authorization": f"Bearer {token}"} if token else {}
     # The authz API reads no pool; an unopened one is enough.
     pool = AsyncConnectionPool("host=127.0.0.1 port=9", open=False)
-    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS, {}, pool))
+    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS, {}, pool, INTAKE))
     return httpx.AsyncClient(transport=transport, base_url="http://api", headers=headers)
 
 
@@ -224,6 +225,7 @@ async def test_the_openapi_document_describes_both_operations_with_bearer_and_th
         "PERMISSION_DENIED",
         "NOT_FOUND",
         "FAILED_PRECONDITION",
+        "RESOURCE_EXHAUSTED",
         "UNAVAILABLE",
     ]
     assert schemas["CheckResponse"]["properties"]["outcome"]["enum"] == ["allow", "deny"]

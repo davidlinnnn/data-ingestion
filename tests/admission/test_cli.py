@@ -40,6 +40,14 @@ def free_port() -> int:
         return probe.getsockname()[1]
 
 
+S3 = {  # the api reaches storage only when a batch is finalized
+    "KP_S3_ENDPOINT": "http://127.0.0.1:9",
+    "KP_S3_BUCKET": "kp-custody",
+    "AWS_ACCESS_KEY_ID": "x",
+    "AWS_SECRET_ACCESS_KEY": "x",
+}
+
+
 def api_env(dsn: str, port: int) -> dict[str, str]:
     """A pilot api on `port` with one registered PEP, wiki, whose credential is pep-1; the Source
     km, whose credential is km-1; and the client research-agent, whose credential is agent-1."""
@@ -48,6 +56,7 @@ def api_env(dsn: str, port: int) -> dict[str, str]:
         "KP_ADMISSION_API_PORT": str(port),
         "KP_AUTHZ_PROVIDER": "allow-all",
         "KP_DEPLOYMENT": "pilot",
+        **S3,
         "KP_AUTHZ_PEP_CREDENTIALS": json.dumps({hashlib.sha256(b"pep-1").hexdigest(): "wiki"}),
         "KP_CREDENTIALS": json.dumps(
             {
@@ -193,12 +202,18 @@ SOURCE = {"credential_id": "c1", "tenant_id": "t1", "source_id": "km", "scopes":
             json.dumps({"d1": SOURCE, "d2": SOURCE | {"credential_id": "c2", "tenant_id": "t2"}}),
         ),
         ("KP_ADMISSION_API_PORT", "http"),
+        ("KP_SOURCES", '{"km": {"ordering": "newest"}}'),
+        ("KP_MAX_FILE_SIZE", "50MB"),
+        ("KP_PAUSE_BACKLOG", "-1"),
+        ("KP_S3_BUCKET", ""),
     ],
 )
 def test_the_api_refuses_a_malformed_setting(monkeypatch, capsys, variable, value):
     monkeypatch.setenv("KP_ADMISSION_DATABASE_URL", "host=127.0.0.1 port=9")
     monkeypatch.setenv("KP_AUTHZ_PROVIDER", "allow-all")
     monkeypatch.setenv("KP_DEPLOYMENT", "pilot")
+    for name, setting in S3.items():
+        monkeypatch.setenv(name, setting)
     monkeypatch.setenv(variable, value)
 
     assert main(["api"]) == 2
@@ -288,6 +303,32 @@ async def test_the_api_serves_registered_sources_and_clients_and_logs_and_counts
         line for line in lines if '"GET /v1/resources' in line["message"] and line.get("client_id")
     ]
     assert client["credential_id"] == "agent-1"
+
+
+async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn, conn):
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
+
+    def run(*args: str) -> tuple[int, dict]:
+        done = subprocess.run(
+            [sys.executable, "-m", "kp_admission.cli", *args],
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        return done.returncode, json.loads(done.stdout)
+
+    assert run("adopt", "--tenant", "t1", "application/pdf", "paper-pdf@1") == (
+        0,
+        {"adopted_version": "paper-pdf@1", "adoption_sequence": 1},
+    )
+    cancel = ("cancel-adoption", "--tenant", "t1", "application/pdf")
+    assert run(*cancel, "paper-pdf@2") == (1, {"cancelled": False})
+    assert run(*cancel, "paper-pdf@1") == (0, {"cancelled": True})
+    await conn.execute(
+        "INSERT INTO batch (batch_id, tenant_id, source_id, state, expires_at)"
+        " VALUES ('bat_1', 't1', 'km', 'open', now() - interval '1 minute')"
+    )
+    assert run("expire") == (0, {"expired": 1})
 
 
 @pytest.mark.docker
