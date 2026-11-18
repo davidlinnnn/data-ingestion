@@ -1,0 +1,131 @@
+{
+ "version": "8.2.12",
+ "position": "derived",
+ "control": "nofence",
+ "faults": "stop@20,stop@70,stop@120",
+ "seed": 24001,
+ "writers": 8,
+ "transactions": 2000,
+ "docs": 2000,
+ "scale": 0.1,
+ "rate_per_writer": 10.0,
+ "wall_seconds": 207.5,
+ "errors": [],
+ "run": "72ed4e88",
+ "committed": 18646,
+ "revisions_match_writers": true,
+ "foreign_in_feed": 0,
+ "feed_entries": 18646,
+ "feed_missed": 0,
+ "feed_duplicates": 0,
+ "feed_unexpected": 0,
+ "feed_order_violations": 0,
+ "read_missed": 0,
+ "read_duplicates": 0,
+ "read_order_violations": 0,
+ "read_position_regressions": 0,
+ "read_redelivered": 0,
+ "reader_incarnations": 1,
+ "epochs": 4,
+ "fenced": 0,
+ "lease_lost": 3,
+ "tailer_errors": [],
+ "zombie_entries_accepted": 0,
+ "failover": [
+  {
+   "fault": "stop",
+   "acquired_after": 5.04,
+   "first_write_after": 5.05
+  },
+  {
+   "fault": "stop",
+   "acquired_after": 4.53,
+   "first_write_after": 4.54
+  },
+  {
+   "fault": "stop",
+   "acquired_after": 5.07,
+   "first_write_after": 5.08
+  }
+ ],
+ "txn_with_split_cluster_time": 0,
+ "multi_change_txns": 2282,
+ "recovery_seconds": null,
+ "backfilled": 0,
+ "backfill_read": 0,
+ "backfill_read_window": null,
+ "recovery_log": [],
+ "faults_log": [
+  {
+   "fault": "stop",
+   "victim": "B:42601",
+   "epoch": 1,
+   "at": 1794926188.8787892,
+   "next_epoch": 2,
+   "resumed": 1794926195.9369411,
+   "t": 1794926195.937089
+  },
+  {
+   "fault": "stop",
+   "victim": "A:42600",
+   "epoch": 2,
+   "at": 1794926238.900643,
+   "next_epoch": 3,
+   "resumed": 1794926245.442981,
+   "t": 1794926245.443153
+  },
+  {
+   "fault": "stop",
+   "victim": "B:42601",
+   "epoch": 3,
+   "at": 1794926288.909878,
+   "next_epoch": 4,
+   "resumed": 1794926296.041644,
+   "t": 1794926296.041876
+  }
+ ],
+ "tries_max": 17,
+ "tries_mean": 1.0,
+ "events_per_second": 90.1,
+ "behind_schedule_p50": 0.008,
+ "behind_schedule_p99": 0.052,
+ "behind_schedule_max": 3.01,
+ "commit_to_feed_p50": 0.037,
+ "commit_to_feed_p99": 4.228,
+ "commit_to_feed_max": 5.123,
+ "commit_to_read_p50": 0.054,
+ "commit_to_read_p99": 4.244,
+ "commit_to_read_max": 5.138,
+ "oplog_by_ns": {
+  "kp240.lease": [
+   5861,
+   2702615
+  ],
+  "config.system.sessions": [
+   30,
+   9686
+  ],
+  "config.transactions": [
+   3,
+   603
+  ],
+  "config.image_collection": [
+   1,
+   205
+  ],
+  "kp240.feed": [
+   2831,
+   6741029
+  ],
+  "kp240.documents": [
+   15184,
+   9499188
+  ],
+  "": [
+   73,
+   8249
+  ]
+ },
+ "oplog_bytes_per_change_writers": 509,
+ "oplog_bytes_per_change_tailer": 506
+}

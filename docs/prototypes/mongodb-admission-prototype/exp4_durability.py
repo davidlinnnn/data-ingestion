@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 
 
 def uri(major):
-    base = {7: 3707, 9: 3709, 6: 3706}[major]  # 6 = the scratch set, rs.sh s
+    base = {7: 3707, 8: 3708, 9: 3709, 6: 3706}[major]  # 6 = the scratch set, rs.sh s
     hosts = ','.join('localhost:%d%d' % (base, i) for i in (1, 2, 3))
     return 'mongodb://%s/?replicaSet=rs0' % hosts
 

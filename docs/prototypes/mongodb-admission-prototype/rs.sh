@@ -1,29 +1,31 @@
 #!/bin/sh
-# PROTOTYPE (#236): a throwaway three-member replica set in one container.
+# PROTOTYPE (#236, #240): a throwaway three-member replica set in one container.
 # All three mongod processes listen on distinct ports that are published 1:1,
 # so the member names (localhost:<port>) resolve the same inside and outside.
 #
-#   rs.sh up <7|9>             start and initiate; refuses a busy port or an existing container
-#   rs.sh down <7|9>           remove the container and its data
-#   rs.sh kill <7|9> <port>    SIGKILL one member
-#   rs.sh start <7|9> <port>   restart a killed member on its old data
-#   rs.sh stepdown <7|9>       ask the primary to step down
-#   rs.sh primary <7|9>        print the primary's port
+#   rs.sh up <major>             start and initiate; refuses a busy port or an existing container
+#   rs.sh down <major>           remove the container and its data
+#   rs.sh kill <major> <port>    SIGKILL one member
+#   rs.sh start <major> <port>   restart a killed member on its old data
+#   rs.sh stepdown <major>       ask the primary to step down
+#   rs.sh primary <major>        print the primary's port
 set -eu
 
-major=${2:?major version: 7, 9 or s}
+major=${2:?major version: 7, 8, 9 or s}
 case $major in
     7) image=mongo:7.0.48 base=3707 ;;
+    8) image=mongo:8.2.12 base=3708 extra='--wiredTigerCacheSizeGB 1' ;;  # #240: the company's major; three default caches overrun the 8 GiB VM once #240's filler writes GBs
     9) image=mongo:9.0.8 base=3709 ;;
     s) image=mongo:9.0.8 base=3706 ;;  # scratch set for developing a script while full runs hold 7 and 9
     *) echo "unknown major $major" >&2; exit 2 ;;
 esac
+extra=${extra:-}
 name=kp236-mongo-$major
 ports="${base}1 ${base}2 ${base}3"
 first=${base}1
 
 mongod_args() {
-    echo "--replSet rs0 --port $1 --bind_ip_all --dbpath /data/$1 --fork --logpath /data/$1.log --pidfilepath /data/$1.pid"
+    echo "--replSet rs0 --port $1 --bind_ip_all --dbpath /data/$1 --fork --logpath /data/$1.log --pidfilepath /data/$1.pid $extra"
 }
 
 sh_in() { docker exec "$name" sh -c "$1"; }
