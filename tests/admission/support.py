@@ -44,7 +44,7 @@ async def revision(conn: AsyncConnection, source_id: str = "s1") -> tuple[str, s
 
 
 async def resource(conn: AsyncConnection, resource_id: str = "res_01") -> str:
-    """A Resource record, as the Resource Service API (#114) will create one."""
+    """A Resource record under `resource_id`, which the provider treats as opaque."""
     await conn.execute(
         "INSERT INTO authz.resource (resource_id, tenant_id, name, created_by_source)"
         " VALUES (%s, 't1', 'rd / nlp', 'rd_papers')",

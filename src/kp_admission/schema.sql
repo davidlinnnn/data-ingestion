@@ -115,9 +115,9 @@ CREATE TABLE idempotency_key (
 CREATE SCHEMA authz;
 
 CREATE TABLE authz.resource (
-    resource_id       text PRIMARY KEY,
+    resource_id       text PRIMARY KEY,  -- the full identifier: Source and key (#114)
     tenant_id         text NOT NULL,
-    name              text NOT NULL,
+    name              text,  -- for display; optional
     created_by_source text NOT NULL,  -- the maintainer (§3.1)
     created_at        timestamptz NOT NULL DEFAULT now()
 );

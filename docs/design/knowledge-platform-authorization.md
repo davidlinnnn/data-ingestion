@@ -585,6 +585,11 @@ once eviction is added; it is not needed in v1 (#55):
 
 Illustrative; the host and response bodies belong to I-B.
 
+Superseded on 2026-11-18 by #114: the current examples, for registering,
+listing and deleting a Resource by its key, are in the
+[authorization guide](knowledge-platform-authorization-guide.md) §4.7. The
+examples below keep the 2026-10-26 shape.
+
 ```sh
 # Create a Resource; the caller's Source becomes its maintainer
 curl -X POST "$KP/v1/resources" -H "Authorization: Bearer $MANAGE_TOKEN" \

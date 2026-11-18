@@ -15,10 +15,11 @@ import sys
 
 import prometheus_client
 import psycopg
+import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission.api import RequestLog, app
+from kp_admission.api import CREDENTIALS, Credential, RequestLog, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
@@ -36,8 +37,11 @@ def main(argv: list[str] | None = None) -> int:
     KP_AUTHZ_PROVIDER selects the authz provider: `allow-all`, the only one, which it refuses
     unless KP_DEPLOYMENT is `pilot` (#113; the marker is #78's). KP_AUTHZ_PEP_CREDENTIALS registers
     the PEPs that may call the authz API, as a JSON object from the SHA-256 hex digest of each
-    credential to its service identity. It starts while the database is down; decisions are then
-    unavailable.
+    credential to its service identity. KP_CREDENTIALS registers the Source and client
+    credentials (§7), as a JSON object from the SHA-256 hex digest of each credential to
+    `{"credential_id", "tenant_id", "source_id", "scopes": ["submit", "manage_relations"]}` or
+    `{"credential_id", "client_id", "delegate"}`; a Source may hold several at once. It starts
+    while the database is down; decisions are then unavailable.
 
     `kp-admission dispatcher`: start the workflows of due outbox rows, looking every POLL_S
     seconds, until SIGTERM or SIGINT. It starts while Temporal is down; the rows wait.
@@ -71,6 +75,11 @@ def main(argv: list[str] | None = None) -> int:
         if not isinstance(peps, dict) or not all(isinstance(v, str) for v in peps.values()):
             print("KP_AUTHZ_PEP_CREDENTIALS must be a JSON object of strings", file=sys.stderr)
             return 2
+        try:
+            credentials = CREDENTIALS.validate_json(os.environ.get("KP_CREDENTIALS", "{}"))
+        except pydantic.ValidationError as error:
+            print(f"KP_CREDENTIALS is not valid: {error}", file=sys.stderr)
+            return 2
         port = os.environ.get("KP_ADMISSION_API_PORT", "8080")
         if not port.isdecimal():
             print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
@@ -78,16 +87,18 @@ def main(argv: list[str] | None = None) -> int:
         log_json_lines(RequestLog())
         if args.metrics_port is not None:
             prometheus_client.start_http_server(args.metrics_port)
-        return asyncio.run(run_api(dsn, peps, int(port)))
+        return asyncio.run(run_api(dsn, peps, credentials, int(port)))
     log_json_lines()
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
 
 
-async def run_api(dsn: str, peps: dict[str, str], port: int) -> int:
+async def run_api(
+    dsn: str, peps: dict[str, str], credentials: dict[str, Credential], port: int
+) -> int:
     pool = AsyncConnectionPool(dsn, max_size=POOL_SIZE, kwargs={"autocommit": True}, open=False)
     async with pool:
         config = uvicorn.Config(
-            app(AllowAll(pool), peps), host="0.0.0.0", port=port, log_config=None
+            app(AllowAll(pool), peps, credentials, pool), host="0.0.0.0", port=port, log_config=None
         )
         await uvicorn.Server(config).serve()
     return 0

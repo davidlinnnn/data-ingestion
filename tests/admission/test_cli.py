@@ -40,13 +40,29 @@ def free_port() -> int:
 
 
 def api_env(dsn: str, port: int) -> dict[str, str]:
-    """A pilot api on `port` with one registered PEP, wiki, whose credential is pep-1."""
+    """A pilot api on `port` with one registered PEP, wiki, whose credential is pep-1; the Source
+    km, whose credential is km-1; and the client research-agent, whose credential is agent-1."""
     return os.environ | {
         "KP_ADMISSION_DATABASE_URL": dsn,
         "KP_ADMISSION_API_PORT": str(port),
         "KP_AUTHZ_PROVIDER": "allow-all",
         "KP_DEPLOYMENT": "pilot",
         "KP_AUTHZ_PEP_CREDENTIALS": json.dumps({hashlib.sha256(b"pep-1").hexdigest(): "wiki"}),
+        "KP_CREDENTIALS": json.dumps(
+            {
+                hashlib.sha256(b"km-1").hexdigest(): {
+                    "credential_id": "km-1",
+                    "tenant_id": "t1",
+                    "source_id": "km",
+                    "scopes": ["submit", "manage_relations"],
+                },
+                hashlib.sha256(b"agent-1").hexdigest(): {
+                    "credential_id": "agent-1",
+                    "client_id": "research-agent",
+                    "delegate": True,
+                },
+            }
+        ),
     }
 
 
@@ -160,6 +176,13 @@ async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_
         ("KP_AUTHZ_PEP_CREDENTIALS", "not json"),
         ("KP_AUTHZ_PEP_CREDENTIALS", "[]"),
         ("KP_AUTHZ_PEP_CREDENTIALS", '{"digest": 1}'),
+        ("KP_CREDENTIALS", "not json"),
+        ("KP_CREDENTIALS", '{"digest": {"credential_id": "c1", "source_id": "km"}}'),
+        (
+            "KP_CREDENTIALS",
+            '{"digest": {"credential_id": "c1", "tenant_id": "t1",'
+            ' "source_id": "km", "scopes": []}}',
+        ),
         ("KP_ADMISSION_API_PORT", "http"),
     ],
 )
@@ -214,3 +237,45 @@ async def test_the_api_without_a_database_stays_healthy_and_its_503s_reach_metri
     assert (no_decision["trace_id"], no_decision["pep"]) == (trace, "wiki")
     [access] = [line for line in lines if "/authz/v1/check" in line["message"]]
     assert (access["logger"], access["trace_id"]) == ("uvicorn.access", trace)
+
+
+@pytest.mark.docker
+@pytest.mark.network
+async def test_the_api_serves_registered_sources_and_clients_and_logs_and_counts_each_call(dsn):
+    port, metrics_port = free_port(), free_port()
+    api = role(
+        "api",
+        api_env(dsn, port),
+        "--metrics-port",
+        str(metrics_port),
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{port}") as http:
+            for _ in range(100):
+                with contextlib.suppress(httpx.ConnectError):
+                    await http.get("/healthz")
+                    break
+                await asyncio.sleep(0.1)
+            registered = await http.put(
+                "/v1/resources/hr%2Fall", headers={"authorization": "Bearer km-1"}
+            )
+            by_client = await http.get("/v1/resources", headers={"authorization": "Bearer agent-1"})
+            unknown = await http.get("/v1/resources", headers={"authorization": "Bearer pep-1"})
+            metrics = (await http.get(f"http://127.0.0.1:{metrics_port}/metrics")).text
+    finally:
+        api.send_signal(signal.SIGTERM)
+
+    _, log = api.communicate(timeout=10)
+    assert (registered.status_code, registered.json()["key"]) == (201, "hr/all")
+    assert (by_client.status_code, unknown.status_code) == (403, 401)
+    counted = 'kp_api_calls_total{operation="register_resource",status="201"} 1.0'
+    assert counted in metrics.splitlines()
+    lines = [json.loads(line) for line in log.splitlines()]
+    [put] = [line for line in lines if '"PUT /v1/resources/' in line["message"]]
+    assert (put["source_id"], put["credential_id"]) == ("km", "km-1")
+    [client] = [
+        line for line in lines if '"GET /v1/resources' in line["message"] and line.get("client_id")
+    ]
+    assert client["credential_id"] == "agent-1"
