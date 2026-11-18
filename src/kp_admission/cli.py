@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     KP_S3_ENDPOINT and KP_S3_BUCKET with the AWS_* credentials, as for the processing workers; the
     credentials need s3:ListBucket, without which S3 answers a missing object with 403.
     KP_MAX_FILE_SIZE is the maximum file size in bytes (default 50 MB); with KP_PAUSE_BACKLOG,
-    declarations are refused while that many process requests are queued.
+    declarations are refused while that many normal-priority process requests are queued.
     It starts while the database or storage is down; decisions are then unavailable.
 
     `kp-admission dispatcher`: start the workflows of due outbox rows, looking every POLL_S
