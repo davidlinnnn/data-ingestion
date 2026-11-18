@@ -29,6 +29,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Annotated, Any, Literal
 
+import psycopg
 from fastapi import APIRouter, Depends, FastAPI, Header, Path, Query, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -56,6 +57,8 @@ calls = Counter("kp_api_calls", "platform API /v1/ calls", ["operation", "status
 
 AUTHZ = "authz.knowledge-platform"
 ADMISSION = "admission.knowledge-platform"
+V1 = "/v1/"  # the Source-facing routes
+RETRY_AFTER_S = 1
 
 # Keyed by log field (trace_id, x_request_id, pep, source_id or client_id, credential_id):
 # RequestLog writes it onto each line as it is.
@@ -183,7 +186,7 @@ class Registered(Resource, frozen=True):
 
 class ResourceList(BaseModel):
     resources: list[Resource]
-    next_page_token: str | SkipJsonSchema[None] = None  # absent on the last page
+    next_page_token: str = ""  # empty on the last page (AIP-158)
 
 
 Key = Annotated[
@@ -252,7 +255,7 @@ class PepOnly:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] == "http" and scope["path"].startswith("/authz/"):
-            pep = self._peps.get(_presented(scope))
+            pep = self._peps.get(_bearer_digest(scope))
             if pep is None:
                 log.warning(
                     "authz API call without a registered PEP credential from %s", _peer(scope)
@@ -275,10 +278,10 @@ class Credentialed:
         self._app, self._credentials = app, credentials
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http" or not scope["path"].startswith("/v1/"):
+        if scope["type"] != "http" or not scope["path"].startswith(V1):
             await self._app(scope, receive, send)
             return
-        credential = self._credentials.get(_presented(scope))
+        credential = self._credentials.get(_bearer_digest(scope))
         if credential is None:
             log.warning("API call without a registered credential from %s", _peer(scope))
             rejected = _error(
@@ -306,7 +309,7 @@ class Counted:
         self._app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http" or not scope["path"].startswith("/v1/"):
+        if scope["type"] != "http" or not scope["path"].startswith(V1):
             await self._app(scope, receive, send)
             return
         status = 500  # unless a response starts
@@ -345,10 +348,10 @@ def app(
     errors = error | {"description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
     unavailable = error | {"description": "UNAVAILABLE: no decision could be made"}
     # Both only name what a caller sends in the OpenAPI document; the middleware reads them.
-    sent = [Depends(HTTPBearer(auto_error=False)), Depends(_traceparent)]
+    declared = [Depends(HTTPBearer(auto_error=False)), Depends(_traceparent)]
     authz = APIRouter(
         prefix="/authz/v1",
-        dependencies=sent,
+        dependencies=declared,
         responses={"200": traced, "4XX": errors, "503": unavailable},
     )
 
@@ -372,7 +375,7 @@ def app(
 
     v1 = APIRouter(
         prefix="/v1",
-        dependencies=sent,
+        dependencies=declared,
         responses={
             "200": traced,
             "4XX": error | {"description": "400, 401, 403, 404 or 409"},
@@ -414,12 +417,12 @@ def app(
         source = _source("submit", "manage_relations")
         size = min(page_size or PAGE_SIZE, PAGE_SIZE)
         async with pool.connection() as conn:
-            page = await resources.list_keys(
+            page = await resources.list_page(
                 conn, source_id=source.source_id, after=page_token or None, limit=size + 1
             )
         more = len(page) > size
         return ResourceList(
-            resources=page[:size], next_page_token=page[size - 1].key if more else None
+            resources=page[:size], next_page_token=page[size - 1].key if more else ""
         )
 
     @v1.get("/resources/{key:path}", response_model=Resource, response_model_exclude_none=True)
@@ -434,7 +437,7 @@ def app(
     async def delete_resource(key: Key) -> None:
         """409 RESOURCE_NOT_EMPTY while a Document without Source Deletion applied is bound."""
         source = _source("manage_relations")
-        async with pool.connection() as conn:
+        async with pool.connection() as conn:  # a key it did not register is 404, not a deny
             if not await resources.get(conn, source_id=source.source_id, key=key):
                 raise not_found
         decision = await authorizer.check(
@@ -494,6 +497,12 @@ def app(
     async def refused(request: Request, error: Refused) -> JSONResponse:
         return _error(error.code, error.status, error.message, error.reason, ADMISSION)
 
+    @api.exception_handler(psycopg.OperationalError)  # PoolTimeout included
+    async def database_down(request: Request, error: psycopg.OperationalError) -> JSONResponse:
+        log.warning("database unavailable", extra={"correlation": {"error": type(error).__name__}})
+        message = "The database is unavailable."
+        return _error(503, "UNAVAILABLE", message, domain=_domain(request))
+
     return api
 
 
@@ -524,7 +533,7 @@ def _digest(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _presented(scope: Scope) -> str:
+def _bearer_digest(scope: Scope) -> str:
     """The digest of the request's bearer token; empty without one."""
     scheme, _, token = Headers(scope=scope).get("authorization", "").partition(" ")
     return _digest(token) if scheme.lower() == "bearer" else ""
@@ -535,15 +544,17 @@ def _peer(scope: Scope) -> str | None:
 
 
 def _domain(request: Request) -> str:
-    return ADMISSION if request.url.path.startswith("/v1/") else AUTHZ
+    return ADMISSION if request.url.path.startswith(V1) else AUTHZ
 
 
 def _error(
     code: int, status: ErrorStatus, message: str, reason: str | None = None, domain: str = AUTHZ
 ) -> JSONResponse:
     details = [ErrorInfo(reason=reason or status, domain=domain)]
+    # Every /v1/ 503 says when to retry (admission spec §5.1).
+    retry = {"Retry-After": str(RETRY_AFTER_S)} if code == 503 and domain == ADMISSION else None
     body = ErrorResponse(
         error=ErrorBody(code=code, status=status, message=message, details=details),
         trace_id=trace_id(),
     )
-    return JSONResponse(body.model_dump(by_alias=True), status_code=code)
+    return JSONResponse(body.model_dump(by_alias=True), status_code=code, headers=retry)

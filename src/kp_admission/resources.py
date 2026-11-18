@@ -2,16 +2,17 @@
 
 Within a tenant a Resource is its Source and that Source's key. The full identifier names both;
 the decision interface, a Document's binding and a reader's copy carry it, and a Source's own
-calls carry the key alone.
+calls carry the key alone. It carries no tenant: one deployment serves one tenant (authorization
+design Q7).
 """
 
 import uuid
-from datetime import datetime
-from typing import Literal
+from datetime import UTC, datetime
+from typing import Annotated, Literal
 from urllib.parse import quote, unquote
 
 from psycopg import AsyncConnection
-from pydantic import BaseModel
+from pydantic import AfterValidator, BaseModel
 from pydantic.json_schema import SkipJsonSchema
 
 
@@ -24,10 +25,11 @@ def resource_id(source_id: str, key: str) -> str:
 def source_and_key(full_id: str) -> tuple[str, str]:
     """The Source and the key that resource_id() made `full_id` from; ValueError for a string
     it cannot have made."""
-    source_id, slash, key = full_id.partition("/")
-    if not (source_id and slash and key):
+    encoded, _, key = full_id.partition("/")
+    source_id = unquote(encoded)
+    if not (source_id and key) or resource_id(source_id, key) != full_id:
         raise ValueError(f"not a Resource identifier: {full_id!r}")
-    return unquote(source_id), key
+    return source_id, key
 
 
 class Resource(BaseModel, frozen=True):
@@ -35,7 +37,7 @@ class Resource(BaseModel, frozen=True):
 
     key: str
     name: str | SkipJsonSchema[None] = None
-    created_at: datetime
+    created_at: Annotated[datetime, AfterValidator(lambda at: at.astimezone(UTC))]
 
 
 _INSERT = """
@@ -50,6 +52,14 @@ INSERT INTO authz.relation_change (change_id, tenant_id, resource_id, op, actor_
                                    actor_credential_id)
 VALUES (%s, %s, %s, %s, %s, %s)
 """
+
+
+async def _change(
+    conn: AsyncConnection, op: str, full_id: str, tenant_id: str, source_id: str, credential_id: str
+) -> str:
+    change_id = f"chg_{uuid.uuid4().hex}"
+    await conn.execute(_CHANGE, (change_id, tenant_id, full_id, op, source_id, credential_id))
+    return change_id
 
 
 async def register(
@@ -70,10 +80,8 @@ async def register(
             if row := await (
                 await conn.execute(_INSERT, (full_id, tenant_id, name, source_id))
             ).fetchone():
-                change_id = f"chg_{uuid.uuid4().hex}"
-                await conn.execute(
-                    _CHANGE,
-                    (change_id, tenant_id, full_id, "create_resource", source_id, credential_id),
+                change_id = await _change(
+                    conn, "create_resource", full_id, tenant_id, source_id, credential_id
                 )
                 return Resource(key=key, name=row[0], created_at=row[1]), change_id
             if row := await (
@@ -97,7 +105,7 @@ async def get(conn: AsyncConnection, *, source_id: str, key: str) -> Resource | 
     return None if row is None else Resource(key=key, name=row[0], created_at=row[1])
 
 
-async def list_keys(
+async def list_page(
     conn: AsyncConnection, *, source_id: str, after: str | None, limit: int
 ) -> list[Resource]:
     """At most `limit` of the Source's Resources, in one fixed order, from the one after the key
@@ -116,9 +124,8 @@ async def delete(
     conn: AsyncConnection, *, tenant_id: str, source_id: str, key: str, credential_id: str
 ) -> Literal["deleted", "not_found", "not_empty"]:
     """Deletes the Resource and records a `delete_resource` change, unless a Document without
-    Source Deletion applied is bound to it. It holds the Resource's row lock while it looks, so a
-    binding made in a transaction that locks the same row (FOR SHARE) is either seen or refused
-    for a missing Resource."""
+    Source Deletion applied is bound to it. A Document bound in a transaction that locked the
+    Resource's row first (#96, #205) is never left bound to a deleted Resource."""
     full_id = resource_id(source_id, key)
     async with conn.transaction():
         if not await (
@@ -135,15 +142,5 @@ async def delete(
         ).fetchone():
             return "not_empty"
         await conn.execute("DELETE FROM authz.resource WHERE resource_id = %s", (full_id,))
-        await conn.execute(
-            _CHANGE,
-            (
-                f"chg_{uuid.uuid4().hex}",
-                tenant_id,
-                full_id,
-                "delete_resource",
-                source_id,
-                credential_id,
-            ),
-        )
+        await _change(conn, "delete_resource", full_id, tenant_id, source_id, credential_id)
         return "deleted"

@@ -170,6 +170,9 @@ async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_
     assert unregistered.status_code == 401
 
 
+SOURCE = {"credential_id": "c1", "tenant_id": "t1", "source_id": "km", "scopes": ["submit"]}
+
+
 @pytest.mark.parametrize(
     "variable, value",
     [
@@ -182,6 +185,11 @@ async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_
             "KP_CREDENTIALS",
             '{"digest": {"credential_id": "c1", "tenant_id": "t1",'
             ' "source_id": "km", "scopes": []}}',
+        ),
+        ("KP_CREDENTIALS", json.dumps({"d1": SOURCE, "d2": SOURCE})),
+        (
+            "KP_CREDENTIALS",
+            json.dumps({"d1": SOURCE, "d2": SOURCE | {"credential_id": "c2", "tenant_id": "t2"}}),
         ),
         ("KP_ADMISSION_API_PORT", "http"),
     ],

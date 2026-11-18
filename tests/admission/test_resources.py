@@ -14,6 +14,7 @@ from kp_admission.api import ClientCredential, SourceCredential, app
 from kp_admission.authz import AllowAll, Ref
 from kp_admission.resources import resource_id, source_and_key
 from tests.admission.authz_fake import FakeAuthorizer
+from tests.admission.support import bind, changes
 
 pytestmark = pytest.mark.docker
 
@@ -61,14 +62,6 @@ def api(pool):
     return connect
 
 
-async def changes(conn) -> list[tuple]:
-    cursor = await conn.execute(
-        "SELECT op, resource_id, actor_source_id, actor_credential_id FROM authz.relation_change"
-        " ORDER BY at"
-    )
-    return await cursor.fetchall()
-
-
 async def test_registering_a_key_twice_creates_it_once_and_returns_the_same_resource(api, conn):
     async with api() as km:
         first = await km.put("/v1/resources/hr-all", json={"name": "HR, everyone"})
@@ -79,6 +72,7 @@ async def test_registering_a_key_twice_creates_it_once_and_returns_the_same_reso
     resource = {"key": "hr-all", "name": "HR, everyone", "created_at": first.json()["created_at"]}
     assert first.json() | {"change_id": None} == resource | {"change_id": None}
     assert second.json() == resource
+    assert resource["created_at"].endswith("Z")  # RFC 3339 in UTC (admission spec §4)
     assert await changes(conn) == [("create_resource", "km/hr-all", "km", "km-1")]
 
 
@@ -139,7 +133,7 @@ def test_two_different_pairs_never_share_a_full_identifier():
     assert len({resource_id(*pair) for pair in pairs}) == len(pairs)
 
 
-@pytest.mark.parametrize("text", ["", "km", "/key"])
+@pytest.mark.parametrize("text", ["", "km", "/key", "km/", "%6Bm/x", "a b/x", "km%2/x"])
 def test_a_string_no_source_and_key_make_is_refused(text):
     with pytest.raises(ValueError):
         source_and_key(text)
@@ -244,16 +238,9 @@ async def test_a_delete_without_manage_is_refused_and_leaves_the_resource(
 
     assert response.status_code == status
     assert response.json()["error"]["details"][0]["reason"] == reason
+    assert response.headers.get("retry-after") == ("1" if status == 503 else None)
     assert still.status_code == 200
     assert [change[0] for change in await changes(conn)] == ["create_resource"]
-
-
-async def bind(conn, resource: str, deleted: bool) -> None:
-    await conn.execute(
-        "INSERT INTO document (document_uid, tenant_id, source_id, document_id, resource_id,"
-        " deleted_at) VALUES (%s, 't1', 'km', %s, %s, %s)",
-        (f"doc_{resource}_{deleted}", f"d-{deleted}", resource, "now()" if deleted else None),
-    )
 
 
 async def test_a_resource_with_a_live_document_is_not_deleted_and_a_deleted_one_does_not_count(
@@ -282,10 +269,11 @@ async def test_a_source_reads_every_key_by_sending_back_each_next_page_token(api
             params = {"page_size": 2} | ({"page_token": token} if token else {})
             body = (await km.get("/v1/resources", params=params)).json()
             pages.append([r["key"] for r in body["resources"]])
-            if not (token := body.get("next_page_token")):
+            if not (token := body["next_page_token"]):
                 break
 
     assert pages == [["a", "b"], ["c"]]
+    assert token == ""
 
 
 def sample(**labels: str) -> float:
@@ -320,3 +308,23 @@ async def test_the_openapi_document_names_bearer_and_the_trace_headers_on_each_o
         assert any(p["name"] == "traceparent" for p in operation["parameters"])
         assert operation["security"]
     assert "201" in document["paths"]["/v1/resources/{key}"]["put"]["responses"]
+
+
+async def test_a_call_while_the_database_is_down_is_a_503_that_says_when_to_retry():
+    down = AsyncConnectionPool("host=127.0.0.1 port=9", timeout=0.5, open=False)
+    await down.open(wait=False)
+    try:
+        application = app(FakeAuthorizer(), {}, CREDENTIALS, down)
+        transport = httpx.ASGITransport(application)
+        headers = {"authorization": "Bearer km-1"}
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://api", headers=headers
+        ) as km:
+            response = await km.get("/v1/resources")
+    finally:
+        await down.close()
+
+    error = response.json()["error"]
+    assert (response.status_code, error["status"]) == (503, "UNAVAILABLE")
+    assert error["details"][0]["domain"] == "admission.knowledge-platform"
+    assert response.headers["retry-after"] == "1"
