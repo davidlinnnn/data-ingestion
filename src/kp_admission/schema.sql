@@ -12,6 +12,9 @@ CREATE TABLE batch (
     finalized_at timestamptz
 );
 
+-- The intake quota counts a Source's recent declarations (§11).
+CREATE INDEX batch_by_source ON batch (tenant_id, source_id, created_at);
+
 CREATE TABLE document (
     document_uid      text PRIMARY KEY,
     tenant_id         text NOT NULL,
@@ -22,7 +25,9 @@ CREATE TABLE document (
     source_url        text,
     metadata          jsonb,
     deleted_at        timestamptz,
-    delete_request_id text
+    delete_request_id text,
+    -- Set with each Source Revision finalization creates; §6.3 orders against it.
+    latest_source_revision_id text
 );
 
 -- A source_id is unique per tenant, so a Source is (tenant_id, source_id).
@@ -72,6 +77,7 @@ CREATE UNIQUE INDEX request_one_active ON request (document_uid, source_revision
     WHERE kind = 'process' AND state IN ('queued', 'processing');
 
 ALTER TABLE document ADD FOREIGN KEY (delete_request_id) REFERENCES request;
+ALTER TABLE document ADD FOREIGN KEY (latest_source_revision_id) REFERENCES source_revision;
 
 CREATE TABLE outbox (
     request_id    text PRIMARY KEY REFERENCES request,
@@ -97,6 +103,8 @@ CREATE TABLE batch_item (
     source_revision_id text REFERENCES source_revision,
     error              jsonb,
     declared           jsonb NOT NULL,  -- the item as declared: files and catalog fields (§5.1)
+    -- The last placement decision (#85): decision_id, evaluated_at, and a deny's reason.
+    placement          jsonb,
     PRIMARY KEY (batch_id, index)
 );
 
@@ -105,9 +113,22 @@ CREATE TABLE idempotency_key (
     source_id   text NOT NULL,
     key         text NOT NULL,
     body_sha256 text NOT NULL,
-    response    jsonb,  -- null while the first request is in progress (IDEMPOTENCY_IN_PROGRESS)
+    -- Written in the declaration's own transaction: a repeat waits for it, then replays it.
+    status      integer NOT NULL,
+    response    jsonb NOT NULL,
     created_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, source_id, key)
+);
+
+-- The adoption record (§3): the Processing Profile version new process requests of a main-file
+-- media type run. The highest sequence of a media type is its adopted version unless cancelled.
+CREATE TABLE adoption (
+    sequence        bigint PRIMARY KEY,  -- the adoption_sequence of the requests made under it
+    tenant_id       text NOT NULL,
+    media_type      text NOT NULL,
+    adopted_version text NOT NULL,
+    adopted_at      timestamptz NOT NULL DEFAULT now(),
+    cancelled_at    timestamptz
 );
 
 -- Authorization records (authorization design §5.1, #113), in their own schema so that a

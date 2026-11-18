@@ -26,7 +26,6 @@ import time
 import uuid
 from collections.abc import Awaitable, Mapping
 from contextvars import ContextVar
-from dataclasses import dataclass
 from typing import Annotated, Any, Literal
 
 import psycopg
@@ -43,8 +42,9 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission import resources
+from kp_admission import batches, resources
 from kp_admission.authz import PAGE_SIZE, Action, Authorizer, Decision, Operation, Outcome, Ref
+from kp_admission.errors import ErrorStatus, Refused
 from kp_admission.resources import Resource
 
 log = logging.getLogger(__name__)
@@ -107,16 +107,6 @@ class ResourcePage(Decision, frozen=True):
     outcome: SkipJsonSchema[Outcome] = Field(exclude=True)
 
 
-ErrorStatus = Literal[
-    "INVALID_ARGUMENT",
-    "UNAUTHENTICATED",
-    "PERMISSION_DENIED",
-    "NOT_FOUND",
-    "FAILED_PRECONDITION",
-    "UNAVAILABLE",
-]
-
-
 class ErrorInfo(BaseModel):
     type: str = Field(default="type.googleapis.com/google.rpc.ErrorInfo", alias="@type")
     reason: str
@@ -135,16 +125,7 @@ class ErrorResponse(BaseModel):
 
     error: ErrorBody
     trace_id: str
-
-
-@dataclass
-class Refused(Exception):
-    """A /v1/ call answered with an AIP-193 error."""
-
-    code: int
-    status: ErrorStatus
-    reason: str
-    message: str
+    items: list[dict[str, Any]] | SkipJsonSchema[None] = None  # ALL_ITEMS_REJECTED only
 
 
 CredentialScope = Literal["submit", "manage_relations"]
@@ -187,6 +168,55 @@ class Registered(Resource, frozen=True):
 class ResourceList(BaseModel):
     resources: list[Resource]
     next_page_token: str = ""  # empty on the last page (AIP-158)
+
+
+class Declaration(BaseModel):
+    items: list[batches.DeclaredItem] = Field(min_length=1)
+
+
+class Upload(BaseModel):
+    path: str
+    method: Literal["PUT"]
+    url: str
+
+
+class DeclaredOutcome(BaseModel):
+    index: int
+    document_id: str
+    document_uid: str | SkipJsonSchema[None] = None
+    status: Literal["declared", "unchanged", "queued", "rejected"]
+    uploads: list[Upload] | SkipJsonSchema[None] = None
+    carried_over: list[str] | SkipJsonSchema[None] = None
+    request_id: str | SkipJsonSchema[None] = None
+    error: dict[str, str] | SkipJsonSchema[None] = None
+
+
+class Declared(BaseModel):
+    batch_id: str
+    state: Literal["open", "finalized"]
+    expires_at: str
+    items: list[DeclaredOutcome]
+
+
+class BatchItem(BaseModel):
+    index: int
+    document_id: str
+    document_uid: str | SkipJsonSchema[None] = None
+    status: str = Field(description="The item's status, then its request's")
+    request_id: str | SkipJsonSchema[None] = None
+    source_revision_id: str | SkipJsonSchema[None] = None
+    error: dict[str, str] | SkipJsonSchema[None] = None
+
+
+class BatchView(BaseModel):
+    batch_id: str
+    state: Literal["open", "finalized", "expired"]
+    created_at: str
+    expires_at: str
+    finalized_at: str | SkipJsonSchema[None] = None
+    counts: dict[str, int]
+    items: list[BatchItem]
+    next_page_token: str = ""
 
 
 Key = Annotated[
@@ -332,6 +362,7 @@ def app(
     peps: Mapping[str, str],
     credentials: Mapping[str, Credential],
     pool: AsyncConnectionPool[Any],
+    intake: batches.Intake,
 ) -> FastAPI:
     """`peps` maps the SHA-256 hex digest of each registered PEP credential to the PEP's service
     identity, `credentials` that of each Source and client credential to it. A call under /authz/
@@ -342,7 +373,7 @@ def app(
 
     Under /v1/ a Source reaches only the keys it registered; `pool` holds them. A key it did not
     register is 404, a credential without the scope an operation needs 403, and a client
-    credential holds none."""
+    credential holds none. A batch is the Source's own too: another Source's is 404."""
     traced = {"headers": {"X-Trace-Id": {"description": "trace_id", "schema": {"type": "string"}}}}
     error = traced | {"model": ErrorResponse}
     errors = error | {"description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
@@ -378,8 +409,8 @@ def app(
         dependencies=declared,
         responses={
             "200": traced,
-            "4XX": error | {"description": "400, 401, 403, 404 or 409"},
-            "503": error | {"description": "AUTHZ_UNAVAILABLE: no decision could be made"},
+            "4XX": error | {"description": "400, 401, 403, 404, 409, 422 or 429"},
+            "503": error | {"description": "AUTHZ_UNAVAILABLE, ADMISSION_PAUSED or UNAVAILABLE"},
         },
     )
     not_found = Refused(
@@ -467,6 +498,42 @@ def app(
                 409, "FAILED_PRECONDITION", "RESOURCE_NOT_EMPTY", "Documents are bound to it."
             )
 
+    @v1.post(
+        "/batches",
+        status_code=201,
+        responses={"201": traced | {"model": Declared, "description": "Declared"}},
+    )
+    async def declare(
+        body: Declaration,
+        request: Request,
+        idempotency_key: Annotated[str | None, Header(max_length=255)] = None,
+    ) -> JSONResponse:
+        """Declares a batch (admission spec §5.1, §6.1)."""
+        status, answer = await batches.declare(
+            pool,
+            authorizer,
+            intake,
+            _caller(),
+            body.items,
+            idempotency_key,
+            str(request.base_url),
+        )
+        return _answer(status, answer)
+
+    @v1.post(
+        "/batches/{batch_id}/finalize",
+        status_code=202,
+        responses={"202": traced | {"model": BatchView, "description": "Finalized"}},
+    )
+    async def finalize(batch_id: Annotated[str, Path(max_length=64)]) -> JSONResponse:
+        """Finalizes a batch (admission spec §5.3, §6.2); repeating it returns the batch."""
+        return _answer(*await batches.finalize(pool, authorizer, intake, _caller(), batch_id))
+
+    @v1.get("/batches/{batch_id}", response_model=BatchView)
+    async def get_batch(batch_id: Annotated[str, Path(max_length=64)]) -> JSONResponse:
+        """The batch and each item's outcome (admission spec §5.4)."""
+        return JSONResponse(await batches.view(pool, _caller(), batch_id))
+
     # No /docs or /redoc: those pages load their scripts from another site.
     api = FastAPI(title="Knowledge Platform API", version="1", docs_url=None, redoc_url=None)
     api.include_router(authz)
@@ -495,7 +562,15 @@ def app(
 
     @api.exception_handler(Refused)
     async def refused(request: Request, error: Refused) -> JSONResponse:
-        return _error(error.code, error.status, error.message, error.reason, ADMISSION)
+        return _error(
+            error.code,
+            error.status,
+            error.message,
+            error.reason,
+            ADMISSION,
+            error.retry_after,
+            error.items,
+        )
 
     @api.exception_handler(psycopg.OperationalError)  # PoolTimeout included
     async def database_down(request: Request, error: psycopg.OperationalError) -> JSONResponse:
@@ -548,13 +623,38 @@ def _domain(request: Request) -> str:
 
 
 def _error(
-    code: int, status: ErrorStatus, message: str, reason: str | None = None, domain: str = AUTHZ
+    code: int,
+    status: ErrorStatus,
+    message: str,
+    reason: str | None = None,
+    domain: str = AUTHZ,
+    retry_after: int | None = None,
+    items: list[dict[str, Any]] | None = None,
 ) -> JSONResponse:
     details = [ErrorInfo(reason=reason or status, domain=domain)]
-    # Every /v1/ 503 says when to retry (admission spec §5.1).
-    retry = {"Retry-After": str(RETRY_AFTER_S)} if code == 503 and domain == ADMISSION else None
+    # Every /v1/ 429 and 503 says when to retry (admission spec §5.1).
+    if code == 503 and domain == ADMISSION:
+        retry_after = retry_after or RETRY_AFTER_S
+    retry = {"Retry-After": str(retry_after)} if retry_after else None
     body = ErrorResponse(
         error=ErrorBody(code=code, status=status, message=message, details=details),
         trace_id=trace_id(),
+        items=items,
     )
-    return JSONResponse(body.model_dump(by_alias=True), status_code=code, headers=retry)
+    return JSONResponse(
+        body.model_dump(by_alias=True, exclude_none=True), status_code=code, headers=retry
+    )
+
+
+def _caller() -> batches.Caller:
+    source = _source("submit")
+    return batches.Caller(source.tenant_id, source.source_id, trace_id())
+
+
+def _answer(status: int, body: dict[str, Any]) -> JSONResponse:
+    """A 2XX as it is; ALL_ITEMS_REJECTED as an AIP-193 error that lists every item."""
+    if status >= 400:
+        raise Refused(
+            status, "FAILED_PRECONDITION", body["reason"], body["message"], items=body["items"]
+        )
+    return JSONResponse(body, status_code=status)
