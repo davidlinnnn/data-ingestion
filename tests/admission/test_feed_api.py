@@ -25,8 +25,8 @@ async def pool(dsn):
 
 def client(pool: AsyncConnectionPool, token: str | None = TOKEN) -> httpx.AsyncClient:
     headers = {"authorization": f"Bearer {token}"} if token else {}
-    transport = httpx.ASGITransport(app(FakeAuthorizer(), PEPS, pool))
-    return httpx.AsyncClient(transport=transport, base_url="http://api", headers=headers)
+    transport = httpx.ASGITransport(app(FakeAuthorizer(), PEPS, {}, pool))
+    return httpx.AsyncClient(transport=transport, base_url="http://api/read", headers=headers)
 
 
 async def delete(conn, uid: str) -> None:
@@ -190,8 +190,8 @@ async def test_document_state_answers_its_fields_404_for_an_unknown_uid_and_503_
 async def test_a_feed_page_carries_identities_only_and_each_read_is_counted(conn, pool):
     await feed.set_profile(conn, tenant_id="t1", source_id="s1", projections=["retrieval"])
     uid, _ = await revision(conn)
-    labels = {"operation": "read_feed", "outcome": "200", "projection": "retrieval"}
-    before = REGISTRY.get_sample_value("kp_feed_requests_total", labels) or 0.0
+    labels = {"operation": "read_feed", "status": "200"}
+    before = REGISTRY.get_sample_value("kp_api_calls_total", labels) or 0.0
     async with client(pool) as api:
         start = (await api.get("/v1/feed")).json()["next_cursor"]
         await delete(conn, uid)
@@ -220,4 +220,4 @@ async def test_a_feed_page_carries_identities_only_and_each_read_is_counted(conn
         "projections": ["wiki"],
         "profile_seq": changed["position"],
     }
-    assert (REGISTRY.get_sample_value("kp_feed_requests_total", labels) or 0.0) - before == 3
+    assert (REGISTRY.get_sample_value("kp_api_calls_total", labels) or 0.0) - before == 3

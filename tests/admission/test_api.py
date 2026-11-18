@@ -29,8 +29,9 @@ LIST = {key: value for key, value in CHECK.items() if key != "resource"}
 
 def client(authorizer=None, token: str | None = TOKEN) -> httpx.AsyncClient:
     headers = {"authorization": f"Bearer {token}"} if token else {}
-    unused = AsyncConnectionPool("host=127.0.0.1 port=9", open=False)  # no governed read here
-    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS, unused))
+    # The authz API reads no pool; an unopened one is enough.
+    pool = AsyncConnectionPool("host=127.0.0.1 port=9", open=False)
+    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS, {}, pool))
     return httpx.AsyncClient(transport=transport, base_url="http://api", headers=headers)
 
 
