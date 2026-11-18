@@ -431,8 +431,11 @@ Not in the pilot (user ruling, 2026-11-18,
 [#56](https://github.com/davidlinnnn/data-ingestion/issues/56#issuecomment-6982506436)): the pilot (MVP) supports Source Deletion only and builds no
 governance withdrawal or reinstatement. No withdrawal record exists, so
 readiness `withdrawn` and the `withdrawn` attention of §7.2 never occur; both
-stay in the contract for the release that adds withdrawal. To take a document
-out of serving during the pilot, its Source deletes it (§8).
+stay in the contract for the release that adds withdrawal:
+[#97](https://github.com/davidlinnnn/data-ingestion/issues/97) keeps the two
+values and builds no rule that produces them, and #78 routes no `governance`
+attention. To take a document out of serving during the pilot, its Source
+deletes it; a deletion cannot be undone (§8).
 
 ### 7.2 Attention
 

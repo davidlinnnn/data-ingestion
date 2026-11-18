@@ -316,7 +316,9 @@ drift that keeps the count unchanged, for example a bug rewriting the mirror
 Note of 2026-11-18: the pilot (MVP) builds no governance withdrawal or
 reinstatement (user ruling, [#56](https://github.com/davidlinnnn/data-ingestion/issues/56#issuecomment-6982506436)), so the "Source withdrawal" row does
 not run in the pilot. The feed and the state read keep room for it
-(`withdrawn`).
+(`withdrawn`). The "Invalidated after acceptance" row still runs: the state
+read answers no current revision with status `active`, and a reader removes
+the Document on that, without depending on `withdrawn`.
 
 ## 7. Validation
 
