@@ -599,21 +599,50 @@ X-Trace-Id: 7d3c1e0a9b2f4c5d8e6f7a1b2c3d4e5f
 
 - Source 在自己的呼叫裡只寫 key（`hr-all`），因為 Source 由憑證決定。
 - 其他地方用完整識別碼，它同時帶 Source 與 key：authz API 的 `resource.id`、`list_resources` 的結果、文件的綁定、讀取端索引裡的副本。
-- 完整識別碼的編碼由 #114 定。本文範例寫成 `km/hr-all` 只是示意。讀取端一律把它當成不透明字串：原樣保存、原樣比對，不要拆解。
+- 完整識別碼的編碼（#114）：Source 的 id 做百分比編碼（所以不含 `/`），接 `/`，再接原樣的 key。`km` 與 `hr-all` 得到 `km/hr-all`；key 本身可以含 `/`，從第一個 `/` 拆開就能拆回 Source 與 key。組成與拆解的函式是 [`kp_admission.resources`](../../src/kp_admission/resources.py) 的 `resource_id()` 與 `source_and_key()`，平台內的程式（#96、#205）用它們，不要自己拼字串。
+- 完整識別碼不帶 tenant：一套部署就是一個 tenant（§4.5）。長度上限是 key 的 200 個字元，加上編碼後的 Source id 與一個 `/`。
+- 寫入文件綁定的交易（#96 的 finalize、#205 的改綁）要先鎖住那筆 Resource 紀錄，找不到就是 `RESOURCE_NOT_FOUND`。刪除 Resource 時也鎖同一筆紀錄再檢查文件，所以兩者不會交錯：綁定不會留在已刪除的 Resource 上，`409 RESOURCE_NOT_EMPTY` 也不會漏掉並行的綁定。
+- 讀取端一律把完整識別碼當成不透明字串：原樣保存、原樣比對，不要拆解。
 
-### 4.7 Source 這一側的 API（#114，摘要）
+### 4.7 Source 這一側的 API（#114）
+
+這一節是 Resource 登記 API 的現行契約；[授權設計](knowledge-platform-authorization.md) §6.1 只保留決策的經過。
 
 | 操作 | 端點 | 結果 |
 |---|---|---|
-| 登記 | `PUT /v1/resources/{key}`，body 可帶顯示用的 `name` | 第一次 `201`，重複 `200`。重複登記不產生變更紀錄；帶不同的 `name` 時更新顯示名稱 |
-| 列出 | `GET /v1/resources` | 呼叫方 Source 登記過的 key |
-| 取得 | `GET /v1/resources/{key}` | 沒登記回 `404` |
-| 刪除 | `DELETE /v1/resources/{key}` | `204`；還有文件時回 `409 RESOURCE_NOT_EMPTY` |
+| 登記 | `PUT /v1/resources/{key}`，body 可省略，或帶顯示用的 `name`（最多 200 字元） | 第一次 `201 {key, name, created_at, change_id}`，重複 `200 {key, name, created_at}`，兩次是同一筆。重複登記不產生變更紀錄；帶 `name` 時更新顯示名稱，不帶時保留原本的 |
+| 列出 | `GET /v1/resources?page_size=&page_token=` | `200 {resources: [...], next_page_token}`：呼叫方 Source 登記過的 key。分頁照 AIP-158：`page_size` 省略、`0` 或超過 1000 時是 1000；`next_page_token` 是空字串就是最後一頁 |
+| 取得 | `GET /v1/resources/{key}` | `200 {key, name, created_at}`；沒登記回 `404 RESOURCE_NOT_FOUND` |
+| 刪除 | `DELETE /v1/resources/{key}` | `204`；還有沒套用 Source Deletion 的文件時回 `409 RESOURCE_NOT_EMPTY`，沒有 force |
 | 交文件時指定 | 宣告的 `resources` 填 key | 見 admission 規格 §5.1 |
 
-登記與刪除需要憑證有 `manage_relations`；列出與取得需要 `submit` 或 `manage_relations`。權限不足回 `403`。
+- 登記與刪除需要憑證有 `manage_relations`；列出與取得需要 `submit` 或 `manage_relations`。權限不足回 `403 PERMISSION_DENIED`，client 憑證兩種都沒有。沒帶或沒登錄的憑證回 `401`，在讀取 body 之前就判斷。
+- 刪除會向授權介面問 `manage`：被拒回 `403`，無法判定回 `503 AUTHZ_UNAVAILABLE`。路徑只寫 key、Source 由憑證決定，所以只刪得到自己登記的 key；pilot 的 `manage` 全放行。
+- 重試刪除（例如前一次的 `204` 沒收到）得到 `404 RESOURCE_NOT_FOUND`，當成已經刪除。登記可以直接重試。
+- `400 INVALID_ARGUMENT`：key 或 `name` 超過 200 字元、`page_size` 是負數、body 不是 JSON。
+- 資料庫連不上時回 `503 UNAVAILABLE`（取得連線最多等 2 秒）。每個 `503` 都帶 `Retry-After`（秒），照它稍後重試。
+- 錯誤照 AIP-193，`ErrorInfo.domain` 是 `admission.knowledge-platform`，body 帶 `trace_id`。例外：路徑不存在的 `404`、method 不對的 `405`，以及未預期的 `500`，body 不是 AIP-193 格式，但同樣帶 `X-Trace-Id` header。
+- 時間是 UTC 的 RFC 3339。
+- 回應只寫 key，不寫完整識別碼。`name` 沒設定時不出現。
+- key 是 1 到 200 個字元（不是位元組），放在路徑時做 URL 編碼：key 裡的 `/` 寫成 `%2F`。平台不解析 key 的內容，比對時逐字相符，不轉大小寫。
 
-key 是 1 到 200 個字元，放在路徑時做 URL 編碼。平台不解析 key 的內容，比對時逐字相符。細節以 #114 完成後的內容為準。
+```sh
+# 登記（可以重複呼叫）
+curl -X PUT "$KP/v1/resources/hr-all" -H "Authorization: Bearer $KM_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"name": "HR, everyone"}'
+# 201 {"key": "hr-all", "name": "HR, everyone", "created_at": "…", "change_id": "chg_…"}
+# 再呼叫一次：200 {"key": "hr-all", "name": "HR, everyone", "created_at": "…"}
+
+# 列出
+curl "$KP/v1/resources?page_size=100" -H "Authorization: Bearer $KM_TOKEN"
+# 200 {"resources": [{"key": "hr-all", "name": "HR, everyone", "created_at": "…"}]}
+
+# key 含 / 時做 URL 編碼：登記並刪除 hr/policies
+curl -X PUT "$KP/v1/resources/hr%2Fpolicies" -H "Authorization: Bearer $KM_TOKEN"
+# 201 {"key": "hr/policies", "created_at": "…", "change_id": "chg_…"}
+curl -X DELETE "$KP/v1/resources/hr%2Fpolicies" -H "Authorization: Bearer $KM_TOKEN"
+# 204；還有文件時 409 RESOURCE_NOT_EMPTY
+```
 
 ### 4.8 process 內的介面
 
@@ -674,21 +703,33 @@ while True:
 | `KP_AUTHZ_PROVIDER` | 授權來源。目前只有 `allow-all` |
 | `KP_DEPLOYMENT` | 必須是 `pilot`，`allow-all` 才能啟動 |
 | `KP_AUTHZ_PEP_CREDENTIALS` | JSON 物件：key 是讀取端憑證的 SHA-256，value 是讀取端的名稱。只放 digest，不放憑證本身。一個讀取端放兩筆就能重疊輪替。改了之後要重啟 pod |
+| `KP_CREDENTIALS` | JSON 物件：key 是憑證的 SHA-256，value 是 Source 憑證 `{"credential_id", "tenant_id", "source_id", "scopes"}`（`scopes` 至少一個：`submit`、`manage_relations`），或 client 憑證 `{"credential_id", "client_id", "delegate"}`。`delegate` 預設 `false`，在 v1 沒有作用。`tenant_id` 是這套部署唯一的 tenant，所有 Source 憑證都要相同；`credential_id` 不能重複，變更紀錄與 log 用它識別憑證。同一個 Source 放多筆就能重疊輪替，拿掉一筆就撤銷。格式不對、tenant 不只一個或 `credential_id` 重複時程式直接結束（exit code 2）。改了之後要重啟 pod（#114） |
 | `KP_ADMISSION_API_PORT` | 預設 8080 |
 
-`KP_AUTHZ_PEP_CREDENTIALS` 要注意三件事：
+`KP_CREDENTIALS` 的例子，一個 Source 憑證與一個 client 憑證：
+
+```json
+{
+  "<km 憑證的 SHA-256>": {"credential_id": "km-1", "tenant_id": "t1", "source_id": "km",
+                          "scopes": ["submit", "manage_relations"]},
+  "<agent 憑證的 SHA-256>": {"credential_id": "agent-1", "client_id": "research-agent",
+                             "delegate": true}
+}
+```
+
+`KP_AUTHZ_PEP_CREDENTIALS` 與 `KP_CREDENTIALS` 都要注意三件事：
 
 - digest 是 64 個小寫的十六進位字元，計算時憑證不含結尾的換行：`printf '%s' "$TOKEN" | sha256sum`。
-- 預設值是 `{}`，也就是沒有任何讀取端能呼叫。
-- 程式不檢查 digest 的格式。寫錯時 `api` 照常啟動，那個讀取端的每個呼叫都得到 `401`。
+- 預設值是 `{}`，也就是沒有任何呼叫方能呼叫。
+- 程式不檢查 digest 的格式。寫錯時 `api` 照常啟動，用那個憑證的每個呼叫都得到 `401`。
 
 ### 6.3 健康檢查、metrics 與 log（#204）
 
 | 項目 | 內容 |
 |---|---|
 | 健康檢查 | `GET /healthz`，不需憑證、不碰資料庫。liveness 與 readiness 都用 HTTP probe 打它。pod 帶 sidecar 時，TCP probe 只要 sidecar 活著就會通過，不能用。路徑是暫定的，#78 可以調整 |
-| metrics | 判定次數，依操作、結果（`allow`、`deny`、`unavailable`）、讀取端區分；判定耗時的 histogram。用 `--metrics-port` 開啟。`401` 不算判定，不在這裡 |
-| log | JSON，寫到 stderr。每一行帶 `trace_id`。無法判定時另外記 `decision_id`、操作、讀取端名稱、例外的型別。`allow` 與 `deny` 沒有逐筆的 log。log 不含憑證，也不含使用者帳號 |
+| metrics | 判定次數，依操作、結果（`allow`、`deny`、`unavailable`）、讀取端區分；判定耗時的 histogram。`/v1/` 的呼叫次數 `kp_api_calls_total`，依操作（`register_resource`、`list_resources_of_source`、`get_resource`、`delete_resource`）與狀態碼區分。用 `--metrics-port` 開啟。`401` 不算判定，也不算進 `/v1/` 的次數 |
+| log | JSON，寫到 stderr。每一行帶 `trace_id`；`/v1/` 的呼叫再帶 `source_id`（或 `client_id`）與 `credential_id`。無法判定時另外記 `decision_id`、操作、讀取端名稱、例外的型別。`allow` 與 `deny` 沒有逐筆的 log。每個 HTTP 呼叫有一行 uvicorn 的 access log，帶 method、路徑（含 key）與狀態碼。log 不含憑證，也不含使用者帳號 |
 
 ### 6.4 要看什麼
 
@@ -713,13 +754,13 @@ while True:
 
 `trace_id` 和 `request_id`（`req_…`）不同：前者識別一次呼叫鏈，後者是平台受理的一件文件處理工作。定義在 admission 規格 §4。
 
-## 7. 實作狀態（2026-11-15）
+## 7. 實作狀態（2026-11-18）
 
 | 項目 | 狀態 | 票 |
 |---|---|---|
 | `check`、`list_resources`、全放行、authz API | 已完成，在 `dev` | #113 |
 | `503`、列表回應、`trace_id` 取自 header、`X-Trace-Id`、健康檢查、metrics、log、能分頁的 fake | 已完成，在 `dev` | #204 |
-| Resource 登記（Source 的 key）、憑證登錄 | 未實作，下一個做 | #114 |
+| Resource 登記（Source 的 key）、完整識別碼、憑證登錄 | 已完成 | #114 |
 | 宣告與 finalize 的放置檢查 | 未實作，在 #114 之後 | #96 |
 | 改綁 | 未實作 | #205 |
 | Change Feed 與文件現況的讀取 | 未實作 | #126 |
@@ -743,7 +784,7 @@ while True:
 | Source 重用 key 時，GAM 那一側會發生什麼 | §3.2 的 key 義務 | #86 |
 | 清理時限的數值，以及超過時限時怎麼處理 | §3.3、§3.4、§3.6 | #56 |
 | 第一個 Source 的 space 裡有沒有單頁的權限 | 有的話，Source 要把受限的頁面放進另一個 Resource（§3.2） | 接入第一個 Source 時確認 |
-| 第一個 Source 的 key 格式 | §4.7 的長度上限 | #114 |
+| 第一個 Source 的 key 格式 | §4.7 的長度上限（目前 200 字元） | 接入第一個 Source 時確認 |
 | 入口的 gateway 是否保留 `traceparent` 與 `x-request-id` | §6.6 能不能從使用者一路對到平台 | #78 |
 
 ## 參考

@@ -29,7 +29,9 @@ LIST = {key: value for key, value in CHECK.items() if key != "resource"}
 
 def client(authorizer=None, token: str | None = TOKEN) -> httpx.AsyncClient:
     headers = {"authorization": f"Bearer {token}"} if token else {}
-    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS))
+    # The authz API reads no pool; an unopened one is enough.
+    pool = AsyncConnectionPool("host=127.0.0.1 port=9", open=False)
+    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS, {}, pool))
     return httpx.AsyncClient(transport=transport, base_url="http://api", headers=headers)
 
 
@@ -219,6 +221,9 @@ async def test_the_openapi_document_describes_both_operations_with_bearer_and_th
     assert schemas["ErrorBody"]["properties"]["status"]["enum"] == [
         "INVALID_ARGUMENT",
         "UNAUTHENTICATED",
+        "PERMISSION_DENIED",
+        "NOT_FOUND",
+        "FAILED_PRECONDITION",
         "UNAVAILABLE",
     ]
     assert schemas["CheckResponse"]["properties"]["outcome"]["enum"] == ["allow", "deny"]

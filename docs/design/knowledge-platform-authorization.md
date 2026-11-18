@@ -518,6 +518,10 @@ Source's own key, which the Source may repeat, and returns no generated id;
 Source registered. The default-Resource onboarding no longer waits for a
 returned id. #114 fixes the endpoint's shape.
 
+Built on 2026-11-18 by #114: the endpoints' current contract is the
+[authorization guide](knowledge-platform-authorization-guide.md) §4.7, and the
+full identifier's encoding is in its §4.6.
+
 ### 6.2 Relations
 
 Deferred on 2026-11-13 by #113 until the first real provider: the allow-all
@@ -584,6 +588,11 @@ once eviction is added; it is not needed in v1 (#55):
 ### 6.4 Examples
 
 Illustrative; the host and response bodies belong to I-B.
+
+Superseded on 2026-11-18 by #114: the current examples, for registering,
+listing and deleting a Resource by its key, are in the
+[authorization guide](knowledge-platform-authorization-guide.md) §4.7. The
+examples below keep the 2026-10-26 shape.
 
 ```sh
 # Create a Resource; the caller's Source becomes its maintainer
