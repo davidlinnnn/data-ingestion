@@ -341,6 +341,12 @@ async def test_9_no_decision_refuses_the_whole_request_and_a_deleted_resource_re
     assert finalized.status_code == 422
     assert finalized.json()["error"]["details"][0]["reason"] == "ALL_ITEMS_REJECTED"
     assert finalized.json()["items"][0]["error"]["reason"] == "RESOURCE_NOT_FOUND"
+    # Both decisions stay on record: allowed at declaration, denied at finalization (#85).
+    row = await (await conn.execute("SELECT placement FROM batch_item")).fetchone()
+    assert row
+    declaration, finalization = row[0]["declaration"], row[0]["finalization"]
+    assert "reason" not in declaration and finalization["reason"] == "resource_not_found"
+    assert declaration["decision_id"] != finalization["decision_id"]
 
 
 async def test_10_missing_files_reject_only_their_item_and_an_open_batch_expires(
@@ -529,20 +535,22 @@ async def test_malformed_items_are_rejected_one_by_one(platform, api, conn):
         fresh("meta") | {"metadata": {"k": "v" * 513}},
         fresh("no-resource") | {"resources": None},
         fresh("ok") | {"files": [file("ok.pdf", "ok", PDF) | {"sha256": digest("ok").upper()}]},
+        fresh("ok") | {"files": [file("ok.pdf", "x", PDF) | {"size": 50 * 2**20 + 1}]},
     ]
     async with api() as hr:
         declared = await hr.post("/v1/batches", json={"items": bad})
-    reasons = {i["document_id"]: i.get("error", {}).get("reason") for i in declared.json()["items"]}
-    assert reasons == {
-        "bad id!": "INVALID_ARGUMENT",
-        "two-mains": "INVALID_ARGUMENT",
-        "big": "FILE_TOO_LARGE",
-        "meta": "INVALID_ARGUMENT",
-        "no-resource": "RESOURCE_REQUIRED",
-        "ok": None,
-    }
+    reasons = [i.get("error", {}).get("reason") for i in declared.json()["items"]]
+    assert reasons == [
+        "INVALID_ARGUMENT",
+        "INVALID_ARGUMENT",
+        "FILE_TOO_LARGE",
+        "INVALID_ARGUMENT",
+        "RESOURCE_REQUIRED",
+        None,
+        "INVALID_ARGUMENT",  # a second item for "ok": the duplicate comes before its size
+    ]
     stored = await (
-        await conn.execute("SELECT declared FROM batch_item WHERE document_id = 'ok'")
+        await conn.execute("SELECT declared FROM batch_item WHERE document_id = 'ok' AND index = 5")
     ).fetchone()
     assert stored and stored[0]["files"][0]["sha256"] == digest("ok")  # lowercase in the key
 

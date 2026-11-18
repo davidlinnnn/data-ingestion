@@ -30,10 +30,8 @@ from kp_canonicalization.workflow import task_queue
 
 POLL_S = 1.0
 POOL_SIZE = 5  # per api pod; the connection budget (#78 C14) counts it
-POOL_WAIT_S = 2.0
-SOURCES = pydantic.TypeAdapter(
-    dict[str, batches.SourceSettings]
-)  # a /v1/ call waits this long for a connection, then answers 503
+POOL_WAIT_S = 2.0  # a /v1/ call waits this long for a connection, then answers 503
+SOURCES = pydantic.TypeAdapter(dict[str, batches.SourceSettings])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -127,8 +125,9 @@ def main(argv: list[str] | None = None) -> int:
         if not all(v.isdecimal() for v in limits.values() if v):
             print("KP_MAX_FILE_SIZE and KP_PAUSE_BACKLOG must be numbers", file=sys.stderr)
             return 2
-        if not all(os.environ.get(k) for k in ("KP_S3_ENDPOINT", "KP_S3_BUCKET")):
-            print("KP_S3_ENDPOINT and KP_S3_BUCKET are required", file=sys.stderr)
+        storage = ("KP_S3_ENDPOINT", "KP_S3_BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+        if not all(os.environ.get(k) for k in storage):
+            print(f"{', '.join(storage)} are required", file=sys.stderr)
             return 2
         intake = batches.Intake(
             S3ObjectStore.from_env(),

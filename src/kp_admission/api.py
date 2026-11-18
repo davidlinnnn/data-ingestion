@@ -1,8 +1,9 @@
 """The platform API (#113, authorization design Q12, §4.3), with its OpenAPI document at
 /openapi.json and a health route at /healthz. So far the internal authz API: the Authorizer for
-the PEPs outside this process, open only to registered PEP service identities; and under /v1/ the
-Resource registration of a Source (#114, authorization design §6.1), open only to registered
-credentials (§7).
+the PEPs outside this process, open only to registered PEP service identities; and under /v1/,
+open only to registered credentials (§7), the Resource registration of a Source (#114,
+authorization design §6.1) and its batches: declare, finalize and get_batch (#96, admission spec
+§5.1, §5.3, §5.4).
 
 Every request has a trace id (admission spec §4): the trace id of its `traceparent` header, or a
 generated one when the header is absent or invalid. Every response returns it in X-Trace-Id and
@@ -17,6 +18,9 @@ conventions:
   `operation`.
 - `kp_api_calls_total` (count) of the /v1/ calls that reached an operation, by `operation` (its
   route's name, such as register_resource) and `status`, the HTTP status code.
+- `kp_admission_items_total` (count) of the batch items decided, by `operation` (declare,
+  finalize), `status` (declared, unchanged, queued, rejected) and `reason`, a rejection's reason
+  code (admission spec §12), empty otherwise.
 """
 
 import hashlib

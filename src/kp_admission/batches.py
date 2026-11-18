@@ -197,17 +197,15 @@ async def _recent_items(conn: AsyncConnection, caller: Caller) -> tuple[int, flo
     """(items the Source declared within QUOTA_WINDOW, seconds until the oldest leaves it)."""
     row = await (
         await conn.execute(
-            "SELECT count(*), extract(epoch FROM min(b.created_at) + %s - now())"
+            "SELECT count(*), min(b.created_at), now()"
             " FROM batch_item i JOIN batch b ON b.batch_id = i.batch_id"
             " WHERE b.tenant_id = %s AND b.source_id = %s AND b.created_at > now() - %s",
-            (QUOTA_WINDOW, caller.tenant_id, caller.source_id, QUOTA_WINDOW),
+            (caller.tenant_id, caller.source_id, QUOTA_WINDOW),
         )
     ).fetchone()
     assert row
-    return row[0], float(row[1] or 0)
+    return row[0], (row[1] + QUOTA_WINDOW - row[2]).total_seconds() if row[1] else 0.0
 
-
-_FINALIZED = "UPDATE batch SET state = 'finalized', finalized_at = now() WHERE batch_id = %s"
 
 _DOCUMENT = """
 SELECT d.document_uid, d.resource_id, r.source_revision_id, r.source_version, r.files, r.outcome,
@@ -283,11 +281,12 @@ async def _apply_catalog(conn: AsyncConnection, uid: str, item: dict[str, Any]) 
 
 
 async def _lock_resource(conn: AsyncConnection, full_id: str) -> bool:
-    """Locks the Resource's row, so a concurrent deletion cannot leave a document bound to it
-    (#114, authorization guide §4.6); False when it does not exist."""
+    """Locks the Resource's row against its deletion, which locks it FOR UPDATE, so a document is
+    never left bound to a deleted Resource (#114, authorization guide §4.6); shared, so bindings
+    into one Resource do not wait on each other. False when it does not exist."""
     row = await (
         await conn.execute(
-            "SELECT 1 FROM authz.resource WHERE resource_id = %s FOR UPDATE", (full_id,)
+            "SELECT 1 FROM authz.resource WHERE resource_id = %s FOR SHARE", (full_id,)
         )
     ).fetchone()
     return row is not None
@@ -371,7 +370,7 @@ async def _update_item(
 ) -> None:
     await conn.execute(
         "UPDATE batch_item SET status = %s, request_id = %s, source_revision_id = %s, error = %s,"
-        " placement = coalesce(%s, placement) WHERE batch_id = %s AND index = %s",
+        " placement = %s WHERE batch_id = %s AND index = %s",
         (
             outcome.status,
             outcome.request_id,
@@ -384,9 +383,20 @@ async def _update_item(
     )
 
 
-async def _batch(conn: AsyncConnection, caller: Caller, batch_id: str, lock: bool = False):
-    """(state, expired by now, created_at, expires_at, finalized_at) of the Source's batch."""
-    return await (
+@dataclass
+class _Batch:
+    state: str
+    overdue: bool  # open, past expires_at, not yet marked expired
+    created_at: datetime
+    expires_at: datetime
+    finalized_at: datetime | None
+
+
+async def _batch(
+    conn: AsyncConnection, caller: Caller, batch_id: str, lock: bool = False
+) -> _Batch | None:
+    """The Source's batch; None for another Source's."""
+    row = await (
         await conn.execute(
             "SELECT state, state = 'open' AND expires_at <= now(), created_at, expires_at,"
             " finalized_at FROM batch WHERE batch_id = %s AND tenant_id = %s AND source_id = %s"
@@ -394,17 +404,32 @@ async def _batch(conn: AsyncConnection, caller: Caller, batch_id: str, lock: boo
             (batch_id, caller.tenant_id, caller.source_id),
         )
     ).fetchone()
+    return None if row is None else _Batch(*row)
 
 
-async def _declared_items(conn: AsyncConnection, batch_id: str) -> list[tuple[int, str, dict]]:
+async def _delete_batch(conn: AsyncConnection, batch_id: str) -> None:
+    await conn.execute("DELETE FROM batch WHERE batch_id = %s", (batch_id,))
+
+
+async def _mark_finalized(conn: AsyncConnection, batch_id: str) -> None:
+    await conn.execute(
+        "UPDATE batch SET state = 'finalized', finalized_at = now() WHERE batch_id = %s",
+        (batch_id,),
+    )
+
+
+async def _declared_items(
+    conn: AsyncConnection, batch_id: str
+) -> list[tuple[int, str, dict, dict]]:
+    """(index, document_uid, the item as declared, its placement record) of each declared item."""
     rows = await (
         await conn.execute(
-            "SELECT index, document_uid, declared FROM batch_item"
+            "SELECT index, document_uid, declared, placement FROM batch_item"
             " WHERE batch_id = %s AND status = 'declared' ORDER BY index",
             (batch_id,),
         )
     ).fetchall()
-    return [(row[0], row[1], row[2]) for row in rows]
+    return [(row[0], row[1], row[2], row[3]) for row in rows]
 
 
 async def _items(conn: AsyncConnection, batch_id: str) -> list[tuple]:
@@ -638,17 +663,24 @@ async def _declare_once(
     async with pool.connection() as conn:
         if key and (replayed := await _replay(conn, caller, key, digest)):
             return replayed
+        refused = None
         if intake.pause_backlog is not None and await _backlog(conn) >= intake.pause_backlog:
-            raise Refused(503, "UNAVAILABLE", "ADMISSION_PAUSED", "Admission is paused.")
+            refused = Refused(503, "UNAVAILABLE", "ADMISSION_PAUSED", "Admission is paused.")
+        # shortcut: two declarations at once may pass the quota together; it is provisional (§11).
         recent, wait_s = await _recent_items(conn, caller)
-        if recent and recent + len(items) > QUOTA_ITEMS:
-            raise Refused(
+        if not refused and recent and recent + len(items) > QUOTA_ITEMS:
+            refused = Refused(
                 429,
                 "RESOURCE_EXHAUSTED",
                 "RATE_LIMITED",
                 f"At most {QUOTA_ITEMS} declared items per minute.",
                 retry_after=max(1, math.ceil(wait_s)),
             )
+        if refused:
+            # The same key may have committed since the first look: its response wins.
+            if key and (replayed := await _replay(conn, caller, key, digest)):
+                return replayed
+            raise refused
         known = {
             i.document_id: await _live_document(conn, caller, i.document_id, False) for i in items
         }
@@ -672,9 +704,9 @@ async def _declare_once(
                 f["sha256"] = f["sha256"].lower()
             response: dict[str, Any] = {"index": index, "document_id": item.document_id}
             uid, placement = None, None
-            reason = _structure(item, intake.max_file_size)
-            if not reason and item.document_id in seen:
-                reason = "INVALID_ARGUMENT"  # one item per document in a declaration
+            # One item per document in a declaration.
+            duplicate = item.document_id in seen
+            reason = "INVALID_ARGUMENT" if duplicate else _structure(item, intake.max_file_size)
             seen.add(item.document_id)
             adopted = None
             if not reason:
@@ -694,7 +726,7 @@ async def _declare_once(
                 elif full_id not in decisions:
                     raise _Again  # the document appeared or moved after the reads
                 else:
-                    placement = _record(decisions[full_id])
+                    placement = {"declaration": _record(decisions[full_id])}
                     stored["resource_id"] = full_id
                     if decisions[full_id].outcome == "deny":
                         reason = "RESOURCE_NOT_FOUND"
@@ -740,7 +772,7 @@ async def _declare_once(
         rows.sort(key=lambda row: row[0]["index"])
         listed = [{k: v for k, v in row[4].items() if v is not None} for row in rows]
         if all(row[2].status == "rejected" for row in rows):
-            await conn.execute("DELETE FROM batch WHERE batch_id = %s", (batch_id,))
+            await _delete_batch(conn, batch_id)
             status, body = 422, _all_rejected(listed)
         else:
             for stored, uid, outcome, placement, _ in rows:
@@ -750,10 +782,7 @@ async def _declare_once(
             state = "open"
             if not any(row[2].status == "declared" for row in rows):
                 state = "finalized"  # §5.1: nothing to upload
-                await conn.execute(
-                    _FINALIZED,
-                    (batch_id,),
-                )
+                await _mark_finalized(conn, batch_id)
             status = 201
             body = {
                 "batch_id": batch_id,
@@ -784,15 +813,15 @@ async def finalize(
         found = await _batch(conn, caller, batch_id)
         if found is None:
             raise _not_found()
-        if found[1]:
+        if found.overdue:
             await expire(conn, batch_id)
-        if found[0] == "expired" or found[1]:
+        if found.state == "expired" or found.overdue:
             raise _expired()
-        declared = await _declared_items(conn, batch_id) if found[0] == "open" else []
-    decisions = await _place(authorizer, caller, {item["resource_id"] for _, _, item in declared})
+        declared = await _declared_items(conn, batch_id) if found.state == "open" else []
+    decisions = await _place(authorizer, caller, {d[2]["resource_id"] for d in declared})
     keys = {
         (index, f["path"]): source_key(uid, batch_id, index, f["sha256"])
-        for index, uid, item in declared
+        for index, uid, item, _ in declared
         for f in item["files"]
         if f["path"] not in item["carried"]
     }
@@ -809,10 +838,12 @@ async def finalize(
         async with conn.transaction():
             found = await _batch(conn, caller, batch_id, lock=True)
             assert found
-            if found[0] == "open" and found[1]:
+            if found.overdue:
                 expired = True
-            elif found[0] == "open":
-                for index, uid, item in sorted(declared, key=lambda d: d[2]["document_id"]):
+            elif found.state == "open":
+                for index, uid, item, placement in sorted(
+                    declared, key=lambda d: d[2]["document_id"]
+                ):
                     decision = decisions[item["resource_id"]]
                     outcome = await _finalize_item(
                         conn,
@@ -827,15 +858,13 @@ async def finalize(
                         in_place,
                     )
                     items_decided.labels("finalize", outcome.status, outcome.reason or "").inc()
-                    await _update_item(conn, batch_id, index, outcome, _record(decision))
-                await conn.execute(
-                    _FINALIZED,
-                    (batch_id,),
-                )
+                    record = placement | {"finalization": _record(decision)}
+                    await _update_item(conn, batch_id, index, outcome, record)
+                await _mark_finalized(conn, batch_id)
         if expired:
             await expire(conn, batch_id)
             raise _expired()
-        if found[0] == "expired":
+        if found.state == "expired":
             raise _expired()
         view = await _view(conn, caller, batch_id)
     if all(item["status"] == "rejected" for item in view["items"]):
@@ -917,14 +946,14 @@ async def _view(conn: AsyncConnection, caller: Caller, batch_id: str) -> dict[st
     found = await _batch(conn, caller, batch_id)
     if found is None:
         raise _not_found()
-    state, expired, created_at, expires_at, finalized_at = found
+    expired = found.overdue
     items, counts = [], {}
     for index, document_id, uid, status, request_id, srv, error, request_state in await _items(
         conn, batch_id
     ):
         if request_state and status == "queued":
             status = request_state
-        if status == "declared" and expired:
+        if status == "declared" and (expired or found.state == "expired"):
             status = "expired"
         counts[status] = counts.get(status, 0) + 1
         entry = {
@@ -939,10 +968,10 @@ async def _view(conn: AsyncConnection, caller: Caller, batch_id: str) -> dict[st
         items.append({k: v for k, v in entry.items() if v is not None})
     body = {
         "batch_id": batch_id,
-        "state": "expired" if expired else state,
-        "created_at": created_at.isoformat(),
-        "expires_at": _at(expires_at),
-        "finalized_at": finalized_at and finalized_at.isoformat(),
+        "state": "expired" if expired else found.state,
+        "created_at": _at(found.created_at),
+        "expires_at": _at(found.expires_at),
+        "finalized_at": found.finalized_at and _at(found.finalized_at),
         "counts": counts,
         "items": items,
         "next_page_token": "",  # shortcut: a batch holds at most MAX_ITEMS, one page

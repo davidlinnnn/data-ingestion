@@ -64,7 +64,7 @@ Logical records; the physical schema is I1's.
 | Record | Key fields | Notes |
 |---|---|---|
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
-| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields, the last placement decision (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses |
+| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields, the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
 | `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
@@ -259,7 +259,8 @@ and the options compared are in the
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 
 No body. Response `202` with the batch and every item, admitted items carrying
-`request_id` and `source_revision_id`. Repeating it returns the same response.
+`request_id` and `source_revision_id`. Repeating it returns the same batch with
+the same requests; item statuses follow their requests (§5.4).
 `409 BATCH_EXPIRED` for an expired batch; `422 ALL_ITEMS_REJECTED` when every
 item of the batch ends rejected (the batch is still finalized and no request is
 created). `503 UNAVAILABLE` with `Retry-After` when storage cannot say whether
@@ -410,7 +411,7 @@ cleanup.
 
 | `ordering` | Rule |
 |---|---|
-| `source_version` | Integer or RFC 3339 time, one kind per Source. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
+| `source_version` | Integer or RFC 3339 time, one kind per Source: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
 | `arrival` | Finalization order decides; equal content → §6.4 |
 
 Content equality is equality of the set of (path, `sha256`) pairs. Equal bytes in
@@ -635,7 +636,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
 | `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `RESOURCE_NOT_FOUND`, `FILES_MISSING`, `UNSUPPORTED_FORMAT`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, finalization | — |
+| `INVALID_ARGUMENT`, `DOCUMENT_DELETED`, `STALE_DECLARATION`, `RESOURCE_NOT_FOUND`, `FILES_MISSING`, `UNSUPPORTED_FORMAT`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, finalization | — |
 
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
