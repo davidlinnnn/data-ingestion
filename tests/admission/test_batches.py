@@ -22,6 +22,7 @@ from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake, SourceSettings, expire
 from kp_admission.storage import FakeObjectStore, source_key
 from tests.admission.authz_fake import FakeAuthorizer
+from tests.admission.support import request, revision
 
 pytestmark = pytest.mark.docker
 
@@ -307,10 +308,11 @@ async def test_7_too_many_items_is_400_and_too_frequent_declarations_429(platfor
 
 
 async def test_8_a_pause_refuses_declarations_and_still_finalizes_open_batches(
-    platform, api, store
+    platform, api, store, conn
 ):
+    await request(conn, *await revision(conn), priority="low")  # a refresh's: never a backlog
     async with api() as hr, api(pause_backlog=1) as paused:
-        declared = (await hr.post("/v1/batches", json={"items": [A]})).json()
+        declared = (await paused.post("/v1/batches", json={"items": [A]})).json()
         upload(store, declared, [A])
         _, queued = await submit(hr, store, [fresh("Q")])  # one queued request: the backlog
 

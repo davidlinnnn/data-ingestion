@@ -641,6 +641,8 @@ def _resource(
 
 
 def _upload_url(base: str, batch_id: str, index: int, path: str) -> str:
+    # shortcut: `base` is the URL the request reached; behind the ingress it is the public one only
+    # when uvicorn trusts the forwarded headers (#78), else set a public base URL.
     return f"{base}v1/batches/{batch_id}/items/{index}/files/{quote(path)}"
 
 
