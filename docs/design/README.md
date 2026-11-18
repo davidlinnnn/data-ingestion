@@ -18,8 +18,8 @@ four kinds, and says which in a status line at its top:
 
 | Document | Kind | Ticket | Covers |
 |---|---|---|---|
-| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99 | Batch API, admission rules, status, deletion, dispatch and durability, limits, error reasons |
-| [File upload](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #184 | Why uploads go through the platform API, architecture and sequence diagrams, failure table, guide for Source developers |
+| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99, #194 | Batch API, admission rules, status, deletion, dispatch and durability, limits, error reasons |
+| [File upload](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #194, #184 | Why uploads go through the platform API, architecture and sequence diagrams, failure table, guide for Source developers, deployment needs for DevOps, implementation status |
 | [Admission design notes](knowledge-platform-admission.md) | Design record | #31 | Rounds 1–5 and their reasons |
 | [Authorization](knowledge-platform-authorization.md) | Design result | #85 | Decision interface, model and pilot provider |
 | [Authorization guide](knowledge-platform-authorization-guide.md) (zh-TW) | Contract | #204, #114, #127 | The authz API contract; system diagram with the provider options; sequence diagrams for ingestion, Retrieval and LLM-Wiki; guide for PEP implementers and operators |

@@ -689,7 +689,7 @@ while True:
 ### 6.1 部署形態與依賴
 
 - authz API 在平台 API 的 `api` 角色裡，和 Resource 登記、Batch API 同一個 process、同一個 port。固定 2 個 pod，每個 pod 一個 uvicorn worker。
-- **對外的路由只開放 `/v1/`。** `/authz/`、`/openapi.json`、`/healthz` 與 metrics 不對外。authz API「不對外開放」靠的是這條路由規則，由 #78 落實。
+- **對外的路由只開放 `/v1/`。** `/authz/`、`/read/`（#126 的 Change Feed 與文件現況）、`/openapi.json`、`/healthz` 與 metrics 不對外。authz API「不對外開放」靠的是這條路由規則，由 #78 落實。
 - 依賴 Admission DB。所以讀取的可用性不會高於平台 API 與 Admission DB 的可用性；走 GAM 路線時再加上 GAM。
 - 資料庫連不上時 `api` 仍然能啟動，判定一律回無法判定，資料庫恢復後自動回復。
 
@@ -728,7 +728,7 @@ while True:
 | 項目 | 內容 |
 |---|---|
 | 健康檢查 | `GET /healthz`，不需憑證、不碰資料庫。liveness 與 readiness 都用 HTTP probe 打它。pod 帶 sidecar 時，TCP probe 只要 sidecar 活著就會通過，不能用。路徑是暫定的，#78 可以調整 |
-| metrics | 判定次數，依操作、結果（`allow`、`deny`、`unavailable`）、讀取端區分；判定耗時的 histogram。`/v1/` 的呼叫次數 `kp_api_calls_total`，依操作（`register_resource`、`list_resources_of_source`、`get_resource`、`delete_resource`）與狀態碼區分。用 `--metrics-port` 開啟。`401` 不算判定，也不算進 `/v1/` 的次數 |
+| metrics | 判定次數，依操作、結果（`allow`、`deny`、`unavailable`）、讀取端區分；判定耗時的 histogram。`/v1/` 與 `/read/v1/` 的呼叫次數 `kp_api_calls_total`，依操作（route 的名稱，例如 `register_resource`、`list_resources_of_source`、`get_resource`、`delete_resource`、`read_feed`）與狀態碼區分。用 `--metrics-port` 開啟。`401` 不算判定，也不算進 `/v1/` 的次數 |
 | log | JSON，寫到 stderr。每一行帶 `trace_id`；`/v1/` 的呼叫再帶 `source_id`（或 `client_id`）與 `credential_id`。無法判定時另外記 `decision_id`、操作、讀取端名稱、例外的型別。`allow` 與 `deny` 沒有逐筆的 log。每個 HTTP 呼叫有一行 uvicorn 的 access log，帶 method、路徑（含 key）與狀態碼。log 不含憑證，也不含使用者帳號 |
 
 ### 6.4 要看什麼
@@ -763,7 +763,7 @@ while True:
 | Resource 登記（Source 的 key）、完整識別碼、憑證登錄 | 已完成 | #114 |
 | 宣告與 finalize 的放置檢查 | 未實作，在 #114 之後 | #96 |
 | 改綁 | 未實作 | #205 |
-| Change Feed 與文件現況的讀取 | 未實作 | #126 |
+| Change Feed 與文件現況的讀取 | 已完成，在 `dev` | #126 |
 | 清理時限的數值、判定可重用的上限 | 設計中 | #56 |
 | 查詢當下的封鎖檢查 | v1 不做（ADR-0014）。需要立即生效的手段時再加 | 無 |
 | 讀取端 SDK 與第一個示範用的讀取端 | 未實作 | #127 |

@@ -1,7 +1,7 @@
 # Knowledge Platform admission specification
 
 **Status:** current contract, kept up to date when a decision changes. The implementation
-tickets #95–#99 build from this document.
+tickets #95–#99 and #194 build from this document.
 
 The buildable contract for
 [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31).
@@ -179,7 +179,7 @@ until then it may get a `429` or `503` to retry. Body:
 {
   "items": [
     {
-      "document_id": "hr/leave-policy",
+      "document_id": "hr:leave-policy",
       "source_version": "3",
       "title": "Leave policy",
       "source_url": "https://km.example/hr/leave-policy",
@@ -203,7 +203,7 @@ Response `201`:
   "state": "open",
   "expires_at": "2026-10-22T09:00:00Z",
   "items": [
-    { "index": 0, "document_id": "hr/leave-policy", "document_uid": "doc_7f3…", "status": "declared",
+    { "index": 0, "document_id": "hr:leave-policy", "document_uid": "doc_7f3…", "status": "declared",
       "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://kp.example/v1/batches/bat_01J…/items/0/files/assets/flow.png" } ],
       "carried_over": ["policy.pdf"] }
   ]
@@ -327,7 +327,7 @@ Returns the current generation (Q10.1f):
 
 ```json
 {
-  "document_id": "hr/leave-policy", "document_uid": "doc_7f3…",
+  "document_id": "hr:leave-policy", "document_uid": "doc_7f3…",
   "resource_id": "hr-all", "title": "Leave policy", "source_url": "https://…",
   "metadata": { "km_folder": "HR/Policies" },
   "readiness": "ready_stale", "since": "2026-10-15T09:12:00Z",
@@ -700,7 +700,12 @@ ended without an error block, such as terminated or timed out (§9).
 - Its own PostgreSQL database, deployed without an operator: one instance on a
   persistent volume, continuous write-ahead-log archiving and a scheduled base
   backup to object storage (§9). Custody belongs to #57; topology and
-  configuration loading to #78.
+  configuration loading to #78. This is the pilot's database (user ruling,
+  2026-11-17,
+  [#78](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6949497546)):
+  before the PROD release admission moves to the company-managed MongoDB
+  ([#239](https://github.com/davidlinnnn/data-ingestion/issues/239)), which
+  rewrites §3, §9 and this item.
 - Uploads are written to the custody bucket (§5.2, §10). Admission writes source
   files there and deletes those of rejected and expired items; it changes
   nothing else in the bucket.
@@ -729,9 +734,12 @@ ended without an error block, such as terminated or timed out (§9).
 
 | Ticket | Scope | Depends on |
 |---|---|---|
-| I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184 |
-| I2b File upload | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
-| I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #126 |
-| I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
-| I5 Validation harness | §13 tiers | I1–I4, #78 |
+| I1 Admission core (#95, done) | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | — |
+| I2 Batch API (#96) | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184, #204, #114 |
+| I2b File upload (#194) | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
+| I3 Status (#97) | §5.5–§5.7, §7, report intake | I1, #55, #126 |
+| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, #55, #126 |
+| I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
+
+The dependencies follow the tracker's edges as of 2026-11-18, without the
+closed prototype #236; where the two differ, the tracker is current. The Resource API of §5.1 is #114 (done).
