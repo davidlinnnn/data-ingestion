@@ -1,5 +1,5 @@
 """kp-admission command line: the api, dispatcher and reconciler roles (#95, #113, admission
-spec §13).
+spec §13), Change Feed retention and the Knowledge Profile write point (#126).
 
 The database comes from KP_ADMISSION_DATABASE_URL; Temporal from TEMPORAL_ADDRESS (default
 localhost:7233) and TEMPORAL_NAMESPACE (default "default"), as for kp-canonicalization.
@@ -9,9 +9,12 @@ import argparse
 import asyncio
 import contextlib
 import json
+import logging
 import os
 import signal
 import sys
+from datetime import UTC, datetime
+from typing import Any
 
 import prometheus_client
 import psycopg
@@ -19,6 +22,7 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
+from kp_admission import feed
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -29,12 +33,16 @@ from kp_canonicalization.workflow import task_queue
 POLL_S = 1.0
 POOL_SIZE = 5  # per api pod; the connection budget (#78 C14) counts it
 POOL_WAIT_S = 2.0  # a /v1/ call waits this long for a connection, then answers 503
+OBSERVE_S = 15.0
+
+log = logging.getLogger(__name__)
 
 
 def main(argv: list[str] | None = None) -> int:
     """`kp-admission api [--metrics-port P]`: serve the platform API on KP_ADMISSION_API_PORT
     (default 8080) until SIGTERM or SIGINT; it finishes open requests, then ends by that signal, as
-    uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics.
+    uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics, and
+    kp_admission.feed's gauges, measured every OBSERVE_S seconds.
     KP_AUTHZ_PROVIDER selects the authz provider: `allow-all`, the only one, which it refuses
     unless KP_DEPLOYMENT is `pilot` (#113; the marker is #78's). KP_AUTHZ_PEP_CREDENTIALS registers
     the PEPs that may call the authz API, as a JSON object from the SHA-256 hex digest of each
@@ -51,13 +59,24 @@ def main(argv: list[str] | None = None) -> int:
     `kp-admission reconcile`: one reconciler run. It prints how many requests went each way, as
     JSON, and fails when Temporal is unreachable.
 
-    All three log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
+    `kp-admission feed-retention`: one Change Feed retention run (kp_admission.feed.retain), daily
+    at least. It prints the partitions it created and dropped, as JSON.
+
+    `kp-admission set-profile --tenant T SOURCE [PROJECTION ...]`: set the Source's Knowledge
+    Profile, the Projection Types it requires, and print its profile_seq as JSON.
+
+    All log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
     configuration error."""
     parser = argparse.ArgumentParser(prog="kp-admission")
     roles = parser.add_subparsers(dest="role", required=True)
     roles.add_parser("api").add_argument("--metrics-port", type=int)
     roles.add_parser("dispatcher")
     roles.add_parser("reconcile")
+    roles.add_parser("feed-retention")
+    profile = roles.add_parser("set-profile")
+    profile.add_argument("--tenant", required=True)
+    profile.add_argument("source")
+    profile.add_argument("projections", nargs="*")
     args = parser.parse_args(argv)
     dsn = os.environ.get("KP_ADMISSION_DATABASE_URL")
     if not dsn:
@@ -97,6 +116,10 @@ def main(argv: list[str] | None = None) -> int:
             prometheus_client.start_http_server(args.metrics_port)
         return asyncio.run(run_api(dsn, peps, credentials, int(port)))
     log_json_lines()
+    if args.role == "feed-retention":
+        return asyncio.run(run_feed_retention(dsn))
+    if args.role == "set-profile":
+        return asyncio.run(run_set_profile(dsn, args.tenant, args.source, args.projections))
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
 
 
@@ -110,7 +133,34 @@ async def run_api(
         config = uvicorn.Config(
             app(AllowAll(pool), peps, credentials, pool), host="0.0.0.0", port=port, log_config=None
         )
+        observing = asyncio.create_task(observe(pool))
         await uvicorn.Server(config).serve()
+        observing.cancel()
+    return 0
+
+
+async def observe(pool: AsyncConnectionPool[Any]) -> None:
+    while True:
+        try:
+            async with pool.connection() as conn:
+                await feed.observe(conn)
+        except Exception as error:  # the gauges keep their last values; the api keeps serving
+            log.warning("feed metrics not measured: %s", type(error).__name__)
+        await asyncio.sleep(OBSERVE_S)
+
+
+async def run_feed_retention(dsn: str) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        print(json.dumps(await feed.retain(conn, datetime.now(UTC))))
+    return 0
+
+
+async def run_set_profile(dsn: str, tenant: str, source: str, projections: list[str]) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        seq = await feed.set_profile(
+            conn, tenant_id=tenant, source_id=source, projections=projections
+        )
+    print(json.dumps({"profile_seq": seq}))
     return 0
 
 

@@ -104,12 +104,16 @@ async def test_every_admission_record_carries_a_tenant(conn):
         "SELECT t.table_name, c.is_nullable FROM information_schema.tables t"
         " LEFT JOIN information_schema.columns c ON c.table_name = t.table_name"
         " AND c.column_name = 'tenant_id' WHERE t.table_schema = 'public'"
+        " AND t.table_name !~ '^change_feed_[0-9]{6}$'"  # the feed's partitions
     )
 
     assert dict(await cursor.fetchall()) == dict.fromkeys(
         ["batch", "batch_item", "document", "source_revision", "request", "outbox",
-         "idempotency_key"], "NO",
-    )  # fmt: skip
+         "idempotency_key", "source", "change_feed"], "NO",
+    ) | {
+        # Platform-wide: a projection reads every tenant's feed (#126).
+        "consumer_cursor": None, "change_feed_horizon": None,
+    }  # fmt: skip
 
 
 async def test_a_document_id_is_unique_among_the_live_documents_of_a_source(conn):
