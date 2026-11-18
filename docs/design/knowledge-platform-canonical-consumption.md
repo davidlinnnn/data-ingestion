@@ -313,6 +313,11 @@ drift that keeps the count unchanged, for example a bug rewriting the mirror
 | Canonical rollback | Retire the faulty adoption → selection falls back → `current_revision_changed` (normal) → recompute | No canonical reprocessing; B5's "equals current" lets the rollback land |
 | Copy's original deleted | Original deleted → the platform blocks the original and every copy in one step → `document_deleted` for each | Copies unreadable within a minute; each projection removes them and each becomes enforced |
 
+Note of 2026-11-18: the pilot (MVP) builds no governance withdrawal or
+reinstatement (user ruling, [#56](https://github.com/davidlinnnn/data-ingestion/issues/56#issuecomment-6982506436)), so the "Source withdrawal" row does
+not run in the pilot. The feed and the state read keep room for it
+(`withdrawn`).
+
 ## 7. Validation
 
 A discrete-event simulation (Codex, two rounds, gated by a reviewed rule

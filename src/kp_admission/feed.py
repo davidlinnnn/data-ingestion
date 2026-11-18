@@ -60,7 +60,8 @@ class State(BaseModel, frozen=True):
 
     resource_id: str
     current: Current | None
-    # shortcut: never `withdrawn` until #56 defines the withdrawal record; read it here then.
+    # shortcut: never `withdrawn`: the pilot builds no withdrawal (#56, 2026-11-18); read its
+    # record here when a release adds one.
     status: Literal["active", "deleted", "withdrawn"]
     copy_of: None = None  # copies are not in v1 (DR B3)
 
