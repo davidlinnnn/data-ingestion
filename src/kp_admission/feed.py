@@ -6,6 +6,9 @@ Document in commit order, within a bounded delay. A position is an opaque string
 may be newer than the event that led to it, and a reader may see one change more than once.
 On PostgreSQL each event is written in the transaction of its fact and the feed is read in
 (transaction id, sequence) order below the snapshot xmin, which ADR-0009 explains.
+
+shortcut: a Source is named by its source_id alone, as the pilot deployment holds one tenant; add
+the tenant to these reads when a deployment holds two.
 """
 
 import re
@@ -137,31 +140,30 @@ async def read(conn: AsyncConnection, cursor: str, limit: int) -> tuple[list[Eve
     """Up to `limit` events after cursor and the cursor after them. Raises CursorExpired when
     retention dropped entries after it, ValueError when it is not a position."""
     xid, seq = _split(cursor)
-    async with conn.transaction():
-        # Shared with retention's update, so a partition is not dropped between check and read.
-        horizon = await conn.execute("SELECT position FROM change_feed_horizon FOR SHARE")
-        [(dropped,)] = await horizon.fetchall()
-        if cursor < dropped:
-            raise CursorExpired
-        rows = await conn.execute(
-            "SELECT xid::text, seq, kind, document_uid, source_id, priority, occurred_at"
-            " FROM change_feed WHERE (xid, seq) > (%s::xid8, %s)"
-            " AND xid < pg_snapshot_xmin(pg_current_snapshot())"
-            # Qualified: a bare xid would sort by the text output column of the same name.
-            " ORDER BY change_feed.xid, seq LIMIT %s",
-            (xid, seq, limit),
+    rows = await conn.execute(
+        "SELECT xid::text, seq, kind, document_uid, source_id, priority, occurred_at"
+        " FROM change_feed WHERE (xid, seq) > (%s::xid8, %s)"
+        " AND xid < pg_snapshot_xmin(pg_current_snapshot())"
+        # Qualified: a bare xid would sort by the text output column of the same name.
+        " ORDER BY change_feed.xid, seq LIMIT %s",
+        (xid, seq, limit),
+    )
+    events = [
+        Event(
+            position=_position(x, s),
+            kind=kind,
+            document_uid=uid,
+            source_id=source,
+            priority=priority,
+            occurred_at=at,
         )
-        events = [
-            Event(
-                position=_position(x, s),
-                kind=kind,
-                document_uid=uid,
-                source_id=source,
-                priority=priority,
-                occurred_at=at,
-            )
-            for x, s, kind, uid, source, priority, at in await rows.fetchall()
-        ]
+        for x, s, kind, uid, source, priority, at in await rows.fetchall()
+    ]
+    # After the read: a drop waits for the read above, and commits with its horizon.
+    horizon = await conn.execute("SELECT position FROM change_feed_horizon")
+    [(dropped,)] = await horizon.fetchall()
+    if cursor < dropped:
+        raise CursorExpired
     return events, events[-1].position if events else cursor
 
 
@@ -209,6 +211,12 @@ async def set_profile(
         )
         if (row := await cursor.fetchone()) and row[0] == projections:
             return row[1]
+        await conn.execute(
+            "INSERT INTO source (tenant_id, source_id, projections, profile_seq)"
+            " VALUES (%s, %s, %s, '') ON CONFLICT (tenant_id, source_id)"
+            " DO UPDATE SET projections = excluded.projections",
+            (tenant_id, source_id, projections),
+        )
         seq = await append(
             conn,
             "source_profile_changed",
@@ -217,10 +225,8 @@ async def set_profile(
             priority="background",
         )
         await conn.execute(
-            "INSERT INTO source (tenant_id, source_id, projections, profile_seq)"
-            " VALUES (%s, %s, %s, %s) ON CONFLICT (tenant_id, source_id)"
-            " DO UPDATE SET projections = excluded.projections, profile_seq = excluded.profile_seq",
-            (tenant_id, source_id, projections, seq),
+            "UPDATE source SET profile_seq = %s WHERE tenant_id = %s AND source_id = %s",
+            (seq, tenant_id, source_id),
         )
         return seq
 
@@ -279,12 +285,13 @@ def _month(at: datetime, ahead: int = 0) -> datetime:
 
 
 async def retain(conn: AsyncConnection, now: datetime) -> dict[str, list[str]]:
-    """Creates the partitions of now's month and the next, and drops each month whose entries
+    """Creates the partitions of now's month and the two after it, so a missed run stops no write
+    for two months, and drops each month whose entries
     are all older than RETENTION, after recording its highest position as the horizon below which
     a cursor is expired. Returns the partitions it created and dropped."""
     now = now.astimezone(UTC)
     done: dict[str, list[str]] = {"created": [], "dropped": []}
-    for ahead in (0, 1):
+    for ahead in (0, 1, 2):
         start = _month(now, ahead)
         name = f"change_feed_{start:%Y%m}"
         cursor = await conn.execute("SELECT to_regclass(%s)", (name,))
@@ -304,8 +311,6 @@ async def retain(conn: AsyncConnection, now: datetime) -> dict[str, list[str]]:
         if _month(start, 1) > now - RETENTION:
             continue
         async with conn.transaction():
-            # Waits for the feed reads that hold the horizon, and holds back new ones.
-            await conn.execute("SELECT position FROM change_feed_horizon FOR UPDATE")
             highest = await conn.execute(
                 sql.SQL(
                     "SELECT xid::text, seq FROM {} p ORDER BY p.xid DESC, seq DESC LIMIT 1"

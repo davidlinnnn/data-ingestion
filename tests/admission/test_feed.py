@@ -351,7 +351,7 @@ async def test_retention_drops_months_past_90_days_and_expires_the_cursors_they_
     await feed.retain(conn, now)  # the months of the real clock again, for the writes below
 
     assert kept == {"created": [], "dropped": []}
-    assert len(later["created"]) == 2
+    assert len(later["created"]) == 3
     assert f"change_feed_{now:%Y%m}" in later["dropped"]
     with pytest.raises(feed.CursorExpired):
         await feed.read(conn, before, limit=10)

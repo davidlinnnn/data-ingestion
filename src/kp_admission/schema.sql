@@ -146,11 +146,11 @@ CREATE TABLE change_feed (
 
 CREATE INDEX change_feed_position ON change_feed (xid, seq);
 
--- This month's and next month's partitions; `kp-admission feed-retention` adds later ones.
+-- This month's partition and the two after it; `kp-admission feed-retention` adds later ones.
 DO $$
 DECLARE month timestamptz := date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 BEGIN
-    FOR i IN 0..1 LOOP
+    FOR i IN 0..2 LOOP
         EXECUTE format('CREATE TABLE %I PARTITION OF change_feed FOR VALUES FROM (%L) TO (%L)',
                        'change_feed_' || to_char(month AT TIME ZONE 'UTC', 'YYYYMM'),
                        month, month + interval '1 month');

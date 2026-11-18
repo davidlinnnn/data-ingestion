@@ -63,7 +63,7 @@ _TRACEPARENT = re.compile(
 )
 _Limit = Annotated[int, Query(ge=1, le=1000)]
 # The paths only a registered service identity may call.
-_SERVICE_ONLY = re.compile(r"/authz/|/v1/(feed|consumers/|sources|documents/[^/]+/state)")
+_SERVICE_ONLY = re.compile(r"/authz/|/v1/(feed|consumers|sources|documents/[^/]+/state)(/|$)")
 
 
 class Subject(Ref, frozen=True):
@@ -212,8 +212,13 @@ class Counted(APIRoute):
         handler = super().get_route_handler()
 
         async def counted(request: Request) -> Response:
-            response = await handler(request)
-            feed_requests.labels(self.name, response.status_code, _request.get()["pep"]).inc()
+            projection = _request.get()["pep"]
+            try:
+                response = await handler(request)
+            except Exception:  # Traced answers it with a 500
+                feed_requests.labels(self.name, 500, projection).inc()
+                raise
+            feed_requests.labels(self.name, response.status_code, projection).inc()
             return response
 
         return counted
@@ -238,7 +243,7 @@ class PepOnly:
                     401,
                     "UNAUTHENTICATED",
                     "A registered service credential is required.",
-                    path=scope["path"],
+                    api=_api(scope["path"]),
                 )
                 await rejected(scope, receive, send)
                 return
@@ -385,12 +390,14 @@ def app(authorizer: Authorizer, peps: Mapping[str, str], pool: AsyncConnectionPo
     async def invalid(request: Request, error: RequestValidationError) -> JSONResponse:
         first = error.errors()[0]
         where = ".".join(map(str, first["loc"]))
-        return _error(400, "INVALID_ARGUMENT", f"{where}: {first['msg']}", path=request.url.path)
+        return _error(
+            400, "INVALID_ARGUMENT", f"{where}: {first['msg']}", api=_api(request.url.path)
+        )
 
     @api.exception_handler(HTTPException)
     async def unreadable(request: Request, error: HTTPException) -> Response:
         if error.status_code == 400:  # FastAPI could not decode the body
-            return _error(400, "INVALID_ARGUMENT", str(error.detail), path=request.url.path)
+            return _error(400, "INVALID_ARGUMENT", str(error.detail), api=_api(request.url.path))
         return await http_exception_handler(request, error)
 
     return api
@@ -412,7 +419,11 @@ async def _decide(operation: Operation, decision: Awaitable[Decision]) -> Decisi
 
 def _fail(code: int, status: ErrorStatus, message: str, **details: Any) -> JSONResponse:
     """An error of the governed read API."""
-    return _error(code, status, message, path="/v1/", **details)
+    return _error(code, status, message, api="admission", **details)
+
+
+def _api(path: str) -> Literal["authz", "admission"]:
+    return "authz" if path.startswith("/authz/") else "admission"
 
 
 def _digest(token: str) -> str:
@@ -424,16 +435,13 @@ def _error(
     status: ErrorStatus,
     message: str,
     *,
-    path: str = "/authz/",
+    api: Literal["authz", "admission"] = "authz",
     reason: str | None = None,
     metadata: dict[str, str] | None = None,
 ) -> JSONResponse:
-    """An AIP-193 error of the API that `path` belongs to; its reason is the status unless one is
+    """An AIP-193 error of the authz or the admission API; its reason is the status unless one is
     given."""
-    domain = "authz" if path.startswith("/authz/") else "admission"
-    info = ErrorInfo(
-        reason=reason or status, domain=f"{domain}.knowledge-platform", metadata=metadata
-    )
+    info = ErrorInfo(reason=reason or status, domain=f"{api}.knowledge-platform", metadata=metadata)
     body = ErrorResponse(
         error=ErrorBody(code=code, status=status, message=message, details=[info]),
         trace_id=trace_id(),
