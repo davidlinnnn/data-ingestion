@@ -14,6 +14,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from kp_admission import feed
 from kp_admission.cli import main
 from tests.admission.support import request, resource, revision, runs
 
@@ -214,3 +215,44 @@ async def test_the_api_without_a_database_stays_healthy_and_its_503s_reach_metri
     assert (no_decision["trace_id"], no_decision["pep"]) == (trace, "wiki")
     [access] = [line for line in lines if "/authz/v1/check" in line["message"]]
     assert (access["logger"], access["trace_id"]) == ("uvicorn.access", trace)
+
+
+@pytest.mark.docker
+async def test_set_profile_and_feed_retention_are_one_shot_runs_that_print_json(conn, dsn):
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
+    runs_ = [
+        role(
+            "set-profile", env, "--tenant", "t1", "s1", "retrieval", "wiki", stdout=subprocess.PIPE
+        ),
+        role("feed-retention", env, stdout=subprocess.PIPE),
+    ]
+    outs = [json.loads(run.communicate(timeout=30)[0]) for run in runs_]
+
+    assert [run.returncode for run in runs_] == [0, 0]
+    assert await feed.profile(conn, "s1") == feed.Profile(
+        source_id="s1", projections=["retrieval", "wiki"], profile_seq=outs[0]["profile_seq"]
+    )
+    assert outs[1] == {"created": [], "dropped": []}
+
+
+@pytest.mark.docker
+@pytest.mark.network
+async def test_the_api_exports_the_feed_guard_gauges_on_its_metrics_port(conn, dsn):
+    async with conn.transaction():
+        await feed.report_cursor(conn, "wiki", await feed.head(conn))
+    port, metrics_port = free_port(), free_port()
+    api = role("api", api_env(dsn, port), "--metrics-port", str(metrics_port))
+    try:
+        async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{metrics_port}") as http:
+            for _ in range(100):
+                with contextlib.suppress(httpx.ConnectError):
+                    page = (await http.get("/metrics")).text
+                    if 'kp_feed_consumer_lag_seconds{projection="wiki"}' in page:
+                        break
+                await asyncio.sleep(0.1)
+    finally:
+        api.send_signal(signal.SIGTERM)
+        api.wait(timeout=10)
+
+    assert 'kp_feed_consumer_lag_seconds{projection="wiki"} 0.0' in page
+    assert "kp_feed_oldest_xmin_age_seconds " in page
