@@ -461,8 +461,7 @@ async def test_a_document_another_batch_created_meanwhile_is_a_stale_declaration
         first = (await hr.post("/v1/batches", json={"items": [A]})).json()
         second = (await hr.post("/v1/batches", json={"items": [A]})).json()
         assert of(first, "A")["document_uid"] != of(second, "A")["document_uid"]
-        upload(store, first, [A])
-        upload(store, second, [A])
+        upload(store, second, [A])  # first's files missing too: step 1 comes first (§6.2)
         assert (await hr.post(f"/v1/batches/{second['batch_id']}/finalize")).status_code == 202
         stale = await hr.post(f"/v1/batches/{first['batch_id']}/finalize")
 

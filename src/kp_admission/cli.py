@@ -114,6 +114,10 @@ def main(argv: list[str] | None = None) -> int:
         if len(set(ids)) < len(ids) or len(tenants) > 1:
             print("KP_CREDENTIALS needs distinct credential_ids and one tenant_id", file=sys.stderr)
             return 2
+        port = os.environ.get("KP_ADMISSION_API_PORT", "8080")
+        if not port.isdecimal():
+            print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
+            return 2
         try:
             sources = SOURCES.validate_json(os.environ.get("KP_SOURCES", "{}"))
         except pydantic.ValidationError:
@@ -132,10 +136,6 @@ def main(argv: list[str] | None = None) -> int:
             int(limits["KP_MAX_FILE_SIZE"] or batches.MAX_FILE_SIZE),
             int(limits["KP_PAUSE_BACKLOG"]) if limits["KP_PAUSE_BACKLOG"] else None,
         )
-        port = os.environ.get("KP_ADMISSION_API_PORT", "8080")
-        if not port.isdecimal():
-            print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
-            return 2
         log_json_lines(RequestLog())
         if args.metrics_port is not None:
             prometheus_client.start_http_server(args.metrics_port)

@@ -64,12 +64,13 @@ Logical records; the physical schema is I1's.
 | Record | Key fields | Notes |
 |---|---|---|
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
-| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields | §5.1 statuses |
+| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields, the last placement decision (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
 | `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored response, `created_at` | 24 hours |
+| `adoption` | `sequence`, `media_type`, `adopted_version`, `adopted_at`, `cancelled_at` | The adoption record, below |
 
 Constraints:
 
@@ -80,6 +81,29 @@ Constraints:
 - `source_revision.outcome` is set by canonical processing outcomes of
   Source-initiated and operator requests; platform refreshes (`initiator:
   platform`) never change it (round 3 R2).
+
+The adoption record (#96) names the Processing Profile version that new
+`process` requests run, by the media type of the main file: the pilot has one
+profile per file format. A Processing Profile owner changes it with two operator
+commands, adopt and cancel adoption, which open no request themselves (the
+refresh after an adoption is #98's command).
+
+- Each adoption is a row with the next `sequence` of the deployment. A request
+  copies `adopted_version` and that row's `sequence` as its `adoption_sequence`
+  when it is made (§10).
+- One sequence counts every adoption, so an adoption raises the adoption
+  sequence of every Source: in the pilot no Source pins a version, and
+  current-revision selection compares the sequences of one document's requests
+  only. When Sources select profiles, the count moves per Source.
+- A media type's adopted version is the one of its highest `sequence`, unless
+  that row is cancelled. Adopting `N+1` supersedes `N`, whose row stays as
+  history; adopting the version already adopted changes nothing.
+- Cancelling applies to the adopted version only and leaves the media type
+  without one: it never falls back to an earlier version, whose workers may be
+  retired. Adopting again makes a new row.
+- A main file whose media type has no adopted version is `UNSUPPORTED_FORMAT`,
+  at declaration (§6.1 rule 2) and at finalization (§6.2 step 4).
+- Before the first finalization, `paper-pdf@1` is adopted for `application/pdf`.
 
 ## 4. API conventions
 
@@ -126,7 +150,9 @@ Constraints:
 
 ### 5.1 Declare: `POST /v1/batches`
 
-Header `Idempotency-Key` (optional, recommended). Body:
+Header `Idempotency-Key` (optional, recommended). A repeat with the same key and
+body within 24 hours returns the stored response; a repeat that arrives while the
+first is in progress waits for it and returns its response. Body:
 
 ```json
 {
@@ -187,7 +213,7 @@ request's `queued`, `processing`, `succeeded` or `failed`.
 
 Whole-request outcomes: `400` (malformed, `TOO_MANY_ITEMS`), `401`, `403`,
 `422 ALL_ITEMS_REJECTED` (no batch is created; the body lists every item's
-error), `422 IDEMPOTENCY_KEY_REUSED`, `409 IDEMPOTENCY_IN_PROGRESS`,
+outcome in `items`, beside `error`), `422 IDEMPOTENCY_KEY_REUSED`,
 `429 RATE_LIMITED`, `503 AUTHZ_UNAVAILABLE`, `503 ADMISSION_PAUSED`, `503`
 while the database is unavailable. Every `429` and `503` carries `Retry-After`.
 
@@ -315,12 +341,15 @@ describes the stages.
 
 ### 6.1 Declaration, per item, first failure wins
 
-1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`), exactly one
-   `main` file, unique paths, valid `metadata` (§11) →
+1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`) not declared by
+   an earlier item of the same request, exactly one `main` file, unique relative
+   paths, a 64-character hexadecimal `sha256` per file (stored in lowercase, as
+   the key of §10 uses it), at most one `resources` value, a `source_version`
+   that is an integer or an RFC 3339 time, valid `metadata` (§11) →
    `INVALID_ARGUMENT`; every file's `size` within the maximum file size (§11) →
    `FILE_TOO_LARGE`.
-2. Main-file format supported (pilot: PDF, Markdown, PPTX) →
-   `UNSUPPORTED_FORMAT`.
+2. Main-file format supported: its media type has an adopted Processing Profile
+   version (§3; pilot: PDF) → `UNSUPPORTED_FORMAT`.
 3. Under `ordering: source_version`, `source_version` present →
    `SOURCE_VERSION_REQUIRED`.
 4. Existing document (same `document_id`, not deleted) with a different
@@ -359,7 +388,8 @@ requests they create are committed with their outbox rows before `201`.
 3. Every file in `uploads` is in place: its object exists in storage, asked
    before the transaction (§5.2 verified size, digest and media type before the
    object appeared) → `FILES_MISSING`.
-4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
+4. Format re-check: the media type still has an adopted version (§3) →
+   `UNSUPPORTED_FORMAT`. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
    or `VERSION_CONFLICT`; same content → §6.4.
 5. Otherwise: create the document on first submission (with the declared `document_uid`),
    create the Source Revision, record each staged file's `custody_ref` (§10;
@@ -525,7 +555,9 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 
   Replication inside the cluster is a later deployment change and needs no code
   change. DEV/POC may run without the archive and is marked as not meeting this.
-- Pilot pause: triggered by backlog depth; rejects new declarations only.
+- Pilot pause: triggered by backlog depth, while the queued `process` requests
+  number at least the deployment's threshold (none by default); rejects new
+  declarations only.
 
 ## 10. Workflow start input
 
@@ -575,7 +607,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Item | Value |
 |---|---|
 | Items per declaration | 50 (provisional) |
-| Intake quota per Source | Token bucket, 50 declared items per minute (provisional) |
+| Intake quota per Source | At most 50 declared items in any one minute, counted over the batches created; `Retry-After` is when the oldest leaves that minute (provisional) |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
 | Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |
@@ -597,13 +629,13 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | `UNAUTHENTICATED` | request | 401 |
 | `PERMISSION_DENIED` | request | 403 |
 | `NOT_FOUND` | request | 404 |
-| `BATCH_EXPIRED`, `BATCH_FINALIZED`, `IDEMPOTENCY_IN_PROGRESS` | request | 409 |
+| `BATCH_EXPIRED`, `BATCH_FINALIZED` | request | 409 |
 | `LENGTH_REQUIRED` | request | 411 |
 | `ALL_ITEMS_REJECTED`, `IDEMPOTENCY_KEY_REUSED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` | request | 422 |
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
 | `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `FILES_MISSING` | item, finalization | — |
+| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `RESOURCE_NOT_FOUND`, `FILES_MISSING`, `UNSUPPORTED_FORMAT`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, finalization | — |
 
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
