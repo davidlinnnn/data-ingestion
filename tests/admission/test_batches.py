@@ -294,7 +294,7 @@ async def test_7_too_many_items_is_400_and_too_frequent_declarations_429(platfor
         too_many = await hr.post("/v1/batches", json={"items": many})
         thirty = await hr.post("/v1/batches", json={"items": [fresh(f"y{k}") for k in range(30)]})
         again = await hr.post("/v1/batches", json={"items": [fresh(f"z{k}") for k in range(30)]})
-        await conn.execute("UPDATE batch SET created_at = created_at - interval '1 hour'")
+        await conn.execute("UPDATE intake_quota SET refilled_at = refilled_at - interval '1 hour'")
         later = await hr.post("/v1/batches", json={"items": [fresh(f"z{k}") for k in range(30)]})
 
     assert too_many.status_code == 400
@@ -302,7 +302,7 @@ async def test_7_too_many_items_is_400_and_too_frequent_declarations_429(platfor
     assert thirty.status_code == 201
     assert again.status_code == 429
     assert again.json()["error"]["details"][0]["reason"] == "RATE_LIMITED"
-    assert 1 <= int(again.headers["retry-after"]) <= 60
+    assert int(again.headers["retry-after"]) == 12  # 10 items short, at 50 a minute
     assert later.status_code == 201
 
 
@@ -536,6 +536,7 @@ async def test_malformed_items_are_rejected_one_by_one(platform, api, conn):
         fresh("no-resource") | {"resources": None},
         fresh("ok") | {"files": [file("ok.pdf", "ok", PDF) | {"sha256": digest("ok").upper()}]},
         fresh("ok") | {"files": [file("ok.pdf", "x", PDF) | {"size": 50 * 2**20 + 1}]},
+        fresh("week") | {"source_version": "2026-W47-3T10:00:00Z"},  # ISO 8601, not RFC 3339
     ]
     async with api() as hr:
         declared = await hr.post("/v1/batches", json={"items": bad})
@@ -548,6 +549,7 @@ async def test_malformed_items_are_rejected_one_by_one(platform, api, conn):
         "RESOURCE_REQUIRED",
         None,
         "INVALID_ARGUMENT",  # a second item for "ok": the duplicate comes before its size
+        "INVALID_ARGUMENT",
     ]
     stored = await (
         await conn.execute("SELECT declared FROM batch_item WHERE document_id = 'ok' AND index = 5")

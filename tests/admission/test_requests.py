@@ -108,7 +108,7 @@ async def test_every_admission_record_carries_a_tenant(conn):
 
     assert dict(await cursor.fetchall()) == dict.fromkeys(
         ["batch", "batch_item", "document", "source_revision", "request", "outbox",
-         "idempotency_key", "adoption"], "NO",
+         "idempotency_key", "adoption", "intake_quota"], "NO",
     )  # fmt: skip
 
 

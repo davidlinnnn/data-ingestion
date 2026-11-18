@@ -64,13 +64,14 @@ Logical records; the physical schema is I1's.
 | Record | Key fields | Notes |
 |---|---|---|
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
-| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields, the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses |
-| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
+| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
+| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last |
 | `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
-| `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
+| `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
-| `idempotency_key` | (`source_id`, key), body hash, stored response, `created_at` | 24 hours |
-| `adoption` | `sequence`, `media_type`, `adopted_version`, `adopted_at`, `cancelled_at` | The adoption record, below |
+| `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
+| `intake_quota` | `source_id`, `tokens`, `refilled_at` | The token bucket of §11 |
+| `adoption` | `sequence`, `tenant_id`, `media_type`, `adopted_version`, `adopted_at`, `cancelled_at` | The adoption record, below |
 
 Constraints:
 
@@ -81,29 +82,46 @@ Constraints:
 - `source_revision.outcome` is set by canonical processing outcomes of
   Source-initiated and operator requests; platform refreshes (`initiator:
   platform`) never change it (round 3 R2).
+- A declaration in which every item is rejected keeps no record, its placement
+  decisions included. An item rejected at finalization before its placement
+  re-check still records that re-check's decision.
 
 The adoption record (#96) names the Processing Profile version that new
 `process` requests run, by the media type of the main file: the pilot has one
 profile per file format. A Processing Profile owner changes it with two operator
-commands, adopt and cancel adoption, which open no request themselves (the
+commands, `kp-admission adopt <media_type> <version>` and `kp-admission
+cancel-adoption <media_type> <version>`, which open no request themselves (the
 refresh after an adoption is #98's command).
 
 - Each adoption is a row with the next `sequence` of the deployment. A request
-  copies `adopted_version` and that row's `sequence` as its `adoption_sequence`
-  when it is made (§10).
-- One sequence counts every adoption, so an adoption raises the adoption
-  sequence of every Source: in the pilot no Source pins a version, and
+  copies its media type's `adopted_version` and that row's `sequence`, as its
+  `adoption_sequence`, when it is made (§10), and keeps both: no later adoption
+  or cancellation changes a request already made.
+- The counter is deployment-wide, not kept per Source as the admission design
+  record's R1a first wrote: in the pilot no Source pins a version, and
   current-revision selection compares the sequences of one document's requests
-  only. When Sources select profiles, the count moves per Source.
+  only, for which a deployment-wide counter rises as a per-Source one would.
+  When Sources select profiles, the count moves per Source.
 - A media type's adopted version is the one of its highest `sequence`, unless
   that row is cancelled. Adopting `N+1` supersedes `N`, whose row stays as
-  history; adopting the version already adopted changes nothing.
-- Cancelling applies to the adopted version only and leaves the media type
-  without one: it never falls back to an earlier version, whose workers may be
-  retired. Adopting again makes a new row.
+  history; adopting the version already adopted changes nothing. Rolling back
+  from `N+1` to `N` is adopting `N` again, which supersedes `N+1` with no gap.
+- Cancelling applies to the adopted version only, and fails for any other
+  version, changing nothing. It leaves the media type without a version: it
+  never falls back to an earlier one, whose workers may be retired. Adopting
+  again makes a new row. A cancellation waits for the declarations and
+  finalizations that read the cancelled row; no request is made under that
+  version after it returns.
+- Neither command checks that the version is released or deployed. A request
+  that names a version with no workers is not refused; it waits as backlog
+  (profiles README, P1). Retiring a version therefore also waits until no
+  queued or processing request names it.
+- The record governs which version new requests run. Which accepted revisions
+  stay eligible as a document's current revision is canonical processing's
+  rule (R1a, P10), not this record's.
 - A main file whose media type has no adopted version is `UNSUPPORTED_FORMAT`,
   at declaration (§6.1 rule 2) and at finalization (§6.2 step 4).
-- Before the first finalization, `paper-pdf@1` is adopted for `application/pdf`.
+- Before the first declaration, `paper-pdf@1` is adopted for `application/pdf`.
 
 ## 4. API conventions
 
@@ -150,9 +168,11 @@ refresh after an adoption is #98's command).
 
 ### 5.1 Declare: `POST /v1/batches`
 
-Header `Idempotency-Key` (optional, recommended). A repeat with the same key and
-body within 24 hours returns the stored response; a repeat that arrives while the
-first is in progress waits for it and returns its response. Body:
+Header `Idempotency-Key` (optional, recommended; at most 255 characters). A
+repeat with the same key and body within 24 hours returns the stored response;
+one with another body is `422 IDEMPOTENCY_KEY_REUSED`. A repeat that arrives
+while the first is in progress returns the first's response once it commits;
+until then it may get a `429` or `503` to retry. Body:
 
 ```json
 {
@@ -163,10 +183,10 @@ first is in progress waits for it and returns its response. Body:
       "title": "Leave policy",
       "source_url": "https://km.example/hr/leave-policy",
       "resources": ["hr-all"],
-      "uploaded_by": "tsso:alice",
+      "uploaded_by": "sso:user-1",
       "metadata": { "km_folder": "HR/Policies", "owner_team": "hr-ops" },
       "files": [
-        { "path": "policy.md", "role": "main", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" },
+        { "path": "policy.pdf", "role": "main", "sha256": "9f2c…", "size": 18342, "media_type": "application/pdf" },
         { "path": "assets/flow.png", "role": "attachment", "sha256": "1ab0…", "size": 220114, "media_type": "image/png" }
       ]
     }
@@ -184,7 +204,7 @@ Response `201`:
   "items": [
     { "index": 0, "document_id": "hr/leave-policy", "document_uid": "doc_7f3…", "status": "declared",
       "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://kp.example/v1/batches/bat_01J…/items/0/files/assets/flow.png" } ],
-      "carried_over": ["policy.md"] }
+      "carried_over": ["policy.pdf"] }
   ]
 }
 ```
@@ -343,10 +363,12 @@ describes the stages.
 ### 6.1 Declaration, per item, first failure wins
 
 1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`) not declared by
-   an earlier item of the same request, exactly one `main` file, unique relative
-   paths, a 64-character hexadecimal `sha256` per file (stored in lowercase, as
-   the key of §10 uses it), at most one `resources` value, a `source_version`
-   that is an integer or an RFC 3339 time, valid `metadata` (§11) →
+   an earlier item of the same request, exactly one `main` file and every other
+   file's `role` `attachment`, unique relative paths (no leading `/`, no empty
+   or `..` segment), a 64-character hexadecimal `sha256` per file (stored in
+   lowercase, as the key of §10 uses it), when present exactly one `resources`
+   value, a `source_version` string holding a non-negative integer of at most 18
+   digits or an RFC 3339 date-time with an offset, valid `metadata` (§11) →
    `INVALID_ARGUMENT`; every file's `size` within the maximum file size (§11) →
    `FILE_TOO_LARGE`.
 2. Main-file format supported: its media type has an adopted Processing Profile
@@ -366,8 +388,9 @@ describes the stages.
    [#55 design record](knowledge-platform-canonical-consumption.md).
    Since 2026-11-14 (ADR-0013) the Resource is named by the Source's own key,
    registered beforehand; an unregistered key is `RESOURCE_NOT_FOUND`.
-6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION` or
-   `VERSION_CONFLICT`.
+6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION`,
+   `VERSION_CONFLICT`, or `INVALID_ARGUMENT` for the other kind of
+   `source_version`.
 7. Same content (§6.4) → `queued` with the active request, a new retry request,
    or `unchanged`.
 8. Otherwise `declared`, with an upload entry (§5.2) for each file whose (path,
@@ -390,7 +413,8 @@ requests they create are committed with their outbox rows before `201`.
    before the transaction (§5.2 verified size, digest and media type before the
    object appeared) → `FILES_MISSING`.
 4. Format re-check: the media type still has an adopted version (§3) →
-   `UNSUPPORTED_FORMAT`. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
+   `UNSUPPORTED_FORMAT`. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`,
+   `INVALID_ARGUMENT` (§6.3)
    or `VERSION_CONFLICT`; same content → §6.4.
 5. Otherwise: create the document on first submission (with the declared `document_uid`),
    create the Source Revision, record each staged file's `custody_ref` (§10;
@@ -411,7 +435,7 @@ cleanup.
 
 | `ordering` | Rule |
 |---|---|
-| `source_version` | Integer or RFC 3339 time, one kind per Source: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
+| `source_version` | Integer or RFC 3339 time, one kind per document: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
 | `arrival` | Finalization order decides; equal content → §6.4 |
 
 Content equality is equality of the set of (path, `sha256`) pairs. Equal bytes in
@@ -556,8 +580,9 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 
   Replication inside the cluster is a later deployment change and needs no code
   change. DEV/POC may run without the archive and is marked as not meeting this.
-- Pilot pause: triggered by backlog depth, while the queued `process` requests
-  number at least the deployment's threshold (none by default); rejects new
+- Pilot pause: triggered by backlog depth, while the queued `normal`-priority
+  `process` requests number at least the deployment's threshold (none by
+  default), so a platform refresh's backlog never pauses intake; rejects new
   declarations only.
 
 ## 10. Workflow start input
@@ -570,9 +595,9 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "document_uid": "doc_7f3…",
   "source_revision_id": "srv_3",
   "files": [
-    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/bat_01J…/0/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
+    { "path": "policy.pdf", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/bat_01J…/0/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "application/pdf" }
   ],
-  "adopted_version": "md-standard@2",
+  "adopted_version": "paper-pdf@1",
   "adoption_sequence": 7,
   "initiator": "source",
   "priority": "normal",
@@ -608,7 +633,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Item | Value |
 |---|---|
 | Items per declaration | 50 (provisional) |
-| Intake quota per Source | At most 50 declared items in any one minute, counted over the batches created; `Retry-After` is when the oldest leaves that minute (provisional) |
+| Intake quota per Source | Token bucket of 50 declared items, refilled at 50 per minute (provisional). A declaration takes one token per item when it commits; with too few it is `429` and `Retry-After` is when there will be enough |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
 | Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |

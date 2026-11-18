@@ -464,7 +464,8 @@ projections: [retrieval, llm-wiki]   # Projection Types whose products the Sourc
 - **Order:** the newer Source Revision (round 2 ordering), then the higher
   adoption sequence, then the existing selection on a tie. The adoption sequence
   is counted per Source and increases when an owner adopts a new canonical
-  version.
+  version. Revised by #96 (2026-11-18): one deployment-wide counter serves every
+  Source while no Source pins a version (admission spec §3).
 - Canonical processing owns this rule and reports the current revision as its
   serving fact (P10).
 - When the current revision is withdrawn, selection does not fall back to an

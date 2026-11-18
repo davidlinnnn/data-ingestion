@@ -12,9 +12,6 @@ CREATE TABLE batch (
     finalized_at timestamptz
 );
 
--- The intake quota counts a Source's recent declarations (§11).
-CREATE INDEX batch_by_source ON batch (tenant_id, source_id, created_at);
-
 CREATE TABLE document (
     document_uid      text PRIMARY KEY,
     tenant_id         text NOT NULL,
@@ -103,7 +100,8 @@ CREATE TABLE batch_item (
     source_revision_id text REFERENCES source_revision,
     error              jsonb,
     declared           jsonb NOT NULL,  -- the item as declared: files and catalog fields (§5.1)
-    -- The last placement decision (#85): decision_id, evaluated_at, and a deny's reason.
+    -- The placement decisions (#85) under declaration and finalization: decision_id,
+    -- evaluated_at, and a deny's reason.
     placement          jsonb,
     PRIMARY KEY (batch_id, index)
 );
@@ -118,6 +116,15 @@ CREATE TABLE idempotency_key (
     response    jsonb NOT NULL,
     created_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, source_id, key)
+);
+
+-- Each Source's intake quota, a token bucket (§11).
+CREATE TABLE intake_quota (
+    tenant_id   text NOT NULL,
+    source_id   text NOT NULL,
+    tokens      double precision NOT NULL,
+    refilled_at timestamptz NOT NULL,
+    PRIMARY KEY (tenant_id, source_id)
 );
 
 -- The adoption record (§3): the Processing Profile version new process requests of a main-file

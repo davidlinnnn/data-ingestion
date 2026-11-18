@@ -34,7 +34,7 @@ from kp_admission.resources import resource_id
 from kp_admission.storage import ObjectStore, StorageUnavailable, source_key
 
 MAX_ITEMS = 50  # per declaration (§11, provisional)
-QUOTA_ITEMS, QUOTA_WINDOW = 50, timedelta(minutes=1)  # per Source (§11, provisional)
+QUOTA_ITEMS, QUOTA_PER_S = 50, 50 / 60  # each Source's bucket and refill (§11, provisional)
 OPEN_FOR = timedelta(hours=24)
 IDEMPOTENCY_FOR = timedelta(hours=24)
 MAX_FILE_SIZE = 50 * 2**20
@@ -46,6 +46,7 @@ items_decided = Counter(
 _DOCUMENT_ID = re.compile(r"[A-Za-z0-9\-_.~:]{1,256}")
 _METADATA_KEY = re.compile(r"[A-Za-z0-9_.\-]{1,64}")
 _SHA256 = re.compile(r"[0-9a-fA-F]{64}")
+_RFC3339 = re.compile(r"\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(\.\d+)?([Zz]|[+-]\d{2}:\d{2})")
 
 _MESSAGES = {
     "INVALID_ARGUMENT": "The item is malformed.",
@@ -73,7 +74,8 @@ class SourceSettings(BaseModel, frozen=True, extra="forbid"):
 @dataclass(frozen=True)
 class Intake:
     """The deployment's settings of the batch API. Declarations pause while at least
-    `pause_backlog` process requests are queued (§9), never without it."""
+    `pause_backlog` normal-priority process requests are queued (§9), never without it: a
+    platform refresh's low-priority backlog never pauses intake."""
 
     store: ObjectStore
     sources: Mapping[str, SourceSettings] = field(default_factory=dict)
@@ -187,24 +189,39 @@ async def _remember(
 async def _backlog(conn: AsyncConnection) -> int:
     row = await (
         await conn.execute(
-            "SELECT count(*) FROM request WHERE kind = 'process' AND state = 'queued'"
+            "SELECT count(*) FROM request"
+            " WHERE kind = 'process' AND state = 'queued' AND priority = 'normal'"
         )
     ).fetchone()
     return row[0] if row else 0
 
 
-async def _recent_items(conn: AsyncConnection, caller: Caller) -> tuple[int, float]:
-    """(items the Source declared within QUOTA_WINDOW, seconds until the oldest leaves it)."""
+async def _take_quota(conn: AsyncConnection, caller: Caller, items: int) -> float:
+    """Takes `items` tokens from the Source's bucket and returns 0, or takes none and returns the
+    seconds until there are enough. The row stays locked until the transaction ends."""
+    await conn.execute(
+        "INSERT INTO intake_quota (tenant_id, source_id, tokens, refilled_at)"
+        " VALUES (%s, %s, %s, now()) ON CONFLICT DO NOTHING",
+        (caller.tenant_id, caller.source_id, QUOTA_ITEMS),
+    )
     row = await (
         await conn.execute(
-            "SELECT count(*), min(b.created_at), now()"
-            " FROM batch_item i JOIN batch b ON b.batch_id = i.batch_id"
-            " WHERE b.tenant_id = %s AND b.source_id = %s AND b.created_at > now() - %s",
-            (caller.tenant_id, caller.source_id, QUOTA_WINDOW),
+            "SELECT tokens, refilled_at, now() FROM intake_quota"
+            " WHERE tenant_id = %s AND source_id = %s FOR UPDATE",
+            (caller.tenant_id, caller.source_id),
         )
     ).fetchone()
     assert row
-    return row[0], (row[1] + QUOTA_WINDOW - row[2]).total_seconds() if row[1] else 0.0
+    at = max(row[1], row[2])  # now() is this transaction's start, which may precede the last take
+    tokens = min(QUOTA_ITEMS, row[0] + (at - row[1]).total_seconds() * QUOTA_PER_S)
+    if tokens < items:
+        return (items - tokens) / QUOTA_PER_S
+    await conn.execute(
+        "UPDATE intake_quota SET tokens = %s, refilled_at = %s"
+        " WHERE tenant_id = %s AND source_id = %s",
+        (tokens - items, at, caller.tenant_id, caller.source_id),
+    )
+    return 0.0
 
 
 _DOCUMENT = """
@@ -488,6 +505,8 @@ def _version(value: str) -> int | datetime | None:
     """An integer or an RFC 3339 time with its offset (§6.3); None for anything else."""
     if re.fullmatch(r"[0-9]{1,18}", value):
         return int(value)
+    if not _RFC3339.fullmatch(value):
+        return None
     try:
         at = datetime.fromisoformat(value)
     except ValueError:
@@ -647,6 +666,13 @@ async def declare(
             )
         except _Again:
             continue
+        except Refused as refused:
+            # The same key may have committed since the first look: its response wins.
+            if refused.code in (429, 503) and idempotency_key:
+                async with pool.connection() as conn:
+                    if replayed := await _replay(conn, caller, idempotency_key, digest):
+                        return replayed
+            raise
 
 
 async def _declare_once(
@@ -663,24 +689,8 @@ async def _declare_once(
     async with pool.connection() as conn:
         if key and (replayed := await _replay(conn, caller, key, digest)):
             return replayed
-        refused = None
         if intake.pause_backlog is not None and await _backlog(conn) >= intake.pause_backlog:
-            refused = Refused(503, "UNAVAILABLE", "ADMISSION_PAUSED", "Admission is paused.")
-        # shortcut: two declarations at once may pass the quota together; it is provisional (§11).
-        recent, wait_s = await _recent_items(conn, caller)
-        if not refused and recent and recent + len(items) > QUOTA_ITEMS:
-            refused = Refused(
-                429,
-                "RESOURCE_EXHAUSTED",
-                "RATE_LIMITED",
-                f"At most {QUOTA_ITEMS} declared items per minute.",
-                retry_after=max(1, math.ceil(wait_s)),
-            )
-        if refused:
-            # The same key may have committed since the first look: its response wins.
-            if key and (replayed := await _replay(conn, caller, key, digest)):
-                return replayed
-            raise refused
+            raise Refused(503, "UNAVAILABLE", "ADMISSION_PAUSED", "Admission is paused.")
         known = {
             i.document_id: await _live_document(conn, caller, i.document_id, False) for i in items
         }
@@ -693,6 +703,15 @@ async def _declare_once(
 
     batch_id = f"bat_{uuid.uuid4().hex}"
     async with pool.connection() as conn, conn.transaction():
+        # Taken first, so every declaration locks the quota row before any document row.
+        if wait_s := await _take_quota(conn, caller, len(items)):
+            raise Refused(
+                429,
+                "RESOURCE_EXHAUSTED",
+                "RATE_LIMITED",
+                f"At most {QUOTA_ITEMS} declared items per minute.",
+                retry_after=max(1, math.ceil(wait_s)),
+            )
         expires_at = await _insert_batch(conn, caller, batch_id)
         seen: set[str] = set()
         rows: list[tuple[dict, str | None, _Outcome, dict | None, dict]] = []

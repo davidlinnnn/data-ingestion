@@ -188,7 +188,9 @@ pod until the version leaves the deployment values.
 
 1. Confirm that no adoption names `paper-pdf@<N>`: the owner cancelled it, or adopted a newer
    version. A start that still names it is not refused: it would wait on a queue with no worker
-   (P1).
+   (P1). Also confirm that no queued or processing admission request names it: a request keeps
+   the version it was made with, and one still in the outbox is not yet a workflow (admission
+   spec §3).
 2. Record the "before" column below, then remove the version's entry from the deployment values
    and sync. Argo CD deletes its Deployments. The file stays in this directory.
 3. The promoter does the rest. It counts the open workflows on the version's orchestration queue;

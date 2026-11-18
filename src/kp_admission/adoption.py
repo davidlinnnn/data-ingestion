@@ -13,12 +13,14 @@ from psycopg import AsyncConnection
 
 _LATEST = """
 SELECT adopted_version, sequence, cancelled_at IS NULL FROM adoption
-WHERE media_type = %s ORDER BY sequence DESC LIMIT 1
+WHERE media_type = %s ORDER BY sequence DESC LIMIT 1 FOR SHARE
 """
 
 
 async def current(conn: AsyncConnection, media_type: str) -> tuple[str, int] | None:
-    """(adopted_version, adoption_sequence) for `media_type`, or None when none is adopted."""
+    """(adopted_version, adoption_sequence) for `media_type`, or None when none is adopted. In a
+    transaction its row stays locked until the end, so a cancel waits for the requests made under
+    it and none is made under a version after its cancel returns."""
     row = await (await conn.execute(_LATEST, (media_type,))).fetchone()
     return (row[0], row[1]) if row and row[2] else None
 
