@@ -61,10 +61,12 @@ def main(argv: list[str] | None = None) -> int:
     Source not in it orders by source_version and has no default. KP_PIPELINES registers the
     status reporters (#97, admission spec §7.3), as a JSON object from the SHA-256 hex digest of
     each reporter's credential to `{"pipeline_id", "track", "stages", "start_deadline_s",
-    "update_interval_s"}`; each pipeline_id is distinct and one pipeline at most has the track
-    `canonical`, canonical processing's. The custody bucket is
-    KP_S3_ENDPOINT and KP_S3_BUCKET with the AWS_* credentials, as for the processing workers; the
-    credentials need s3:ListBucket, without which S3 answers a missing object with 403.
+    "update_interval_s"}`; the credentials of one pipeline_id, several while one is rotated, carry
+    the same registration, and one pipeline at most has the track `canonical`, canonical
+    processing's. Without it every status report is 401 and no attempt is progress_stalled. The
+    custody bucket is KP_S3_ENDPOINT and KP_S3_BUCKET with the AWS_* credentials, as for the
+    processing workers; the credentials need s3:ListBucket, without which S3 answers a missing
+    object with 403.
     KP_MAX_FILE_SIZE is the maximum file size in bytes (default 50 MB); with KP_PAUSE_BACKLOG,
     declarations are refused while that many normal-priority process requests are queued.
     KP_ADMISSION_PUBLIC_URL is the https origin Sources call through the ingress, such as
@@ -151,9 +153,14 @@ def main(argv: list[str] | None = None) -> int:
             pipelines = PIPELINES.validate_json(os.environ.get("KP_PIPELINES", "{}"))
         except pydantic.ValidationError:
             pipelines = None
-        names = [p.pipeline_id for p in (pipelines or {}).values()]
-        tracks = [p.track for p in (pipelines or {}).values()]
-        if pipelines is None or len(set(names)) < len(names) or tracks.count("canonical") > 1:
+        # Several credentials may name one pipeline, to rotate them, with one registration.
+        by_id = {p.pipeline_id: p for p in (pipelines or {}).values()}
+        tracks = [p.track for p in by_id.values()]
+        if (
+            pipelines is None
+            or any(by_id[p.pipeline_id] != p for p in pipelines.values())
+            or tracks.count("canonical") > 1
+        ):
             print("KP_PIPELINES is not valid", file=sys.stderr)
             return 2
         port = os.environ.get("KP_ADMISSION_API_PORT", "8080")

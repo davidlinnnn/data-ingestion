@@ -4,6 +4,12 @@
 decisions unless a dated note in it says so; those decisions are on the
 [wayfinder map](https://github.com/davidlinnnn/data-ingestion/issues/52) and its tickets, which win where they differ.
 
+Dated note, 2026-11-19: #97 was split
+([record](https://github.com/davidlinnnn/data-ingestion/issues/97#issuecomment-7009958556)).
+Every projection item this record assigns to #97 (registration and the B5 check,
+serving facts, `PENDING_MAX`, repair, the heartbeat hash, readiness's serving
+part and the SC and NC cases) is #252's; `current_revision_changed` is #251's.
+
 The design result of
 [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55),
 confirmed with the user from 2026-10-22 to 2026-10-26 (grilling groups A–E,

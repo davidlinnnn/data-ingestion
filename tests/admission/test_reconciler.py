@@ -84,6 +84,11 @@ async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(con
     request_id, _ = await request(conn, *await revision(conn))
     start = temporal_start(temporal, queue)
     assert await dispatch_due(conn, start) == 1
+    await conn.execute(  # a report of the run about to be lost
+        "UPDATE request SET last_report = '{\"seq\": 1}', reported_at = now()"
+        " WHERE request_id = %s",
+        (request_id,),
+    )
     await temporal.workflow_service.delete_workflow_execution(
         DeleteWorkflowExecutionRequest(
             namespace=temporal.namespace,
@@ -101,13 +106,13 @@ async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(con
     assert await reconcile(conn, temporal) == Counter(redispatched=1)
 
     cursor = await conn.execute(
-        "SELECT dispatched_at, redispatch_reason, attempt_id FROM outbox JOIN request"
-        " USING (request_id) WHERE request_id = %s",
+        "SELECT dispatched_at, redispatch_reason, attempt_id, last_report, reported_at"
+        " FROM outbox JOIN request USING (request_id) WHERE request_id = %s",
         (request_id,),
     )
-    dispatched_at, reason, attempt_id = await cursor.fetchone()
+    dispatched_at, reason, *attempt = await cursor.fetchone()
     assert dispatched_at is None
-    assert attempt_id is None  # the lost run's reports no longer count
+    assert attempt == [None, None, None]  # the lost run's reports no longer count
     assert "not found" in reason
     assert await dispatch_due(conn, start) == 1
     assert await runs(temporal, request_id) == 1

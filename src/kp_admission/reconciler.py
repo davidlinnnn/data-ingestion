@@ -30,7 +30,9 @@ WHERE request_id = %s
 """
 
 # Until the dispatcher records the next run, reports wait (#97): none of the lost run's count.
-_NO_ATTEMPT = "UPDATE request SET attempt_id = NULL WHERE request_id = %s"
+_NO_ATTEMPT = """
+UPDATE request SET attempt_id = NULL, last_report = NULL, reported_at = NULL WHERE request_id = %s
+"""
 
 log = logging.getLogger(__name__)
 

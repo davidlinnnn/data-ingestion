@@ -91,8 +91,8 @@ Constraints:
   | `failed`, any other error, `WORKFLOW_ENDED_WITHOUT_RESULT` included | `failed` |
   | `succeeded` | `pending`, until Canonical Acceptance makes it `accepted` (#251) |
 
-  An `accepted` outcome stays: a later request that fails does not undo the
-  acceptance. A request that has ended keeps its outcome; whichever of the two
+  An `accepted` outcome stays: a later request, whatever its outcome, does not
+  undo the acceptance. A request that has ended keeps its outcome; whichever of the two
   records it first wins.
 - A declaration in which every item is rejected keeps no record, its placement
   decisions included. An item rejected at finalization before its placement
@@ -351,7 +351,7 @@ document's current state.
   "error": { "domain": "kp-canonicalization", "reason": "PASSWORD_REQUIRED", "message": "…", "retryable": false,
              "metadata": { "cause": "source", "category": "source" }, "support_ref": "temporal:req_01J…/…", "occurred_at": "…" },
   "trace_id": "…",
-  "details": { "attempt_id": "…", "seq": 3, "stage": "prepare", "progress": null }
+  "details": { "attempt_id": "…", "seq": 2, "stage": "prepare", "progress": null }
 }
 ```
 
@@ -364,13 +364,17 @@ Canonical Acceptance), `failed`. Delete states: `received`, `applied`,
   stage, that a report or the reconciler records. `terminal_at` is the
   report's `observed_at`, or the workflow's close time when the reconciler
   records it. `error` is the error block as the reporter sent it, or the
-  reconciler's `WORKFLOW_ENDED_WITHOUT_RESULT` (§12).
+  reconciler's `WORKFLOW_ENDED_WITHOUT_RESULT` (§12), except that a failure
+  whose `metadata.cause` is not `source` carries the fixed English `message`
+  "Processing failed for a platform reason; the platform owner is alerted.": a
+  platform failure's own message can be an exception's text. Its `reason`,
+  `domain` and `support_ref` stay, for the platform owner.
 - `details` is where the current attempt last reported, `null` before any
   report; it is internal: do not use it for status decisions.
 - A Source sees the requests of its own Documents, platform refreshes included;
   another Source's request is `404`. A request is `404` 30 days after its
   `terminal_at` (§11); an active one never expires. The record stays: removal is
-  not built.
+  not built. Requires the submit permission, as §5.6 and §5.7 do.
 
 ### 5.6 Document: `GET /v1/documents/{document_id}`
 
@@ -384,8 +388,8 @@ Returns the current generation (Q10.1f):
   "readiness": "ready_stale", "since": "2026-10-15T09:12:00Z",
   "latest": { "source_revision_id": "srv_3", "source_version": "3", "request_id": "req_…" },
   "serving": [
-    { "projection": "retrieval", "source_revision_id": "srv_2", "source_version": "2" },
-    { "projection": "llm-wiki",  "source_revision_id": "srv_2", "source_version": "2" }
+    { "projection": "retrieval", "state": "ready", "source_revision_id": "srv_2", "source_version": "2" },
+    { "projection": "llm-wiki",  "state": "ready", "source_revision_id": "srv_2", "source_version": "2" }
   ],
   "attention": [
     { "kind": "source_revision_rejected", "action_owner": "source", "source_version": "3",
@@ -399,6 +403,10 @@ Returns the current generation (Q10.1f):
   the `document_id` is deleted, the one deleted last, with readiness `deleted`.
   Its `404` 30 days after deletion is #98's. Another Source's Document is `404`.
 - `resource_id` is the Source's own key of the Resource (ADR-0013).
+- No `details` yet: what the design record puts there (a method-version lag of
+  the current revision) needs the current Canonical Revision, which #251
+  records. Until #252 every Document not deleted is `not_ready` (§7.1), so an
+  application follows a submission by its request's `state` (§5.5).
 - `latest` is the Source Revision that finalization created last
   (`document.latest_source_revision_id`), and `request_id` its newest request
   that is not a platform refresh. It is not the current Canonical Revision,
@@ -411,9 +419,10 @@ Returns the current generation (Q10.1f):
 - `attention` follows §7.2. Each entry carries `kind`, `action_owner`,
   `source_version` (of the latest Source Revision), an English `message` and
   `since`; `processing_failed` also carries `track`. For
-  `source_revision_rejected` and `processing_failed` the message is the error
-  block's and `since` the request's `terminal_at`; for `progress_stalled`
-  `since` is the deadline that passed. A deleted Document has no attention.
+  `source_revision_rejected` and `processing_failed` `since` is the request's
+  `terminal_at`, and the message the error block's for the first and the fixed
+  platform message of §5.5 for the second; for `progress_stalled` `since` is the
+  deadline that passed. A deleted Document has no attention.
 
 ### 5.7 List: `GET /v1/documents`
 
@@ -430,7 +439,7 @@ deletions with this list.
       "latest": { "source_version": "3" }, "readiness": "not_ready",
       "metadata": { "km_folder": "HR/Policies" } }
   ],
-  "next_page_token": "hr:leave-policy/doc_7f3…"
+  "next_page_token": "…"
 }
 ```
 
@@ -439,7 +448,8 @@ deletions with this list.
   while within 30 days of `deleted_at`.
 - `resource_id` is the Source's own key. `projection` keeps the Documents whose
   `serving` lists that projection, so before #252 it matches none.
-- AIP-158 pages: `page_size` 0 or above 1000 is 1000. `readiness` and
+- AIP-158 pages: `page_size` 0 or above 1000 is 1000; a `page_token` is opaque,
+  and one this list did not return is `400`. `readiness` and
   `projection` apply to each page after it is read, so a page may hold fewer
   entries than `page_size`, none even, while more follow. Read until
   `next_page_token` is empty; stopping at the first page can miss matches.
@@ -632,13 +642,20 @@ newest request that is not a platform refresh:
 Admission, canonical processing and each projection report through the round-3
 status reporting contract (registered pipeline IDs, attempt reports,
 AIP-193-style error blocks, serving facts). #97 builds canonical processing's
-reports; the projections' are #252's, on the same registration.
+reports; the projections' are #252's. #252 keeps the registration's format and
+the `seq` rule within one attempt, and defines for projections what an attempt
+is (DR C4: Document, revision and Build), what starts its deadline, and the
+route.
 
 **Registration.** A reporter calls with its own service credential, which
 `KP_PIPELINES` registers: a JSON object from the credential's SHA-256 hex digest
 to `{"pipeline_id", "track", "stages", "start_deadline_s", "update_interval_s"}`.
 `track` is what its failures show under (`canonical`; a projection's name with
-#252); one pipeline at most has `canonical`. `stages` is the ordered stage list;
+#252); one pipeline at most has `canonical`. Several digests may name one
+`pipeline_id`, so a credential is rotated with an overlap, and they carry the
+same registration; the `api` refuses to start otherwise. Without
+`KP_PIPELINES` the `api` starts, every report is `401` and no attempt is
+`progress_stalled`. `stages` is the ordered stage list;
 the two deadlines decide `progress_stalled` (§7.2). Canonical processing
 registers as `kp-canonicalization` with `prepare`, `parse`, `enrich`,
 `finalize` and, provisionally until the cluster-tier runs (§13), 1800 seconds
@@ -655,9 +672,11 @@ of #129, all twelve fields present: `request_id` (that of the path), `attempt_id
 `failed`), `progress` (`{done, total, unit}` or `null`), `message`,
 `method_version`, `manifest_ref` (or `null`), `observed_at` (RFC 3339 with a
 zone) and `error`, the error block exactly when `state` is `failed`. A body that
-breaks this is `400` and changes nothing. `skipped` is reserved for #252's
-projections. The error block is AIP-193-style (`domain`, `reason`, `message`,
-`retryable`, `metadata`, `support_ref`, `occurred_at`); admission reads only
+breaks this is `400` and changes nothing; that check comes before the track's
+`403`. `skipped` is reserved for #252's
+projections. The error block is AIP-193-style: `domain`, `reason`, `message` and
+`retryable` are required, `metadata` (string values), `support_ref` and
+`occurred_at` optional; admission reads only
 `metadata.cause` (§3) and does not interpret domains, reasons or stages beyond
 the last one.
 
@@ -671,16 +690,24 @@ workflow back to the outbox. Only the current attempt's reports count:
 |---|---|
 | The current attempt's, `seq` above the last one taken (gaps are fine) | `202`; taken |
 | The same as the last one taken, a resend | `200`; nothing changes |
-| The current attempt's, any other `seq` | `409` with `{"attempt_id", "seq"}`, the current attempt and its last `seq` |
+| The current attempt's, any other report: a lower `seq`, or the last `seq` with another body | `409` with `{"attempt_id", "seq"}`, the current attempt and its last `seq` |
 | Another attempt's | `409` with the current position (`seq` 0 before any report); not stored |
 | Before the dispatcher has recorded the attempt | `503` `ATTEMPT_NOT_RECORDED` with `Retry-After`: the sender retries within its report budget |
 | A request that does not exist or is not a `process` request | `404` |
 
+The `409` body is the bare position the sender reads, not an AIP-193 error; its
+trace id is in `X-Trace-Id`. A `503` `ATTEMPT_NOT_RECORDED` is the normal race
+with the dispatcher's commit and needs no alert.
+
 The first report taken moves a `queued` request to `processing`; a `failed`
 report, or a `succeeded` one at the last registered stage, ends it (§3, §5.5).
 This rests on admission making every run: canonical processing uses no
-workflow-level retry, and an operator who resets a workflow by hand tells
-admission, whose next report from the new run is otherwise `409`.
+workflow-level retry, and operators do not reset its workflows. A run made
+outside admission, such as by a manual reset, is not the current attempt: its
+reports are `409` and the request turns `progress_stalled`, while the
+reconciler, which follows the workflow ID, still records its outcome when it
+ends. No command records such a run; one is added when a reset becomes an
+operator procedure.
 
 Superseded on 2026-10-26 by
 [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): instead of a full
@@ -889,6 +916,15 @@ ended without an error block, such as terminated or timed out (§9).
   without buffering it first, and allow several minutes per request; #78 sets
   these values. Capacity runs include the PROD burst (#88) through the upload
   route.
+- Status reports (§7.3) reach the `api` inside the cluster under `/report/`,
+  which the ingress does not expose, as it does not expose `/read/` and
+  `/authz/`. The `api` reads `KP_PIPELINES`; canonical processing's
+  orchestration worker reads `KP_ADMISSION_URL` (the `api`'s in-cluster address)
+  and `KP_ADMISSION_TOKEN` (its credential, from a Secret), and without the
+  token logs a warning and reports without a credential. Report intake counts in
+  `kp_api_calls_total{operation="report_status"}` by status, and logs each
+  report with `request_id`, `attempt_id`, `seq`, `stage`, `state`, `pipeline`,
+  its result and, on failure, the error's `reason`, never its message.
 - **CI tier:** Testcontainers PostgreSQL and Temporal; failpoints around each
   commit and start; an adjustable clock; the prototype's 19 scenarios as
   acceptance tests.
@@ -896,7 +932,9 @@ ended without an error block, such as terminated or timed out (§9).
   pod kill, loss of the database's node, a restore drill from the archive
   (measures the restore time and the lost interval), API and dispatcher pod
   kills, a one-hour Temporal outage extrapolated to 24 hours, a backlog pause,
-  capacity runs. All *unmeasured*.
+  capacity runs, and the longest wait before a canonical attempt's first report
+  and between two of its reports under the PROD burst, which set the canonical
+  pipeline's two deadlines (§7.3). All *unmeasured*.
 - A full 24-hour Temporal outage test before production.
 - **Pass criteria:** every `202` maps to exactly one workflow; no loss or
   duplication; convergence within one reconciler period; deleted documents never
@@ -911,8 +949,8 @@ ended without an error block, such as terminated or timed out (§9).
 | I1 Admission core (#95, done) | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | — |
 | I2 Batch API (#96) | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184, #204, #114 |
 | I2b File upload (#194) | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
-| I3 Status (#97, done) | §5.5–§5.7, canonical processing's report intake and request outcomes (§3, §7.3), readiness over no serving facts and canonical attention (§7) | I1, #55, #126 |
-| I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision, `current_revision_changed` | I3, #57 |
+| I3 Status (#97) | §5.5–§5.7, canonical processing's report intake and request outcomes (§3, §7.3), readiness over no serving facts and canonical attention (§7) | I1, #55, #126 |
+| I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision, `current_revision_changed`; it needs #57 scope 2's conclusion, which is not a tracker edge | I3 |
 | I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
 | I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |

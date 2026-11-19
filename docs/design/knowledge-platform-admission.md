@@ -614,8 +614,11 @@ Superseded on 2026-11-19 by
 be ordered, so reports are ordered by `seq` within the current attempt only, the
 run admission dispatched; another attempt's report is refused with the current
 position. Registration holds only what the platform acts on: pipeline ID,
-track, stages and the two deadlines. The canonical owner's `cause` travels in
-the error block's `metadata`. See the
+track, stages and the two deadlines; the owner team and support contact of the
+Error block section below are not registered yet, so incidents route by
+`domain` through #78. The canonical owner's `cause` travels in the error block's
+`metadata`, and the platform reads it and the last registered stage, beyond the
+Interpretation row above. See the
 [admission specification §7.3](knowledge-platform-admission-spec.md#73-reports).
 
 ### Error block (Q8.4)

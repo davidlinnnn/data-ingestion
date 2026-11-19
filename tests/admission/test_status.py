@@ -23,6 +23,7 @@ from tests.ports.test_status_reporter import report as sender_report
 pytestmark = pytest.mark.docker
 
 CANONICAL = "canonical-credential-1"
+ROTATED = "canonical-credential-2"  # its successor, while the first is rotated out
 PIPELINE = Pipeline(
     pipeline_id="kp-canonicalization",
     track="canonical",
@@ -72,7 +73,7 @@ def api(pool):
         {digest(s): credential(s) for s in ("s1", "s2")},
         pool,
         INTAKE,
-        pipelines={digest(CANONICAL): PIPELINE},
+        pipelines={digest(CANONICAL): PIPELINE, digest(ROTATED): PIPELINE},
     )
 
     def connect(token: str = "s1") -> httpx.AsyncClient:
@@ -197,6 +198,17 @@ async def test_reports_out_of_order_get_the_position_and_a_repeat_of_the_last_ch
     assert (behind.status_code, behind.json()) == (409, {"attempt_id": "run-a", "seq": 3})
     assert (changed.status_code, changed.json()) == (409, {"attempt_id": "run-a", "seq": 3})
     assert await state_of(conn, request_id) == ("processing", "3", "pending")
+
+
+async def test_both_credentials_of_a_pipeline_being_rotated_report(api, conn):
+    request_id = await dispatched(conn, *await document(conn))
+    assert (await send(api, report(request_id, 1, "prepare", "running"))).status_code == 202
+    async with api(ROTATED) as successor:
+        response = await successor.post(
+            f"/report/v1/requests/{request_id}/status-reports",
+            json=report(request_id, 2, "parse", "running"),
+        )
+    assert response.status_code == 202
 
 
 async def test_only_the_current_attempt_changes_the_request(api, conn):

@@ -211,7 +211,9 @@ PIPELINE = {
         ),
         ("KP_PIPELINES", "not json"),
         ("KP_PIPELINES", '{"d1": {"pipeline_id": "kp-canonicalization", "track": "canonical"}}'),
-        ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE})),
+        # Two credentials of one pipeline rotate; they must not disagree on its registration.
+        ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE | {"stages": ["prepare"]}})),
+        ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE | {"pipeline_id": "other"}})),
         ("KP_ADMISSION_API_PORT", "http"),
         ("KP_SOURCES", '{"km": {"ordering": "newest"}}'),
         ("KP_MAX_FILE_SIZE", "50MB"),
