@@ -276,9 +276,18 @@ a staged file is one in place and not yet admitted. Outcomes:
 | `Content-Length`, or the bytes received, differ from the declared `size` | `400 SIZE_MISMATCH`; nothing is staged |
 | SHA-256 differs from the declaration | `422 DIGEST_MISMATCH`; nothing is staged |
 | Detected media type differs from the declaration | `422 MEDIA_TYPE_MISMATCH`; nothing is staged |
+| Storage does not answer during the upload | `503 UNAVAILABLE` with `Retry-After`; nothing is staged; repeat the whole request |
 | Batch finalized | `409 BATCH_FINALIZED` |
 | Batch expired | `409 BATCH_EXPIRED` |
 | Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` |
+
+The platform detects the media types whose leading bytes have a fixed signature
+(PDF and the common image formats). A declared type that it detects must be the
+detected one; a declared type that it cannot detect, such as `text/markdown`,
+stands unless the bytes show a type it detects (user ruling of 2026-11-19,
+[#194](https://github.com/davidlinnnn/data-ingestion/issues/194)). The main
+file's media type selects the Processing Profile (§3), so an adopted main-file
+format without a signature is routed by the Source's declaration.
 
 A repeated `PUT` of the same path changes nothing: a staged file already holds
 the declared bytes. Files of one item, and of different

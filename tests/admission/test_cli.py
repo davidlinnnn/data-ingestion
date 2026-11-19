@@ -45,6 +45,7 @@ S3 = {  # the api reaches storage only when a batch is finalized
     "KP_S3_BUCKET": "kp-custody",
     "AWS_ACCESS_KEY_ID": "x",
     "AWS_SECRET_ACCESS_KEY": "x",
+    "KP_ADMISSION_PUBLIC_URL": "https://kp.example",
 }
 
 
@@ -206,6 +207,9 @@ SOURCE = {"credential_id": "c1", "tenant_id": "t1", "source_id": "km", "scopes":
         ("KP_MAX_FILE_SIZE", "50MB"),
         ("KP_PAUSE_BACKLOG", "-1"),
         ("KP_S3_BUCKET", ""),
+        ("KP_ADMISSION_PUBLIC_URL", ""),
+        ("KP_ADMISSION_PUBLIC_URL", "http://kp.example"),
+        ("KP_ADMISSION_PUBLIC_URL", "https://kp.example/v1"),
     ],
 )
 def test_the_api_refuses_a_malformed_setting(monkeypatch, capsys, variable, value):
@@ -306,7 +310,7 @@ async def test_the_api_serves_registered_sources_and_clients_and_logs_and_counts
 
 
 async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn, conn):
-    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn, **S3}
 
     def run(*args: str) -> tuple[int, dict]:
         done = subprocess.run(
@@ -328,7 +332,7 @@ async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn,
         "INSERT INTO batch (batch_id, tenant_id, source_id, state, expires_at)"
         " VALUES ('bat_1', 't1', 'km', 'open', now() - interval '1 minute')"
     )
-    assert run("expire") == (0, {"expired": 1})
+    assert run("expire") == (0, {"expired": 1, "cleaned": 0})  # it expired under an hour ago
 
 
 @pytest.mark.docker
