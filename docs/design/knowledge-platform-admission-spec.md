@@ -12,8 +12,8 @@ The rules in §6 are also modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html), whose
 19 scenarios pass. Domain terms follow `CONTEXT.md`. The file upload path (why
 it is a platform endpoint, the architecture, the sequence diagrams and the
-Source-facing guide) is the [file upload design](knowledge-platform-file-upload.md);
-§5.2 here stays its contract.
+Source-facing guide) is the [document submission guide](knowledge-platform-file-upload.md);
+§5 here stays the contract.
 
 Sizing figures marked *unmeasured* are provisional until the cluster-tier
 validation (§13) measures them.
@@ -195,6 +195,14 @@ until then it may get a `429` or `503` to retry. Body:
 }
 ```
 
+An item requires `document_id` and `files`, and a file all five of its fields.
+`source_version` is required under `ordering: source_version` (§6.1 rule 3), and
+`resources` for a new document of a Source without a default Resource (rule 5).
+`title`, `source_url` and `metadata` are optional (§6.5). `uploaded_by` is
+optional: the identity of the person who submitted the document, as the Source
+asserts it. It is recorded with the item and is neither used for authorization
+nor proof that the person acted (Q3.8).
+
 Response `201`:
 
 ```json
@@ -211,7 +219,12 @@ Response `201`:
 ```
 
 Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
-valid until the batch is finalized or expires.
+valid until the batch is finalized or expires. `url` is an absolute URL on
+the origin the client called and `method` is `PUT`. A client uploads to the
+`url` as returned and does not build it, sends its credential to that origin
+only, and ignores response fields it does not know, so that a later version can
+add one (API review of 2026-11-19, recorded in the
+[design notes](knowledge-platform-admission.md#api-review-on-2026-11-19)).
 
 A `resources` value is the Source's own key for a Resource it has registered
 through the Resource API
@@ -245,8 +258,9 @@ A batch in which no item is `declared` is created `finalized`.
 One request per file listed in the item's `uploads`, authenticated with the
 Source credential like every other call; there is no separate upload grant.
 `{path}` is the declared file path. `Content-Length` is required and must equal
-the declared `size`; `Content-Type` may carry the declared `media_type` (the
-platform detects the type itself). The body is the file's bytes in one request:
+the declared `size`; `Content-Type` may carry the declared `media_type`, and its
+value is not checked (the platform detects the type itself). The body is the
+file's bytes in one request:
 no multipart form, no chunked encoding, no resumption.
 
 The platform streams the body into storage, computing the SHA-256 and counting
@@ -275,7 +289,7 @@ the whole request. Uploads are accepted until the batch is finalized or expires
 Changed on 2026-11-07: this endpoint replaces the storage-native upload grant
 (presigned URL or SAS) that company policy excluded on 2026-10-30. The reasons
 and the options compared are in the
-[file upload design](knowledge-platform-file-upload.md).
+[document submission guide](knowledge-platform-file-upload.md).
 
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 
@@ -458,6 +472,13 @@ Submitted `title` and `source_url` replace the current values. `metadata` replac
 the whole map; omitted keeps it; `{}` clears it. None of them creates a Source
 Revision. A rejected item applies nothing. Metadata is returned only to the
 owning Source and never reaches projections, agents or filters.
+
+Superseded on 2026-10-31 by
+[#76](https://github.com/davidlinnnn/data-ingestion/issues/96#issuecomment-6542094987):
+metadata is no longer returned to the Source only. The serving layer returns it
+with the document to everyone who can read the document, so a Source puts
+nothing there that its readers may not see. The storage rules above are
+unchanged, and the platform still does not interpret or filter on it.
 
 ## 7. Status
 

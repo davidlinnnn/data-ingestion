@@ -67,8 +67,8 @@ _Avoid_: Asset, file, Source, current file bytes, filename, storage location
 
 **Source Metadata**:
 Key-value information a Source attaches to a Document for its own use. The
-platform stores it and returns it only to that Source; it does not interpret,
-index or disclose it.
+platform stores it and returns it with the Document, to that Source and to
+everyone who can read the Document; it does not interpret or index it.
 _Avoid_: catalog metadata, filterable attribute, access policy
 
 **Corpus**:
