@@ -1,7 +1,7 @@
 """The Change Feed on PostgreSQL (#126, ADR-0009, canonical consumption DR §2 A1–A6).
 
-What the feed promises its readers: every committed change appears, changes of one Document in
-commit order, within a bounded delay. The tests do not check an order across Documents."""
+What the feed promises its readers: every committed change appears, within a bounded delay. The
+tests do not check an order between events."""
 
 import asyncio
 import random
