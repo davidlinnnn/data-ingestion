@@ -42,6 +42,8 @@ def test_code_and_allowed_addresses_pass(line):
         ("in /priv" + "ate/tmp/x", "local-path"),
         ("key AK" + "IA" + "ABCDEFGHIJKLMNOP", "secret"),
     ],
+    # Spelled-out ids would join the text again, and .test_durations stores test ids.
+    ids=["email-tw", "email-gmail", "email-163", "path-users", "path-private", "secret-aws"],
 )
 def test_private_text_is_refused(line, rule):
     result = check(line, "--no-placeholders")

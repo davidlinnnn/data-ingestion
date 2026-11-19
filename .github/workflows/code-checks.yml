@@ -3,8 +3,8 @@
 # that need Docker or a local socket: the S3 contract against tests/s3/compose.yaml (marker `s3`)
 # and the local-socket tests (marker `network`, which download the Temporal dev server).
 # The docling tests need the pinned weights, fetched once per manifest and verified against it.
-# pytest runs in parallel shards (scripts/test-shard): docling on the runner's CPU made one job
-# take about 10 minutes.
+# pytest runs in four shards balanced by measured duration (scripts/test-shard): docling on the
+# runner's CPU made one job take about 10 minutes.
 name: code-checks
 
 on:
@@ -70,6 +70,14 @@ jobs:
         run: docker compose -f tests/s3/compose.yaml up -d --wait
 
       - name: Tests
-        run: scripts/test-shard ${{ matrix.shard }}
+        run: scripts/test-shard ${{ matrix.shard }} --store-durations --clean-durations
         env:
           HF_HUB_OFFLINE: "1"
+
+      - name: Keep this shard's test durations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-durations-${{ matrix.shard }}
+          path: .test_durations
+          include-hidden-files: true
