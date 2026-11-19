@@ -70,6 +70,14 @@ jobs:
         run: docker compose -f tests/s3/compose.yaml up -d --wait
 
       - name: Tests
-        run: scripts/test-shard ${{ matrix.shard }}
+        run: scripts/test-shard ${{ matrix.shard }} --store-durations --clean-durations
         env:
           HF_HUB_OFFLINE: "1"
+
+      - name: Keep this shard's test durations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-durations-${{ matrix.shard }}
+          path: .test_durations
+          include-hidden-files: true
