@@ -195,6 +195,14 @@ until then it may get a `429` or `503` to retry. Body:
 }
 ```
 
+An item requires `document_id` and `files`, and a file all five of its fields.
+`source_version` is required under `ordering: source_version` (§6.1 rule 3), and
+`resources` for a new document of a Source without a default Resource (rule 5).
+`title`, `source_url` and `metadata` are optional (§6.5). `uploaded_by` is
+optional: the identity of the person who submitted the document, as the Source
+asserts it. It is recorded with the item and is neither used for authorization
+nor proof that the person acted (Q3.8).
+
 Response `201`:
 
 ```json
@@ -211,7 +219,10 @@ Response `201`:
 ```
 
 Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
-valid until the batch is finalized or expires.
+valid until the batch is finalized or expires. A client sends each file with
+the entry's `method` to its `url` as returned, without building the URL itself,
+and ignores response fields it does not know: a later version may add a field
+or another way to upload (2026-11-19).
 
 A `resources` value is the Source's own key for a Resource it has registered
 through the Resource API

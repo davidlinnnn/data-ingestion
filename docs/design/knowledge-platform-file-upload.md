@@ -1,14 +1,43 @@
-# Knowledge Platform 檔案上傳：論述與設計
+# Knowledge Platform 文件交付指南：設計、決策與 Source API
 
-**狀態：** Contract companion：說明契約，不另立契約。2026-11-07 定案方向與契約；2026-11-18 對齊之後的決定（第 7.2 節）。實作票與進度在第 7.3 節。
+**狀態：** Contract companion：說明契約，不另立契約；和規格不一致時以規格為準。2026-11-07 定案方向與契約；最近一次對齊在 2026-11-19（第 7.2 節）。實作票與進度在第 7.3 節。
 
-本文是「Source 如何把檔案交給平台」這個題目的完整論述：背景與限制、比較過的選項與決定、系統架構、流程圖、給 Source 開發者的使用指南、部署與維運需求。正式契約在兩處：[admission 規格](knowledge-platform-admission-spec.md) §5（§5.2 是上傳端點），以及 Resource 登記的[授權指南](knowledge-platform-authorization-guide.md) §4.7；本文引用它們，不另立契約。歷史決策的問答編號（Q4、Q5 等）見 [admission 設計筆記](knowledge-platform-admission.md)。術語依 `CONTEXT.md`。
+本文是「Source 如何把文件交給平台」的單一入口。讀完這一份，就知道設計的想法、做過的決定與理由、API 怎麼用、部署要準備什麼，不必再開另外兩份文件。那兩份的用途不同：
+
+| 文件 | 給誰 | 內容 |
+|---|---|---|
+| 本文 | Source 開發者、DevOps、想了解設計的人 | 設計、決策、架構與流程、API 使用方法、部署需求 |
+| [admission 規格](knowledge-platform-admission-spec.md) | 平台實作者 | 完整契約：每條受理規則、狀態、派送與耐久、保留期 |
+| [admission 設計筆記](knowledge-platform-admission.md) | 查歷史的人 | 逐輪的問答紀錄（Q4、Q5 等編號），含已被取代的內容 |
+
+Resource 登記的契約在[授權指南](knowledge-platform-authorization-guide.md) §4.7。術語依 `CONTEXT.md`。
 
 | 讀者 | 先讀 | 再讀 |
 |---|---|---|
-| Source 開發者 | 第 5 節：使用指南 | 第 4 節的流程與失敗表 |
+| 想了解設計的人 | 摘要；第 2 節：選項與決定 | 第 3、4 節 |
+| Source 開發者 | 摘要；第 5 節：使用指南 | 第 4.2 節的失敗表 |
 | DevOps | 第 3 節：架構；第 6 節：部署與維運 | 第 4.2 節的失敗表、第 7.3 節的實作狀態 |
 | 平台實作者 | 規格 §5、§6（契約） | 第 2 節的決定、第 4 節 |
+
+## 摘要
+
+Source 是把文件交給平台的系統，例如 KM。它用平台核發的 credential 呼叫 API。交一份文件是三個呼叫；處理在背景進行，結果用查詢取得。
+
+| 步驟 | 呼叫 | 平台做什麼 |
+|---|---|---|
+| 準備（每個 Resource 一次） | `PUT /v1/resources/{key}` | 記下這個 Resource；Resource 決定誰讀得到文件 |
+| 1. 宣告 | `POST /v1/batches` | 還沒收檔就檢查規則，回覆哪些檔案要上傳 |
+| 2. 上傳 | 每個檔案一個 `PUT` | 邊收邊驗大小與 SHA-256，通過才存下來 |
+| 3. finalize | `POST /v1/batches/{batch_id}/finalize` | 一次受理整批，回 `202` 與每份文件的 `request_id` |
+| 之後 | `GET /v1/documents/{document_id}` | 回報處理進度，以及文件是否已經可以被讀到 |
+
+三個主要的決定：
+
+- **檔案經平台 API 上傳。** 不用 presigned URL，也不讓 client 直接寫 storage：公司政策禁止前者，後者要多發一套 storage 憑證（第 2.3、2.4 節）。
+- **先宣告、再上傳、最後 finalize。** 沒變的文件在宣告就結束，只改一個附件就只傳那個附件；finalize 把整批在一個 transaction 受理，`202` 之後不會遺失也不會重複（第 2.5 節）。
+- **Resource 用 Source 自己的 key，先登記再使用。** 打錯的 key 會被擋下，不會默默建出一個新的 Resource（[ADR-0013](../adr/0013-resource-identified-by-source-key.md)）。
+
+最短的用法是第 5 節開頭的 quick start。
 
 ## 1. 背景與限制
 
@@ -108,6 +137,41 @@ presigned URL 本來就是「讓 client 不拿 storage 憑證也能直接寫」�
 - **契約採最小形式**（規格 §5.2）：上傳端點直接以 Source credential 驗證，不另發 grant token；每個檔案一個 `PUT`；宣告回應的 `uploads[]` 列出平台端點；原本的 grant 重發端點與一小時效期刪除。理由：少一套 token 的簽發、過期與重發；上傳的授權本來就在 finalize 再檢查一次；Source credential 是每次呼叫都要帶的東西。
 - **不做的事**：分段或續傳（50 MB 以下整個重傳即可）、inline 內容、pull 路徑（等有具體來源再開）。
 - **對 Valet Key 原則的影響**：client 不再持有任何對 storage 的委派權限，設計筆記裡「以 Valet Key 模式授予 client 有限的 storage 存取」改為歷史。平台先驗證提交者的授權、再接受資料傳輸，這個順序沒有變。
+
+### 2.5 為什麼是這幾個呼叫（2026-11-19 的審查）
+
+2026-11-19 對 Source 這一側的 API 做了一次獨立審查，問題是流程能不能更簡單。結論是契約不改。每一步的理由：
+
+| 步驟 | 換到什麼 | 併掉或拿掉會失去什麼 |
+|---|---|---|
+| 登記 Resource | 平台只收它認得的 key，打錯的 key 在宣告時被擋。登記要 `manage_relations`、交文件要 `submit`，兩種權限分開 | 併進宣告（沒見過的 key 自動建立）：打錯字會默默建出一個 Resource，只有 `submit` 的 credential 也能建 |
+| 宣告 | 檔案還沒傳就逐 item 檢查規則；只傳有變動的檔案；內容沒變的文件在這一步就結束 | 併進上傳：被拒的 item 也已經把檔案傳完，沒變的檔案每次都要重傳 |
+| 每檔一個 `PUT` | 可並行；失敗只重傳那一檔；平台收到就驗證 | 併進宣告：50 個 item、每個 20 MB 是一個 1 GB 的 request，任何一檔失敗都整批重來 |
+| finalize | 整批在一個 transaction 受理；受理當下重查刪除、Resource 與版本順序；重複呼叫回同一份結果 | 改成「最後一個檔案到就自動受理」：並行上傳時由哪一個 `PUT` 帶回受理結果不固定，那個回應遺失時 client 要另外查詢 |
+| 查詢 | 處理是非同步的，結果用查詢取得 | 沒有替代品，除非做 callback；callback 列為之後的事（規格 §1） |
+
+出處：規格 §5、§6.1、§6.2、§9；設計筆記 Q4、Q4a、Q10.1d；[ADR-0012](../adr/0012-uploads-written-at-custody-key.md)、[ADR-0013](../adr/0013-resource-identified-by-source-key.md)。
+
+和公開的 API 比較。數的是「把一個檔案交出去，到對方承認收到」的呼叫數，不含查詢：
+
+| API | 一個檔案 | 完成的方式 |
+|---|---|---|
+| 本平台 | 3 | 明確的 finalize，一次涵蓋整批 |
+| [Slack 外部上傳](https://docs.slack.dev/messaging/working-with-files/) | 3 | 明確的 complete |
+| [S3 multipart upload](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html) | 3（只有一段時） | 明確的 complete |
+| [OpenAI Uploads](https://developers.openai.com/api/docs/api-reference/uploads) | 3（只有一段時） | 明確的 complete |
+| [GCS resumable upload](https://docs.cloud.google.com/storage/docs/resumable-uploads)、[tus](https://tus.io/protocols/resumable-upload) | 2 | 最後一個 byte 到就完成 |
+| [OpenAI Files](https://developers.openai.com/api/docs/api-reference/files/create) | 1 | 沒有事前檢查，也沒有「只傳有變動的檔案」 |
+
+有明確 complete 的三個，都是把多個獨立的上傳組成一個單位；本平台的單位是多份文件乘多個檔案，屬於同一類。兩個呼叫的那兩個處理的是一條依序送的 byte stream；本平台允許檔案並行上傳，沒有「最後一個 byte」可看。
+
+審查之後的處置：
+
+- **做**：SDK 把三個呼叫包成一個（[#194](https://github.com/davidlinnnn/data-ingestion/issues/194)）；第 5 節加 quick start 與欄位表；規格 §5.1 寫明哪些欄位必填，以及 client 照 `uploads[]` 給的 `url` 上傳。
+- **不做：單一 request 的便利端點。** 它是第二條進件路徑，和「單筆與批次共用一個契約」（設計筆記 2026-10-18）不一致。重新考慮的條件已經定了：pilot 的 client 無法使用 SDK（設計筆記 Q4a）。
+- **不做：自動 finalize。** 有 SDK 之後，省下的那一個呼叫開發者看不到。
+
+對「一份文件、一個檔案」的情境，宣告與 finalize 分開給 client 的好處很少。這個情境的簡化交給 SDK，不改契約。
 
 ## 3. 系統架構
 
@@ -227,7 +291,46 @@ sequenceDiagram
 
 ## 5. 使用指南：給 Source 開發者
 
-本節依契約寫，不是現況。2026-11-18 時能呼叫的只有 Resource 登記；其餘端點的進度見第 7.3 節。
+本節依契約寫，不是現況。2026-11-19 時 `dev` 上能呼叫的是 Resource 登記、宣告、finalize 與 `GET /v1/batches/{batch_id}`；上傳、狀態查詢與刪除還沒實作，進度見第 7.3 節。
+
+### Quick start：一份文件、一個 PDF
+
+```sh
+# 準備：算出檔案的 SHA-256 與大小
+shasum -a 256 policy.pdf     # 64 個十六進位字元
+wc -c < policy.pdf           # bytes
+
+# 準備（每個 Resource 一次）：登記 Resource
+curl -X PUT https://kp.example/v1/resources/hr-all -H "Authorization: Bearer $KP_TOKEN"
+
+# 1. 宣告。回應 201，帶 batch_id 與 items[0].uploads[0].url
+curl -X POST https://kp.example/v1/batches \
+  -H "Authorization: Bearer $KP_TOKEN" -H "Content-Type: application/json" \
+  -d '{"items":[{"document_id":"hr:leave-policy","source_version":"1","resources":["hr-all"],
+       "files":[{"path":"policy.pdf","role":"main","sha256":"9f2c…","size":18342,"media_type":"application/pdf"}]}]}'
+
+# 2. 上傳到回應給的 url。回應 204
+curl -X PUT "https://kp.example/v1/batches/bat_01J…/items/0/files/policy.pdf" \
+  -H "Authorization: Bearer $KP_TOKEN" --data-binary @policy.pdf
+
+# 3. finalize。回應 202，帶 request_id
+curl -X POST https://kp.example/v1/batches/bat_01J…/finalize -H "Authorization: Bearer $KP_TOKEN"
+
+# 之後：查詢，直到 readiness 是 ready
+curl https://kp.example/v1/documents/hr:leave-policy -H "Authorization: Bearer $KP_TOKEN"
+```
+
+一開始可以不管的東西：
+
+| 項目 | 為什麼可以先不管 |
+|---|---|
+| `Idempotency-Key` | 選填。沒帶而重送宣告，會多一個 batch、多扣一次配額，但同樣的內容不會被受理兩次（規格 §6.2、§6.4） |
+| `title`、`source_url`、`metadata`、`uploaded_by` | 選填，不影響處理 |
+| `carried_over` | 只有重送多檔文件時才會出現 |
+| `GET /v1/requests/{request_id}` | 一般整合只看 document 的 `readiness`；request 留給除錯 |
+| `GET /v1/batches/{batch_id}` | 整批的進度；交單份文件用不到 |
+
+以下各小節是完整的說明。
 
 ### 5.1 前置
 
@@ -265,7 +368,8 @@ curl -X POST https://kp.example/v1/batches \
       "title": "Leave policy",
       "source_url": "https://km.example/hr/leave-policy",
       "resources": ["hr-all"],
-      "uploaded_by": "tsso:alice",
+      "uploaded_by": "sso:user-1",
+      "metadata": { "km_folder": "HR/Policies" },
       "files": [
         { "path": "policy.pdf", "role": "main", "sha256": "9f2c…", "size": 18342, "media_type": "application/pdf" },
         { "path": "assets/flow.png", "role": "attachment", "sha256": "1ab0…", "size": 220114, "media_type": "image/png" }
@@ -275,9 +379,33 @@ curl -X POST https://kp.example/v1/batches \
 }
 ```
 
-`resources` 填一個已登記的 key，只能填一個；既有的文件不用填，平台沿用原本的綁定。回應 `201` 的每個 item 帶 `status`；`declared` 的 item 帶 `uploads[]`，只列與上一版不同的檔案，其餘列在 `carried_over`，不必再傳。`unchanged`、`queued`、`rejected` 的 item 已經結束，沒有上傳步驟。
+這個例子列出全部的欄位。每個 item 的欄位：
 
-**2. 上傳**：對 `uploads[]` 的每個檔案發一次 `PUT`，可以並行。
+| 欄位 | 必填 | 說明 |
+|---|---|---|
+| `document_id` | 是 | Source 自己的文件代號；重送、查詢、刪除都用它 |
+| `files` | 是 | 這個版本的全部檔案，見下表 |
+| `source_version` | Source 依版本排序時要（預設） | 整數，或帶時區的 RFC 3339 時間。比上一版小的會被拒（`STALE_SOURCE_VERSION`）。Source 沒有版本號時，請平台把它設成依到達順序，就不用填 |
+| `resources` | 新文件，且 Source 沒有預設 Resource 時要 | 一個已登記的 key，放在陣列裡，只能一個。既有的文件不用填，平台沿用原本的綁定 |
+| `title`、`source_url` | 否 | 目錄資訊；送了就取代現值 |
+| `metadata` | 否 | Source 自己的註記，只回給這個 Source；送了就取代整份，`{}` 清空。不要放敏感資料 |
+| `uploaded_by` | 否 | Source 聲明的提交者身分；只做紀錄，不用於授權 |
+
+每個檔案的五個欄位都必填：
+
+| 欄位 | 說明 |
+|---|---|
+| `path` | 文件內的相對路徑，不可重複；也是上傳網址的最後一段 |
+| `role` | 恰好一個 `main`，其餘是 `attachment` |
+| `sha256` | 64 個十六進位字元。平台用它判斷檔案有沒有變，並驗證收到的內容 |
+| `size` | bytes。超過上限的在宣告時就被拒；上傳時要和 `Content-Length` 相同 |
+| `media_type` | 主檔的格式要是平台支援的（pilot 只有 `application/pdf`），否則宣告時就被拒 |
+
+排序方式與預設 Resource 是每個 Source 的設定，由平台設定（規格 §2）。規則的完整條文在規格 §6.1。
+
+回應 `201` 裡要用的是 `batch_id`、每個 item 的 `status`，以及 `declared` 的 item 的 `uploads[]`。`uploads[]` 只列與上一版不同的檔案，其餘列在 `carried_over`，不必再傳。`unchanged`、`queued`、`rejected` 的 item 已經結束，沒有上傳步驟；`rejected` 的帶 `error`。
+
+**2. 上傳**：對 `uploads[]` 的每個檔案發一次 `PUT`，可以並行。網址用 `uploads[]` 給的 `url`，不要自己組；回應裡不認得的欄位略過。
 
 ```sh
 curl -X PUT "https://kp.example/v1/batches/bat_01J…/items/0/files/assets/flow.png" \
@@ -304,7 +432,16 @@ curl https://kp.example/v1/requests/req_01J… -H "Authorization: Bearer $KP_TOK
 curl https://kp.example/v1/documents/hr:leave-policy -H "Authorization: Bearer $KP_TOKEN"
 ```
 
-request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `GET /v1/documents/{document_id}` 的 `readiness`（規格 §7.1）。
+request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `GET /v1/documents/{document_id}` 的 `readiness`（規格 §7.1）：
+
+| `readiness` | 意思 |
+|---|---|
+| `not_ready` | Source 要求的讀取端（projection，例如 Retrieval、LLM-Wiki）裡，還有一個沒有這份文件的任何版本 |
+| `ready_stale` | 每個讀取端都有這份文件，但至少一個還是舊版 |
+| `ready` | 每個讀取端都是最新版 |
+| `deleted` | 已刪除 |
+
+回應的 `attention` 列出需要有人處理的事。`action_owner` 是 `source` 時輪到 Source 處理：例如 `source_revision_rejected` 表示這一版無法處理，要修正後重送（規格 §7.2）。規格還有 `withdrawn` 這個值，pilot 不會出現。
 
 **刪除**
 
@@ -365,13 +502,13 @@ DevOps 要準備的東西。數值與設定名稱多數還是暫定的，由 [#7
 | 項目 | 需求 | 細節在哪 |
 |---|---|---|
 | 角色 | 一個 image，三種角色：`api`（固定 2 個副本，不用 HPA）、`dispatcher`（至少 2 個副本）、CronJob（reconciler 每 5 分鐘；batch 過期與上傳清理每小時；保留期每天） | 規格 §13；第 6.1、6.3 節 |
-| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）。還沒有：batch 過期與採用紀錄的指令（#96）、上傳清理（#194）、redrive 與 refresh（#98）、規格 §11 的紀錄保留期（還沒有票寫明） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
+| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，跑一次就結束，CronJob 每小時）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`adopt` 與 `cancel-adoption`（設定某個檔案格式用哪個 Processing Profile 版本）。第一次宣告之前要先用 `adopt` 採用 PDF 的版本，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。還沒有：上傳清理（#194）、redrive 與 refresh（#98）、規格 §11 的紀錄保留期（還沒有票寫明） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
 | Admission DB | pilot：一個 PostgreSQL instance，放在網路磁碟的 persistent volume，不用 operator；WAL 連續歸檔，加上排程的 base backup，都放到物件儲存。版本要 17 以上；`api` 的資料庫角色要 `pg_read_all_stats`。`feed-retention` 要每天跑：它刪掉超過 90 天的 Change Feed，也預先建立之後幾個月的分區，長期沒跑的話 admission 的寫入會失敗。目前沒有套用 schema 的指令。PROD release 之前移到公司代管的 MongoDB | 規格 §9、§13；[#137 的交接](https://github.com/davidlinnnn/data-ingestion/issues/137#issuecomment-6983041476)；第 3 節；#239 |
 | 物件儲存 | S3 相容，一個 bucket，原始檔與處理結果共用。`api` 要寫入與刪除的權限，processing worker 要讀寫。必要的行為用 `storage_probe.py` 驗證 | 規格 §10；第 6.3、6.7 節；產品由 #57 決定 |
 | Temporal | `dispatcher` 與 `reconcile` 要連得到：`TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE`。`api` 不連 Temporal，所以 Temporal 停機時照常受理，outbox 裡的 request 等它恢復 | 規格 §9 |
 | 路由 | 對外只開放 `/v1/`。`/authz/`、`/read/`、`/healthz`、`/openapi.json` 與 metrics 不對外。上傳路徑要另外放寬 | 授權指南 §6.1；第 6.2 節 |
 | Mesh sidecar | CronJob 的 pod 可能因為 sidecar 不會自己退出而無法結束：確認是否啟用 native sidecar，沒有的話關閉注入，或在結束時停止 proxy。應用程式可能比 proxy 先啟動：`api` 會自行重連資料庫，`dispatcher` 連不上會結束，由 Kubernetes 重啟。`api` 收到 SIGTERM 會先處理完進行中的 request，結束碼是 143 | [#78 的交接](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6854292201)；第 6.2 節 |
-| 設定 | 環境變數：`KP_ADMISSION_DATABASE_URL`（每個角色都要，缺了就以 exit code 2 結束）、`KP_CREDENTIALS`（每個 Source credential 的 SHA-256 與權限）、`KP_AUTHZ_PEP_CREDENTIALS`（讀取端的憑證）；`api` 另外要 `KP_AUTHZ_PROVIDER=allow-all` 與 `KP_DEPLOYMENT=pilot`，缺一個就不啟動。改了要重啟 pod。admission 連物件儲存的設定還沒有，隨 #96 加入 | 授權指南 §6.2 |
+| 設定 | 環境變數。每個角色都要 `KP_ADMISSION_DATABASE_URL`，缺了就以 exit code 2 結束。`api` 另外必填：`KP_AUTHZ_PROVIDER=allow-all`、`KP_DEPLOYMENT=pilot`，以及物件儲存的 `KP_S3_ENDPOINT`、`KP_S3_BUCKET`、`AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`；缺一個就不啟動。`api` 的其他設定：`KP_CREDENTIALS`（每個 Source credential 的 SHA-256 與權限）、`KP_AUTHZ_PEP_CREDENTIALS`（讀取端的憑證）、`KP_SOURCES`（每個 Source 的排序方式與預設 Resource）、`KP_MAX_FILE_SIZE`（bytes，預設 50 MiB）、`KP_PAUSE_BACKLOG`、`KP_ADMISSION_API_PORT`（預設 8080）、`AWS_REGION`（預設 `us-east-1`）。改了要重啟 pod | 授權指南 §6.2；[`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
 | 健康檢查、metrics、log | `api` 的 `GET /healthz` 用 HTTP probe，並用 `--metrics-port` 開 metrics；`dispatcher` 還沒有 HTTP 端點與 metrics（#189）。log 是 JSON、寫到 stderr，`api` 的每一行帶 `trace_id` | 授權指南 §6.3、§6.6；第 6.4 節 |
 | 上線前的驗證 | pilot 前跑叢集層驗證：資料庫故障三案、終止 pod、Temporal 停機、容量 | 第 6.6 節；規格 §13；#99 |
 
@@ -440,7 +577,7 @@ pod 帶 mesh sidecar 時，body 上限、不先緩衝與 timeout 在 sidecar 那
 | 事項 | 影響 | 負責 |
 |---|---|---|
 | pull 路徑 | 等有「檔案已在公司核准 storage」的具體來源再開 | #96 之後另開票 |
-| 分段上傳 | GB 級檔案才需要；契約形狀相容（OpenAI Uploads 的 create、add parts、complete 同形） | 不在第一版 |
+| 大檔案的續傳 | 5 GB 以上才需要；可以用新增的端點加上，不破壞既有 client（第 7.4 節） | 不在第一版 |
 | 公司的 ingress 產品與設定值 | 第 6.2 節的數值 | #78 |
 | 上傳進行中 storage 無法回應時的回應 | 規格 §5.2 的結果表沒有這一列；finalize 的同類情況已定為 `503 UNAVAILABLE` | #194 |
 
@@ -456,8 +593,9 @@ pod 帶 mesh sidecar 時，body 上限、不先緩衝與 timeout 在 sidecar 那
 | 2026-11-07 | 使用者確認政策只排除 presigned URL，不限定傳輸管道；本決定的前提成立，未決事項移除 |
 | 2026-11-11 | #184：上傳直接寫到 custody 的 key，不設 staging，finalize 不寫 storage（[ADR-0012](../adr/0012-uploads-written-at-custody-key.md)）；第 1.2、3、4、6.3、6.4 節改寫，新增第 6.7 節 |
 | 2026-11-18 | 對齊之後的決定：Resource 由 Source 自己的 key 識別、先登記再宣告（ADR-0013，#114）；上傳與 SDK 拆到 #194；每個回應帶 `X-Trace-Id`（#204）；pilot 用 PostgreSQL，PROD release 前移到 MongoDB（#239）。新增讀者表、刪除的呼叫、第 6 節的總表與第 7.3 節。`document_id` 的例子改成符合規格 §11 的字元 |
+| 2026-11-19 | 本文成為「Source 交付文件」的單一入口，標題改為文件交付指南：新增摘要、第 2.5 節（API 的獨立審查，契約不改）、quick start、欄位表、`readiness` 的說明、第 7.4 節（大檔案的評估）。#96 已合併，第 5、6、7.3 節跟著更新。規格 §5.1 寫明必填欄位與 `uploaded_by`，並要求 client 照 `uploads[]` 的 `url` 上傳 |
 
-### 7.3 實作狀態（2026-11-18）
+### 7.3 實作狀態（2026-11-19）
 
 進度以各票為準；這張表在票結案時更新。
 
@@ -467,15 +605,35 @@ pod 帶 mesh sidecar 時，body 上限、不先緩衝與 timeout 在 sidecar 那
 | 共用處理 | `trace_id`、`/healthz`、metrics、log | #204 | 已完成，在 `dev` |
 | 登記 Resource | `PUT`、`GET`、`DELETE /v1/resources/{key}`，`GET /v1/resources` | #114 | 已完成，在 `dev` |
 | Change Feed | 讀取端取得文件變更的 API（`/read/v1/`，不對外） | #126 | 已完成，在 `dev` |
-| 宣告、finalize | `POST /v1/batches`、`POST /v1/batches/{batch_id}/finalize`、`GET /v1/batches/{batch_id}`、batch 過期 | #96 | 未實作 |
-| 上傳 | `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`、上傳清理、最小 SDK | #194 | 未實作，在 #96 之後 |
+| 宣告、finalize | `POST /v1/batches`、`POST /v1/batches/{batch_id}/finalize`、`GET /v1/batches/{batch_id}`、batch 過期、採用紀錄 | #96 | 已完成，在 `dev` |
+| 上傳 | `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`、上傳清理、最小 SDK | #194 | 未實作 |
 | 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents` | #97 | 未實作 |
-| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #96 與 #97 之後 |
+| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #97 之後 |
 | dispatcher 與 reconciler 的 metrics | | #189 | 未實作 |
-| 驗證 | CI 層與叢集層 | #99 | 未實作，在 #96、#194、#97、#98 之後；叢集層另外等 #78 |
+| 驗證 | CI 層與叢集層 | #99 | 未實作，在 #194、#97、#98 之後；叢集層另外等 #78 |
 | admission 的 image、依賴拆分 | | #207 | 未實作 |
 | 部署形態、ingress 數值、告警 | | #78 | 設計中 |
 | 移到 MongoDB | | #239 | pilot 之後，PROD release 之前 |
+
+上傳端點還沒有，所以現在宣告出 `declared` 的 item 之後無法完成：finalize 會以 `FILES_MISSING` 拒絕它。
+
+### 7.4 大檔案（1 GB 以上）的評估（2026-11-19）
+
+問題：之後要收 1 GB 以上的影片時，現在的契約夠不夠。結論：之後可以用新增的方式支援，現在不用改契約。下表的連線速度是假設，時間是換算，都不是量測。
+
+| 檔案 | 100 Mbps 下傳一次 | 現在的契約 |
+|---|---|---|
+| 50 MB 以下 | 4 秒以內 | 可用；50 MB 是部署設定的上限（規格 §11） |
+| 1 GB | 80 秒 | 調高上限，並調整第 6.2 節的 ingress 與 sidecar 設定，就可用 |
+| 5 GB | 6.7 分鐘 | 勉強：斷線要整檔重傳（規格 §5.2） |
+| 20 GB | 27 分鐘 | 不可用：斷在 90% 就損失 24 分鐘，而且撐不過一次部署 |
+
+- **最先遇到的限制是「單一 request、不能續傳」**，不是 storage，也不是記憶體。平台寫入 storage 本來就分段，每段 8 MiB，一個上傳佔的記憶體和檔案大小無關（第 6.1 節）；20 GB 是 2,385 段，低於 S3 的 10,000 段上限（[AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html)）。
+- **部署會切斷長時間的上傳。** pod 的終止寬限預設 30 秒（[Kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)），Istio sidecar 的 `terminationDrainDuration` 預設 5 秒（[Istio](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/)）。上傳時間超過寬限的，每次部署都會被切斷重來。
+- **續傳可以新增。** 保留現在的 `PUT`，在宣告與 finalize 之間加分段上傳的端點，形狀和 OpenAI Uploads 的 create、add parts、complete 相同。`uploads[]` 的每一項已經有 `method` 與 `url`，整檔的 `sha256` 照舊；規格 §5.1 因此要求 client 照回應的 `url` 上傳。
+- **影片當主檔還需要一個 Processing Profile**（pilot 只有 PDF）；這也是新增。
+- **20 GB 級的檔案另有一條路**：平台去公司核准的 storage 讀檔（第 7.1 節的 pull 路徑），檔案不經過 API pod。
+- 做續傳時，清理的假設要跟著改：現在假設上傳在一小時內結束（第 6.3 節）。
 
 ## 來源
 
