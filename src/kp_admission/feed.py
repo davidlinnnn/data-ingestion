@@ -1,9 +1,10 @@
 """The Change Feed and the governed reads behind it (#126, ADR-0009, canonical consumption DR §2
 A1–A7, §3), one function per operation.
 
-What a reader may rely on: every committed change appears in the feed, the changes of one
-Document in commit order, within a bounded delay. A position is an opaque string. The state read
-may be newer than the event that led to it, and a reader may see one change more than once.
+What a reader may rely on: every committed change appears in the feed within a bounded delay.
+The events of one Document may arrive in any order, so each one means "re-read the current
+state". A position is an opaque string. The state read may be newer than the event that led to
+it, and a reader may see one change more than once.
 On PostgreSQL each event is written in the transaction of its fact and the feed is read in
 (transaction id, sequence) order below the snapshot xmin, which ADR-0009 explains.
 
