@@ -3,7 +3,7 @@ holds back this database's snapshot xmin; (2) (xid, seq) order differs from comm
 Document when a writer took its xid before touching the Document."""
 import psycopg
 
-BASE = "postgresql://postgres:pw@localhost:55439/"
+BASE = "postgresql://postgres@localhost:55439/"
 admin = psycopg.connect(BASE + "postgres", autocommit=True)
 for name in ("a", "b"):
     admin.execute(f"CREATE DATABASE {name}")

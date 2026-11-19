@@ -138,7 +138,8 @@ Omits:
 ## 9. Reproduction
 
 Added after the review. [`check_findings.py`](check_findings.py) ran against PostgreSQL 17 in a
-container published on port 55439 and printed:
+container (`docker run -e POSTGRES_HOST_AUTH_METHOD=trust -p 55439:5432 postgres:17`) and
+printed:
 
 ```
 (1) open writer in database b has xid 741; database a sees xmin 741; committed feed rows readable: 0
@@ -153,4 +154,6 @@ both findings reproduced
    re-reads the state is right whichever event it handles last.
 
 What followed: ADR-0009 and `kp_admission.feed` no longer promise an order between the events of
-one Document, and the ADR's broker and sizing paragraphs were corrected.
+one Document, the ADR states the instance-wide reach of the xmin, and its broker and sizing
+paragraphs were corrected. The ADR claims less for a broker than §6 does: a relay that reads
+this feed stays below the xmin, so only a log-based relay would remove that tie (§2 row b).
