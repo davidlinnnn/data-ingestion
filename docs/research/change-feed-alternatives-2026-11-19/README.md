@@ -153,6 +153,22 @@ both findings reproduced
    same Document and committed earlier (§3.7). The state is the later commit's, so a reader that
    re-reads the state is right whichever event it handles last.
 
+For an instance shared with other databases, [`check_shared.py`](check_shared.py) ran against a
+container started with the timeout set for the whole instance (`docker run -e
+POSTGRES_HOST_AUTH_METHOD=trust -p 55439:5432 postgres:17 -c transaction_timeout=2s`) and printed:
+
+```
+instance setting: 2s
+while the other database's writer is open: 0
+after the instance timeout ended it: 1
+exempt role still open after 3 s, readable rows: 1 of 2
+after the exempt role ends: 2 of 2
+```
+
+3. Set for the instance, the timeout ends a writer in any database, and the feed reads again. A
+   role exempted from it, such as one that runs long migrations, holds the feed back for as long as
+   its transaction is open: a planned pause in which events are delayed, not lost.
+
 What followed: ADR-0009 and `kp_admission.feed` no longer promise an order between the events of
 one Document, the ADR states the instance-wide reach of the xmin, and its broker and sizing
 paragraphs were corrected. The ADR claims less for a broker than §6 does: a relay that reads
