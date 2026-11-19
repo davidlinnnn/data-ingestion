@@ -258,8 +258,9 @@ A batch in which no item is `declared` is created `finalized`.
 One request per file listed in the item's `uploads`, authenticated with the
 Source credential like every other call; there is no separate upload grant.
 `{path}` is the declared file path. `Content-Length` is required and must equal
-the declared `size`; `Content-Type` may carry the declared `media_type` (the
-platform detects the type itself). The body is the file's bytes in one request:
+the declared `size`; `Content-Type` may carry the declared `media_type`, and its
+value is not checked (the platform detects the type itself). The body is the
+file's bytes in one request:
 no multipart form, no chunked encoding, no resumption.
 
 The platform streams the body into storage, computing the SHA-256 and counting
