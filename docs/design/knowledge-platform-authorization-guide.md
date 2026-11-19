@@ -236,7 +236,7 @@ sequenceDiagram
 - **誰按下上傳不影響權限。** 交文件用的是 Source 憑證，不是使用者的身分。
 - **同一個 Resource 裡的文件，讀者必須相同。** 平台以 Resource 為單位判定，分不出 space 裡個別頁面的權限。讀者比較少的頁面要放進另一個 Resource，也就是另一個 key，並在授權來源為它設定讀者。
 - **key 不可以換一批讀者重用。** 平台上的文件一直綁在登記時的 key。Source 刪掉一個 space、之後用同一個 key 建新的 space，舊文件就會被新 space 的讀者讀到。刪除或改名 space 之前，先刪除或改綁平台上的文件，再刪除 Resource。
-- 上傳本身的細節在[檔案上傳](knowledge-platform-file-upload.md)，規則在 [admission 規格](knowledge-platform-admission-spec.md) §5、§6。
+- 上傳本身的細節在[文件交付指南](knowledge-platform-file-upload.md)，規則在 [admission 規格](knowledge-platform-admission-spec.md) §5、§6。
 
 ### 3.3 RAG：使用者透過 agent 應用問問題（Retrieval）
 
@@ -792,6 +792,6 @@ while True:
 - [授權設計](knowledge-platform-authorization.md)：決策、理由與 GAM 需求清單。
 - [ADR-0007](../adr/0007-derived-product-readers-within-input-intersection.md)、[ADR-0008](../adr/0008-resource-level-authorization-relations.md)、[ADR-0013](../adr/0013-resource-identified-by-source-key.md)、[ADR-0014](../adr/0014-removal-by-projection-cleanup.md)。
 - [admission 規格](knowledge-platform-admission-spec.md)：交文件的 API、`trace_id` 慣例。
-- [檔案上傳](knowledge-platform-file-upload.md)：上傳的流程與 Source 開發者指南。
+- [文件交付指南](knowledge-platform-file-upload.md)：上傳的流程與 Source 開發者指南。
 - [authz API review](../research/knowledge-platform-authz-api-review-2026-11-14.md)：獨立 review 與它引用的官方文件。
 - [授權範圍的外部做法](../research/knowledge-platform-application-scope-csp-practices-2026-11-14.md)：agent 應用可讀範圍的調查。
