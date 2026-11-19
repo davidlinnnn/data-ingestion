@@ -17,7 +17,12 @@ from tests.admission.support import queue, request, revision, runs
 
 pytestmark = pytest.mark.docker
 
-ERROR = {"domain": "kp-canonicalization", "reason": "PASSWORD_REQUIRED", "retryable": False}
+ERROR = {
+    "domain": "kp-canonicalization",
+    "reason": "PASSWORD_REQUIRED",
+    "retryable": False,
+    "metadata": {"cause": "source", "category": "source"},
+}
 
 
 @workflow.defn(name="paper-pdf")
@@ -39,25 +44,31 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
     }
     for name in ("terminated", "running"):  # on a queue that no worker polls
         ids[name] = (await request(conn, *await revision(conn), adopted_version="paper-pdf@9"))[0]
-    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 4
+    # A platform refresh that fails leaves its Source Revision's outcome alone (spec §3).
+    ids["refresh"] = (
+        await request(conn, *await revision(conn), trace_id="failed", initiator="platform")
+    )[0]
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 5
     async with Worker(
         temporal, task_queue=queue("paper-pdf@1"), workflows=[CannedWorkflow],
         workflow_runner=UnsandboxedWorkflowRunner(),
     ):  # fmt: skip
-        for name in ("complete", "failed"):
+        for name in ("complete", "failed", "refresh"):
             await temporal.get_workflow_handle(ids[name]).result()
     await temporal.get_workflow_handle(ids["terminated"]).terminate()
 
-    assert await reconcile(conn, temporal) == Counter(recorded=3, running=1)
+    assert await reconcile(conn, temporal) == Counter(recorded=4, running=1)
 
     cursor = await conn.execute(
-        "SELECT request_id, state, terminal_at IS NOT NULL, error FROM request"
+        "SELECT request_id, state, terminal_at IS NOT NULL, error, outcome"
+        " FROM request JOIN source_revision USING (source_revision_id)"
     )
     by_id = {row[0]: row[1:] for row in await cursor.fetchall()}
-    assert by_id[ids["complete"]] == ("succeeded", True, None)
-    assert by_id[ids["failed"]] == ("failed", True, ERROR)
-    state, ended, error = by_id[ids["terminated"]]
-    assert (state, ended) == ("failed", True)
+    assert by_id[ids["complete"]] == ("succeeded", True, None, "pending")  # accepted is #251's
+    assert by_id[ids["failed"]] == ("failed", True, ERROR, "rejected")
+    assert by_id[ids["refresh"]] == ("failed", True, ERROR, "pending")
+    state, ended, error, outcome = by_id[ids["terminated"]]
+    assert (state, ended, outcome) == ("failed", True, "failed")
     assert {key: error[key] for key in ("domain", "reason", "retryable", "metadata")} == {
         "domain": "admission.knowledge-platform",
         "reason": "WORKFLOW_ENDED_WITHOUT_RESULT",
@@ -65,7 +76,7 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
         "metadata": {"status": "TERMINATED"},
     }
     assert error["occurred_at"].endswith("Z")
-    assert by_id[ids["running"]] == ("queued", False, None)
+    assert by_id[ids["running"]] == ("queued", False, None, "pending")
     assert await reconcile(conn, temporal) == Counter(running=1)
 
 
@@ -73,6 +84,11 @@ async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(con
     request_id, _ = await request(conn, *await revision(conn))
     start = temporal_start(temporal, queue)
     assert await dispatch_due(conn, start) == 1
+    await conn.execute(  # a report of the run about to be lost
+        "UPDATE request SET last_report = '{\"seq\": 1}', reported_at = now()"
+        " WHERE request_id = %s",
+        (request_id,),
+    )
     await temporal.workflow_service.delete_workflow_execution(
         DeleteWorkflowExecutionRequest(
             namespace=temporal.namespace,
@@ -90,10 +106,13 @@ async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(con
     assert await reconcile(conn, temporal) == Counter(redispatched=1)
 
     cursor = await conn.execute(
-        "SELECT dispatched_at, redispatch_reason FROM outbox WHERE request_id = %s", (request_id,)
+        "SELECT dispatched_at, redispatch_reason, attempt_id, last_report, reported_at"
+        " FROM outbox JOIN request USING (request_id) WHERE request_id = %s",
+        (request_id,),
     )
-    dispatched_at, reason = await cursor.fetchone()
+    dispatched_at, reason, *attempt = await cursor.fetchone()
     assert dispatched_at is None
+    assert attempt == [None, None, None]  # the lost run's reports no longer count
     assert "not found" in reason
     assert await dispatch_due(conn, start) == 1
     assert await runs(temporal, request_id) == 1

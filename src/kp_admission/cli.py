@@ -24,7 +24,7 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, batches, feed, uploads
+from kp_admission import adoption, batches, feed, reports, uploads
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -40,6 +40,7 @@ OBSERVE_S = 15.0
 
 log = logging.getLogger(__name__)
 SOURCES = pydantic.TypeAdapter(dict[str, batches.SourceSettings])
+PIPELINES = pydantic.TypeAdapter(dict[str, reports.Pipeline])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -57,9 +58,15 @@ def main(argv: list[str] | None = None) -> int:
     credential_id is distinct and every Source credential names the deployment's one tenant (Q7).
     KP_SOURCES holds each Source's settings (admission spec §2), as a JSON object from source_id
     to `{"ordering": "source_version" | "arrival", "default_resource_id": <its own key>}`; a
-    Source not in it orders by source_version and has no default. The custody bucket is
-    KP_S3_ENDPOINT and KP_S3_BUCKET with the AWS_* credentials, as for the processing workers; the
-    credentials need s3:ListBucket, without which S3 answers a missing object with 403.
+    Source not in it orders by source_version and has no default. KP_PIPELINES registers the
+    status reporters (#97, admission spec §7.3), as a JSON object from the SHA-256 hex digest of
+    each reporter's credential to `{"pipeline_id", "track", "stages", "start_deadline_s",
+    "update_interval_s"}`; the credentials of one pipeline_id, several while one is rotated, carry
+    the same registration, and one pipeline at most has the track `canonical`, canonical
+    processing's. Without it every status report is 401 and no attempt is progress_stalled. The
+    custody bucket is KP_S3_ENDPOINT and KP_S3_BUCKET with the AWS_* credentials, as for the
+    processing workers; the credentials need s3:ListBucket, without which S3 answers a missing
+    object with 403.
     KP_MAX_FILE_SIZE is the maximum file size in bytes (default 50 MB); with KP_PAUSE_BACKLOG,
     declarations are refused while that many normal-priority process requests are queued.
     KP_ADMISSION_PUBLIC_URL is the https origin Sources call through the ingress, such as
@@ -142,6 +149,20 @@ def main(argv: list[str] | None = None) -> int:
         if len(set(ids)) < len(ids) or len(tenants) > 1:
             print("KP_CREDENTIALS needs distinct credential_ids and one tenant_id", file=sys.stderr)
             return 2
+        try:
+            pipelines = PIPELINES.validate_json(os.environ.get("KP_PIPELINES", "{}"))
+        except pydantic.ValidationError:
+            pipelines = None
+        # Several credentials may name one pipeline, to rotate them, with one registration.
+        by_id = {p.pipeline_id: p for p in (pipelines or {}).values()}
+        tracks = [p.track for p in by_id.values()]
+        if (
+            pipelines is None
+            or any(by_id[p.pipeline_id] != p for p in pipelines.values())
+            or tracks.count("canonical") > 1
+        ):
+            print("KP_PIPELINES is not valid", file=sys.stderr)
+            return 2
         port = os.environ.get("KP_ADMISSION_API_PORT", "8080")
         if not port.isdecimal():
             print("KP_ADMISSION_API_PORT must be a port number", file=sys.stderr)
@@ -178,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
         log_json_lines(RequestLog())
         if args.metrics_port is not None:
             prometheus_client.start_http_server(args.metrics_port)
-        return asyncio.run(run_api(dsn, peps, credentials, intake, int(port)))
+        return asyncio.run(run_api(dsn, peps, credentials, intake, int(port), pipelines))
     log_json_lines()
     if args.role == "feed-retention":
         return asyncio.run(run_feed_retention(dsn))
@@ -205,13 +226,14 @@ async def run_api(
     credentials: dict[str, Credential],
     intake: batches.Intake,
     port: int,
+    pipelines: dict[str, reports.Pipeline],
 ) -> int:
     pool = AsyncConnectionPool(
         dsn, max_size=POOL_SIZE, kwargs={"autocommit": True}, timeout=POOL_WAIT_S, open=False
     )
     async with pool:
         config = uvicorn.Config(
-            app(AllowAll(pool), peps, credentials, pool, intake),
+            app(AllowAll(pool), peps, credentials, pool, intake, pipelines),
             host="0.0.0.0",
             port=port,
             log_config=None,

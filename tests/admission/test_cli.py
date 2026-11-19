@@ -182,6 +182,13 @@ async def test_the_api_in_a_pilot_serves_decisions_to_registered_peps_and_stops_
 
 
 SOURCE = {"credential_id": "c1", "tenant_id": "t1", "source_id": "km", "scopes": ["submit"]}
+PIPELINE = {
+    "pipeline_id": "kp-canonicalization",
+    "track": "canonical",
+    "stages": ["prepare", "parse", "enrich", "finalize"],
+    "start_deadline_s": 1800,
+    "update_interval_s": 1800,
+}
 
 
 @pytest.mark.parametrize(
@@ -202,6 +209,11 @@ SOURCE = {"credential_id": "c1", "tenant_id": "t1", "source_id": "km", "scopes":
             "KP_CREDENTIALS",
             json.dumps({"d1": SOURCE, "d2": SOURCE | {"credential_id": "c2", "tenant_id": "t2"}}),
         ),
+        ("KP_PIPELINES", "not json"),
+        ("KP_PIPELINES", '{"d1": {"pipeline_id": "kp-canonicalization", "track": "canonical"}}'),
+        # Two credentials of one pipeline rotate; they must not disagree on its registration.
+        ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE | {"stages": ["prepare"]}})),
+        ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE | {"pipeline_id": "other"}})),
         ("KP_ADMISSION_API_PORT", "http"),
         ("KP_SOURCES", '{"km": {"ordering": "newest"}}'),
         ("KP_MAX_FILE_SIZE", "50MB"),

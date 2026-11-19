@@ -1,5 +1,5 @@
 """The batch API (#96, admission spec §5.1, §5.3, §5.4, §6, §11): the admission rules prototype's
-scenarios 1, 2, 5–12 and 14 as acceptance tests, over the platform API with a real database, the
+scenarios 1–3, 5–12 and 14 as acceptance tests, over the platform API with a real database, the
 pilot's allow-all provider and the object store's fake.
 
 The prototype predates the current spec, which wins where they differ: a file uploaded with the
@@ -20,6 +20,7 @@ from kp_admission import adoption
 from kp_admission.api import SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake, SourceSettings, expire
+from kp_admission.requests import record_outcome
 from kp_admission.storage import FakeObjectStore, source_key
 from tests.admission.authz_fake import FakeAuthorizer
 from tests.admission.support import request, revision
@@ -145,14 +146,20 @@ async def submit(client: httpx.AsyncClient, store, items: list[dict], **headers:
 
 
 async def processed(conn, request_id: str, outcome: str) -> None:
-    """Canonical processing's outcome (#97): accepted, rejected (content) or failed (platform)."""
-    state = "succeeded" if outcome == "accepted" else "failed"
-    await conn.execute("UPDATE request SET state = %s WHERE request_id = %s", (state, request_id))
-    await conn.execute(
-        "UPDATE source_revision SET outcome = %s WHERE source_revision_id ="
-        " (SELECT source_revision_id FROM request WHERE request_id = %s)",
-        (outcome, request_id),
-    )
+    """Canonical processing's outcome: rejected (content) or failed (platform) as status reports
+    and the reconciler record it (#97), accepted as #251 will."""
+    if outcome == "accepted":
+        await record_outcome(conn, request_id, "succeeded", None, None)
+        await conn.execute(
+            "UPDATE source_revision SET outcome = 'accepted' WHERE source_revision_id ="
+            " (SELECT source_revision_id FROM request WHERE request_id = %s)",
+            (request_id,),
+        )
+        return
+    cause = "source" if outcome == "rejected" else "platform"
+    error = {"domain": "kp-canonicalization", "reason": "R", "message": "m", "retryable": False,
+             "metadata": {"cause": cause}}  # fmt: skip
+    assert await record_outcome(conn, request_id, "failed", error, None)
 
 
 def of(body: dict, document_id: str) -> dict:
@@ -249,6 +256,19 @@ async def test_2_a_repeated_declaration_or_finalization_returns_the_first_answer
     assert of(later.json(), "A")["status"] == "unchanged"
     batches = await (await conn.execute("SELECT count(*) FROM batch")).fetchone()
     assert batches == (2,)
+
+
+async def test_3_a_request_is_queued_right_after_202_before_any_workflow(platform, api, store):
+    async with api() as hr:
+        _, finalized = await submit(hr, store, [A])
+        request_id = of(finalized.json(), "A")["request_id"]
+        queued = await hr.get(f"/v1/requests/{request_id}")
+        document = await hr.get("/v1/documents/A")
+
+    assert finalized.status_code == 202
+    assert (queued.status_code, queued.json()["state"]) == (200, "queued")
+    assert document.json()["readiness"] == "not_ready"  # nothing serves it yet
+    assert document.json()["latest"]["request_id"] == request_id
 
 
 async def test_5_a_rejected_revision_is_fixed_under_the_same_source_version(
