@@ -114,7 +114,7 @@ def start_request(bucket: str, start: dict, wait: bool = True) -> tuple[int, str
 
 async def reports(request_id: str) -> list[dict]:
     async with httpx.AsyncClient() as http:
-        return (await http.get(f"{ADMISSION}/v1/requests/{request_id}/status-reports")).json()
+        return (await http.get(f"{ADMISSION}/report/v1/requests/{request_id}/status-reports")).json()
 
 
 async def activity_history(client: Client, request_id: str) -> list[dict]:

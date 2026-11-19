@@ -250,13 +250,6 @@ class DocumentList(BaseModel):
     next_page_token: str = ""  # empty on the last page (AIP-158)
 
 
-class Position(BaseModel):
-    """The current attempt of a request and the seq of its last report taken (0 before any)."""
-
-    attempt_id: str
-    seq: int
-
-
 class CursorReport(BaseModel):
     cursor: str
 
@@ -681,42 +674,23 @@ def app(
         so a page may hold fewer entries, none even, with more to follow: read until
         next_page_token is empty. `projection` keeps the Documents whose serving lists it."""
         source = _source("submit")
-        size = min(page_size or PAGE_SIZE, PAGE_SIZE)
-        after = None
-        if page_token:
-            document_id, _, uid = page_token.partition("/")
-            if not (document_id and uid):
-                raise _invalid("page_token: not a token this list returned")
-            after = (document_id, uid)
         async with pool.connection() as conn:
-            page = await status.documents(
-                conn,
-                source.tenant_id,
-                source.source_id,
-                canonical,
-                after=after,
-                limit=size + 1,
-                resource_id=resource_id and resources.resource_id(source.source_id, resource_id),
-            )
-        more, page = len(page) > size, page[:size]
-        last = page[-1] if page else None
-        return DocumentList(
-            documents=[
-                DocumentEntry(
-                    document_id=d["document_id"],
-                    document_uid=d["document_uid"],
-                    latest={"source_version": d["latest"]["source_version"]},
-                    readiness=d["readiness"],
-                    metadata=d["metadata"],
+            try:
+                entries, token = await status.documents(
+                    conn,
+                    source.tenant_id,
+                    source.source_id,
+                    canonical,
+                    page_size=min(page_size or PAGE_SIZE, PAGE_SIZE),
+                    page_token=page_token,
+                    resource_id=resource_id
+                    and resources.resource_id(source.source_id, resource_id),
+                    readiness=readiness,
+                    projection=projection,
                 )
-                for d in page
-                if (readiness is None or d["readiness"] == readiness)
-                and (projection is None or any(s["projection"] == projection for s in d["serving"]))
-            ],
-            next_page_token=f"{last['document_id']}/{last['document_uid']}"
-            if more and last
-            else "",
-        )
+            except ValueError:
+                raise _invalid("page_token: not a token this list returned") from None
+        return DocumentList.model_validate({"documents": entries, "next_page_token": token})
 
     report = APIRouter(
         prefix="/report/v1",
@@ -724,14 +698,17 @@ def app(
         responses={
             "200": traced | {"description": "A repeat of the last report: nothing changed"},
             "4XX": error | {"description": "400, 401, 403 or 404"},
-            "409": traced | {"model": Position, "description": "Out of order: the position"},
+            "409": traced
+            | {"model": reports.Position, "description": "Out of order: the position"},
             "503": error | {"description": "ATTEMPT_NOT_RECORDED or UNAVAILABLE: retry"},
         },
     )
     pipeline_of = {p.pipeline_id: p for p in pipelines.values()}
 
     @report.post("/requests/{request_id}/status-reports", status_code=202)
-    async def report_status(request_id: str, body: reports.Report) -> Response:
+    async def report_status(
+        request_id: Annotated[str, Path(max_length=64)], body: reports.Report
+    ) -> Response:
         """Takes a status report of the request's current attempt (admission spec §7.3)."""
         pipeline = pipeline_of[_request.get()["pipeline"]]
         if pipeline.track != "canonical":
@@ -756,8 +733,7 @@ def app(
                     503, "UNAVAILABLE", "ATTEMPT_NOT_RECORDED", "The attempt is not recorded yet."
                 )
         assert taken.position
-        attempt_id, seq = taken.position
-        return JSONResponse(Position(attempt_id=attempt_id, seq=seq).model_dump(), 409)
+        return JSONResponse(taken.position.model_dump(), 409)
 
     read = APIRouter(
         prefix="/read/v1",

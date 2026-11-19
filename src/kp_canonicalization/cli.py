@@ -277,6 +277,8 @@ async def run_worker(
     store = S3ObjectStore.from_env()
     runtime = Runtime(profile=profile, build_id=build_id or "dev", custody_bucket=store.bucket)
     token = os.environ.get("KP_ADMISSION_TOKEN")
+    if queue == "orchestration" and not token:
+        log.warning("KP_ADMISSION_TOKEN is not set: status reports carry no credential")
     reporting = {"Authorization": f"Bearer {token}"} if token else {}
     async with (
         httpx.AsyncClient(timeout=10, headers=reporting) as http,

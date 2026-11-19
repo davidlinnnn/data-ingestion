@@ -12,7 +12,8 @@ from kp_admission.reports import Pipeline, details
 from kp_admission.resources import source_and_key
 
 Readiness = Literal["deleted", "withdrawn", "not_ready", "ready_stale", "ready"]
-RETENTION = timedelta(days=30)  # of a terminal request and a deleted Document (§11)
+# A platform failure's message can be an exception's text, which a Source does not see.
+PLATFORM_FAILURE = "Processing failed for a platform reason; the platform owner is alerted."
 
 _REQUEST = """
 SELECT r.request_id, r.kind, r.state, d.document_id, r.document_uid, r.source_revision_id,
@@ -34,7 +35,16 @@ async def request(
     if row is None:
         return None
     row["details"] = details(row.pop("last_report"))
+    row["error"] = _shown(row["error"])
     return {k: _json(v) for k, v in row.items()}
+
+
+def _shown(error: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The error block as a Source sees it: a failure whose cause is not the source carries
+    PLATFORM_FAILURE as its message."""
+    if error is None or (error.get("metadata") or {}).get("cause") == "source":
+        return error
+    return error | {"message": PLATFORM_FAILURE}
 
 
 # The latest Source Revision and its newest request that is not a platform refresh, which never
@@ -52,7 +62,7 @@ LEFT JOIN LATERAL (
     ORDER BY created_at DESC, request_id DESC LIMIT 1
 ) r ON true
 LEFT JOIN outbox o ON o.request_id = r.request_id
-WHERE d.tenant_id = %(tenant_id)s AND d.source_id = %(source_id)s AND {where}
+WHERE d.tenant_id = %(tenant_id)s AND d.source_id = %(source_id)s AND {tail}
 """
 
 _PROJECTIONS = "SELECT projections FROM source WHERE tenant_id = %s AND source_id = %s"
@@ -66,9 +76,9 @@ async def document(
     canonical: Pipeline | None,
 ) -> dict[str, Any] | None:
     """The Source's Document (§5.6): its current generation, else the one deleted last."""
-    where = "d.document_id = %(document_id)s ORDER BY d.deleted_at IS NOT NULL, d.deleted_at DESC"
+    tail = "d.document_id = %(document_id)s ORDER BY d.deleted_at IS NOT NULL, d.deleted_at DESC"
     params = {"tenant_id": tenant_id, "source_id": source_id, "document_id": document_id}
-    rows = await _rows(conn, where + " LIMIT 1", params)
+    rows = await _rows(conn, tail + " LIMIT 1", params)
     if not rows:
         return None
     return _view(rows[0], await _projections(conn, tenant_id, source_id), canonical)
@@ -80,35 +90,53 @@ async def documents(
     source_id: str,
     canonical: Pipeline | None,
     *,
-    after: tuple[str, str] | None,
-    limit: int,
+    page_size: int,
+    page_token: str | None = None,
     resource_id: str | None = None,
-) -> list[dict[str, Any]]:
-    """Up to `limit` of the Source's Documents, deleted ones within retention included, in
-    (document_id, document_uid) order after `after`, in Resource `resource_id` when given."""
-    where = "(d.deleted_at IS NULL OR d.deleted_at > %(retained)s)"
-    params: dict[str, Any] = {
-        "tenant_id": tenant_id,
-        "source_id": source_id,
-        "retained": datetime.now(UTC) - RETENTION,
-        "limit": limit,
-    }
+    readiness: str | None = None,
+    projection: str | None = None,
+) -> tuple[list[dict[str, Any]], str]:
+    """One page of the Source's Documents (§5.7), deleted ones within retention included, in
+    (document_id, document_uid) order, and the next page's token, empty on the last page. It
+    reads page_size Documents after page_token, in Resource `resource_id` (the full identifier)
+    when given, then keeps those of `readiness` and whose serving lists `projection`, so a page
+    may hold fewer. ValueError for a page_token this list did not return."""
+    tail = "(d.deleted_at IS NULL OR d.deleted_at > now() - interval '30 days')"
+    params: dict[str, Any] = {"tenant_id": tenant_id, "source_id": source_id}
     if resource_id is not None:
-        where += " AND d.resource_id = %(resource_id)s"
+        tail += " AND d.resource_id = %(resource_id)s"
         params["resource_id"] = resource_id
-    if after is not None:
-        where += " AND (d.document_id, d.document_uid) > (%(after_id)s, %(after_uid)s)"
-        params["after_id"], params["after_uid"] = after
+    if page_token:
+        document_id, _, uid = page_token.partition("/")  # a document_id holds no "/"
+        if not (document_id and uid):
+            raise ValueError(f"not a page token: {page_token!r}")
+        tail += " AND (d.document_id, d.document_uid) > (%(after_id)s, %(after_uid)s)"
+        params["after_id"], params["after_uid"] = document_id, uid
+    params["limit"] = page_size + 1
     rows = await _rows(
-        conn, where + " ORDER BY d.document_id, d.document_uid LIMIT %(limit)s", params
+        conn, tail + " ORDER BY d.document_id, d.document_uid LIMIT %(limit)s", params
     )
+    more, rows = len(rows) > page_size, rows[:page_size]
     required = await _projections(conn, tenant_id, source_id)
-    return [_view(row, required, canonical) for row in rows]
+    entries = []
+    for row in rows:
+        view = _view(row, required, canonical)
+        if readiness not in (None, view["readiness"]) or (
+            projection is not None and all(s["projection"] != projection for s in view["serving"])
+        ):
+            continue
+        entries.append(
+            {k: view[k] for k in ("document_id", "document_uid", "readiness", "metadata")}
+            | {"latest": {"source_version": view["latest"]["source_version"]}}
+        )
+    token = f"{rows[-1]['document_id']}/{rows[-1]['document_uid']}" if more else ""
+    return entries, token
 
 
-async def _rows(conn: AsyncConnection, where: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+async def _rows(conn: AsyncConnection, tail: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+    """The rows of _DOCUMENTS with `tail` after its own conditions: more, and the order."""
     cursor = conn.cursor(row_factory=dict_row)
-    return await (await cursor.execute(_DOCUMENTS.format(where=where), params)).fetchall()  # type: ignore[arg-type]
+    return await (await cursor.execute(_DOCUMENTS.format(tail=tail), params)).fetchall()  # type: ignore[arg-type]
 
 
 async def _projections(conn: AsyncConnection, tenant_id: str, source_id: str) -> list[str]:
@@ -146,7 +174,7 @@ def attention(row: Mapping[str, Any], canonical: Pipeline | None, now: datetime)
     if outcome == "failed" and not active:
         found.append(
             {"kind": "processing_failed", "action_owner": "platform", "track": "canonical",
-             "source_version": version, "message": error.get("message", ""),
+             "source_version": version, "message": PLATFORM_FAILURE,
              "since": _json(row["terminal_at"])}
         )  # fmt: skip
     if active and canonical:

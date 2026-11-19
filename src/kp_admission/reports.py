@@ -73,10 +73,17 @@ class Report(BaseModel, extra="forbid"):
         return self
 
 
+class Position(BaseModel):
+    """The current attempt of a request and the seq of its last report taken (0 before any)."""
+
+    attempt_id: str
+    seq: int
+
+
 @dataclass(frozen=True)
 class Taken:
     result: Result
-    position: tuple[str, int] | None = None  # the current attempt and its last seq, on a refusal
+    position: Position | None = None  # on a refusal
 
 
 _REQUEST = """
@@ -104,11 +111,11 @@ async def take(conn: AsyncConnection, pipeline: Pipeline, report: Report) -> Tak
     async with conn.transaction():
         row = await (await conn.execute(_REQUEST, (report.request_id,))).fetchone()
         if row is None:
-            return Taken("not_found")
+            return _logged(pipeline, report, Taken("not_found"))
         attempt_id, last = row
         if attempt_id is None:
             return _logged(pipeline, report, Taken("no_attempt"))
-        position = (attempt_id, last["seq"] if last else 0)
+        position = Position(attempt_id=attempt_id, seq=last["seq"] if last else 0)
         body = report.model_dump(mode="json")
         if report.attempt_id != attempt_id:
             return _logged(pipeline, report, Taken("not_current", position))
@@ -138,7 +145,8 @@ def _logged(pipeline: Pipeline, report: Report, taken: Taken) -> Taken:
     if report.error:
         fields["reason"] = report.error.reason  # never the message: it can be exception text
     if taken.position:
-        fields["current_attempt_id"], fields["current_seq"] = taken.position
+        fields["current_attempt_id"] = taken.position.attempt_id
+        fields["current_seq"] = taken.position.seq
     level = logging.INFO if taken.result in ("recorded", "repeated") else logging.WARNING
     log.log(level, "status report %s", taken.result, extra={"correlation": fields})
     return taken

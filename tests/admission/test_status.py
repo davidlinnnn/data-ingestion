@@ -288,6 +288,7 @@ async def test_a_platform_failure_without_an_active_request_is_processing_failed
     await fail(api, first, PLATFORM)
     async with api() as source:
         failed = (await source.get("/v1/documents/A")).json()
+        shown_error = (await source.get(f"/v1/requests/{first}")).json()["error"]
 
         retry = await dispatched(conn, uid, srv, retry_of=first)
         retrying = (await source.get("/v1/documents/A")).json()
@@ -296,9 +297,11 @@ async def test_a_platform_failure_without_an_active_request_is_processing_failed
 
     assert failed["attention"] == [
         {"kind": "processing_failed", "action_owner": "platform", "track": "canonical",
-         "source_version": "1", "message": "storage unavailable",
+         "source_version": "1", "message": status.PLATFORM_FAILURE,
          "since": "2026-11-19T08:01:00Z"}
     ]  # fmt: skip
+    # The message of a platform failure can be exception text: the Source sees a fixed one.
+    assert shown_error == PLATFORM | {"message": status.PLATFORM_FAILURE}
     assert retrying["attention"] == []
     # The retry succeeded: the revision waits for acceptance (#251), and is no longer failed.
     assert await state_of(conn, retry) == ("succeeded", "1", "pending")
