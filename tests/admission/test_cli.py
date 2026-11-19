@@ -332,7 +332,10 @@ async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn,
         "INSERT INTO batch (batch_id, tenant_id, source_id, state, expires_at)"
         " VALUES ('bat_1', 't1', 'km', 'open', now() - interval '1 minute')"
     )
-    assert run("expire") == (0, {"expired": 1, "cleaned": 0})  # it expired under an hour ago
+    assert run("expire") == (
+        0,
+        {"expired": 1, "cleaned": 0, "left": 0},
+    )  # it expired under an hour ago
 
 
 @pytest.mark.docker

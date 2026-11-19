@@ -74,6 +74,7 @@ RETRY_AFTER_S = 1
 # RequestLog writes it onto each line as it is.
 _request: ContextVar[dict[str, str]] = ContextVar("request")
 # W3C Trace Context §3.2: version 00 has exactly these fields; a later one may append more (§3.2.4).
+_FILE_PATH = re.compile(r"^(/v1/batches/[^/]+/items/[^/]+/files/).+")
 _TRACEPARENT = re.compile(
     r"(?!ff)([0-9a-f]{2})-(?!0{32})([0-9a-f]{32})-(?!0{16})[0-9a-f]{16}-[0-9a-f]{2}(-.*)?"
 )
@@ -262,10 +263,17 @@ def trace_id() -> str:
 
 class RequestLog(logging.Filter):
     """Adds the trace_id of the request being served, and its x_request_id and pep when known, to
-    each record logged while it is served, as the `correlation` extra JsonFormatter writes."""
+    each record logged while it is served, as the `correlation` extra JsonFormatter writes; and
+    leaves the file path out of an upload's access line."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.__dict__["correlation"] = _request.get({}) | getattr(record, "correlation", {})
+        # uvicorn's access line is (client, method, path, version, status); a file path stays out.
+        if record.name == "uvicorn.access" and isinstance(record.args, tuple):
+            record.args = tuple(
+                _FILE_PATH.sub(r"\1…", a) if i == 2 and isinstance(a, str) else a
+                for i, a in enumerate(record.args)
+            )
         return True
 
 

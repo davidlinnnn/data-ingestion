@@ -18,8 +18,14 @@ from kp_admission import adoption, storage
 from kp_admission.api import SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake, expire
-from kp_admission.storage import FakeObjectStore, ObjectStore, S3ObjectStore, source_key
-from kp_admission.uploads import PART, clean
+from kp_admission.storage import (
+    FakeObjectStore,
+    ObjectStore,
+    S3ObjectStore,
+    StorageUnavailable,
+    source_key,
+)
+from kp_admission.uploads import PART, clean, matches
 
 pytestmark = pytest.mark.docker
 
@@ -99,7 +105,7 @@ async def put(client: httpx.AsyncClient, url: str, data: bytes) -> httpx.Respons
     return await client.put(url, content=chunks(data), headers=headers)
 
 
-async def test_an_uploaded_file_is_admitted_at_its_custody_key(hr, store):
+async def test_an_uploaded_file_is_staged_at_its_custody_key_and_admitted_there(hr, store):
     batch = await declare(hr, item("A", PDF))
     url = batch["items"][0]["uploads"][0]["url"]
 
@@ -242,7 +248,7 @@ async def test_the_cleanup_removes_what_no_source_revision_holds_and_repeats_as_
     repeated_key, expired_key = key_of(repeating, 0, v2), key_of(expiring, 0, PDF)
     held = {key_of(first, 0, PDF), a2_key}
 
-    assert await clean(conn, store) == 0  # every batch ended under an hour ago
+    assert await clean(conn, store) == (0, 0)  # every batch ended under an hour ago
     assert {b_key, repeated_key, expired_key} <= store.keys
 
     await conn.execute(
@@ -250,8 +256,8 @@ async def test_the_cleanup_removes_what_no_source_revision_holds_and_repeats_as_
         " expires_at = expires_at - interval '25 hours'"
     )
     assert await expire(conn) == 1
-    assert await clean(conn, store) == 4
-    assert await clean(conn, store) == 0
+    assert await clean(conn, store) == (4, 0)
+    assert await clean(conn, store) == (0, 0)
 
     assert store.keys == held
     assert {k: store.content[k] for k in held} == {key_of(first, 0, PDF): PDF, a2_key: v2}
@@ -318,3 +324,62 @@ async def test_control_a_storage_call_on_the_event_loop_delays_them(pool, conn, 
     gaps = await health_while_uploading(pool, conn, S3ObjectStore(SlowS3(), "kp-custody"))
 
     assert max(gaps) >= SlowS3.PART_S
+
+
+class Refusing(FakeObjectStore):
+    """Storage that refuses to delete the keys in `refused`."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.refused: set[str] = set()
+
+    async def delete(self, key: str) -> None:
+        if key in self.refused:
+            raise StorageUnavailable(key)
+        await super().delete(key)
+
+
+async def test_a_batch_storage_fails_for_is_left_to_the_next_run_and_the_others_are_cleaned(
+    pool, conn
+):
+    store = Refusing()
+    application = app(AllowAll(pool), {}, CREDENTIALS, pool, Intake(store))
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(application),
+        base_url="http://api",
+        headers={"authorization": "Bearer hr-km"},
+    ) as client:
+        assert (await client.put("/v1/resources/hr-all")).status_code == 201
+        await adoption.adopt(conn, tenant_id="t1", media_type="application/pdf", version="p@1")
+        batches = [await declare(client, item(d, PDF)) for d in ("A", "B")]
+        for batch in batches:
+            await stage(client, batch, 0, PDF)
+    await conn.execute("UPDATE batch SET expires_at = expires_at - interval '26 hours'")
+    stuck, cleaned = (key_of(batch, 0, PDF) for batch in batches)
+    store.refused.add(stuck)
+
+    assert await clean(conn, store) == (1, 1)
+    assert store.keys == {stuck}
+    store.refused.clear()
+    assert await clean(conn, store) == (1, 0)
+    assert store.keys == set()
+    assert cleaned not in store.keys
+
+
+@pytest.mark.parametrize(
+    ("declared", "head", "fits"),
+    [
+        ("application/pdf", b"%PDF-1.7", True),
+        ("application/pdf", b"\x00" * 500 + b"%PDF-1.4", True),  # junk before the header
+        ("application/pdf", b"\x89PNG\r\n\x1a\n", False),
+        ("image/png", b"%PDF-1.7", False),
+        ("text/plain", b"%PDF-1.7", False),
+        ("text/markdown", b"# Notes\nA PDF starts with %PDF-.", True),
+        ("text/markdown", b"# Notes", True),
+        ("image/webp", b"RIFF\x00\x00\x00\x00WEBPVP8 ", True),
+        ("image/webp", b"XXXX\x00\x00\x00\x00WEBPVP8 ", False),
+        ("IMAGE/PNG", b"\x89PNG\r\n\x1a\n", True),
+    ],
+)
+def test_a_detected_type_must_be_declared_and_an_undetectable_one_stands(declared, head, fits):
+    assert matches(declared, head) is fits

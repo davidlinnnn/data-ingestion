@@ -27,11 +27,20 @@ _READ = 2**20
 
 
 class PlatformError(Exception):
-    """A call the platform refused, or one that never got an answer (status 0)."""
+    """A call the platform refused, or one that never got an answer (status 0). `items` lists
+    every item's outcome when every item is rejected (ALL_ITEMS_REJECTED, §5.1 and §5.3)."""
 
-    def __init__(self, status: int, reason: str, message: str, trace_id: str | None) -> None:
+    def __init__(
+        self,
+        status: int,
+        reason: str,
+        message: str,
+        trace_id: str | None,
+        items: list[dict[str, Any]] | None = None,
+    ) -> None:
         super().__init__(f"{status} {reason}: {message} (trace_id {trace_id})")
         self.status, self.reason, self.message, self.trace_id = status, reason, message, trace_id
+        self.items = items
 
 
 class Client:
@@ -59,42 +68,35 @@ class Client:
         """Submits `items`, each as admission spec §5.1 declares one, except that a file gives the
         `local` path of its bytes instead of `sha256` and `size`. Returns the finalized batch
         (§5.3), with each item's outcome."""
-        local = {
-            (index, f["path"]): Path(f["local"])
-            for index, item in enumerate(items)
-            for f in item["files"]
-        }
-        declared = [
-            dict(item)
-            | {
-                "files": [
-                    {k: v for k, v in f.items() if k != "local"}
-                    | _measure(local[(index, f["path"])])
-                    for f in item["files"]
-                ]
-            }
+        files: dict[tuple[int, str], tuple[Path, dict[str, Any]]] = {}
+        for index, item in enumerate(items):
+            for f in item["files"]:
+                local = Path(f["local"])
+                declared = {k: v for k, v in f.items() if k != "local"} | _measure(local)
+                files[(index, f["path"])] = (local, declared)
+        declaration = [
+            dict(item) | {"files": [files[(index, f["path"])][1] for f in item["files"]]}
             for index, item in enumerate(items)
         ]
         batch = self._call(
             "POST",
             "/v1/batches",
-            json={"items": declared},
+            json={"items": declaration},
             headers={"idempotency-key": uuid.uuid4().hex},
         ).json()
         for entry in batch["items"]:
             for upload in entry.get("uploads", []):
-                self._upload(upload, local[(entry["index"], upload["path"])], declared, entry)
+                self._upload(upload, *files[(entry["index"], upload["path"])])
         if batch["state"] != "open":  # nothing to upload: finalized at declaration
             return batch
         return self._call("POST", f"/v1/batches/{batch['batch_id']}/finalize").json()
 
-    def _upload(self, upload: dict, path: Path, declared: list[dict], entry: dict) -> None:
+    def _upload(self, upload: dict, path: Path, file: dict[str, Any]) -> None:
         url = httpx.URL(upload["url"])
         base = self.http.base_url
         if (url.scheme, url.host, url.port) != (base.scheme, base.host, base.port):
             # The credential goes to the origin it was given for only (§5.1).
             raise PlatformError(0, "UPLOAD_URL", "The upload URL is on another origin.", None)
-        file = next(f for f in declared[entry["index"]]["files"] if f["path"] == upload["path"])
         self._call(
             upload["method"],
             upload["url"],
@@ -139,15 +141,17 @@ class Client:
 
 
 def _refused(response: httpx.Response, trace_id: str | None) -> PlatformError:
+    items = None
     try:
-        error = response.json()["error"]
+        body = response.json()
+        error, items = body["error"], body.get("items")
         reason = (error.get("details") or [{}])[0].get("reason", error["status"])
         message = error["message"]
-    except (ValueError, KeyError, TypeError, IndexError):
+    except (ValueError, KeyError, TypeError, IndexError, AttributeError):
         reason, message = "UNKNOWN", response.reason_phrase
     # The URL names a file path, which stays out of the log.
     log.warning("refused: %s %s (trace_id %s)", response.status_code, reason, trace_id)
-    return PlatformError(response.status_code, reason, message, trace_id)
+    return PlatformError(response.status_code, reason, message, trace_id, items)
 
 
 def _measure(path: Path) -> dict[str, Any]:

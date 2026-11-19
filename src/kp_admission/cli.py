@@ -83,9 +83,10 @@ def main(argv: list[str] | None = None) -> int:
     `kp-admission expire`: one batch expiry and upload cleanup run, the hourly CronJob: every
     batch open 24 hours is expired (§11), then the uploads not admitted of every batch that ended
     an hour before are deleted and its incomplete uploads aborted (§6.2,
-    kp_admission.uploads.clean). It prints how many of each, as JSON, and fails when storage
-    does not answer. It reads the custody bucket as the api does; its credentials need
-    s3:DeleteObject, s3:AbortMultipartUpload and s3:ListBucketMultipartUploads.
+    kp_admission.uploads.clean). It prints how many batches it expired, cleaned and left to the
+    next run because storage failed, as JSON, and fails (exit 1) when it left any. It reads the
+    custody bucket as the api does; its credentials need s3:DeleteObject,
+    s3:AbortMultipartUpload and s3:ListBucketMultipartUploads.
 
     `kp-admission adopt --tenant T MEDIA_TYPE VERSION` and `kp-admission cancel-adoption --tenant
     T MEDIA_TYPE VERSION`: the Processing Profile owner's adoption commands (§3). Adopting
@@ -269,9 +270,9 @@ async def run_reconciler(dsn: str) -> int:
 async def run_expiry(dsn: str) -> int:
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
         expired = await batches.expire(conn)
-        cleaned = await uploads.clean(conn, S3ObjectStore.from_env())
-    print(json.dumps({"expired": expired, "cleaned": cleaned}))
-    return 0
+        cleaned, left = await uploads.clean(conn, S3ObjectStore.from_env())
+    print(json.dumps({"expired": expired, "cleaned": cleaned, "left": left}))
+    return 1 if left else 0
 
 
 async def run_adoption(

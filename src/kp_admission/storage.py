@@ -74,16 +74,16 @@ class FakeObjectStore:
         self.down = False
         self._uploads: dict[str, tuple[str, dict[int, bytes]]] = {}
 
-    def _answer(self, key: str) -> None:
+    def _raise_if_down(self, key: str) -> None:
         if self.down:
             raise StorageUnavailable(key)
 
     async def head(self, key: str) -> bool:
-        self._answer(key)
+        self._raise_if_down(key)
         return key in self.keys
 
     async def create_upload(self, key: str) -> str:
-        self._answer(key)
+        self._raise_if_down(key)
         upload_id = uuid.uuid4().hex
         self._uploads[upload_id] = (key, {})
         return upload_id
@@ -91,7 +91,7 @@ class FakeObjectStore:
     async def upload_part(
         self, key: str, upload_id: str, number: int, data: bytes | bytearray
     ) -> str:
-        self._answer(key)
+        self._raise_if_down(key)
         if upload_id not in self._uploads:
             raise StorageUnavailable(key)
         self._uploads[upload_id][1][number] = bytes(data)
@@ -99,7 +99,7 @@ class FakeObjectStore:
         return str(number)
 
     async def complete_upload(self, key: str, upload_id: str, etags: list[str]) -> None:
-        self._answer(key)
+        self._raise_if_down(key)
         if upload_id not in self._uploads:
             raise StorageUnavailable(key)
         _, parts = self._uploads.pop(upload_id)
@@ -107,15 +107,15 @@ class FakeObjectStore:
         self.keys.add(key)
 
     async def abort_upload(self, key: str, upload_id: str) -> None:
-        self._answer(key)
+        self._raise_if_down(key)
         self._uploads.pop(upload_id, None)
 
     async def incomplete_uploads(self, key: str) -> list[str]:
-        self._answer(key)
+        self._raise_if_down(key)
         return [upload_id for upload_id, (k, _) in self._uploads.items() if k == key]
 
     async def delete(self, key: str) -> None:
-        self._answer(key)
+        self._raise_if_down(key)
         self.keys.discard(key)
         self.content.pop(key, None)
 
@@ -181,8 +181,7 @@ class S3ObjectStore:
         await self._call(self.client.abort_multipart_upload, key, UploadId=upload_id)
 
     async def incomplete_uploads(self, key: str) -> list[str]:
-        # The full key as the prefix: AIStor lists incomplete uploads by full object name only
-        # (document submission guide §6.7). One key has at most a few, never a second page.
+        # By full key: AIStor lists incomplete uploads by object name only (guide §6.7).
         try:
             answer = await asyncio.to_thread(
                 self.client.list_multipart_uploads, Bucket=self.bucket, Prefix=key

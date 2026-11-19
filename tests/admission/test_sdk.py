@@ -181,3 +181,34 @@ def test_an_error_carries_the_trace_id_and_a_429_is_retried_after_its_delay():
     assert (refused.value.status, refused.value.reason) == (503, "UNAVAILABLE")
     assert refused.value.trace_id == "b" * 32
     assert "b" * 32 in str(refused.value)
+
+
+def test_a_batch_whose_every_item_is_rejected_raises_with_each_items_outcome():
+    rejected = [
+        {
+            "index": 0,
+            "document_id": "d",
+            "status": "rejected",
+            "error": {"reason": "UNSUPPORTED_FORMAT", "message": "…"},
+        }
+    ]
+    body = {
+        "error": {
+            "code": 422,
+            "status": "FAILED_PRECONDITION",
+            "message": "Every item is rejected.",
+            "details": [{"reason": "ALL_ITEMS_REJECTED"}],
+        },
+        "trace_id": "c" * 32,
+        "items": rejected,
+    }
+    client = Client(
+        "https://kp.example",
+        "hr-km",
+        transport=httpx.MockTransport(lambda _: httpx.Response(422, json=body)),
+    )
+
+    with pytest.raises(PlatformError) as refused:
+        client.submit([{"document_id": "d", "files": []}])
+
+    assert (refused.value.reason, refused.value.items) == ("ALL_ITEMS_REJECTED", rejected)

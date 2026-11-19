@@ -10,7 +10,8 @@ finalized or expires during the transfer is refused and its parts discarded.
 
 import contextlib
 import hashlib
-from collections.abc import AsyncIterator
+import logging
+from collections.abc import AsyncIterator, Callable
 from datetime import timedelta
 from typing import Any
 
@@ -23,36 +24,28 @@ from kp_admission.storage import ObjectStore, StorageUnavailable, source_key
 
 PART = 8 * 2**20  # every part but the last
 
-# Byte signatures of the media types the platform detects: (offset, bytes). A PDF header may sit
-# anywhere in the first 1024 bytes (ISO 32000-2 Annex H). Adopting a main-file format without a
-# signature here leaves its route to the Source's declaration.
-_SIGNATURES: dict[str, list[tuple[int, bytes]]] = {
-    "image/png": [(0, b"\x89PNG\r\n\x1a\n")],
-    "image/jpeg": [(0, b"\xff\xd8\xff")],
-    "image/gif": [(0, b"GIF87a"), (0, b"GIF89a")],
-    "image/webp": [(8, b"WEBP")],
-    "image/tiff": [(0, b"II*\x00"), (0, b"MM\x00*")],
+log = logging.getLogger(__name__)
+
+# The media types the platform detects (§5.2), by their leading bytes.
+_SIGNATURES: dict[str, Callable[[bytes], bool]] = {
+    "application/pdf": lambda head: head.startswith(b"%PDF-"),
+    "image/png": lambda head: head.startswith(b"\x89PNG\r\n\x1a\n"),
+    "image/jpeg": lambda head: head.startswith(b"\xff\xd8\xff"),
+    "image/gif": lambda head: head.startswith((b"GIF87a", b"GIF89a")),
+    "image/webp": lambda head: head.startswith(b"RIFF") and head[8:12] == b"WEBP",
+    "image/tiff": lambda head: head.startswith((b"II*\x00", b"MM\x00*")),
 }
 _HEAD = 1024
 
 
-def detected(head: bytes) -> str | None:
-    """The media type the first bytes of a file show, None when they show none of the table."""
-    if b"%PDF-" in head[:_HEAD]:
-        return "application/pdf"
-    for media_type, signatures in _SIGNATURES.items():
-        if any(head[offset : offset + len(sig)] == sig for offset, sig in signatures):
-            return media_type
-    return None
-
-
-def _matches(declared: str, head: bytes) -> bool:
-    """A declared type the platform detects must be the one detected; any other declared type
-    stands unless the bytes show a type the platform detects."""
+def matches(declared: str, head: bytes) -> bool:
+    """Whether a file's first bytes fit its declared media type: a type the platform detects must
+    be the one detected; any other stands unless the bytes show a type the platform detects."""
     declared = declared.lower()
-    found = detected(head)
-    known = declared == "application/pdf" or declared in _SIGNATURES
-    return found == declared or (found is None and not known)
+    if declared == "application/pdf":  # its header may sit anywhere in the first 1024 bytes
+        return b"%PDF-" in head[:_HEAD]
+    found = next((t for t, shows in _SIGNATURES.items() if shows(head)), None)
+    return found == declared or (found is None and declared not in _SIGNATURES)
 
 
 async def receive(
@@ -69,7 +62,7 @@ async def receive(
     if content_length is None:
         raise Refused(411, "INVALID_ARGUMENT", "LENGTH_REQUIRED", "Content-Length is required.")
     declared, key = await _target(pool, caller, batch_id, index, path)
-    if int(content_length) != declared["size"]:
+    if not content_length.isdecimal() or int(content_length) != declared["size"]:
         raise _size_mismatch()
     try:
         upload_id = await store.create_upload(key)
@@ -120,7 +113,7 @@ async def _stream(
         raise Refused(
             422, "INVALID_ARGUMENT", "DIGEST_MISMATCH", "The SHA-256 differs from the declaration."
         )
-    if not _matches(declared["media_type"], head):
+    if not matches(declared["media_type"], head):
         raise Refused(
             422,
             "INVALID_ARGUMENT",
@@ -168,26 +161,39 @@ async def _target(
 CLEAN_AFTER = timedelta(hours=1)  # uploads in flight when a batch ends have ended by then (§6.2)
 
 
-async def clean(conn: AsyncConnection, store: ObjectStore) -> int:
+async def clean(conn: AsyncConnection, store: ObjectStore) -> tuple[int, int]:
     """§6.2: for each batch finalized or expired CLEAN_AFTER before and not yet cleaned, aborts
     every incomplete upload under its keys and deletes each uploaded object that no Source
-    Revision of its document references, then marks the batch cleaned; returns how many batches.
-    The keys come from the records, never from listing a prefix (document submission guide §6.7).
-    StorageUnavailable leaves the batch to the next run."""
-    batch_ids = await _ended(conn)
-    for batch_id in batch_ids:
-        for index, uid, item in await _uploading_items(conn, batch_id):
-            held = await _referenced(conn, uid)
-            for f in item["files"]:
-                if f["path"] in item["carried"]:
-                    continue
-                key = source_key(uid, batch_id, index, f["sha256"])
-                for upload_id in await store.incomplete_uploads(key):
-                    await store.abort_upload(key, upload_id)
-                if f"s3://{store.bucket}/{key}" not in held:
-                    await store.delete(key)
-        await _mark_cleaned(conn, batch_id)
-    return len(batch_ids)
+    Revision of its document references, then marks the batch cleaned. The keys come from the
+    records, never from listing a prefix (document submission guide §6.7). A batch that storage
+    fails for is left to the next run, and the others go on. Returns (cleaned, left)."""
+    cleaned, left = 0, 0
+    for batch_id in await _ended(conn):
+        try:
+            await _clean_batch(conn, store, batch_id)
+            cleaned += 1
+        except StorageUnavailable as error:
+            left += 1
+            cause = type(error.__cause__).__name__
+            log.warning(
+                "upload cleanup left a batch",
+                extra={"correlation": {"batch_id": batch_id, "error": cause}},
+            )
+    return cleaned, left
+
+
+async def _clean_batch(conn: AsyncConnection, store: ObjectStore, batch_id: str) -> None:
+    for index, uid, item in await _uploading_items(conn, batch_id):
+        held = await _referenced(conn, uid)
+        for f in item["files"]:
+            if f["path"] in item["carried"]:
+                continue
+            key = source_key(uid, batch_id, index, f["sha256"])
+            for upload_id in await store.incomplete_uploads(key):
+                await store.abort_upload(key, upload_id)
+            if f"s3://{store.bucket}/{key}" not in held:
+                await store.delete(key)
+    await _mark_cleaned(conn, batch_id)
 
 
 async def _ended(conn: AsyncConnection) -> list[str]:
