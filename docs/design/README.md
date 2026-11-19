@@ -18,8 +18,8 @@ four kinds, and says which in a status line at its top:
 
 | Document | Kind | Ticket | Covers |
 |---|---|---|---|
-| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99 | Batch API, admission rules, status, deletion, dispatch and durability, limits, error reasons |
-| [File upload](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #184 | Why uploads go through the platform API, architecture and sequence diagrams, failure table, guide for Source developers |
+| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99, #194 | Batch API, admission rules, status, deletion, dispatch and durability, limits, error reasons |
+| [Document submission guide](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #194, #184 | The one document to read on how a Source hands documents to the platform: design and decisions, why the API has these calls, architecture and sequence diagrams, failure table, quick start and field tables for Source developers, deployment needs for DevOps, implementation status, the large-file assessment |
 | [Admission design notes](knowledge-platform-admission.md) | Design record | #31 | Rounds 1–5 and their reasons |
 | [Authorization](knowledge-platform-authorization.md) | Design result | #85 | Decision interface, model and pilot provider |
 | [Authorization guide](knowledge-platform-authorization-guide.md) (zh-TW) | Contract | #204, #114, #127 | The authz API contract; system diagram with the provider options; sequence diagrams for ingestion, Retrieval and LLM-Wiki; guide for PEP implementers and operators |
@@ -144,12 +144,14 @@ Deletion, dispatch, limits and validation. Its rules are modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html). The
 storage product remains open (#57).
 
-[File upload](knowledge-platform-file-upload.md) is the account of one topic
-across the two documents above: why clients push files through a platform
-upload endpoint after company policy excluded presigned URLs (2026-10-30 and
-2026-11-07), the options compared, the architecture and sequence diagrams, the
-Source-facing guide and the deployment requirements. The specification's §5.2
-stays the contract.
+The [document submission guide](knowledge-platform-file-upload.md) is the one
+document to read on how a Source hands documents to the platform; the two
+documents above are for implementers and for history. It covers why clients
+push files through a platform upload endpoint after company policy excluded
+presigned URLs (2026-10-30 and 2026-11-07), the options compared, why the API
+has these calls (reviewed on 2026-11-19), the architecture and sequence
+diagrams, the Source-facing guide and the deployment requirements. It states no
+contract of its own: the specification's §5 stays the contract.
 
 [PDF processing workflow v2](knowledge-platform-processing-workflow-v2.md)
 records the #91 decisions (Q1–Q32): the stage graph, Activity and per-item

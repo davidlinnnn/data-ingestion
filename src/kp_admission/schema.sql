@@ -9,7 +9,9 @@ CREATE TABLE batch (
     state        text NOT NULL CHECK (state IN ('open', 'finalized', 'expired')),
     created_at   timestamptz NOT NULL DEFAULT now(),
     expires_at   timestamptz NOT NULL,
-    finalized_at timestamptz
+    finalized_at timestamptz,
+    -- Its uploads not admitted are deleted (§6.2); retention keeps the batch until then (§11).
+    cleaned_at   timestamptz
 );
 
 CREATE TABLE document (
@@ -22,12 +24,20 @@ CREATE TABLE document (
     source_url        text,
     metadata          jsonb,
     deleted_at        timestamptz,
-    delete_request_id text
+    delete_request_id text,
+    -- Written by status intake (#97) with the current_revision_changed event; null until then.
+    current_source_revision_id    text,
+    current_canonical_revision_id text,
+    -- Set with each Source Revision finalization creates; §6.3 orders against it.
+    latest_source_revision_id     text
 );
 
 -- A source_id is unique per tenant, so a Source is (tenant_id, source_id).
 CREATE UNIQUE INDEX document_live_id ON document (tenant_id, source_id, document_id)
     WHERE deleted_at IS NULL;
+
+-- Bootstrap pages a Source's live Documents by key (canonical consumption DR §3).
+CREATE INDEX document_by_source ON document (source_id, document_uid) WHERE deleted_at IS NULL;
 
 CREATE TABLE source_revision (
     source_revision_id text PRIMARY KEY,
@@ -72,6 +82,8 @@ CREATE UNIQUE INDEX request_one_active ON request (document_uid, source_revision
     WHERE kind = 'process' AND state IN ('queued', 'processing');
 
 ALTER TABLE document ADD FOREIGN KEY (delete_request_id) REFERENCES request;
+ALTER TABLE document ADD FOREIGN KEY (current_source_revision_id) REFERENCES source_revision;
+ALTER TABLE document ADD FOREIGN KEY (latest_source_revision_id) REFERENCES source_revision;
 
 CREATE TABLE outbox (
     request_id    text PRIMARY KEY REFERENCES request,
@@ -97,6 +109,9 @@ CREATE TABLE batch_item (
     source_revision_id text REFERENCES source_revision,
     error              jsonb,
     declared           jsonb NOT NULL,  -- the item as declared: files and catalog fields (§5.1)
+    -- The placement decisions (#85) under declaration and finalization: decision_id,
+    -- evaluated_at, and a deny's reason.
+    placement          jsonb,
     PRIMARY KEY (batch_id, index)
 );
 
@@ -105,9 +120,96 @@ CREATE TABLE idempotency_key (
     source_id   text NOT NULL,
     key         text NOT NULL,
     body_sha256 text NOT NULL,
-    response    jsonb,  -- null while the first request is in progress (IDEMPOTENCY_IN_PROGRESS)
+    -- Written in the declaration's own transaction: a repeat waits for it, then replays it.
+    status      integer NOT NULL,
+    response    jsonb NOT NULL,
     created_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (tenant_id, source_id, key)
+);
+
+-- A Source and its Knowledge Profile (admission spec §2). profile_seq is the feed position of
+-- the source_profile_changed event that set the projections (DR §2 A2).
+CREATE TABLE source (
+    tenant_id   text NOT NULL,
+    source_id   text NOT NULL,
+    projections text[] NOT NULL,
+    profile_seq text NOT NULL,
+    PRIMARY KEY (tenant_id, source_id)
+);
+
+-- The Change Feed (ADR-0009, DR §2 A1–A5): each entry is written in the transaction of the fact
+-- it records, read in (xid, seq) order below the snapshot xmin, partitioned by month.
+CREATE SEQUENCE change_feed_seq;
+
+CREATE TABLE change_feed (
+    xid          xid8 NOT NULL DEFAULT pg_current_xact_id(),
+    seq          bigint NOT NULL DEFAULT nextval('change_feed_seq'),
+    tenant_id    text NOT NULL,
+    kind         text NOT NULL CHECK (kind IN ('current_revision_changed', 'document_deleted',
+                                               'inclusion_changed', 'source_profile_changed')),
+    source_id    text NOT NULL,
+    document_uid text,
+    priority     text NOT NULL CHECK (priority IN ('narrowing', 'normal', 'background')),
+    occurred_at  timestamptz NOT NULL DEFAULT now(),
+    CHECK ((kind = 'source_profile_changed') = (document_uid IS NULL))
+) PARTITION BY RANGE (occurred_at);
+
+CREATE INDEX change_feed_position ON change_feed (xid, seq);
+
+-- This month's partition and the two after it; `kp-admission feed-retention` adds later ones.
+DO $$
+DECLARE month timestamptz := date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+BEGIN
+    FOR i IN 0..2 LOOP
+        EXECUTE format('CREATE TABLE %I PARTITION OF change_feed FOR VALUES FROM (%L) TO (%L)',
+                       'change_feed_' || to_char(month AT TIME ZONE 'UTC', 'YYYYMM'),
+                       month, month + interval '1 month');
+        month := month + interval '1 month';
+    END LOOP;
+END $$;
+
+-- An open transaction holds back the whole feed (A5, G8), so the database ends long ones, for
+-- every session, an operator's too. The values are provisional until #78 sets them.
+DO $$
+BEGIN
+    EXECUTE format('ALTER DATABASE %I SET transaction_timeout = %L', current_database(), '60s');
+    EXECUTE format('ALTER DATABASE %I SET idle_in_transaction_session_timeout = %L',
+                   current_database(), '30s');
+END $$;
+
+-- The highest position in a dropped partition: a cursor below it may have missed entries (A4).
+CREATE TABLE change_feed_horizon (
+    one      boolean PRIMARY KEY DEFAULT true CHECK (one),
+    position text NOT NULL
+);
+
+INSERT INTO change_feed_horizon (position) VALUES ('');
+
+-- One cursor per projection (A3, A7), keyed by its registered service identity (#113).
+CREATE TABLE consumer_cursor (
+    projection text PRIMARY KEY,
+    position   text NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Each Source's intake quota, a token bucket (§11).
+CREATE TABLE intake_quota (
+    tenant_id   text NOT NULL,
+    source_id   text NOT NULL,
+    tokens      double precision NOT NULL,
+    refilled_at timestamptz NOT NULL,
+    PRIMARY KEY (tenant_id, source_id)
+);
+
+-- The adoption record (§3): the Processing Profile version new process requests of a main-file
+-- media type run. The highest sequence of a media type is its adopted version unless cancelled.
+CREATE TABLE adoption (
+    sequence        bigint PRIMARY KEY,  -- the adoption_sequence of the requests made under it
+    tenant_id       text NOT NULL,
+    media_type      text NOT NULL,
+    adopted_version text NOT NULL,
+    adopted_at      timestamptz NOT NULL DEFAULT now(),
+    cancelled_at    timestamptz
 );
 
 -- Authorization records (authorization design §5.1, #113), in their own schema so that a
@@ -115,9 +217,9 @@ CREATE TABLE idempotency_key (
 CREATE SCHEMA authz;
 
 CREATE TABLE authz.resource (
-    resource_id       text PRIMARY KEY,
+    resource_id       text PRIMARY KEY,  -- the full identifier: Source and key (#114)
     tenant_id         text NOT NULL,
-    name              text NOT NULL,
+    name              text,  -- for display; optional
     created_by_source text NOT NULL,  -- the maintainer (§3.1)
     created_at        timestamptz NOT NULL DEFAULT now()
 );

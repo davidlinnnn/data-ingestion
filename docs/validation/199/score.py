@@ -504,10 +504,11 @@ async def summary_check(argv: list[str]) -> int:
     if PLANTER:
         chat = t5b.OpenAIChat
 
-        def planter(http, base_url, api_key, model, connect_s, total_s):
+        def planter(http, base_url, headers, model, connect_s, total_s):
             if model == "gpt-6-luna":
-                base_url, api_key, model = "https://api.anthropic.com/v1", os.environ["ANTHROPIC_API_KEY"], PLANTER
-            return chat(http, base_url, api_key, model, connect_s, total_s)
+                base_url, model = "https://api.anthropic.com/v1", PLANTER
+                headers = {"Authorization": f"Bearer {os.environ['ANTHROPIC_API_KEY']}"}
+            return chat(http, base_url, headers, model, connect_s, total_s)
 
         t5b.OpenAIChat = planter
     code = await t5b.main([str(out / "summaries"), name, *rest])

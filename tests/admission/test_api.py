@@ -15,6 +15,7 @@ from kp_admission.api import RequestLog, app
 from kp_admission.authz import AllowAll
 from kp_canonicalization.cli import JsonFormatter
 from tests.admission.authz_fake import FakeAuthorizer
+from tests.admission.support import INTAKE
 
 TOKEN = "retrieval-credential-1"
 PEPS = {hashlib.sha256(TOKEN.encode()).hexdigest(): "retrieval"}
@@ -29,7 +30,9 @@ LIST = {key: value for key, value in CHECK.items() if key != "resource"}
 
 def client(authorizer=None, token: str | None = TOKEN) -> httpx.AsyncClient:
     headers = {"authorization": f"Bearer {token}"} if token else {}
-    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS))
+    # The authz API reads no pool; an unopened one is enough.
+    pool = AsyncConnectionPool("host=127.0.0.1 port=9", open=False)
+    transport = httpx.ASGITransport(app(authorizer or FakeAuthorizer(), PEPS, {}, pool, INTAKE))
     return httpx.AsyncClient(transport=transport, base_url="http://api", headers=headers)
 
 
@@ -219,6 +222,10 @@ async def test_the_openapi_document_describes_both_operations_with_bearer_and_th
     assert schemas["ErrorBody"]["properties"]["status"]["enum"] == [
         "INVALID_ARGUMENT",
         "UNAUTHENTICATED",
+        "PERMISSION_DENIED",
+        "NOT_FOUND",
+        "FAILED_PRECONDITION",
+        "RESOURCE_EXHAUSTED",
         "UNAVAILABLE",
     ]
     assert schemas["CheckResponse"]["properties"]["outcome"]["enum"] == ["allow", "deny"]
@@ -372,3 +379,16 @@ async def test_an_empty_page_with_a_next_cursor_is_not_the_end_of_the_list():
                 break
 
     assert pages == [(["res_01"], True), ([], True), (["res_02"], False)]
+
+
+def test_an_upload_access_line_leaves_out_the_file_path(json_log):
+    access = logging.getLogger("uvicorn.access")
+    path = "/v1/batches/bat_1/items/0/files/hr/salaries-2026.pdf"
+    access.info('%s - "%s %s HTTP/%s" %d', "10.0.0.7:5100", "PUT", path, "1.1", 204)
+    access.info('%s - "%s %s HTTP/%s" %d', "10.0.0.7:5100", "GET", "/v1/batches/bat_1", "1.1", 200)
+
+    lines = [line["message"] for line in json_log()]
+    assert lines == [
+        '10.0.0.7:5100 - "PUT /v1/batches/bat_1/items/0/files/… HTTP/1.1" 204',
+        '10.0.0.7:5100 - "GET /v1/batches/bat_1 HTTP/1.1" 200',
+    ]

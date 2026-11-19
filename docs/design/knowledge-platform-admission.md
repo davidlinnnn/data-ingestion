@@ -289,7 +289,7 @@ platform-verified digest as the artifact's integrity information.
   storage-native presigned URL or SAS, chosen with the storage product.
   Superseded on 2026-10-30: company policy excludes this form; the upload
   endpoint that replaced it on 2026-11-07 is in the
-  [file upload design](knowledge-platform-file-upload.md) and specification
+  [document submission guide](knowledge-platform-file-upload.md) and specification
   §5.2 (see [Upload path](#upload-path-policy-change-on-2026-10-30-and-decision-on-2026-11-07)).
 - An upload session not finalized within 24 hours expires: its items are not
   admitted and staged files are deleted. Finalizing an expired session fails
@@ -464,7 +464,8 @@ projections: [retrieval, llm-wiki]   # Projection Types whose products the Sourc
 - **Order:** the newer Source Revision (round 2 ordering), then the higher
   adoption sequence, then the existing selection on a tie. The adoption sequence
   is counted per Source and increases when an owner adopts a new canonical
-  version.
+  version. Revised by #96 (2026-11-18): one deployment-wide counter serves every
+  Source while no Source pins a version (admission spec §3).
 - Canonical processing owns this rule and reports the current revision as its
   serving fact (P10).
 - When the current revision is withdrawn, selection does not fall back to an
@@ -721,7 +722,7 @@ records the decisions and their reasons. Rounds 1–3 call the logical object
   `uploaded_by`, `metadata`, `title` and `source_url`. Exactly one file has role
   `main`; paths are unique within the item. An unsupported main-file format is
   rejected at declaration (`UNSUPPORTED_FORMAT`); `media_type` is verified at
-  finalization.
+  upload (§5.2 of the spec, #194).
 - Item results carry `index`, `document_id`, `document_uid`, `status`,
   `request_id`, `source_revision_id` and `error`.
 - `title` and `source_url` are used by the platform for citations and display.
@@ -739,6 +740,10 @@ records the decisions and their reasons. Rounds 1–3 call the logical object
 - It is returned only to the submitting Source, in document reads and lists. It
   is not passed to projections or agents, is not filterable, is deleted with the
   document, and must not hold sensitive data.
+  Superseded on 2026-10-31 by
+  [#76](https://github.com/davidlinnnn/data-ingestion/issues/96#issuecomment-6542094987):
+  the serving layer returns metadata with the document to everyone who can read
+  the document.
 - v1 has no filterable attributes; that question belongs to #55 and #76.
   Applications that want to filter results may post-filter with their own
   metadata.
@@ -1016,9 +1021,32 @@ upload endpoint, authenticated with the Source credential and without a
 separate grant; specification §5.2 holds the contract. The account of this
 topic, with the options compared, the architecture, the sequence diagrams and
 the Source-facing guide, is the
-[file upload design](knowledge-platform-file-upload.md). Passages above written
+[document submission guide](knowledge-platform-file-upload.md). Passages above written
 before the policy (Q4b "signed into the upload grant", Q5, and the principle
 below) stand as history.
+
+## API review on 2026-11-19
+
+An independent review asked two questions of the Source-facing flow (register a
+Resource, declare, upload each file, finalize, read status): is it more complex
+than its guarantees need, and does it leave room for files of 1 GB and above.
+On 2026-11-19 the user asked for its recommendations to be applied.
+
+- The calls stay as they are. Each buys a guarantee that merging it with
+  another would lose; the table, and the comparison with public upload APIs, are
+  in the [document submission guide](knowledge-platform-file-upload.md) §2.5.
+- Not added now: a single-request endpoint for one document with one file. It
+  would be a second intake path beside the shared `items[1..N]` contract of
+  2026-10-18. Q4a's condition stands: inline content only if a pilot client
+  cannot use the SDK.
+- Not added now: automatic finalization. Q4a keeps it as a later optimization;
+  the SDK hides the call.
+- Added to specification §5.1: which declaration fields are required, the
+  meaning of `uploaded_by` (Q3.8), and the rule that a client uploads to the
+  `url` of `uploads[]` as returned and ignores response fields it does not know.
+- Files above about 1 GB need an upload that can resume. It can be added as a
+  new endpoint between declaration and finalization without breaking existing
+  clients; nothing is built for it now. The assessment is in the guide §7.4.
 
 ## Principle for later architecture documentation
 

@@ -1,0 +1,214 @@
+{
+ "version": "8.2.12",
+ "position": "epochseq",
+ "control": "none",
+ "fence": "last",
+ "faults": "kill@60,stop@150,freeze@200,reader@240,oplog@330,kill@480,stop@560,freeze@590,reader@620",
+ "seed": 24001,
+ "writers": 8,
+ "transactions": 13500,
+ "docs": 2000,
+ "scale": 0.1,
+ "rate_per_writer": 20.0,
+ "wall_seconds": 688.8,
+ "errors": [],
+ "run": "d078f6c0",
+ "committed": 125732,
+ "revisions_match_writers": true,
+ "foreign_in_feed": 0,
+ "feed_entries": 125732,
+ "feed_missed": 0,
+ "feed_duplicates": 0,
+ "feed_unexpected": 0,
+ "feed_order_violations": 0,
+ "read_missed": 0,
+ "read_duplicates": 0,
+ "read_order_violations": 0,
+ "read_position_regressions": 0,
+ "read_redelivered": 0,
+ "reader_incarnations": 3,
+ "epochs": 8,
+ "fenced": 4,
+ "lease_lost": 0,
+ "tailer_errors": [],
+ "zombie_entries_accepted": 0,
+ "failover": [
+  {
+   "fault": "kill",
+   "acquired_after": 4.01,
+   "first_write_after": 4.01,
+   "first_read_after": 4.03
+  },
+  {
+   "fault": "stop",
+   "acquired_after": 4.75,
+   "first_write_after": 4.75,
+   "first_read_after": 4.77
+  },
+  {
+   "fault": "freeze",
+   "acquired_after": 4.07,
+   "first_write_after": 4.07,
+   "first_read_after": 4.08
+  },
+  {
+   "fault": "kill",
+   "acquired_after": 4.65,
+   "first_write_after": 4.65,
+   "first_read_after": 4.67
+  },
+  {
+   "fault": "stop",
+   "acquired_after": 5.09,
+   "first_write_after": 5.09,
+   "first_read_after": 5.11
+  },
+  {
+   "fault": "freeze",
+   "acquired_after": 5.04,
+   "first_write_after": 5.04,
+   "first_read_after": 5.06
+  }
+ ],
+ "txn_with_split_cluster_time": 0,
+ "multi_change_txns": 15414,
+ "recovery_seconds": 0.45,
+ "backfilled": 6110,
+ "backfill_read": 6110,
+ "backfill_read_window": [
+  0.38,
+  0.46
+ ],
+ "recovery_log": [
+  {
+   "ev": "history_lost",
+   "epoch": 5,
+   "error": "Executor error during aggregate command on namespace: kp240.revisions :: caused by :: Resume of change stream was not possible, as the resume point may no longer be in the oplog., full error: {'errorL",
+   "tailer": "A:53608",
+   "t": 1794955690.0731132
+  },
+  {
+   "ev": "recovery_start",
+   "epoch": 5,
+   "t_rec": [
+    1794955690,
+    14
+   ],
+   "tailer": "A:53608",
+   "t": 1794955690.0744262
+  },
+  {
+   "ev": "recovery_scanned",
+   "epoch": 5,
+   "scanned": 67328,
+   "feed_had": 61218,
+   "missing": 6110,
+   "tailer": "A:53608",
+   "t": 1794955690.432718
+  },
+  {
+   "ev": "reopened",
+   "epoch": 5,
+   "t_rec": [
+    1794955690,
+    14
+   ],
+   "backfilled": 6110,
+   "tailer": "A:53608",
+   "t": 1794955690.526848
+  }
+ ],
+ "faults_log": [
+  {
+   "fault": "kill",
+   "victim": "A:53437",
+   "epoch": 1,
+   "at": 1794955386.442817,
+   "next_epoch": 2,
+   "t": 1794955390.489751
+  },
+  {
+   "fault": "stop",
+   "victim": "B:53438",
+   "epoch": 2,
+   "at": 1794955476.4693172,
+   "next_epoch": 3,
+   "resumed": 1794955483.244512,
+   "t": 1794955483.244753
+  },
+  {
+   "fault": "freeze",
+   "victim": "A:53469",
+   "epoch": 3,
+   "at": 1794955526.543421,
+   "next_epoch": 4,
+   "resumed": 1794955532.677355,
+   "t": 1794955532.677522
+  },
+  {
+   "fault": "reader",
+   "at": 1794955566.4953432,
+   "t": 1794955568.5083818
+  },
+  {
+   "fault": "oplog",
+   "at": 1794955656.50093,
+   "stopped_at": [
+    1794955656,
+    98
+   ],
+   "filler_bytes": 1702887424,
+   "filled": 1794955689.9738932,
+   "restarted": 1794955689.981416,
+   "oldest": [
+    "Timestamp(1794955669, 95)",
+    "Timestamp(1794955669, 95)",
+    "Timestamp(1794955669, 95)"
+   ],
+   "t": 1794955689.983511
+  },
+  {
+   "fault": "kill",
+   "victim": "A:53608",
+   "epoch": 5,
+   "at": 1794955806.4441118,
+   "next_epoch": 6,
+   "t": 1794955811.1211588
+  },
+  {
+   "fault": "stop",
+   "victim": "A:53658",
+   "epoch": 6,
+   "at": 1794955886.505755,
+   "next_epoch": 7,
+   "resumed": 1794955893.6354911,
+   "t": 1794955893.635676
+  },
+  {
+   "fault": "freeze",
+   "victim": "B:53609",
+   "epoch": 7,
+   "at": 1794955916.543117,
+   "next_epoch": 8,
+   "resumed": 1794955923.65615,
+   "t": 1794955923.656397
+  },
+  {
+   "fault": "reader",
+   "at": 1794955946.483865,
+   "t": 1794955948.500895
+  }
+ ],
+ "tries_max": 1386,
+ "tries_mean": 1.03,
+ "events_per_second": 182.8,
+ "behind_schedule_p50": 0.007,
+ "behind_schedule_p99": 1.535,
+ "behind_schedule_max": 3.949,
+ "commit_to_feed_p50": 0.033,
+ "commit_to_feed_p99": 27.465,
+ "commit_to_feed_max": 34.018,
+ "commit_to_read_p50": 0.05,
+ "commit_to_read_p99": 27.481,
+ "commit_to_read_max": 34.039
+}

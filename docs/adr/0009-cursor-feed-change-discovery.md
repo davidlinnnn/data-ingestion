@@ -20,23 +20,37 @@ the same feed.
 
 Each projection runs one logical reader that reads a batch, hands each event to
 its durable execution layer under a deterministic identity, and reports its
-position. Parallelism and autoscaling belong to that execution layer and follow
-its backlog; for Temporal-based projections the reader is a singleton workflow
-and workers scale on task-queue backlog. A platform consumer SDK wraps reading,
+position. Parallelism belongs to that execution layer; for Temporal-based
+projections the reader is a singleton workflow. The company sizes a fixed pod
+count for the peak, and a backlog autoscaler such as KEDA is a cluster-level
+install the platform does not get, so a worker pool has a fixed size, set from
+the capacity runs of [#88](https://github.com/davidlinnnn/data-ingestion/issues/88),
+and its backlog is watched, not scaled on. A platform consumer SDK wraps reading,
 position reporting and idempotent hand-off, so a projection implements only its
 handler. The reader must not run inside request-serving web workers, where every
 worker process would start its own reader.
 
+The contract has the shape of the Kubernetes list and watch API: a reader
+resumes from a position, the history is bounded, and a position older than it
+gets `410 Gone` and the reader lists again. The Cosmos DB change feed pull
+model and DynamoDB Streams are database-backed feeds pulled by position, and
+PgQ uses transaction snapshots on a PostgreSQL queue so that a late commit is
+not skipped.
+
 A broker such as NATS JetStream was considered and deferred, not rejected. It
-removes nothing: the authoritative facts commit in PostgreSQL, so the
+would remove the consumers' polling and hold each projection's position in a
+durable consumer, neither of which costs much at this load. It does not remove
+the outbox, nor the tie between feed delay and the longest writing transaction
+while the relay reads this feed: the authoritative facts commit in PostgreSQL,
+so the
 dual-write problem still requires this outbox plus a relay, and the API path
 stays for bootstrap, resynchronisation and replay beyond a stream's retention,
 so a broker is always a second transport. It adds a second access-control
 surface, because entry identities reveal that a Document exists in a Resource.
 Its strongest feature, a durable consumer shared by many workers, duplicates
 what the execution layer already provides for work that runs for minutes to
-hours (distribution, redelivery, backlog-based scaling), and parallel pulls lose
-per-document order. Throughput is not a reason either: the near-term target of
+hours (distribution, redelivery, a visible backlog). Throughput is not a reason
+either: the near-term target of
 10,000 document updates a day averages 0.12 events a second, and the enterprise
 horizon of 100,000 a day averages about 1.2 and peaks around 12, on the order of
 ten million entries over a 90-day retention. These are estimates, not
@@ -58,6 +72,15 @@ long-polling on the same endpoint comes first. The upgrade is additive: a relay
 publishes from the existing feed table, with no schema change and no change to
 consumer logic.
 
+What a reader may rely on, whatever database holds the facts: every committed
+change appears in the feed within a bounded delay, a change may appear more
+than once, a position is opaque, and a state read that follows a position is at
+least as new as it. No order is promised between events. The ordering by
+transaction ID, the xmin filter, the partitions and the timeouts below are the
+PostgreSQL mechanism of the pilot;
+[#239](https://github.com/davidlinnnn/data-ingestion/issues/239) replaces them
+when the facts move to MongoDB.
+
 Implementation guards carried to the implementation tickets (the feed and its read API: [#126](https://github.com/davidlinnnn/data-ingestion/issues/126); the projection side: [#127](https://github.com/davidlinnnn/data-ingestion/issues/127)): the feed is ordered
 and paged by transaction ID and then sequence, and never returns entries from
 transactions at or above the snapshot xmin. A sequence-only cursor is unsafe even
@@ -68,8 +91,15 @@ PostgreSQL 18.4 lost about one event in ten that way. The cost of the filter is
 that one long-running transaction holds back the whole feed until it ends, so
 the admission database sets `transaction_timeout` (PostgreSQL 17 and later) and
 `idle_in_transaction_session_timeout`, and operations alert on the age of the
-oldest snapshot xmin. Consumers treat the cursor as opaque, events
-for one Document may arrive in any order, and handling is level-triggered: each
+oldest snapshot xmin. The xmin counts the writing transactions of every
+database on the instance and the timeouts end only those of the admission
+database, so the guard holds only where the instance holds no other database
+or sets both timeouts for the whole instance. Consumers treat the cursor as
+opaque. Events
+for one Document may arrive in any order: a transaction takes its ID at its
+first write, so one that wrote elsewhere before it reached the Document is
+listed ahead of one that changed the Document and committed earlier. Handling
+is level-triggered: each
 event means "re-read the current state". A state read that follows a feed
 position must observe state at least as new as that position. The feed is
 partitioned by month and kept for 90 days; a cursor older than the retention
@@ -85,6 +115,12 @@ single feed in the admission database, revised revisit thresholds) and on
 2026-10-26 (long-transaction guards and resynchronisation after validation)
 during the
 [publication grilling](https://github.com/davidlinnnn/data-ingestion/issues/55).
+Revised on 2026-11-19 after an
+[independent review](../research/change-feed-alternatives-2026-11-19/README.md)
+(what a broker would remove, fixed-size worker pools, the precedents, the
+instance-wide reach of the xmin). It withdraws the promise that the events of
+one Document arrive in commit order, which the implementation tickets had
+carried since 2026-11-18.
 The ordering evidence is in the
 [validation record](../research/canonical-consumption-validation-2026-10-26/README.md).
 This applies [#58 Q18](https://github.com/davidlinnnn/data-ingestion/issues/58#issuecomment-5843984257)
@@ -101,7 +137,10 @@ and [Kafka consumer offsets](https://docs.redpanda.com/docs/development/consumer
 against the consumer-held [Kinesis KCL lease table](https://docs.aws.amazon.com/streams/latest/dev/kcl-dynamoDB.html);
 long-polling change feeds in [CouchDB](https://docs.couchdb.org/en/3.5.1/api/database/changes.html)
 and [Consul blocking queries](https://developer.hashicorp.com/consul/api-docs/features/blocking);
-the [KEDA Temporal scaler](https://keda.sh/docs/2.21/scalers/temporal/) and
-Temporal's [continue-as-new pattern](https://docs.temporal.io/design-patterns/continue-as-new).
+Temporal's [continue-as-new pattern](https://docs.temporal.io/design-patterns/continue-as-new);
+the same contract in [Kubernetes list and watch](https://kubernetes.io/docs/reference/using-api/api-concepts/),
+the [Cosmos DB change feed pull model](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/change-feed-pull-model)
+and [DynamoDB Streams](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html),
+and snapshot ordering in [PgQ](https://www.pgcon.org/2008/schedule/attachments/55_pgq.pdf).
 The event schema, serving-fact reporting and repair are in the
 [#55 design record](../design/knowledge-platform-canonical-consumption.md).

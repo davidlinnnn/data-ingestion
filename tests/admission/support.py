@@ -8,13 +8,17 @@ from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
 from temporalio.client import Client
 
+from kp_admission.batches import Intake
 from kp_admission.requests import create_process_request
+from kp_admission.storage import FakeObjectStore
+
+INTAKE = Intake(FakeObjectStore())  # for tests that call no batch route
 
 FILES = [
     {
         "path": "paper.pdf",
         "role": "main",
-        "custody_ref": "custody://kp-dev/sources/s1/paper.pdf",
+        "custody_ref": f"s3://kp-custody/documents/doc_1/files/bat_1/0/{'a' * 64}",
         "sha256": "a" * 64,
         "size": 18342,
         "media_type": "application/pdf",
@@ -44,13 +48,31 @@ async def revision(conn: AsyncConnection, source_id: str = "s1") -> tuple[str, s
 
 
 async def resource(conn: AsyncConnection, resource_id: str = "res_01") -> str:
-    """A Resource record, as the Resource Service API (#114) will create one."""
+    """A Resource record under `resource_id`, which the provider treats as opaque."""
     await conn.execute(
         "INSERT INTO authz.resource (resource_id, tenant_id, name, created_by_source)"
         " VALUES (%s, 't1', 'rd / nlp', 'rd_papers')",
         (resource_id,),
     )
     return resource_id
+
+
+async def changes(conn: AsyncConnection) -> list[tuple]:
+    """The Resource changes recorded (#114), oldest first: (op, resource_id, source, credential)."""
+    cursor = await conn.execute(
+        "SELECT op, resource_id, actor_source_id, actor_credential_id FROM authz.relation_change"
+        " ORDER BY at"
+    )
+    return await cursor.fetchall()
+
+
+async def bind(conn: AsyncConnection, resource: str, deleted: bool) -> None:
+    """A Document of Source km bound to `resource`, with Source Deletion applied when `deleted`."""
+    await conn.execute(
+        "INSERT INTO document (document_uid, tenant_id, source_id, document_id, resource_id,"
+        " deleted_at) VALUES (%s, 't1', 'km', %s, %s, %s)",
+        (f"doc_{resource}_{deleted}", f"d-{deleted}", resource, "now()" if deleted else None),
+    )
 
 
 async def request(conn: AsyncConnection, uid: str, srv: str, **fields: Any) -> tuple[str, bool]:

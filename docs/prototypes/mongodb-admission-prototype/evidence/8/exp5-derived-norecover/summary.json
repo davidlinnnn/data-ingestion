@@ -1,0 +1,92 @@
+{
+ "version": "8.2.12",
+ "position": "derived",
+ "control": "norecover",
+ "faults": "oplog@10",
+ "seed": 24001,
+ "writers": 8,
+ "transactions": 2000,
+ "docs": 2000,
+ "scale": 0.1,
+ "rate_per_writer": 10.0,
+ "wall_seconds": 223.1,
+ "errors": [],
+ "run": "8371b8fb",
+ "committed": 18646,
+ "revisions_match_writers": true,
+ "foreign_in_feed": 0,
+ "feed_entries": 16328,
+ "feed_missed": 2318,
+ "feed_duplicates": 0,
+ "feed_unexpected": 0,
+ "feed_order_violations": 0,
+ "read_missed": 2318,
+ "read_duplicates": 0,
+ "read_order_violations": 0,
+ "read_position_regressions": 0,
+ "read_redelivered": 0,
+ "reader_incarnations": 1,
+ "epochs": 2,
+ "fenced": 0,
+ "lease_lost": 0,
+ "tailer_errors": [],
+ "zombie_entries_accepted": 0,
+ "failover": [],
+ "txn_with_split_cluster_time": 0,
+ "multi_change_txns": 2282,
+ "recovery_seconds": 0.0,
+ "backfilled": 0,
+ "backfill_read": 0,
+ "backfill_read_window": null,
+ "recovery_log": [
+  {
+   "ev": "history_lost",
+   "epoch": 2,
+   "error": "Executor error during aggregate command on namespace: kp240.revisions :: caused by :: Resume of change stream was not possible, as the resume point may no longer be in the oplog., full error: {'errorL",
+   "tailer": "B:42805",
+   "t": 1794926641.5998359
+  },
+  {
+   "ev": "reopened",
+   "epoch": 2,
+   "t_rec": [
+    1794926641,
+    62
+   ],
+   "backfilled": 0,
+   "tailer": "B:42805",
+   "t": 1794926641.602137
+  }
+ ],
+ "faults_log": [
+  {
+   "fault": "oplog",
+   "at": 1794926617.1144562,
+   "stopped_at": [
+    1794926617,
+    19
+   ],
+   "filler_bytes": 1254096896,
+   "filled": 1794926641.516213,
+   "restarted": 1794926641.524708,
+   "oldest": [
+    "Timestamp(1794926621, 44)",
+    "Timestamp(1794926621, 44)",
+    "Timestamp(1794926621, 44)"
+   ],
+   "t": 1794926641.5267022
+  }
+ ],
+ "tries_max": 18,
+ "tries_mean": 1.01,
+ "events_per_second": 90.1,
+ "behind_schedule_p50": 0.007,
+ "behind_schedule_p99": 0.05,
+ "behind_schedule_max": 3.012,
+ "commit_to_feed_p50": 0.034,
+ "commit_to_feed_p99": 0.095,
+ "commit_to_feed_max": 0.147,
+ "commit_to_read_p50": 0.051,
+ "commit_to_read_p99": 0.115,
+ "commit_to_read_max": 0.154
+}

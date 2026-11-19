@@ -1,7 +1,7 @@
 # Knowledge Platform admission specification
 
 **Status:** current contract, kept up to date when a decision changes. The implementation
-tickets #95–#99 build from this document.
+tickets #95–#99 and #194 build from this document.
 
 The buildable contract for
 [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31).
@@ -12,8 +12,8 @@ The rules in §6 are also modelled in the
 [admission rules prototype](https://github.com/davidlinnnn/data-ingestion/blob/prototype/31-admission-rules/docs/prototypes/admission-rules.prototype.html), whose
 19 scenarios pass. Domain terms follow `CONTEXT.md`. The file upload path (why
 it is a platform endpoint, the architecture, the sequence diagrams and the
-Source-facing guide) is the [file upload design](knowledge-platform-file-upload.md);
-§5.2 here stays its contract.
+Source-facing guide) is the [document submission guide](knowledge-platform-file-upload.md);
+§5 here stays the contract.
 
 Sizing figures marked *unmeasured* are provisional until the cluster-tier
 validation (§13) measures them.
@@ -63,13 +63,15 @@ Logical records; the physical schema is I1's.
 
 | Record | Key fields | Notes |
 |---|---|---|
-| `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
-| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, declared files and catalog fields | §5.1 statuses |
-| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id` | Unique (`source_id`, `document_id`) among documents not deleted |
+| `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at`, `cleaned_at` (its upload cleanup done, §6.2) | The history of one submission |
+| `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
+| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last |
 | `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
-| `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
+| `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
-| `idempotency_key` | (`source_id`, key), body hash, stored response, `created_at` | 24 hours |
+| `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
+| `intake_quota` | `source_id`, `tokens`, `refilled_at` | The token bucket of §11 |
+| `adoption` | `sequence`, `tenant_id`, `media_type`, `adopted_version`, `adopted_at`, `cancelled_at` | The adoption record, below |
 
 Constraints:
 
@@ -80,6 +82,47 @@ Constraints:
 - `source_revision.outcome` is set by canonical processing outcomes of
   Source-initiated and operator requests; platform refreshes (`initiator:
   platform`) never change it (round 3 R2).
+- A declaration in which every item is rejected keeps no record, its placement
+  decisions included. An item rejected at finalization before its placement
+  re-check still records that re-check's decision.
+
+The adoption record (#96) names the Processing Profile version that new
+`process` requests run, by the media type of the main file: the pilot has one
+profile per file format. A Processing Profile owner changes it with two operator
+commands, `kp-admission adopt --tenant <tenant> <media_type> <version>` and
+`kp-admission cancel-adoption --tenant <tenant> <media_type> <version>`, which
+open no request themselves (the
+refresh after an adoption is #98's command).
+
+- Each adoption is a row with the next `sequence` of the deployment. A request
+  copies its media type's `adopted_version` and that row's `sequence`, as its
+  `adoption_sequence`, when it is made (§10), and keeps both: no later adoption
+  or cancellation changes a request already made.
+- The counter is deployment-wide, not kept per Source as the admission design
+  record's R1a first wrote: in the pilot no Source pins a version, and
+  current-revision selection compares the sequences of one document's requests
+  only, for which a deployment-wide counter rises as a per-Source one would.
+  When Sources select profiles, the count moves per Source.
+- A media type's adopted version is the one of its highest `sequence`, unless
+  that row is cancelled. Adopting `N+1` supersedes `N`, whose row stays as
+  history; adopting the version already adopted changes nothing. Rolling back
+  from `N+1` to `N` is adopting `N` again, which supersedes `N+1` with no gap.
+- Cancelling applies to the adopted version only, and fails for any other
+  version, changing nothing. It leaves the media type without a version: it
+  never falls back to an earlier one, whose workers may be retired. Adopting
+  again makes a new row. A cancellation waits for the declarations and
+  finalizations that read the cancelled row; no request is made under that
+  version after it returns.
+- Neither command checks that the version is released or deployed. A request
+  that names a version with no workers is not refused; it waits as backlog
+  (profiles README, P1). Retiring a version therefore also waits until no
+  queued or processing request names it.
+- The record governs which version new requests run. Which accepted revisions
+  stay eligible as a document's current revision is canonical processing's
+  rule (R1a, P10), not this record's.
+- A main file whose media type has no adopted version is `UNSUPPORTED_FORMAT`,
+  at declaration (§6.1 rule 2) and at finalization (§6.2 step 4).
+- Before the first declaration, `paper-pdf@1` is adopted for `application/pdf`.
 
 ## 4. API conventions
 
@@ -126,27 +169,39 @@ Constraints:
 
 ### 5.1 Declare: `POST /v1/batches`
 
-Header `Idempotency-Key` (optional, recommended). Body:
+Header `Idempotency-Key` (optional, recommended; at most 255 characters). A
+repeat with the same key and body within 24 hours returns the stored response;
+one with another body is `422 IDEMPOTENCY_KEY_REUSED`. A repeat that arrives
+while the first is in progress returns the first's response once it commits;
+until then it may get a `429` or `503` to retry. Body:
 
 ```json
 {
   "items": [
     {
-      "document_id": "hr/leave-policy",
+      "document_id": "hr:leave-policy",
       "source_version": "3",
       "title": "Leave policy",
       "source_url": "https://km.example/hr/leave-policy",
       "resources": ["hr-all"],
-      "uploaded_by": "tsso:alice",
+      "uploaded_by": "sso:user-1",
       "metadata": { "km_folder": "HR/Policies", "owner_team": "hr-ops" },
       "files": [
-        { "path": "policy.md", "role": "main", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" },
+        { "path": "policy.pdf", "role": "main", "sha256": "9f2c…", "size": 18342, "media_type": "application/pdf" },
         { "path": "assets/flow.png", "role": "attachment", "sha256": "1ab0…", "size": 220114, "media_type": "image/png" }
       ]
     }
   ]
 }
 ```
+
+An item requires `document_id` and `files`, and a file all five of its fields.
+`source_version` is required under `ordering: source_version` (§6.1 rule 3), and
+`resources` for a new document of a Source without a default Resource (rule 5).
+`title`, `source_url` and `metadata` are optional (§6.5). `uploaded_by` is
+optional: the identity of the person who submitted the document, as the Source
+asserts it. It is recorded with the item and is neither used for authorization
+nor proof that the person acted (Q3.8).
 
 Response `201`:
 
@@ -156,15 +211,21 @@ Response `201`:
   "state": "open",
   "expires_at": "2026-10-22T09:00:00Z",
   "items": [
-    { "index": 0, "document_id": "hr/leave-policy", "document_uid": "doc_7f3…", "status": "declared",
+    { "index": 0, "document_id": "hr:leave-policy", "document_uid": "doc_7f3…", "status": "declared",
       "uploads": [ { "path": "assets/flow.png", "method": "PUT", "url": "https://kp.example/v1/batches/bat_01J…/items/0/files/assets/flow.png" } ],
-      "carried_over": ["policy.md"] }
+      "carried_over": ["policy.pdf"] }
   ]
 }
 ```
 
 Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
-valid until the batch is finalized or expires.
+valid until the batch is finalized or expires. `url` is an absolute URL on
+the platform's public origin, the one Sources call (a deployment setting, not
+the address a request reached), and `method` is `PUT`. A client uploads to the
+`url` as returned and does not build it, sends its credential to that origin
+only, and ignores response fields it does not know, so that a later version can
+add one (API review of 2026-11-19, recorded in the
+[design notes](knowledge-platform-admission.md#api-review-on-2026-11-19)).
 
 A `resources` value is the Source's own key for a Resource it has registered
 through the Resource API
@@ -187,7 +248,7 @@ request's `queued`, `processing`, `succeeded` or `failed`.
 
 Whole-request outcomes: `400` (malformed, `TOO_MANY_ITEMS`), `401`, `403`,
 `422 ALL_ITEMS_REJECTED` (no batch is created; the body lists every item's
-error), `422 IDEMPOTENCY_KEY_REUSED`, `409 IDEMPOTENCY_IN_PROGRESS`,
+outcome in `items`, beside `error`), `422 IDEMPOTENCY_KEY_REUSED`,
 `429 RATE_LIMITED`, `503 AUTHZ_UNAVAILABLE`, `503 ADMISSION_PAUSED`, `503`
 while the database is unavailable. Every `429` and `503` carries `Retry-After`.
 
@@ -198,8 +259,9 @@ A batch in which no item is `declared` is created `finalized`.
 One request per file listed in the item's `uploads`, authenticated with the
 Source credential like every other call; there is no separate upload grant.
 `{path}` is the declared file path. `Content-Length` is required and must equal
-the declared `size`; `Content-Type` may carry the declared `media_type` (the
-platform detects the type itself). The body is the file's bytes in one request:
+the declared `size`; `Content-Type` may carry the declared `media_type`, and its
+value is not checked (the platform checks the bytes, below). The body is the
+file's bytes in one request:
 no multipart form, no chunked encoding, no resumption.
 
 The platform streams the body into storage, computing the SHA-256 and counting
@@ -215,9 +277,19 @@ a staged file is one in place and not yet admitted. Outcomes:
 | `Content-Length`, or the bytes received, differ from the declared `size` | `400 SIZE_MISMATCH`; nothing is staged |
 | SHA-256 differs from the declaration | `422 DIGEST_MISMATCH`; nothing is staged |
 | Detected media type differs from the declaration | `422 MEDIA_TYPE_MISMATCH`; nothing is staged |
+| Storage or the database does not answer during the upload | `503 UNAVAILABLE` with `Retry-After`; the file may be staged or not; repeating the whole request is safe either way |
 | Batch finalized | `409 BATCH_FINALIZED` |
 | Batch expired | `409 BATCH_EXPIRED` |
-| Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` |
+| Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` (a `{batch_id}` or `{index}` that is not one, `400 INVALID_ARGUMENT`) |
+
+The platform detects the media types whose leading bytes have a fixed signature:
+`application/pdf` (its header within the first 1024 bytes), `image/png`,
+`image/jpeg`, `image/gif`, `image/webp` and `image/tiff`. A declared type that it
+detects must be the detected one; a declared type that it cannot detect, such as
+`text/markdown`, stands unless the bytes begin with a type it detects (user ruling of 2026-11-19,
+[#194](https://github.com/davidlinnnn/data-ingestion/issues/194)). The main
+file's media type selects the Processing Profile (§3), so an adopted main-file
+format without a signature is routed by the Source's declaration.
 
 A repeated `PUT` of the same path changes nothing: a staged file already holds
 the declared bytes. Files of one item, and of different
@@ -228,12 +300,13 @@ the whole request. Uploads are accepted until the batch is finalized or expires
 Changed on 2026-11-07: this endpoint replaces the storage-native upload grant
 (presigned URL or SAS) that company policy excluded on 2026-10-30. The reasons
 and the options compared are in the
-[file upload design](knowledge-platform-file-upload.md).
+[document submission guide](knowledge-platform-file-upload.md).
 
 ### 5.3 Finalize: `POST /v1/batches/{batch_id}/finalize`
 
 No body. Response `202` with the batch and every item, admitted items carrying
-`request_id` and `source_revision_id`. Repeating it returns the same response.
+`request_id` and `source_revision_id`. Repeating it returns the same batch with
+the same requests; item statuses follow their requests (§5.4).
 `409 BATCH_EXPIRED` for an expired batch; `422 ALL_ITEMS_REJECTED` when every
 item of the batch ends rejected (the batch is still finalized and no request is
 created). `503 UNAVAILABLE` with `Retry-After` when storage cannot say whether
@@ -279,7 +352,7 @@ Returns the current generation (Q10.1f):
 
 ```json
 {
-  "document_id": "hr/leave-policy", "document_uid": "doc_7f3…",
+  "document_id": "hr:leave-policy", "document_uid": "doc_7f3…",
   "resource_id": "hr-all", "title": "Leave policy", "source_url": "https://…",
   "metadata": { "km_folder": "HR/Policies" },
   "readiness": "ready_stale", "since": "2026-10-15T09:12:00Z",
@@ -315,12 +388,17 @@ describes the stages.
 
 ### 6.1 Declaration, per item, first failure wins
 
-1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`), exactly one
-   `main` file, unique paths, valid `metadata` (§11) →
+1. Structure: valid `document_id` (1–256 of `[A-Za-z0-9-_.~:]`) not declared by
+   an earlier item of the same request, exactly one `main` file and every other
+   file's `role` `attachment`, unique relative paths (no leading `/`, no empty
+   or `..` segment), a 64-character hexadecimal `sha256` per file (stored in
+   lowercase, as the key of §10 uses it), when present exactly one `resources`
+   value, a `source_version` string holding a non-negative integer of at most 18
+   digits or an RFC 3339 date-time with an offset, valid `metadata` (§11) →
    `INVALID_ARGUMENT`; every file's `size` within the maximum file size (§11) →
    `FILE_TOO_LARGE`.
-2. Main-file format supported (pilot: PDF, Markdown, PPTX) →
-   `UNSUPPORTED_FORMAT`.
+2. Main-file format supported: its media type has an adopted Processing Profile
+   version (§3; pilot: PDF) → `UNSUPPORTED_FORMAT`.
 3. Under `ordering: source_version`, `source_version` present →
    `SOURCE_VERSION_REQUIRED`.
 4. Existing document (same `document_id`, not deleted) with a different
@@ -336,8 +414,9 @@ describes the stages.
    [#55 design record](knowledge-platform-canonical-consumption.md).
    Since 2026-11-14 (ADR-0013) the Resource is named by the Source's own key,
    registered beforehand; an unregistered key is `RESOURCE_NOT_FOUND`.
-6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION` or
-   `VERSION_CONFLICT`.
+6. Order against the latest Source Revision (§6.3) → `STALE_SOURCE_VERSION`,
+   `VERSION_CONFLICT`, or `INVALID_ARGUMENT` for the other kind of
+   `source_version`.
 7. Same content (§6.4) → `queued` with the active request, a new retry request,
    or `unchanged`.
 8. Otherwise `declared`, with an upload entry (§5.2) for each file whose (path,
@@ -359,7 +438,9 @@ requests they create are committed with their outbox rows before `201`.
 3. Every file in `uploads` is in place: its object exists in storage, asked
    before the transaction (§5.2 verified size, digest and media type before the
    object appeared) → `FILES_MISSING`.
-4. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`
+4. Format re-check: the media type still has an adopted version (§3) →
+   `UNSUPPORTED_FORMAT`. Order re-check against the then-latest Source Revision → `STALE_SOURCE_VERSION`,
+   `INVALID_ARGUMENT` (§6.3)
    or `VERSION_CONFLICT`; same content → §6.4.
 5. Otherwise: create the document on first submission (with the declared `document_uid`),
    create the Source Revision, record each staged file's `custody_ref` (§10;
@@ -380,7 +461,7 @@ cleanup.
 
 | `ordering` | Rule |
 |---|---|
-| `source_version` | Integer or RFC 3339 time, one kind per Source. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
+| `source_version` | Integer or RFC 3339 time, one kind per document: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
 | `arrival` | Finalization order decides; equal content → §6.4 |
 
 Content equality is equality of the set of (path, `sha256`) pairs. Equal bytes in
@@ -402,6 +483,13 @@ Submitted `title` and `source_url` replace the current values. `metadata` replac
 the whole map; omitted keeps it; `{}` clears it. None of them creates a Source
 Revision. A rejected item applies nothing. Metadata is returned only to the
 owning Source and never reaches projections, agents or filters.
+
+Superseded on 2026-10-31 by
+[#76](https://github.com/davidlinnnn/data-ingestion/issues/96#issuecomment-6542094987):
+metadata is no longer returned to the Source only. The serving layer returns it
+with the document to everyone who can read the document, so a Source puts
+nothing there that its readers may not see. The storage rules above are
+unchanged, and the platform still does not interpret or filter on it.
 
 ## 7. Status
 
@@ -427,6 +515,16 @@ readiness. `serving[]` (§5.6) carries each projection's state: `ready`,
 `building` or `stale`. See the
 [#55 design record](knowledge-platform-canonical-consumption.md).
 
+Not in the pilot (user ruling, 2026-11-18,
+[#56](https://github.com/davidlinnnn/data-ingestion/issues/56#issuecomment-6982506436)): the pilot (MVP) supports Source Deletion only and builds no
+governance withdrawal or reinstatement. No withdrawal record exists, so
+readiness `withdrawn` and the `withdrawn` attention of §7.2 never occur; both
+stay in the contract for the release that adds withdrawal:
+[#97](https://github.com/davidlinnnn/data-ingestion/issues/97) keeps the two
+values and builds no rule that produces them, and #78 routes no `governance`
+attention. To take a document out of serving during the pilot, its Source
+deletes it; a deletion cannot be undone (§8).
+
 ### 7.2 Attention
 
 | Kind | Action owner | When |
@@ -439,7 +537,8 @@ readiness. `serving[]` (§5.6) carries each projection's state: `ready`,
 | `withdrawn` | `governance` | Governance withdrawal |
 
 Method-version changes and failed platform refreshes affect neither readiness
-nor attention; the owner is alerted (#78).
+nor attention; the owner is alerted (#78). `withdrawn` does not occur in the
+pilot (§7.1).
 
 ### 7.3 Reports
 
@@ -525,7 +624,10 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 
   Replication inside the cluster is a later deployment change and needs no code
   change. DEV/POC may run without the archive and is marked as not meeting this.
-- Pilot pause: triggered by backlog depth; rejects new declarations only.
+- Pilot pause: triggered by backlog depth, while the queued `normal`-priority
+  `process` requests number at least the deployment's threshold (none by
+  default), so a platform refresh's backlog never pauses intake; rejects new
+  declarations only.
 
 ## 10. Workflow start input
 
@@ -537,9 +639,9 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
   "document_uid": "doc_7f3…",
   "source_revision_id": "srv_3",
   "files": [
-    { "path": "policy.md", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/bat_01J…/0/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "text/markdown" }
+    { "path": "policy.pdf", "role": "main", "custody_ref": "s3://kp-custody/documents/doc_7f3…/files/bat_01J…/0/9f2c…", "sha256": "9f2c…", "size": 18342, "media_type": "application/pdf" }
   ],
-  "adopted_version": "md-standard@2",
+  "adopted_version": "paper-pdf@1",
   "adoption_sequence": 7,
   "initiator": "source",
   "priority": "normal",
@@ -575,7 +677,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Item | Value |
 |---|---|
 | Items per declaration | 50 (provisional) |
-| Intake quota per Source | Token bucket, 50 declared items per minute (provisional) |
+| Intake quota per Source | Token bucket of 50 declared items, refilled at 50 per minute (provisional). A declaration takes one token per item when it commits; with too few it is `429` and `Retry-After` is when there will be enough |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
 | Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |
@@ -597,13 +699,13 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | `UNAUTHENTICATED` | request | 401 |
 | `PERMISSION_DENIED` | request | 403 |
 | `NOT_FOUND` | request | 404 |
-| `BATCH_EXPIRED`, `BATCH_FINALIZED`, `IDEMPOTENCY_IN_PROGRESS` | request | 409 |
+| `BATCH_EXPIRED`, `BATCH_FINALIZED` | request | 409 |
 | `LENGTH_REQUIRED` | request | 411 |
 | `ALL_ITEMS_REJECTED`, `IDEMPOTENCY_KEY_REUSED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` | request | 422 |
 | `RATE_LIMITED` | request | 429 |
 | `AUTHZ_UNAVAILABLE`, `ADMISSION_PAUSED`, `UNAVAILABLE` | request | 503 |
 | `INVALID_ARGUMENT`, `FILE_TOO_LARGE`, `UNSUPPORTED_FORMAT`, `SOURCE_VERSION_REQUIRED`, `BINDING_CONFLICT`, `RESOURCE_NOT_FOUND`, `RESOURCE_REQUIRED`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, declaration | — |
-| `DOCUMENT_DELETED`, `STALE_DECLARATION`, `FILES_MISSING` | item, finalization | — |
+| `INVALID_ARGUMENT`, `DOCUMENT_DELETED`, `STALE_DECLARATION`, `RESOURCE_NOT_FOUND`, `FILES_MISSING`, `UNSUPPORTED_FORMAT`, `STALE_SOURCE_VERSION`, `VERSION_CONFLICT` | item, finalization | — |
 
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
@@ -630,10 +732,16 @@ ended without an error block, such as terminated or timed out (§9).
 - Its own PostgreSQL database, deployed without an operator: one instance on a
   persistent volume, continuous write-ahead-log archiving and a scheduled base
   backup to object storage (§9). Custody belongs to #57; topology and
-  configuration loading to #78.
+  configuration loading to #78. This is the pilot's database (user ruling,
+  2026-11-17,
+  [#78](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6949497546)):
+  before the PROD release admission moves to the company-managed MongoDB
+  ([#239](https://github.com/davidlinnnn/data-ingestion/issues/239)), which
+  rewrites §3, §9 and this item.
 - Uploads are written to the custody bucket (§5.2, §10). Admission writes source
-  files there and deletes those of rejected and expired items; it changes
-  nothing else in the bucket.
+  files there and deletes those of the items that created no Source Revision,
+  with the incomplete uploads under their keys (§6.2); it changes nothing else
+  in the bucket.
 - The `api` role carries upload bytes (§5.2): it streams each body into storage
   in parts and never holds a whole file in memory. On the upload route the
   ingress must allow bodies up to the maximum file size, pass the body through
@@ -659,9 +767,12 @@ ended without an error block, such as terminated or timed out (§9).
 
 | Ticket | Scope | Depends on |
 |---|---|---|
-| I1 Admission core | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | #78, #80, #91 |
-| I2 Batch API | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184 |
-| I2b File upload | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
-| I3 Status | §5.5–§5.7, §7, report intake | I1, #55, #126 |
-| I4 Deletion and retry | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I3, #55, #56 |
-| I5 Validation harness | §13 tiers | I1–I4, #78 |
+| I1 Admission core (#95, done) | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | — |
+| I2 Batch API (#96) | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184, #204, #114 |
+| I2b File upload (#194) | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
+| I3 Status (#97) | §5.5–§5.7, §7, report intake | I1, #55, #126 |
+| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, #55, #126 |
+| I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
+
+The dependencies follow the tracker's edges as of 2026-11-18, without the
+closed prototype #236; where the two differ, the tracker is current. The Resource API of §5.1 is #114 (done).
