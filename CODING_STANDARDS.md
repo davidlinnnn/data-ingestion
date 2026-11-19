@@ -62,6 +62,10 @@ Processing Result, Enrichment Status, …), so code, docs and tickets share one 
   the event loop, a counter per operation and outcome, and every failure visible as a status
   code or a metric. The log line of a failed call carries the trace id and the calling
   service's name.
+- A response carries only what its caller may read. An exception's text, an internal endpoint
+  or an object key stays in the platform's own records; a Source sees a platform failure as
+  its reason code and `support_ref`, with a fixed message
+  (`kp_admission.status.PLATFORM_FAILURE`).
 
 ## Logs and metrics
 
