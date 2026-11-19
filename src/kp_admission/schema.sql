@@ -29,7 +29,8 @@ CREATE TABLE document (
     current_source_revision_id    text,
     current_canonical_revision_id text,
     -- Set with each Source Revision finalization creates; §6.3 orders against it.
-    latest_source_revision_id     text
+    latest_source_revision_id     text,
+    created_at                    timestamptz NOT NULL DEFAULT now()
 );
 
 -- A source_id is unique per tenant, so a Source is (tenant_id, source_id).
@@ -69,6 +70,10 @@ CREATE TABLE request (
     updated_at         timestamptz NOT NULL DEFAULT now(),
     terminal_at        timestamptz,
     error              jsonb,
+    -- The current attempt, the run the dispatcher started (#97); only its reports count.
+    attempt_id         text,
+    last_report        jsonb,  -- the current attempt's last status report taken
+    reported_at        timestamptz,  -- when it was taken
     CHECK (
         (kind = 'process' AND state IN ('queued', 'processing', 'succeeded', 'failed')
          AND source_revision_id IS NOT NULL AND adopted_version IS NOT NULL

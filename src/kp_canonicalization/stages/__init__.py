@@ -101,14 +101,18 @@ class ProcessingFailure(Exception):
 
 
 def error_block(details: dict[str, Any], occurred_at: str, support_ref: str) -> dict[str, Any]:
-    """AIP-193 error block for the failure report and the failed status report. The category
-    goes into metadata."""
+    """AIP-193 error block for the failure report and the failed status report. The cause, which
+    admission reads (#97: source is a rejection), and the category go into metadata."""
     return {
         "domain": ERROR_DOMAIN,
         "reason": details["reason"],
         "message": details["message"],
         "retryable": details["retryable"],
-        "metadata": {"category": details["category"], **details["metadata"]},
+        "metadata": {
+            "cause": details["cause"],
+            "category": details["category"],
+            **details["metadata"],
+        },
         "support_ref": support_ref,
         "occurred_at": occurred_at,
     }

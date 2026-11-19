@@ -17,7 +17,12 @@ from tests.admission.support import queue, request, revision, runs
 
 pytestmark = pytest.mark.docker
 
-ERROR = {"domain": "kp-canonicalization", "reason": "PASSWORD_REQUIRED", "retryable": False}
+ERROR = {
+    "domain": "kp-canonicalization",
+    "reason": "PASSWORD_REQUIRED",
+    "retryable": False,
+    "metadata": {"cause": "source", "category": "source"},
+}
 
 
 @workflow.defn(name="paper-pdf")
@@ -39,25 +44,31 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
     }
     for name in ("terminated", "running"):  # on a queue that no worker polls
         ids[name] = (await request(conn, *await revision(conn), adopted_version="paper-pdf@9"))[0]
-    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 4
+    # A platform refresh that fails leaves its Source Revision's outcome alone (spec §3).
+    ids["refresh"] = (
+        await request(conn, *await revision(conn), trace_id="failed", initiator="platform")
+    )[0]
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 5
     async with Worker(
         temporal, task_queue=queue("paper-pdf@1"), workflows=[CannedWorkflow],
         workflow_runner=UnsandboxedWorkflowRunner(),
     ):  # fmt: skip
-        for name in ("complete", "failed"):
+        for name in ("complete", "failed", "refresh"):
             await temporal.get_workflow_handle(ids[name]).result()
     await temporal.get_workflow_handle(ids["terminated"]).terminate()
 
-    assert await reconcile(conn, temporal) == Counter(recorded=3, running=1)
+    assert await reconcile(conn, temporal) == Counter(recorded=4, running=1)
 
     cursor = await conn.execute(
-        "SELECT request_id, state, terminal_at IS NOT NULL, error FROM request"
+        "SELECT request_id, state, terminal_at IS NOT NULL, error, outcome"
+        " FROM request JOIN source_revision USING (source_revision_id)"
     )
     by_id = {row[0]: row[1:] for row in await cursor.fetchall()}
-    assert by_id[ids["complete"]] == ("succeeded", True, None)
-    assert by_id[ids["failed"]] == ("failed", True, ERROR)
-    state, ended, error = by_id[ids["terminated"]]
-    assert (state, ended) == ("failed", True)
+    assert by_id[ids["complete"]] == ("succeeded", True, None, "pending")  # accepted is #251's
+    assert by_id[ids["failed"]] == ("failed", True, ERROR, "rejected")
+    assert by_id[ids["refresh"]] == ("failed", True, ERROR, "pending")
+    state, ended, error, outcome = by_id[ids["terminated"]]
+    assert (state, ended, outcome) == ("failed", True, "failed")
     assert {key: error[key] for key in ("domain", "reason", "retryable", "metadata")} == {
         "domain": "admission.knowledge-platform",
         "reason": "WORKFLOW_ENDED_WITHOUT_RESULT",
@@ -65,7 +76,7 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
         "metadata": {"status": "TERMINATED"},
     }
     assert error["occurred_at"].endswith("Z")
-    assert by_id[ids["running"]] == ("queued", False, None)
+    assert by_id[ids["running"]] == ("queued", False, None, "pending")
     assert await reconcile(conn, temporal) == Counter(running=1)
 
 

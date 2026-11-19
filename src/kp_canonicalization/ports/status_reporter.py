@@ -1,5 +1,5 @@
 """StatusReporter port: the sending side of the #31 round-3 status contract (#129, admission
-integration). The report fields are fixed; the HTTP wrapping is provisional until #97."""
+integration). The receiver is admission's status report intake (#97, admission spec §7.3)."""
 
 from dataclasses import asdict, dataclass
 from typing import Any, Literal, Protocol
@@ -68,11 +68,12 @@ class RecordingStatusReporter:
 
 
 class HttpStatusReporter:
-    """Provisional HTTP wrapping, to be revisited when #97 fixes it:
-    POST {base_url}/v1/requests/{request_id}/status-reports with report.to_json().
+    """POST {base_url}/report/v1/requests/{request_id}/status-reports with report.to_json(), with
+    the headers of `client`, which carry the pipeline's credential (admission spec §7.3).
     2xx -> delivered. 409 -> not delivered; the body {"attempt_id", "seq"} is the receiver's
-    current position. Anything else (other status, transport error, timeout, unreadable
-    409 body) -> not delivered with an error string; nothing is raised."""
+    current position. Anything else (other status, 503 before the receiver knows the attempt,
+    transport error, timeout, unreadable 409 body) -> not delivered with an error string;
+    nothing is raised."""
 
     def __init__(self, client: httpx.AsyncClient, base_url: str) -> None:
         self.client = client
@@ -81,7 +82,7 @@ class HttpStatusReporter:
     async def report(self, report: StatusReport) -> ReportOutcome:
         try:
             response = await self.client.post(
-                f"{self.base_url}/v1/requests/{report.request_id}/status-reports",
+                f"{self.base_url}/report/v1/requests/{report.request_id}/status-reports",
                 json=report.to_json(),
             )
             if response.is_success:

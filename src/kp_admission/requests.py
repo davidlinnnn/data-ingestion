@@ -1,9 +1,11 @@
-"""Process requests and their outbox rows (admission spec §3, §9)."""
+"""Process requests, their outbox rows and their outcomes (admission spec §3, §9)."""
 
 import uuid
-from typing import Literal
+from datetime import datetime
+from typing import Any, Literal
 
 from psycopg import AsyncConnection
+from psycopg.types.json import Jsonb
 
 _INSERT = """
 INSERT INTO request (request_id, tenant_id, kind, document_uid, source_revision_id, state,
@@ -65,3 +67,47 @@ async def create_process_request(
             if active := await (await conn.execute(_ACTIVE, params)).fetchone():
                 return active[0], False
             # The active request ended between the two statements: insert again.
+
+
+_END = """
+UPDATE request SET state = %s, terminal_at = %s, error = %s, updated_at = now()
+WHERE request_id = %s AND kind = 'process' AND state IN ('queued', 'processing')
+RETURNING initiator, source_revision_id
+"""
+
+# An accepted revision stays accepted: a later run that fails does not undo the acceptance.
+_OUTCOME = """
+UPDATE source_revision SET outcome = %s WHERE source_revision_id = %s AND outcome <> 'accepted'
+"""
+
+
+async def record_outcome(
+    conn: AsyncConnection,
+    request_id: str,
+    state: Literal["succeeded", "failed"],
+    error: dict[str, Any] | None,
+    terminal_at: datetime | None,
+) -> bool:
+    """Ends a queued or processing process request with `state` and `error`, the status report's or
+    the workflow's error block, in one transaction, and returns whether it did; an ended request
+    keeps its outcome. Unless the request is a platform refresh (§3), its Source Revision's outcome
+    follows: succeeded makes it pending, which #251 turns into accepted; failed with
+    error.metadata.cause "source" makes it rejected, any other failure failed. An accepted
+    revision keeps its outcome."""
+    async with conn.transaction():
+        ended = await (
+            await conn.execute(_END, (state, terminal_at, error and Jsonb(error), request_id))
+        ).fetchone()
+        if ended is None:
+            return False
+        initiator, source_revision_id = ended
+        if initiator != "platform":
+            await conn.execute(_OUTCOME, (revision_outcome(state, error), source_revision_id))
+    return True
+
+
+def revision_outcome(state: str, error: dict[str, Any] | None) -> str:
+    if state == "succeeded":
+        return "pending"
+    cause = ((error or {}).get("metadata") or {}).get("cause")
+    return "rejected" if cause == "source" else "failed"

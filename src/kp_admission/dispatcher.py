@@ -15,9 +15,10 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from kp_canonicalization.workflow import SEARCH_ATTRIBUTES, WORKFLOW, priority
 
-StartWorkflow = Callable[[dict[str, Any]], Awaitable[None]]
-"""Starts the workflow of a §10 start input with workflow ID = its request_id. It returns
-normally when that workflow exists already and raises when it cannot tell that it started."""
+StartWorkflow = Callable[[dict[str, Any]], Awaitable[str]]
+"""Starts the workflow of a §10 start input with workflow ID = its request_id and returns its run
+ID, or that of the run under that ID when one exists already; raises when it cannot tell that it
+started."""
 
 # Provisional until the cluster-tier Temporal outage run (§13).
 BACKOFF_CAP_S = 60
@@ -59,6 +60,11 @@ _DISPATCHED = """
 UPDATE outbox SET attempts = attempts + 1, dispatched_at = now() WHERE request_id = %s
 """
 
+# Its run is the current attempt, whose status reports count from here (#97).
+_ATTEMPT = """
+UPDATE request SET attempt_id = %s, last_report = NULL, reported_at = NULL WHERE request_id = %s
+"""
+
 # clock_timestamp(), not now(): the backoff starts when the start failed, not when the
 # transaction began, which can be rpc_timeout earlier. 2 ^ attempts overflows past 1023.
 _RETRY = """
@@ -95,12 +101,13 @@ async def dispatch_due(
                 return dispatched
             request_id = start_input["request_id"]
             try:
-                await start(start_input)
+                run_id = await start(start_input)
             except Exception:
                 log.warning("starting %s failed; it waits and retries", request_id, exc_info=True)
                 await conn.execute(_RETRY, (BACKOFF_CAP_S, request_id))
                 return dispatched  # Temporal is likely down: the next row would fail too
             await conn.execute(_DISPATCHED, (request_id,))
+            await conn.execute(_ATTEMPT, (run_id, request_id))
         dispatched += 1
 
 
@@ -112,9 +119,9 @@ def temporal_start(
     """The StartWorkflow of the canonical workflow on `client`, with REJECT_DUPLICATE, on the task
     queue task_queue(adopted_version), giving up after rpc_timeout."""
 
-    async def start(start_input: dict[str, Any]) -> None:
+    async def start(start_input: dict[str, Any]) -> str:
         try:
-            await client.start_workflow(
+            handle = await client.start_workflow(
                 WORKFLOW,
                 start_input,
                 id=start_input["request_id"],
@@ -129,7 +136,12 @@ def temporal_start(
                 id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
                 rpc_timeout=rpc_timeout,
             )
-        except WorkflowAlreadyStartedError:
-            pass
+        except WorkflowAlreadyStartedError as started:
+            if started.run_id:
+                return started.run_id
+            handle = client.get_workflow_handle(start_input["request_id"])
+            return (await handle.describe(rpc_timeout=rpc_timeout)).run_id
+        assert handle.first_execution_run_id
+        return handle.first_execution_run_id
 
     return start

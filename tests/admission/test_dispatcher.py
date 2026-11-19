@@ -48,10 +48,11 @@ async def test_the_dispatcher_starts_the_canonical_workflow_with_the_start_input
         "trace_id": "4bf92f3577b34da6",
     }
     cursor = await conn.execute(
-        "SELECT attempts, dispatched_at IS NOT NULL FROM outbox WHERE request_id = %s",
+        "SELECT attempts, dispatched_at IS NOT NULL, attempt_id FROM outbox JOIN request"
+        " USING (request_id) WHERE request_id = %s",
         (request_id,),
     )
-    assert await cursor.fetchone() == (1, True)
+    assert await cursor.fetchone() == (1, True, described.run_id)
     assert await dispatch_due(conn, temporal_start(temporal, queue)) == 0
     assert await runs(temporal, request_id) == 1
 
@@ -64,7 +65,7 @@ async def test_a_row_one_dispatcher_holds_does_not_block_another(conn, dsn, temp
     async def held_start(start_input):
         holding.set()
         await release.wait()
-        await real(start_input)
+        return await real(start_input)
 
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as other:
         first = asyncio.create_task(dispatch_due(conn, held_start))
@@ -143,13 +144,19 @@ async def test_redispatching_an_ended_workflow_starts_nothing_and_a_duplicate_wo
     request_id, _ = await request(conn, *await revision(conn))
     start = temporal_start(temporal, queue)
     assert await dispatch_due(conn, start) == 1
-    await temporal.get_workflow_handle(request_id).terminate()
+    handle = temporal.get_workflow_handle(request_id)
+    await handle.terminate()
 
     await conn.execute(
         "UPDATE outbox SET dispatched_at = NULL WHERE request_id = %s", (request_id,)
     )
+    await conn.execute("UPDATE request SET attempt_id = NULL WHERE request_id = %s", (request_id,))
     assert await dispatch_due(conn, start) == 1  # REJECT_DUPLICATE: already started counts
     assert await runs(temporal, request_id) == 1
+    cursor = await conn.execute(
+        "SELECT attempt_id FROM request WHERE request_id = %s", (request_id,)
+    )
+    assert await cursor.fetchone() == ((await handle.describe()).run_id,)  # the run it started
 
     # Negative control: runs() counts ended runs, so a second run under the ID shows as 2.
     await temporal.start_workflow(
