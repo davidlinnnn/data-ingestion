@@ -63,7 +63,7 @@ Logical records; the physical schema is I1's.
 
 | Record | Key fields | Notes |
 |---|---|---|
-| `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at` | The history of one submission |
+| `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at`, `cleaned_at` (its upload cleanup done, §6.2) | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last |
 | `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
@@ -220,7 +220,8 @@ Response `201`:
 
 Each `uploads[]` entry names the platform endpoint of §5.2 for one file; it is
 valid until the batch is finalized or expires. `url` is an absolute URL on
-the origin the client called and `method` is `PUT`. A client uploads to the
+the platform's public origin, the one Sources call (a deployment setting, not
+the address a request reached), and `method` is `PUT`. A client uploads to the
 `url` as returned and does not build it, sends its credential to that origin
 only, and ignores response fields it does not know, so that a later version can
 add one (API review of 2026-11-19, recorded in the
@@ -259,7 +260,7 @@ One request per file listed in the item's `uploads`, authenticated with the
 Source credential like every other call; there is no separate upload grant.
 `{path}` is the declared file path. `Content-Length` is required and must equal
 the declared `size`; `Content-Type` may carry the declared `media_type`, and its
-value is not checked (the platform detects the type itself). The body is the
+value is not checked (the platform checks the bytes, below). The body is the
 file's bytes in one request:
 no multipart form, no chunked encoding, no resumption.
 
@@ -276,9 +277,19 @@ a staged file is one in place and not yet admitted. Outcomes:
 | `Content-Length`, or the bytes received, differ from the declared `size` | `400 SIZE_MISMATCH`; nothing is staged |
 | SHA-256 differs from the declaration | `422 DIGEST_MISMATCH`; nothing is staged |
 | Detected media type differs from the declaration | `422 MEDIA_TYPE_MISMATCH`; nothing is staged |
+| Storage or the database does not answer during the upload | `503 UNAVAILABLE` with `Retry-After`; the file may be staged or not; repeating the whole request is safe either way |
 | Batch finalized | `409 BATCH_FINALIZED` |
 | Batch expired | `409 BATCH_EXPIRED` |
-| Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` |
+| Unknown batch or item, or a path not in the item's `uploads` (carried-over files included) | `404` (a `{batch_id}` or `{index}` that is not one, `400 INVALID_ARGUMENT`) |
+
+The platform detects the media types whose leading bytes have a fixed signature:
+`application/pdf` (its header within the first 1024 bytes), `image/png`,
+`image/jpeg`, `image/gif`, `image/webp` and `image/tiff`. A declared type that it
+detects must be the detected one; a declared type that it cannot detect, such as
+`text/markdown`, stands unless the bytes begin with a type it detects (user ruling of 2026-11-19,
+[#194](https://github.com/davidlinnnn/data-ingestion/issues/194)). The main
+file's media type selects the Processing Profile (§3), so an adopted main-file
+format without a signature is routed by the Source's declaration.
 
 A repeated `PUT` of the same path changes nothing: a staged file already holds
 the declared bytes. Files of one item, and of different
@@ -728,8 +739,9 @@ ended without an error block, such as terminated or timed out (§9).
   ([#239](https://github.com/davidlinnnn/data-ingestion/issues/239)), which
   rewrites §3, §9 and this item.
 - Uploads are written to the custody bucket (§5.2, §10). Admission writes source
-  files there and deletes those of rejected and expired items; it changes
-  nothing else in the bucket.
+  files there and deletes those of the items that created no Source Revision,
+  with the incomplete uploads under their keys (§6.2); it changes nothing else
+  in the bucket.
 - The `api` role carries upload bytes (§5.2): it streams each body into storage
   in parts and never holds a whole file in memory. On the upload route the
   ingress must allow bodies up to the maximum file size, pass the body through

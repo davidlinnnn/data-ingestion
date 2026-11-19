@@ -379,3 +379,16 @@ async def test_an_empty_page_with_a_next_cursor_is_not_the_end_of_the_list():
                 break
 
     assert pages == [(["res_01"], True), ([], True), (["res_02"], False)]
+
+
+def test_an_upload_access_line_leaves_out_the_file_path(json_log):
+    access = logging.getLogger("uvicorn.access")
+    path = "/v1/batches/bat_1/items/0/files/hr/salaries-2026.pdf"
+    access.info('%s - "%s %s HTTP/%s" %d', "10.0.0.7:5100", "PUT", path, "1.1", 204)
+    access.info('%s - "%s %s HTTP/%s" %d', "10.0.0.7:5100", "GET", "/v1/batches/bat_1", "1.1", 200)
+
+    lines = [line["message"] for line in json_log()]
+    assert lines == [
+        '10.0.0.7:5100 - "PUT /v1/batches/bat_1/items/0/files/… HTTP/1.1" 204',
+        '10.0.0.7:5100 - "GET /v1/batches/bat_1 HTTP/1.1" 200',
+    ]

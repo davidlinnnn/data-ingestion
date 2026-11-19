@@ -1,6 +1,6 @@
 """kp-admission command line: the api, dispatcher and reconciler roles (#95, #113, admission
 spec §13), Change Feed retention and the Knowledge Profile write point (#126), batch expiry and
-the two adoption commands (#96, admission spec §3).
+the two adoption commands (#96, admission spec §3), the upload cleanup (#194).
 
 The database comes from KP_ADMISSION_DATABASE_URL; Temporal from TEMPORAL_ADDRESS (default
 localhost:7233) and TEMPORAL_NAMESPACE (default "default"), as for kp-canonicalization.
@@ -16,6 +16,7 @@ import signal
 import sys
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlsplit
 
 import prometheus_client
 import psycopg
@@ -23,7 +24,7 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, batches, feed
+from kp_admission import adoption, batches, feed, uploads
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -61,6 +62,10 @@ def main(argv: list[str] | None = None) -> int:
     credentials need s3:ListBucket, without which S3 answers a missing object with 403.
     KP_MAX_FILE_SIZE is the maximum file size in bytes (default 50 MB); with KP_PAUSE_BACKLOG,
     declarations are refused while that many normal-priority process requests are queued.
+    KP_ADMISSION_PUBLIC_URL is the https origin Sources call through the ingress, such as
+    https://kp.example: every upload URL a declaration returns names it (§5.1), whatever headers
+    the ingress forwards. The api also writes uploads (§5.2), so its storage credentials need
+    s3:PutObject and s3:AbortMultipartUpload as well.
     It starts while the database or storage is down; decisions are then unavailable.
 
     `kp-admission dispatcher`: start the workflows of due outbox rows, looking every POLL_S
@@ -75,8 +80,13 @@ def main(argv: list[str] | None = None) -> int:
     `kp-admission set-profile --tenant T SOURCE [PROJECTION ...]`: set the Source's Knowledge
     Profile, the Projection Types it requires, and print its profile_seq as JSON.
 
-    `kp-admission expire`: one batch expiry run, the hourly CronJob: every batch open 24 hours is
-    expired (§11). It prints how many, as JSON.
+    `kp-admission expire`: one batch expiry and upload cleanup run, the hourly CronJob: every
+    batch open 24 hours is expired (§11), then the uploads not admitted of every batch that ended
+    an hour before are deleted and its incomplete uploads aborted (§6.2,
+    kp_admission.uploads.clean). It prints how many batches it expired, cleaned and left to the
+    next run because storage failed, as JSON, and fails (exit 1) when it left any. It takes the
+    custody bucket's settings as the api does; its credentials need s3:DeleteObject,
+    s3:AbortMultipartUpload and s3:ListBucketMultipartUploads.
 
     `kp-admission adopt --tenant T MEDIA_TYPE VERSION` and `kp-admission cancel-adoption --tenant
     T MEDIA_TYPE VERSION`: the Processing Profile owner's adoption commands (§3). Adopting
@@ -145,15 +155,25 @@ def main(argv: list[str] | None = None) -> int:
         if not all(v.isdecimal() for v in limits.values() if v):
             print("KP_MAX_FILE_SIZE and KP_PAUSE_BACKLOG must be numbers", file=sys.stderr)
             return 2
-        storage = ("KP_S3_ENDPOINT", "KP_S3_BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
-        if not all(os.environ.get(k) for k in storage):
-            print(f"{', '.join(storage)} are required", file=sys.stderr)
+        if not _storage_set():
+            return 2
+        public = urlsplit(os.environ.get("KP_ADMISSION_PUBLIC_URL", ""))
+        if (
+            public.scheme != "https"
+            or not public.hostname
+            or "@" in public.netloc
+            or public.path not in ("", "/")
+            or public.query
+            or public.fragment
+        ):
+            print("KP_ADMISSION_PUBLIC_URL must be an https origin", file=sys.stderr)
             return 2
         intake = batches.Intake(
             S3ObjectStore.from_env(),
             sources,
             int(limits["KP_MAX_FILE_SIZE"] or batches.MAX_FILE_SIZE),
             int(limits["KP_PAUSE_BACKLOG"]) if limits["KP_PAUSE_BACKLOG"] else None,
+            f"{public.scheme}://{public.netloc}",
         )
         log_json_lines(RequestLog())
         if args.metrics_port is not None:
@@ -167,8 +187,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.role in ("adopt", "cancel-adoption"):
         return asyncio.run(run_adoption(dsn, args.tenant, args.role, args.media_type, args.version))
     if args.role == "expire":
-        return asyncio.run(run_expiry(dsn))
+        return asyncio.run(run_expiry(dsn)) if _storage_set() else 2
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
+
+
+def _storage_set() -> bool:
+    storage = ("KP_S3_ENDPOINT", "KP_S3_BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+    if all(os.environ.get(k) for k in storage):
+        return True
+    print(f"{', '.join(storage)} are required", file=sys.stderr)
+    return False
 
 
 async def run_api(
@@ -241,8 +269,10 @@ async def run_reconciler(dsn: str) -> int:
 
 async def run_expiry(dsn: str) -> int:
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
-        print(json.dumps({"expired": await batches.expire(conn)}))
-    return 0
+        expired = await batches.expire(conn)
+        cleaned, left = await uploads.clean(conn, S3ObjectStore.from_env())
+    print(json.dumps({"expired": expired, "cleaned": cleaned, "left": left}))
+    return 1 if left else 0
 
 
 async def run_adoption(

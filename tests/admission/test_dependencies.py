@@ -15,7 +15,7 @@ def loaded(module: str) -> set[str]:
     return set(out.stdout.split()) & PARSING
 
 
-@pytest.mark.parametrize("module", ["kp_admission.cli", "kp_admission.api"])
+@pytest.mark.parametrize("module", ["kp_admission.cli", "kp_admission.api", "kp_sdk"])
 def test_the_admission_roles_load_no_parsing_dependency(module):
     assert loaded(module) == set()
 

@@ -48,9 +48,10 @@ from pydantic import BaseModel, Field, TypeAdapter
 from pydantic.json_schema import SkipJsonSchema
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.exceptions import HTTPException
+from starlette.requests import ClientDisconnect
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission import batches, feed, resources
+from kp_admission import batches, feed, resources, uploads
 from kp_admission.authz import PAGE_SIZE, Action, Authorizer, Decision, Operation, Outcome, Ref
 from kp_admission.errors import ErrorStatus, Refused
 from kp_admission.resources import Resource
@@ -73,6 +74,7 @@ RETRY_AFTER_S = 1
 # RequestLog writes it onto each line as it is.
 _request: ContextVar[dict[str, str]] = ContextVar("request")
 # W3C Trace Context §3.2: version 00 has exactly these fields; a later one may append more (§3.2.4).
+_FILE_PATH = re.compile(r"^(/v1/batches/[^/]+/items/[^/]+/files/).+")
 _TRACEPARENT = re.compile(
     r"(?!ff)([0-9a-f]{2})-(?!0{32})([0-9a-f]{32})-(?!0{16})[0-9a-f]{16}-[0-9a-f]{2}(-.*)?"
 )
@@ -261,10 +263,17 @@ def trace_id() -> str:
 
 class RequestLog(logging.Filter):
     """Adds the trace_id of the request being served, and its x_request_id and pep when known, to
-    each record logged while it is served, as the `correlation` extra JsonFormatter writes."""
+    each record logged while it is served, as the `correlation` extra JsonFormatter writes; and
+    leaves the file path out of an upload's access line."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.__dict__["correlation"] = _request.get({}) | getattr(record, "correlation", {})
+        # uvicorn's access line is (client, method, path, version, status); a file path stays out.
+        if record.name == "uvicorn.access" and isinstance(record.args, tuple):
+            record.args = tuple(
+                _FILE_PATH.sub(r"\1…", a) if i == 2 and isinstance(a, str) else a
+                for i, a in enumerate(record.args)
+            )
         return True
 
 
@@ -550,7 +559,7 @@ def app(
             _caller(),
             body.items,
             idempotency_key,
-            str(request.base_url),
+            intake.public_url or str(request.base_url),
         )
         return _answer(status, answer)
 
@@ -562,6 +571,35 @@ def app(
     async def finalize(batch_id: Annotated[str, Path(max_length=64)]) -> JSONResponse:
         """Finalizes a batch (admission spec §5.3, §6.2); repeating it returns the batch."""
         return _answer(*await batches.finalize(pool, authorizer, intake, _caller(), batch_id))
+
+    @v1.put(
+        "/batches/{batch_id}/items/{index}/files/{path:path}",
+        status_code=204,
+        response_class=Response,
+        responses={"204": traced | {"description": "Staged"}},
+    )
+    async def upload_file(
+        batch_id: Annotated[str, Path(max_length=64)],
+        index: int,
+        path: Annotated[str, Path(description="The declared file path")],
+        request: Request,
+    ) -> Response:
+        """Stages one declared file; the body is its bytes (admission spec §5.2)."""
+        try:
+            await uploads.receive(
+                pool,
+                intake.store,
+                _caller(),
+                batch_id,
+                index,
+                path,
+                request.headers.get("content-length"),
+                request.stream(),
+            )
+        except ClientDisconnect:
+            log.warning("upload interrupted", extra={"correlation": {"batch_id": batch_id}})
+            return Response(status_code=499)  # never sent; counted as the interrupted upload
+        return Response(status_code=204)
 
     @v1.get("/batches/{batch_id}", response_model=BatchView)
     async def get_batch(batch_id: Annotated[str, Path(max_length=64)]) -> JSONResponse:

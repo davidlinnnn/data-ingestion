@@ -9,7 +9,9 @@ CREATE TABLE batch (
     state        text NOT NULL CHECK (state IN ('open', 'finalized', 'expired')),
     created_at   timestamptz NOT NULL DEFAULT now(),
     expires_at   timestamptz NOT NULL,
-    finalized_at timestamptz
+    finalized_at timestamptz,
+    -- Its uploads not admitted are deleted (§6.2); retention keeps the batch until then (§11).
+    cleaned_at   timestamptz
 );
 
 CREATE TABLE document (

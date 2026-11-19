@@ -722,7 +722,7 @@ records the decisions and their reasons. Rounds 1–3 call the logical object
   `uploaded_by`, `metadata`, `title` and `source_url`. Exactly one file has role
   `main`; paths are unique within the item. An unsupported main-file format is
   rejected at declaration (`UNSUPPORTED_FORMAT`); `media_type` is verified at
-  finalization.
+  upload (§5.2 of the spec, #194).
 - Item results carry `index`, `document_id`, `document_uid`, `status`,
   `request_id`, `source_revision_id` and `error`.
 - `title` and `source_url` are used by the platform for citations and display.

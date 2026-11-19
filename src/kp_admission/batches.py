@@ -75,12 +75,14 @@ class SourceSettings(BaseModel, frozen=True, extra="forbid"):
 class Intake:
     """The deployment's settings of the batch API. Declarations pause while at least
     `pause_backlog` normal-priority process requests are queued (§9), never without it: a
-    platform refresh's low-priority backlog never pauses intake."""
+    platform refresh's low-priority backlog never pauses intake. `public_url` is the origin
+    Sources call, which every upload URL names (§5.1); without it, the URL the request reached."""
 
     store: ObjectStore
     sources: Mapping[str, SourceSettings] = field(default_factory=dict)
     max_file_size: int = MAX_FILE_SIZE
     pause_backlog: int | None = None
+    public_url: str | None = None
 
 
 class DeclaredFile(BaseModel):
@@ -641,9 +643,7 @@ def _resource(
 
 
 def _upload_url(base: str, batch_id: str, index: int, path: str) -> str:
-    # shortcut: `base` is the URL the request reached; behind the ingress it is the public one only
-    # when uvicorn trusts the forwarded headers (#78), else set a public base URL.
-    return f"{base}v1/batches/{batch_id}/items/{index}/files/{quote(path)}"
+    return f"{base.rstrip('/')}/v1/batches/{batch_id}/items/{index}/files/{quote(path)}"
 
 
 async def declare(
