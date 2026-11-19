@@ -29,6 +29,9 @@ UPDATE outbox SET dispatched_at = NULL, available_at = now(), redispatch_reason 
 WHERE request_id = %s
 """
 
+# Until the dispatcher records the next run, reports wait (#97): none of the lost run's count.
+_NO_ATTEMPT = "UPDATE request SET attempt_id = NULL WHERE request_id = %s"
+
 log = logging.getLogger(__name__)
 
 
@@ -37,7 +40,7 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
     processing: a running workflow is left alone; an ended one records the request's outcome,
     succeeded, or failed with the workflow's error block, as requests.record_outcome does; a
     missing one goes back to the outbox, due now under the same request ID, with the reason in
-    redispatch_reason. Returns how many
+    redispatch_reason and no current attempt. Returns how many
     requests went each way: running, recorded, redispatched. An unreachable Temporal or a
     missing namespace raises."""
     actions: Counter[str] = Counter()
@@ -53,7 +56,9 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
             ):
                 raise
             log.warning("workflow %s is missing; it goes back to the outbox", request_id)
-            await conn.execute(_REDISPATCH, (str(err), request_id))
+            async with conn.transaction():
+                await conn.execute(_REDISPATCH, (str(err), request_id))
+                await conn.execute(_NO_ATTEMPT, (request_id,))
             actions["redispatched"] += 1
             continue
         if described.status == WorkflowExecutionStatus.RUNNING:

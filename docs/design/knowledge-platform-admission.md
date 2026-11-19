@@ -609,6 +609,15 @@ per-commit deltas of inclusion facts keyed by (projection, Build, `document_uid`
 on request. See the
 [#55 design record](knowledge-platform-canonical-consumption.md).
 
+Superseded on 2026-11-19 by
+[#97](https://github.com/davidlinnnn/data-ingestion/issues/97): run IDs cannot
+be ordered, so reports are ordered by `seq` within the current attempt only, the
+run admission dispatched; another attempt's report is refused with the current
+position. Registration holds only what the platform acts on: pipeline ID,
+track, stages and the two deadlines. The canonical owner's `cause` travels in
+the error block's `metadata`. See the
+[admission specification §7.3](knowledge-platform-admission-spec.md#73-reports).
+
 ### Error block (Q8.4)
 
 Failed reports carry an error block modeled on AIP-193 `ErrorInfo`: `domain`

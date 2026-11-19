@@ -101,10 +101,13 @@ async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(con
     assert await reconcile(conn, temporal) == Counter(redispatched=1)
 
     cursor = await conn.execute(
-        "SELECT dispatched_at, redispatch_reason FROM outbox WHERE request_id = %s", (request_id,)
+        "SELECT dispatched_at, redispatch_reason, attempt_id FROM outbox JOIN request"
+        " USING (request_id) WHERE request_id = %s",
+        (request_id,),
     )
-    dispatched_at, reason = await cursor.fetchone()
+    dispatched_at, reason, attempt_id = await cursor.fetchone()
     assert dispatched_at is None
+    assert attempt_id is None  # the lost run's reports no longer count
     assert "not found" in reason
     assert await dispatch_due(conn, start) == 1
     assert await runs(temporal, request_id) == 1
