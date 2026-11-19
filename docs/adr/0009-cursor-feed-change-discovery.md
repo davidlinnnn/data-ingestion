@@ -93,8 +93,8 @@ the admission database sets `transaction_timeout` (PostgreSQL 17 and later) and
 `idle_in_transaction_session_timeout`, and operations alert on the age of the
 oldest snapshot xmin. The xmin counts the writing transactions of every
 database on the instance and the timeouts end only those of the admission
-database, so the guard holds while the instance holds no other database, as
-the admission specification §13 deploys it. Consumers treat the cursor as
+database, so the guard holds only where the instance holds no other database
+or sets both timeouts for the whole instance. Consumers treat the cursor as
 opaque. Events
 for one Document may arrive in any order: a transaction takes its ID at its
 first write, so one that wrote elsewhere before it reached the Document is
