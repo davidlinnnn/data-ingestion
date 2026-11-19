@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     KP_ADMISSION_PUBLIC_URL is the https origin Sources call through the ingress, such as
     https://kp.example: every upload URL a declaration returns names it (§5.1), whatever headers
     the ingress forwards. The api also writes uploads (§5.2), so its storage credentials need
-    s3:PutObject, s3:AbortMultipartUpload and s3:ListBucketMultipartUploads.
+    s3:PutObject and s3:AbortMultipartUpload as well.
     It starts while the database or storage is down; decisions are then unavailable.
 
     `kp-admission dispatcher`: start the workflows of due outbox rows, looking every POLL_S
@@ -84,8 +84,8 @@ def main(argv: list[str] | None = None) -> int:
     batch open 24 hours is expired (§11), then the uploads not admitted of every batch that ended
     an hour before are deleted and its incomplete uploads aborted (§6.2,
     kp_admission.uploads.clean). It prints how many batches it expired, cleaned and left to the
-    next run because storage failed, as JSON, and fails (exit 1) when it left any. It reads the
-    custody bucket as the api does; its credentials need s3:DeleteObject,
+    next run because storage failed, as JSON, and fails (exit 1) when it left any. It takes the
+    custody bucket's settings as the api does; its credentials need s3:DeleteObject,
     s3:AbortMultipartUpload and s3:ListBucketMultipartUploads.
 
     `kp-admission adopt --tenant T MEDIA_TYPE VERSION` and `kp-admission cancel-adoption --tenant
