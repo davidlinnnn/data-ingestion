@@ -641,3 +641,111 @@ async def test_concurrent_declarations_with_one_key_create_one_batch(platform, a
     assert {a.status_code for a in answers} == {201}
     assert len({a.json()["batch_id"] for a in answers}) == 1
     assert await (await conn.execute("SELECT count(*) FROM batch")).fetchone() == (1,)
+
+
+# A higher source_version with the same content is §6.4 and records the version (#258).
+C2 = C1 | {"source_version": "2", "title": "Renamed", "metadata": {"km_folder": "HR"}}
+
+
+async def test_a_higher_version_of_processed_content_is_unchanged_and_recorded(seeded, api):
+    async with api() as hr:
+        before = (await hr.get("/v1/documents/C")).json()
+        declared = await hr.post("/v1/batches", json={"items": [C2]})
+        after = (await hr.get("/v1/documents/C")).json()
+
+    entry = of(declared.json(), "C")
+    assert entry["status"] == "unchanged" and "uploads" not in entry and "request_id" not in entry
+    assert declared.json()["state"] == "finalized"
+    assert after["latest"] == before["latest"] | {"source_version": "2"}
+    assert (after["title"], after["metadata"]) == ("Renamed", {"km_folder": "HR"})
+
+
+@pytest.mark.parametrize("outcome", [None, "failed", "rejected"])
+async def test_a_higher_version_of_the_same_content_follows_section_6_4(
+    platform, api, store, conn, outcome
+):
+    """None: v1's request is still queued."""
+    a2 = A | {"source_version": "2", "title": "Renamed"}
+    async with api() as hr:
+        _, finalized = await submit(hr, store, [A])
+        first = of(finalized.json(), "A")["request_id"]
+        if outcome:
+            await processed(conn, first, outcome)
+        before = (await hr.get("/v1/documents/A")).json()
+        entry = of((await hr.post("/v1/batches", json={"items": [a2]})).json(), "A")
+        after = (await hr.get("/v1/documents/A")).json()
+
+    assert "uploads" not in entry
+    srv = before["latest"]["source_revision_id"]
+    assert after["latest"]["source_revision_id"] == srv
+    assert (after["latest"]["source_version"], after["title"]) == ("2", "Renamed")
+    if outcome is None:
+        assert (entry["status"], entry["request_id"]) == ("queued", first)
+    elif outcome == "failed":
+        assert entry["status"] == "queued" and entry["request_id"] != first
+        retry_of = await (
+            await conn.execute(
+                "SELECT retry_of FROM request WHERE request_id = %s", (entry["request_id"],)
+            )
+        ).fetchone()
+        assert retry_of == (first,)
+    else:
+        assert entry["status"] == "unchanged"
+        assert [a["kind"] for a in after["attention"]] == ["source_revision_rejected"]
+        assert after["attention"][0]["source_version"] == "2"
+
+
+async def test_later_items_are_ordered_against_the_recorded_version(seeded, api):
+    def c(version: str, content: str) -> dict[str, Any]:
+        return C1 | {"source_version": version, "files": [file("c.pdf", content, PDF)]}
+
+    async with api() as hr:
+        recorded = of((await hr.post("/v1/batches", json={"items": [C2]})).json(), "C")
+        assert recorded["status"] == "unchanged"
+        answers = [
+            of((await hr.post("/v1/batches", json={"items": [i]})).json(), "C")
+            for i in (c("1", "c-x"), c("2", "c-x"), c("3", "c-x"))
+        ]
+    assert [a.get("error", {}).get("reason") for a in answers] == [
+        "STALE_SOURCE_VERSION",
+        "VERSION_CONFLICT",
+        None,
+    ]
+    assert answers[2]["status"] == "declared" and answers[2]["uploads"]
+
+
+async def test_the_recorded_version_only_grows_and_a_rejected_item_leaves_it(seeded, api):
+    c3 = C1 | {"source_version": "3"}
+    async with api() as hr:
+        await hr.post("/v1/batches", json={"items": [c3]})
+        lower = await hr.post("/v1/batches", json={"items": [C2]})
+        unbound = await hr.post(
+            "/v1/batches", json={"items": [C1 | {"source_version": "4", "resources": ["fin"]}]}
+        )
+        latest = (await hr.get("/v1/documents/C")).json()["latest"]
+
+    assert lower.json()["items"][0]["error"]["reason"] == "STALE_SOURCE_VERSION"
+    assert unbound.json()["items"][0]["error"]["reason"] == "BINDING_CONFLICT"
+    assert latest["source_version"] == "3"
+
+
+async def test_finalization_rechecks_a_higher_version_against_the_then_latest_content(
+    seeded, api, store
+):
+    def c(version: str) -> dict[str, Any]:
+        return C1 | {"source_version": version, "files": [file("c.pdf", "c-y", PDF)]}
+
+    async with api() as hr:
+        later = (await hr.post("/v1/batches", json={"items": [c("3")]})).json()
+        upload(store, later, [c("3")])
+        _, earlier = await submit(hr, store, [c("2")])
+        finalized = await hr.post(f"/v1/batches/{later['batch_id']}/finalize")
+        document = (await hr.get("/v1/documents/C")).json()
+
+    entry, admitted = of(finalized.json(), "C"), of(earlier.json(), "C")
+    assert (entry["status"], entry["request_id"]) == ("queued", admitted["request_id"])
+    assert document["latest"] == {
+        "source_revision_id": admitted["source_revision_id"],
+        "source_version": "3",
+        "request_id": admitted["request_id"],
+    }

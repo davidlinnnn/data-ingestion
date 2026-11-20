@@ -299,6 +299,14 @@ async def _apply_catalog(conn: AsyncConnection, uid: str, item: dict[str, Any]) 
     )
 
 
+async def _record_version(conn: AsyncConnection, srv: str, version: str) -> None:
+    """§6.4: a higher source_version of the same content becomes its Source Revision's."""
+    await conn.execute(
+        "UPDATE source_revision SET source_version = %s WHERE source_revision_id = %s",
+        (version, srv),
+    )
+
+
 async def _lock_resource(conn: AsyncConnection, full_id: str) -> bool:
     """Locks the Resource's row against its deletion, which locks it FOR UPDATE, so a document is
     never left bound to a deleted Resource (#114, authorization guide §4.6); shared, so bindings
@@ -556,8 +564,8 @@ def _content(files: list[dict]) -> set[tuple[str, str]]:
 
 
 def _order(item: dict[str, Any], latest: dict | None, ordering: str) -> str | None:
-    """§6.3 against the latest Source Revision: a rejection reason, "same" for §6.4, or None
-    when the item makes a new Source Revision."""
+    """§6.3 against the latest Source Revision: a rejection reason, "same" or "newer" (a higher
+    source_version) for §6.4, or None when the item makes a new Source Revision."""
     if latest is None:
         return None
     same = _content(item["files"]) == _content(latest["files"])
@@ -569,9 +577,9 @@ def _order(item: dict[str, Any], latest: dict | None, ordering: str) -> str | No
     assert new is not None and old is not None
     if new < old:  # type: ignore[operator]
         return "STALE_SOURCE_VERSION"
+    if same:
+        return "same" if new == old else "newer"
     if new == old:
-        if same:
-            return "same"
         return None if latest["outcome"] == "rejected" else "VERSION_CONFLICT"
     return None
 
@@ -583,12 +591,15 @@ async def _same_content(
     item: dict[str, Any],
     batch_id: str,
     adopted: tuple[str, int],
+    order: str,
 ) -> _Outcome:
-    """§6.4, with the catalog fields applied in every case."""
+    """§6.4, with the catalog fields and a higher source_version recorded in every case."""
     latest = document.latest
     assert latest
     srv = latest["source_revision_id"]
     await _apply_catalog(conn, document.uid, item)
+    if order == "newer":
+        await _record_version(conn, srv, item["source_version"])
     if active := await _active_request(conn, document.uid, srv):
         return _Outcome("queued", request_id=active, source_revision_id=srv)
     if latest["outcome"] == "failed":
@@ -757,9 +768,11 @@ async def _declare_once(
                 assert adopted
                 latest = document.latest if document else None
                 order = _order(stored, latest, settings.ordering)
-                if order == "same":
-                    assert document
-                    outcome = await _same_content(conn, caller, document, stored, batch_id, adopted)
+                if order in ("same", "newer"):
+                    assert document and order
+                    outcome = await _same_content(
+                        conn, caller, document, stored, batch_id, adopted, order
+                    )
                     uid = document.uid
                 elif order:
                     outcome = _Outcome.rejected(order)
@@ -924,9 +937,9 @@ async def _finalize_item(
         return _Outcome.rejected("UNSUPPORTED_FORMAT")
     document = found[0] if found else None
     order = _order(item, document.latest if document else None, settings.ordering)
-    if order == "same":
-        assert document
-        return await _same_content(conn, caller, document, item, batch_id, adopted)
+    if order in ("same", "newer"):
+        assert document and order
+        return await _same_content(conn, caller, document, item, batch_id, adopted, order)
     if order:
         return _Outcome.rejected(order)
     if document is None and not await _create_document(conn, caller, uid, item):
