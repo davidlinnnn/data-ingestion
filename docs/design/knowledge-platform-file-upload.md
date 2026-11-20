@@ -410,7 +410,7 @@ curl -X POST https://kp.example/v1/batches \
 |---|---|---|---|
 | `document_id` | 字串 | 是 | Source 自己的文件代號；重送、查詢、刪除都用它。字元限制見第 5.4 節 |
 | `files` | 陣列 | 是 | 這個版本的全部檔案，見下表 |
-| `source_version` | 字串 | Source 依版本排序時要（預設） | 內容是整數（最多 18 位），或帶時區的 RFC 3339 時間，例如 `"3"`；一份文件只能用其中一種。寫成 JSON 數字，整個 request 會得到 `400`。比上一版小的會被拒（`STALE_SOURCE_VERSION`）；和上一版相同但內容不同的也會被拒（`VERSION_CONFLICT`），除非上一版被判定無法處理。Source 沒有版本號時，請平台把它設成依到達順序，就不用填 |
+| `source_version` | 字串 | Source 依版本排序時要（預設） | 內容是整數（最多 18 位），或帶時區的 RFC 3339 時間，例如 `"3"`；一份文件只能用其中一種。寫成 JSON 數字，整個 request 會得到 `400`。比上一版小的會被拒（`STALE_SOURCE_VERSION`）；和上一版相同但內容不同的也會被拒（`VERSION_CONFLICT`），除非上一版被判定無法處理。比上一版大、檔案卻都相同的不會再處理一次：item 是 `unchanged` 或 `queued`，平台把這個版本記成最新版的 `source_version`，之後的排序以它為準。Source 沒有版本號時，請平台把它設成依到達順序，就不用填 |
 | `resources` | 字串的陣列 | 新文件，且 Source 沒有預設 Resource 時要 | 一個已登記的 key，放在陣列裡，只能一個。既有的文件不用填，平台沿用原本的綁定 |
 | `title`、`source_url` | 字串 | 否 | 目錄資訊；送了就取代現值 |
 | `metadata` | 物件，key 與值都是字串 | 否 | Source 自己的註記；送了就取代整份，`{}` 清空。讀得到這份文件的人都看得到它，所以只放可以給讀者看的內容（[2026-10-31 的裁決](https://github.com/davidlinnnn/data-ingestion/issues/96#issuecomment-6542094987)，規格 §6.5）。大小限制見第 5.4 節 |
@@ -447,8 +447,8 @@ curl -X POST https://kp.example/v1/batches \
 
 | `status` | 意思 | 接下來 |
 |---|---|---|
-| `declared` | 等上傳與 finalize | 上傳 `uploads[]` 的檔案，再 finalize。`uploads[]` 可能是空的（檔案都和上一版相同，只有版本變大）：不用上傳，但仍然要 finalize |
-| `unchanged` | 內容和最新版相同；`title`、`source_url`、`metadata` 已更新。平台不會再處理一次 | 結束。它不代表那一版處理成功：上一版被判定無法處理時，再送同樣的內容仍然是 `unchanged`。那一版的結果看 document 的 `attention` |
+| `declared` | 等上傳與 finalize | 上傳 `uploads[]` 的檔案，再 finalize。`uploads[]` 可能是空的（只拿掉了附件，留下的檔案都和上一版相同）：不用上傳，但仍然要 finalize |
+| `unchanged` | 內容和最新版相同；`title`、`source_url`、`metadata` 已更新，`source_version` 較大時記下新的版本。平台不會再處理一次 | 結束。它不代表那一版處理成功：上一版被判定無法處理時，再送同樣的內容仍然是 `unchanged`。那一版的結果看 document 的 `attention` |
 | `queued` | 同樣的內容已經有 request 在處理，或上一次是平台這一側失敗、現在重新排入；帶 `request_id` | 不用上傳也不用 finalize；用 `request_id` 查結果 |
 | `rejected` | 被拒，帶 `error`（`reason` 與 `message`） | 修正後重新宣告 |
 
@@ -857,7 +857,7 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 | `metadata` | 物件或 `null` | 宣告時給的 `metadata` |
 | `readiness` | 字串 | `not_ready`、`ready_stale`、`ready`、`deleted`（第 5.2 節） |
 | `since` | 時間 | `readiness` 從什麼時候開始是現在這個值。#252 之前是文件建立或刪除的時間 |
-| `latest` | 物件 | 最後受理的版本：`source_revision_id`、`source_version`，以及它最新的 `request_id`（不算平台自己的重跑） |
+| `latest` | 物件 | 最後受理的版本：`source_revision_id`、`source_version`，以及它最新的 `request_id`（不算平台自己的重跑）。同樣的檔案用較大的 `source_version` 再送，`source_version` 會變成新的版本，`source_revision_id` 不變 |
 | `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。#252 之前是空陣列 |
 | `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`、`message`、`since`；`processing_failed` 另外帶 `track`。沒有就是空陣列 |
 | `deleted_at` | 時間或 `null` | 刪除的時間 |
@@ -1137,6 +1137,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-19 | #194：上傳端點、上傳清理與最小 SDK 實作完成。上傳中 storage 無法回應定為 `503 UNAVAILABLE`（規格 §5.2 補上一列）；`uploads[].url` 改用 `KP_ADMISSION_PUBLIC_URL` 組成；media type 的偵測規則補進規格 §5.2 與第 6.5 節。第 7.1 節移除 storage 那一列，對外網址那一列改成 #78 要給的設定值；第 5.5、6 節跟著更新。獨立審查之後：規格 §5.1 寫明 `url` 用平台的對外 origin（部署設定），§5.2 列出偵測的六種型別、`503` 那一列涵蓋資料庫並註明檔案可能已就位，§3 的 `batch` 加上 `cleaned_at`，§13 改為引用 §6.2；本文第 6 節的 S3 權限按角色列出 |
 | 2026-11-20 | #97：canonical processing 的回報接收與狀態查詢實作完成（PR #253）。#97 在開工前拆成三張：projection 的回報接收（#252）與 Canonical Acceptance 的記錄（#251）另外實作。第 5 節寫明 `readiness` 在 #252 之前都是 `not_ready`，以及平台原因失敗的訊息是固定句子；第 6 節補上 `/report/`、`KP_PIPELINES` 與 worker 的兩個設定；第 7.3 節更新，保留期的票是 #250 |
 | 2026-11-20 | 補上讓 Source 開發者與 DevOps 只讀本文就能串接的內容：第 4.3 節（三種狀態與受理後平台做的事）、第 5.2 節的查詢改寫（用 request 的 `state` 判斷結果，各種結果該怎麼處理）、第 5.3 節 item 被拒的原因表、第 5.6 節（每個呼叫的 request 與回應欄位）、第 6.8 節（四個 JSON 設定的格式）、第 6.9 節（部署順序、驗收與常見現象）。回應的欄位對 `dev` 上的 `api` 實際跑過一次核對。另外請兩個只讀本文的獨立讀者試做：一個照本文寫出 client，對真的 `api`、資料庫與物件儲存跑過 8 個情境；一個照本文寫出部署計畫。兩者回報的缺口已補上。契約不變 |
+| 2026-11-20 | #258：版本較大、檔案都相同的重送不再處理一次，和版本相同、內容相同一樣走規格 §6.4（`unchanged`、`queued` 或平台失敗後的重試），並把新的版本記成最新版的 `source_version`。原本回 `declared`、`uploads: []`，finalize 後重新處理整份文件；這是規格 §6.3 漏掉的組合（設計筆記的裁決同日補上）。第 5.2 節的 `source_version`、`declared`、`unchanged` 與第 5.6 節的 `latest` 跟著改；規格 §3、§6.3、§6.4 與 `CONTEXT.md` 的 Source Revision 條目一起更新 |
 
 ### 7.3 實作狀態（2026-11-20）
 
@@ -1150,6 +1151,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | Change Feed | 讀取端取得文件變更的 API（`/read/v1/`，不對外） | #126 | 已完成，在 `dev` |
 | 宣告、finalize | `POST /v1/batches`、`POST /v1/batches/{batch_id}/finalize`、`GET /v1/batches/{batch_id}`、batch 過期、採用紀錄 | #96 | 已完成，在 `dev` |
 | 上傳 | `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`、上傳清理、最小 SDK | #194 | 已完成，在 `dev` |
+| 版本較大、檔案相同不重新處理 | 宣告與 finalize 的排序規則（規格 §6.3、§6.4） | #258 | 已完成，在 `dev` |
 | 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev`；`readiness` 在 #252 之前都是 `not_ready` |
 | projection 的回報接收 | 登記、serving 事實、修復與 heartbeat；`readiness` 的 serving 部分 | #252 | 未實作，下一張 |
 | Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed` | #251 | 未實作，等 #57 對受理點的結論 |

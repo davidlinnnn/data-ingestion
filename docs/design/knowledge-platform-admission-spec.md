@@ -66,7 +66,7 @@ Logical records; the physical schema is I1's.
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at`, `cleaned_at` (its upload cleanup done, §6.2) | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id`, `created_at` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content. `source_version` is the highest the Source has submitted that content under (§6.4) |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error`, `attempt_id` (the current attempt, §7.3), `last_report` and `reported_at` (the current attempt's last report taken, and when) | `request_id` equals the Temporal workflow ID |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
@@ -537,7 +537,7 @@ cleanup.
 
 | `ordering` | Rule |
 |---|---|
-| `source_version` | Integer or RFC 3339 time, one kind per document: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
+| `source_version` | Integer or RFC 3339 time, one kind per document: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`, whatever the content. Equal or higher with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher with different content → new Source Revision |
 | `arrival` | Finalization order decides; equal content → §6.4 |
 
 Content equality is equality of the set of (path, `sha256`) pairs. Equal bytes in
@@ -552,6 +552,20 @@ another document are never merged.
 | Any other outcome | `unchanged` |
 
 `title`, `source_url` and `metadata` apply in all three cases.
+
+Under `ordering: source_version`, an item whose `source_version` is higher than
+the latest Source Revision's records it as that Source Revision's
+`source_version`, in all three cases, and creates no Source Revision. From then
+on `latest.source_version` (§5.6, §5.7), and the `source_version` of each
+`serving` row and attention entry that names that Source Revision, is the
+recorded one, and §6.3 orders later items against it. It only grows: a lower
+version is rejected before §6.4 (§6.3), and an item rejected for any reason
+records nothing. Under `ordering: arrival` no version is recorded.
+
+Added on 2026-11-20 (#258): §6.3 made a higher version a new Source Revision
+whatever its content, so the same files under a higher version were processed
+again. The design record's Q6a (equal digests are `unchanged`) and Q6b (a newer
+version creates a Source Revision) had left this combination open.
 
 ### 6.5 Catalog fields and Source Metadata
 

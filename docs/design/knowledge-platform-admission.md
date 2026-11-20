@@ -1060,6 +1060,34 @@ On 2026-11-19 the user asked for its recommendations to be applied.
   new endpoint between declaration and finalization without breaking existing
   clients; nothing is built for it now. The assessment is in the guide §7.4.
 
+## Higher version with the same content on 2026-11-20
+
+A gap, not an earlier decision: Q6a makes content whose every digest equals the
+admitted version's `unchanged`, Q6b makes a newer `source_version` a new Source
+Revision, and neither says which wins when both hold. Specification §6.3 wrote
+"Higher → new Source Revision" with no condition on content, and #96 built it,
+so a Source whose version moves without its files changing (a modification time
+that a title edit bumps, for example) had its document processed again.
+
+- Under `ordering: source_version`, a higher version with the same content is
+  §6.4: `queued` with the active request, a new retry request after a platform
+  failure, or `unchanged`. No Source Revision is created, catalog fields and
+  metadata apply, and Q10.1b and Q10.1h are unchanged. This supersedes Q6b's
+  "Newer creates a Source Revision" for equal content.
+- The version is recorded on the latest Source Revision, whose `source_version`
+  becomes the highest the Source has submitted that content under; it only
+  grows, and §6.3 orders later items against it. A field on the document was
+  the alternative: it would leave `serving[]` rows at the old version while
+  `latest` showed the new one, so a Source could not reconcile by its own
+  versions. Each submitted version stays in the batch history
+  (`batch_item.declared`). The user approved recording it on the Source
+  Revision on 2026-11-20; `CONTEXT.md`'s Source Revision entry follows.
+- Arrival ordering, cancelling or merging older versions still in processing,
+  and `source_version` in canonical processing's start input or the Change Feed
+  are out of scope: only admission changes.
+
+The contract is specification §3, §6.3 and §6.4; #258 builds it.
+
 ## Principle for later architecture documentation
 
 Authorize delivery before delegating data transfer. Use the Valet Key pattern
