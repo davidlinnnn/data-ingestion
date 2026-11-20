@@ -80,9 +80,11 @@ authorization scope.
 _Avoid_: ingestion batch, Source, Published View, access grant
 
 **Source Revision**:
-A captured observation of a Document's main file and required dependencies at a
-particular source version or observation point. Its identity alone does not establish
-its order relative to other observations.
+A captured observation of a Document's main file and required dependencies, made when
+they differ from the latest one's, with the source version it was submitted under, if any.
+When a Source orders by source version, the latest one's content submitted under a higher
+version raises that version and creates no new Source Revision. Its identity alone does not establish its order relative to other
+observations.
 _Avoid_: current source state, processing request
 
 **Batch**:

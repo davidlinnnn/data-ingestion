@@ -245,18 +245,26 @@ def _document_of(row: tuple | None) -> _Document | None:
     return _Document(row[0], row[1], latest)
 
 
+async def _locked(conn: AsyncConnection, where: str, params: tuple) -> None:
+    # A statement of its own: one that waits for the lock reads rows as they were when it began.
+    await conn.execute(f"SELECT 1 FROM document d WHERE {where} FOR UPDATE", params)  # type: ignore[arg-type]
+
+
 async def _live_document(
     conn: AsyncConnection, caller: Caller, document_id: str, lock: bool
 ) -> _Document | None:
     where = "d.tenant_id = %s AND d.source_id = %s AND d.document_id = %s AND d.deleted_at IS NULL"
-    query = _DOCUMENT.format(where=where) + (" FOR UPDATE OF d" if lock else "")
     params = (caller.tenant_id, caller.source_id, document_id)
+    if lock:
+        await _locked(conn, where, params)
+    query = _DOCUMENT.format(where=where)
     return _document_of(await (await conn.execute(query, params)).fetchone())  # type: ignore[arg-type]
 
 
 async def _document_by_uid(conn: AsyncConnection, uid: str) -> tuple[_Document, bool] | None:
     """The document with this uid, locked, and whether it is deleted."""
-    query = _DOCUMENT.format(where="d.document_uid = %s") + " FOR UPDATE OF d"
+    await _locked(conn, "d.document_uid = %s", (uid,))
+    query = _DOCUMENT.format(where="d.document_uid = %s")
     row = await (await conn.execute(query, (uid,))).fetchone()  # type: ignore[arg-type]
     document = _document_of(row)
     return None if row is None or document is None else (document, row[6])
@@ -296,6 +304,14 @@ async def _apply_catalog(conn: AsyncConnection, uid: str, item: dict[str, Any]) 
             None if metadata is None else Jsonb(metadata),
             uid,
         ),
+    )
+
+
+async def _record_version(conn: AsyncConnection, srv: str, version: str) -> None:
+    """§6.4: a higher source_version of the same content becomes its Source Revision's."""
+    await conn.execute(
+        "UPDATE source_revision SET source_version = %s WHERE source_revision_id = %s",
+        (version, srv),
     )
 
 
@@ -556,8 +572,8 @@ def _content(files: list[dict]) -> set[tuple[str, str]]:
 
 
 def _order(item: dict[str, Any], latest: dict | None, ordering: str) -> str | None:
-    """§6.3 against the latest Source Revision: a rejection reason, "same" for §6.4, or None
-    when the item makes a new Source Revision."""
+    """§6.3 against the latest Source Revision: a rejection reason, "same" or "newer" (a higher
+    source_version) for §6.4, or None when the item makes a new Source Revision."""
     if latest is None:
         return None
     same = _content(item["files"]) == _content(latest["files"])
@@ -569,9 +585,9 @@ def _order(item: dict[str, Any], latest: dict | None, ordering: str) -> str | No
     assert new is not None and old is not None
     if new < old:  # type: ignore[operator]
         return "STALE_SOURCE_VERSION"
+    if same:
+        return "same" if new == old else "newer"
     if new == old:
-        if same:
-            return "same"
         return None if latest["outcome"] == "rejected" else "VERSION_CONFLICT"
     return None
 
@@ -583,12 +599,15 @@ async def _same_content(
     item: dict[str, Any],
     batch_id: str,
     adopted: tuple[str, int],
+    order: str,
 ) -> _Outcome:
-    """§6.4, with the catalog fields applied in every case."""
+    """§6.4, with the catalog fields and a higher source_version recorded in every case."""
     latest = document.latest
     assert latest
     srv = latest["source_revision_id"]
     await _apply_catalog(conn, document.uid, item)
+    if order == "newer":
+        await _record_version(conn, srv, item["source_version"])
     if active := await _active_request(conn, document.uid, srv):
         return _Outcome("queued", request_id=active, source_revision_id=srv)
     if latest["outcome"] == "failed":
@@ -757,9 +776,11 @@ async def _declare_once(
                 assert adopted
                 latest = document.latest if document else None
                 order = _order(stored, latest, settings.ordering)
-                if order == "same":
+                if order in ("same", "newer"):
                     assert document
-                    outcome = await _same_content(conn, caller, document, stored, batch_id, adopted)
+                    outcome = await _same_content(
+                        conn, caller, document, stored, batch_id, adopted, order
+                    )
                     uid = document.uid
                 elif order:
                     outcome = _Outcome.rejected(order)
@@ -924,9 +945,9 @@ async def _finalize_item(
         return _Outcome.rejected("UNSUPPORTED_FORMAT")
     document = found[0] if found else None
     order = _order(item, document.latest if document else None, settings.ordering)
-    if order == "same":
+    if order in ("same", "newer"):
         assert document
-        return await _same_content(conn, caller, document, item, batch_id, adopted)
+        return await _same_content(conn, caller, document, item, batch_id, adopted, order)
     if order:
         return _Outcome.rejected(order)
     if document is None and not await _create_document(conn, caller, uid, item):
