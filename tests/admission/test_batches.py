@@ -775,7 +775,8 @@ async def test_an_item_waiting_for_the_document_is_ordered_against_the_version_r
             for _ in range(100):
                 row = await (
                     await conn.execute(
-                        "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'"
+                        "SELECT count(*) FROM pg_stat_activity"
+                        " WHERE wait_event_type = 'Lock' AND datname = current_database()"
                     )
                 ).fetchone()
                 if row and row[0]:
