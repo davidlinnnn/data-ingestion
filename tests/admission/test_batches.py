@@ -13,6 +13,7 @@ import hashlib
 from typing import Any
 
 import httpx
+import psycopg
 import pytest
 from psycopg_pool import AsyncConnectionPool
 
@@ -660,12 +661,10 @@ async def test_a_higher_version_of_processed_content_is_unchanged_and_recorded(s
     assert (after["title"], after["metadata"]) == ("Renamed", {"km_folder": "HR"})
 
 
-@pytest.mark.parametrize("outcome", [None, "failed", "rejected"])
-async def test_a_higher_version_of_the_same_content_follows_section_6_4(
-    platform, api, store, conn, outcome
-):
-    """None: v1's request is still queued."""
-    a2 = A | {"source_version": "2", "title": "Renamed"}
+async def resent_higher(api, store, conn, outcome: str | None) -> tuple[dict, str, dict]:
+    """A at v1, its request left queued or processed to `outcome`, then the same files at v2:
+    (v2's item, v1's request, the Document after)."""
+    a2 = A | {"source_version": "2", "title": "Renamed", "metadata": {"km_folder": "HR"}}
     async with api() as hr:
         _, finalized = await submit(hr, store, [A])
         first = of(finalized.json(), "A")["request_id"]
@@ -674,31 +673,43 @@ async def test_a_higher_version_of_the_same_content_follows_section_6_4(
         before = (await hr.get("/v1/documents/A")).json()
         entry = of((await hr.post("/v1/batches", json={"items": [a2]})).json(), "A")
         after = (await hr.get("/v1/documents/A")).json()
-
     assert "uploads" not in entry
-    srv = before["latest"]["source_revision_id"]
-    assert after["latest"]["source_revision_id"] == srv
-    assert (after["latest"]["source_version"], after["title"]) == ("2", "Renamed")
-    if outcome is None:
-        assert (entry["status"], entry["request_id"]) == ("queued", first)
-    elif outcome == "failed":
-        assert entry["status"] == "queued" and entry["request_id"] != first
-        retry_of = await (
-            await conn.execute(
-                "SELECT retry_of FROM request WHERE request_id = %s", (entry["request_id"],)
-            )
-        ).fetchone()
-        assert retry_of == (first,)
-    else:
-        assert entry["status"] == "unchanged"
-        assert [a["kind"] for a in after["attention"]] == ["source_revision_rejected"]
-        assert after["attention"][0]["source_version"] == "2"
+    assert after["latest"]["source_revision_id"] == before["latest"]["source_revision_id"]
+    assert after["latest"]["source_version"] == "2"
+    assert (after["title"], after["metadata"]) == ("Renamed", {"km_folder": "HR"})
+    return entry, first, after
+
+
+async def test_a_higher_version_of_content_in_processing_returns_its_request(
+    platform, api, store, conn
+):
+    entry, first, _ = await resent_higher(api, store, conn, None)
+    assert (entry["status"], entry["request_id"]) == ("queued", first)
+
+
+async def test_a_higher_version_of_platform_failed_content_is_retried(platform, api, store, conn):
+    entry, first, _ = await resent_higher(api, store, conn, "failed")
+    async with api() as hr:
+        retry = (await hr.get(f"/v1/requests/{entry['request_id']}")).json()
+    assert entry["status"] == "queued" and entry["request_id"] != first
+    assert retry["retry_of"] == first
+
+
+async def test_a_higher_version_of_rejected_content_is_unchanged_and_still_rejected(
+    platform, api, store, conn
+):
+    entry, _, after = await resent_higher(api, store, conn, "rejected")
+    assert entry["status"] == "unchanged"
+    assert [(a["kind"], a["source_version"]) for a in after["attention"]] == [
+        ("source_revision_rejected", "2")
+    ]
+
+
+def c(version: str, content: str) -> dict[str, Any]:
+    return C1 | {"source_version": version, "files": [file("c.pdf", content, PDF)]}
 
 
 async def test_later_items_are_ordered_against_the_recorded_version(seeded, api):
-    def c(version: str, content: str) -> dict[str, Any]:
-        return C1 | {"source_version": version, "files": [file("c.pdf", content, PDF)]}
-
     async with api() as hr:
         recorded = of((await hr.post("/v1/batches", json={"items": [C2]})).json(), "C")
         assert recorded["status"] == "unchanged"
@@ -732,13 +743,10 @@ async def test_the_recorded_version_only_grows_and_a_rejected_item_leaves_it(see
 async def test_finalization_rechecks_a_higher_version_against_the_then_latest_content(
     seeded, api, store
 ):
-    def c(version: str) -> dict[str, Any]:
-        return C1 | {"source_version": version, "files": [file("c.pdf", "c-y", PDF)]}
-
     async with api() as hr:
-        later = (await hr.post("/v1/batches", json={"items": [c("3")]})).json()
-        upload(store, later, [c("3")])
-        _, earlier = await submit(hr, store, [c("2")])
+        later = (await hr.post("/v1/batches", json={"items": [c("3", "c-y")]})).json()
+        upload(store, later, [c("3", "c-y")])
+        _, earlier = await submit(hr, store, [c("2", "c-y")])
         finalized = await hr.post(f"/v1/batches/{later['batch_id']}/finalize")
         document = (await hr.get("/v1/documents/C")).json()
 
@@ -749,3 +757,34 @@ async def test_finalization_rechecks_a_higher_version_against_the_then_latest_co
         "source_version": "3",
         "request_id": admitted["request_id"],
     }
+
+
+async def test_an_item_waiting_for_the_document_is_ordered_against_the_version_recorded_meanwhile(
+    seeded, api, conn, dsn
+):
+    """The holder stands in for a concurrent finalization that records v3 under the document's
+    lock while the declaration of v2 waits for it."""
+    async with await psycopg.AsyncConnection.connect(dsn) as holder, api() as hr:
+        async with holder.transaction():
+            await holder.execute("SELECT 1 FROM document WHERE document_id = 'C' FOR UPDATE")
+            await holder.execute(
+                "UPDATE source_revision SET source_version = '3' WHERE document_uid ="
+                " (SELECT document_uid FROM document WHERE document_id = 'C')"
+            )
+            waiting = asyncio.create_task(hr.post("/v1/batches", json={"items": [C2]}))
+            for _ in range(100):
+                row = await (
+                    await conn.execute(
+                        "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock'"
+                    )
+                ).fetchone()
+                if row and row[0]:
+                    break
+                await asyncio.sleep(0.05)
+            else:
+                pytest.fail("the declaration never waited for the document")
+        declared = await waiting
+        latest = (await hr.get("/v1/documents/C")).json()["latest"]
+
+    assert declared.json()["items"][0]["error"]["reason"] == "STALE_SOURCE_VERSION"
+    assert latest["source_version"] == "3"

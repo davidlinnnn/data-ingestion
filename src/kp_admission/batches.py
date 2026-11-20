@@ -245,18 +245,26 @@ def _document_of(row: tuple | None) -> _Document | None:
     return _Document(row[0], row[1], latest)
 
 
+async def _locked(conn: AsyncConnection, where: str, params: tuple) -> None:
+    # A statement of its own: one that waits for the lock reads rows as they were when it began.
+    await conn.execute(f"SELECT 1 FROM document d WHERE {where} FOR UPDATE", params)  # type: ignore[arg-type]
+
+
 async def _live_document(
     conn: AsyncConnection, caller: Caller, document_id: str, lock: bool
 ) -> _Document | None:
     where = "d.tenant_id = %s AND d.source_id = %s AND d.document_id = %s AND d.deleted_at IS NULL"
-    query = _DOCUMENT.format(where=where) + (" FOR UPDATE OF d" if lock else "")
     params = (caller.tenant_id, caller.source_id, document_id)
+    if lock:
+        await _locked(conn, where, params)
+    query = _DOCUMENT.format(where=where)
     return _document_of(await (await conn.execute(query, params)).fetchone())  # type: ignore[arg-type]
 
 
 async def _document_by_uid(conn: AsyncConnection, uid: str) -> tuple[_Document, bool] | None:
     """The document with this uid, locked, and whether it is deleted."""
-    query = _DOCUMENT.format(where="d.document_uid = %s") + " FOR UPDATE OF d"
+    await _locked(conn, "d.document_uid = %s", (uid,))
+    query = _DOCUMENT.format(where="d.document_uid = %s")
     row = await (await conn.execute(query, (uid,))).fetchone()  # type: ignore[arg-type]
     document = _document_of(row)
     return None if row is None or document is None else (document, row[6])
@@ -769,7 +777,7 @@ async def _declare_once(
                 latest = document.latest if document else None
                 order = _order(stored, latest, settings.ordering)
                 if order in ("same", "newer"):
-                    assert document and order
+                    assert document
                     outcome = await _same_content(
                         conn, caller, document, stored, batch_id, adopted, order
                     )
@@ -938,7 +946,7 @@ async def _finalize_item(
     document = found[0] if found else None
     order = _order(item, document.latest if document else None, settings.ordering)
     if order in ("same", "newer"):
-        assert document and order
+        assert document
         return await _same_content(conn, caller, document, item, batch_id, adopted, order)
     if order:
         return _Outcome.rejected(order)
