@@ -788,3 +788,22 @@ async def test_an_item_waiting_for_the_document_is_ordered_against_the_version_r
 
     assert declared.json()["items"][0]["error"]["reason"] == "STALE_SOURCE_VERSION"
     assert latest["source_version"] == "3"
+
+
+async def test_concurrent_finalizations_of_one_document_admit_one_and_keep_the_higher_version(
+    seeded, api, store
+):
+    items = [c("2", "c-y"), c("3", "c-y")]
+    async with api() as hr:
+        declared = [(await hr.post("/v1/batches", json={"items": [i]})).json() for i in items]
+        for body, i in zip(declared, items, strict=True):
+            upload(store, body, [i])
+        answers = await asyncio.gather(
+            *(hr.post(f"/v1/batches/{body['batch_id']}/finalize") for body in declared)
+        )
+        latest = (await hr.get("/v1/documents/C")).json()["latest"]
+
+    entries = [of(a.json(), "C") for a in answers]
+    # v2 first: v3 is §6.4 and returns v2's request. v3 first: v2 is stale.
+    assert {e.get("request_id") for e in entries} - {None} == {latest["request_id"]}
+    assert latest["source_version"] == "3"

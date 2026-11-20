@@ -327,6 +327,8 @@ platform-verified digest as the artifact's integrity information.
   opaque IDs, decoupled from `source_version`, which serves only as an ordering
   guard and source evidence. Results return both. Re-baselining after a Source
   renumbers its versions is deferred.
+- Refined on 2026-11-20: a newer version with equal digests creates no Source
+  Revision ([Higher version with the same content on 2026-11-20](#higher-version-with-the-same-content-on-2026-11-20)).
 
 ### Acceptance store and dispatch (Q7.1–Q7.6)
 
@@ -1064,7 +1066,7 @@ On 2026-11-19 the user asked for its recommendations to be applied.
 
 A gap, not an earlier decision: Q6a makes content whose every digest equals the
 admitted version's `unchanged`, Q6b makes a newer `source_version` a new Source
-Revision, and neither says which wins when both hold. Specification §6.3 wrote
+Revision, and neither ruled on which wins when both hold. Specification §6.3 wrote
 "Higher → new Source Revision" with no condition on content, and #96 built it,
 so a Source whose version moves without its files changing (a modification time
 that a title edit bumps, for example) had its document processed again.
@@ -1072,16 +1074,20 @@ that a title edit bumps, for example) had its document processed again.
 - Under `ordering: source_version`, a higher version with the same content is
   §6.4: `queued` with the active request, a new retry request after a platform
   failure, or `unchanged`. No Source Revision is created, catalog fields and
-  metadata apply, and Q10.1b and Q10.1h are unchanged. This supersedes Q6b's
-  "Newer creates a Source Revision" for equal content.
+  metadata apply, and Q10.1b and Q10.1h are unchanged. For equal content this
+  takes precedence over Q6b's "Newer creates a Source Revision". A lower version
+  stays stale whatever its content, as Q6b has it.
 - The version is recorded on the latest Source Revision, whose `source_version`
-  becomes the highest the Source has submitted that content under; it only
-  grows, and §6.3 orders later items against it. A field on the document was
+  becomes the highest submitted while it is the latest; it only grows, and §6.3
+  orders later items against it. Content that returns after a change (A, B, A)
+  is a new Source Revision, as before. A field on the document was
   the alternative: it would leave `serving[]` rows at the old version while
   `latest` showed the new one, so a Source could not reconcile by its own
   versions. Each submitted version stays in the batch history
-  (`batch_item.declared`). The user approved recording it on the Source
-  Revision on 2026-11-20; `CONTEXT.md`'s Source Revision entry follows.
+  (`batch_item.declared`) for the batch's retention (§11), so the version a
+  Source Revision was first captured under is not kept beyond it. The user
+  approved recording it on the Source Revision on 2026-11-20
+  ([#258](https://github.com/davidlinnnn/data-ingestion/issues/258#issuecomment-7041093504)); `CONTEXT.md`'s Source Revision entry follows.
 - Arrival ordering, cancelling or merging older versions still in processing,
   and `source_version` in canonical processing's start input or the Change Feed
   are out of scope: only admission changes.

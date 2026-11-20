@@ -625,7 +625,7 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 | `RESOURCE_REQUIRED` | 宣告 | 新文件沒有填 `resources`，Source 也沒有預設的 Resource | 補上 `resources` |
 | `RESOURCE_NOT_FOUND` | 兩者 | `resources` 的 key 沒有登記，或在宣告之後被刪除 | 先 `PUT /v1/resources/{key}` 再宣告 |
 | `BINDING_CONFLICT` | 宣告 | 既有的文件宣告了另一個 Resource | 省略 `resources`，或填原本的 key。把文件移到另一個 Resource 還沒有做（#205） |
-| `STALE_SOURCE_VERSION` | 兩者 | `source_version` 比已受理的版本小 | 這一版已經過時，不用再送 |
+| `STALE_SOURCE_VERSION` | 兩者 | `source_version` 比最新版記下的 `source_version` 小 | 這一版已經過時，不用再送 |
 | `VERSION_CONFLICT` | 兩者 | `source_version` 和上一版相同，內容卻不同，而且上一版沒有被判定無法處理 | 內容真的變了就用更大的 `source_version` |
 | `FILES_MISSING` | finalize | `uploads[]` 裡有檔案沒有上傳成功 | 重新宣告、上傳、finalize |
 | `STALE_DECLARATION` | finalize | 宣告之後，另一個 batch 先建立了同一個 `document_id` 的文件 | 重新宣告 |
@@ -858,8 +858,8 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 | `readiness` | 字串 | `not_ready`、`ready_stale`、`ready`、`deleted`（第 5.2 節） |
 | `since` | 時間 | `readiness` 從什麼時候開始是現在這個值。#252 之前是文件建立或刪除的時間 |
 | `latest` | 物件 | 最後受理的版本：`source_revision_id`、`source_version`，以及它最新的 `request_id`（不算平台自己的重跑）。同樣的檔案用較大的 `source_version` 再送，`source_version` 會變成新的版本，`source_revision_id` 不變 |
-| `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。#252 之前是空陣列 |
-| `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`、`message`、`since`；`processing_failed` 另外帶 `track`。沒有就是空陣列 |
+| `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。`source_version` 是那一版目前記下的版本，所以 `source_revision_id` 和 `latest` 的相同時，讀取端提供的就是最新的內容。#252 之前是空陣列 |
+| `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`（最新版記下的版本）、`message`、`since`；`processing_failed` 另外帶 `track`。沒有就是空陣列 |
 | `deleted_at` | 時間或 `null` | 刪除的時間 |
 
 文件刪除後又提交同一個 `document_id` 時，回的是現存的那一份；全部都刪除時，回最後刪除的那一份，`readiness` 是 `deleted`。`404`：這個 Source 沒有這份文件。
