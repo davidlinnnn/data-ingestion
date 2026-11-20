@@ -1137,7 +1137,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-19 | #194：上傳端點、上傳清理與最小 SDK 實作完成。上傳中 storage 無法回應定為 `503 UNAVAILABLE`（規格 §5.2 補上一列）；`uploads[].url` 改用 `KP_ADMISSION_PUBLIC_URL` 組成；media type 的偵測規則補進規格 §5.2 與第 6.5 節。第 7.1 節移除 storage 那一列，對外網址那一列改成 #78 要給的設定值；第 5.5、6 節跟著更新。獨立審查之後：規格 §5.1 寫明 `url` 用平台的對外 origin（部署設定），§5.2 列出偵測的六種型別、`503` 那一列涵蓋資料庫並註明檔案可能已就位，§3 的 `batch` 加上 `cleaned_at`，§13 改為引用 §6.2；本文第 6 節的 S3 權限按角色列出 |
 | 2026-11-20 | #97：canonical processing 的回報接收與狀態查詢實作完成（PR #253）。#97 在開工前拆成三張：projection 的回報接收（#252）與 Canonical Acceptance 的記錄（#251）另外實作。第 5 節寫明 `readiness` 在 #252 之前都是 `not_ready`，以及平台原因失敗的訊息是固定句子；第 6 節補上 `/report/`、`KP_PIPELINES` 與 worker 的兩個設定；第 7.3 節更新，保留期的票是 #250 |
 | 2026-11-20 | 補上讓 Source 開發者與 DevOps 只讀本文就能串接的內容：第 4.3 節（三種狀態與受理後平台做的事）、第 5.2 節的查詢改寫（用 request 的 `state` 判斷結果，各種結果該怎麼處理）、第 5.3 節 item 被拒的原因表、第 5.6 節（每個呼叫的 request 與回應欄位）、第 6.8 節（四個 JSON 設定的格式）、第 6.9 節（部署順序、驗收與常見現象）。回應的欄位對 `dev` 上的 `api` 實際跑過一次核對。另外請兩個只讀本文的獨立讀者試做：一個照本文寫出 client，對真的 `api`、資料庫與物件儲存跑過 8 個情境；一個照本文寫出部署計畫。兩者回報的缺口已補上。契約不變 |
-| 2026-11-20 | #258：版本較大、檔案都相同的重送不再處理一次，和版本相同、內容相同一樣走規格 §6.4（`unchanged`、`queued` 或平台失敗後的重試），並把新的版本記成最新版的 `source_version`。原本回 `declared`、`uploads: []`，finalize 後重新處理整份文件；這是規格 §6.3 漏掉的組合（設計筆記的裁決同日補上）。第 5.2 節的 `source_version`、`declared`、`unchanged` 與第 5.6 節的 `latest` 跟著改；規格 §3、§6.3、§6.4 與 `CONTEXT.md` 的 Source Revision 條目一起更新 |
+| 2026-11-20 | #258：版本較大、檔案都相同的重送不再處理一次，和版本相同、內容相同一樣走規格 §6.4（`unchanged`、`queued` 或平台失敗後的重試），並把新的版本記成最新版的 `source_version`。原本回 `declared`、`uploads: []`，finalize 後重新處理整份文件；這是規格 §6.3 漏掉的組合（設計筆記的裁決同日補上）。第 5.2 節的 `source_version`、`declared`、`unchanged`，第 5.3 節的 `STALE_SOURCE_VERSION`，與第 5.6 節的 `latest`、`serving`、`attention` 跟著改；規格 §3、§6.3、§6.4 與 `CONTEXT.md` 的 Source Revision 條目一起更新 |
 
 ### 7.3 實作狀態（2026-11-20）
 
