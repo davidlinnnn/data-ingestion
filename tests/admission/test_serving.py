@@ -3,11 +3,13 @@ registrations, serving facts, heartbeats, attempts and backfill reports over the
 with a real database, and the readiness, serving and attention a Source then reads. The tests
 send what a projection would (#127 is not built) and set what #251, #98 and #205 will write."""
 
+import asyncio
 import hashlib
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
+import psycopg
 import pytest
 from psycopg_pool import AsyncConnectionPool
 
@@ -439,6 +441,7 @@ def test_the_heartbeat_digest_is_the_xor_of_each_entrys_sha256():
 async def test_an_old_report_after_a_tombstone_expired_is_fenced(api, conn):
     """SC19: a removal's tombstone expired; an `included` issued before it expired comes late."""
     uid, srv = await document(conn)
+    await accepted(conn, uid, srv)
     await profile(conn, "retrieval")
     await build(api, "retrieval")
     await included(api, "retrieval", fact(uid, srv, 100, state="removed"))
@@ -447,6 +450,7 @@ async def test_an_old_report_after_a_tombstone_expired_is_fenced(api, conn):
     await aged(conn, uid, "31 days")
     issued = (datetime.now(UTC) - timedelta(days=40)).isoformat()  # before the removal, even
     late = await included(api, "retrieval", fact(uid, srv, 99, issued_at=issued))
+    late_write = await registered(api, "retrieval", fact(uid, srv, 98, issued_at=issued))
     held = await serving.held(conn, uid)
     asked = await beat(api, "retrieval")
     fresh = await included(api, "retrieval", fact(uid, srv, 101))
@@ -455,6 +459,7 @@ async def test_an_old_report_after_a_tombstone_expired_is_fenced(api, conn):
     assert late.status_code == 200
     assert late.json()["fenced"] == [{"document_uid": uid, "resource_id": RESOURCE}]
     assert late.json()["repair_requested"]["reason"] == "fenced"
+    assert gate(late_write) == (409, "FENCED", {"document_uid": uid})
     assert held == []
     assert asked.json()["repair_requested"]["reason"] == "fenced"  # until #260 repairs
     assert await serving.held(conn, uid) == [("retrieval", "b1", RESOURCE, "included")]
@@ -593,7 +598,8 @@ async def test_a_silent_attempt_is_stalled_and_a_silent_build_unverified(api, co
     await accepted(conn, uid, srv)
     await profile(conn, "retrieval")
     await build(api, "retrieval")
-    await tried(api, "retrieval", attempt(uid, srv, 1, 1, "running"))
+    # A stage that is not the pipeline's last one succeeded: the attempt goes on.
+    await tried(api, "retrieval", attempt(uid, srv, 1, 1, "succeeded", stage="read"))
     reporting = await seen(api)
 
     await conn.execute("UPDATE projection_attempt SET reported_at = now() - interval '11 minutes'")
@@ -602,8 +608,11 @@ async def test_a_silent_attempt_is_stalled_and_a_silent_build_unverified(api, co
     unverified = await seen(api)
     now = datetime.now(UTC)
     lost = await serving.silent(conn, {p.track: p for p in PIPELINES.values()}, now)
+    await tried(api, "retrieval", attempt(uid, srv, 1, 2, "succeeded"))  # the last stage
+    ended = await seen(api)
 
     assert reporting["attention"] == []
+    assert ended["attention"] == []  # the attempt ended, and the report is a liveness signal
     assert kinds(stalled) == [("progress_stalled", "platform", "retrieval")]
     assert kinds(unverified) == [
         ("progress_stalled", "platform", "retrieval"),
@@ -638,13 +647,14 @@ async def test_a_switch_that_fails_a_gate_changes_nothing(api, conn):
     await conn.execute("UPDATE document SET deleted_at = now() WHERE document_uid = %s", (b,))
     stray = await build(api, "retrieval", "b2", switch_seq=2, replaces="b1")
     garbled = await build(api, "retrieval", "b2", switch_seq=2, replaces="b1", feed_position="x")
+    ahead = await build(api, "retrieval", "b2", switch_seq=2, replaces="b1", feed_position="f" * 32)
     after = await seen(api, "A")
 
     assert gate(lagging) == (409, "GATE_FAILED", {"gate": "caught_up"})
     assert gate(wrong) == (409, "GATE_FAILED", {"gate": "replaces"})
     assert gate(short) == (409, "GATE_FAILED", {"gate": "coverage"})
     assert gate(stray) == (409, "GATE_FAILED", {"gate": "removed_documents"})
-    assert garbled.status_code == 400
+    assert garbled.status_code == ahead.status_code == 400
     assert states(after) == [("retrieval", "ready", "1")]  # b1 still serves
 
 
@@ -752,3 +762,75 @@ async def test_an_abandoned_write_over_a_served_revision_reports_what_the_store_
 
     assert (after["readiness"], states(after)) == ("ready_stale", [("retrieval", "stale", "1")])
     assert await serving.held(conn, uid) == [("retrieval", "b1", RESOURCE, "included")]
+
+
+async def test_a_build_writing_over_served_revisions_keeps_its_coverage(api, conn):
+    """The coverage gate counts what a Build serves, so a rewrite under way does not fail it."""
+    uid, srv = await document(conn)
+    await accepted(conn, uid, srv)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval", "b1")
+    await included(api, "retrieval", fact(uid, srv, 1))
+    await build(api, "retrieval", "b2", state="building")
+    await included(api, "retrieval", fact(uid, srv, 1), build_id="b2")
+    await registered(api, "retrieval", fact(uid, srv, 2), build_id="b2")
+
+    switched = await build(api, "retrieval", "b2", switch_seq=2, replaces="b1")
+
+    assert (switched.status_code, switched.json()["state"]) == (200, "serving")
+    assert (await seen(api))["readiness"] == "ready"
+
+
+async def test_a_resent_switch_finishes_the_refresh_a_crash_cut_short(api, conn):
+    a, srv_a = await document(conn, "A")  # only the replaced Build holds it
+    b, srv_b = await document(conn, "B")  # only the new one
+    await profile(conn, "retrieval")
+    await build(api, "retrieval", "b1")
+    await included(api, "retrieval", fact(a, srv_a, 1))
+    await build(api, "retrieval", "b2", state="building")
+    await included(api, "retrieval", fact(b, srv_b, 1), build_id="b2")
+    async with api("retrieval") as reader:
+        head = (await reader.get("/read/v1/feed")).json()["next_cursor"]
+    switch = {"state": "serving", "switch_seq": 2, "replaces": "b1", "feed_position": head}
+
+    # The switch commits and the api stops before it recomputed the Documents.
+    await serving.report_build(conn, "retrieval", "b2", serving.BuildReport(**switch))
+    cut = await seen(api, "A"), await seen(api, "B")
+    resent = await build(api, "retrieval", "b2", **switch)
+    done = await seen(api, "A"), await seen(api, "B")
+
+    assert resent.status_code == 200
+    assert [v["readiness"] for v in cut] == [v["readiness"] for v in done] == ["not_ready", "ready"]
+    assert done[0]["since"] > cut[0]["since"]
+    assert done[1]["since"] > cut[1]["since"]
+
+
+async def test_two_switches_racing_leave_one_serving_build(api, conn, dsn):
+    """Two first switches of a projection, of different Builds, neither seeing the other's row:
+    the one that commits second is refused as a retry of it would be."""
+    await profile(conn, "retrieval")
+    async with await psycopg.AsyncConnection.connect(dsn) as other:  # a transaction, held open
+        await other.execute(
+            "INSERT INTO build (projection, build_id, state, switch_seq)"
+            " VALUES ('retrieval', 'b0', 'serving', 1)"
+        )
+        racing = asyncio.create_task(build(api, "retrieval", "b1", switch_seq=2))
+        await asyncio.sleep(0.3)  # b1's switch now waits for b0's to commit
+        await other.commit()
+        raced = await racing
+    after = await build(api, "retrieval", "b1", state="building")
+
+    assert gate(raced) == (409, "GATE_FAILED", {"gate": "replaces"})
+    assert after.json()["state"] == "building"  # 409 BUILD_STATE were b1 serving
+
+
+async def test_a_registration_naming_a_key_twice_keeps_its_highest_version(api, conn):
+    uid, srv = await document(conn)
+    await accepted(conn, uid, srv)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+
+    await registered(api, "retrieval", fact(uid, srv, 2), fact(uid, srv, 1))
+    await included(api, "retrieval", fact(uid, srv, 2))  # not above the registration: older
+
+    assert (await seen(api))["readiness"] == "not_ready"

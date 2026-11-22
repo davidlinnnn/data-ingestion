@@ -269,13 +269,16 @@ async def report_cursor(conn: AsyncConnection, projection: str, position: str) -
 
 async def lag_s(conn: AsyncConnection, position: str) -> float:
     """How long the oldest entry after the position has waited, in seconds; 0 when none follows.
-    ValueError when it is not a position."""
+    ValueError when it is not a position, or is one the feed has not reached."""
     cursor = await conn.execute(
-        "SELECT coalesce(extract(epoch FROM now() - (SELECT occurred_at FROM change_feed"
+        "SELECT pg_snapshot_xmin(pg_current_snapshot())::text,"
+        " coalesce(extract(epoch FROM now() - (SELECT occurred_at FROM change_feed"
         " WHERE (xid, seq) > (%s::xid8, %s) ORDER BY xid, seq LIMIT 1)), 0)::float",
         _split(position),
     )
-    [(lag,)] = await cursor.fetchall()
+    [(xmin, lag)] = await cursor.fetchall()
+    if position > _position(xmin, 0):  # as document_state: no read has answered it
+        raise ValueError("ahead of the feed")
     return lag
 
 

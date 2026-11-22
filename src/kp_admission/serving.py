@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
+import psycopg
 from prometheus_client import Counter, Gauge
 from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
@@ -192,9 +193,11 @@ async def report_build(
     Documents' readiness it may have changed. A Build starts `building`. `serving` is a switch:
     the platform re-runs the gates and, in the same step, retains the Build it replaces; a switch
     numbered at or below the projection's last one came late and changes nothing. `retired` is
-    final. A report of the state the Build is in is a repeat. Refused: 409 GATE_FAILED naming
-    the gate (replaces, caught_up, coverage, removed_documents), 409 BUILD_STATE for a state the
-    Build cannot take from where it is, 400 for a feed_position that is not one."""
+    final. A report of the state the Build is in is a repeat, and returns the Builds again so
+    the caller finishes a refresh the first call did not. Refused: 409 GATE_FAILED naming the
+    gate (replaces, caught_up, coverage, removed_documents), 409 BUILD_STATE for a state the
+    Build cannot take from where it is, 400 for a feed_position that is not one or is ahead of
+    the feed."""
     async with conn.transaction():
         await conn.execute(
             "INSERT INTO build (projection, build_id, state) VALUES (%s, %s, 'building')"
@@ -211,7 +214,9 @@ async def report_build(
         _, state, _, reason, requested_at = builds[build_id]
         changed: list[str] = []
         if report.state == state:
-            changed = [build_id] if state == "serving" else []  # a retry finishes the refresh
+            # A resend finishes the refresh that a crash after the first one cut short.
+            finishing = state in ("serving", "retired")
+            changed = [b for b in (build_id, report.replaces) if b] if finishing else []
         elif state == "retired" or report.state in ("building", "retained"):
             # The platform retains a Build when another replaces it; its owner only repeats it.
             raise Refused(
@@ -235,6 +240,13 @@ async def report_build(
                 if replaced != report.replaces
                 else await _failed_gate(conn, projection, build_id, replaced, report)
             )
+            if not gate:
+                try:
+                    await _switch(conn, projection, build_id, replaced, report)
+                except psycopg.errors.UniqueViolation:
+                    # build_one_serving: another Build's switch, of a row this one did not see
+                    # and so did not lock, committed first. A retry would read it as serving.
+                    gate = "replaces"
             if gate:
                 _log(logging.WARNING, "switch refused", projection, build_id, reason=gate)
                 raise Refused(
@@ -244,22 +256,6 @@ async def report_build(
                     f"The switch failed the gate {gate}.",
                     metadata={"gate": gate},
                 )
-            await conn.execute(
-                "UPDATE build SET state = 'retained' WHERE projection = %s AND build_id = %s",
-                (projection, replaced),
-            )
-            await conn.execute(
-                "UPDATE build SET state = 'serving', switch_seq = %s, feed_position = %s,"
-                " approval_ref = %s, evidence_ref = %s WHERE projection = %s AND build_id = %s",
-                (
-                    report.switch_seq,
-                    report.feed_position,
-                    report.approval_ref,
-                    report.evidence_ref,
-                    projection,
-                    build_id,
-                ),
-            )
             state, changed = "serving", [b for b in (build_id, replaced) if b]
         await conn.execute(
             "UPDATE build SET reported_at = now() WHERE projection = %s AND build_id = %s",
@@ -270,6 +266,28 @@ async def report_build(
     return BuildAnswer(state=state, repair_requested=repair), changed
 
 
+async def _switch(
+    conn: AsyncConnection, projection: str, build_id: str, replaced: str | None, report: BuildReport
+) -> None:
+    """Makes the Build the serving one and the one it replaces `retained`."""
+    await conn.execute(
+        "UPDATE build SET state = 'retained' WHERE projection = %s AND build_id = %s",
+        (projection, replaced),
+    )
+    await conn.execute(
+        "UPDATE build SET state = 'serving', switch_seq = %s, feed_position = %s,"
+        " approval_ref = %s, evidence_ref = %s WHERE projection = %s AND build_id = %s",
+        (
+            report.switch_seq,
+            report.feed_position,
+            report.approval_ref,
+            report.evidence_ref,
+            projection,
+            build_id,
+        ),
+    )
+
+
 async def _failed_gate(
     conn: AsyncConnection,
     projection: str,
@@ -277,8 +295,9 @@ async def _failed_gate(
     replaced: str | None,
     report: BuildReport,
 ) -> str | None:
-    """The first switch gate of D2 the Build fails: caught up with the feed, coverage not below
-    the Build it replaces, no fact of a Document deleted or moved out of the fact's Resource."""
+    """The first switch gate of D2 the Build fails: caught up with the feed, serving no fewer
+    Documents than the Build it replaces, no fact of a Document deleted or moved out of the
+    fact's Resource."""
     assert report.feed_position is not None
     try:
         lag = await feed.lag_s(conn, report.feed_position)
@@ -288,13 +307,15 @@ async def _failed_gate(
         ) from None
     if lag > SWITCH_LAG_MAX_S:
         return "caught_up"
+    # A fact being written over one that was included still serves the earlier revision.
     cursor = await conn.execute(
-        "SELECT build_id, count(*) FROM serving_fact WHERE projection = %s AND state = 'included'"
+        "SELECT build_id, count(*) FROM serving_fact WHERE projection = %s"
+        " AND (state = 'included' OR served_source_revision_id IS NOT NULL)"
         " AND build_id = ANY(%s) GROUP BY build_id",
         (projection, [build_id, replaced]),
     )
-    included = dict(await cursor.fetchall())
-    if included.get(build_id, 0) < included.get(replaced, 0):
+    serves = dict(await cursor.fetchall())
+    if serves.get(build_id, 0) < serves.get(replaced, 0):
         return "coverage"
     cursor = await conn.execute(
         "SELECT count(*) FROM serving_fact f LEFT JOIN document d USING (document_uid)"
@@ -348,7 +369,12 @@ async def register(
                     metadata={"document_uid": fact.document_uid},
                 )
         held = await _held(conn, projection, build_id, uids)
-        placed = [(f, _place(held.get((f.document_uid, f.resource_id)), f, now)) for f in facts]
+        placed: list[tuple[Fact, str]] = []
+        for fact in facts:
+            key = (fact.document_uid, fact.resource_id)
+            placed.append((fact, _place(held.get(key), fact, now)))
+            if placed[-1][1] == "recorded":  # a later fact of the call with the same key meets it
+                held[key] = ("pending", fact.fact_version, now)
         fenced = next((f for f, result in placed if result == "fenced"), None)
         if fenced:
             repair = await _repair(conn, projection, build_id, repair, "fenced")

@@ -222,6 +222,10 @@ CREATE TABLE build (
     PRIMARY KEY (projection, build_id)
 );
 
+-- Of a projection one Build serves: the later of two switches that did not see each other
+-- fails here.
+CREATE UNIQUE INDEX build_one_serving ON build (projection) WHERE state = 'serving';
+
 -- The mirror of the serving facts a projection reported (DR §5). A row is never deleted: a
 -- `removed` one is the tombstone, and after 30 days still fences older reports (DR §5.3).
 CREATE TABLE serving_fact (

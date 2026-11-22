@@ -286,7 +286,9 @@ def _projected(
                             "action_owner": "source" if by_source else "platform",
                             "message": error["message"] if by_source else PLATFORM_FAILURE}
                 )  # fmt: skip
-            elif last["state"] in ("pending", "running"):
+            elif last["state"] in ("pending", "running") or (
+                last["state"] == "succeeded" and last["stage"] != pipeline.stages[-1]
+            ):  # as §7.3: only the last stage's success ends the attempt
                 wait = pipeline.start_deadline_s if last["state"] == "pending" else None
                 deadline = at + timedelta(seconds=wait or pipeline.update_interval_s)
                 if deadline < now:

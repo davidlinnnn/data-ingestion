@@ -809,15 +809,19 @@ owner's `approval_ref` and `evidence_ref` (DR D2). The platform re-runs the
 gates in this order and refuses the switch with the first that fails:
 `replaces` names another Build than the one serving; `caught_up`, the oldest
 feed entry after `feed_position` has waited more than 300 seconds (provisional
-until #127 measures a reader); `coverage`, fewer `included` facts than the
-Build it replaces holds; `removed_documents`, an `included` or `pending` fact of
-a Document deleted, unknown, or bound to another Resource than the fact's. A switch that
-passes makes the replaced Build `retained` in the same step. A `serving` report
+until #127 measures a reader); `coverage`, it serves fewer Documents than the
+Build it replaces, counting on both sides the `included` facts and the
+`pending` ones written over a revision still served (§7.1);
+`removed_documents`, an `included` or `pending` fact of
+a Document deleted, unknown, or bound to another Resource than the fact's. A
+`feed_position` the feed has not reached is `400`, as a malformed one is. A switch that
+passes makes the replaced Build `retained` in the same step, so one Build of a
+projection serves: of two switches sent at once the later fails `replaces`. A `serving` report
 numbered at or below the last switch came late and changes nothing; its answer
 carries the Build's state. A `retained` Build switches back by the same report,
 which is a rollback (DR D2). `retired` is the owner's report that the Build's
 data is gone (DR §4) and is final. A Build reported in the state it is in
-answers `200` with nothing changed. Any other step, such as back to
+answers `200` with its state unchanged. Any other step, such as back to
 `building`, is `409` `BUILD_STATE` with the state the Build is in.
 
 **Facts.** A fact carries `document_uid`, `resource_id` (the full identifier the
@@ -897,7 +901,10 @@ calls that can change them: a fact report, a Build switch or retirement (for
 every Document the Builds hold a fact of), a backfill report and a Knowledge
 Profile change (for the Source's Documents), finalization (for its Documents),
 and a rebind (#205 calls the platform's recompute for the Documents it moves). Each Document in a transaction of its own, so a large
-fan-out holds no long transaction: the database ends one at 60 seconds. The readiness a query answers is
+fan-out holds no long transaction: the database ends one at 60 seconds. The
+recompute follows the report's own commit, so a call that ends in an error or
+no answer is sent again: every report here is safe to resend, and the resend
+finishes the recompute. The readiness a query answers is
 computed when it answers; only `since` comes from the stored moment.
 
 **Liveness.** A Build's liveness signal is its last report of any kind, so each
