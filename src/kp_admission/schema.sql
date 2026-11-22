@@ -25,9 +25,8 @@ CREATE TABLE document (
     metadata          jsonb,
     deleted_at        timestamptz,
     delete_request_id text,
-    -- The current Canonical Revision (#251), written with its current_revision_changed event;
-    -- null until the first acceptance. The three values after it are what selection compares
-    -- (spec §3), kept here so it reads the locked row only.
+    -- The current Canonical Revision and what selection compares, on this row so it reads only
+    -- the locked row (spec §3).
     current_source_revision_id    text,
     current_canonical_revision_id text,
     current_source_revision_sequence bigint,

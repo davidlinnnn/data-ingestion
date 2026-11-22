@@ -460,7 +460,8 @@ Returns the current generation (Q10.1f):
 - `details` is internal: do not use it for status decisions. It is `null`
   except for a method-version lag of a Document not deleted, when the
   Processing Profile version that made the current Canonical Revision is not
-  the one adopted now for its media type:
+  the one adopted now for its media type (none while the media type has no
+  adopted version):
   `{"method_version_lag": {"canonical_revision_id", "processing_profile_version",
   "adopted_version"}}`. A lag affects neither readiness nor attention.
 - Readiness reads the projections' serving facts (§7.4); until a projection

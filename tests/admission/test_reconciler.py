@@ -11,11 +11,12 @@ from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
-from kp_admission import feed
+from kp_admission import feed, reports
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
 from kp_admission.requests import record_outcome
 from tests.admission.support import CANDIDATE, queue, request, revision, runs
+from tests.admission.test_status import PIPELINE, report
 
 pytestmark = pytest.mark.docker
 
@@ -118,8 +119,16 @@ async def test_the_reconciler_accepts_a_lost_report_s_candidate_once(conn, tempo
         "malformed": None,
         "reported": "crv_" + reported_id.removeprefix("req_"),
     }
+    # The lost report arrives after all: it is taken and accepts nothing again.
+    [(attempt_id,)] = await (
+        await conn.execute("SELECT attempt_id FROM request WHERE request_id = %s", (accepted_id,))
+    ).fetchall()
+    late = report(accepted_id, 1, "finalize", "succeeded", attempt_id=attempt_id,
+                  candidate=CANDIDATE.model_dump())  # fmt: skip
+    taken = await reports.take(conn, PIPELINE, reports.Report.model_validate(late))
+    assert taken.result == "recorded"
     found, _ = await feed.read(conn, start, limit=10)
-    assert [e.document_uid for e in found] == [accepted_uid]  # none again for the reported one
+    assert [e.document_uid for e in found] == [accepted_uid]  # once, and none for the reported one
     cursor = await conn.execute("SELECT count(*) FROM canonical_revision")
     assert await cursor.fetchone() == (2,)
 

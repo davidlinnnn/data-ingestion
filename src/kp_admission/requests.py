@@ -86,7 +86,8 @@ _OUTCOME = """
 UPDATE source_revision SET outcome = %s WHERE source_revision_id = %s AND outcome <> 'accepted'
 """
 
-# Every acceptance writes the Document, the conflict a concurrent deletion meets on MongoDB.
+# Every success writes the Document, accepted or not: the conflict a concurrent deletion meets on
+# MongoDB.
 _DOCUMENT = """
 UPDATE document SET acceptance_version = acceptance_version + 1 WHERE document_uid = %s
 RETURNING tenant_id, source_id, deleted_at IS NOT NULL, current_source_revision_sequence,
