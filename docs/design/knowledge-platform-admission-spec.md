@@ -158,7 +158,7 @@ candidate (§7.3) into the same function. In that transaction, in order:
    no candidate, the candidate's `ref` is not the revision's own key (§7.3), or
    the request's `adopted_version` is among the withdrawn versions of its main
    file's media type at that moment. The Source Revision is not made
-   `accepted` (it is `pending` unless an earlier revision accepted it), no
+   `accepted`: it keeps the outcome the table above gives it, no
    Canonical Revision is recorded, the current one stays and no event is
    appended. Each reason is counted (`kp_admission_not_accepted_total`,
    `reason` `document_deleted`, `no_candidate`, `ref_mismatch` or

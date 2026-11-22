@@ -502,6 +502,12 @@ projections: [retrieval, llm-wiki]   # Projection Types whose products the Sourc
   2. Method changes affect neither readiness nor attention.
   3. A failed refresh leaves the previous result serving and alerts the owner
      (#78).
+
+  Note of 2026-11-22 ([#251](https://github.com/davidlinnnn/data-ingestion/issues/251)):
+  a refresh still leaves `source_revision.outcome` alone when it fails or forms
+  no acceptance, but one that forms Canonical Acceptance makes its Source
+  Revision `accepted`, so that `accepted` holds exactly when a Canonical
+  Revision of it exists (admission spec §3).
   4. Daily submissions keep priority.
   5. Queued and running requests keep compatible workers (constraint 8).
   6. Exact-revision references stay resolvable within retention (ADR-0003).

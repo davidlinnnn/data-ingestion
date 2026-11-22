@@ -1,7 +1,8 @@
 """Projection report intake (#252, admission spec §7.4, canonical consumption DR §4–§5): Builds,
 registrations, serving facts, heartbeats, attempts and backfill reports over the platform API
 with a real database, and the readiness, serving and attention a Source then reads. The tests
-send what a projection would (#127 is not built) and set what #251, #98 and #205 will write."""
+send what a projection would (#127 is not built), accept through #251's acceptance, and set
+what #98 and #205 will write."""
 
 import asyncio
 import hashlib
