@@ -51,11 +51,12 @@ class Revision:
 class Doc:
     uid: int
     poison: frozenset  # profile versions under which this Document fails every time
+    rejects: set = field(default_factory=set)  # Source Revisions the Source broke: always rejected
     latest: int = 1
     deleted_with: int | None = None  # revisions held when it was deleted
     current: Revision | None = None
     revisions: list = field(default_factory=list)
-    outcome: dict = field(default_factory=dict)  # srv -> pending, accepted, failed
+    outcome: dict = field(default_factory=dict)  # srv -> pending, accepted, failed, rejected
 
 
 class World:
@@ -97,9 +98,11 @@ class World:
         self.request(doc, 1, "source")
         return doc
 
-    def update(self, doc: Doc) -> None:
+    def update(self, doc: Doc, rejected=False) -> None:
         if doc.deleted_with is None:
             doc.latest += 1
+            if rejected:
+                doc.rejects.add(doc.latest)
             self.request(doc, doc.latest, "source")
 
     def source_retry(self, doc: Doc) -> None:  # spec §6.4: same content, latest outcome failed
@@ -121,6 +124,9 @@ class World:
         if r.state != "active":
             return  # a repeated report, or the reconciler after the report, changes nothing
         doc = self.docs[r.doc]
+        if r.srv in doc.rejects:  # a source cause: re-run once per adoption, like a dead failure
+            r.state, doc.outcome[r.srv] = "failed", "rejected"
+            return
         if transient or r.version in doc.poison:
             r.state, r.retryable = "failed", r.version not in doc.poison
             if r.initiator != "platform":
@@ -355,6 +361,20 @@ def case_f11(block: bool) -> tuple:
     return w.late_promotions, seen, (old.current.version, new.current.version), w.pointer_changes
 
 
+def case_rejected_latest() -> tuple:
+    """Review B, H1: current made by @2 on S1, S2 rejected, then @2 withdrawn: S1 is redone."""
+    w = World()
+    w.adopt(2, "none")
+    doc = w.submit()
+    w.settle()
+    w.update(doc, rejected=True)
+    w.settle()
+    w.adopt(1, "none", withdraw=2)
+    w.settle()
+    assert w.check() == (0, 0)
+    return doc.current.srv, doc.current.version, doc.outcome[2]
+
+
 def case_b4() -> tuple:
     """Deletion before the result arrives, and after acceptance with a refresh in flight."""
     w = World()
@@ -383,7 +403,7 @@ def random_run(rng: random.Random, rule: str, block: bool) -> World:
                 poison = {rng.randint(1, top + 1)} if rng.random() < 0.8 else set(range(1, 99))
             w.submit(poison)
         elif roll < 0.33 and live:
-            w.update(rng.choice(live))
+            w.update(rng.choice(live), rejected=roll < 0.20)  # no extra draw: the stream is kept
         elif roll < 0.63 and active:
             r = rng.choice(active)
             w.report(r, transient=rng.random() < 0.15)
@@ -423,6 +443,7 @@ def main() -> None:
     for block in (False, True):
         print(f"F11 block={block}: (late promotions, seen, final, feed events) {case_f11(block)}")
     print(f"B4  (revisions of a, of b, void results, feed events): {case_b4()}")
+    print(f"H1  latest rejected, served version withdrawn: (current srv, version, S2) {case_rejected_latest()}")
 
     rng = random.Random(seed)
     total = {"documents": 0, "requests": 0, "gave up": 0, "served faulty, redo failed": 0}

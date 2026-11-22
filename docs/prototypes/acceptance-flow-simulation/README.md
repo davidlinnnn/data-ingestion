@@ -28,8 +28,16 @@ sweep that refreshes existing Documents by the refresh scope declared with each 
 - A rollback needs a withdrawn-version record that outlives the rollback's own adoption (`v3`).
   With the latest adoption's scope alone (`v2`), 3,721 of 20,000 runs end with a Document served
   from the withdrawn version.
-- The sweep's "no active request for the Document" check is an economy, not a safety property:
-  removing it fails 0 of 2,000 runs.
+- The sweep's "no active request for the Document" check is an economy for which revision ends
+  current: removing it fails 0 of 2,000 runs. It is not one for liveness: an active request that
+  never ends blocks its Document's re-run (review B, H2), which the simulation does not model.
+- A Source Revision rejected for a source cause (review B, H1 and M13) is re-run once per adoption
+  and then the served revision falls back into scope: with the latest content rejected and the
+  served version withdrawn, the served content is redone. Without that fall-back arm the fixed
+  case fails and so do 191 of 2,000 random runs.
+
+The numbers above this point were measured before rejected Source Revisions were added to the
+random runs; with them the `v2` figure is 3,844 of 20,000.
 
 The mutation runs behind these numbers patch `World` from a throwaway script; they are not in this
 directory.
@@ -37,6 +45,6 @@ directory.
 ## Not covered
 
 Temporal and Kubernetes (the gate, CronJob overlap), database locks and transactions on either
-engine, priorities and capacity, re-dispatch and stale attempts, a second media type, a Source
-Revision rejected for a source cause. The simulation checks rules, not code: the acceptance
+engine, priorities and capacity, re-dispatch and stale attempts, a second media type, requests
+whose workflow never ends. The simulation checks rules, not code: the acceptance
 transaction (#251) and the sweep (#98) are not built.
