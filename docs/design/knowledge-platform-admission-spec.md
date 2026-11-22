@@ -791,15 +791,16 @@ once the projection reported its state; its other routes are `404` before.
 | Route under `/report/v1/` | Body | Answers |
 |---|---|---|
 | `PUT builds/{build_id}` | the Build's state (below) | `200` `{"state", "repair_requested"}`; `409` `GATE_FAILED`, `BUILD_STATE` |
-| `POST builds/{build_id}/registrations` | `{"facts": [...]}`, each to become `pending` | `200` `{"repair_requested"}`; `409` `SUPERSEDED`, `FENCED` |
-| `POST builds/{build_id}/facts` | `{"facts": [...]}`, each with `state` `included` or `removed` | `200` `{"fenced", "repair_requested"}` |
-| `POST builds/{build_id}/heartbeats` | `{"count", "digest"}` | `200` `{"repair_requested"}` |
-| `POST builds/{build_id}/status-reports` | an attempt report (below) | `202` taken, `200` a resend, `409` `{"attempt_no", "seq"}` |
+| `POST builds/{build_id}/registrations` | `{"facts": [...]}`, each to become `pending` | `200` `{"repair_requested"}`; `409` `SUPERSEDED`, `FENCED`, `BUILD_STATE` |
+| `POST builds/{build_id}/facts` | `{"facts": [...]}`, each with `state` `included` or `removed` | `200` `{"fenced", "repair_requested"}`; `409` `BUILD_STATE` |
+| `POST builds/{build_id}/heartbeats` | `{"count", "digest"}` | `200` `{"repair_requested"}`; `409` `BUILD_STATE` |
+| `POST builds/{build_id}/status-reports` | an attempt report (below) | `202` taken, `200` a resend, `409` `{"attempt_no", "seq"}` or `BUILD_STATE` |
 | `PUT sources/{source_id}/backfill` | `{"profile_seq"}` | `204`; `404` for a Source without a Knowledge Profile; `400` for a `profile_seq` after the Source's |
 
 A refusal is an AIP-193 error whose ErrorInfo `metadata` names what failed:
 `{"gate"}`, `{"state"}` or `{"document_uid"}`. The `409` of a status report is
-the bare position, as in §7.3.
+the bare position, as in §7.3, except to a retired Build, where it is the
+`BUILD_STATE` error: a client tells the two apart by the `error` member.
 
 **Builds.** `build_id` is the owner's, unique within the projection. Its first
 report creates the Build as `building`. A Build switches to `serving` by a
@@ -918,7 +919,8 @@ finishes the recompute. How long an owner keeps resending before it asks for
 a repair instead (DR §5.3: before the tombstone's 30 days) is #260's. The
 recompute after a Build's state report or a backfill report, and a
 heartbeat's comparison, run inside the call and grow with the Build or the
-Source; they are sized for 100,000 Documents until #99 measures them, and the
+Source. Their duration is not measured: #99 measures it, and until then a
+caller allows for a call that outlasts its timeout and resends. The
 reports of one Build are taken one at a time. The readiness a query answers is
 computed when it answers; only `since` comes from the stored moment.
 

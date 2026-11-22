@@ -752,7 +752,7 @@ def app(
         async with pool.connection() as conn:
             answer, changed = await serving.report_build(conn, name, build_id, body)
             # shortcut: a switch, or a resent one, refreshes every Document of both Builds inside
-            # the request, move the fan-out to a worker when a Build holds over 100,000.
+            # the request, move the fan-out to a worker when #99 measures it near a call's timeout.
             await status.refresh_builds(conn, name, changed)
         return JSONResponse(answer.model_dump(mode="json"))
 
@@ -765,7 +765,7 @@ def app(
         async with pool.connection() as conn:
             await serving.report_backfill(conn, name, source_id, body.profile_seq)
             # shortcut: refreshes every Document of the Source inside the request, move the
-            # fan-out to a worker when a Source holds over 100,000.
+            # fan-out to a worker when #99 measures it near a call's timeout.
             await status.refresh_source(conn, source_id)
 
     @report.post("/builds/{build_id}/registrations", response_model=serving.Answer)

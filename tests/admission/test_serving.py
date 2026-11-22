@@ -848,7 +848,8 @@ async def test_a_retired_build_takes_no_more_reports(api, conn):
         await registered(api, "retrieval", fact(uid, srv, 1)),
         await included(api, "retrieval", fact(uid, srv, 2)),
         await beat(api, "retrieval"),
+        await tried(api, "retrieval", attempt(uid, srv, 1, 1, "running")),
     ]
 
-    assert [gate(r) for r in refused] == [(409, "BUILD_STATE", {"state": "retired"})] * 3
+    assert [gate(r) for r in refused] == [(409, "BUILD_STATE", {"state": "retired"})] * 4
     assert await serving.held(conn, uid) == []
