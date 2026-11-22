@@ -112,8 +112,10 @@ async def test_every_admission_record_carries_a_tenant(conn):
          "idempotency_key", "source", "change_feed", "adoption",
          "intake_quota"], "NO",
     ) | {
-        # Platform-wide: a projection reads every tenant's feed (#126).
+        # Platform-wide: a projection reads every tenant's feed (#126) and its Builds serve
+        # them all (#252).
         "consumer_cursor": None, "change_feed_horizon": None,
+        "build": None, "serving_fact": None, "projection_attempt": None,
     }  # fmt: skip
 
 

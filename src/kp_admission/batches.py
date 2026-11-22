@@ -31,6 +31,7 @@ from kp_admission.authz import Authorizer, Decision, Ref
 from kp_admission.errors import Refused
 from kp_admission.requests import create_process_request
 from kp_admission.resources import resource_id
+from kp_admission.status import refresh
 from kp_admission.storage import ObjectStore, StorageUnavailable, source_key
 
 MAX_ITEMS = 50  # per declaration (§11, provisional)
@@ -903,6 +904,8 @@ async def finalize(
                     record = placement | {"finalization": _record(decision)}
                     await _update_item(conn, batch_id, index, outcome, record)
                 await _mark_finalized(conn, batch_id)
+        # A new latest Source Revision can make a served Document ready_stale (§7.1).
+        await refresh(conn, sorted(uid for _, uid, _, _ in declared))
         if expired:
             await expire(conn, batch_id)
             raise _expired()

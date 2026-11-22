@@ -214,6 +214,16 @@ PIPELINE = {
         # Two credentials of one pipeline rotate; they must not disagree on its registration.
         ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE | {"stages": ["prepare"]}})),
         ("KP_PIPELINES", json.dumps({"d1": PIPELINE, "d2": PIPELINE | {"pipeline_id": "other"}})),
+        # A projection's reports are keyed by its track, so one pipeline has it (spec §7.4).
+        (
+            "KP_PIPELINES",
+            json.dumps(
+                {
+                    "d1": PIPELINE | {"track": "wiki"},
+                    "d2": PIPELINE | {"pipeline_id": "w2", "track": "wiki"},
+                }
+            ),
+        ),
         ("KP_ADMISSION_API_PORT", "http"),
         ("KP_SOURCES", '{"km": {"ordering": "newest"}}'),
         ("KP_MAX_FILE_SIZE", "50MB"),
@@ -370,10 +380,16 @@ async def test_set_profile_and_feed_retention_are_one_shot_runs_that_print_json(
 
 @pytest.mark.docker
 @pytest.mark.network
-async def test_the_api_exports_the_feed_guard_gauges_on_its_metrics_port(conn, dsn):
+async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(conn, dsn):
     await feed.report_cursor(conn, "wiki", await feed.head(conn))
+    await conn.execute(
+        "INSERT INTO build (projection, build_id, state, reported_at)"
+        " VALUES ('wiki', 'b1', 'serving', now() - interval '1 hour')"
+    )
     port, metrics_port = free_port(), free_port()
-    api = role("api", api_env(dsn, port), "--metrics-port", str(metrics_port))
+    wiki = PIPELINE | {"pipeline_id": "kp-wiki", "track": "wiki", "update_interval_s": 600}
+    env = api_env(dsn, port) | {"KP_PIPELINES": json.dumps({"d1": wiki})}
+    api = role("api", env, "--metrics-port", str(metrics_port))
     try:
         async with httpx.AsyncClient(base_url=f"http://127.0.0.1:{metrics_port}") as http:
             for _ in range(100):
@@ -388,3 +404,4 @@ async def test_the_api_exports_the_feed_guard_gauges_on_its_metrics_port(conn, d
 
     assert 'kp_feed_consumer_lag_seconds{projection="wiki"} 0.0' in page
     assert "kp_feed_oldest_xmin_age_seconds " in page
+    assert 'kp_serving_builds_without_liveness{projection="wiki"} 1.0' in page
