@@ -21,7 +21,10 @@ sweep that refreshes existing Documents by the refresh scope declared with each 
   refreshed opens 50 requests; the corrected rule opens 5.
 - The sweep needs a retry arm for a Document whose latest Source Revision failed, whatever the
   refresh scope, with a cap per adoption. Without the arm 766 of 2,000 runs leave such a Document
-  uncounted; without the cap a failing refresh is reopened on every run.
+  uncounted; without the cap a failing refresh is reopened on every run. After the B9 ruling
+  (2026-11-22) the cap stays for non-retryable failures only; a retryable failure is bounded by a
+  retry interval instead, so that a first submission made during a long outage is not stranded
+  until the next adoption. The simulation still models the count cap.
 - A rollback needs a withdrawn-version record that outlives the rollback's own adoption (`v3`).
   With the latest adoption's scope alone (`v2`), 3,721 of 20,000 runs end with a Document served
   from the withdrawn version.
