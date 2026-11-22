@@ -8,7 +8,7 @@ from typing import Any, Literal
 from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 
-from kp_admission import feed
+from kp_admission import adoption, feed
 from kp_admission import serving as mirror
 from kp_admission.reports import Pipeline, details
 from kp_admission.resources import source_and_key
@@ -54,7 +54,8 @@ def _shown(error: dict[str, Any] | None) -> dict[str, Any] | None:
 # affects readiness or attention (§7.2).
 _DOCUMENTS = """
 SELECT d.document_uid, d.document_id, d.resource_id, d.title, d.source_url, d.metadata,
-       d.deleted_at, d.readiness_since, s.source_revision_id, s.source_version, s.outcome,
+       d.deleted_at, d.readiness_since, d.current_canonical_revision_id,
+       d.current_adopted_version, s.source_revision_id, s.source_version, s.outcome,
        r.request_id, r.state, r.error, r.terminal_at, r.reported_at, o.dispatched_at
 FROM document d
 LEFT JOIN source_revision s ON s.source_revision_id = d.latest_source_revision_id
@@ -95,7 +96,25 @@ async def document(
         pipelines,
         datetime.now(UTC),
     )
-    return _view(row, required, served, pipelines.get("canonical"), projected)
+    view = _view(row, required, served, pipelines.get("canonical"), projected)
+    return view | {"details": await _lag(conn, row) if view["readiness"] != "deleted" else None}
+
+
+async def _lag(conn: AsyncConnection, row: Mapping[str, Any]) -> dict[str, Any] | None:
+    """The method-version lag (§5.6): the current Canonical Revision's Processing Profile version
+    is not the one adopted now; None without a lag or a current revision."""
+    if (made_by := row["current_adopted_version"]) is None:
+        return None
+    adopted = await adoption.adopted_for(conn, made_by)
+    if adopted in (None, made_by):
+        return None
+    return {
+        "method_version_lag": {
+            "canonical_revision_id": row["current_canonical_revision_id"],
+            "processing_profile_version": made_by,
+            "adopted_version": adopted,
+        }
+    }
 
 
 async def documents(

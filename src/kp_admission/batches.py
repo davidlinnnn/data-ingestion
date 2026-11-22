@@ -348,10 +348,12 @@ async def _create_revision(
     conn: AsyncConnection, caller: Caller, uid: str, item: dict[str, Any], files: list[dict]
 ) -> str:
     srv = f"srv_{uuid.uuid4().hex}"
+    # Under the Document's lock, so no two Source Revisions of it count the same sequence.
     await conn.execute(
         "INSERT INTO source_revision (source_revision_id, tenant_id, document_uid, source_version,"
-        " files) VALUES (%s, %s, %s, %s, %s)",
-        (srv, caller.tenant_id, uid, item.get("source_version"), Jsonb(files)),
+        " files, sequence) SELECT %s, %s, %s, %s, %s, coalesce(max(sequence), 0) + 1"
+        " FROM source_revision WHERE document_uid = %s",
+        (srv, caller.tenant_id, uid, item.get("source_version"), Jsonb(files), uid),
     )
     await conn.execute(
         "UPDATE document SET latest_source_revision_id = %s WHERE document_uid = %s", (srv, uid)

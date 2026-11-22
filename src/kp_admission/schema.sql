@@ -25,9 +25,16 @@ CREATE TABLE document (
     metadata          jsonb,
     deleted_at        timestamptz,
     delete_request_id text,
-    -- Written by status intake (#97) with the current_revision_changed event; null until then.
+    -- The current Canonical Revision and what selection compares, on this row so it reads only
+    -- the locked row (spec §3).
     current_source_revision_id    text,
     current_canonical_revision_id text,
+    current_source_revision_sequence bigint,
+    current_adoption_sequence     bigint,
+    current_adopted_version       text,
+    -- Written by every acceptance transaction, so on MongoDB a concurrent deletion conflicts
+    -- with it (#251, #239).
+    acceptance_version            bigint NOT NULL DEFAULT 0,
     -- Set with each Source Revision finalization creates; §6.3 orders against it.
     latest_source_revision_id     text,
     created_at                    timestamptz NOT NULL DEFAULT now(),
@@ -48,10 +55,13 @@ CREATE TABLE source_revision (
     tenant_id          text NOT NULL,
     document_uid       text NOT NULL REFERENCES document,
     source_version     text,
+    -- 1, 2, … per document in finalization order: which Source Revision is newer (spec §3).
+    sequence           bigint NOT NULL,
     -- The files of the §10 start input: [{path, role, custody_ref, sha256, size, media_type}].
     files              jsonb NOT NULL,
     outcome            text NOT NULL DEFAULT 'pending'
-                       CHECK (outcome IN ('pending', 'accepted', 'rejected', 'failed'))
+                       CHECK (outcome IN ('pending', 'accepted', 'rejected', 'failed')),
+    UNIQUE (document_uid, sequence)
 );
 
 CREATE TABLE request (
@@ -88,6 +98,33 @@ CREATE TABLE request (
 -- At most one process request in queued or processing per Source Revision (Q9.7a).
 CREATE UNIQUE INDEX request_one_active ON request (document_uid, source_revision_id)
     WHERE kind = 'process' AND state IN ('queued', 'processing');
+
+-- An accepted Canonical Revision (#251, spec §3): one per request, written by the acceptance
+-- transaction whether or not it becomes the Document's current one. content_ref is the candidate's
+-- string as it came (#57 scopes 3, 4 decide its form).
+CREATE TABLE canonical_revision (
+    canonical_revision_id text PRIMARY KEY,  -- crv_ and the request id's 32 hex digits
+    tenant_id          text NOT NULL,
+    document_uid       text NOT NULL REFERENCES document,
+    source_revision_id text NOT NULL REFERENCES source_revision,
+    request_id         text NOT NULL REFERENCES request,
+    adopted_version    text NOT NULL,  -- the Processing Profile version that made it
+    adoption_sequence  bigint NOT NULL,
+    content_ref        text NOT NULL,
+    content_sha256     text NOT NULL,
+    content_size       bigint NOT NULL,
+    accepted_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- Processing Profile versions withdrawn per main-file media type (#251, #57 B6): a success of
+-- one of them is not accepted. Written by declarative adoption (#261).
+CREATE TABLE withdrawn_version (
+    tenant_id    text NOT NULL,
+    media_type   text NOT NULL,
+    version      text NOT NULL,
+    withdrawn_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (media_type, version)
+);
 
 ALTER TABLE document ADD FOREIGN KEY (delete_request_id) REFERENCES request;
 ALTER TABLE document ADD FOREIGN KEY (current_source_revision_id) REFERENCES source_revision;

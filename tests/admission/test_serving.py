@@ -1,7 +1,8 @@
 """Projection report intake (#252, admission spec §7.4, canonical consumption DR §4–§5): Builds,
 registrations, serving facts, heartbeats, attempts and backfill reports over the platform API
 with a real database, and the readiness, serving and attention a Source then reads. The tests
-send what a projection would (#127 is not built) and set what #251, #98 and #205 will write."""
+send what a projection would (#127 is not built), accept through #251's acceptance, and set
+what #98 and #205 will write."""
 
 import asyncio
 import hashlib
@@ -11,15 +12,17 @@ from typing import Any
 import httpx
 import psycopg
 import pytest
+from psycopg.types.json import Jsonb
 from psycopg_pool import AsyncConnectionPool
 
 from kp_admission import adoption, feed, serving, status
 from kp_admission.api import app
 from kp_admission.batches import Intake
 from kp_admission.reports import Pipeline
+from kp_admission.requests import record_outcome
 from kp_admission.storage import FakeObjectStore
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import INTAKE, resource
+from tests.admission.support import FILES, INTAKE, candidate, resource
 from tests.admission.test_batches import PDF, file, item, submit
 from tests.admission.test_status import PLATFORM, REJECTED, credential, digest, document
 
@@ -73,11 +76,17 @@ async def profile(conn, *projections: str) -> str:
 
 
 async def accepted(conn, uid: str, srv: str, crv: str = "crv_1") -> None:
-    """#251's write: the Document's current Canonical Revision, of Source Revision `srv`."""
+    """Canonical Acceptance (#251) of a run of Source Revision `srv` whose Canonical Revision is
+    `crv`: it becomes the Document's current one."""
+    request_id = "req_" + crv.removeprefix("crv_")
     await conn.execute(
-        "UPDATE document SET current_source_revision_id = %s, current_canonical_revision_id = %s"
-        " WHERE document_uid = %s",
-        (srv, crv, uid),
+        "INSERT INTO request (request_id, tenant_id, kind, document_uid, source_revision_id, state,"
+        " initiator, priority, adopted_version, adoption_sequence, trace_id) VALUES"
+        " (%s, 't1', 'process', %s, %s, 'processing', 'source', 'normal', 'paper-pdf@1', 7, 't')",
+        (request_id, uid, srv),
+    )
+    assert await record_outcome(
+        conn, request_id, "succeeded", None, None, candidate(uid, request_id)
     )
 
 
@@ -85,8 +94,9 @@ async def revised(conn, uid: str, srv: str, version: str = "2") -> None:
     """A newer Source Revision of the Document, its latest, as finalization leaves it."""
     await conn.execute(
         "INSERT INTO source_revision (source_revision_id, tenant_id, document_uid,"
-        " source_version, files) VALUES (%s, 't1', %s, %s, '[]')",
-        (srv, uid, version),
+        " source_version, files, sequence) SELECT %s, 't1', %s, %s, %s, max(sequence) + 1"
+        " FROM source_revision WHERE document_uid = %s",
+        (srv, uid, version, Jsonb(FILES), uid),
     )
     await conn.execute(
         "UPDATE document SET latest_source_revision_id = %s WHERE document_uid = %s", (srv, uid)
@@ -339,8 +349,8 @@ async def test_a_registration_passes_the_check_or_records_nothing(api, conn):
     b, srv_b = await document(conn, "B")
     gone, srv_gone = await document(conn, "C")
     moved, srv_moved = await document(conn, "D")
-    for uid, srv in ((a, srv_a), (b, srv_b), (gone, srv_gone), (moved, srv_moved)):
-        await accepted(conn, uid, srv)
+    for i, (uid, srv) in enumerate(((a, srv_a), (b, srv_b), (gone, srv_gone), (moved, srv_moved))):
+        await accepted(conn, uid, srv, f"crv_{i + 1}")
     await conn.execute("UPDATE document SET deleted_at = now() WHERE document_uid = %s", (gone,))
     await conn.execute(
         "UPDATE document SET resource_id = 's1/finance' WHERE document_uid = %s", (moved,)
@@ -351,10 +361,12 @@ async def test_a_registration_passes_the_check_or_records_nothing(api, conn):
     older = await registered(
         api, "wiki", fact(a, srv_a, 1), fact(b, srv_b, 1, canonical_revision_id="crv_0")
     )
-    deleted = await registered(api, "wiki", fact(gone, srv_gone, 2))
-    out = await registered(api, "wiki", fact(moved, srv_moved, 3))
+    deleted = await registered(api, "wiki", fact(gone, srv_gone, 2, canonical_revision_id="crv_3"))
+    out = await registered(api, "wiki", fact(moved, srv_moved, 3, canonical_revision_id="crv_4"))
     nothing = [await serving.held(conn, uid) for uid in (a, b, gone, moved)]
-    page = await registered(api, "wiki", fact(a, srv_a, 4), fact(b, srv_b, 4))
+    page = await registered(
+        api, "wiki", fact(a, srv_a, 4), fact(b, srv_b, 4, canonical_revision_id="crv_2")
+    )
     pending = await seen(api, "A")
 
     for refused, uid in ((older, b), (deleted, gone), (out, moved)):
@@ -579,12 +591,16 @@ async def test_a_skip_names_who_acts_from_its_cause(api, conn):
     a, srv_a = await document(conn, "A")
     b, srv_b = await document(conn, "B")
     await accepted(conn, a, srv_a)
-    await accepted(conn, b, srv_b)
+    await accepted(conn, b, srv_b, "crv_2")
     await profile(conn, "wiki")
     await build(api, "wiki")
 
     await tried(api, "wiki", attempt(a, srv_a, 1, 1, "skipped", error=REJECTED))
-    await tried(api, "wiki", attempt(b, srv_b, 1, 1, "skipped", error=PLATFORM))
+    await tried(
+        api,
+        "wiki",
+        attempt(b, srv_b, 1, 1, "skipped", error=PLATFORM, canonical_revision_id="crv_2"),
+    )
     by_source, by_platform = await seen(api, "A"), await seen(api, "B")
 
     assert kinds(by_source) == [("skipped", "source", "wiki")]
