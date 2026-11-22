@@ -564,7 +564,11 @@ async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
     assert (failure["cause"], failure["stage"]) == ("platform", "enrich")
     error = failure["error"]
     assert (error["reason"], error["retryable"]) == ("PLATFORM_ERROR", True)
-    assert error["metadata"] == {"category": "platform", "activity": "inventory"}
+    assert error["metadata"] == {
+        "cause": "platform",
+        "category": "platform",
+        "activity": "inventory",
+    }
 
 
 async def test_a_summary_past_its_budget_does_not_hold_the_document(client, ports, runtime):

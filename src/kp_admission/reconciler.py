@@ -3,10 +3,10 @@ that has no terminal outcome against its workflow."""
 
 import logging
 from collections import Counter
-from typing import Any
+from typing import Any, Literal
 
 from psycopg import AsyncConnection
-from psycopg.types.json import Jsonb
+from pydantic import ValidationError
 from temporalio.api.errordetails.v1 import NamespaceNotFoundFailure
 from temporalio.client import (
     Client,
@@ -16,6 +16,8 @@ from temporalio.client import (
 )
 from temporalio.service import RPCError, RPCStatusCode
 
+from kp_admission.requests import Candidate, record_outcome
+
 ERROR_DOMAIN = "admission.knowledge-platform"
 
 _UNSETTLED = """
@@ -23,15 +25,14 @@ SELECT request_id FROM outbox JOIN request USING (request_id)
 WHERE dispatched_at IS NOT NULL AND kind = 'process' AND state IN ('queued', 'processing')
 """
 
-# The state guard keeps an outcome that status reports (#97) recorded meanwhile.
-_RECORD = """
-UPDATE request SET state = %s, terminal_at = %s, error = %s, updated_at = now()
-WHERE request_id = %s AND state IN ('queued', 'processing')
-"""
-
 _REDISPATCH = """
 UPDATE outbox SET dispatched_at = NULL, available_at = now(), redispatch_reason = %s
 WHERE request_id = %s
+"""
+
+# Until the dispatcher records the next run, reports wait (#97): none of the lost run's count.
+_NO_ATTEMPT = """
+UPDATE request SET attempt_id = NULL, last_report = NULL, reported_at = NULL WHERE request_id = %s
 """
 
 log = logging.getLogger(__name__)
@@ -40,8 +41,9 @@ log = logging.getLogger(__name__)
 async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
     """On an autocommit connection, for each dispatched process request still queued or
     processing: a running workflow is left alone; an ended one records the request's outcome,
-    succeeded, or failed with the workflow's error block; a missing one goes back to the outbox,
-    due now under the same request ID, with the reason in redispatch_reason. Returns how many
+    succeeded with its result's candidate, or failed with the workflow's error block, as
+    requests.record_outcome does; a missing one goes back to the outbox, due now under the same
+    request ID, with the reason in redispatch_reason and no current attempt. Returns how many
     requests went each way: running, recorded, redispatched. An unreachable Temporal or a
     missing namespace raises."""
     actions: Counter[str] = Counter()
@@ -57,37 +59,54 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
             ):
                 raise
             log.warning("workflow %s is missing; it goes back to the outbox", request_id)
-            await conn.execute(_REDISPATCH, (str(err), request_id))
+            async with conn.transaction():
+                await conn.execute(_REDISPATCH, (str(err), request_id))
+                await conn.execute(_NO_ATTEMPT, (request_id,))
             actions["redispatched"] += 1
             continue
         if described.status == WorkflowExecutionStatus.RUNNING:
             actions["running"] += 1
             continue
-        state, error = await _outcome(handle, described)
-        await conn.execute(
-            _RECORD, (state, described.close_time, error and Jsonb(error), request_id)
-        )
+        state, error, candidate = await _outcome(handle, described)
+        # An outcome that status reports (#97) recorded meanwhile stays.
+        await record_outcome(conn, request_id, state, error, described.close_time, candidate)
         actions["recorded"] += 1
     return actions
 
 
 async def _outcome(
     handle: WorkflowHandle, described: WorkflowExecutionDescription
-) -> tuple[str, dict[str, Any] | None]:
+) -> tuple[Literal["succeeded", "failed"], dict[str, Any] | None, Candidate | None]:
     status = described.status
     if status == WorkflowExecutionStatus.COMPLETED:
         result = await handle.result()
         if result.get("outcome") == "complete":
-            return "succeeded", None
+            return "succeeded", None, _candidate(described.id, result.get("candidate"))
         if result.get("error"):
-            return "failed", result["error"]
+            return "failed", result["error"], None
     name, closed = status.name if status else "UNKNOWN", described.close_time
-    return "failed", {
-        "domain": ERROR_DOMAIN,
-        "reason": "WORKFLOW_ENDED_WITHOUT_RESULT",
-        "message": f"The processing workflow ended {name} without an error block.",
-        "retryable": True,
-        "metadata": {"status": name},
-        "support_ref": f"temporal:{described.id}/{described.run_id}",
-        "occurred_at": closed and closed.isoformat().replace("+00:00", "Z"),
-    }
+    return (
+        "failed",
+        {
+            "domain": ERROR_DOMAIN,
+            "reason": "WORKFLOW_ENDED_WITHOUT_RESULT",
+            "message": f"The processing workflow ended {name} without an error block.",
+            "retryable": True,
+            "metadata": {"status": name},
+            "support_ref": f"temporal:{described.id}/{described.run_id}",
+            "occurred_at": closed and closed.isoformat().replace("+00:00", "Z"),
+        },
+        None,
+    )
+
+
+def _candidate(request_id: str, value: Any) -> Candidate | None:
+    """The workflow result's candidate (spec §7.3); one that is not well formed is none, so the
+    request still ends, without an acceptance."""
+    if value is None:
+        return None
+    try:
+        return Candidate.model_validate(value)
+    except ValidationError:
+        log.warning("workflow %s returned a malformed candidate", request_id)
+        return None

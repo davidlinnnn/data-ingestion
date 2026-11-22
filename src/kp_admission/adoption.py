@@ -56,3 +56,26 @@ async def cancel(conn: AsyncConnection, *, media_type: str, version: str) -> boo
         (media_type, version),
     )
     return cursor.rowcount == 1
+
+
+async def withdrawn(conn: AsyncConnection, media_type: str) -> set[str]:
+    """The Processing Profile versions withdrawn for `media_type` (#57 B6), as the transaction
+    reads them now."""
+    cursor = await conn.execute(
+        "SELECT version FROM withdrawn_version WHERE media_type = %s", (media_type,)
+    )
+    return {version for (version,) in await cursor.fetchall()}
+
+
+async def adopted_for(conn: AsyncConnection, version: str) -> str | None:
+    """The version adopted now for the media type `version` was adopted for, or None when it has
+    none: a version names one profile, so one media type (§3)."""
+    row = await (
+        await conn.execute(
+            "SELECT adopted_version, cancelled_at IS NULL FROM adoption WHERE media_type ="
+            " (SELECT media_type FROM adoption WHERE adopted_version = %s LIMIT 1)"
+            " ORDER BY sequence DESC LIMIT 1",
+            (version,),
+        )
+    ).fetchone()
+    return row[0] if row and row[1] else None

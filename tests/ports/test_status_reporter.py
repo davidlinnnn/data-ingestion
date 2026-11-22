@@ -112,7 +112,7 @@ async def test_http_posts_the_report_json_to_the_request():
     assert outcome.error is None
     (request,) = seen
     assert request.method == "POST"
-    assert str(request.url) == f"{BASE}/v1/requests/req_01/status-reports"
+    assert str(request.url) == f"{BASE}/report/v1/requests/req_01/status-reports"
     assert json.loads(request.content) == report(stage="finalize", progress=None).to_json()
 
 

@@ -31,7 +31,7 @@ async def test_reports_round_trip_and_out_of_order_gets_the_position(base_url):
         stale = await reporter.report(report(seq=2))
         assert (await reporter.report(report(seq=1, attempt_id="run-b"))).delivered
 
-        stored = (await client.get(f"{base_url}/v1/requests/req_01/status-reports")).json()
+        stored = (await client.get(f"{base_url}/report/v1/requests/req_01/status-reports")).json()
 
     assert not stale.delivered
     assert stale.position == Position(attempt_id="run-a", seq=3)
@@ -47,6 +47,8 @@ async def test_a_report_missing_a_field_is_rejected(base_url):
     body = report().to_json()
     del body["observed_at"]
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{base_url}/v1/requests/req_01/status-reports", json=body)
+        response = await client.post(
+            f"{base_url}/report/v1/requests/req_01/status-reports", json=body
+        )
 
     assert response.status_code == 400

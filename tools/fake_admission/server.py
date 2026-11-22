@@ -1,14 +1,14 @@
-"""Stand-in for the admission status-report receiver (#97 not built yet), for local runs.
-Kept in the repo as a reference for #97. The HTTP wrapping is the provisional one
-HttpStatusReporter sends:
+"""Stand-in for admission's status report intake (#97), for local runs that start no admission,
+such as the #80 and #199 harnesses. It takes what HttpStatusReporter sends, without a
+credential:
 
-    POST /v1/requests/{request_id}/status-reports   store a report
-    GET  /v1/requests/{request_id}/status-reports   every stored report, in arrival order
+    POST /report/v1/requests/{request_id}/status-reports   store a report
+    GET  /report/v1/requests/{request_id}/status-reports   every stored report, in arrival order
 
 Per (request_id, attempt_id) a report's seq must exceed the last stored one (gaps are
 fine). A repeat of the last report is accepted again; anything else out of order gets
-409 with the current position {"attempt_id", "seq"}. Ordering across attempts is not
-modelled: run IDs are not orderable, and the rule is an open question for #97.
+409 with the current position {"attempt_id", "seq"}. Unlike admission it keeps every attempt's
+reports: it does not know which run the dispatcher started, so it has no current attempt.
 
     python -m tools.fake_admission.server [--port 8081] [--log reports.jsonl]
 """
@@ -24,7 +24,7 @@ from typing import Any
 from kp_canonicalization.ports.status_reporter import StatusReport
 
 FIELDS = {field.name for field in fields(StatusReport)}
-PATH = re.compile(r"^/v1/requests/([^/]+)/status-reports$")
+PATH = re.compile(r"^/report/v1/requests/([^/]+)/status-reports$")
 
 
 class Receiver:

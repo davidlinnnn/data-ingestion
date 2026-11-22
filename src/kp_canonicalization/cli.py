@@ -2,9 +2,12 @@
 
 Connections come from the environment: TEMPORAL_ADDRESS (default localhost:7233),
 TEMPORAL_NAMESPACE (default "default"), KP_S3_* (see S3ObjectStore.from_env) and
-KP_ADMISSION_URL, the status-report receiver (tools/fake_admission until #97), which only the
-orchestration worker needs; KP_VLM_BASE_URL and KP_VLM_API_KEY, the OpenAI-compatible VLM
-endpoint, which only the vlm worker needs (the model comes from the profile);
+KP_ADMISSION_URL, the platform API that takes status reports, and KP_ADMISSION_TOKEN, mounted
+from a Secret, the credential admission registered for canonical processing (#97), sent as
+`Authorization: Bearer`, which only the orchestration worker needs (without the token, reports
+carry no Authorization header, as tools/fake_admission takes them); KP_VLM_BASE_URL and
+KP_VLM_API_KEY, the OpenAI-compatible VLM endpoint, which only the vlm worker needs (the model
+comes from the profile);
 KP_SUMMARY_BASE_URL and KP_SUMMARY_API_KEY, the OpenAI-compatible endpoint of the Document
 Summary's model, which only the summary worker needs (the model comes from the profile);
 KP_D3_BASE_URL and KP_D3_API_KEY, the root of the d3 decision model's System One service and
@@ -273,7 +276,14 @@ async def run_worker(
 
     store = S3ObjectStore.from_env()
     runtime = Runtime(profile=profile, build_id=build_id or "dev", custody_bucket=store.bucket)
-    async with httpx.AsyncClient(timeout=10) as http, httpx.AsyncClient() as external_http:
+    token = os.environ.get("KP_ADMISSION_TOKEN")
+    if queue == "orchestration" and not token:
+        log.warning("KP_ADMISSION_TOKEN is not set: status reports carry no credential")
+    reporting = {"Authorization": f"Bearer {token}"} if token else {}
+    async with (
+        httpx.AsyncClient(timeout=10, headers=reporting) as http,
+        httpx.AsyncClient() as external_http,
+    ):
         # Only orchestration Activities send status reports, only vlm ones VLM requests, only
         # summary ones summary requests and only d3 ones Quality Check requests.
         reporter = HttpStatusReporter(http, admission or "")

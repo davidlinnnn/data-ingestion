@@ -1,7 +1,7 @@
 # Knowledge Platform admission specification
 
 **Status:** current contract, kept up to date when a decision changes. The implementation
-tickets #95–#99 and #194 build from this document.
+tickets #95–#99, #194, #251 and #252 build from this document.
 
 The buildable contract for
 [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31).
@@ -65,9 +65,11 @@ Logical records; the physical schema is I1's.
 |---|---|---|
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at`, `cleaned_at` (its upload cleanup done, §6.2) | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
-| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per distinct content |
-| `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error` | `request_id` equals the Temporal workflow ID |
+| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id`, `created_at`, the current Canonical Revision (`current_source_revision_id`, `current_canonical_revision_id`; the two values selection compares, `current_source_revision_sequence` and `current_adoption_sequence`; and `current_adopted_version`, the version that made it), `acceptance_version` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last. The current Canonical Revision is Canonical Acceptance's (below) |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `sequence` (1, 2, … per document in finalization order, unique per document), `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per change of content from the latest Source Revision (§6.3). Under `ordering: source_version`, its `source_version` is the highest submitted while it is the latest (§6.4) |
+| `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error`, `attempt_id` (the current attempt, §7.3), `last_report` and `reported_at` (the current attempt's last report taken, and when) | `request_id` equals the Temporal workflow ID |
+| `canonical_revision` | `canonical_revision_id` (`crv_` and the request id's 32 hex digits), `document_uid`, `source_revision_id`, `request_id`, `adopted_version`, `adoption_sequence`, `content_ref`, `content_sha256`, `content_size`, `accepted_at` | An accepted Canonical Revision, one per request, fixed once written (ADR-0003). `content_ref` is the candidate's `ref`, checked to be the revision's own key (§7.3) |
+| `withdrawn_version` | `media_type`, `version`, `withdrawn_at` | Processing Profile versions withdrawn per main-file media type (#57 B6); written by declarative adoption (#261) |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
 | `intake_quota` | `source_id`, `tokens`, `refilled_at` | The token bucket of §11 |
@@ -78,10 +80,27 @@ Constraints:
 - At most one `process` request in `queued` or `processing` per
   (`document_uid`, `source_revision_id`): a partial unique index (Q9.7a).
 - Finalization and re-declaration are serialized per document (row lock on the
-  document).
+  document). Each reads the latest Source Revision after the operation before it
+  on that document has committed, so §6.3 orders against a version §6.4 recorded
+  meanwhile.
 - `source_revision.outcome` is set by canonical processing outcomes of
   Source-initiated and operator requests; platform refreshes (`initiator:
-  platform`) never change it (round 3 R2).
+  platform`) never change it (round 3 R2), except that Canonical Acceptance
+  (below) makes every accepted revision's Source Revision `accepted`, a
+  refresh's included. A Source Revision is `accepted` exactly when it has a
+  `canonical_revision`. When such a `process` request ends,
+  whether a status report (§7.3) or the reconciler (§9) records it first, its
+  Source Revision's outcome follows in the same transaction:
+
+  | The request ends | `source_revision.outcome` |
+  |---|---|
+  | `failed`, `error.metadata.cause` is `source` | `rejected` |
+  | `failed`, any other error, `WORKFLOW_ENDED_WITHOUT_RESULT` included | `failed` |
+  | `succeeded` | `pending`; `accepted` in the same transaction when it forms Canonical Acceptance (below) |
+
+  An `accepted` outcome stays: a later request, whatever its outcome, does not
+  undo the acceptance. A request that has ended keeps its outcome; whichever of the two
+  records it first wins.
 - A declaration in which every item is rejected keeps no record, its placement
   decisions included. An item rejected at finalization before its placement
   re-check still records that re-check's decision.
@@ -117,12 +136,62 @@ refresh after an adoption is #98's command).
   that names a version with no workers is not refused; it waits as backlog
   (profiles README, P1). Retiring a version therefore also waits until no
   queued or processing request names it.
-- The record governs which version new requests run. Which accepted revisions
-  stay eligible as a document's current revision is canonical processing's
-  rule (R1a, P10), not this record's.
+- The record governs which version new requests run. Which accepted revision
+  is a document's current one is Canonical Acceptance's selection (below).
 - A main file whose media type has no adopted version is `UNSUPPORTED_FORMAT`,
   at declaration (§6.1 rule 2) and at finalization (§6.2 step 4).
 - Before the first declaration, `paper-pdf@1` is adopted for `application/pdf`.
+
+**Canonical Acceptance** (#251, #57 scopes 2–4) is the commit of the
+transaction that records a `process` request `succeeded`, when that transaction
+records a Canonical Revision. Whichever of status intake (§7.3) and the
+reconciler (§9) records the success first runs it, and both pass the run's
+candidate (§7.3) into the same function. In that transaction, in order:
+
+1. It serializes with every other transaction on the Document (finalization,
+   deletion, another acceptance) before it touches the request. On PostgreSQL:
+   the Document's row is locked, then the request's, and every transaction that
+   ends a request takes them in this order, which #98 relies on. A request that
+   has ended changes nothing.
+2. The request becomes `succeeded`.
+3. No acceptance forms when the Document is deleted (§8), the success carries
+   no candidate, the candidate's `ref` is not the revision's own key (§7.3), or
+   the request's `adopted_version` is among the withdrawn versions of its main
+   file's media type at that moment. The Source Revision is not made
+   `accepted`: it keeps the outcome the table above gives it, no
+   Canonical Revision is recorded, the current one stays and no event is
+   appended. Each reason is counted (`kp_admission_not_accepted_total`,
+   `reason` `document_deleted`, `no_candidate`, `ref_mismatch` or
+   `version_withdrawn`) and logged. The `ref` check exists because reads
+   follow a revision's `ref`: a wrong or forged report must not point one
+   Document's revision at another Document's object.
+4. Otherwise the Canonical Revision is recorded and its Source Revision becomes
+   `accepted`.
+5. It becomes the Document's current Canonical Revision when the Document has
+   none, or when it is of a Source Revision with a higher `sequence`, or of the
+   same one under a higher `adoption_sequence`. A lower or equal candidate
+   leaves the current one. Completion time does not count, so results that
+   arrive in any order leave the same current revision. A new current revision
+   is written with a `current_revision_changed` event (ADR-0009): `normal` when
+   the revision it replaces was made by a withdrawn version (a canonical
+   rollback), otherwise `background` for a platform refresh and `normal` for
+   any other request (canonical consumption DR §3).
+
+- A success writes the Document on every path, `acceptance_version` when it
+  forms no acceptance or loses, so that on MongoDB a concurrent deletion
+  conflicts with it (#239).
+- Selection compares a candidate with the current revision only, once. That
+  holds while nothing clears a current revision: the pilot has no governance
+  withdrawal, and a failed redo after a withdrawn version keeps serving the
+  revision it had (user, 2026-11-22). Adding withdrawal or invalidation changes
+  this rule.
+- A withdrawn version is never the adopted one: declarative adoption (#261)
+  refuses to adopt it. Withdrawing takes no lock on the Document, so a result
+  accepted just before the withdrawal stays, as every revision already current
+  does; #98's scan redoes those Documents under the adopted version, and the
+  result wins as a higher `adoption_sequence` of the same Source Revision.
+- Canonical processing hands over candidates; it does not choose the current
+  revision.
 
 ## 4. API conventions
 
@@ -336,15 +405,42 @@ document's current state.
   "document_id": "A", "document_uid": "doc_…", "source_revision_id": "srv_…",
   "initiator": "source", "retry_of": null, "batch_id": "bat_…",
   "created_at": "…", "updated_at": "…", "terminal_at": "…",
-  "error": { "domain": "canonical.pdf-standard", "reason": "OCR_UNAVAILABLE", "message": "…", "retryable": false, "support_ref": "run-…" },
+  "error": { "domain": "kp-canonicalization", "reason": "PASSWORD_REQUIRED", "message": "…", "retryable": false,
+             "metadata": { "cause": "source", "category": "source" }, "support_ref": "temporal:req_01J…/…", "occurred_at": "…" },
   "trace_id": "…",
-  "details": { "_note": "internal; do not use for status decisions" }
+  "details": { "attempt_id": "…", "seq": 2, "stage": "prepare", "progress": null }
 }
 ```
 
-Process states: `queued`, `processing`, `succeeded` (processing completed; not
-Canonical Acceptance), `failed`. Delete states: `received`, `applied`,
+Process states: `queued`, `processing`, `succeeded` (processing completed;
+Canonical Acceptance, when it forms, commits with it, §3), `failed`. Delete states: `received`, `applied`,
 `enforced`. Visible immediately after `202`, before any workflow exists.
+
+- A `process` request becomes `processing` with the first report of its current
+  attempt (§7.3), and ends with the failure, or success at the last registered
+  stage, that a report or the reconciler records. `terminal_at` is the
+  report's `observed_at`, or the workflow's close time when the reconciler
+  records it. `error` is the error block as the reporter sent it, or the
+  reconciler's `WORKFLOW_ENDED_WITHOUT_RESULT` (§12), except that a failure
+  whose `metadata.cause` is not `source` carries the fixed English `message`
+  "Processing failed for a platform reason; the platform owner is alerted.": a
+  platform failure's own message can be an exception's text. Its `reason`,
+  `domain` and `support_ref` stay, for the platform owner.
+- A `succeeded` request forms no Canonical Acceptance when its Document was
+  deleted, its success carried no candidate or a `ref` that is not its
+  revision's key, or its Processing Profile version was withdrawn (§3). The
+  Source then sees the request `succeeded` and the Document as before: its
+  readiness and `serving` do not move to that Source Revision, and it has no
+  attention. Such a request is one that is `succeeded` with no
+  `canonical_revision` of its `request_id`; #98's scan runs it again, at once
+  for a withdrawn version, once per adoption for a missing or wrong candidate,
+  never for a deleted Document.
+- `details` is where the current attempt last reported, `null` before any
+  report; it is internal: do not use it for status decisions.
+- A Source sees the requests of its own Documents, platform refreshes included;
+  another Source's request is `404`. A request is `404` 30 days after its
+  `terminal_at` (§11); an active one never expires. The record stays: removal is
+  not built. Requires the submit permission, as §5.6 and §5.7 do.
 
 ### 5.6 Document: `GET /v1/documents/{document_id}`
 
@@ -358,17 +454,57 @@ Returns the current generation (Q10.1f):
   "readiness": "ready_stale", "since": "2026-10-15T09:12:00Z",
   "latest": { "source_revision_id": "srv_3", "source_version": "3", "request_id": "req_…" },
   "serving": [
-    { "projection": "retrieval", "source_revision_id": "srv_2", "source_version": "2" },
-    { "projection": "llm-wiki",  "source_revision_id": "srv_2", "source_version": "2" }
+    { "projection": "retrieval", "state": "ready", "source_revision_id": "srv_2", "source_version": "2" },
+    { "projection": "llm-wiki",  "state": "ready", "source_revision_id": "srv_2", "source_version": "2" }
   ],
   "attention": [
     { "kind": "source_revision_rejected", "action_owner": "source", "source_version": "3",
       "message": "PDF could not be parsed; fix and re-upload", "since": "2026-10-15T09:12:00Z" }
   ],
   "deleted_at": null,
-  "details": { "_note": "internal; do not use for status decisions" }
+  "details": null
 }
 ```
+
+- The current generation is the Document not deleted; when every generation of
+  the `document_id` is deleted, the one deleted last, with readiness `deleted`.
+  Its `404` 30 days after deletion is #98's. Another Source's Document is `404`.
+- `resource_id` is the Source's own key of the Resource (ADR-0013).
+- `details` is internal: do not use it for status decisions. It is `null`
+  except for a method-version lag of a Document not deleted, when the
+  Processing Profile version that made the current Canonical Revision is not
+  the one adopted now for the media type that version was adopted for (no lag
+  while that media type has no adopted version):
+  `{"method_version_lag": {"canonical_revision_id", "processing_profile_version",
+  "adopted_version"}}`. A lag affects neither readiness nor attention.
+- Readiness reads the projections' serving facts (§7.4); until a projection
+  reports, which needs canonical processing's candidate (#81) and #127's reader
+  of `current_revision_changed`, every
+  Document not deleted is `not_ready`, so an application follows a submission
+  by its request's `state` (§5.5).
+- `latest` is the Source Revision that finalization created last
+  (`document.latest_source_revision_id`), and `request_id` its newest request
+  that is not a platform refresh. It is not the current Canonical Revision
+  (§3).
+- `serving` has a row per required projection whose serving Build includes the
+  Document in its current Resource (§7.4): `state` is `building` while the
+  projection does not count toward readiness (§7.1), else `ready` when it serves
+  the latest Source Revision and `stale` when it serves an older one.
+  `source_version` is the one that Source Revision carries when the response is
+  made, so it follows a rewrite of §6.4. A projection that serves nothing has no
+  row.
+- `since` is when the Document took its readiness: `deleted_at` for `deleted`,
+  otherwise the moment the platform last recorded a change of readiness (§7.4),
+  its creation before any.
+- `attention` follows §7.2. Each entry carries `kind`, `action_owner`,
+  `source_version` (of the latest Source Revision), an English `message` and
+  `since`; `processing_failed`, `progress_stalled`, `status_unverified` and
+  `skipped` also carry `track`. For
+  `source_revision_rejected` and `processing_failed` `since` is the request's
+  `terminal_at`, and the message the error block's for the first and the fixed
+  platform message of §5.5 for the second, when canonical processing raises
+  them; for `progress_stalled` and `status_unverified` `since` is the deadline
+  that passed. The projections' entries follow §7.2. A deleted Document has no attention.
 
 ### 5.7 List: `GET /v1/documents`
 
@@ -377,6 +513,28 @@ filters it lists all the Source's documents, including `deleted` ones still
 within retention. Each entry carries `document_id`, `document_uid`,
 `latest.source_version`, `readiness` and `metadata`. Applications reconcile
 deletions with this list.
+
+```json
+{
+  "documents": [
+    { "document_id": "hr:leave-policy", "document_uid": "doc_7f3…",
+      "latest": { "source_version": "3" }, "readiness": "not_ready",
+      "metadata": { "km_folder": "HR/Policies" } }
+  ],
+  "next_page_token": "…"
+}
+```
+
+- Entries are in `document_id` order, then `document_uid` (a deleted
+  generation and the current one share a `document_id`). Deleted ones count
+  while within 30 days of `deleted_at`.
+- `resource_id` is the Source's own key. `projection` keeps the Documents whose
+  `serving` lists that projection.
+- AIP-158 pages: `page_size` 0 or above 1000 is 1000; a `page_token` is opaque,
+  and one this list did not return is `400`. `readiness` and
+  `projection` apply to each page after it is read, so a page may hold fewer
+  entries than `page_size`, none even, while more follow. Read until
+  `next_page_token` is empty; stopping at the first page can miss matches.
 
 ### 5.8 Delete: `DELETE /v1/documents/{document_id}`
 
@@ -461,7 +619,7 @@ cleanup.
 
 | `ordering` | Rule |
 |---|---|
-| `source_version` | Integer or RFC 3339 time, one kind per document: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`. Equal with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher → new Source Revision |
+| `source_version` | Integer or RFC 3339 time, one kind per document: the other kind than the latest Source Revision's is `INVALID_ARGUMENT`. Lower than the latest → `STALE_SOURCE_VERSION`, whatever the content. Equal or higher with equal content → §6.4. Equal with different content → accepted only if the latest Source Revision's outcome is `rejected` (Q10.1b), else `VERSION_CONFLICT`. Higher with different content → new Source Revision |
 | `arrival` | Finalization order decides; equal content → §6.4 |
 
 Content equality is equality of the set of (path, `sha256`) pairs. Equal bytes in
@@ -476,6 +634,23 @@ another document are never merged.
 | Any other outcome | `unchanged` |
 
 `title`, `source_url` and `metadata` apply in all three cases.
+
+Under `ordering: source_version`, an item whose `source_version` is higher than
+the latest Source Revision's records it as that Source Revision's
+`source_version`, in all three cases, and creates no Source Revision. From then
+on §6.3 orders later items against the recorded version, and a response shows it
+wherever it shows that Source Revision's `source_version`: `latest` (§5.6,
+§5.7), attention entries (they describe the latest Source Revision), and each
+`serving` row of that Source Revision, read when the response is built. It only
+grows: a lower
+version is rejected before §6.4 (§6.3), and an item rejected for any reason
+records nothing. Under `ordering: arrival` no version is recorded.
+
+Added on 2026-11-20 (#258): §6.3 made a higher version a new Source Revision
+whatever its content, so the same files under a higher version were processed
+again. Neither the design record's Q6a (equal digests are `unchanged`) nor Q6b
+(a newer version creates a Source Revision) ruled on this combination; for equal
+content the design record's ruling of 2026-11-20 takes precedence over Q6b.
 
 ### 6.5 Catalog fields and Source Metadata
 
@@ -502,16 +677,27 @@ the document's current Resource counts. First match:
 |---|---|
 | `deleted` | Source Deletion applied |
 | `withdrawn` | Governance withdrawal of the document or its latest Source Revision (#56) |
-| `not_ready` | Some required projection serves no revision |
+| `not_ready` | Some required projection serves no revision, or the Source requires none |
 | `ready_stale` | All serve a revision, at least one older than the latest |
 | `ready` | All serve the latest Source Revision |
+
+Platform refreshes (`initiator: platform`) affect neither readiness nor
+attention, whatever their outcome (§7.2). A projection serves the Source
+Revision of the `included` fact its serving Build holds for the Document in the
+Document's current Resource (§7.4), and keeps serving it while it writes a
+newer one over it; a fact in another Resource, a `pending` one over nothing, or
+one in a Build not `serving` counts for nothing.
 
 Superseded on 2026-10-26 by
 [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): the scalar
 readiness counts only projections whose backfill for the Source has completed. A
 newly added projection does not count until its owner reports "backfill of Source
 S complete at `profile_seq` P"; until then the document keeps its previous
-readiness. `serving[]` (§5.6) carries each projection's state: `ready`,
+readiness. A projection of the Source's first Knowledge Profile counts at once,
+as the #55 validation modelled it; one added later counts once its owner reports
+the backfill at a `profile_seq` not before the one that added it (§7.4). The
+value is computed over the projections that count, so a Document whose
+required projections all wait for their backfill is `not_ready`. `serving[]` (§5.6) carries each projection's state: `ready`,
 `building` or `stale`. See the
 [#55 design record](knowledge-platform-canonical-consumption.md).
 
@@ -540,12 +726,126 @@ Method-version changes and failed platform refreshes affect neither readiness
 nor attention; the owner is alerted (#78). `withdrawn` does not occur in the
 pilot (§7.1).
 
+Canonical processing's attention (#97) reads the latest Source Revision and its
+newest request that is not a platform refresh:
+
+- `source_revision_rejected`: the revision's outcome is `rejected` (§3).
+- `processing_failed` with `track: canonical`: its outcome is `failed` and that
+  request is not `queued` or `processing`. A failed report comes after
+  canonical processing's own retries (#80 retries Activities, not workflows).
+- `progress_stalled`: that request is `queued` or `processing` and dispatched,
+  with no report within the canonical pipeline's `start_deadline_s` of its
+  dispatch, or none within `update_interval_s` of its last report (§7.3). A
+  request still in the outbox is admission's own backlog and is not stalled.
+
+A required projection's attention (#252) reads only the current attempt, in
+that projection's serving Build, for the Document's current Canonical Revision
+(DR C4), so a failure in a Build still building, or a dropped result of an
+older revision, raises none:
+
+- `processing_failed` with `track: <projection>`: that attempt's last report is
+  `failed` for the latest Source Revision, and the projection does not serve
+  that revision. The message is the fixed platform message of §5.5.
+- `skipped`: the same, with `skipped`. The action owner is `source` with the
+  error block's message when its `metadata.cause` is `source`, else `platform`
+  with the fixed message.
+- `progress_stalled` with `track: <projection>`: that attempt's last report is
+  `pending` with none after it within the pipeline's `start_deadline_s`, or
+  `running`, or `succeeded` at a stage that is not the pipeline's last, with
+  none within `update_interval_s`. A projection has no dispatch,
+  so its first report starts the clock. Canonical processing's entry carries
+  `track: canonical`.
+- `status_unverified` with `track: <projection>`: the projection's serving Build
+  has sent no report of any kind within the pipeline's `update_interval_s`.
+  Liveness is a Build's, as it is a pipeline's (not a Document's) in the
+  admission design.
+
+`since` is the platform's time of that last report for the first two, the
+deadline that passed for the others.
+
 ### 7.3 Reports
 
 Admission, canonical processing and each projection report through the round-3
-status reporting contract (registered pipeline IDs, attempt reports ordered by
-`attempt_id` and `seq`, AIP-193-style error blocks, serving facts per published
-product version). The transport is chosen with #55's handoff channel in I3.
+status reporting contract (registered pipeline IDs, attempt reports,
+AIP-193-style error blocks, serving facts). #97 builds canonical processing's
+reports; the projections' are §7.4's, with the same registration and the same
+`seq` rule within one attempt.
+
+**Registration.** A reporter calls with its own service credential, which
+`KP_PIPELINES` registers: a JSON object from the credential's SHA-256 hex digest
+to `{"pipeline_id", "track", "stages", "start_deadline_s", "update_interval_s"}`.
+`track` is what its failures show under: `canonical`, or a projection's name,
+the value of the Source's `projections` (§7.4). No two pipelines share a
+track. Several digests may name one
+`pipeline_id`, so a credential is rotated with an overlap, and they carry the
+same registration; the `api` refuses to start otherwise. Without
+`KP_PIPELINES` the `api` starts, every report is `401` and no attempt is
+`progress_stalled`. `stages` is the ordered stage list;
+the two deadlines decide `progress_stalled` (§7.2). Canonical processing
+registers as `kp-canonicalization` with `prepare`, `parse`, `enrich`,
+`finalize` and, provisionally until the cluster-tier runs (§13), 1800 seconds
+for both: the PROD burst may wait 25 minutes, and `enrich` reports nothing
+between its start and its end.
+
+**Intake.** `POST /report/v1/requests/{request_id}/status-reports` on the
+platform API, under its own prefix because `/v1/` is the Source-facing surface
+an ingress exposes; a call without a registered pipeline credential is `401`,
+and a pipeline whose track is not `canonical` is `403`. The body is the report
+of #129, all twelve fields present: `request_id` (that of the path), `attempt_id`
+(the Temporal run ID), `seq` (an integer from 1, per attempt), `stages_version`,
+`stage` (a registered stage), `state` (`pending`, `running`, `succeeded`,
+`failed`), `progress` (`{done, total, unit}` or `null`), `message`,
+`method_version`, `manifest_ref` (or `null`), `observed_at` (RFC 3339 with a
+zone) and `error`, the error block exactly when `state` is `failed`. A body that
+breaks this is `400` and changes nothing; that check comes before the track's
+`403`. `skipped` is a projection's state (§7.4). The error block is AIP-193-style: `domain`, `reason`, `message` and
+`retryable` are required, `metadata` (string values), `support_ref` and
+`occurred_at` optional; admission reads only
+`metadata.cause` (§3) and does not interpret domains, reasons or stages beyond
+the last one.
+
+**Candidate.** A thirteenth field, `candidate`, may be left out or `null`, so a
+worker that predates it is still taken: `{"ref", "sha256", "size"}`, the
+Canonical content object of the run. `ref` is its object key without the bucket,
+which the deployment sets: `documents/{document_uid}/revisions/{canonical_revision_id}.json`,
+where `canonical_revision_id` is `crv_` and the request id's 32 hex digits
+(#57 scopes 3 and 4); any other `ref` forms no acceptance (§3). `sha256` is
+lowercase hex and `size` in bytes; any other key is `400`. Admission reads it from the
+success at the last registered stage only, for Canonical Acceptance (§3). The
+workflow's result carries the same object as `candidate` next to `"outcome":
+"complete"`, which the reconciler reads; a malformed one there counts as none.
+The last registered stage stays `finalize`: mapping is not a fifth stage,
+because old and new versions run side by side during an upgrade and a
+different stage count would end a request too early or never.
+
+**Current attempt.** Run IDs cannot be ordered, so reports are ordered within
+one attempt only. The dispatcher records the run it started as the request's
+`attempt_id`, from the start's answer, or from an already-started error's run
+when the workflow exists (§9); the reconciler clears it when it sends a lost
+workflow back to the outbox. Only the current attempt's reports count:
+
+| Report | Answer |
+|---|---|
+| The current attempt's, `seq` above the last one taken (gaps are fine) | `202`; taken |
+| The same as the last one taken, a resend | `200`; nothing changes |
+| The current attempt's, any other report: a lower `seq`, or the last `seq` with another body | `409` with `{"attempt_id", "seq"}`, the current attempt and its last `seq` |
+| Another attempt's | `409` with the current position (`seq` 0 before any report); not stored |
+| Before the dispatcher has recorded the attempt | `503` `ATTEMPT_NOT_RECORDED` with `Retry-After`: the sender retries within its report budget |
+| A request that does not exist or is not a `process` request | `404` |
+
+The `409` body is the bare position the sender reads, not an AIP-193 error; its
+trace id is in `X-Trace-Id`. A `503` `ATTEMPT_NOT_RECORDED` is the normal race
+with the dispatcher's commit and needs no alert.
+
+The first report taken moves a `queued` request to `processing`; a `failed`
+report, or a `succeeded` one at the last registered stage, ends it (§3, §5.5).
+This rests on admission making every run: canonical processing uses no
+workflow-level retry, and operators do not reset its workflows. A run made
+outside admission, such as by a manual reset, is not the current attempt: its
+reports are `409` and the request turns `progress_stalled`, while the
+reconciler, which follows the workflow ID, still records its outcome when it
+ends. No command records such a run; one is added when a reset becomes an
+operator procedure.
 
 Superseded on 2026-10-26 by
 [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): instead of a full
@@ -553,6 +853,185 @@ inclusion list per product version, projections report per-commit deltas of
 inclusion facts keyed by (projection, Build, `document_uid`, `resource_id`) with a
 Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 [#55 design record](knowledge-platform-canonical-consumption.md).
+
+### 7.4 Projection reports
+
+A projection reports to the platform over HTTP, under the protocol of the
+[#55 design record](knowledge-platform-canonical-consumption.md) (DR) §4 and §5:
+the state of each of its Builds, its serving facts, a heartbeat per Build, its
+attempts, and the completion of each Source's backfill. The platform keeps them
+per projection, platform-wide like its feed cursor: a Build serves every tenant.
+They are the mirror that readiness (§7.1), attention (§7.2) and Source
+Deletion's judgment (#98) read. The pilot deployment holds one tenant, so a
+Source is named by its `source_id` alone here until a deployment holds two.
+
+**Identity.** A projection calls with its service credential, registered twice
+under its name (DR C1): in `KP_AUTHZ_PEP_CREDENTIALS`, to read the Change Feed,
+and in `KP_PIPELINES` (§7.3) with that name as its `track`. Its pipeline's two
+deadlines decide its `progress_stalled` and `status_unverified`. A call without
+a registered pipeline credential is `401`; canonical processing's is `403`. A
+body that breaks the shapes below is `400` and changes nothing. A Build exists
+once the projection reported its state; its other routes are `404` before.
+
+| Route under `/report/v1/` | Body | Answers |
+|---|---|---|
+| `PUT builds/{build_id}` | the Build's state (below) | `200` `{"state", "repair_requested"}`; `409` `GATE_FAILED`, `BUILD_STATE` |
+| `POST builds/{build_id}/registrations` | `{"facts": [...]}`, each to become `pending` | `200` `{"repair_requested"}`; `409` `SUPERSEDED`, `FENCED`, `BUILD_STATE` |
+| `POST builds/{build_id}/facts` | `{"facts": [...]}`, each with `state` `included` or `removed` | `200` `{"fenced", "repair_requested"}`; `409` `BUILD_STATE` |
+| `POST builds/{build_id}/heartbeats` | `{"count", "digest"}` | `200` `{"repair_requested"}`; `409` `BUILD_STATE` |
+| `POST builds/{build_id}/status-reports` | an attempt report (below) | `202` taken, `200` a resend, `409` `{"attempt_no", "seq"}` or `BUILD_STATE` |
+| `PUT sources/{source_id}/backfill` | `{"profile_seq"}` | `204`; `404` for a Source without a Knowledge Profile; `400` for a `profile_seq` after the Source's |
+
+A refusal is an AIP-193 error whose ErrorInfo `metadata` names what failed:
+`{"gate"}`, `{"state"}` or `{"document_uid"}`. The `409` of a status report is
+the bare position, as in §7.3, except to a retired Build, where it is the
+`BUILD_STATE` error: a client tells the two apart by the `error` member.
+
+**Builds.** `build_id` is the owner's, unique within the projection. Its first
+report creates the Build as `building`. A Build switches to `serving` by a
+report that carries `switch_seq`, a number above every earlier switch of the
+projection; `replaces`, the Build serving now (`null` when none serves); and
+`feed_position`, the Change Feed position the Build has read to; with the
+owner's `approval_ref` and `evidence_ref` (DR D2). The platform re-runs the
+gates in this order and refuses the switch with the first that fails:
+`replaces` names another Build than the one serving; `caught_up`, the oldest
+feed entry after `feed_position` has waited more than 300 seconds (provisional
+until #127 measures a reader); `coverage`, it serves fewer Documents than the
+Build it replaces, counting on both sides the `included` facts and the
+`pending` ones written over a revision still served (§7.1);
+`removed_documents`, an `included` or `pending` fact of
+a Document deleted, unknown, or bound to another Resource than the fact's. A
+`feed_position` the feed has not reached is `400`, as a malformed one is; it
+is read after `replaces` passed, and not at all for a late switch. A switch that
+passes makes the replaced Build `retained` in the same step, so one Build of a
+projection serves: of two switches sent at once the later fails `replaces`. A `serving` report
+numbered at or below the last switch came late and changes nothing; its answer
+carries the Build's state. A `retained` Build switches back by the same report,
+which is a rollback (DR D2). `retired` is the owner's report that the Build's
+data is gone (DR §4) and is final: every later registration, fact, heartbeat
+and status report to it is `409` `BUILD_STATE`. A Build reported in the state it is in
+answers `200` with its state unchanged; a repeated `serving` or `retired`
+report runs the recompute of readiness again (below), so it is a retry, not a
+keepalive. Any other step, such as back to
+`building`, is `409` `BUILD_STATE` with the state the Build is in.
+
+**Facts.** A fact carries `document_uid`, `resource_id` (the full identifier the
+Document state read answers), `source_revision_id`, `canonical_revision_id`,
+`fact_version` (an integer from 1, monotonic within the Build, gaps allowed)
+and `issued_at` (RFC 3339 with a zone: when the projection first created this
+report, which the fence reads). A call carries 1 to 1000 facts. `build_id` is
+at most 128 characters, `document_uid` and the revision IDs 64, `resource_id`
+512.
+
+- A registration records every fact as `pending`, or none, after the B5 check
+  in the same transaction (DR §5.2, K1): each Document exists, is not deleted,
+  is bound to the fact's Resource, and has the fact's Source Revision and
+  Canonical Revision as its current ones (#251 records them). It locks the
+  Documents in `document_id` order, as declaration and finalization do, and
+  holds them until it commits, so Source Deletion's judgment, which locks the
+  Document, comes before it or sees the `pending` fact. A failed check is `409`
+  `SUPERSEDED` naming the first Document that failed: the projection drops the
+  result and does not write. When that answer came to a registration sent
+  more than once, an earlier send may have been recorded, so the projection
+  then reports each key as for an abandoned write. A projection that abandons a registered write
+  reports, with a new `fact_version`, what its store holds for the key:
+  `included` with the revisions still stored, or `removed` when it holds
+  nothing. A registration resent, or any fact whose `fact_version` is not
+  above the one held, answers `200` and records nothing. A registration over
+  an `included` fact keeps that fact's Source Revision as the one served until
+  the write is confirmed, so the Document keeps counting as served while it is
+  written, `ready_stale` when the write is of a newer Source Revision, and
+  does not turn `not_ready` (user ruling, 2026-11-22); the fact is
+  `pending` for every other reader, Source Deletion's judgment included.
+- `included` and `removed` facts are taken one by one: the highest
+  `fact_version` of a key, (Build, `document_uid`, `resource_id`), is kept, and an
+  older one answers `200` and changes nothing.
+- A `removed` fact is a tombstone kept 30 days. After that it counts as no
+  fact, except that it stops a report at or below its version issued before it
+  expired (DR §5.3). A stopped fact is listed in `fenced`, the other facts of
+  the call are taken, and a repair is requested; a fenced registration is `409`
+  `FENCED` and records nothing. A fenced fact is not sent again. Tombstones
+  stay in the database after their 30 days, as do the facts and attempts of
+  a retired Build and the attempts of earlier Canonical Revisions; their
+  removal is #264, after the pilot.
+
+**Repairs and heartbeats.** Every `200` of a Build's state, registration, fact
+or heartbeat report carries `repair_requested`: `null`, or `{"reason", "requested_at"}` while the platform
+asks for a repair view of the Build. Reasons: `heartbeat_mismatch`,
+`pending_expired`, `fenced`. The request stays until a repair view completes
+(#260, which adds the route for the view and its own reasons); until then it
+is information for the owner and refuses no report, and it shows the first
+reason: a later one does not replace it. The owner computes a heartbeat with
+no report of the Build in flight; a report still on its way is a mismatch. A heartbeat carries `count` and `digest` over the
+Build's store entries plus its unfinished registrations, a registration winning
+for a key with both (DR §5.5). `digest` is 64 lowercase hex digits: the XOR of
+the SHA-256 of each entry's `document_uid`, `resource_id` and
+`canonical_revision_id` joined by the byte 0x1F, UTF-8; all zeros for none. The
+platform computes the same over the Build's `included` and `pending` facts, and
+requests a repair when either differs, or when a `pending` fact is older than
+`PENDING_MAX`: 30 minutes, provisional until #127 measures a store write. It
+must exceed the longest write, a liveness pause included.
+
+**Attempts.** A projection's attempt is for one unit: (Build, `document_uid`,
+`canonical_revision_id`) (DR C4). Its report carries the fields of §7.3 without
+`request_id`, plus `document_uid`, `source_revision_id`,
+`canonical_revision_id` and `attempt_no`, a number the projection allocates
+durably per unit and only increases. The highest `attempt_no` of a unit is its
+current attempt; within it the `seq` rule of §7.3 holds (`202` taken, `200` a
+resend, `409` with the position), and a lower `attempt_no` is `409` with the
+current position. `attempt_id` is the owner's name of the run, such as its
+workflow run ID; the platform keeps it and orders nothing by it. `state` also takes
+`skipped`, and the error block is present exactly when the state is `failed`
+or `skipped`. A dropped result (B5) is `failed` with the owner's reason, such
+as `SUPERSEDED`, which the platform does not interpret.
+
+**Backfill.** The platform records the `profile_seq` at which each projection
+joined the Source's Knowledge Profile, none for those of its first one. The
+owner reports a Source's backfill complete with the `profile_seq` it read; an
+earlier one than recorded changes nothing. A projection counts toward the
+Source's readiness once its report is at or after the `profile_seq` that added
+it (§7.1).
+
+**Readiness changes.** The platform stores each Document's readiness and the
+moment it last changed, which is `since` (§5.6). It recomputes them after the
+calls that can change them: a fact report, a Build switch or retirement (for
+every Document the Builds hold a fact of), a backfill report and a Knowledge
+Profile change (for the Source's Documents), finalization (for its Documents),
+and a rebind (#205 calls the platform's recompute for the Documents it moves). Each Document in a transaction of its own, so a large
+fan-out holds no long transaction: the database ends one at 60 seconds. The
+recompute follows the report's own commit, so a call that ends in an error or
+no answer is sent again: every report here is safe to resend, and the resend
+finishes the recompute. How long an owner keeps resending before it asks for
+a repair instead (DR §5.3: before the tombstone's 30 days) is #260's. The
+recompute after a Build's state report or a backfill report, and a
+heartbeat's comparison, run inside the call and grow with the Build or the
+Source. Their duration is not measured: #99 measures it, and until then a
+caller allows for a call that outlasts its timeout and resends. The
+reports of one Build are taken one at a time. The readiness a query answers is
+computed when it answers; only `since` comes from the stored moment.
+
+**Liveness.** A Build's liveness signal is its last report taken, of any kind
+(a refused one does not count, except a `FENCED` registration and a status
+report's `409`), so each
+Build not retired, `building` and `retained` ones too, reports at least a
+heartbeat more often than its pipeline's `update_interval_s`, and a candidate
+its owner gives up is reported `retired` once its data is gone. A Build not
+retired with no report within that interval has lost liveness: the gauge `kp_serving_builds_without_liveness` counts them per
+projection, a serving one shows `status_unverified` (§7.2), and Source
+Deletion's judgment pauses while any exists (DR §5.6, #98). The interval is
+the registered pipeline's, so a projection stays in `KP_PIPELINES` until its
+Builds are retired (DR D1); a Build of one that left is not measured.
+
+**Logs and metrics.** Each report's log line carries `projection` and
+`build_id` (a backfill's carries `source_id` in its place), and as they apply
+`document_uid`, `resource_id`, `fact_version`, `state`, `attempt_no`, `seq`,
+`stage`, `result`, `reason` (a gate, an error block's reason, a repair's
+reason) and a call's counts (`count`, `results`, `late_landings`);
+never an error message. Metrics: `kp_api_calls_total` by operation and status
+(§7.3); `kp_serving_facts_total` by `projection` and `result` (`recorded`,
+`older`, `fenced`, `superseded`); `kp_serving_repairs_requested_total` by
+`projection` and `reason`; `kp_serving_late_landings_total` by `projection`, an
+`included` fact recorded for a deleted Document (DR §9); and the gauge above.
 
 ## 8. Source Deletion
 
@@ -582,8 +1061,9 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
 - When deletion is applied, `title`, `source_url` and `metadata` are cleared;
   the `deleted` record keeps only identifiers, times and request IDs.
 - Items of earlier batches finalized after `applied` → `DOCUMENT_DELETED`.
-- Results arriving later are recorded but never restore the document; publishing
-  a deleted document is ignored.
+- A result arriving later ends its request but forms no Canonical Acceptance
+  (§3), so it never restores the document; publishing a deleted document is
+  ignored.
 - A new submission of the same `document_id` after `applied` creates a new
   `document_uid`.
 - The deleted generation is visible for 30 days (its delete request and
@@ -601,10 +1081,13 @@ Build-wide monotonic `fact_version`, plus repair snapshots on request. See the
   apply global and per-Source in-flight budgets with fair rotation and
   priority, and start the workflow with workflow ID = `request_id` and
   `REJECT_DUPLICATE`; `WorkflowExecutionAlreadyStarted` counts as success.
+  In the transaction that marks the row dispatched, the started run, or the run
+  already under that workflow ID, becomes the request's current attempt (§7.3).
   During a Temporal outage rows wait and retry with backoff.
 - The reconciler (every 5 minutes) checks dispatched requests without a terminal
-  outcome: running → left alone; closed → outcome recorded; missing →
-  re-dispatched with the same ID and the reason recorded.
+  outcome: running → left alone; closed → outcome recorded (§3); missing →
+  re-dispatched with the same ID, the reason recorded and the current attempt
+  cleared.
 - Redrive (operator command): for every document whose latest Source Revision is
   platform-failed with no active request, create a `process` request with
   `initiator: operator`, low priority, no quota.
@@ -710,6 +1193,9 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
 
+`ATTEMPT_NOT_RECORDED` (`503`) is the status report intake's answer to a report
+that arrives before the dispatcher has recorded its attempt (§7.3).
+
 `WORKFLOW_ENDED_WITHOUT_RESULT` (domain `admission.knowledge-platform`,
 retryable) is a failed request's `error` when the reconciler finds its workflow
 ended without an error block, such as terminated or timed out (§9).
@@ -738,6 +1224,10 @@ ended without an error block, such as terminated or timed out (§9).
   before the PROD release admission moves to the company-managed MongoDB
   ([#239](https://github.com/davidlinnnn/data-ingestion/issues/239)), which
   rewrites §3, §9 and this item.
+- The `api` that takes a report's `candidate` (§7.3) is deployed before a worker
+  that sends one (#81). The report refuses unknown fields, so in the other
+  order every last report is `400` and the reconciler ends each request with no
+  candidate.
 - Uploads are written to the custody bucket (§5.2, §10). Admission writes source
   files there and deletes those of the items that created no Source Revision,
   with the incomplete uploads under their keys (§6.2); it changes nothing else
@@ -748,6 +1238,15 @@ ended without an error block, such as terminated or timed out (§9).
   without buffering it first, and allow several minutes per request; #78 sets
   these values. Capacity runs include the PROD burst (#88) through the upload
   route.
+- Status reports (§7.3) reach the `api` inside the cluster under `/report/`,
+  which the ingress does not expose, as it does not expose `/read/` and
+  `/authz/`. The `api` reads `KP_PIPELINES`; canonical processing's
+  orchestration worker reads `KP_ADMISSION_URL` (the `api`'s in-cluster address)
+  and `KP_ADMISSION_TOKEN` (its credential, from a Secret), and without the
+  token logs a warning and reports without a credential. Report intake counts in
+  `kp_api_calls_total{operation="report_status"}` by status, and logs each
+  report with `request_id`, `attempt_id`, `seq`, `stage`, `state`, `pipeline`,
+  its result and, on failure, the error's `reason`, never its message.
 - **CI tier:** Testcontainers PostgreSQL and Temporal; failpoints around each
   commit and start; an adjustable clock; the prototype's 19 scenarios as
   acceptance tests.
@@ -755,7 +1254,9 @@ ended without an error block, such as terminated or timed out (§9).
   pod kill, loss of the database's node, a restore drill from the archive
   (measures the restore time and the lost interval), API and dispatcher pod
   kills, a one-hour Temporal outage extrapolated to 24 hours, a backlog pause,
-  capacity runs. All *unmeasured*.
+  capacity runs, and the longest wait before a canonical attempt's first report
+  and between two of its reports under the PROD burst, which set the canonical
+  pipeline's two deadlines (§7.3). All *unmeasured*.
 - A full 24-hour Temporal outage test before production.
 - **Pass criteria:** every `202` maps to exactly one workflow; no loss or
   duplication; convergence within one reconciler period; deleted documents never
@@ -770,9 +1271,14 @@ ended without an error block, such as terminated or timed out (§9).
 | I1 Admission core (#95, done) | §3 schema, outbox, dispatcher, reconciler, the one-active-request constraint, Temporal start (§9, §10) | — |
 | I2 Batch API (#96) | §5.1, §5.3, §5.4, §6, idempotency, quota, the adoption record | I1, #113, #184, #204, #114 |
 | I2b File upload (#194) | §5.2, the upload cleanup (§6.2), minimal SDK | I2 |
-| I3 Status (#97) | §5.5–§5.7, §7, report intake | I1, #55, #126 |
-| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, #55, #126 |
+| I3 Status (#97) | §5.5–§5.7, canonical processing's report intake and request outcomes (§3, §7.3), readiness over no serving facts and canonical attention (§7) | I1, #55, #126 |
+| I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision and its selection, `current_revision_changed`, the withdrawn versions, the candidate and `details` (§3, §5.5, §5.6, §7.3) | I3 |
+| I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
+| I3c Serving-fact repair (#260) | the repair view's intake and the replacement of a Build's mirror (§7.4, DR §5.4) | I3b |
+| I3d Serving-mirror retention (#264, after the pilot) | removal of a retired Build's facts, old attempts and expired tombstones (§7.4, DR §5.3) | I3c |
+| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, I3c, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
 
-The dependencies follow the tracker's edges as of 2026-11-18, without the
+The dependencies follow the tracker's edges as of 2026-11-19, when #97 was split
+into I3, I3a and I3b, without the
 closed prototype #236; where the two differ, the tracker is current. The Resource API of §5.1 is #114 (done).

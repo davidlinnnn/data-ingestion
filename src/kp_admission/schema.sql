@@ -25,11 +25,22 @@ CREATE TABLE document (
     metadata          jsonb,
     deleted_at        timestamptz,
     delete_request_id text,
-    -- Written by status intake (#97) with the current_revision_changed event; null until then.
+    -- The current Canonical Revision and what selection compares, on this row so it reads only
+    -- the locked row (spec §3).
     current_source_revision_id    text,
     current_canonical_revision_id text,
+    current_source_revision_sequence bigint,
+    current_adoption_sequence     bigint,
+    current_adopted_version       text,
+    -- Written by every acceptance transaction, so on MongoDB a concurrent deletion conflicts
+    -- with it (#251, #239).
+    acceptance_version            bigint NOT NULL DEFAULT 0,
     -- Set with each Source Revision finalization creates; §6.3 orders against it.
-    latest_source_revision_id     text
+    latest_source_revision_id     text,
+    created_at                    timestamptz NOT NULL DEFAULT now(),
+    -- The readiness last computed (spec §7.1) and when it took that value: `since` of §5.6.
+    readiness                     text NOT NULL DEFAULT 'not_ready',
+    readiness_since               timestamptz NOT NULL DEFAULT now()
 );
 
 -- A source_id is unique per tenant, so a Source is (tenant_id, source_id).
@@ -44,10 +55,13 @@ CREATE TABLE source_revision (
     tenant_id          text NOT NULL,
     document_uid       text NOT NULL REFERENCES document,
     source_version     text,
+    -- 1, 2, … per document in finalization order: which Source Revision is newer (spec §3).
+    sequence           bigint NOT NULL,
     -- The files of the §10 start input: [{path, role, custody_ref, sha256, size, media_type}].
     files              jsonb NOT NULL,
     outcome            text NOT NULL DEFAULT 'pending'
-                       CHECK (outcome IN ('pending', 'accepted', 'rejected', 'failed'))
+                       CHECK (outcome IN ('pending', 'accepted', 'rejected', 'failed')),
+    UNIQUE (document_uid, sequence)
 );
 
 CREATE TABLE request (
@@ -69,6 +83,10 @@ CREATE TABLE request (
     updated_at         timestamptz NOT NULL DEFAULT now(),
     terminal_at        timestamptz,
     error              jsonb,
+    -- The current attempt, the run the dispatcher started (#97); only its reports count.
+    attempt_id         text,
+    last_report        jsonb,  -- the current attempt's last status report taken
+    reported_at        timestamptz,  -- when it was taken
     CHECK (
         (kind = 'process' AND state IN ('queued', 'processing', 'succeeded', 'failed')
          AND source_revision_id IS NOT NULL AND adopted_version IS NOT NULL
@@ -80,6 +98,33 @@ CREATE TABLE request (
 -- At most one process request in queued or processing per Source Revision (Q9.7a).
 CREATE UNIQUE INDEX request_one_active ON request (document_uid, source_revision_id)
     WHERE kind = 'process' AND state IN ('queued', 'processing');
+
+-- An accepted Canonical Revision (#251, spec §3): one per request, written by the acceptance
+-- transaction whether or not it becomes the Document's current one. content_ref is the candidate's
+-- string as it came (#57 scopes 3, 4 decide its form).
+CREATE TABLE canonical_revision (
+    canonical_revision_id text PRIMARY KEY,  -- crv_ and the request id's 32 hex digits
+    tenant_id          text NOT NULL,
+    document_uid       text NOT NULL REFERENCES document,
+    source_revision_id text NOT NULL REFERENCES source_revision,
+    request_id         text NOT NULL REFERENCES request,
+    adopted_version    text NOT NULL,  -- the Processing Profile version that made it
+    adoption_sequence  bigint NOT NULL,
+    content_ref        text NOT NULL,
+    content_sha256     text NOT NULL,
+    content_size       bigint NOT NULL,
+    accepted_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- Processing Profile versions withdrawn per main-file media type (#251, #57 B6): a success of
+-- one of them is not accepted. Written by declarative adoption (#261).
+CREATE TABLE withdrawn_version (
+    tenant_id    text NOT NULL,
+    media_type   text NOT NULL,
+    version      text NOT NULL,
+    withdrawn_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (media_type, version)
+);
 
 ALTER TABLE document ADD FOREIGN KEY (delete_request_id) REFERENCES request;
 ALTER TABLE document ADD FOREIGN KEY (current_source_revision_id) REFERENCES source_revision;
@@ -134,6 +179,11 @@ CREATE TABLE source (
     source_id   text NOT NULL,
     projections text[] NOT NULL,
     profile_seq text NOT NULL,
+    -- Per projection: the profile_seq it was added at ('' in the Source's first profile), and the
+    -- profile_seq its owner reported the backfill complete at. It counts toward readiness once
+    -- the second is not below the first (DR B1).
+    added       jsonb NOT NULL DEFAULT '{}',
+    backfilled  jsonb NOT NULL DEFAULT '{}',
     PRIMARY KEY (tenant_id, source_id)
 );
 
@@ -191,6 +241,65 @@ CREATE TABLE consumer_cursor (
     position   text NOT NULL,
     updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- A Build as its owner reported it (DR §4, spec §7.4), keyed by projection: the pilot holds one
+-- tenant (the shortcut of kp_admission.feed).
+CREATE TABLE build (
+    projection   text NOT NULL,
+    build_id     text NOT NULL,
+    state        text NOT NULL CHECK (state IN ('building', 'serving', 'retained', 'retired')),
+    switch_seq   bigint NOT NULL DEFAULT 0,  -- of the last `serving` report taken
+    feed_position text,
+    approval_ref text,
+    evidence_ref text,
+    reported_at  timestamptz NOT NULL DEFAULT now(),  -- the last report of any kind: liveness
+    repair_reason       text,  -- set while the platform asks the owner for a repair view
+    repair_requested_at timestamptz,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (projection, build_id)
+);
+
+-- Of a projection one Build serves: the later of two switches that did not see each other
+-- fails here.
+CREATE UNIQUE INDEX build_one_serving ON build (projection) WHERE state = 'serving';
+
+-- The mirror of the serving facts a projection reported (DR §5). A row is never deleted: a
+-- `removed` one is the tombstone, and after 30 days still fences older reports (DR §5.3).
+CREATE TABLE serving_fact (
+    projection   text NOT NULL,
+    build_id     text NOT NULL,
+    document_uid text NOT NULL,
+    resource_id  text NOT NULL,
+    state        text NOT NULL CHECK (state IN ('pending', 'included', 'removed')),
+    source_revision_id    text NOT NULL,
+    canonical_revision_id text NOT NULL,
+    fact_version bigint NOT NULL,
+    -- Of a `pending` fact registered over an `included` one: the Source Revision the store
+    -- serves until the write is confirmed, which readiness still counts (spec §7.4).
+    served_source_revision_id text,
+    recorded_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (projection, build_id, document_uid, resource_id),
+    FOREIGN KEY (projection, build_id) REFERENCES build
+);
+
+CREATE INDEX serving_fact_by_document ON serving_fact (document_uid);
+
+-- A projection's current attempt per (Build, Document, Canonical Revision) and its last report
+-- taken (spec §7.4): the highest attempt_no is the current attempt.
+CREATE TABLE projection_attempt (
+    projection   text NOT NULL,
+    build_id     text NOT NULL,
+    document_uid text NOT NULL,
+    canonical_revision_id text NOT NULL,
+    source_revision_id    text NOT NULL,
+    attempt_no   bigint NOT NULL,
+    last_report  jsonb NOT NULL,
+    reported_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (projection, build_id, document_uid, canonical_revision_id),
+    FOREIGN KEY (projection, build_id) REFERENCES build
+);
+
+CREATE INDEX projection_attempt_by_document ON projection_attempt (document_uid);
 
 -- Each Source's intake quota, a token bucket (§11).
 CREATE TABLE intake_quota (
