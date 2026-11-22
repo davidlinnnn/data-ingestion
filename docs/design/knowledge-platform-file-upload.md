@@ -1168,6 +1168,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev` |
 | projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#251、#127）`readiness` 仍是 `not_ready` |
 | 修復 view 的接收 | 讀取端送來整份 view，一次替換 mirror | #260 | 未實作，可以開始 |
+| mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，在 #260 之後 |
 | Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed` | #251 | 未實作，可以開始：#57 在 2026-11-22 定了受理點 |
 | 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob 套用；取代手動的 `kp-admission adopt` | #261 | 未實作，在 #251 之後；第一次部署到公司環境之前要完成 |
 | 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #251、#260、#261 之後 |
