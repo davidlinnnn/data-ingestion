@@ -682,7 +682,6 @@ def app(
                     conn,
                     source.tenant_id,
                     source.source_id,
-                    by_track,
                     page_size=min(page_size or PAGE_SIZE, PAGE_SIZE),
                     page_token=page_token,
                     resource_id=resource_id
@@ -737,7 +736,7 @@ def app(
         assert taken.position
         return JSONResponse(taken.position.model_dump(), 409)
 
-    def projection() -> str:
+    def calling_projection() -> str:
         """The calling projection: its pipeline's track (admission spec §7.4)."""
         track = pipeline_of[_request.get()["pipeline"]].track
         if track == "canonical":
@@ -749,11 +748,11 @@ def app(
     @report.put("/builds/{build_id}", response_model=serving.BuildAnswer)
     async def report_build_state(build_id: _BuildId, body: serving.BuildReport) -> JSONResponse:
         """A Build's state (DR §4, D2); a switch failing a gate is 409 GATE_FAILED."""
-        name = projection()
+        name = calling_projection()
         async with pool.connection() as conn:
             answer, changed = await serving.report_build(conn, name, build_id, body)
-            # shortcut: a resent `serving` report refreshes the whole Build again; skip it when
-            # Builds grow past a few hundred thousand Documents.
+            # shortcut: a switch, or a resent one, refreshes every Document of both Builds inside
+            # the request, move the fan-out to a worker when a Build holds over 100,000.
             await status.refresh_builds(conn, name, changed)
         return JSONResponse(answer.model_dump(mode="json"))
 
@@ -762,24 +761,28 @@ def app(
         source_id: Annotated[str, Path(max_length=64)], body: serving.Backfill
     ) -> None:
         """The projection's backfill of the Source is complete at profile_seq (DR B1)."""
-        name = projection()
+        name = calling_projection()
         async with pool.connection() as conn:
             await serving.report_backfill(conn, name, source_id, body.profile_seq)
+            # shortcut: refreshes every Document of the Source inside the request, move the
+            # fan-out to a worker when a Source holds over 100,000.
             await status.refresh_source(conn, source_id)
 
     @report.post("/builds/{build_id}/registrations", response_model=serving.Answer)
     async def register_facts(build_id: _BuildId, body: serving.Registrations) -> JSONResponse:
         """`pending` facts before a store write, all or none, after the B5 check (DR §5.2);
         409 SUPERSEDED: drop the result, do not write."""
-        name = projection()
+        name = calling_projection()
         async with pool.connection() as conn:
             answer = await serving.register(conn, name, build_id, body.facts)
+            # A `pending` fact over an `included` one ends its serving until confirmed.
+            await status.refresh(conn, sorted({f.document_uid for f in body.facts}))
         return JSONResponse(answer.model_dump(mode="json"))
 
     @report.post("/builds/{build_id}/heartbeats", response_model=serving.Answer)
     async def report_heartbeat(build_id: _BuildId, body: serving.Heartbeat) -> JSONResponse:
         """The Build's count and digest (DR §5.5); a mismatch asks for a repair view."""
-        name = projection()
+        name = calling_projection()
         async with pool.connection() as conn:
             answer = await serving.heartbeat(conn, name, build_id, body)
         return JSONResponse(answer.model_dump(mode="json"))
@@ -788,7 +791,7 @@ def app(
     async def report_projection_status(build_id: _BuildId, body: serving.AttemptReport) -> Response:
         """A status report of the projection's attempt for a Document's Canonical Revision in
         the Build (admission spec §7.4): 409 with the current position when out of order."""
-        name = projection()
+        name = calling_projection()
         async with pool.connection() as conn:
             taken = await serving.take_attempt(conn, by_track[name], build_id, body)
         if isinstance(taken, serving.AttemptPosition):
@@ -798,7 +801,7 @@ def app(
     @report.post("/builds/{build_id}/facts", response_model=serving.FactsAnswer)
     async def report_serving_facts(build_id: _BuildId, body: serving.ServingFacts) -> JSONResponse:
         """`included` and `removed` facts (DR §5.1); a fenced one is listed and not taken."""
-        name = projection()
+        name = calling_projection()
         async with pool.connection() as conn:
             answer = await serving.report_facts(conn, name, build_id, body.facts)
             await status.refresh(conn, sorted({f.document_uid for f in body.facts}))

@@ -102,7 +102,6 @@ async def documents(
     conn: AsyncConnection,
     tenant_id: str,
     source_id: str,
-    pipelines: Mapping[str, Pipeline],
     *,
     page_size: int,
     page_token: str | None = None,

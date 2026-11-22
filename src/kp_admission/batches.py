@@ -904,14 +904,17 @@ async def finalize(
                     record = placement | {"finalization": _record(decision)}
                     await _update_item(conn, batch_id, index, outcome, record)
                 await _mark_finalized(conn, batch_id)
-        # A new latest Source Revision can make a served Document ready_stale (§7.1).
-        await refresh(conn, sorted(uid for _, uid, _, _ in declared))
         if expired:
             await expire(conn, batch_id)
             raise _expired()
         if found.state == "expired":
             raise _expired()
         view = await _view(conn, caller, batch_id)
+        # A new latest Source Revision can make a served Document ready_stale (§7.1); on every
+        # call, so a retry after a crash before this line still records the change.
+        await refresh(
+            conn, sorted({i["document_uid"] for i in view["items"] if "document_uid" in i})
+        )
     if all(item["status"] == "rejected" for item in view["items"]):
         return 422, _all_rejected(view["items"])
     return 202, view

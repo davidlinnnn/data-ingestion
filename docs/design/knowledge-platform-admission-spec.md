@@ -431,9 +431,9 @@ Returns the current generation (Q10.1f):
   `skipped` also carry `track`. For
   `source_revision_rejected` and `processing_failed` `since` is the request's
   `terminal_at`, and the message the error block's for the first and the fixed
-  platform message of §5.5 for the second; for `progress_stalled` and
-  `status_unverified` `since` is the deadline that passed. The projections'
-  entries are §7.4's. A deleted Document has no attention.
+  platform message of §5.5 for the second, when canonical processing raises
+  them; for `progress_stalled` and `status_unverified` `since` is the deadline
+  that passed. The projections' entries follow §7.2. A deleted Document has no attention.
 
 ### 5.7 List: `GET /v1/documents`
 
@@ -623,7 +623,9 @@ newly added projection does not count until its owner reports "backfill of Sourc
 S complete at `profile_seq` P"; until then the document keeps its previous
 readiness. A projection of the Source's first Knowledge Profile counts at once,
 as the #55 validation modelled it; one added later counts once its owner reports
-the backfill at a `profile_seq` not before the one that added it (§7.4). `serving[]` (§5.6) carries each projection's state: `ready`,
+the backfill at a `profile_seq` not before the one that added it (§7.4). The
+value is computed over the projections that count, so a Document whose
+required projections all wait for their backfill is `not_ready`. `serving[]` (§5.6) carries each projection's state: `ready`,
 `building` or `stale`. See the
 [#55 design record](knowledge-platform-canonical-consumption.md).
 
@@ -773,7 +775,8 @@ the state of each of its Builds, its serving facts, a heartbeat per Build, its
 attempts, and the completion of each Source's backfill. The platform keeps them
 per projection, platform-wide like its feed cursor: a Build serves every tenant.
 They are the mirror that readiness (§7.1), attention (§7.2) and Source
-Deletion's judgment (#98) read.
+Deletion's judgment (#98) read. The pilot deployment holds one tenant, so a
+Source is named by its `source_id` alone here until a deployment holds two.
 
 **Identity.** A projection calls with its service credential, registered twice
 under its name (DR C1): in `KP_AUTHZ_PEP_CREDENTIALS`, to read the Change Feed,
@@ -807,10 +810,11 @@ gates in this order and refuses the switch with the first that fails:
 feed entry after `feed_position` has waited more than 300 seconds (provisional
 until #127 measures a reader); `coverage`, fewer `included` facts than the
 Build it replaces holds; `removed_documents`, an `included` or `pending` fact of
-a Document deleted, or bound to another Resource than the fact's. A switch that
+a Document deleted, unknown, or bound to another Resource than the fact's. A switch that
 passes makes the replaced Build `retained` in the same step. A `serving` report
 numbered at or below the last switch came late and changes nothing; its answer
-carries the Build's state. `retired` is the owner's report that the Build's
+carries the Build's state. A `retained` Build switches back by the same report,
+which is a rollback (DR D2). `retired` is the owner's report that the Build's
 data is gone (DR §4) and is final. A Build reported in the state it is in
 answers `200` with nothing changed. Any other step, such as back to
 `building`, is `409` `BUILD_STATE` with the state the Build is in.
@@ -819,7 +823,9 @@ answers `200` with nothing changed. Any other step, such as back to
 Document state read answers), `source_revision_id`, `canonical_revision_id`,
 `fact_version` (an integer from 1, monotonic within the Build, gaps allowed)
 and `issued_at` (RFC 3339 with a zone: when the projection first created this
-report, which the fence reads). A call carries 1 to 1000 facts.
+report, which the fence reads). A call carries 1 to 1000 facts. `build_id` is
+at most 128 characters, `document_uid` and the revision IDs 64, `resource_id`
+512.
 
 - A registration records every fact as `pending`, or none, after the B5 check
   in the same transaction (DR §5.2, K1): each Document exists, is not deleted,
@@ -830,7 +836,13 @@ report, which the fence reads). A call carries 1 to 1000 facts.
   Document, comes before it or sees the `pending` fact. A failed check is `409`
   `SUPERSEDED` naming the first Document that failed: the projection drops the
   result and does not write. A projection that abandons a registered write
-  reports the fact `removed` with a new `fact_version`.
+  reports, with a new `fact_version`, what its store holds for the key:
+  `included` with the revisions still stored, or `removed` when it holds
+  nothing. A registration resent, or any fact whose `fact_version` is not
+  above the one held, answers `200` and records nothing. A registration replaces
+  the key's fact, so while a new revision is written over one served, the
+  projection serves nothing for that Document and it is `not_ready` (DR §5.1, as
+  the #55 validation modelled it) until the `included` confirmation.
 - `included` and `removed` facts are taken one by one: the highest
   `fact_version` of a key, (Build, `document_uid`, `resource_id`), is kept, and an
   older one answers `200` and changes nothing.
@@ -842,11 +854,12 @@ report, which the fence reads). A call carries 1 to 1000 facts.
   stay in the database after their 30 days; their deletion waits for a
   retention ticket.
 
-**Repairs and heartbeats.** Every `200` of a Build's report carries
-`repair_requested`: `null`, or `{"reason", "requested_at"}` while the platform
+**Repairs and heartbeats.** Every `200` of a Build's state, registration, fact
+or heartbeat report carries `repair_requested`: `null`, or `{"reason", "requested_at"}` while the platform
 asks for a repair view of the Build. Reasons: `heartbeat_mismatch`,
 `pending_expired`, `fenced`. The request stays until a repair view completes
-(#260, which adds its reasons). A heartbeat carries `count` and `digest` over the
+(#260, which adds the route for the view and its own reasons); until then it
+is information for the owner and refuses no report. A heartbeat carries `count` and `digest` over the
 Build's store entries plus its unfinished registrations, a registration winning
 for a key with both (DR §5.5). `digest` is 64 lowercase hex digits: the XOR of
 the SHA-256 of each entry's `document_uid`, `resource_id` and
@@ -861,8 +874,10 @@ must exceed the longest write, a liveness pause included.
 `request_id`, plus `document_uid`, `source_revision_id`,
 `canonical_revision_id` and `attempt_no`, a number the projection allocates
 durably per unit and only increases. The highest `attempt_no` of a unit is its
-current attempt; within it the `seq` rule and answers of §7.3 hold, and a lower
-`attempt_no` is `409` with the current position. `state` also takes
+current attempt; within it the `seq` rule of §7.3 holds (`202` taken, `200` a
+resend, `409` with the position), and a lower `attempt_no` is `409` with the
+current position. `attempt_id` is the owner's name of the run, such as its
+workflow run ID; the platform keeps it and orders nothing by it. `state` also takes
 `skipped`, and the error block is present exactly when the state is `failed`
 or `skipped`. A dropped result (B5) is `failed` with the owner's reason, such
 as `SUPERSEDED`, which the platform does not interpret.
@@ -876,16 +891,18 @@ it (§7.1).
 
 **Readiness changes.** The platform stores each Document's readiness and the
 moment it last changed, which is `since` (§5.6). It recomputes them after the
-calls that can change them: a fact report, a Build switch or retirement (for
+calls that can change them: a registration or fact report, a Build switch or retirement (for
 every Document the Builds hold a fact of), a backfill report and a Knowledge
 Profile change (for the Source's Documents), finalization (for its Documents),
-and a rebind (#205). Each Document in a transaction of its own, so a large
+and a rebind (#205 calls the platform's recompute for the Documents it moves). Each Document in a transaction of its own, so a large
 fan-out holds no long transaction: the database ends one at 60 seconds. The readiness a query answers is
 computed when it answers; only `since` comes from the stored moment.
 
-**Liveness.** A Build's liveness signal is its last report of any kind. A Build
-not retired with no report within its pipeline's `update_interval_s` has lost
-liveness: the gauge `kp_serving_builds_without_liveness` counts them per
+**Liveness.** A Build's liveness signal is its last report of any kind, so each
+Build not retired, `building` and `retained` ones too, reports at least a
+heartbeat more often than its pipeline's `update_interval_s`, and a candidate
+its owner gives up is reported `retired` once its data is gone. A Build not
+retired with no report within that interval has lost liveness: the gauge `kp_serving_builds_without_liveness` counts them per
 projection, a serving one shows `status_unverified` (§7.2), and Source
 Deletion's judgment pauses while any exists (DR §5.6, #98).
 
@@ -1134,6 +1151,7 @@ ended without an error block, such as terminated or timed out (§9).
 | I3 Status (#97) | §5.5–§5.7, canonical processing's report intake and request outcomes (§3, §7.3), readiness over no serving facts and canonical attention (§7) | I1, #55, #126 |
 | I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision, `current_revision_changed`; it needs #57 scope 2's conclusion, which is not a tracker edge | I3 |
 | I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
+| I3c Serving-fact repair (#260) | the repair view's intake and the replacement of a Build's mirror (§7.4, DR §5.4) | I3b |
 | I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
 

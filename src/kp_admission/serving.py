@@ -106,7 +106,7 @@ class BuildReport(BaseModel, extra="forbid"):
 
 
 class Backfill(BaseModel, extra="forbid"):
-    profile_seq: str = Field(min_length=1)
+    profile_seq: str = Field(pattern="^[0-9a-f]{32}$")  # a feed position, as set-profile prints
 
 
 class AttemptReport(BaseModel, extra="forbid"):
@@ -428,7 +428,7 @@ async def heartbeat(
         )
         rows = await cursor.fetchall()
         # shortcut: reads and hashes the whole Build while it holds the Build's row, so its other
-        # reports wait; keep a running count and digest per Build when one holds millions.
+        # reports wait, keep a running count and digest per Build when one holds millions.
         mirror = await asyncio.to_thread(digest, [row[:3] for row in rows])
         reason = None
         if (len(rows), mirror) != (beat.count, beat.digest):
@@ -639,7 +639,7 @@ async def silent(
         if (p := pipelines.get(projection)) and at + timedelta(seconds=p.update_interval_s) < now
     ]
     without_liveness.clear()
-    for projection in pipelines:
+    for projection in pipelines.keys() - {"canonical"}:
         without_liveness.labels(projection).set(sum(p == projection for p, _ in found))
     return found
 

@@ -575,7 +575,7 @@ request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `
 | `ready` | 每個讀取端都是最新版 |
 | `deleted` | 已刪除 |
 
-**現況（2026-11-22）：** 讀取端的回報接收已經完成（#252），但還沒有讀取端會送回報：要等 Canonical Acceptance 的記錄（#251）寫出 `current_revision_changed`，以及 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。規格還有 `withdrawn` 這個值，pilot 不會出現。
+**現況（2026-11-22）：** 讀取端的回報接收已經完成（#252），但還沒有讀取端會送回報：要等 Canonical Acceptance 的記錄（#251）寫出 `current_revision_changed`，以及 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。讀取端寫入新的一版時，從它登記寫入到確認完成之間，文件會短暫是 `not_ready`（規格 §7.4）。規格還有 `withdrawn` 這個值，pilot 不會出現。
 
 `attention` 列出需要有人處理的事，沒有就是空陣列。`action_owner` 是 `source` 時輪到 Source 處理：
 
@@ -864,7 +864,7 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 | `since` | 時間 | `readiness` 從什麼時候開始是現在這個值。刪除的文件是刪除的時間；還沒變過的是文件建立的時間 |
 | `latest` | 物件 | 最後受理的版本：`source_revision_id`、`source_version`，以及它最新的 `request_id`（不算平台自己的重跑）。同樣的檔案用較大的 `source_version` 再送，`source_version` 會變成新的版本，`source_revision_id` 不變 |
 | `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。`source_version` 是那一版目前記下的版本，所以 `source_revision_id` 和 `latest` 的相同時，讀取端提供的就是最新的內容。沒有在提供這份文件的讀取端不列出 |
-| `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`（最新版記下的版本）、`message`、`since`；`processing_failed` 另外帶 `track`。沒有就是空陣列 |
+| `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`（最新版記下的版本）、`message`、`since`；`processing_failed`、`progress_stalled`、`status_unverified`、`skipped` 另外帶 `track`。沒有就是空陣列 |
 | `deleted_at` | 時間或 `null` | 刪除的時間 |
 
 文件刪除後又提交同一個 `document_id` 時，回的是現存的那一份；全部都刪除時，回最後刪除的那一份，`readiness` 是 `deleted`。`404`：這個 Source 沒有這份文件。
@@ -1117,7 +1117,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | finalize 一直回 `503` | storage 連不到，或憑證少了 `s3:ListBucket` |
 | request 一直是 `queued` | dispatcher 沒在跑、連不到 Temporal，或沒有 worker 在輪詢那個 task queue |
 | request 不經過 `processing`，幾分鐘後直接變成 `succeeded` 或 `failed` | 回報沒送到，結果是 reconciler 補記的。檢查 `KP_PIPELINES`、worker 的 `KP_ADMISSION_URL` 與 `KP_ADMISSION_TOKEN`；`kp_api_calls_total{operation="report_status"}` 的 `401` 會增加 |
-| `readiness` 一直是 `not_ready` | 讀取端開始回報之前（#251、#127）的正常結果。之後還是這樣：讀取端的 credential 要同時登記在 `KP_AUTHZ_PEP_CREDENTIALS` 與 `KP_PIPELINES`，名稱相同（第 6.8 節） |
+| `readiness` 一直是 `not_ready` | 讀取端開始回報之前（#251、#127）的正常結果。之後還是這樣：檢查讀取端在 `KP_PIPELINES` 的 `track` 和 `set-profile` 用的名稱相同；credential 不在 `KP_PIPELINES` 時它的回報都是 `401`（`kp_api_calls_total` 看得到）（第 6.8 節） |
 
 ## 7. 未決事項與變更紀錄
 

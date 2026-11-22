@@ -707,3 +707,27 @@ async def test_a_finalized_revision_makes_a_ready_document_stale_from_that_momen
     assert (ready["readiness"], stale["readiness"]) == ("ready", "ready_stale")
     assert stale["since"] > ready["since"]
     assert states(stale) == [("retrieval", "stale", "1")]
+
+
+async def test_a_registration_over_an_included_fact_moves_readiness_while_it_writes(api, conn):
+    """DR §5.1: `pending` does not count toward readiness, so writing a new revision over the
+    one served leaves the Document not_ready until the write is confirmed."""
+    uid, srv = await document(conn)
+    await accepted(conn, uid, srv)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    await included(api, "retrieval", fact(uid, srv, 1))
+    ready = await seen(api)
+
+    await revised(conn, uid, "srv_2")
+    await accepted(conn, uid, "srv_2", "crv_2")
+    stale = await seen(api)
+    await registered(api, "retrieval", fact(uid, "srv_2", 2, canonical_revision_id="crv_2"))
+    writing = await seen(api)
+    await included(api, "retrieval", fact(uid, "srv_2", 3, canonical_revision_id="crv_2"))
+    written = await seen(api)
+
+    assert [v["readiness"] for v in (ready, stale, writing, written)] == [
+        "ready", "ready_stale", "not_ready", "ready"
+    ]  # fmt: skip
+    assert ready["since"] < stale["since"] < writing["since"] < written["since"]
