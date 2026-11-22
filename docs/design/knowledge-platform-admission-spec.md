@@ -866,8 +866,9 @@ at most 128 characters, `document_uid` and the revision IDs 64, `resource_id`
   expired (DR §5.3). A stopped fact is listed in `fenced`, the other facts of
   the call are taken, and a repair is requested; a fenced registration is `409`
   `FENCED` and records nothing. A fenced fact is not sent again. Tombstones
-  stay in the database after their 30 days; their deletion waits for a
-  retention ticket.
+  stay in the database after their 30 days, as do the facts and attempts of
+  a retired Build and the attempts of earlier Canonical Revisions; their
+  removal is #264, after the pilot.
 
 **Repairs and heartbeats.** Every `200` of a Build's state, registration, fact
 or heartbeat report carries `repair_requested`: `null`, or `{"reason", "requested_at"}` while the platform
@@ -1184,6 +1185,7 @@ ended without an error block, such as terminated or timed out (§9).
 | I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision, `current_revision_changed`; it needs #57 scope 2's conclusion, which is not a tracker edge | I3 |
 | I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
 | I3c Serving-fact repair (#260) | the repair view's intake and the replacement of a Build's mirror (§7.4, DR §5.4) | I3b |
+| I3d Serving-mirror retention (#264, after the pilot) | removal of a retired Build's facts, old attempts and expired tombstones (§7.4, DR §5.3) | I3c |
 | I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, I3c, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
 
