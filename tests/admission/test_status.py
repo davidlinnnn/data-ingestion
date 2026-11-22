@@ -17,7 +17,7 @@ from kp_admission.dispatcher import dispatch_due
 from kp_admission.reports import Pipeline
 from kp_canonicalization.ports.status_reporter import HttpStatusReporter, Position
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import FILES, INTAKE, request
+from tests.admission.support import CANDIDATE, FILES, INTAKE, request
 from tests.ports.test_status_reporter import report as sender_report
 
 pytestmark = pytest.mark.docker
@@ -304,7 +304,7 @@ async def test_a_platform_failure_without_an_active_request_is_processing_failed
 
         retry = await dispatched(conn, uid, srv, retry_of=first)
         retrying = (await source.get("/v1/documents/A")).json()
-        done = report(retry, 1, "finalize", "succeeded")
+        done = report(retry, 1, "finalize", "succeeded", candidate=CANDIDATE.model_dump())
         assert (await send(api, done)).status_code == 202
 
     assert failed["attention"] == [
@@ -315,14 +315,14 @@ async def test_a_platform_failure_without_an_active_request_is_processing_failed
     # The message of a platform failure can be exception text: the Source sees a fixed one.
     assert shown_error == PLATFORM | {"message": status.PLATFORM_FAILURE}
     assert retrying["attention"] == []
-    # The retry succeeded: the revision waits for acceptance (#251), and is no longer failed.
-    assert await state_of(conn, retry) == ("succeeded", "1", "pending")
+    # The retry succeeded with its candidate: the revision is accepted, no longer failed (#251).
+    assert await state_of(conn, retry) == ("succeeded", "1", "accepted")
 
 
 async def test_a_failed_platform_refresh_changes_neither_outcome_nor_attention(api, conn):
     """Scenario 13, its status part: the refresh is made as #98's command will make it."""
     uid, srv = await document(conn)
-    await conn.execute("UPDATE source_revision SET outcome = 'accepted'")  # #251's write
+    await conn.execute("UPDATE source_revision SET outcome = 'accepted'")  # as #251 leaves it
     async with api() as source:
         before = (await source.get("/v1/documents/A")).json()
         refresh = await dispatched(conn, uid, srv, initiator="platform", priority="low")

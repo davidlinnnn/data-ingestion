@@ -312,7 +312,7 @@ sequenceDiagram
 
 ## 5. 使用指南：給 Source 開發者
 
-本節依契約寫，不是現況。`dev` 上能呼叫的是 Resource 登記、宣告、上傳、finalize、`GET /v1/batches/{batch_id}` 與狀態查詢；刪除還沒實作，進度見第 7.3 節。讀取端的回報接收已經接上（#252），但還沒有讀取端會送回報：要等 Canonical Acceptance 的記錄（#251）寫出 `current_revision_changed`，以及 consumer SDK 與 reference projection（#127）。在那之前每份未刪除的文件的 `readiness` 都是 `not_ready`；這段期間用 request 的 `state` 追蹤一次提交（規格 §5.6）。
+本節依契約寫，不是現況。`dev` 上能呼叫的是 Resource 登記、宣告、上傳、finalize、`GET /v1/batches/{batch_id}` 與狀態查詢；刪除還沒實作，進度見第 7.3 節。讀取端的回報接收（#252）與 Canonical Acceptance 的記錄（#251）已經接上，但還沒有讀取端會送回報：處理端要到 Canonical mapping（#81）才交出 Canonical 內容，讀取端要等 consumer SDK 與 reference projection（#127）。在那之前每份未刪除的文件的 `readiness` 都是 `not_ready`；這段期間用 request 的 `state` 追蹤一次提交（規格 §5.6）。
 
 ### Quick start：一份文件、一個 PDF
 
@@ -349,7 +349,7 @@ curl https://kp.example/v1/requests/req_01J… -H "Authorization: Bearer $KP_TOK
 | `Idempotency-Key` | 選填。沒帶而重送宣告，會多一個 batch、多扣一次配額，但同樣的內容不會被受理兩次（規格 §6.2、§6.4） |
 | `title`、`source_url`、`metadata`、`uploaded_by` | 選填，不影響處理 |
 | `carried_over` | 只有重送多檔文件時才不是空的 |
-| `GET /v1/documents/{document_id}` | 讀取端開始回報之前（#251、#127），`readiness` 都是 `not_ready`；這段期間看 request 的 `state` 就夠（第 5.2 節「之後：查詢」） |
+| `GET /v1/documents/{document_id}` | 讀取端開始回報之前（#81、#127），`readiness` 都是 `not_ready`；這段期間看 request 的 `state` 就夠（第 5.2 節「之後：查詢」） |
 | `GET /v1/batches/{batch_id}` | 整批的進度；交單份文件用不到 |
 
 以下各小節是完整的說明。
@@ -575,7 +575,7 @@ request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `
 | `ready` | 每個讀取端都是最新版 |
 | `deleted` | 已刪除 |
 
-**現況（2026-11-22）：** 讀取端的回報接收已經完成（#252），但還沒有讀取端會送回報：要等 Canonical Acceptance 的記錄（#251）寫出 `current_revision_changed`，以及 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。讀取端寫入新的一版時，在確認完成之前仍算提供著原本那一版：文件是 `ready_stale`，不會變回 `not_ready`（規格 §7.4）。規格還有 `withdrawn` 這個值，pilot 不會出現。
+**現況（2026-11-22）：** 讀取端的回報接收（#252）與 Canonical Acceptance 的記錄（#251）已經完成，但還沒有讀取端會送回報：處理端要到 Canonical mapping（#81）才交出 Canonical 內容，讀取端要等 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。讀取端寫入新的一版時，在確認完成之前仍算提供著原本那一版：文件是 `ready_stale`，不會變回 `not_ready`（規格 §7.4）。規格還有 `withdrawn` 這個值，pilot 不會出現。
 
 `attention` 列出需要有人處理的事，沒有就是空陣列。`action_owner` 是 `source` 時輪到 Source 處理：
 
@@ -866,6 +866,7 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 | `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。`source_version` 是那一版目前記下的版本，所以 `source_revision_id` 和 `latest` 的相同時，讀取端提供的就是最新的內容。沒有在提供這份文件的讀取端不列出 |
 | `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`（最新版記下的版本）、`message`、`since`；`processing_failed`、`progress_stalled`、`status_unverified`、`skipped` 另外帶 `track`。沒有就是空陣列 |
 | `deleted_at` | 時間或 `null` | 刪除的時間 |
+| `details` | 物件或 `null` | 給平台用，不要拿來判斷狀態。目前的 Canonical Revision 是較舊的處理方法版本做的時候是 `{"method_version_lag": {"canonical_revision_id", "processing_profile_version", "adopted_version"}}`，其他時候是 `null`。不影響 `readiness` 與 `attention` |
 
 文件刪除後又提交同一個 `document_id` 時，回的是現存的那一份；全部都刪除時，回最後刪除的那一份，`readiness` 是 `deleted`。`404`：這個 Source 沒有這份文件。
 
@@ -1072,12 +1073,12 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 |---|---|---|
 | 1 | 建立空的 PostgreSQL 資料庫（17 以上），整份套用 [`schema.sql`](../../src/kp_admission/schema.sql)，它也建立 Change Feed 頭三個月的分區。`api` 的資料庫角色要有 `pg_read_all_stats`；跑 `feed-retention` 的角色要是 `change_feed` 資料表的擁有者，因為它建立與刪除分區 | 資料表都在 |
 | 2 | 準備 custody bucket 與 storage 的憑證（權限見第 6 節「物件儲存」一列） | [`storage_probe.py`](../validation/184/storage_probe.py) 以 exit code 0 結束。它在 repo 的開發環境執行，讀 `KP_S3_ENDPOINT`、`KP_S3_BUCKET` 與 `AWS_*`，寫在 `probe184/` 這個前綴底下，跑完自己刪掉 |
-| 3 | 確認 Temporal 的 namespace 連得到，processing worker 已部署 | orchestration worker 在輪詢 `<profile>-<版本>.orchestration`；採用 `paper-pdf@1` 時是 `paper-pdf-1.orchestration` |
+| 3 | 確認 Temporal 的 namespace 連得到，processing worker 已部署。之後會在回報帶 `candidate` 的 worker（#81）要等接受它的 `api` 部署之後才部署，順序反了每一筆最後回報都是 `400`（規格 §13） | orchestration worker 在輪詢 `<profile>-<版本>.orchestration`；採用 `paper-pdf@1` 時是 `paper-pdf-1.orchestration` |
 | 4 | 產生 Source credential 與回報用的 credential，把 digest 寫進 `KP_CREDENTIALS` 與 `KP_PIPELINES`（第 6.8 節）；設定第 6 節「設定」一列的必填項目 | Secret 與環境變數就緒 |
 | 5 | 啟動 `kp-admission api`（2 個副本）與 `kp-admission dispatcher`（至少 2 個副本） | `api`：叢集內 `GET /healthz` 回 `200`。`dispatcher` 沒有 HTTP 端點：pod 維持 Running、沒有重啟，log 沒有錯誤 |
 | 6 | 建立三個 CronJob：`reconcile` 每 5 分鐘、`expire` 每小時、`feed-retention` 每天 | 各跑一次，exit code 0 |
 | 7 | 採用 PDF 的處理方法版本：`kp-admission adopt --tenant <tenant> application/pdf paper-pdf@1`。用同一個 image 的 Job 跑一次，只需要 `KP_ADMISSION_DATABASE_URL`。公司的 PROD 不能由人進 pod 下指令：採用會改成寫在部署設定、由 CronJob 套用（#261），`set-profile` 等其他指令怎麼排程由 #78 決定；`<tenant>` 是 `KP_CREDENTIALS` 裡的 `tenant_id` | 印出 `adopted_version`。指令不檢查這個版本有沒有 worker：採用了沒有 worker 的版本，request 會一直是 `queued` |
-| 8 | 設定每個 Source 要求的讀取端：`kp-admission set-profile`（第 6.8 節），執行方式同上一步。名稱是讀取端登記的名稱，例如 `retrieval`。讀取端開始回報之前（#251、#127）這一步不影響任何結果，可以晚點做；Knowledge Profile 第一次設定時就有的讀取端直接計入 `readiness`，之後加入的要等它回報補建完成 | 印出 `profile_seq` |
+| 8 | 設定每個 Source 要求的讀取端：`kp-admission set-profile`（第 6.8 節），執行方式同上一步。名稱是讀取端登記的名稱，例如 `retrieval`。讀取端開始回報之前（#81、#127）這一步不影響任何結果，可以晚點做；Knowledge Profile 第一次設定時就有的讀取端直接計入 `readiness`，之後加入的要等它回報補建完成 | 印出 `profile_seq` |
 | 9 | 設定 ingress：對外只開放 `/v1/`，上傳路徑放寬 body 上限、關閉緩衝、放寬 timeout（第 6.2 節） | 從 Source 的網段連得到 `/v1/`，連不到 `/report/`、`/read/`、`/authz/` |
 | 10 | 設定 orchestration worker 的 `KP_ADMISSION_URL`（`api` 的叢集內位址）與 `KP_ADMISSION_TOKEN`，然後重啟 worker | worker 的 log 沒有 `KP_ADMISSION_TOKEN is not set` 這行 warning |
 
@@ -1099,7 +1100,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 上傳 | `204` |
 | finalize | `202`，item 帶 `request_id` |
 | `GET /v1/requests/{request_id}` | 先是 `queued`，worker 開始回報後是 `processing`，最後是 `succeeded` |
-| `GET /v1/documents/{document_id}` | `readiness` 是 `not_ready`、`attention` 是空陣列。讀取端開始回報之前（#251、#127）這是正常的結果 |
+| `GET /v1/documents/{document_id}` | `readiness` 是 `not_ready`、`attention` 是空陣列。讀取端開始回報之前（#81、#127）這是正常的結果 |
 
 結果不如預期時：
 
@@ -1117,7 +1118,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | finalize 一直回 `503` | storage 連不到，或憑證少了 `s3:ListBucket` |
 | request 一直是 `queued` | dispatcher 沒在跑、連不到 Temporal，或沒有 worker 在輪詢那個 task queue |
 | request 不經過 `processing`，幾分鐘後直接變成 `succeeded` 或 `failed` | 回報沒送到，結果是 reconciler 補記的。檢查 `KP_PIPELINES`、worker 的 `KP_ADMISSION_URL` 與 `KP_ADMISSION_TOKEN`；`kp_api_calls_total{operation="report_status"}` 的 `401` 會增加 |
-| `readiness` 一直是 `not_ready` | 讀取端開始回報之前（#251、#127）的正常結果。之後還是這樣：檢查讀取端在 `KP_PIPELINES` 的 `track` 和 `set-profile` 用的名稱相同；credential 不在 `KP_PIPELINES` 時它的回報都是 `401`（`kp_api_calls_total` 看得到）（第 6.8 節） |
+| `readiness` 一直是 `not_ready` | 讀取端開始回報之前（#81、#127）的正常結果。之後還是這樣：檢查讀取端在 `KP_PIPELINES` 的 `track` 和 `set-profile` 用的名稱相同；credential 不在 `KP_PIPELINES` 時它的回報都是 `401`（`kp_api_calls_total` 看得到）（第 6.8 節） |
 
 ## 7. 未決事項與變更紀錄
 
@@ -1151,6 +1152,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-20 | #258：版本較大、檔案都相同的重送不再處理一次，和版本相同、內容相同一樣走規格 §6.4（`unchanged`、`queued` 或平台失敗後的重試），並把新的版本記成最新版的 `source_version`。原本回 `declared`、`uploads: []`，finalize 後重新處理整份文件；這是規格 §6.3 漏掉的組合（設計筆記的裁決同日補上）。第 5.2 節的 `source_version`、`declared`、`unchanged`，第 5.3 節的 `STALE_SOURCE_VERSION`，與第 5.6 節的 `latest`、`serving`、`attention` 跟著改；規格 §3、§6.3、§6.4 與 `CONTEXT.md` 的 Source Revision 條目一起更新 |
 | 2026-11-22 | 第 7.3 節跟上 2026-11-22 的票：#251 可以開始（#57 定了受理點），新增宣告式採用（#261），#98 改等 #251、#260、#261。第 6.9 節寫明 PROD 不能由人進 pod 下指令 |
 | 2026-11-22 | #252：讀取端的回報接收實作完成：Build 狀態、寫入前登記與 B5 檢查、serving 事實、heartbeat、attempt 回報、補建完成；`readiness`、`since`、`serving` 與讀取端的 `attention` 改由這些回報算出（規格 §7.4）。修復 view 的接收拆到 #260。第 5 節更新現況：讀取端還沒開始回報（#251、#127），所以仍是 `not_ready`；第 6.8 節補上讀取端的登記 |
+| 2026-11-22 | #251：Canonical Acceptance 的記錄實作完成：成功的 request 帶 candidate 時記下 Canonical Revision、Source Revision 改成 `accepted`，較新的成為目前版本並發出 `current_revision_changed`（規格 §3）；文件已刪除、沒有 candidate、版本已作廢時不形成接受（規格 §5.5）。第 5 節的現況改成等 #81 與 #127，第 5.6 節補上 `details`，第 6.9 節補上部署順序，第 7.3 節更新 |
 
 ### 7.3 實作狀態（2026-11-22）
 
@@ -1166,12 +1168,12 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 上傳 | `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`、上傳清理、最小 SDK | #194 | 已完成，在 `dev` |
 | 版本較大、檔案相同不重新處理 | 宣告與 finalize 的排序規則（規格 §6.3、§6.4） | #258 | 已完成，在 `dev` |
 | 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev` |
-| projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#251、#127）`readiness` 仍是 `not_ready` |
+| projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#81、#127）`readiness` 仍是 `not_ready` |
 | 修復 view 的接收 | 讀取端送來整份 view，一次替換 mirror | #260 | 未實作，可以開始 |
 | mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，在 #260 之後 |
-| Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed` | #251 | 未實作，可以開始：#57 在 2026-11-22 定了受理點 |
-| 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob 套用；取代手動的 `kp-admission adopt` | #261 | 未實作，在 #251 之後；第一次部署到公司環境之前要完成 |
-| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #251、#260、#261 之後 |
+| Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed`、作廢的版本、`details` 的方法版本落後 | #251 | 已完成，在 `dev`；處理端到 #81 才交出 candidate，在那之前成功的 request 不形成接受，Source Revision 留在 `pending` |
+| 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob 套用；取代手動的 `kp-admission adopt` | #261 | 未實作，可以開始；第一次部署到公司環境之前要完成 |
+| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #260、#261 之後 |
 | 保留期 | batch 與 `Idempotency-Key` 到期回 `404` 並移除紀錄 | #250 | 未實作 |
 | dispatcher 與 reconciler 的 metrics | | #189 | 未實作 |
 | 驗證 | CI 層與叢集層 | #99 | 未實作，在 #98 之後；叢集層另外等 #78 |
