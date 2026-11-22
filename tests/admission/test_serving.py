@@ -21,7 +21,7 @@ from kp_admission.reports import Pipeline
 from kp_admission.requests import record_outcome
 from kp_admission.storage import FakeObjectStore
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import CANDIDATE, FILES, INTAKE, resource
+from tests.admission.support import FILES, INTAKE, candidate, resource
 from tests.admission.test_batches import PDF, file, item, submit
 from tests.admission.test_status import PLATFORM, REJECTED, credential, digest, document
 
@@ -84,7 +84,9 @@ async def accepted(conn, uid: str, srv: str, crv: str = "crv_1") -> None:
         " (%s, 't1', 'process', %s, %s, 'processing', 'source', 'normal', 'paper-pdf@1', 7, 't')",
         (request_id, uid, srv),
     )
-    assert await record_outcome(conn, request_id, "succeeded", None, None, CANDIDATE)
+    assert await record_outcome(
+        conn, request_id, "succeeded", None, None, candidate(uid, request_id)
+    )
 
 
 async def revised(conn, uid: str, srv: str, version: str = "2") -> None:

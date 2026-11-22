@@ -9,7 +9,7 @@ from prometheus_client import REGISTRY
 
 from kp_admission import adoption, feed, reports, status
 from kp_admission.requests import Candidate, record_outcome
-from tests.admission.support import CANDIDATE, request, revision
+from tests.admission.support import candidate, request, revision
 from tests.admission.test_status import PIPELINE, dispatched, document, report
 
 pytestmark = pytest.mark.docker
@@ -38,8 +38,18 @@ async def newer(conn, uid: str, srv: str) -> str:
     return f"{srv}_2"
 
 
-async def succeed(conn, request_id: str, candidate: Candidate | None = CANDIDATE) -> bool:
-    return await record_outcome(conn, request_id, "succeeded", None, None, candidate)
+OWN = Candidate(ref="own", sha256="c" * 64, size=0)  # stands for the request's own candidate
+
+
+async def succeed(conn, request_id: str, given: Candidate | None = OWN) -> bool:
+    if given is OWN:
+        [(uid,)] = await (
+            await conn.execute(
+                "SELECT document_uid FROM request WHERE request_id = %s", (request_id,)
+            )
+        ).fetchall()
+        given = candidate(uid, request_id)
+    return await record_outcome(conn, request_id, "succeeded", None, None, given)
 
 
 async def run(conn, uid: str, srv: str, **fields) -> str:
@@ -115,7 +125,16 @@ async def test_an_acceptance_makes_the_revision_current_with_one_event(conn):
         " content_ref, content_sha256, content_size FROM canonical_revision"
     )
     assert await cursor.fetchall() == [
-        ("t1", uid, request_id, "paper-pdf@1", 7, CANDIDATE.ref, CANDIDATE.sha256, CANDIDATE.size)
+        (
+            "t1",
+            uid,
+            request_id,
+            "paper-pdf@1",
+            7,
+            f"documents/{uid}/revisions/{crv(request_id)}.json",
+            "c" * 64,
+            2048,
+        )
     ]
 
 
@@ -232,6 +251,30 @@ async def test_a_success_without_a_candidate_forms_no_acceptance(conn):
     assert not_accepted("no_candidate") == before + 1
 
 
+@pytest.mark.parametrize("names", ["another document", "another revision"])
+async def test_a_candidate_whose_ref_is_not_its_revision_s_key_forms_no_acceptance(
+    conn, names: str
+):
+    uid, srv = await revision(conn)
+    other, _ = await revision(conn)
+    request_id, _ = await request(conn, uid, srv)
+    own = candidate(uid, request_id)
+    wrong = {
+        "another document": candidate(other, request_id),
+        "another revision": candidate(uid, "req_" + "0" * 32),
+    }[names]
+    start, before = await feed.head(conn), not_accepted("ref_mismatch")
+
+    assert await succeed(conn, request_id, wrong)
+
+    assert wrong.ref != own.ref
+    assert await outcomes(conn, request_id) == ("succeeded", "pending")
+    assert await recorded(conn, srv) == []
+    assert await current(conn, uid) is None
+    assert await events(conn, start) == []
+    assert not_accepted("ref_mismatch") == before + 1
+
+
 async def test_a_success_after_its_version_is_withdrawn_forms_no_acceptance(conn):
     uid, srv = await revision(conn)
     earlier = await run(conn, uid, srv, adopted_version="paper-pdf@2", adoption_sequence=8)
@@ -293,7 +336,13 @@ async def test_ending_a_request_locks_the_document_before_the_request(conn, dsn,
     uid, srv = await revision(conn)
     request_id = await dispatched(conn, uid, srv)
     last = reports.Report.model_validate(
-        report(request_id, 1, "finalize", "succeeded", candidate=CANDIDATE.model_dump())
+        report(
+            request_id,
+            1,
+            "finalize",
+            "succeeded",
+            candidate=candidate(uid, request_id).model_dump(),
+        )
     )
     end = reports.take(conn, PIPELINE, last) if path == "report" else succeed(conn, request_id)
 

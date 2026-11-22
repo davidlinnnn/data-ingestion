@@ -57,7 +57,7 @@ TypeScript).
 | Admission, status vocabulary, readiness surface | #31 (closed), [admission specification](knowledge-platform-admission-spec.md), #97 |
 | Deletion workflow, retry, enforcement alerting | #98 |
 | Serving-time blocks, withdrawal, conformance of disclosure | #56 |
-| Canonical revision selection, adoption, rollback | #80 |
+| Canonical revision selection, adoption, rollback | #80; since 2026-11-22 selection is admission's Canonical Acceptance (#251, admission spec §3) |
 | Retention and purge of canonical data and Builds | #57 |
 | Consumer presentation (coverage, freshness, hidden pages, list shapes) | #76 |
 | Operations: monitoring, alerts, restore runbook, database guards | #78 |
@@ -106,7 +106,7 @@ TypeScript).
 |---|---|
 | D1 | Turning a projection off for a Source removes its products; nothing is frozen. When a Resource's Wiki inputs are all removed, the whole Build retires. Platform-wide replacement: add the new projection, wait for ready, remove the old one, retire its Builds, purge (#57), delete its cursor and registration. Pause: stop the consumer, the cursor stays, blocks keep governance; a pause beyond 90 days resynchronises by bootstrap. A non-empty Resource cannot be deleted (#31 `409`); deleting an empty Resource retires its Wiki Build. |
 | D2 | **Rebuild:** deploying an incompatible version starts a new Build automatically. The new Build is a new feed consumer: it fixes its cursor start, reads everything from the canonical read API (never copies from the old Build), and follows the feed. Mechanical switch gates: coverage not below the serving Build (at the pre-switch snapshot), caught up with the feed, no deleted, withdrawn or moved-out Documents. Quality is the owner's offline responsibility; the candidate references its validation evidence. In production, a method or storage change needs the Published View Owner's approval; repair rebuilds and non-production switches are automatic. Evidence binds to (Build, full pipeline version); any pipeline version change, compatible ones included, makes a new candidate; Document catch-up does not invalidate an approval; a failed gate at switch time needs re-approval; the switch record holds the cursor positions at evidence time and at switch time (review M5). The approval record is kept by the projection owner (#58 baseline). The owner's workflow checks the gates, obtains approval, switches, and reports `serving` with approval and evidence references; the platform re-runs the gates and rejects a failing switch (review m10). One pending candidate per Published View; a newer one replaces it. The old Build is retained 7 days by default and keeps following the feed; rollback is switching back; retention expiry retires it automatically. A Wiki may let its retained Build process only narrowing events and catch up after a rollback. Compatible changes recompute inside the Build; a Document rollback is a forward fix. |
-| D3 | The canonical layer keeps #31's immutable per-Document revisions with adoption and platform refresh; no Builds there. Rollback retires the faulty adoption and selection falls back to the previous adopted revision of the same Source Revision without reprocessing (to #80). An incompatible canonical output change uses expand/contract: every projection declares support before canonical adopts it. |
+| D3 | The canonical layer keeps #31's immutable per-Document revisions with adoption and platform refresh; no Builds there. Rollback retires the faulty adoption and selection falls back to the previous adopted revision of the same Source Revision without reprocessing (to #80). **Superseded in part on 2026-11-22** (#57 B6, [#251](https://github.com/davidlinnnn/data-ingestion/issues/251)): in the pilot a withdrawn version does not move the current revision; #98 redoes those Documents under the adopted version, and the pointer fallback is a PROD gate. An incompatible canonical output change uses expand/contract: every projection declares support before canonical adopts it. |
 
 ### E. Product behaviour and scale
 
@@ -328,7 +328,7 @@ joined by the byte 0x1F.
 | Rebind | `inclusion_changed` (narrowing) → old Resource blocked at once, Wiki pages of the old Resource rewritten → included in the new Resource in normal order | Readiness counts the new Resource; move-out completes when no (D, old R) fact remains |
 | Stale capture (#32 V08) | Admission rejects the stale capture by `source_version` → no Source Revision → no event | Projections see nothing |
 | Major breaking release (Q23) | Deploy a new major → new Build → owner validation with evidence → gates → production approval → owner switches, reports `serving`, platform re-runs gates | Catch-up during the wait keeps the approval; a pipeline version change makes a new candidate; the switch record keeps both cursor positions |
-| Canonical rollback | Retire the faulty adoption → selection falls back → `current_revision_changed` (normal) → recompute | No canonical reprocessing; B5's "equals current" lets the rollback land |
+| Canonical rollback | Retire the faulty adoption → selection falls back → `current_revision_changed` (normal) → recompute | No canonical reprocessing; B5's "equals current" lets the rollback land. Superseded in part on 2026-11-22 (#57 B6, #251): the pilot has no fallback; #98 redoes the Documents and the redo lands as `current_revision_changed` (normal) |
 | Copy's original deleted | Original deleted → the platform blocks the original and every copy in one step → `document_deleted` for each | Copies unreadable within a minute; each projection removes them and each becomes enforced |
 
 Note of 2026-11-18: the pilot (MVP) builds no governance withdrawal or
@@ -336,7 +336,10 @@ reinstatement (user ruling, [#56](https://github.com/davidlinnnn/data-ingestion/
 not run in the pilot. The feed and the state read keep room for it
 (`withdrawn`). The "Invalidated after acceptance" row still runs: the state
 read answers no current revision with status `active`, and a reader removes
-the Document on that, without depending on `withdrawn`.
+the Document on that, without depending on `withdrawn`. Note of 2026-11-22
+([#251](https://github.com/davidlinnnn/data-ingestion/issues/251)): nothing in the pilot clears a current revision, since a failed
+redo after a withdrawn version keeps serving the revision it had; a reader still
+handles `current: null`, which a Document has until its first acceptance.
 
 ## 7. Validation
 

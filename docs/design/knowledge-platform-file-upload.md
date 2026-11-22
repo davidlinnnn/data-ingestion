@@ -539,6 +539,7 @@ curl https://kp.example/v1/requests/req_01J… -H "Authorization: Bearer $KP_TOK
 | `failed`，且 `error.metadata.cause` 是 `source` | 這一版的內容無法處理，例如 PDF 有密碼 | 看 `error.reason` 與 `error.message`，修正檔案後重新宣告。`source_version` 可以沿用被拒的那一版，也可以用更大的 |
 | `failed`，其他情況 | 平台這一側的失敗，平台的負責人會收到告警。`error.message` 是一句固定的英文，不帶原始的錯誤內容 | 檔案不用改。平台修復後，重新宣告相同的內容，那個 item 的 `status` 會是 `queued`，帶一個新的 `request_id`。回報問題時附上 `error.support_ref` |
 
+- `succeeded` 不保證內容會被讀到。文件在處理完成前已刪除、處理端沒有交出內容，或做它的處理方法版本已作廢時，平台不接受這次結果：document 維持原本的 `readiness` 與 `serving`，也沒有 `attention`。這不需要 Source 處理，平台會自己重跑（已刪除的不重跑；規格 §5.5）。
 - 查詢的間隔契約沒有規定。建議從幾秒開始，逐次拉長到 30 秒左右；這是建議，不是量測出來的值。
 - 處理要多久沒有承諾值。尖峰時一份文件可能等到大約 25 分鐘才處理完（規格 §7.3 的估計，不是量測），所以輪詢的總時限要留得夠長。進行中的 request 不會過期。
 - 查詢不扣進件配額；配額只算宣告的 item（第 5.4 節）。

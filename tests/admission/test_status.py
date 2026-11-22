@@ -17,7 +17,7 @@ from kp_admission.dispatcher import dispatch_due
 from kp_admission.reports import Pipeline
 from kp_canonicalization.ports.status_reporter import HttpStatusReporter, Position
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import CANDIDATE, FILES, INTAKE, request
+from tests.admission.support import FILES, INTAKE, candidate, request
 from tests.ports.test_status_reporter import report as sender_report
 
 pytestmark = pytest.mark.docker
@@ -304,7 +304,9 @@ async def test_a_platform_failure_without_an_active_request_is_processing_failed
 
         retry = await dispatched(conn, uid, srv, retry_of=first)
         retrying = (await source.get("/v1/documents/A")).json()
-        done = report(retry, 1, "finalize", "succeeded", candidate=CANDIDATE.model_dump())
+        done = report(
+            retry, 1, "finalize", "succeeded", candidate=candidate(uid, retry).model_dump()
+        )
         assert (await send(api, done)).status_code == 202
 
     assert failed["attention"] == [

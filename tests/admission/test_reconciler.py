@@ -15,7 +15,7 @@ from kp_admission import feed, reports
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
 from kp_admission.requests import record_outcome
-from tests.admission.support import CANDIDATE, queue, request, revision, runs
+from tests.admission.support import candidate, queue, request, revision, runs
 from tests.admission.test_status import PIPELINE, report
 
 pytestmark = pytest.mark.docker
@@ -38,7 +38,8 @@ class CannedWorkflow:
         if start["trace_id"] == "complete":
             return {"outcome": "complete", "manifest_ref": ref}
         if start["trace_id"] == "accepted":
-            return {"outcome": "complete", "manifest_ref": ref, "candidate": CANDIDATE.model_dump()}
+            own = candidate(start["document_uid"], start["request_id"])
+            return {"outcome": "complete", "manifest_ref": ref, "candidate": own.model_dump()}
         if start["trace_id"] == "malformed":
             return {"outcome": "complete", "manifest_ref": ref, "candidate": {"ref": ""}}
         return {"outcome": "failed", "manifest_ref": ref, "error": ERROR}
@@ -103,7 +104,9 @@ async def test_the_reconciler_accepts_a_lost_report_s_candidate_once(conn, tempo
         for _, request_id in ids.values():
             await temporal.get_workflow_handle(request_id).result()
     reported_uid, reported_id = ids["reported"]
-    assert await record_outcome(conn, reported_id, "succeeded", None, None, CANDIDATE)
+    assert await record_outcome(
+        conn, reported_id, "succeeded", None, None, candidate(reported_uid, reported_id)
+    )
     start = await feed.head(conn)
 
     assert await reconcile(conn, temporal) == Counter(recorded=2)
@@ -124,7 +127,7 @@ async def test_the_reconciler_accepts_a_lost_report_s_candidate_once(conn, tempo
         await conn.execute("SELECT attempt_id FROM request WHERE request_id = %s", (accepted_id,))
     ).fetchall()
     late = report(accepted_id, 1, "finalize", "succeeded", attempt_id=attempt_id,
-                  candidate=CANDIDATE.model_dump())  # fmt: skip
+                  candidate=candidate(accepted_uid, accepted_id).model_dump())  # fmt: skip
     taken = await reports.take(conn, PIPELINE, reports.Report.model_validate(late))
     assert taken.result == "recorded"
     found, _ = await feed.read(conn, start, limit=10)

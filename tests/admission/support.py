@@ -26,8 +26,12 @@ FILES = [
 ]
 
 
-# The Canonical content object of a successful run (#251).
-CANDIDATE = Candidate(ref="s3://kp-canonical/doc_1/crv.json", sha256="c" * 64, size=2048)
+def candidate(document_uid: str, request_id: str) -> Candidate:
+    """The Canonical content object of a successful run, at its revision's key (spec §7.3)."""
+    crv = "crv_" + request_id.removeprefix("req_")
+    return Candidate(
+        ref=f"documents/{document_uid}/revisions/{crv}.json", sha256="c" * 64, size=2048
+    )
 
 
 def queue(adopted_version: str) -> str:

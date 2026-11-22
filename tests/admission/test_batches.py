@@ -24,7 +24,7 @@ from kp_admission.batches import Intake, SourceSettings, expire
 from kp_admission.requests import record_outcome
 from kp_admission.storage import FakeObjectStore, source_key
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import CANDIDATE, request, revision
+from tests.admission.support import candidate, request, revision
 
 pytestmark = pytest.mark.docker
 
@@ -150,7 +150,14 @@ async def processed(conn, request_id: str, outcome: str) -> None:
     """Canonical processing's outcome: rejected (content) or failed (platform) as status reports
     and the reconciler record it (#97), accepted by Canonical Acceptance (#251)."""
     if outcome == "accepted":
-        assert await record_outcome(conn, request_id, "succeeded", None, None, CANDIDATE)
+        [(uid,)] = await (
+            await conn.execute(
+                "SELECT document_uid FROM request WHERE request_id = %s", (request_id,)
+            )
+        ).fetchall()
+        assert await record_outcome(
+            conn, request_id, "succeeded", None, None, candidate(uid, request_id)
+        )
         return
     cause = "source" if outcome == "rejected" else "platform"
     error = {"domain": "kp-canonicalization", "reason": "R", "message": "m", "retryable": False,

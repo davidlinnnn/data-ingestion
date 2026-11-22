@@ -65,10 +65,10 @@ Logical records; the physical schema is I1's.
 |---|---|---|
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at`, `cleaned_at` (its upload cleanup done, §6.2) | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
-| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id`, `created_at`, the current Canonical Revision (`current_source_revision_id`, `current_canonical_revision_id`, and the three values selection compares: its Source Revision's `sequence`, its `adoption_sequence` and its `adopted_version`), `acceptance_version` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last. The current Canonical Revision is Canonical Acceptance's (below) |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `sequence` (1, 2, … per document, in finalization order, given under the document's lock), `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per change of content from the latest Source Revision (§6.3). Under `ordering: source_version`, its `source_version` is the highest submitted while it is the latest (§6.4) |
+| `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id`, `created_at`, the current Canonical Revision (`current_source_revision_id`, `current_canonical_revision_id`; the two values selection compares, `current_source_revision_sequence` and `current_adoption_sequence`; and `current_adopted_version`, the version that made it), `acceptance_version` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last. The current Canonical Revision is Canonical Acceptance's (below) |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `sequence` (1, 2, … per document in finalization order, unique per document), `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per change of content from the latest Source Revision (§6.3). Under `ordering: source_version`, its `source_version` is the highest submitted while it is the latest (§6.4) |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error`, `attempt_id` (the current attempt, §7.3), `last_report` and `reported_at` (the current attempt's last report taken, and when) | `request_id` equals the Temporal workflow ID |
-| `canonical_revision` | `canonical_revision_id` (`crv_` and the request id's 32 hex digits), `document_uid`, `source_revision_id`, `request_id`, `adopted_version`, `adoption_sequence`, `content_ref`, `content_sha256`, `content_size`, `accepted_at` | An accepted Canonical Revision, one per request, fixed once written (ADR-0003). `content_ref` is the candidate's `ref` as it came (§7.3) |
+| `canonical_revision` | `canonical_revision_id` (`crv_` and the request id's 32 hex digits), `document_uid`, `source_revision_id`, `request_id`, `adopted_version`, `adoption_sequence`, `content_ref`, `content_sha256`, `content_size`, `accepted_at` | An accepted Canonical Revision, one per request, fixed once written (ADR-0003). `content_ref` is the candidate's `ref`, checked to be the revision's own key (§7.3) |
 | `withdrawn_version` | `media_type`, `version`, `withdrawn_at` | Processing Profile versions withdrawn per main-file media type (#57 B6); written by declarative adoption (#261) |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
@@ -142,22 +142,29 @@ refresh after an adoption is #98's command).
   at declaration (§6.1 rule 2) and at finalization (§6.2 step 4).
 - Before the first declaration, `paper-pdf@1` is adopted for `application/pdf`.
 
-**Canonical Acceptance** (#251, #57 scope 2) is the commit of the transaction
-that records a `process` request `succeeded`. Whichever of status intake (§7.3)
-and the reconciler (§9) records the success first runs it, and both pass the
-run's candidate (§7.3) into the same function. In that transaction, in order:
+**Canonical Acceptance** (#251, #57 scopes 2–4) is the commit of the
+transaction that records a `process` request `succeeded`, when that transaction
+records a Canonical Revision. Whichever of status intake (§7.3) and the
+reconciler (§9) records the success first runs it, and both pass the run's
+candidate (§7.3) into the same function. In that transaction, in order:
 
-1. The Document's row is locked, then the request's: every transaction that
+1. It serializes with every other transaction on the Document (finalization,
+   deletion, another acceptance) before it touches the request. On PostgreSQL:
+   the Document's row is locked, then the request's, and every transaction that
    ends a request takes them in this order, which #98 relies on. A request that
    has ended changes nothing.
 2. The request becomes `succeeded`.
 3. No acceptance forms when the Document is deleted (§8), the success carries
-   no candidate, or the request's `adopted_version` is among the withdrawn
-   versions of its main file's media type at that moment. The Source
-   Revision's outcome stays `pending`, no Canonical Revision is recorded, the
-   current one stays and no event is appended. Each reason is counted
-   (`kp_admission_not_accepted`, `reason` `document_deleted`, `no_candidate`
-   or `version_withdrawn`) and logged.
+   no candidate, the candidate's `ref` is not the revision's own key (§7.3), or
+   the request's `adopted_version` is among the withdrawn versions of its main
+   file's media type at that moment. The Source Revision is not made
+   `accepted` (it is `pending` unless an earlier revision accepted it), no
+   Canonical Revision is recorded, the current one stays and no event is
+   appended. Each reason is counted (`kp_admission_not_accepted_total`,
+   `reason` `document_deleted`, `no_candidate`, `ref_mismatch` or
+   `version_withdrawn`) and logged. The `ref` check exists because reads
+   follow a revision's `ref`: a wrong or forged report must not point one
+   Document's revision at another Document's object.
 4. Otherwise the Canonical Revision is recorded and its Source Revision becomes
    `accepted`.
 5. It becomes the Document's current Canonical Revision when the Document has
@@ -170,16 +177,19 @@ run's candidate (§7.3) into the same function. In that transaction, in order:
    rollback), otherwise `background` for a platform refresh and `normal` for
    any other request (canonical consumption DR §3).
 
-- The transaction writes the Document on every path, `acceptance_version` when
-  it forms no acceptance or loses, so that on MongoDB a concurrent deletion
+- A success writes the Document on every path, `acceptance_version` when it
+  forms no acceptance or loses, so that on MongoDB a concurrent deletion
   conflicts with it (#239).
 - Selection compares a candidate with the current revision only, once. That
-  holds while nothing clears a current revision: the pilot has no withdrawal,
-  and a failed redo after a withdrawn version keeps serving the revision it had
-  (user, 2026-11-22). Adding withdrawal or invalidation changes this rule.
-- A withdrawn version does not move a revision that is already current; #98's
-  scan redoes those Documents under the adopted version, and the result wins
-  as a higher `adoption_sequence` of the same Source Revision.
+  holds while nothing clears a current revision: the pilot has no governance
+  withdrawal, and a failed redo after a withdrawn version keeps serving the
+  revision it had (user, 2026-11-22). Adding withdrawal or invalidation changes
+  this rule.
+- A withdrawn version is never the adopted one: declarative adoption (#261)
+  refuses to adopt it. Withdrawing takes no lock on the Document, so a result
+  accepted just before the withdrawal stays, as every revision already current
+  does; #98's scan redoes those Documents under the adopted version, and the
+  result wins as a higher `adoption_sequence` of the same Source Revision.
 - Canonical processing hands over candidates; it does not choose the current
   revision.
 
@@ -417,11 +427,14 @@ Canonical Acceptance, when it forms, commits with it, §3), `failed`. Delete sta
   platform failure's own message can be an exception's text. Its `reason`,
   `domain` and `support_ref` stay, for the platform owner.
 - A `succeeded` request forms no Canonical Acceptance when its Document was
-  deleted, its success carried no candidate, or its Processing Profile version
-  was withdrawn (§3). The Source then sees the request `succeeded`, its Source
-  Revision `pending`, no content and no attention. #98's scan runs it again: at
-  once for a withdrawn version, once per adoption for a missing candidate, never
-  for a deleted Document.
+  deleted, its success carried no candidate or a `ref` that is not its
+  revision's key, or its Processing Profile version was withdrawn (§3). The
+  Source then sees the request `succeeded` and the Document as before: its
+  readiness and `serving` do not move to that Source Revision, and it has no
+  attention. Such a request is one that is `succeeded` with no
+  `canonical_revision` of its `request_id`; #98's scan runs it again, at once
+  for a withdrawn version, once per adoption for a missing or wrong candidate,
+  never for a deleted Document.
 - `details` is where the current attempt last reported, `null` before any
   report; it is internal: do not use it for status decisions.
 - A Source sees the requests of its own Documents, platform refreshes included;
@@ -460,12 +473,13 @@ Returns the current generation (Q10.1f):
 - `details` is internal: do not use it for status decisions. It is `null`
   except for a method-version lag of a Document not deleted, when the
   Processing Profile version that made the current Canonical Revision is not
-  the one adopted now for its media type (none while the media type has no
-  adopted version):
+  the one adopted now for the media type that version was adopted for (no lag
+  while that media type has no adopted version):
   `{"method_version_lag": {"canonical_revision_id", "processing_profile_version",
   "adopted_version"}}`. A lag affects neither readiness nor attention.
 - Readiness reads the projections' serving facts (§7.4); until a projection
-  reports, which needs #127's reader of `current_revision_changed`, every
+  reports, which needs canonical processing's candidate (#81) and #127's reader
+  of `current_revision_changed`, every
   Document not deleted is `not_ready`, so an application follows a submission
   by its request's `state` (§5.5).
 - `latest` is the Source Revision that finalization created last
@@ -792,9 +806,11 @@ the last one.
 
 **Candidate.** A thirteenth field, `candidate`, may be left out or `null`, so a
 worker that predates it is still taken: `{"ref", "sha256", "size"}`, the
-Canonical content object of the run, with `ref` a non-empty string admission
-stores as it comes (#57 scopes 3 and 4 fix its form), `sha256` lowercase hex
-and `size` in bytes; any other key is `400`. Admission reads it from the
+Canonical content object of the run. `ref` is its object key without the bucket,
+which the deployment sets: `documents/{document_uid}/revisions/{canonical_revision_id}.json`,
+where `canonical_revision_id` is `crv_` and the request id's 32 hex digits
+(#57 scopes 3 and 4); any other `ref` forms no acceptance (§3). `sha256` is
+lowercase hex and `size` in bytes; any other key is `400`. Admission reads it from the
 success at the last registered stage only, for Canonical Acceptance (§3). The
 workflow's result carries the same object as `candidate` next to `"outcome":
 "complete"`, which the reconciler reads; a malformed one there counts as none.

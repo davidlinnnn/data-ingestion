@@ -148,8 +148,9 @@ async def record_outcome(
     follows: succeeded makes it pending; failed with error.metadata.cause "source" makes it
     rejected, any other failure failed. An accepted revision keeps its outcome.
 
-    A success with `candidate` is Canonical Acceptance (§3), unless the Document is deleted or the
-    request's version is withdrawn for its media type: the Canonical Revision is recorded, its
+    A success with `candidate` is Canonical Acceptance (§3), unless the Document is deleted, the
+    candidate's ref is not the revision's own key, or the request's version is withdrawn for its
+    media type: the Canonical Revision is recorded, its
     Source Revision becomes accepted, and it becomes the Document's current one, with a
     current_revision_changed event, when it is of a newer Source Revision or, of the same one,
     under a higher adoption sequence."""
@@ -192,11 +193,14 @@ async def _accept(
     sequence, files = revision
     main = next(f for f in files if f["role"] == "main")
     withdrawn = await adoption.withdrawn(conn, main["media_type"])
+    crv = f"crv_{request_id.removeprefix('req_')}"
     reason = None
     if deleted:  # a late result does not bring a deleted Document back (§8)
         reason = "document_deleted"
     elif candidate is None:
         reason = "no_candidate"
+    elif candidate.ref != f"documents/{uid}/revisions/{crv}.json":
+        reason = "ref_mismatch"  # reads follow ref: it must not name another Document's object
     elif adopted_version in withdrawn:
         reason = "version_withdrawn"
     if reason or candidate is None:
@@ -209,7 +213,7 @@ async def _accept(
         )  # fmt: skip
         return
     params = {
-        "crv": f"crv_{request_id.removeprefix('req_')}",
+        "crv": crv,
         "tenant_id": tenant_id,
         "uid": uid,
         "srv": srv,
