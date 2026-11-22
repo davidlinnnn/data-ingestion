@@ -11,9 +11,11 @@ from temporalio.client import Client
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
+from kp_admission import feed
 from kp_admission.dispatcher import dispatch_due, temporal_start
 from kp_admission.reconciler import reconcile
-from tests.admission.support import queue, request, revision, runs
+from kp_admission.requests import record_outcome
+from tests.admission.support import CANDIDATE, queue, request, revision, runs
 
 pytestmark = pytest.mark.docker
 
@@ -34,6 +36,10 @@ class CannedWorkflow:
         ref = f"requests/{start['request_id']}/result.json"
         if start["trace_id"] == "complete":
             return {"outcome": "complete", "manifest_ref": ref}
+        if start["trace_id"] == "accepted":
+            return {"outcome": "complete", "manifest_ref": ref, "candidate": CANDIDATE.model_dump()}
+        if start["trace_id"] == "malformed":
+            return {"outcome": "complete", "manifest_ref": ref, "candidate": {"ref": ""}}
         return {"outcome": "failed", "manifest_ref": ref, "error": ERROR}
 
 
@@ -64,7 +70,7 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
         " FROM request JOIN source_revision USING (source_revision_id)"
     )
     by_id = {row[0]: row[1:] for row in await cursor.fetchall()}
-    assert by_id[ids["complete"]] == ("succeeded", True, None, "pending")  # accepted is #251's
+    assert by_id[ids["complete"]] == ("succeeded", True, None, "pending")  # no candidate
     assert by_id[ids["failed"]] == ("failed", True, ERROR, "rejected")
     assert by_id[ids["refresh"]] == ("failed", True, ERROR, "pending")
     state, ended, error, outcome = by_id[ids["terminated"]]
@@ -78,6 +84,44 @@ async def test_the_reconciler_records_ended_workflows_and_leaves_running_ones(co
     assert error["occurred_at"].endswith("Z")
     assert by_id[ids["running"]] == ("queued", False, None, "pending")
     assert await reconcile(conn, temporal) == Counter(running=1)
+
+
+async def test_the_reconciler_accepts_a_lost_report_s_candidate_once(conn, temporal):
+    """#251: the reconciler records the acceptance a lost last report would have, a malformed
+    candidate ends the request without one, and an acceptance a report recorded first stays: a
+    report and the reconciler both arriving is the resend of test_acceptance."""
+    ids = {}
+    for trace in ("accepted", "malformed", "reported"):
+        uid, srv = await revision(conn)
+        ids[trace] = (uid, (await request(conn, uid, srv, trace_id=trace))[0])
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 3
+    async with Worker(
+        temporal, task_queue=queue("paper-pdf@1"), workflows=[CannedWorkflow],
+        workflow_runner=UnsandboxedWorkflowRunner(),
+    ):  # fmt: skip
+        for _, request_id in ids.values():
+            await temporal.get_workflow_handle(request_id).result()
+    reported_uid, reported_id = ids["reported"]
+    assert await record_outcome(conn, reported_id, "succeeded", None, None, CANDIDATE)
+    start = await feed.head(conn)
+
+    assert await reconcile(conn, temporal) == Counter(recorded=2)
+
+    current = {}
+    for trace, (uid, _) in ids.items():
+        state = await feed.document_state(conn, uid, None)
+        assert state
+        current[trace] = state.current and state.current.canonical_revision_id
+    accepted_uid, accepted_id = ids["accepted"]
+    assert current == {
+        "accepted": "crv_" + accepted_id.removeprefix("req_"),
+        "malformed": None,
+        "reported": "crv_" + reported_id.removeprefix("req_"),
+    }
+    found, _ = await feed.read(conn, start, limit=10)
+    assert [e.document_uid for e in found] == [accepted_uid]  # none again for the reported one
+    cursor = await conn.execute("SELECT count(*) FROM canonical_revision")
+    assert await cursor.fetchone() == (2,)
 
 
 async def test_the_reconciler_redispatches_a_lost_workflow_under_the_same_id(conn, temporal):

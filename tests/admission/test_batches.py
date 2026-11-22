@@ -24,7 +24,7 @@ from kp_admission.batches import Intake, SourceSettings, expire
 from kp_admission.requests import record_outcome
 from kp_admission.storage import FakeObjectStore, source_key
 from tests.admission.authz_fake import FakeAuthorizer
-from tests.admission.support import request, revision
+from tests.admission.support import CANDIDATE, request, revision
 
 pytestmark = pytest.mark.docker
 
@@ -148,14 +148,9 @@ async def submit(client: httpx.AsyncClient, store, items: list[dict], **headers:
 
 async def processed(conn, request_id: str, outcome: str) -> None:
     """Canonical processing's outcome: rejected (content) or failed (platform) as status reports
-    and the reconciler record it (#97), accepted as #251 will."""
+    and the reconciler record it (#97), accepted by Canonical Acceptance (#251)."""
     if outcome == "accepted":
-        await record_outcome(conn, request_id, "succeeded", None, None)
-        await conn.execute(
-            "UPDATE source_revision SET outcome = 'accepted' WHERE source_revision_id ="
-            " (SELECT source_revision_id FROM request WHERE request_id = %s)",
-            (request_id,),
-        )
+        assert await record_outcome(conn, request_id, "succeeded", None, None, CANDIDATE)
         return
     cause = "source" if outcome == "rejected" else "platform"
     error = {"domain": "kp-canonicalization", "reason": "R", "message": "m", "retryable": False,
@@ -432,7 +427,7 @@ async def test_11_a_binding_conflict_and_another_sources_documents_stay_apart(se
 
 
 async def test_12_concurrent_programs_finalize_in_turn_against_the_then_latest_revision(
-    seeded, api, store
+    seeded, api, store, conn
 ):
     b4 = B3 | {
         "source_version": "4",
@@ -460,6 +455,11 @@ async def test_12_concurrent_programs_finalize_in_turn_against_the_then_latest_r
 
     assert of(second, "B")["status"] == "queued"
     assert of(second, "B")["request_id"] == of(first, "B")["request_id"]
+    cursor = await conn.execute(  # finalization numbers B's Source Revisions in its order (#251)
+        "SELECT source_version, sequence FROM source_revision s JOIN document d USING"
+        " (document_uid) WHERE d.document_id = 'B' ORDER BY sequence"
+    )
+    assert await cursor.fetchall() == [("2", 1), ("4", 2), ("5", 3)]
 
 
 async def test_14_an_item_declared_before_a_deletion_is_rejected_and_a_new_c_is_a_new_document(
