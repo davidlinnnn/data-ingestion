@@ -24,7 +24,7 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, batches, feed, reports, uploads
+from kp_admission import adoption, batches, feed, reports, serving, status, uploads
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -62,11 +62,11 @@ def main(argv: list[str] | None = None) -> int:
     status reporters (#97, admission spec §7.3), as a JSON object from the SHA-256 hex digest of
     each reporter's credential to `{"pipeline_id", "track", "stages", "start_deadline_s",
     "update_interval_s"}`; the credentials of one pipeline_id, several while one is rotated, carry
-    the same registration, and one pipeline at most has the track `canonical`, canonical
-    processing's. Without it every status report is 401 and no attempt is progress_stalled. The
-    custody bucket is KP_S3_ENDPOINT and KP_S3_BUCKET with the AWS_* credentials, as for the
-    processing workers; the credentials need s3:ListBucket, without which S3 answers a missing
-    object with 403.
+    the same registration, and no two pipelines share a track: `canonical` is canonical
+    processing's, any other a projection's (§7.4). Without it every status report is 401 and no
+    attempt is progress_stalled. The custody bucket is KP_S3_ENDPOINT and KP_S3_BUCKET with the
+    AWS_* credentials, as for the processing workers; the credentials need s3:ListBucket, without
+    which S3 answers a missing object with 403.
     KP_MAX_FILE_SIZE is the maximum file size in bytes (default 50 MB); with KP_PAUSE_BACKLOG,
     declarations are refused while that many normal-priority process requests are queued.
     KP_ADMISSION_PUBLIC_URL is the https origin Sources call through the ingress, such as
@@ -159,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         if (
             pipelines is None
             or any(by_id[p.pipeline_id] != p for p in pipelines.values())
-            or tracks.count("canonical") > 1
+            or len(set(tracks)) < len(tracks)
         ):
             print("KP_PIPELINES is not valid", file=sys.stderr)
             return 2
@@ -238,19 +238,21 @@ async def run_api(
             port=port,
             log_config=None,
         )
-        observing = asyncio.create_task(observe(pool))
+        by_track = {p.track: p for p in pipelines.values()}
+        observing = asyncio.create_task(observe(pool, by_track))
         await uvicorn.Server(config).serve()
         observing.cancel()
     return 0
 
 
-async def observe(pool: AsyncConnectionPool[Any]) -> None:
+async def observe(pool: AsyncConnectionPool[Any], pipelines: dict[str, reports.Pipeline]) -> None:
     while True:
         try:
             async with pool.connection() as conn:
                 await feed.observe(conn)
+                await serving.silent(conn, pipelines, datetime.now(UTC))
         except Exception as error:  # the gauges keep their last values; the api keeps serving
-            log.warning("feed metrics not measured: %s", type(error).__name__)
+            log.warning("feed and liveness metrics not measured: %s", type(error).__name__)
         await asyncio.sleep(OBSERVE_S)
 
 
@@ -265,6 +267,7 @@ async def run_set_profile(dsn: str, tenant: str, source: str, projections: list[
         seq = await feed.set_profile(
             conn, tenant_id=tenant, source_id=source, projections=projections
         )
+        await status.refresh_source(conn, source)  # a dropped projection stops counting
     print(json.dumps({"profile_seq": seq}))
     return 0
 

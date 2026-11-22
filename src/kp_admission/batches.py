@@ -31,6 +31,7 @@ from kp_admission.authz import Authorizer, Decision, Ref
 from kp_admission.errors import Refused
 from kp_admission.requests import create_process_request
 from kp_admission.resources import resource_id
+from kp_admission.status import refresh
 from kp_admission.storage import ObjectStore, StorageUnavailable, source_key
 
 MAX_ITEMS = 50  # per declaration (§11, provisional)
@@ -909,6 +910,11 @@ async def finalize(
         if found.state == "expired":
             raise _expired()
         view = await _view(conn, caller, batch_id)
+        # A new latest Source Revision can make a served Document ready_stale (§7.1); on every
+        # call, so a retry after a crash before this line still records the change.
+        await refresh(
+            conn, sorted({i["document_uid"] for i in view["items"] if "document_uid" in i})
+        )
     if all(item["status"] == "rejected" for item in view["items"]):
         return 422, _all_rejected(view["items"])
     return 202, view

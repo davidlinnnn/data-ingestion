@@ -7,7 +7,8 @@ design §6.1) and its batches: declare, finalize and get_batch (#96, admission s
 /read/v1/ the governed read API (#126, canonical consumption DR §3): the Change Feed, cursors,
 Document state and bootstrap listings that kp_admission.feed describes, open only to the same
 registered service identities as the authz API; and under /report/v1/ the status report intake
-(#97, admission spec §7.3), open only to the registered pipelines. Both have their own prefix
+(#97, admission spec §7.3) and the projections' reports (#252, §7.4), open only to the registered
+pipelines. Both have their own prefix
 because /v1/ is the Source-facing surface that an ingress exposes.
 
 Every request has a trace id (admission spec §4): the trace id of its `traceparent` header, or a
@@ -28,7 +29,7 @@ conventions:
 - `kp_admission_items_total` (count) of the batch items decided, by `operation` (declare,
   finalize), `status` (declared, unchanged, queued, rejected) and `reason`, a rejection's reason
   code (admission spec §12), empty otherwise.
-- kp_admission.feed's gauges.
+- kp_admission.feed's gauges, and kp_admission.serving's counters and gauge (#252).
 """
 
 import hashlib
@@ -56,7 +57,7 @@ from starlette.exceptions import HTTPException
 from starlette.requests import ClientDisconnect
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission import batches, feed, reports, resources, status, uploads
+from kp_admission import batches, feed, reports, resources, serving, status, uploads
 from kp_admission.authz import PAGE_SIZE, Action, Authorizer, Decision, Operation, Outcome, Ref
 from kp_admission.errors import ErrorStatus, Refused
 from kp_admission.resources import Resource
@@ -269,6 +270,7 @@ class DocumentPage(BaseModel):
 
 
 _Limit = Annotated[int, Query(ge=1, le=1000)]
+_BuildId = Annotated[str, Path(min_length=1, max_length=128)]  # the owner's choice
 
 Key = Annotated[
     str, Path(min_length=1, max_length=200, description="The Source's own key, URL-encoded")
@@ -444,8 +446,8 @@ def app(
     Under /read/v1/ a registered PEP reads the Change Feed and reports only its own cursor.
 
     `pipelines` maps that of each reporter's service credential to its registration (#97); under
-    /report/v1/ only those reach a route, and only the `canonical` one reports a request's
-    status."""
+    /report/v1/ only those reach a route. The `canonical` one reports a request's status, and
+    every other one, a projection named by its track, its Builds (#252, admission spec §7.4)."""
     traced = {"headers": {"X-Trace-Id": {"description": "trace_id", "schema": {"type": "string"}}}}
     error = traced | {"model": ErrorResponse}
     errors = error | {"description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
@@ -646,7 +648,7 @@ def app(
             raise Refused(404, "NOT_FOUND", "NOT_FOUND", "The Source has no such request.")
         return JSONResponse(found)
 
-    canonical = next((p for p in pipelines.values() if p.track == "canonical"), None)
+    by_track = {p.track: p for p in pipelines.values()}
 
     @v1.get("/documents/{document_id}")
     async def get_document(document_id: Annotated[str, Path(max_length=256)]) -> JSONResponse:
@@ -655,7 +657,7 @@ def app(
         source = _source("submit")
         async with pool.connection() as conn:
             found = await status.document(
-                conn, source.tenant_id, source.source_id, document_id, canonical
+                conn, source.tenant_id, source.source_id, document_id, by_track
             )
         if found is None:
             raise Refused(404, "NOT_FOUND", "NOT_FOUND", "The Source has no such document.")
@@ -680,7 +682,6 @@ def app(
                     conn,
                     source.tenant_id,
                     source.source_id,
-                    canonical,
                     page_size=min(page_size or PAGE_SIZE, PAGE_SIZE),
                     page_token=page_token,
                     resource_id=resource_id
@@ -734,6 +735,75 @@ def app(
                 )
         assert taken.position
         return JSONResponse(taken.position.model_dump(), 409)
+
+    def calling_projection() -> str:
+        """The calling projection: its pipeline's track (admission spec §7.4)."""
+        track = pipeline_of[_request.get()["pipeline"]].track
+        if track == "canonical":
+            raise Refused(
+                403, "PERMISSION_DENIED", "PERMISSION_DENIED", "Only projections report Builds."
+            )
+        return track
+
+    @report.put("/builds/{build_id}", response_model=serving.BuildAnswer)
+    async def report_build_state(build_id: _BuildId, body: serving.BuildReport) -> JSONResponse:
+        """A Build's state (DR §4, D2); a switch failing a gate is 409 GATE_FAILED."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            answer, changed = await serving.report_build(conn, name, build_id, body)
+            # shortcut: a switch, or a resent one, refreshes every Document of both Builds inside
+            # the request, move the fan-out to a worker when #99 measures it near a call's timeout.
+            await status.refresh_builds(conn, name, changed)
+        return JSONResponse(answer.model_dump(mode="json"))
+
+    @report.put("/sources/{source_id}/backfill", status_code=204, response_class=Response)
+    async def report_backfill(
+        source_id: Annotated[str, Path(max_length=64)], body: serving.Backfill
+    ) -> None:
+        """The projection's backfill of the Source is complete at profile_seq (DR B1)."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            await serving.report_backfill(conn, name, source_id, body.profile_seq)
+            # shortcut: refreshes every Document of the Source inside the request, move the
+            # fan-out to a worker when #99 measures it near a call's timeout.
+            await status.refresh_source(conn, source_id)
+
+    @report.post("/builds/{build_id}/registrations", response_model=serving.Answer)
+    async def register_facts(build_id: _BuildId, body: serving.Registrations) -> JSONResponse:
+        """`pending` facts before a store write, all or none, after the B5 check (DR §5.2);
+        409 SUPERSEDED: drop the result, do not write."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            answer = await serving.register(conn, name, build_id, body.facts)
+        return JSONResponse(answer.model_dump(mode="json"))
+
+    @report.post("/builds/{build_id}/heartbeats", response_model=serving.Answer)
+    async def report_heartbeat(build_id: _BuildId, body: serving.Heartbeat) -> JSONResponse:
+        """The Build's count and digest (DR §5.5); a mismatch asks for a repair view."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            answer = await serving.heartbeat(conn, name, build_id, body)
+        return JSONResponse(answer.model_dump(mode="json"))
+
+    @report.post("/builds/{build_id}/status-reports", status_code=202)
+    async def report_projection_status(build_id: _BuildId, body: serving.AttemptReport) -> Response:
+        """A status report of the projection's attempt for a Document's Canonical Revision in
+        the Build (admission spec §7.4): 409 with the current position when out of order."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            taken = await serving.take_attempt(conn, by_track[name], build_id, body)
+        if isinstance(taken, serving.AttemptPosition):
+            return JSONResponse(taken.model_dump(), 409)
+        return Response(status_code=202 if taken == "recorded" else 200)
+
+    @report.post("/builds/{build_id}/facts", response_model=serving.FactsAnswer)
+    async def report_serving_facts(build_id: _BuildId, body: serving.ServingFacts) -> JSONResponse:
+        """`included` and `removed` facts (DR §5.1); a fenced one is listed and not taken."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            answer = await serving.report_facts(conn, name, build_id, body.facts)
+            await status.refresh(conn, sorted({f.document_uid for f in body.facts}))
+        return JSONResponse(answer.model_dump(mode="json"))
 
     read = APIRouter(
         prefix="/read/v1",

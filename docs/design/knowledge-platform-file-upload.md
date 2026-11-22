@@ -298,7 +298,7 @@ sequenceDiagram
 |---|---|---|---|
 | batch 裡 item 的 `status` | 這個 item 有沒有被受理 | 宣告時是 `declared`、`unchanged`、`queued` 或 `rejected`。之後 `declared` 變成 `queued`（受理）、`unchanged`、`rejected` 或 `expired` | 宣告與 finalize 時的規則（規格 §6） |
 | request 的 `state` | 這一次處理做完了沒 | `queued` → `processing` → `succeeded` 或 `failed` | 處理端的回報；回報沒送到時由 reconciler 補記 |
-| document 的 `readiness` | 這份文件現在讀不讀得到 | `not_ready`、`ready_stale`、`ready`、`deleted` | 各讀取端回報自己提供哪一版（#252，未實作） |
+| document 的 `readiness` | 這份文件現在讀不讀得到 | `not_ready`、`ready_stale`、`ready`、`deleted` | 各讀取端回報自己提供哪一版（#252） |
 
 受理（`202`）之後，平台在背景依序做這些事：
 
@@ -312,7 +312,7 @@ sequenceDiagram
 
 ## 5. 使用指南：給 Source 開發者
 
-本節依契約寫，不是現況。`dev` 上能呼叫的是 Resource 登記、宣告、上傳、finalize、`GET /v1/batches/{batch_id}` 與狀態查詢；刪除還沒實作，進度見第 7.3 節。projection 的回報接上之前（#252），每份未刪除的文件的 `readiness` 都是 `not_ready`；這段期間用 request 的 `state` 追蹤一次提交（規格 §5.6）。
+本節依契約寫，不是現況。`dev` 上能呼叫的是 Resource 登記、宣告、上傳、finalize、`GET /v1/batches/{batch_id}` 與狀態查詢；刪除還沒實作，進度見第 7.3 節。讀取端的回報接收已經接上（#252），但還沒有讀取端會送回報：要等 Canonical Acceptance 的記錄（#251）寫出 `current_revision_changed`，以及 consumer SDK 與 reference projection（#127）。在那之前每份未刪除的文件的 `readiness` 都是 `not_ready`；這段期間用 request 的 `state` 追蹤一次提交（規格 §5.6）。
 
 ### Quick start：一份文件、一個 PDF
 
@@ -349,7 +349,7 @@ curl https://kp.example/v1/requests/req_01J… -H "Authorization: Bearer $KP_TOK
 | `Idempotency-Key` | 選填。沒帶而重送宣告，會多一個 batch、多扣一次配額，但同樣的內容不會被受理兩次（規格 §6.2、§6.4） |
 | `title`、`source_url`、`metadata`、`uploaded_by` | 選填，不影響處理 |
 | `carried_over` | 只有重送多檔文件時才不是空的 |
-| `GET /v1/documents/{document_id}` | 讀取端的回報接上之前（#252），`readiness` 都是 `not_ready`；這段期間看 request 的 `state` 就夠（第 5.2 節「之後：查詢」） |
+| `GET /v1/documents/{document_id}` | 讀取端開始回報之前（#251、#127），`readiness` 都是 `not_ready`；這段期間看 request 的 `state` 就夠（第 5.2 節「之後：查詢」） |
 | `GET /v1/batches/{batch_id}` | 整批的進度；交單份文件用不到 |
 
 以下各小節是完整的說明。
@@ -575,7 +575,7 @@ request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `
 | `ready` | 每個讀取端都是最新版 |
 | `deleted` | 已刪除 |
 
-**現況（2026-11-20）：** 讀取端的回報還沒接上（#252），所以每份未刪除的文件都是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。規格還有 `withdrawn` 這個值，pilot 不會出現。
+**現況（2026-11-22）：** 讀取端的回報接收已經完成（#252），但還沒有讀取端會送回報：要等 Canonical Acceptance 的記錄（#251）寫出 `current_revision_changed`，以及 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。讀取端寫入新的一版時，在確認完成之前仍算提供著原本那一版：文件是 `ready_stale`，不會變回 `not_ready`（規格 §7.4）。規格還有 `withdrawn` 這個值，pilot 不會出現。
 
 `attention` 列出需要有人處理的事，沒有就是空陣列。`action_owner` 是 `source` 時輪到 Source 處理：
 
@@ -585,7 +585,12 @@ request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `
 | `processing_failed` | `platform` | 平台這一側處理失敗，而且沒有進行中的 request。帶 `track`，說明是哪一段失敗 | 不用做事；要催的話附上 request 的 `error.support_ref` |
 | `progress_stalled` | `platform` | 處理超過期限沒有回報進度 | 不用做事，平台會處理 |
 
-`status_unverified` 與 `skipped` 要等 #252；`withdrawn` 在 pilot 不會出現（規格 §7.2）。
+讀取端也會帶來下面兩種，`track` 是讀取端的名稱（規格 §7.2）。`processing_failed` 與 `progress_stalled` 也可能來自讀取端，這時 `track` 是它的名稱，不是 `canonical`。`withdrawn` 在 pilot 不會出現。
+
+| `kind` | `action_owner` | 意思 | Source 要做什麼 |
+|---|---|---|---|
+| `skipped` | `source` 或 `platform` | 讀取端略過這份文件。`source` 表示原因在內容 | `source`：依 `message` 修正；`platform`：不用做事 |
+| `status_unverified` | `platform` | 讀取端一段時間沒有回報，平台無法確認它提供的狀態 | 不用做事，平台會處理 |
 
 **刪除**
 
@@ -856,10 +861,10 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 | `title`、`source_url` | 字串或 `null` | 宣告時給的目錄資訊 |
 | `metadata` | 物件或 `null` | 宣告時給的 `metadata` |
 | `readiness` | 字串 | `not_ready`、`ready_stale`、`ready`、`deleted`（第 5.2 節） |
-| `since` | 時間 | `readiness` 從什麼時候開始是現在這個值。#252 之前是文件建立或刪除的時間 |
+| `since` | 時間 | `readiness` 從什麼時候開始是現在這個值。刪除的文件是刪除的時間；還沒變過的是文件建立的時間 |
 | `latest` | 物件 | 最後受理的版本：`source_revision_id`、`source_version`，以及它最新的 `request_id`（不算平台自己的重跑）。同樣的檔案用較大的 `source_version` 再送，`source_version` 會變成新的版本，`source_revision_id` 不變 |
-| `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。`source_version` 是那一版目前記下的版本，所以 `source_revision_id` 和 `latest` 的相同時，讀取端提供的就是最新的內容。#252 之前是空陣列 |
-| `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`（最新版記下的版本）、`message`、`since`；`processing_failed` 另外帶 `track`。沒有就是空陣列 |
+| `serving` | 陣列 | 每個讀取端在提供哪一版，每筆有 `projection`、`state`（`ready`、`building`、`stale`）、`source_revision_id`、`source_version`。`source_version` 是那一版目前記下的版本，所以 `source_revision_id` 和 `latest` 的相同時，讀取端提供的就是最新的內容。沒有在提供這份文件的讀取端不列出 |
+| `attention` | 陣列 | 需要有人處理的事，每筆有 `kind`、`action_owner`、`source_version`（最新版記下的版本）、`message`、`since`；`processing_failed`、`progress_stalled`、`status_unverified`、`skipped` 另外帶 `track`。沒有就是空陣列 |
 | `deleted_at` | 時間或 `null` | 刪除的時間 |
 
 文件刪除後又提交同一個 `document_id` 時，回的是現存的那一份；全部都刪除時，回最後刪除的那一份，`readiness` 是 `deleted`。`404`：這個 Source 沒有這份文件。
@@ -872,7 +877,7 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 |---|---|---|
 | `resource_id` | 否 | 只列這個 Resource（key）裡的文件 |
 | `readiness` | 否 | 只列這個 `readiness` 的文件；值不合法回 `400` |
-| `projection` | 否 | 只列這個讀取端正在提供的文件。#252 之前不會有符合的 |
+| `projection` | 否 | 只列這個讀取端正在提供的文件 |
 | `page_size` | 否 | 省略、`0` 或超過 1000 時是 1000 |
 | `page_token` | 否 | 上一頁的 `next_page_token`；不是這個列表給的值回 `400` |
 
@@ -1027,6 +1032,12 @@ printf '%s' "$TOKEN" | sha256sum    # 64 個小寫的十六進位字元；creden
 - `start_deadline_s` 是派送後多久內要有第一筆回報，`update_interval_s` 是兩筆回報之間最長多久；超過就在文件的 `attention` 顯示 `progress_stalled`。
 - 輪替時放兩筆，內容要完全相同；不同的話 `api` 不啟動。
 
+讀取端（projection）也登記在 `KP_PIPELINES`，`track` 是它的名稱，和 `set-profile` 用的名稱相同，例如 `{"pipeline_id": "kp-retrieval", "track": "retrieval", ...}`（規格 §7.4）。
+
+- 同一把 credential 也要登記在 `KP_AUTHZ_PEP_CREDENTIALS`，名稱相同：讀取端用它讀 Change Feed，也用它回報。
+- 兩個 pipeline 不能用同一個 `track`，否則 `api` 不啟動。
+- 讀取端的 `update_interval_s` 也是它的 Build 最久多久要回報一次：超過就在 `attention` 顯示 `status_unverified`，`kp_serving_builds_without_liveness` 也會計入。
+
 四個設定共同的行為：
 
 - 預設值是 `{}`。`KP_CREDENTIALS` 是 `{}` 時沒有任何 Source 能呼叫；`KP_PIPELINES` 是 `{}` 時 `api` 照常啟動，但每筆回報都是 `401`。
@@ -1066,7 +1077,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 5 | 啟動 `kp-admission api`（2 個副本）與 `kp-admission dispatcher`（至少 2 個副本） | `api`：叢集內 `GET /healthz` 回 `200`。`dispatcher` 沒有 HTTP 端點：pod 維持 Running、沒有重啟，log 沒有錯誤 |
 | 6 | 建立三個 CronJob：`reconcile` 每 5 分鐘、`expire` 每小時、`feed-retention` 每天 | 各跑一次，exit code 0 |
 | 7 | 採用 PDF 的處理方法版本：`kp-admission adopt --tenant <tenant> application/pdf paper-pdf@1`。用同一個 image 跑一次（Job 或進入 pod 執行），只需要 `KP_ADMISSION_DATABASE_URL`；`<tenant>` 是 `KP_CREDENTIALS` 裡的 `tenant_id` | 印出 `adopted_version`。指令不檢查這個版本有沒有 worker：採用了沒有 worker 的版本，request 會一直是 `queued` |
-| 8 | 設定每個 Source 要求的讀取端：`kp-admission set-profile`（第 6.8 節），執行方式同上一步。名稱是讀取端登記的名稱，例如 `retrieval`。#252 完成之前這一步不影響任何結果，可以晚點做 | 印出 `profile_seq` |
+| 8 | 設定每個 Source 要求的讀取端：`kp-admission set-profile`（第 6.8 節），執行方式同上一步。名稱是讀取端登記的名稱，例如 `retrieval`。讀取端開始回報之前（#251、#127）這一步不影響任何結果，可以晚點做；Knowledge Profile 第一次設定時就有的讀取端直接計入 `readiness`，之後加入的要等它回報補建完成 | 印出 `profile_seq` |
 | 9 | 設定 ingress：對外只開放 `/v1/`，上傳路徑放寬 body 上限、關閉緩衝、放寬 timeout（第 6.2 節） | 從 Source 的網段連得到 `/v1/`，連不到 `/report/`、`/read/`、`/authz/` |
 | 10 | 設定 orchestration worker 的 `KP_ADMISSION_URL`（`api` 的叢集內位址）與 `KP_ADMISSION_TOKEN`，然後重啟 worker | worker 的 log 沒有 `KP_ADMISSION_TOKEN is not set` 這行 warning |
 
@@ -1088,7 +1099,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 上傳 | `204` |
 | finalize | `202`，item 帶 `request_id` |
 | `GET /v1/requests/{request_id}` | 先是 `queued`，worker 開始回報後是 `processing`，最後是 `succeeded` |
-| `GET /v1/documents/{document_id}` | `readiness` 是 `not_ready`、`attention` 是空陣列。#252 完成之前這是正常的結果 |
+| `GET /v1/documents/{document_id}` | `readiness` 是 `not_ready`、`attention` 是空陣列。讀取端開始回報之前（#251、#127）這是正常的結果 |
 
 結果不如預期時：
 
@@ -1106,7 +1117,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | finalize 一直回 `503` | storage 連不到，或憑證少了 `s3:ListBucket` |
 | request 一直是 `queued` | dispatcher 沒在跑、連不到 Temporal，或沒有 worker 在輪詢那個 task queue |
 | request 不經過 `processing`，幾分鐘後直接變成 `succeeded` 或 `failed` | 回報沒送到，結果是 reconciler 補記的。檢查 `KP_PIPELINES`、worker 的 `KP_ADMISSION_URL` 與 `KP_ADMISSION_TOKEN`；`kp_api_calls_total{operation="report_status"}` 的 `401` 會增加 |
-| `readiness` 一直是 `not_ready` | #252 完成之前的正常結果 |
+| `readiness` 一直是 `not_ready` | 讀取端開始回報之前（#251、#127）的正常結果。之後還是這樣：檢查讀取端在 `KP_PIPELINES` 的 `track` 和 `set-profile` 用的名稱相同；credential 不在 `KP_PIPELINES` 時它的回報都是 `401`（`kp_api_calls_total` 看得到）（第 6.8 節） |
 
 ## 7. 未決事項與變更紀錄
 
@@ -1138,8 +1149,9 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-20 | #97：canonical processing 的回報接收與狀態查詢實作完成（PR #253）。#97 在開工前拆成三張：projection 的回報接收（#252）與 Canonical Acceptance 的記錄（#251）另外實作。第 5 節寫明 `readiness` 在 #252 之前都是 `not_ready`，以及平台原因失敗的訊息是固定句子；第 6 節補上 `/report/`、`KP_PIPELINES` 與 worker 的兩個設定；第 7.3 節更新，保留期的票是 #250 |
 | 2026-11-20 | 補上讓 Source 開發者與 DevOps 只讀本文就能串接的內容：第 4.3 節（三種狀態與受理後平台做的事）、第 5.2 節的查詢改寫（用 request 的 `state` 判斷結果，各種結果該怎麼處理）、第 5.3 節 item 被拒的原因表、第 5.6 節（每個呼叫的 request 與回應欄位）、第 6.8 節（四個 JSON 設定的格式）、第 6.9 節（部署順序、驗收與常見現象）。回應的欄位對 `dev` 上的 `api` 實際跑過一次核對。另外請兩個只讀本文的獨立讀者試做：一個照本文寫出 client，對真的 `api`、資料庫與物件儲存跑過 8 個情境；一個照本文寫出部署計畫。兩者回報的缺口已補上。契約不變 |
 | 2026-11-20 | #258：版本較大、檔案都相同的重送不再處理一次，和版本相同、內容相同一樣走規格 §6.4（`unchanged`、`queued` 或平台失敗後的重試），並把新的版本記成最新版的 `source_version`。原本回 `declared`、`uploads: []`，finalize 後重新處理整份文件；這是規格 §6.3 漏掉的組合（設計筆記的裁決同日補上）。第 5.2 節的 `source_version`、`declared`、`unchanged`，第 5.3 節的 `STALE_SOURCE_VERSION`，與第 5.6 節的 `latest`、`serving`、`attention` 跟著改；規格 §3、§6.3、§6.4 與 `CONTEXT.md` 的 Source Revision 條目一起更新 |
+| 2026-11-22 | #252：讀取端的回報接收實作完成：Build 狀態、寫入前登記與 B5 檢查、serving 事實、heartbeat、attempt 回報、補建完成；`readiness`、`since`、`serving` 與讀取端的 `attention` 改由這些回報算出（規格 §7.4）。修復 view 的接收拆到 #260。第 5 節更新現況：讀取端還沒開始回報（#251、#127），所以仍是 `not_ready`；第 6.8 節補上讀取端的登記 |
 
-### 7.3 實作狀態（2026-11-20）
+### 7.3 實作狀態（2026-11-22）
 
 進度以各票為準；這張表在票結案時更新。
 
@@ -1152,10 +1164,11 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 宣告、finalize | `POST /v1/batches`、`POST /v1/batches/{batch_id}/finalize`、`GET /v1/batches/{batch_id}`、batch 過期、採用紀錄 | #96 | 已完成，在 `dev` |
 | 上傳 | `PUT /v1/batches/{batch_id}/items/{index}/files/{path}`、上傳清理、最小 SDK | #194 | 已完成，在 `dev` |
 | 版本較大、檔案相同不重新處理 | 宣告與 finalize 的排序規則（規格 §6.3、§6.4） | #258 | 已完成，在 `dev` |
-| 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev`；`readiness` 在 #252 之前都是 `not_ready` |
-| projection 的回報接收 | 登記、serving 事實、修復與 heartbeat；`readiness` 的 serving 部分 | #252 | 未實作，下一張 |
+| 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev` |
+| projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#251、#127）`readiness` 仍是 `not_ready` |
+| 修復 view 的接收 | 讀取端送來整份 view，一次替換 mirror | #260 | 未實作，在 #252 之後 |
 | Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed` | #251 | 未實作，等 #57 對受理點的結論 |
-| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #252 之後 |
+| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #260 之後 |
 | 保留期 | batch 與 `Idempotency-Key` 到期回 `404` 並移除紀錄 | #250 | 未實作 |
 | dispatcher 與 reconciler 的 metrics | | #189 | 未實作 |
 | 驗證 | CI 層與叢集層 | #99 | 未實作，在 #98 之後；叢集層另外等 #78 |

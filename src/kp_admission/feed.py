@@ -19,6 +19,7 @@ from typing import Literal
 from prometheus_client import Gauge
 from psycopg import AsyncConnection, sql
 from psycopg.pq import TransactionStatus
+from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
 Kind = Literal[
@@ -204,10 +205,11 @@ async def set_profile(
 ) -> str:
     """Sets the Source's Knowledge Profile and appends source_profile_changed in one transaction,
     or in a savepoint when the caller has one open, and returns its profile_seq. An unchanged
-    profile appends nothing and keeps its profile_seq."""
+    profile appends nothing and keeps its profile_seq. It records the profile_seq at which each
+    projection joined; one of the Source's first profile joined at none (DR B1)."""
     async with conn.transaction():
         cursor = await conn.execute(
-            "SELECT projections, profile_seq FROM source"
+            "SELECT projections, profile_seq, added FROM source"
             " WHERE tenant_id = %s AND source_id = %s FOR UPDATE",
             (tenant_id, source_id),
         )
@@ -226,9 +228,12 @@ async def set_profile(
             source_id=source_id,
             priority="background",
         )
+        before, added = (row[0], row[2]) if row else (projections, {})
+        joined = {p: added.get(p, "") if p in before else seq for p in projections}
         await conn.execute(
-            "UPDATE source SET profile_seq = %s WHERE tenant_id = %s AND source_id = %s",
-            (seq, tenant_id, source_id),
+            "UPDATE source SET profile_seq = %s, added = %s"
+            " WHERE tenant_id = %s AND source_id = %s",
+            (seq, Jsonb(joined), tenant_id, source_id),
         )
         return seq
 
@@ -260,6 +265,21 @@ async def report_cursor(conn: AsyncConnection, projection: str, position: str) -
         )
         [(platform,)] = await recorded.fetchall()
         raise Backwards(platform)
+
+
+async def lag_s(conn: AsyncConnection, position: str) -> float:
+    """How long the oldest entry after the position has waited, in seconds; 0 when none follows.
+    ValueError when it is not a position, or is one the feed has not reached."""
+    cursor = await conn.execute(
+        "SELECT pg_snapshot_xmin(pg_current_snapshot())::text,"
+        " coalesce(extract(epoch FROM now() - (SELECT occurred_at FROM change_feed"
+        " WHERE (xid, seq) > (%s::xid8, %s) ORDER BY xid, seq LIMIT 1)), 0)::float",
+        _split(position),
+    )
+    [(xmin, lag)] = await cursor.fetchall()
+    if position > _position(xmin, 0):  # as document_state: no read has answered it
+        raise ValueError("ahead of the feed")
+    return lag
 
 
 async def list_sources(conn: AsyncConnection) -> list[str]:
@@ -340,12 +360,7 @@ async def observe(conn: AsyncConnection) -> Observed:
     lags: dict[str, float] = {}
     cursors = await conn.execute("SELECT projection, position FROM consumer_cursor")
     for projection, position in await cursors.fetchall():
-        cursor = await conn.execute(
-            "SELECT coalesce(extract(epoch FROM now() - (SELECT occurred_at FROM change_feed"
-            " WHERE (xid, seq) > (%s::xid8, %s) ORDER BY xid, seq LIMIT 1)), 0)::float",
-            _split(position),
-        )
-        [(lags[projection],)] = await cursor.fetchall()
+        lags[projection] = await lag_s(conn, position)
     observed = Observed(oldest_xmin_age_s=age, lag_s=lags)
     oldest_xmin_age.set(observed.oldest_xmin_age_s)
     consumer_lag.clear()

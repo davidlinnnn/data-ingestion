@@ -1,5 +1,5 @@
 """Status queries (#97, admission spec §5.5–§5.7, §7): a Source's requests and Documents, with
-each Document's readiness and attention."""
+each Document's readiness, serving and attention, from the serving-fact mirror (#252)."""
 
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
@@ -8,12 +8,15 @@ from typing import Any, Literal
 from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 
+from kp_admission import feed
+from kp_admission import serving as mirror
 from kp_admission.reports import Pipeline, details
 from kp_admission.resources import source_and_key
 
 Readiness = Literal["deleted", "withdrawn", "not_ready", "ready_stale", "ready"]
 # A platform failure's message can be an exception's text, which a Source does not see.
 PLATFORM_FAILURE = "Processing failed for a platform reason; the platform owner is alerted."
+PAGE = 500  # Documents per page of a refresh fan-out
 
 _REQUEST = """
 SELECT r.request_id, r.kind, r.state, d.document_id, r.document_uid, r.source_revision_id,
@@ -51,7 +54,7 @@ def _shown(error: dict[str, Any] | None) -> dict[str, Any] | None:
 # affects readiness or attention (§7.2).
 _DOCUMENTS = """
 SELECT d.document_uid, d.document_id, d.resource_id, d.title, d.source_url, d.metadata,
-       d.deleted_at, d.created_at, s.source_revision_id, s.source_version, s.outcome,
+       d.deleted_at, d.readiness_since, s.source_revision_id, s.source_version, s.outcome,
        r.request_id, r.state, r.error, r.terminal_at, r.reported_at, o.dispatched_at
 FROM document d
 LEFT JOIN source_revision s ON s.source_revision_id = d.latest_source_revision_id
@@ -65,30 +68,40 @@ LEFT JOIN outbox o ON o.request_id = r.request_id
 WHERE d.tenant_id = %(tenant_id)s AND d.source_id = %(source_id)s AND {tail}
 """
 
-_PROJECTIONS = "SELECT projections FROM source WHERE tenant_id = %s AND source_id = %s"
-
 
 async def document(
     conn: AsyncConnection,
     tenant_id: str,
     source_id: str,
     document_id: str,
-    canonical: Pipeline | None,
+    pipelines: Mapping[str, Pipeline],
 ) -> dict[str, Any] | None:
-    """The Source's Document (§5.6): its current generation, else the one deleted last."""
+    """The Source's Document (§5.6): its current generation, else the one deleted last.
+    `pipelines` are the registered ones by track."""
     tail = "d.document_id = %(document_id)s ORDER BY d.deleted_at IS NOT NULL, d.deleted_at DESC"
     params = {"tenant_id": tenant_id, "source_id": source_id, "document_id": document_id}
     rows = await _rows(conn, tail + " LIMIT 1", params)
     if not rows:
         return None
-    return _view(rows[0], await _projections(conn, tenant_id, source_id), canonical)
+    row, uid = rows[0], rows[0]["document_uid"]
+    required = await mirror.required(conn, tenant_id, source_id)
+    served = (await mirror.served(conn, [uid])).get(uid, {})
+    projected = _projected(
+        row,
+        required,
+        served,
+        (await mirror.attempts(conn, [uid])).get(uid, {}),
+        await mirror.serving_builds(conn),
+        pipelines,
+        datetime.now(UTC),
+    )
+    return _view(row, required, served, pipelines.get("canonical"), projected)
 
 
 async def documents(
     conn: AsyncConnection,
     tenant_id: str,
     source_id: str,
-    canonical: Pipeline | None,
     *,
     page_size: int,
     page_token: str | None = None,
@@ -117,10 +130,11 @@ async def documents(
         conn, tail + " ORDER BY d.document_id, d.document_uid LIMIT %(limit)s", params
     )
     more, rows = len(rows) > page_size, rows[:page_size]
-    required = await _projections(conn, tenant_id, source_id)
+    required = await mirror.required(conn, tenant_id, source_id)
+    served = await mirror.served(conn, [row["document_uid"] for row in rows])
     entries = []
     for row in rows:
-        view = _view(row, required, canonical)
+        view = _view(row, required, served.get(row["document_uid"], {}), None)
         if readiness not in (None, view["readiness"]) or (
             projection is not None and all(s["projection"] != projection for s in view["serving"])
         ):
@@ -139,9 +153,50 @@ async def _rows(conn: AsyncConnection, tail: str, params: dict[str, Any]) -> lis
     return await (await cursor.execute(_DOCUMENTS.format(tail=tail), params)).fetchall()  # type: ignore[arg-type]
 
 
-async def _projections(conn: AsyncConnection, tenant_id: str, source_id: str) -> list[str]:
-    row = await (await conn.execute(_PROJECTIONS, (tenant_id, source_id))).fetchone()
-    return row[0] if row else []
+_STORED = """
+SELECT d.tenant_id, d.source_id, d.deleted_at IS NOT NULL, d.latest_source_revision_id,
+       d.readiness
+FROM document d WHERE d.document_uid = %s FOR UPDATE
+"""
+
+
+async def refresh(conn: AsyncConnection, uids: Sequence[str]) -> None:
+    """Records each Document's readiness and, when it changed, the moment: `since` (§5.6). Each
+    in a transaction of its own, so a large fan-out holds no long transaction, and with the
+    Document locked, so two refreshes of it record in the order they read. A report or state
+    change that can move a Document's readiness calls it after its own transaction."""
+    for uid in uids:
+        async with conn.transaction():
+            row = await (await conn.execute(_STORED, (uid,))).fetchone()
+            if row is None:
+                continue
+            tenant_id, source_id, deleted, latest, stored = row
+            required = await mirror.required(conn, tenant_id, source_id)
+            served = (await mirror.served(conn, [uid])).get(uid, {})
+            state = _readiness(deleted, required, served, latest)
+            if state != stored:
+                await conn.execute(
+                    "UPDATE document SET readiness = %s, readiness_since = now()"
+                    " WHERE document_uid = %s",
+                    (state, uid),
+                )
+
+
+async def refresh_builds(conn: AsyncConnection, projection: str, builds: Sequence[str]) -> None:
+    """refresh, in pages, for every Document the projection's Builds hold a fact of."""
+    after = ""
+    while page := await mirror.documents(conn, projection, builds, after, PAGE):
+        await refresh(conn, page)
+        after = page[-1]
+
+
+async def refresh_source(conn: AsyncConnection, source_id: str) -> None:
+    """refresh, in pages, for every Document of the Source not deleted: after its Knowledge
+    Profile changed or a projection reported its backfill."""
+    after = None
+    while page := await feed.list_documents(conn, source_id, after, PAGE):
+        await refresh(conn, page)
+        after = page[-1]
 
 
 def readiness(
@@ -186,18 +241,110 @@ def attention(row: Mapping[str, Any], canonical: Pipeline | None, now: datetime)
             deadline = None  # not dispatched yet: admission's own backlog
         if deadline and deadline < now:
             found.append(
-                {"kind": "progress_stalled", "action_owner": "platform", "source_version": version,
+                {"kind": "progress_stalled", "action_owner": "platform", "track": "canonical",
+                 "source_version": version,
                  "message": "Canonical processing has not reported within its deadline.",
                  "since": _json(deadline)}
             )  # fmt: skip
     return found
 
 
-def _view(row: dict[str, Any], required: list[str], canonical: Pipeline | None) -> dict[str, Any]:
-    serving: dict[str, str] = {}  # serving facts arrive with #252
-    state = readiness(row["deleted_at"] is not None, required, serving, row["source_revision_id"])
-    # shortcut: since holds while nothing serves the Document; #252 records when readiness changes.
-    since = row["deleted_at"] or row["created_at"]
+def _projected(
+    row: Mapping[str, Any],
+    required: Mapping[str, bool],
+    served: Mapping[str, mirror.Served],
+    attempts: Mapping[str, mirror.Attempt],
+    live: Mapping[str, datetime],
+    pipelines: Mapping[str, Pipeline],
+    now: datetime,
+) -> list[dict[str, Any]]:
+    """§7.2 from the required projections (#252). Of each, only the serving Build's attempt for
+    the Document's current Canonical Revision counts (DR C4): failed or skipped for the latest
+    Source Revision while that is not served, or past its deadline; and the serving Build without
+    liveness, no report within the pipeline's update interval, is status_unverified."""
+    latest, version = row["source_revision_id"], row["source_version"]
+    found: list[dict[str, Any]] = []
+    for projection in required:
+        pipeline = pipelines.get(projection)
+        attempt = attempts.get(projection)
+        base = {"action_owner": "platform", "track": projection, "source_version": version}
+        if attempt and pipeline:
+            last, at = attempt.last_report, attempt.reported_at
+            open_ = attempt.source_revision_id == latest and (
+                projection not in served or served[projection].source_revision_id != latest
+            )
+            error = last["error"] or {}
+            if last["state"] == "failed" and open_:
+                found.append(
+                    base | {"kind": "processing_failed", "message": PLATFORM_FAILURE,
+                            "since": _json(at)}
+                )  # fmt: skip
+            elif last["state"] == "skipped" and open_:
+                by_source = (error.get("metadata") or {}).get("cause") == "source"
+                found.append(
+                    base | {"kind": "skipped", "since": _json(at),
+                            "action_owner": "source" if by_source else "platform",
+                            "message": error["message"] if by_source else PLATFORM_FAILURE}
+                )  # fmt: skip
+            elif last["state"] in ("pending", "running") or (
+                last["state"] == "succeeded" and last["stage"] != pipeline.stages[-1]
+            ):  # as §7.3: only the last stage's success ends the attempt
+                wait = pipeline.start_deadline_s if last["state"] == "pending" else None
+                deadline = at + timedelta(seconds=wait or pipeline.update_interval_s)
+                if deadline < now:
+                    found.append(
+                        base | {"kind": "progress_stalled",
+                                "message": "The projection has not reported within its deadline.",
+                                "since": _json(deadline)}
+                    )  # fmt: skip
+        if pipeline and projection in live:
+            deadline = live[projection] + timedelta(seconds=pipeline.update_interval_s)
+            if deadline < now:
+                found.append(
+                    base | {"kind": "status_unverified",
+                            "message": "The projection's serving Build has stopped reporting.",
+                            "since": _json(deadline)}
+                )  # fmt: skip
+    return found
+
+
+def _readiness(
+    deleted: bool, required: Mapping[str, bool], served: Mapping[str, mirror.Served], latest: Any
+) -> Readiness:
+    """§7.1 over the projections that count (DR B1)."""
+    counted = [p for p, counts in required.items() if counts]
+    by_revision = {p: s.source_revision_id for p, s in served.items()}
+    return readiness(deleted, counted, by_revision, latest)
+
+
+def _serving(
+    required: Mapping[str, bool], served: Mapping[str, mirror.Served], latest: Any
+) -> list[dict[str, Any]]:
+    """A row per required projection that serves the Document (DR B1): `building` while its
+    backfill does not count, else `ready` when it serves the latest Source Revision, `stale`."""
+    rows = []
+    for projection, counts in required.items():
+        if (s := served.get(projection)) is None:
+            continue
+        state = "building" if not counts else "ready" if s.source_revision_id == latest else "stale"
+        rows.append(
+            {"projection": projection, "state": state,
+             "source_revision_id": s.source_revision_id, "source_version": s.source_version}
+        )  # fmt: skip
+    return rows
+
+
+def _view(
+    row: dict[str, Any],
+    required: Mapping[str, bool],
+    served: Mapping[str, mirror.Served],
+    canonical: Pipeline | None,
+    projected: Sequence[dict[str, Any]] = (),
+) -> dict[str, Any]:
+    """The Document's view (§5.6). A list (§5.7) shows no attention and passes none."""
+    latest = row["source_revision_id"]
+    state = _readiness(row["deleted_at"] is not None, required, served, latest)
+    since = row["deleted_at"] or row["readiness_since"]
     return {
         "document_id": row["document_id"],
         "document_uid": row["document_uid"],
@@ -212,8 +359,10 @@ def _view(row: dict[str, Any], required: list[str], canonical: Pipeline | None) 
             "source_version": row["source_version"],
             "request_id": row["request_id"],
         },
-        "serving": [],
-        "attention": attention(row, canonical, datetime.now(UTC)) if state != "deleted" else [],
+        "serving": _serving(required, served, latest),
+        "attention": []
+        if state == "deleted"
+        else [*attention(row, canonical, datetime.now(UTC)), *projected],
         "deleted_at": _json(row["deleted_at"]),
     }
 
