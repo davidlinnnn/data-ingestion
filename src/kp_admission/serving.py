@@ -674,14 +674,23 @@ async def silent(
 
 async def _reported(conn: AsyncConnection, projection: str, build_id: str) -> Repair | None:
     """Marks a report of the Build, its liveness signal, and returns the repair asked of it. It
-    locks the Build's row, so the reports of one Build are taken one at a time."""
+    locks the Build's row, so the reports of one Build are taken one at a time. 409 BUILD_STATE
+    for a retired Build: its data is gone, and `held` no longer reads its facts."""
     cursor = await conn.execute(
         "UPDATE build SET reported_at = now() WHERE projection = %s AND build_id = %s"
-        " RETURNING repair_reason, repair_requested_at",
+        " RETURNING repair_reason, repair_requested_at, state",
         (projection, build_id),
     )
     if (row := await cursor.fetchone()) is None:
         raise Refused(404, "NOT_FOUND", "NOT_FOUND", "The projection reported no such Build.")
+    if row[2] == "retired":
+        raise Refused(
+            409,
+            "FAILED_PRECONDITION",
+            "BUILD_STATE",
+            "The Build is retired.",
+            metadata={"state": "retired"},
+        )
     return Repair(reason=row[0], requested_at=row[1]) if row[0] else None
 
 

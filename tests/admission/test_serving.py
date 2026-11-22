@@ -834,3 +834,21 @@ async def test_a_registration_naming_a_key_twice_keeps_its_highest_version(api, 
     await included(api, "retrieval", fact(uid, srv, 2))  # not above the registration: older
 
     assert (await seen(api))["readiness"] == "not_ready"
+
+
+async def test_a_retired_build_takes_no_more_reports(api, conn):
+    """A registration's 200 permits a store write, and deletion's judgment skips retired Builds."""
+    uid, srv = await document(conn)
+    await accepted(conn, uid, srv)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    await build(api, "retrieval", state="retired")
+
+    refused = [
+        await registered(api, "retrieval", fact(uid, srv, 1)),
+        await included(api, "retrieval", fact(uid, srv, 2)),
+        await beat(api, "retrieval"),
+    ]
+
+    assert [gate(r) for r in refused] == [(409, "BUILD_STATE", {"state": "retired"})] * 3
+    assert await serving.held(conn, uid) == []

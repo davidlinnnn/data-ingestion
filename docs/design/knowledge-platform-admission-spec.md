@@ -680,7 +680,8 @@ older revision, raises none:
   with the fixed message.
 - `progress_stalled` with `track: <projection>`: that attempt's last report is
   `pending` with none after it within the pipeline's `start_deadline_s`, or
-  `running` with none within `update_interval_s`. A projection has no dispatch,
+  `running`, or `succeeded` at a stage that is not the pipeline's last, with
+  none within `update_interval_s`. A projection has no dispatch,
   so its first report starts the clock. Canonical processing's entry carries
   `track: canonical`.
 - `status_unverified` with `track: <projection>`: the projection's serving Build
@@ -814,14 +815,18 @@ Build it replaces, counting on both sides the `included` facts and the
 `pending` ones written over a revision still served (§7.1);
 `removed_documents`, an `included` or `pending` fact of
 a Document deleted, unknown, or bound to another Resource than the fact's. A
-`feed_position` the feed has not reached is `400`, as a malformed one is. A switch that
+`feed_position` the feed has not reached is `400`, as a malformed one is; it
+is read after `replaces` passed, and not at all for a late switch. A switch that
 passes makes the replaced Build `retained` in the same step, so one Build of a
 projection serves: of two switches sent at once the later fails `replaces`. A `serving` report
 numbered at or below the last switch came late and changes nothing; its answer
 carries the Build's state. A `retained` Build switches back by the same report,
 which is a rollback (DR D2). `retired` is the owner's report that the Build's
-data is gone (DR §4) and is final. A Build reported in the state it is in
-answers `200` with its state unchanged. Any other step, such as back to
+data is gone (DR §4) and is final: every later registration, fact, heartbeat
+and status report to it is `409` `BUILD_STATE`. A Build reported in the state it is in
+answers `200` with its state unchanged; a repeated `serving` or `retired`
+report runs the recompute of readiness again (below), so it is a retry, not a
+keepalive. Any other step, such as back to
 `building`, is `409` `BUILD_STATE` with the state the Build is in.
 
 **Facts.** A fact carries `document_uid`, `resource_id` (the full identifier the
@@ -840,14 +845,17 @@ at most 128 characters, `document_uid` and the revision IDs 64, `resource_id`
   holds them until it commits, so Source Deletion's judgment, which locks the
   Document, comes before it or sees the `pending` fact. A failed check is `409`
   `SUPERSEDED` naming the first Document that failed: the projection drops the
-  result and does not write. A projection that abandons a registered write
+  result and does not write. When that answer came to a registration sent
+  more than once, an earlier send may have been recorded, so the projection
+  then reports each key as for an abandoned write. A projection that abandons a registered write
   reports, with a new `fact_version`, what its store holds for the key:
   `included` with the revisions still stored, or `removed` when it holds
   nothing. A registration resent, or any fact whose `fact_version` is not
   above the one held, answers `200` and records nothing. A registration over
   an `included` fact keeps that fact's Source Revision as the one served until
-  the write is confirmed, so the Document stays `ready_stale` while it is
-  written and does not turn `not_ready` (user ruling, 2026-11-22); the fact is
+  the write is confirmed, so the Document keeps counting as served while it is
+  written, `ready_stale` when the write is of a newer Source Revision, and
+  does not turn `not_ready` (user ruling, 2026-11-22); the fact is
   `pending` for every other reader, Source Deletion's judgment included.
 - `included` and `removed` facts are taken one by one: the highest
   `fact_version` of a key, (Build, `document_uid`, `resource_id`), is kept, and an
@@ -865,7 +873,9 @@ or heartbeat report carries `repair_requested`: `null`, or `{"reason", "requeste
 asks for a repair view of the Build. Reasons: `heartbeat_mismatch`,
 `pending_expired`, `fenced`. The request stays until a repair view completes
 (#260, which adds the route for the view and its own reasons); until then it
-is information for the owner and refuses no report. A heartbeat carries `count` and `digest` over the
+is information for the owner and refuses no report, and it shows the first
+reason: a later one does not replace it. The owner computes a heartbeat with
+no report of the Build in flight; a report still on its way is a mismatch. A heartbeat carries `count` and `digest` over the
 Build's store entries plus its unfinished registrations, a registration winning
 for a key with both (DR §5.5). `digest` is 64 lowercase hex digits: the XOR of
 the SHA-256 of each entry's `document_uid`, `resource_id` and
@@ -904,20 +914,31 @@ and a rebind (#205 calls the platform's recompute for the Documents it moves). E
 fan-out holds no long transaction: the database ends one at 60 seconds. The
 recompute follows the report's own commit, so a call that ends in an error or
 no answer is sent again: every report here is safe to resend, and the resend
-finishes the recompute. The readiness a query answers is
+finishes the recompute. How long an owner keeps resending before it asks for
+a repair instead (DR §5.3: before the tombstone's 30 days) is #260's. The
+recompute after a Build's state report or a backfill report, and a
+heartbeat's comparison, run inside the call and grow with the Build or the
+Source; they are sized for 100,000 Documents until #99 measures them, and the
+reports of one Build are taken one at a time. The readiness a query answers is
 computed when it answers; only `since` comes from the stored moment.
 
-**Liveness.** A Build's liveness signal is its last report of any kind, so each
+**Liveness.** A Build's liveness signal is its last report taken, of any kind
+(a refused one does not count, except a `FENCED` registration and a status
+report's `409`), so each
 Build not retired, `building` and `retained` ones too, reports at least a
 heartbeat more often than its pipeline's `update_interval_s`, and a candidate
 its owner gives up is reported `retired` once its data is gone. A Build not
 retired with no report within that interval has lost liveness: the gauge `kp_serving_builds_without_liveness` counts them per
 projection, a serving one shows `status_unverified` (§7.2), and Source
-Deletion's judgment pauses while any exists (DR §5.6, #98).
+Deletion's judgment pauses while any exists (DR §5.6, #98). The interval is
+the registered pipeline's, so a projection stays in `KP_PIPELINES` until its
+Builds are retired (DR D1); a Build of one that left is not measured.
 
-**Logs and metrics.** Each report's log line carries `projection`, `build_id`,
-and as they apply `document_uid`, `resource_id`, `fact_version`, `state`,
-`result` and `reason` (a gate, an error block's reason, a repair's reason);
+**Logs and metrics.** Each report's log line carries `projection` and
+`build_id` (a backfill's carries `source_id` in its place), and as they apply
+`document_uid`, `resource_id`, `fact_version`, `state`, `attempt_no`, `seq`,
+`stage`, `result`, `reason` (a gate, an error block's reason, a repair's
+reason) and a call's counts (`count`, `results`, `late_landings`);
 never an error message. Metrics: `kp_api_calls_total` by operation and status
 (§7.3); `kp_serving_facts_total` by `projection` and `result` (`recorded`,
 `older`, `fenced`, `superseded`); `kp_serving_repairs_requested_total` by
@@ -1161,7 +1182,7 @@ ended without an error block, such as terminated or timed out (§9).
 | I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision, `current_revision_changed`; it needs #57 scope 2's conclusion, which is not a tracker edge | I3 |
 | I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
 | I3c Serving-fact repair (#260) | the repair view's intake and the replacement of a Build's mirror (§7.4, DR §5.4) | I3b |
-| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, #55, #126 |
+| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, I3c, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
 
 The dependencies follow the tracker's edges as of 2026-11-19, when #97 was split
