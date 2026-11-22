@@ -613,8 +613,9 @@ the document's current Resource counts. First match:
 Platform refreshes (`initiator: platform`) affect neither readiness nor
 attention, whatever their outcome (§7.2). A projection serves the Source
 Revision of the `included` fact its serving Build holds for the Document in the
-Document's current Resource (§7.4); a fact in another Resource, a `pending` one,
-or one in a Build not `serving` counts for nothing.
+Document's current Resource (§7.4), and keeps serving it while it writes a
+newer one over it; a fact in another Resource, a `pending` one over nothing, or
+one in a Build not `serving` counts for nothing.
 
 Superseded on 2026-10-26 by
 [#55](https://github.com/davidlinnnn/data-ingestion/issues/55): the scalar
@@ -839,10 +840,11 @@ at most 128 characters, `document_uid` and the revision IDs 64, `resource_id`
   reports, with a new `fact_version`, what its store holds for the key:
   `included` with the revisions still stored, or `removed` when it holds
   nothing. A registration resent, or any fact whose `fact_version` is not
-  above the one held, answers `200` and records nothing. A registration replaces
-  the key's fact, so while a new revision is written over one served, the
-  projection serves nothing for that Document and it is `not_ready` (DR §5.1, as
-  the #55 validation modelled it) until the `included` confirmation.
+  above the one held, answers `200` and records nothing. A registration over
+  an `included` fact keeps that fact's Source Revision as the one served until
+  the write is confirmed, so the Document stays `ready_stale` while it is
+  written and does not turn `not_ready` (user ruling, 2026-11-22); the fact is
+  `pending` for every other reader, Source Deletion's judgment included.
 - `included` and `removed` facts are taken one by one: the highest
   `fact_version` of a key, (Build, `document_uid`, `resource_id`), is kept, and an
   older one answers `200` and changes nothing.
@@ -891,7 +893,7 @@ it (§7.1).
 
 **Readiness changes.** The platform stores each Document's readiness and the
 moment it last changed, which is `since` (§5.6). It recomputes them after the
-calls that can change them: a registration or fact report, a Build switch or retirement (for
+calls that can change them: a fact report, a Build switch or retirement (for
 every Document the Builds hold a fact of), a backfill report and a Knowledge
 Profile change (for the Source's Documents), finalization (for its Documents),
 and a rebind (#205 calls the platform's recompute for the Documents it moves). Each Document in a transaction of its own, so a large

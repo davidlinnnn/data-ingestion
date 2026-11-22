@@ -15,7 +15,10 @@ entry of §5.6, SC21, SC23, SC24 and NC2) into #260, and fixed what this record 
 to #97 in the [admission specification](knowledge-platform-admission-spec.md)
 §7.4: the report routes, the repair request's shape, the heartbeat hash,
 `PENDING_MAX` and the Build switch's caught-up gate. A2's handling of unknown
-kinds changed the same day (A2).
+kinds changed the same day (A2). Also that day (user ruling): a `pending` fact
+registered over an `included` one keeps the served Source Revision counting
+toward readiness until the write is confirmed, where §5.1 says `pending` does
+not count; C3 is unchanged.
 
 The design result of
 [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55),

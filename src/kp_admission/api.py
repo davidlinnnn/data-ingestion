@@ -775,8 +775,6 @@ def app(
         name = calling_projection()
         async with pool.connection() as conn:
             answer = await serving.register(conn, name, build_id, body.facts)
-            # A `pending` fact over an `included` one ends its serving until confirmed.
-            await status.refresh(conn, sorted({f.document_uid for f in body.facts}))
         return JSONResponse(answer.model_dump(mode="json"))
 
     @report.post("/builds/{build_id}/heartbeats", response_model=serving.Answer)

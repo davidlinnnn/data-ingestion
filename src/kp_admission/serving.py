@@ -558,14 +558,16 @@ async def required(conn: AsyncConnection, tenant_id: str, source_id: str) -> dic
 
 async def served(conn: AsyncConnection, uids: Sequence[str]) -> dict[str, dict[str, Served]]:
     """Per Document and projection, the Source Revision the projection's serving Build includes
-    for the Document's current Resource."""
+    for the Document's current Resource; while it writes a newer one over it, still that one."""
     cursor = await conn.execute(
-        "SELECT f.document_uid, f.projection, f.source_revision_id, s.source_version"
+        "SELECT f.document_uid, f.projection, v.srv, s.source_version"
         " FROM serving_fact f"
         " JOIN build b ON b.projection = f.projection AND b.build_id = f.build_id"
         " JOIN document d ON d.document_uid = f.document_uid AND d.resource_id = f.resource_id"
-        " LEFT JOIN source_revision s ON s.source_revision_id = f.source_revision_id"
-        " WHERE f.document_uid = ANY(%s) AND f.state = 'included' AND b.state = 'serving'",
+        " CROSS JOIN LATERAL (SELECT CASE WHEN f.state = 'included' THEN f.source_revision_id"
+        "  WHEN f.state = 'pending' THEN f.served_source_revision_id END AS srv) v"
+        " LEFT JOIN source_revision s ON s.source_revision_id = v.srv"
+        " WHERE f.document_uid = ANY(%s) AND v.srv IS NOT NULL AND b.state = 'serving'",
         (list(uids),),
     )
     found: dict[str, dict[str, Served]] = {}
@@ -709,7 +711,11 @@ async def _record(
         " ON CONFLICT (projection, build_id, document_uid, resource_id) DO UPDATE SET"
         " state = excluded.state, source_revision_id = excluded.source_revision_id,"
         " canonical_revision_id = excluded.canonical_revision_id,"
-        " fact_version = excluded.fact_version, recorded_at = now()",
+        " fact_version = excluded.fact_version, recorded_at = now(),"
+        # A write over a served revision keeps it for readiness until confirmed (spec §7.4).
+        " served_source_revision_id = CASE WHEN excluded.state <> 'pending' THEN NULL"
+        " WHEN serving_fact.state = 'included' THEN serving_fact.source_revision_id"
+        " ELSE serving_fact.served_source_revision_id END",
         (
             projection,
             build_id,

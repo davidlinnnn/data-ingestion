@@ -709,9 +709,10 @@ async def test_a_finalized_revision_makes_a_ready_document_stale_from_that_momen
     assert states(stale) == [("retrieval", "stale", "1")]
 
 
-async def test_a_registration_over_an_included_fact_moves_readiness_while_it_writes(api, conn):
-    """DR §5.1: `pending` does not count toward readiness, so writing a new revision over the
-    one served leaves the Document not_ready until the write is confirmed."""
+async def test_a_document_written_over_keeps_its_served_revision_until_confirmed(api, conn):
+    """User ruling 2026-11-22: while a projection writes a new revision over the one it serves,
+    the old one still counts, so readiness is ready_stale, not not_ready, until the write is
+    confirmed; the `pending` fact still blocks a deletion's judgment."""
     uid, srv = await document(conn)
     await accepted(conn, uid, srv)
     await profile(conn, "retrieval")
@@ -724,10 +725,30 @@ async def test_a_registration_over_an_included_fact_moves_readiness_while_it_wri
     stale = await seen(api)
     await registered(api, "retrieval", fact(uid, "srv_2", 2, canonical_revision_id="crv_2"))
     writing = await seen(api)
+    held = await serving.held(conn, uid)
     await included(api, "retrieval", fact(uid, "srv_2", 3, canonical_revision_id="crv_2"))
     written = await seen(api)
 
     assert [v["readiness"] for v in (ready, stale, writing, written)] == [
-        "ready", "ready_stale", "not_ready", "ready"
+        "ready", "ready_stale", "ready_stale", "ready"
     ]  # fmt: skip
-    assert ready["since"] < stale["since"] < writing["since"] < written["since"]
+    assert states(writing) == [("retrieval", "stale", "1")]
+    assert held == [("retrieval", "b1", RESOURCE, "pending")]
+    assert ready["since"] < stale["since"] == writing["since"] < written["since"]
+
+
+async def test_an_abandoned_write_over_a_served_revision_reports_what_the_store_holds(api, conn):
+    uid, srv = await document(conn)
+    await accepted(conn, uid, srv)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    await included(api, "retrieval", fact(uid, srv, 1))
+    await revised(conn, uid, "srv_2")
+    await accepted(conn, uid, "srv_2", "crv_2")
+    await registered(api, "retrieval", fact(uid, "srv_2", 2, canonical_revision_id="crv_2"))
+
+    await included(api, "retrieval", fact(uid, srv, 3))  # the write failed; srv_1 is stored
+    after = await seen(api)
+
+    assert (after["readiness"], states(after)) == ("ready_stale", [("retrieval", "stale", "1")])
+    assert await serving.held(conn, uid) == [("retrieval", "b1", RESOURCE, "included")]

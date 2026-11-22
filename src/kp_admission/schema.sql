@@ -233,6 +233,9 @@ CREATE TABLE serving_fact (
     source_revision_id    text NOT NULL,
     canonical_revision_id text NOT NULL,
     fact_version bigint NOT NULL,
+    -- Of a `pending` fact registered over an `included` one: the Source Revision the store
+    -- serves until the write is confirmed, which readiness still counts (spec §7.4).
+    served_source_revision_id text,
     recorded_at  timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (projection, build_id, document_uid, resource_id),
     FOREIGN KEY (projection, build_id) REFERENCES build
