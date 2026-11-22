@@ -10,6 +10,13 @@ Every projection item this record assigns to #97 (registration and the B5 check,
 serving facts, `PENDING_MAX`, repair, the heartbeat hash, readiness's serving
 part and the SC and NC cases) is #252's; `current_revision_changed` is #251's.
 
+Dated note, 2026-11-22: #252 split the repair view's intake (§5.4, the lost-writes
+entry of §5.6, SC21, SC23, SC24 and NC2) into #260, and fixed what this record left
+to #97 in the [admission specification](knowledge-platform-admission-spec.md)
+§7.4: the report routes, the repair request's shape, the heartbeat hash,
+`PENDING_MAX` and the Build switch's caught-up gate. A2's handling of unknown
+kinds changed the same day (A2).
+
 The design result of
 [Define canonical consumption and publication for Wiki and Retrieval](https://github.com/davidlinnnn/data-ingestion/issues/55),
 confirmed with the user from 2026-10-22 to 2026-10-26 (grilling groups A–E,
@@ -61,7 +68,7 @@ TypeScript).
 | ID | Decision |
 |---|---|
 | A1 | One append-only Change Feed in the admission PostgreSQL database, each entry written in the same transaction as the fact it records, so the feed table is the transactional outbox. Facts owned by other components (the current canonical revision through status intake; withdrawal and reinstatement through #56's shared block record) enter the feed in the transaction that records them in the admission database. Projections read it only through the governed read API and never connect to the database. [ADR-0009](../adr/0009-cursor-feed-change-discovery.md). |
-| A2 | Thin events of four kinds: `current_revision_changed` (a new revision accepted, a method refresh, a canonical rollback, a governance withdrawal or reinstatement; the Document may end with no usable revision), `document_deleted`, `inclusion_changed` (per Document: rebind, or a rebind or narrowing of a copy's original), `source_profile_changed` (carries only `source_id`; its position doubles as `profile_seq`). Unknown kinds are logged and skipped and the cursor advances. |
+| A2 | Thin events of four kinds: `current_revision_changed` (a new revision accepted, a method refresh, a canonical rollback, a governance withdrawal or reinstatement; the Document may end with no usable revision), `document_deleted`, `inclusion_changed` (per Document: rebind, or a rebind or narrowing of a copy's original), `source_profile_changed` (carries only `source_id`; its position doubles as `profile_seq`). Unknown kinds are logged and skipped and the cursor advances. **Superseded in part on 2026-11-22** (user ruling, [#252](https://github.com/davidlinnnn/data-ingestion/issues/252#issuecomment-7075713259)): an event of a kind the reader does not know that carries a `document_uid` is reconciled as A3 handles any event (`reconcile_doc`); only one without a `document_uid` is logged and skipped. Every event means "re-read the current state", so skipping would let an older reader miss a kind added later. |
 | A3 | A projection reports a position only after each event's effect is durable (applied, or handed to durable execution). The cursor only moves forward. Changes that narrow access (deletion, withdrawal, moving out of a Resource) carry the highest priority; bulk refreshes must not hold up daily updates; coalescing events of one Document is allowed but never across a deletion. Events of one Document may arrive out of order; handling is level-triggered: every event means "re-read the current state". |
 | A4 | 90-day retention, monthly partitions. An expired cursor receives `cursor_expired` and resynchronises through the same bootstrap as a new projection: fix the feed starting point first, then enumerate Documents (review m2). **R-a:** that bootstrap also reconciles every Document the projection still stores but the enumeration did not return, and a state read for a deleted Document answers `deleted`, not `404`. |
 | A5 | Ordering and paging by (transaction ID `xid8`, sequence), returning only entries from transactions below the snapshot xmin; the cursor is opaque. A sequence-only cursor permanently skips a transaction that took a lower sequence and committed later; a PostgreSQL 18.4 prototype lost about one event in ten that way (review M1). Cost: one long transaction holds back the whole feed, so the admission database sets `transaction_timeout` and `idle_in_transaction_session_timeout` and operations alert on the oldest xmin age (G8). |
@@ -191,7 +198,7 @@ SDK operations: `report_facts` (registrations included), `report_build_state`,
 
 The platform asks for a repair in its response to heartbeat and report calls
 (for example a `repair_requested` field with a reason), so a projection learns
-of it over HTTP alone; #97 fixes the shape.
+of it over HTTP alone; the admission specification §7.4 fixes the shape.
 
 ### 5.2 Register before write
 
@@ -216,7 +223,8 @@ the deletion is judged complete while the content is still served (observed in
 
 A `pending` fact older than `PENDING_MAX` and still unconfirmed makes the
 platform request a repair. `PENDING_MAX` must exceed the longest store write
-delay, including a liveness pause; #97 sets the value.
+delay, including a liveness pause; the admission specification §7.4 sets it,
+provisionally 30 minutes.
 
 ### 5.3 Tombstones and the expiry fence
 
@@ -263,7 +271,7 @@ turned unconfirmed facts into tombstones while their content stayed stored,
 and repairs and write retries could overwrite each other indefinitely; both
 showed in simulation (§7).
 
-Implementation note for #97: the model assumed an atomic view. A real
+Implementation note for #260 (first #97's): the model assumed an atomic view. A real
 implementation takes the view from one database snapshot or an equivalent, and
 reads pages synchronously with retries so that transfer time stays well below
 the lifetime.
@@ -283,7 +291,8 @@ extra repairs (about a quarter of them); at production write rates that would
 trigger a whole-Build view on almost every heartbeat, which this definition
 avoids without losing any drift the digest detects. The digest catches silent
 drift that keeps the count unchanged, for example a bug rewriting the mirror
-(G2). #97 fixes the hash.
+(G2). The admission specification §7.4 fixes the hash: SHA-256 of the three
+joined by the byte 0x1F.
 
 ### 5.6 Enforcement gates
 
@@ -388,6 +397,7 @@ about protocol logic, not performance or scale (#88).
 | [Admission specification](knowledge-platform-admission-spec.md) §7.1 and #31 acceptance case 20 | B1 readiness backfill rule |
 | Admission specification §6.1 rule 5 and the admission design's maintainer-granted placement | J1: no cross-Source placement in v1 |
 | Admission specification §8, "each projection reports when it has finished" | C3 level predicate |
+| A2's "unknown kinds are logged and skipped" | A2 as amended 2026-11-22: an unknown kind with a `document_uid` is reconciled |
 | The admission design's original cross-projection `min_readiness` | E4 |
 | ADR-0007's precondition that all inputs of a Resource share its readers | B3 per-page query-time check when a Resource contains copies (ADR-0007 amended) |
 | [#55 Q1 comment](https://github.com/davidlinnnn/data-ingestion/issues/55#issuecomment-6344459131): consumer-held cursor, sequence watermark, broker thresholds | A5, A7, A8 and ADR-0009 |

@@ -7,7 +7,8 @@ design §6.1) and its batches: declare, finalize and get_batch (#96, admission s
 /read/v1/ the governed read API (#126, canonical consumption DR §3): the Change Feed, cursors,
 Document state and bootstrap listings that kp_admission.feed describes, open only to the same
 registered service identities as the authz API; and under /report/v1/ the status report intake
-(#97, admission spec §7.3), open only to the registered pipelines. Both have their own prefix
+(#97, admission spec §7.3) and the projections' reports (#252, §7.4), open only to the registered
+pipelines. Both have their own prefix
 because /v1/ is the Source-facing surface that an ingress exposes.
 
 Every request has a trace id (admission spec §4): the trace id of its `traceparent` header, or a
@@ -28,7 +29,7 @@ conventions:
 - `kp_admission_items_total` (count) of the batch items decided, by `operation` (declare,
   finalize), `status` (declared, unchanged, queued, rejected) and `reason`, a rejection's reason
   code (admission spec §12), empty otherwise.
-- kp_admission.feed's gauges.
+- kp_admission.feed's gauges, and kp_admission.serving's counters and gauge (#252).
 """
 
 import hashlib
@@ -445,8 +446,8 @@ def app(
     Under /read/v1/ a registered PEP reads the Change Feed and reports only its own cursor.
 
     `pipelines` maps that of each reporter's service credential to its registration (#97); under
-    /report/v1/ only those reach a route, and only the `canonical` one reports a request's
-    status."""
+    /report/v1/ only those reach a route. The `canonical` one reports a request's status, and
+    every other one, a projection named by its track, its Builds (#252, admission spec §7.4)."""
     traced = {"headers": {"X-Trace-Id": {"description": "trace_id", "schema": {"type": "string"}}}}
     error = traced | {"model": ErrorResponse}
     errors = error | {"description": "400 INVALID_ARGUMENT or 401 UNAUTHENTICATED"}
