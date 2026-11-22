@@ -99,7 +99,7 @@ async def document(
     )
     await conn.execute(
         "INSERT INTO source_revision (source_revision_id, tenant_id, document_uid,"
-        " source_version, files) VALUES (%s, 't1', %s, '1', %s)",
+        " source_version, files, sequence) VALUES (%s, 't1', %s, '1', %s, 1)",
         (srv, uid, Jsonb(FILES)),
     )
     await conn.execute(

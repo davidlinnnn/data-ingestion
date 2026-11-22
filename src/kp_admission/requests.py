@@ -1,11 +1,17 @@
-"""Process requests, their outbox rows and their outcomes (admission spec §3, §9)."""
+"""Process requests, their outbox rows, their outcomes and Canonical Acceptance (admission spec
+§3, §9)."""
 
+import logging
 import uuid
 from datetime import datetime
 from typing import Any, Literal
 
+from prometheus_client import Counter
 from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
+from pydantic import BaseModel, Field, StrictInt
+
+from kp_admission import adoption, feed
 
 _INSERT = """
 INSERT INTO request (request_id, tenant_id, kind, document_uid, source_revision_id, state,
@@ -72,13 +78,59 @@ async def create_process_request(
 _END = """
 UPDATE request SET state = %s, terminal_at = %s, error = %s, updated_at = now()
 WHERE request_id = %s AND kind = 'process' AND state IN ('queued', 'processing')
-RETURNING initiator, source_revision_id
+RETURNING initiator, source_revision_id, document_uid, adopted_version, adoption_sequence
 """
 
 # An accepted revision stays accepted: a later run that fails does not undo the acceptance.
 _OUTCOME = """
 UPDATE source_revision SET outcome = %s WHERE source_revision_id = %s AND outcome <> 'accepted'
 """
+
+# Every acceptance writes the Document, the conflict a concurrent deletion meets on MongoDB.
+_DOCUMENT = """
+UPDATE document SET acceptance_version = acceptance_version + 1 WHERE document_uid = %s
+RETURNING tenant_id, source_id, deleted_at IS NOT NULL, current_source_revision_sequence,
+          current_adoption_sequence, current_adopted_version
+"""
+
+_REVISION = """
+INSERT INTO canonical_revision (canonical_revision_id, tenant_id, document_uid, source_revision_id,
+                                request_id, adopted_version, adoption_sequence, content_ref,
+                                content_sha256, content_size)
+VALUES (%(crv)s, %(tenant_id)s, %(uid)s, %(srv)s, %(request_id)s, %(adopted_version)s,
+        %(adoption_sequence)s, %(ref)s, %(sha256)s, %(size)s)
+"""
+
+_CURRENT = """
+UPDATE document SET current_source_revision_id = %(srv)s, current_canonical_revision_id = %(crv)s,
+                    current_source_revision_sequence = %(sequence)s,
+                    current_adoption_sequence = %(adoption_sequence)s,
+                    current_adopted_version = %(adopted_version)s
+WHERE document_uid = %(uid)s
+"""
+
+not_accepted = Counter(
+    "kp_admission_not_accepted", "successful process requests that formed no acceptance", ["reason"]
+)
+log = logging.getLogger(__name__)
+
+
+class Candidate(BaseModel, frozen=True, extra="forbid"):
+    """The Canonical content object a successful run hands over (spec §7.3)."""
+
+    ref: str = Field(min_length=1)
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    size: StrictInt = Field(ge=0)
+
+
+async def lock_document(conn: AsyncConnection, request_id: str) -> None:
+    """Locks the request's Document: the first lock of a transaction that ends a request, before
+    the request's own (spec §3)."""
+    await conn.execute(
+        "SELECT 1 FROM document WHERE document_uid ="
+        " (SELECT document_uid FROM request WHERE request_id = %s) FOR UPDATE",
+        (request_id,),
+    )
 
 
 async def record_outcome(
@@ -87,23 +139,104 @@ async def record_outcome(
     state: Literal["succeeded", "failed"],
     error: dict[str, Any] | None,
     terminal_at: datetime | None,
+    candidate: Candidate | None = None,
 ) -> bool:
     """Ends a queued or processing process request with `state` and `error`, the status report's or
     the workflow's error block, in one transaction, and returns whether it did; an ended request
     keeps its outcome. Unless the request is a platform refresh (§3), its Source Revision's outcome
-    follows: succeeded makes it pending, which #251 turns into accepted; failed with
-    error.metadata.cause "source" makes it rejected, any other failure failed. An accepted
-    revision keeps its outcome."""
+    follows: succeeded makes it pending; failed with error.metadata.cause "source" makes it
+    rejected, any other failure failed. An accepted revision keeps its outcome.
+
+    A success with `candidate` is Canonical Acceptance (§3), unless the Document is deleted or the
+    request's version is withdrawn for its media type: the Canonical Revision is recorded, its
+    Source Revision becomes accepted, and it becomes the Document's current one, with a
+    current_revision_changed event, when it is of a newer Source Revision or, of the same one,
+    under a higher adoption sequence."""
     async with conn.transaction():
+        await lock_document(conn, request_id)
         ended = await (
             await conn.execute(_END, (state, terminal_at, error and Jsonb(error), request_id))
         ).fetchone()
         if ended is None:
             return False
-        initiator, source_revision_id = ended
+        initiator, srv, uid, adopted_version, adoption_sequence = ended
         if initiator != "platform":
-            await conn.execute(_OUTCOME, (revision_outcome(state, error), source_revision_id))
+            await conn.execute(_OUTCOME, (revision_outcome(state, error), srv))
+        if state == "succeeded":
+            await _accept(
+                conn, request_id, initiator, srv, uid, adopted_version, adoption_sequence, candidate
+            )
     return True
+
+
+async def _accept(
+    conn: AsyncConnection,
+    request_id: str,
+    initiator: str,
+    srv: str,
+    uid: str,
+    adopted_version: str,
+    adoption_sequence: int,
+    candidate: Candidate | None,
+) -> None:
+    document = await (await conn.execute(_DOCUMENT, (uid,))).fetchone()
+    assert document
+    tenant_id, source_id, deleted, current_sequence, current_adoption, current_version = document
+    revision = await (
+        await conn.execute(
+            "SELECT sequence, files FROM source_revision WHERE source_revision_id = %s", (srv,)
+        )
+    ).fetchone()
+    assert revision
+    sequence, files = revision
+    main = next(f for f in files if f["role"] == "main")
+    withdrawn = await adoption.withdrawn(conn, main["media_type"])
+    reason = None
+    if deleted:  # a late result does not bring a deleted Document back (§8)
+        reason = "document_deleted"
+    elif candidate is None:
+        reason = "no_candidate"
+    elif adopted_version in withdrawn:
+        reason = "version_withdrawn"
+    if reason or candidate is None:
+        not_accepted.labels(reason).inc()
+        log.warning(
+            "no canonical acceptance: %s",
+            reason,
+            extra={"correlation": {"request_id": request_id, "document_uid": uid,
+                                   "adopted_version": adopted_version, "reason": reason}},
+        )  # fmt: skip
+        return
+    params = {
+        "crv": f"crv_{request_id.removeprefix('req_')}",
+        "tenant_id": tenant_id,
+        "uid": uid,
+        "srv": srv,
+        "request_id": request_id,
+        "sequence": sequence,
+        "adopted_version": adopted_version,
+        "adoption_sequence": adoption_sequence,
+    } | candidate.model_dump()
+    await conn.execute(_REVISION, params)
+    await conn.execute(
+        "UPDATE source_revision SET outcome = 'accepted' WHERE source_revision_id = %s", (srv,)
+    )
+    if current_sequence is not None and (sequence, adoption_sequence) <= (
+        current_sequence,
+        current_adoption,
+    ):
+        return  # an older or equal candidate: recorded, the current one stays
+    await conn.execute(_CURRENT, params)
+    # Replacing a withdrawn version's revision is a canonical rollback (DR §3), not a refresh.
+    rollback = current_version in withdrawn
+    await feed.append(
+        conn,
+        "current_revision_changed",
+        tenant_id=tenant_id,
+        source_id=source_id,
+        document_uid=uid,
+        priority="background" if initiator == "platform" and not rollback else "normal",
+    )
 
 
 def revision_outcome(state: str, error: dict[str, Any] | None) -> str:

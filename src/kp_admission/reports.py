@@ -9,7 +9,7 @@ from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
 from pydantic import AwareDatetime, BaseModel, Field, StrictInt, model_validator
 
-from kp_admission.requests import record_outcome
+from kp_admission.requests import Candidate, lock_document, record_outcome
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +51,8 @@ class ErrorBlock(BaseModel, extra="forbid"):
 
 class Report(BaseModel, extra="forbid"):
     """The twelve fields of #129, every one present; progress, manifest_ref and error may be
-    null, and error is present exactly when the state is failed."""
+    null, and error is present exactly when the state is failed. The candidate (#251) may be
+    left out."""
 
     request_id: str
     attempt_id: str = Field(min_length=1)
@@ -65,6 +66,8 @@ class Report(BaseModel, extra="forbid"):
     manifest_ref: str | None
     observed_at: AwareDatetime
     error: ErrorBlock | None
+    # Optional, so a worker that predates it (#81) is still taken; read on the last success only.
+    candidate: Candidate | None = None
 
     @model_validator(mode="after")
     def _error_on_failure(self) -> "Report":
@@ -101,14 +104,20 @@ WHERE request_id = %s
 async def take(conn: AsyncConnection, pipeline: Pipeline, report: Report) -> Taken:
     """Takes the report of a process request, in one transaction. Only the current attempt's
     reports count, each with a seq above the last one taken (gaps are fine): the first moves the
-    request to processing, and a failure, or success at the last registered stage, ends it as
-    requests.record_outcome does. A repeat of the last report is `repeated` and changes nothing;
-    any other report in the wrong place is `out_of_order`, or `not_current` from another attempt,
-    with the current position. `no_attempt` while the dispatcher has not recorded the attempt:
-    the sender retries. `bad_stage` for a stage the pipeline did not register."""
+    request to processing, and a failure, or success at the last registered stage with its
+    candidate, ends it as requests.record_outcome does. A repeat of the last report is `repeated`
+    and changes nothing; any other report in the wrong place is `out_of_order`, or `not_current`
+    from another attempt, with the current position. `no_attempt` while the dispatcher has not
+    recorded the attempt: the sender retries. `bad_stage` for a stage the pipeline did not
+    register."""
     if report.stage not in pipeline.stages:
         return _logged(pipeline, report, Taken("bad_stage"))
+    ends = report.state == "failed" or (
+        report.state == "succeeded" and report.stage == pipeline.stages[-1]
+    )
     async with conn.transaction():
+        if ends:
+            await lock_document(conn, report.request_id)
         row = await (await conn.execute(_REQUEST, (report.request_id,))).fetchone()
         if row is None:
             return _logged(pipeline, report, Taken("not_found"))
@@ -124,11 +133,15 @@ async def take(conn: AsyncConnection, pipeline: Pipeline, report: Report) -> Tak
         if last and report.seq <= last["seq"]:
             return _logged(pipeline, report, Taken("out_of_order", position))
         await conn.execute(_RECORD, (Jsonb(body), report.request_id))
-        if report.state == "failed" or (
-            report.state == "succeeded" and report.stage == pipeline.stages[-1]
-        ):
-            error = body["error"]
-            await record_outcome(conn, report.request_id, report.state, error, report.observed_at)
+        if ends:
+            await record_outcome(
+                conn,
+                report.request_id,
+                "failed" if report.state == "failed" else "succeeded",
+                body["error"],
+                report.observed_at,
+                report.candidate,
+            )
     return _logged(pipeline, report, Taken("recorded"))
 
 

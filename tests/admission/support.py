@@ -9,7 +9,7 @@ from psycopg.types.json import Jsonb
 from temporalio.client import Client
 
 from kp_admission.batches import Intake
-from kp_admission.requests import create_process_request
+from kp_admission.requests import Candidate, create_process_request
 from kp_admission.storage import FakeObjectStore
 
 INTAKE = Intake(FakeObjectStore())  # for tests that call no batch route
@@ -24,6 +24,10 @@ FILES = [
         "media_type": "application/pdf",
     }
 ]
+
+
+# The Canonical content object of a successful run (#251).
+CANDIDATE = Candidate(ref="s3://kp-canonical/doc_1/crv.json", sha256="c" * 64, size=2048)
 
 
 def queue(adopted_version: str) -> str:
@@ -41,7 +45,7 @@ async def revision(conn: AsyncConnection, source_id: str = "s1") -> tuple[str, s
     )
     await conn.execute(
         "INSERT INTO source_revision (source_revision_id, tenant_id, document_uid,"
-        " source_version, files) VALUES (%s, 't1', %s, '1', %s)",
+        " source_version, files, sequence) VALUES (%s, 't1', %s, '1', %s, 1)",
         (srv, uid, Jsonb(FILES)),
     )
     return uid, srv
