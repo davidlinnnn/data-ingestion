@@ -255,6 +255,13 @@ CREATE TABLE build (
     reported_at  timestamptz NOT NULL DEFAULT now(),  -- the last report of any kind: liveness
     repair_reason       text,  -- set while the platform asks the owner for a repair view
     repair_requested_at timestamptz,
+    -- The last repair view taken (DR §5.4): only a view captured after view_captured_at starts.
+    view_id          text,
+    view_state       text CHECK (view_state IN ('incomplete', 'installed', 'expired', 'fenced',
+                                                'writes_lost')),
+    view_captured_at timestamptz,
+    view_watermark   bigint,
+    view_pages       integer,
     created_at   timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (projection, build_id)
 );
@@ -283,6 +290,22 @@ CREATE TABLE serving_fact (
 );
 
 CREATE INDEX serving_fact_by_document ON serving_fact (document_uid);
+
+-- The pages received of a Build's repair view while it is incomplete (DR §5.4).
+CREATE TABLE repair_page (
+    projection text NOT NULL,
+    build_id   text NOT NULL,
+    page       integer NOT NULL,
+    entries    jsonb NOT NULL,
+    PRIMARY KEY (projection, build_id, page),
+    FOREIGN KEY (projection, build_id) REFERENCES build
+);
+
+-- Each loss of committed writes operations declared (DR §5.6, K2): a declaration is applied once.
+CREATE TABLE writes_lost (
+    event      bigint PRIMARY KEY,
+    applied_at timestamptz NOT NULL DEFAULT now()
+);
 
 -- A projection's current attempt per (Build, Document, Canonical Revision) and its last report
 -- taken (spec §7.4): the highest attempt_no is the current attempt.

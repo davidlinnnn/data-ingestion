@@ -101,6 +101,15 @@ def main(argv: list[str] | None = None) -> int:
     leaves none, and fails (exit 1) for a version that is not the adopted one. Each prints the
     result as JSON and opens no refresh request (#98 does).
 
+    `kp-admission writes-lost EVENT`: operations' declaration that the admission database lost
+    committed writes (a restore, a point-in-time restore, a failover that lost commits; DR §5.6),
+    run by a Job of the deployment repo with the event's number, which each such declaration
+    raises (#78's runbook). Every Build not retired is asked for a repair view, and Source
+    Deletion's judgment stays suspended until a view captured after the run repairs each one
+    (kp_admission.serving.writes_unrepaired). An event at or below one applied changes
+    nothing, so the Job can run again. It prints whether it applied the event and how many
+    Builds it asked, as JSON.
+
     All log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
     configuration error."""
     parser = argparse.ArgumentParser(prog="kp-admission")
@@ -114,6 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     profile.add_argument("source")
     profile.add_argument("projections", nargs="*")
     roles.add_parser("expire")
+    roles.add_parser("writes-lost").add_argument("event", type=int)
     for command in ("adopt", "cancel-adoption"):
         adopting = roles.add_parser(command)
         adopting.add_argument("--tenant", required=True)
@@ -207,6 +217,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(run_set_profile(dsn, args.tenant, args.source, args.projections))
     if args.role in ("adopt", "cancel-adoption"):
         return asyncio.run(run_adoption(dsn, args.tenant, args.role, args.media_type, args.version))
+    if args.role == "writes-lost":
+        return asyncio.run(run_writes_lost(dsn, args.event))
     if args.role == "expire":
         return asyncio.run(run_expiry(dsn)) if _storage_set() else 2
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
@@ -259,6 +271,13 @@ async def observe(pool: AsyncConnectionPool[Any], pipelines: dict[str, reports.P
 async def run_feed_retention(dsn: str) -> int:
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
         print(json.dumps(await feed.retain(conn, datetime.now(UTC))))
+    return 0
+
+
+async def run_writes_lost(dsn: str, event: int) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        builds = await serving.lose_writes(conn, event)
+    print(json.dumps({"applied": builds is not None, "builds": builds or 0}))
     return 0
 
 

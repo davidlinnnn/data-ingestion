@@ -14,7 +14,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from kp_admission import feed
+from kp_admission import feed, serving
 from kp_admission.cli import main
 from tests.admission.support import request, resource, revision, runs
 
@@ -376,6 +376,22 @@ async def test_set_profile_and_feed_retention_are_one_shot_runs_that_print_json(
         source_id="s1", projections=["retrieval", "wiki"], profile_seq=outs[0]["profile_seq"]
     )
     assert outs[1] == {"created": [], "dropped": []}
+
+
+@pytest.mark.docker
+async def test_writes_lost_applies_each_declared_event_once(conn, dsn):
+    """DR §5.6, K2: a Job of the deployment repo runs it with the event's number."""
+    await conn.execute(
+        "INSERT INTO build (projection, build_id, state) VALUES ('wiki', 'b1', 'serving')"
+    )
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
+    outs = []
+    for event in ("1", "1"):
+        run = role("writes-lost", env, event, stdout=subprocess.PIPE)
+        outs.append((json.loads(run.communicate(timeout=30)[0]), run.returncode))
+
+    assert outs == [({"applied": True, "builds": 1}, 0), ({"applied": False, "builds": 0}, 0)]
+    assert await serving.writes_unrepaired(conn) == [("wiki", "b1")]
 
 
 @pytest.mark.docker
