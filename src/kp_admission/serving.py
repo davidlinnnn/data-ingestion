@@ -1,7 +1,8 @@
 """Projection report intake (#252, admission spec §7.4, canonical consumption DR §4–§5): the
-platform's mirror of the serving facts each projection reports per Build, the Builds' states,
-the projections' attempts and their backfill reports. kp_admission.status reads it for readiness
-and attention; Source Deletion's judgment (#98) reads `held` and `silent`.
+platform's mirror of the serving facts each projection reports per Build, its repair from the
+projection's repair views (#260), the Builds' states, the projections' attempts and their
+backfill reports. kp_admission.status reads it for readiness and attention; Source Deletion's
+judgment (#98) reads `held`, `silent` and `writes_unrepaired`.
 
 Metrics:
 
@@ -9,9 +10,18 @@ Metrics:
   `result`: recorded, older (a higher fact_version is held), fenced (§5.3), superseded (a
   registration that failed the B5 check).
 - `kp_serving_repairs_requested_total` (count) by `projection` and `reason`
-  (heartbeat_mismatch, pending_expired, fenced): a Build newly asked for a repair view.
+  (heartbeat_mismatch, pending_expired, fenced, view_expired, view_fenced, writes_lost): a Build
+  newly asked for a repair view.
+- `kp_serving_repair_views_total` (count) of the repair view pages taken, by `projection` and
+  `result`: incomplete, installed (the page completed the view), resent (of a view installed),
+  expired and fenced (the page discarded the view), discarded (of a view discarded before),
+  superseded (of a view a later one replaced).
+- `kp_serving_repair_seconds` (histogram) by `projection`: from a repair request to the install
+  of the view that ended it (DR §9's repair latency).
 - `kp_serving_late_landings_total` (count) by `projection`: an `included` fact recorded for a
   Document that Source Deletion already applies to.
+- `kp_serving_builds_writes_lost` (gauge) by `projection`: its Builds not retired that a
+  lost-writes declaration asked to repair and no view has repaired since (DR §5.6).
 - `kp_serving_builds_without_liveness` (gauge) by `projection`: its Builds not retired whose last
   report is older than the pipeline's update interval.
 """
@@ -25,7 +35,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import psycopg
-from prometheus_client import Counter, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
 from pydantic import AwareDatetime, BaseModel, Field, StrictInt, model_validator
@@ -43,6 +53,18 @@ repairs = Counter(
 late_landings = Counter(
     "kp_serving_late_landings", "included facts of deleted Documents", ["projection"]
 )
+views = Counter("kp_serving_repair_views", "repair view pages taken", ["projection", "result"])
+repair_latency = Histogram(
+    "kp_serving_repair_seconds",
+    "from a repair request to the view that ended it",
+    ["projection"],
+    buckets=(10, 30, 60, 300, 900, 1800, 3600, 7200, 21600, 86400),
+)
+writes_lost_builds = Gauge(
+    "kp_serving_builds_writes_lost",
+    "Builds not retired a lost-writes declaration asked to repair",
+    ["projection"],
+)
 without_liveness = Gauge(
     "kp_serving_builds_without_liveness",
     "Builds not retired that stopped reporting",
@@ -53,6 +75,10 @@ TOMBSTONE = timedelta(days=30)  # how long a `removed` fact is held (DR §5.3)
 # Provisional until #127 measures a projection's store writes: a slow write, with a liveness
 # pause, stays below it, and a lost confirmation is repaired within the hour.
 PENDING_MAX = timedelta(minutes=30)
+# Provisional until #127 measures a view's transfer: well below TOMBSTONE (DR §5.3), long enough
+# to ride out a platform outage overnight. A report retry gives up after it too (spec §7.4).
+VIEW_LIFETIME = timedelta(hours=24)
+CLOCK_SKEW = timedelta(minutes=1)  # how far ahead of the platform a view's captured_at may be
 SWITCH_LAG_MAX_S = 300  # provisional: how far behind the feed a Build may be when it switches
 
 BuildState = Literal["building", "serving", "retained", "retired"]
@@ -145,25 +171,60 @@ class AttemptPosition(BaseModel):
     seq: int
 
 
+class ViewEntry(BaseModel, extra="forbid"):
+    """A store entry (`included`) or an unfinished registration (`pending`) of a repair view, with
+    the fact_version last reported for it, which the expiry fence reads (DR §5.4)."""
+
+    document_uid: str = Field(min_length=1, max_length=64)
+    resource_id: str = Field(min_length=1, max_length=512)
+    state: Literal["included", "pending"]
+    source_revision_id: str = Field(min_length=1, max_length=64)
+    canonical_revision_id: str = Field(min_length=1, max_length=64)
+    fact_version: StrictInt = Field(ge=1)
+
+
+class ViewPage(BaseModel, extra="forbid"):
+    """A page of a repair view. Every page of one view states the same capture time, watermark
+    (the highest fact_version allocated in the Build at capture) and number of pages."""
+
+    captured_at: AwareDatetime
+    watermark: StrictInt = Field(ge=0)
+    pages: StrictInt = Field(ge=1)
+    entries: list[ViewEntry] = Field(max_length=1000)
+
+    @model_validator(mode="after")
+    def _below_watermark(self) -> "ViewPage":
+        if any(e.fact_version > self.watermark for e in self.entries):
+            raise ValueError("an entry's fact_version is above the watermark")
+        return self
+
+
 class Key(BaseModel):
     document_uid: str
     resource_id: str
 
 
 class Repair(BaseModel):
-    reason: Literal["heartbeat_mismatch", "pending_expired", "fenced"]
+    reason: Literal[
+        "heartbeat_mismatch", "pending_expired", "fenced", "view_expired", "view_fenced",
+        "writes_lost",
+    ]  # fmt: skip
     requested_at: datetime
 
 
 class Answer(BaseModel):
     """Every 2xx of a Build's reports says whether the platform asks for a repair view of it
-    (DR §5.1); #260 takes the view and ends the request."""
+    (DR §5.1), until a repair view is installed."""
 
     repair_requested: Repair | None
 
 
 class FactsAnswer(Answer):
     fenced: list[Key]  # not recorded, and never to be sent again (DR §5.3)
+
+
+class ViewAnswer(Answer):
+    view: Literal["incomplete", "installed"]
 
 
 class BuildAnswer(Answer):
@@ -186,8 +247,23 @@ class Attempt:
 _Held = tuple[str, int, datetime]  # state, fact_version, recorded_at
 
 
+@dataclass(frozen=True)
+class _Row:
+    """A key's fact in the mirror, as a repair reads it."""
+
+    state: str
+    srv: str
+    crv: str
+    version: int
+    recorded_at: datetime
+
+
 async def report_build(
-    conn: AsyncConnection, projection: str, build_id: str, report: BuildReport
+    conn: AsyncConnection,
+    projection: str,
+    build_id: str,
+    report: BuildReport,
+    update_interval_s: int,
 ) -> tuple[BuildAnswer, list[str]]:
     """Takes a Build's state report (DR §4, D2), in one transaction, and returns the Builds whose
     Documents' readiness it may have changed. A Build starts `building`. `serving` is a switch:
@@ -197,13 +273,19 @@ async def report_build(
     the caller finishes a refresh the first call did not. Refused: 409 GATE_FAILED naming the
     gate (replaces, caught_up, coverage, removed_documents), 409 BUILD_STATE for a state the
     Build cannot take from where it is, 400 for a feed_position that is not one or is ahead of
-    the feed."""
+    the feed. A Build first reported within `update_interval_s`, its pipeline's, of a lost-writes
+    declaration may be one the loss erased: it starts asked for a view captured after it."""
     async with conn.transaction():
-        await conn.execute(
+        cursor = await conn.execute(
             "INSERT INTO build (projection, build_id, state) VALUES (%s, %s, 'building')"
-            " ON CONFLICT DO NOTHING",
+            " ON CONFLICT DO NOTHING RETURNING build_id",
             (projection, build_id),
         )
+        if await cursor.fetchone():
+            # shortcut: a Build created while a lost-writes Job's transaction is open sees no
+            # declaration, nor the Job it, and only its owner's view repairs it; have both lock
+            # one shared row if that window matters.
+            await _maybe_erased(conn, projection, build_id, update_interval_s)
         # Every Build of the projection, so two switches cannot both read the same serving one.
         cursor = await conn.execute(
             "SELECT build_id, state, switch_seq, repair_reason, repair_requested_at FROM build"
@@ -264,6 +346,22 @@ async def report_build(
     _log(logging.INFO, "build state", projection, build_id, state=state, reported=report.state)
     repair = Repair(reason=reason, requested_at=requested_at) if reason else None
     return BuildAnswer(state=state, repair_requested=repair), changed
+
+
+async def _maybe_erased(
+    conn: AsyncConnection, projection: str, build_id: str, update_interval_s: int
+) -> None:
+    """A new Build reported within its pipeline's update interval of the last lost-writes
+    declaration may be one the loss erased, reported again by its owner (DR §5.6, K2): it is
+    asked for a repair and, as the Builds the declaration asked, refuses views captured before."""
+    cursor = await conn.execute("SELECT max(applied_at) FROM writes_lost")
+    [(declared,)] = await cursor.fetchall()
+    if declared and datetime.now(UTC) - declared < timedelta(seconds=update_interval_s):
+        await conn.execute(
+            "UPDATE build SET view_captured_at = %s WHERE projection = %s AND build_id = %s",
+            (declared, projection, build_id),
+        )
+        await _repair(conn, projection, build_id, None, "writes_lost")
 
 
 async def _switch(
@@ -477,6 +575,274 @@ def digest(entries: Iterable[tuple[str, str, str]]) -> str:
     return f"{total:064x}"
 
 
+async def repair_view(
+    conn: AsyncConnection, projection: str, build_id: str, view_id: str, number: int, page: ViewPage
+) -> tuple[ViewAnswer, bool]:
+    """Takes page `number` of a repair view of the Build (DR §5.4), in one transaction, and
+    returns whether the caller refreshes the readiness of the Build's Documents: the page
+    completed the view, or is a resend of the view installed. A view captured after the Build's
+    last one starts and ends any other in transfer. Pages arrive in any order, a duplicate
+    changes nothing, and when every page is in, the Build's mirror is replaced in one step and
+    the repair request ends. Refused: 409 VIEW_DISCARDED naming why (`expired`, past
+    VIEW_LIFETIME from capture; `fenced`, an entry the expiry fence stops; `writes_lost`, the
+    view was in transfer or done when committed writes were lost; `superseded`, a later view
+    started), which except for `superseded` asks for a fresh view; 400 for a page beyond
+    `pages`, a header unlike the view's first page or a captured_at more than CLOCK_SKEW ahead
+    of the platform's clock; 404 for a Build the projection did not
+    report."""
+    if number > page.pages:
+        raise Refused(400, "INVALID_ARGUMENT", "INVALID_ARGUMENT", "page: beyond pages")
+    now = datetime.now(UTC)
+    if page.captured_at > now + CLOCK_SKEW:
+        raise Refused(
+            400,
+            "INVALID_ARGUMENT",
+            "INVALID_ARGUMENT",
+            "captured_at: ahead of the platform's clock",
+        )
+    async with conn.transaction():
+        repair = await _reported(conn, projection, build_id)
+        cursor = await conn.execute(
+            "SELECT view_id, view_state, view_captured_at, view_watermark, view_pages FROM build"
+            " WHERE projection = %s AND build_id = %s",
+            (projection, build_id),
+        )
+        [(current, stored, *header)] = await cursor.fetchall()
+        if view_id != current:
+            if header[0] is not None and page.captured_at <= header[0]:
+                # Without a later view in transfer, a lost-writes request still wants a fresh one.
+                lost = stored != "incomplete" and repair and repair.reason == "writes_lost"
+                stored = "writes_lost" if lost else "superseded"
+            else:
+                await _start_view(conn, projection, build_id, view_id, page)
+                stored = "incomplete"
+        # A loss of writes moves view_captured_at; a discarded view's pages are only refused.
+        elif stored in ("incomplete", "installed") and tuple(header) != (
+            page.captured_at, page.watermark, page.pages
+        ):  # fmt: skip
+            raise Refused(400, "INVALID_ARGUMENT", "INVALID_ARGUMENT", "a header unlike the view's")
+        if stored != "incomplete":
+            result = {"installed": "resent", "superseded": "superseded"}.get(stored, "discarded")
+        elif now >= page.captured_at + VIEW_LIFETIME:
+            result = "expired"
+        else:
+            await _add_page(conn, projection, build_id, number, page)
+            result = "incomplete"
+            if await _complete(conn, projection, build_id, page.pages):
+                result = await _install(conn, projection, build_id, page, now)
+        if result in ("expired", "fenced"):
+            await _end_view(conn, projection, build_id, result)
+            repair = await _repair(conn, projection, build_id, repair, f"view_{result}")
+        elif result == "installed":
+            if repair:
+                seconds = (now - repair.requested_at).total_seconds()
+                repair_latency.labels(projection).observe(seconds)
+            repair = None
+    views.labels(projection, result).inc()
+    installed = result in ("installed", "resent")
+    # Why the page is refused: the view was discarded, now or before, or a later one replaced it.
+    refused = (
+        None if installed or result == "incomplete" else stored if result == "discarded" else result
+    )
+    fields: dict[str, Any] = {"reason": refused} if refused else {}
+    _log(logging.WARNING if refused else logging.INFO, "repair view", projection, build_id,
+         view_id=view_id, page=number, pages=page.pages, watermark=page.watermark,
+         count=len(page.entries), result=result, **fields)  # fmt: skip
+    if refused:  # after the commit, which keeps the repair request
+        raise Refused(
+            409,
+            "FAILED_PRECONDITION",
+            "VIEW_DISCARDED",
+            "The repair view was discarded.",
+            metadata={"reason": refused},
+        )
+    answer = ViewAnswer(view="installed" if installed else "incomplete", repair_requested=repair)
+    return answer, installed
+
+
+async def _start_view(
+    conn: AsyncConnection, projection: str, build_id: str, view_id: str, page: ViewPage
+) -> None:
+    await _drop_pages(conn, projection, build_id)
+    await conn.execute(
+        "UPDATE build SET view_id = %s, view_state = 'incomplete', view_captured_at = %s,"
+        " view_watermark = %s, view_pages = %s WHERE projection = %s AND build_id = %s",
+        (view_id, page.captured_at, page.watermark, page.pages, projection, build_id),
+    )
+
+
+async def _add_page(
+    conn: AsyncConnection, projection: str, build_id: str, number: int, page: ViewPage
+) -> None:
+    await conn.execute(
+        "INSERT INTO repair_page (projection, build_id, page, entries) VALUES (%s, %s, %s, %s)"
+        " ON CONFLICT DO NOTHING",
+        (projection, build_id, number, Jsonb([e.model_dump() for e in page.entries])),
+    )
+
+
+async def _complete(conn: AsyncConnection, projection: str, build_id: str, pages: int) -> bool:
+    cursor = await conn.execute(
+        "SELECT count(*) FROM repair_page WHERE projection = %s AND build_id = %s",
+        (projection, build_id),
+    )
+    [(received,)] = await cursor.fetchall()
+    return received == pages
+
+
+async def _drop_pages(conn: AsyncConnection, projection: str, build_id: str) -> None:
+    await conn.execute(
+        "DELETE FROM repair_page WHERE projection = %s AND build_id = %s", (projection, build_id)
+    )
+
+
+async def _end_view(conn: AsyncConnection, projection: str, build_id: str, state: str) -> None:
+    await _drop_pages(conn, projection, build_id)
+    await conn.execute(
+        "UPDATE build SET view_state = %s WHERE projection = %s AND build_id = %s",
+        (state, projection, build_id),
+    )
+
+
+async def _install(
+    conn: AsyncConnection, projection: str, build_id: str, page: ViewPage, now: datetime
+) -> Literal["installed", "fenced"]:
+    """Replaces the Build's mirror with the complete view (DR §5.4 step 4), unless the expiry
+    fence stops one of its entries at its own version (step 3). A fact above the watermark was
+    reported after the capture and stays; a key of the view takes the view's state, a key it
+    lacks becomes a tombstone, both stamped with the watermark. A key the view holds both
+    stored and registered is `pending`, its stored revision still served (spec §7.4)."""
+    cursor = await conn.execute(
+        "SELECT entries FROM repair_page WHERE projection = %s AND build_id = %s ORDER BY page",
+        (projection, build_id),
+    )
+    pages = [entries for (entries,) in await cursor.fetchall()]
+    cursor = await conn.execute(
+        "SELECT document_uid, resource_id, state, source_revision_id, canonical_revision_id,"
+        " fact_version, recorded_at FROM serving_fact WHERE projection = %s AND build_id = %s",
+        (projection, build_id),
+    )
+    mirror = {(row[0], row[1]): _Row(*row[2:]) for row in await cursor.fetchall()}
+    # A whole Build's merge, off the event loop, as the heartbeat's digest.
+    merged = await asyncio.to_thread(_merge, pages, mirror, page, now)
+    if merged is None:
+        return "fenced"
+    rows = [(projection, build_id, *row) for row in merged]
+    # shortcut: rewrites the whole Build in one transaction while it holds the Build's row, which
+    # the database ends at 60 s, or at 30 s idle while the merge runs; write only the keys that
+    # change when #99 measures a large Build.
+    async with conn.cursor() as cur:
+        await cur.executemany(
+            "INSERT INTO serving_fact (projection, build_id, document_uid, resource_id, state,"
+            " source_revision_id, canonical_revision_id, fact_version, served_source_revision_id)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            " ON CONFLICT (projection, build_id, document_uid, resource_id) DO UPDATE SET"
+            " state = excluded.state, source_revision_id = excluded.source_revision_id,"
+            " canonical_revision_id = excluded.canonical_revision_id,"
+            " fact_version = excluded.fact_version, recorded_at = now(),"
+            " served_source_revision_id = excluded.served_source_revision_id",
+            rows,
+        )
+    await _end_view(conn, projection, build_id, "installed")
+    await conn.execute(
+        "UPDATE build SET repair_reason = NULL, repair_requested_at = NULL"
+        " WHERE projection = %s AND build_id = %s",
+        (projection, build_id),
+    )
+    return "installed"
+
+
+def _merge(
+    pages: list[list[dict[str, Any]]], mirror: Mapping[tuple[str, str], _Row], page: ViewPage,
+    now: datetime,
+) -> list[tuple[Any, ...]] | None:  # fmt: skip
+    """The facts a complete view writes, (document_uid, resource_id, state, revisions,
+    fact_version, served revision) each, or None when the expiry fence stops an entry."""
+    view: dict[tuple[str, str], dict[str, Any]] = {}
+    served: dict[tuple[str, str], str] = {}
+    for entries in pages:
+        for e in entries:
+            key = (e["document_uid"], e["resource_id"])
+            if e["state"] == "included":
+                served[key] = e["source_revision_id"]
+            if key not in view or e["state"] == "pending":
+                view[key] = e
+    for key, e in view.items():
+        if (held := mirror.get(key)) and _fences(
+            (held.state, held.version, held.recorded_at), e["fact_version"], page.captured_at, now
+        ):
+            return None
+    rows = []
+    for key in mirror.keys() | view.keys():
+        held = mirror.get(key)
+        if held and held.version > page.watermark:
+            continue
+        if e := view.get(key):
+            state, srv, crv = e["state"], e["source_revision_id"], e["canonical_revision_id"]
+        elif held and (held.state != "removed" or held.recorded_at + TOMBSTONE > now):
+            state, srv, crv = "removed", held.srv, held.crv
+        else:
+            continue  # an expired tombstone stays as it is: it still fences (DR §5.3)
+        kept = served.get(key) if state == "pending" else None
+        rows.append((*key, state, srv, crv, page.watermark, kept))
+    return rows
+
+
+async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
+    """Applies operations' declaration that the admission database lost committed writes (DR
+    §5.6, K2), once per `event`, a number each declaration raises: every Build not retired is
+    asked for a repair, `writes_lost`, which replaces any earlier request, and its last view,
+    in transfer or installed, is discarded, so only a view captured after now ends the request.
+    Now is the platform's clock, as the api's: a Build first reported within its pipeline's
+    update interval of it starts with the request too (report_build). Returns how many Builds
+    were asked, or None for the event applied last, run again.
+    ValueError for an event below it: the declaration's number was not raised."""
+    now = datetime.now(UTC)
+    async with conn.transaction():
+        cursor = await conn.execute("SELECT coalesce(max(event), 0) FROM writes_lost")
+        [(applied,)] = await cursor.fetchall()
+        if event < applied:
+            raise ValueError(f"event {event} is below the last applied, {applied}")
+        if event == applied:
+            return None
+        cursor = await conn.execute(
+            "INSERT INTO writes_lost (event, applied_at) VALUES (%s, %s)"
+            " ON CONFLICT DO NOTHING RETURNING event",
+            (event, now),
+        )
+        if await cursor.fetchone() is None:
+            return None  # a concurrent run applied it
+        # In report_build's order within a projection, which locks a projection's Builds.
+        await conn.execute(
+            "SELECT 1 FROM build WHERE state <> 'retired' ORDER BY projection, build_id FOR UPDATE"
+        )
+        cursor = await conn.execute(
+            "UPDATE build SET repair_reason = 'writes_lost', repair_requested_at = %s,"
+            " view_captured_at = %s,"
+            " view_state = CASE WHEN view_id IS NULL THEN NULL ELSE 'writes_lost' END"
+            " WHERE state <> 'retired' RETURNING projection, build_id",
+            (now, now),
+        )
+        builds = await cursor.fetchall()
+        await conn.execute("DELETE FROM repair_page")  # pages are only of views in transfer
+    for projection, build_id in builds:
+        repairs.labels(projection, "writes_lost").inc()
+        _log(logging.WARNING, "repair requested", projection, build_id, reason="writes_lost")
+    return len(builds)
+
+
+async def writes_unrepaired(conn: AsyncConnection) -> list[tuple[str, str]]:
+    """(projection, build_id) of the Builds not retired that no view captured after the last
+    loss of committed writes has repaired. While there is one, and for the longest update
+    interval of the registered pipelines after the declaration, #98 makes no enforcement
+    judgment (DR §5.6, K2, spec §7.4)."""
+    cursor = await conn.execute(
+        "SELECT projection, build_id FROM build WHERE repair_reason = 'writes_lost'"
+        " AND state <> 'retired' ORDER BY 1, 2"
+    )
+    return await cursor.fetchall()
+
+
 async def take_attempt(
     conn: AsyncConnection, pipeline: Pipeline, build_id: str, report: AttemptReport
 ) -> Literal["recorded", "repeated"] | AttemptPosition:
@@ -657,18 +1023,25 @@ async def silent(
 ) -> list[tuple[str, str]]:
     """(projection, build_id) of the Builds not retired without liveness: no report within the
     update interval of the projection's pipeline, `pipelines` by track. While there is one, #98
-    makes no enforcement judgment (R-c). Sets kp_serving_builds_without_liveness."""
+    makes no enforcement judgment (R-c). Sets kp_serving_builds_without_liveness, and
+    kp_serving_builds_writes_lost from the same read."""
     cursor = await conn.execute(
-        "SELECT projection, build_id, reported_at FROM build WHERE state <> 'retired' ORDER BY 1, 2"
+        "SELECT projection, build_id, reported_at, repair_reason FROM build"
+        " WHERE state <> 'retired' ORDER BY 1, 2"
     )
+    rows = await cursor.fetchall()
     found = [
         (projection, build_id)
-        for projection, build_id, at in await cursor.fetchall()
+        for projection, build_id, at, _ in rows
         if (p := pipelines.get(projection)) and at + timedelta(seconds=p.update_interval_s) < now
     ]
-    without_liveness.clear()
+    # Every projection is set on each pass, so the series are never cleared: a scrape between a
+    # clear and the sets would read them missing.
     for projection in pipelines.keys() - {"canonical"}:
         without_liveness.labels(projection).set(sum(p == projection for p, _ in found))
+        writes_lost_builds.labels(projection).set(
+            sum(p == projection and reason == "writes_lost" for p, _, _, reason in rows)
+        )
     return found
 
 
@@ -678,12 +1051,13 @@ async def _reported(conn: AsyncConnection, projection: str, build_id: str) -> Re
     for a retired Build: its data is gone, and `held` no longer reads its facts."""
     cursor = await conn.execute(
         "UPDATE build SET reported_at = now() WHERE projection = %s AND build_id = %s"
-        " RETURNING repair_reason, repair_requested_at, state",
+        " RETURNING repair_reason, repair_requested_at, state, view_state, view_captured_at",
         (projection, build_id),
     )
     if (row := await cursor.fetchone()) is None:
         raise Refused(404, "NOT_FOUND", "NOT_FOUND", "The projection reported no such Build.")
-    if row[2] == "retired":
+    reason, requested_at, state, view_state, captured_at = row
+    if state == "retired":
         raise Refused(
             409,
             "FAILED_PRECONDITION",
@@ -691,7 +1065,12 @@ async def _reported(conn: AsyncConnection, projection: str, build_id: str) -> Re
             "The Build is retired.",
             metadata={"state": "retired"},
         )
-    return Repair(reason=row[0], requested_at=row[1]) if row[0] else None
+    repair = Repair(reason=reason, requested_at=requested_at) if reason else None
+    # A view whose pages stopped coming is discarded by the Build's next report (DR §5.4).
+    if view_state == "incomplete" and captured_at + VIEW_LIFETIME <= datetime.now(UTC):
+        await _end_view(conn, projection, build_id, "expired")
+        repair = await _repair(conn, projection, build_id, repair, "view_expired")
+    return repair
 
 
 async def _repair(
@@ -728,12 +1107,20 @@ def _place(held: _Held | None, fact: Fact, now: datetime) -> Literal["recorded",
     or below its version that was issued before it expired (§5.3)."""
     if held is None:
         return "recorded"
+    if _fences(held, fact.fact_version, fact.issued_at, now):
+        return "fenced"
     state, version, recorded_at = held
-    expiry = recorded_at + TOMBSTONE
-    if state == "removed" and expiry <= now:
-        behind = fact.fact_version <= version and fact.issued_at < expiry
-        return "fenced" if behind else "recorded"
+    if state == "removed" and recorded_at + TOMBSTONE <= now:
+        return "recorded"
     return "recorded" if fact.fact_version > version else "older"
+
+
+def _fences(held: _Held, version: int, issued: datetime, now: datetime) -> bool:
+    """Whether the held fact is an expired tombstone that stops a report at `version` issued
+    (for a repair view, captured) at `issued` (DR §5.3)."""
+    state, held_version, recorded_at = held
+    expiry = recorded_at + TOMBSTONE
+    return state == "removed" and expiry <= now and version <= held_version and issued < expiry
 
 
 async def _record(

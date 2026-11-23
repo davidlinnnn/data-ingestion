@@ -879,11 +879,12 @@ once the projection reported its state; its other routes are `404` before.
 | `POST builds/{build_id}/registrations` | `{"facts": [...]}`, each to become `pending` | `200` `{"repair_requested"}`; `409` `SUPERSEDED`, `FENCED`, `BUILD_STATE` |
 | `POST builds/{build_id}/facts` | `{"facts": [...]}`, each with `state` `included` or `removed` | `200` `{"fenced", "repair_requested"}`; `409` `BUILD_STATE` |
 | `POST builds/{build_id}/heartbeats` | `{"count", "digest"}` | `200` `{"repair_requested"}`; `409` `BUILD_STATE` |
+| `PUT builds/{build_id}/repair-views/{view_id}/pages/{page}` | a page of a repair view (below) | `200` `{"view", "repair_requested"}`; `409` `VIEW_DISCARDED`, `BUILD_STATE` |
 | `POST builds/{build_id}/status-reports` | an attempt report (below) | `202` taken, `200` a resend, `409` `{"attempt_no", "seq"}` or `BUILD_STATE` |
 | `PUT sources/{source_id}/backfill` | `{"profile_seq"}` | `204`; `404` for a Source without a Knowledge Profile; `400` for a `profile_seq` after the Source's |
 
 A refusal is an AIP-193 error whose ErrorInfo `metadata` names what failed:
-`{"gate"}`, `{"state"}` or `{"document_uid"}`. The `409` of a status report is
+`{"gate"}`, `{"state"}`, `{"document_uid"}` or `{"reason"}`. The `409` of a status report is
 the bare position, as in §7.3, except to a retired Build, where it is the
 `BUILD_STATE` error: a client tells the two apart by the `error` member.
 
@@ -908,8 +909,8 @@ projection serves: of two switches sent at once the later fails `replaces`. A `s
 numbered at or below the last switch came late and changes nothing; its answer
 carries the Build's state. A `retained` Build switches back by the same report,
 which is a rollback (DR D2). `retired` is the owner's report that the Build's
-data is gone (DR §4) and is final: every later registration, fact, heartbeat
-and status report to it is `409` `BUILD_STATE`. A Build reported in the state it is in
+data is gone (DR §4) and is final: every later registration, fact, heartbeat,
+repair view page and status report to it is `409` `BUILD_STATE`. A Build reported in the state it is in
 answers `200` with its state unchanged; a repeated `serving` or `retired`
 report runs the recompute of readiness again (below), so it is a retry, not a
 keepalive. Any other step, such as back to
@@ -953,15 +954,20 @@ at most 128 characters, `document_uid` and the revision IDs 64, `resource_id`
   `FENCED` and records nothing. A fenced fact is not sent again. Tombstones
   stay in the database after their 30 days, as do the facts and attempts of
   a retired Build and the attempts of earlier Canonical Revisions; their
-  removal is #264, after the pilot.
+  removal is #264, after the pilot. A repair gives each live tombstone it
+  writes a fresh 30 days and leaves an expired one as it is (Repair views); an
+  expired one fences only reports issued, and views captured, before it
+  expired, but a report's `issued_at` has no age limit the platform enforces.
 
-**Repairs and heartbeats.** Every `200` of a Build's state, registration, fact
-or heartbeat report carries `repair_requested`: `null`, or `{"reason", "requested_at"}` while the platform
+**Repairs and heartbeats.** Every `200` of a Build's state, registration, fact,
+heartbeat or repair view report carries `repair_requested`: `null`, or `{"reason", "requested_at"}` while the platform
 asks for a repair view of the Build. Reasons: `heartbeat_mismatch`,
-`pending_expired`, `fenced`. The request stays until a repair view completes
-(#260, which adds the route for the view and its own reasons); until then it
+`pending_expired`, `fenced`, `view_expired`, `view_fenced` (below) and
+`writes_lost` (Lost writes, below). The request stays until a repair view is
+installed; until then it
 is information for the owner and refuses no report, and it shows the first
-reason: a later one does not replace it. The owner computes a heartbeat with
+reason: a later one does not replace it, except `writes_lost`, which replaces
+any other. The owner computes a heartbeat with
 no report of the Build in flight; a report still on its way is a mismatch. A heartbeat carries `count` and `digest` over the
 Build's store entries plus its unfinished registrations, a registration winning
 for a key with both (DR §5.5). `digest` is 64 lowercase hex digits: the XOR of
@@ -971,6 +977,109 @@ platform computes the same over the Build's `included` and `pending` facts, and
 requests a repair when either differs, or when a `pending` fact is older than
 `PENDING_MAX`: 30 minutes, provisional until #127 measures a store write. It
 must exceed the longest write, a liveness pause included.
+
+**Repair views.** A repair view is the Build's whole state captured at one
+moment (DR §5.4): every store entry as `included` and every registration whose
+write has not completed as `pending`, a key with both listed both ways. The
+owner may send one at any time; it sends one when `repair_requested` is set
+and no view of the Build is in transfer, and before it reports a Build `serving`
+(DR §5.4, review m8), which the platform does not check. A request is answered
+by the view in transfer, except `writes_lost` (Lost writes, below): an owner
+captures again only after a `409` `VIEW_DISCARDED` other than `superseded`. It sends the view in pages numbered from 1. Each page carries
+the view's `captured_at` (RFC 3339 with a zone, by a clock within a minute of
+the platform's), `watermark` (the highest `fact_version`
+allocated in the Build at capture, 0 for none), `pages` (how many pages the view
+has) and `entries`, 0 to 1000 of them. An entry carries `document_uid`,
+`resource_id`, `state` (`included` or `pending`), `source_revision_id`,
+`canonical_revision_id` and `fact_version`, the version last reported for the
+entry, at most `watermark`. `view_id` is the owner's, at most 64 characters,
+and names one capture. A page is `400` when it states another `captured_at`,
+`watermark` or `pages` than the first page the platform took of the view, when
+its `page` is above `pages`, or when its `captured_at` is more than a minute
+ahead of the platform's clock.
+
+- A Build has at most one view in transfer. A view captured after the Build's
+  last one starts and ends any other in transfer. A page of a view captured at
+  or before the last one is `409` `VIEW_DISCARDED`: `writes_lost` while a
+  `writes_lost` request stands and no later view is in transfer, which asks for
+  a fresh view (Lost writes, below); `superseded` otherwise, which asks for
+  nothing.
+- Pages arrive in any order and any number of times. The answer's `view` is
+  `incomplete` until every page has arrived, then `installed`; a page of the
+  installed view sent again answers `installed` and runs the recompute of
+  readiness again.
+- A view must be complete within 24 hours of `captured_at` (provisional until
+  #127 measures a transfer; below the tombstones' 30 days). After that the
+  view is discarded, by its next page, which answers `409` `VIEW_DISCARDED`
+  `expired`, or by the Build's next registration, fact, heartbeat or status
+  report, and a repair is
+  requested, `view_expired`. The owner keeps its report retries within the same
+  24 hours, from the report's `issued_at`, and then sends a repair view instead.
+- When the last page arrives, each key's entry passes the expiry fence with its
+  own `fact_version`, the view's `captured_at` standing for `issued_at`; for a
+  key listed both ways, its `pending` entry. If any entry is stopped, the whole
+  view is discarded: `409` `VIEW_DISCARDED` `fenced`, and a repair is
+  requested, `view_fenced`.
+- Otherwise the platform replaces the Build's mirror in one step, which a query
+  sees before or after, never in part: a fact above `watermark` was reported
+  after the capture and stays; every other key of the view takes the view's
+  state and revisions; every other key the view lacks becomes `removed`, a
+  tombstone of 30 days from now, except a tombstone already expired, which stays
+  as it is and fences as before. Each written fact takes `watermark` as its
+  `fact_version`, and a written `pending` fact's age toward `PENDING_MAX`
+  starts at the install. A key listed both ways is `pending`, and the Source
+  Revision of its `included` entry is the one it still serves. The repair
+  request ends, and readiness is recomputed for every Document the Build holds
+  a fact of.
+- A discarded view's pages answer `409` `VIEW_DISCARDED` with the same reason
+  when sent again. The owner then captures a fresh view, under a new `view_id`.
+
+**Lost writes.** When the admission database loses committed writes (a
+restore, a point-in-time restore, or a failover that loses commits; DR §5.6,
+K2), operations declare it with `kp-admission writes-lost EVENT`, run by a Job
+of the deployment repo once the api takes reports again: the window for erased
+Builds, below, counts from the declaration. Until the Job has run, the
+restored database carries no sign of the loss, so the runbook keeps Source
+Deletion's judgment from running (for example, its CronJob stays suspended)
+from the restore until the Job ends; where the Job falls among the restore's
+other steps, such as reopening the read surface ([#57 scope 7](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-7086864591)),
+is #78's runbook too. `EVENT` is a number from 1, above every earlier
+declaration's, kept in the deployment repo (the database's own record of it may
+be among the lost writes). The last declaration applied, run again, changes
+nothing and exits 0; one with a lower number changes nothing and exits 1, and
+an `EVENT` that is not a number from 1 exits 2. It
+prints `{"applied", "builds"}`, whether it applied and how many Builds it asked,
+and its log lines; the runbook checks `"applied": true` on its first run. The
+gauge `kp_serving_builds_writes_lost` counts, per projection, the Builds still
+asked; with two api pods each reports it, so it is read with `max`.
+
+- It asks every Build not retired for a repair, `writes_lost`, and discards the
+  Build's last view, in transfer or installed: that view's pages answer `409`
+  `VIEW_DISCARDED` `writes_lost`, and so does a view captured at or before the
+  declaration, by the platform's clock. A `writes_lost` request is answered only
+  by a view captured after the declaration; every other request is answered by
+  the view in transfer.
+- The loss can erase Builds and reports. A Build first reported within its
+  pipeline's `update_interval_s` after the declaration may be one it erased: it
+  starts with a `writes_lost` request and refuses views captured at or before
+  the declaration, as the Builds the declaration asked. An owner that reads a
+  `writes_lost` request, or a `404` for a Build it reported, puts its Builds
+  back in this order: it reports `building` each Build the platform no longer
+  knows; it sends each Build it holds and has not retired a view; it sends
+  again, in `switch_seq` order, each switch the platform does not show, with a
+  `feed_position` read after its cursor was rewound (#78), and retries one that
+  answers `400` or `GATE_FAILED` once it has caught up; only then it reports
+  `retired` each Build retired since the restore point, so a switch sent again
+  still names in `replaces` the Build the platform serves. It reports its
+  backfill completions again.
+- Source Deletion's judgment stays suspended until no Build not retired carries
+  `writes_lost`, and for at least the longest `update_interval_s` of the
+  registered projections' pipelines after the declaration, so an owner whose
+  Builds were erased has reported them again (#98). A projection leaves
+  `KP_PIPELINES` only once its Builds are retired (Liveness, below); a Build of
+  one that left keeps the suspension until it is retired. Which events trigger
+  the declaration, and the feed, cursor and block rewinds that come with it, are
+  #78's runbook.
 
 **Attempts.** A projection's attempt is for one unit: (Build, `document_uid`,
 `canonical_revision_id`) (DR C4). Its report carries the fields of §7.3 without
@@ -994,25 +1103,31 @@ it (§7.1).
 
 **Readiness changes.** The platform stores each Document's readiness and the
 moment it last changed, which is `since` (§5.6). It recomputes them after the
-calls that can change them: a fact report, a Build switch or retirement (for
-every Document the Builds hold a fact of), a backfill report and a Knowledge
+calls that can change them: a fact report, a Build switch or retirement, or an
+installed repair view (for every Document the Builds hold a fact of), a backfill report and a Knowledge
 Profile change (for the Source's Documents), finalization (for its Documents),
 and a rebind (#205 calls the platform's recompute for the Documents it moves). Each Document in a transaction of its own, so a large
 fan-out holds no long transaction: the database ends one at 60 seconds. The
 recompute follows the report's own commit, so a call that ends in an error or
 no answer is sent again: every report here is safe to resend, and the resend
-finishes the recompute. How long an owner keeps resending before it asks for
-a repair instead (DR §5.3: before the tombstone's 30 days) is #260's. The
-recompute after a Build's state report or a backfill report, and a
-heartbeat's comparison, run inside the call and grow with the Build or the
-Source. Their duration is not measured: #99 measures it, and until then a
+finishes the recompute. An owner resends for at most 24 hours, then sends a
+repair view instead (Repair views, above). The
+recompute after a Build's state report, a backfill report or an installed
+repair view, a heartbeat's comparison, and a repair view's replacement of the
+mirror, run inside the call and grow with the Build or the Source. The
+replacement is one transaction, which the database ends at 60 seconds, or at
+30 seconds idle while the platform merges the view: a Build
+too large for it never installs a view, and resending repeats the same
+transaction; after lost writes that keeps Source Deletion's judgment suspended.
+The sign is repair requests with no `kp_serving_repair_seconds` observation and
+`503` answers to the view's last page (#99 measures it). Their duration is not measured: #99 measures it, and until then a
 caller allows for a call that outlasts its timeout and resends. The
 reports of one Build are taken one at a time. The readiness a query answers is
 computed when it answers; only `since` comes from the stored moment.
 
 **Liveness.** A Build's liveness signal is its last report taken, of any kind
-(a refused one does not count, except a `FENCED` registration and a status
-report's `409`), so each
+(a refused one does not count, except a `FENCED` registration, a status
+report's `409` and a `VIEW_DISCARDED` page), so each
 Build not retired, `building` and `retained` ones too, reports at least a
 heartbeat more often than its pipeline's `update_interval_s`, and a candidate
 its owner gives up is reported `retired` once its data is gone. A Build not
@@ -1026,12 +1141,19 @@ Builds are retired (DR D1); a Build of one that left is not measured.
 `build_id` (a backfill's carries `source_id` in its place), and as they apply
 `document_uid`, `resource_id`, `fact_version`, `state`, `attempt_no`, `seq`,
 `stage`, `result`, `reason` (a gate, an error block's reason, a repair's
-reason) and a call's counts (`count`, `results`, `late_landings`);
+reason) and a call's counts (`count`, `results`, `late_landings`); a repair view's page
+also `view_id`, `page`, `pages` and `watermark`;
 never an error message. Metrics: `kp_api_calls_total` by operation and status
 (§7.3); `kp_serving_facts_total` by `projection` and `result` (`recorded`,
 `older`, `fenced`, `superseded`); `kp_serving_repairs_requested_total` by
-`projection` and `reason`; `kp_serving_late_landings_total` by `projection`, an
-`included` fact recorded for a deleted Document (DR §9); and the gauge above.
+`projection` and `reason`; `kp_serving_repair_views_total` by `projection` and
+`result` (`incomplete`, `installed`, `resent`, `expired`, `fenced`,
+`discarded`, `superseded`); `kp_serving_repair_seconds`, a histogram by
+`projection` of the time from a repair request to the installed view that
+ended it (DR §9's repair latency); `kp_serving_late_landings_total` by `projection`, an
+`included` fact report recorded for a deleted Document (DR §9; a repair view
+is not counted); the gauge `kp_serving_builds_writes_lost` (Lost writes); and
+the gauge above.
 
 ## 8. Source Deletion
 
@@ -1102,7 +1224,8 @@ never an error message. Metrics: `kp_api_calls_total` by operation and status
     action.
   - The volume is lost: the database is restored from the archive. Requests
     acknowledged within the archive interval (target: one minute) may be lost,
-    and their Sources submit them again.
+    and their Sources submit them again. Operations declare the loss (§7.4,
+    Lost writes) before Source Deletion's judgment runs again.
   - Restore time is *unmeasured* until the restore drill (§13).
 
   Replication inside the cluster is a later deployment change and needs no code
@@ -1262,7 +1385,8 @@ ended without an error block, such as terminated or timed out (§9).
   duplication; convergence within one reconciler period; deleted documents never
   return; deletion meets its `applied` and `enforced` targets. The restore drill
   is the one exception to "no loss": it passes when the lost interval is within
-  the archive interval.
+  the archive interval, and the lost-writes declaration (§7.4) has run and every
+  Build not retired has installed a view after it.
 
 ## 14. Implementation tickets
 
@@ -1274,7 +1398,7 @@ ended without an error block, such as terminated or timed out (§9).
 | I3 Status (#97) | §5.5–§5.7, canonical processing's report intake and request outcomes (§3, §7.3), readiness over no serving facts and canonical attention (§7) | I1, #55, #126 |
 | I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision and its selection, `current_revision_changed`, the withdrawn versions, the candidate and `details` (§3, §5.5, §5.6, §7.3) | I3 |
 | I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
-| I3c Serving-fact repair (#260) | the repair view's intake and the replacement of a Build's mirror (§7.4, DR §5.4) | I3b |
+| I3c Serving-fact repair (#260, done) | the repair view's intake, the replacement of a Build's mirror and the lost-writes declaration (§7.4, DR §5.4, §5.6) | I3b |
 | I3d Serving-mirror retention (#264, after the pilot) | removal of a retired Build's facts, old attempts and expired tombstones (§7.4, DR §5.3) | I3c |
 | I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, I3c, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |

@@ -7,7 +7,8 @@ design §6.1) and its batches: declare, finalize and get_batch (#96, admission s
 /read/v1/ the governed read API (#126, canonical consumption DR §3): the Change Feed, cursors,
 Document state and bootstrap listings that kp_admission.feed describes, open only to the same
 registered service identities as the authz API; and under /report/v1/ the status report intake
-(#97, admission spec §7.3) and the projections' reports (#252, §7.4), open only to the registered
+(#97, admission spec §7.3) and the projections' reports (#252, §7.4) with their repair views
+(#260), open only to the registered
 pipelines. Both have their own prefix
 because /v1/ is the Source-facing surface that an ingress exposes.
 
@@ -29,7 +30,8 @@ conventions:
 - `kp_admission_items_total` (count) of the batch items decided, by `operation` (declare,
   finalize), `status` (declared, unchanged, queued, rejected) and `reason`, a rejection's reason
   code (admission spec §12), empty otherwise.
-- kp_admission.feed's gauges, and kp_admission.serving's counters and gauge (#252).
+- kp_admission.feed's gauges, and kp_admission.serving's counters, histogram and gauge (#252,
+  #260).
 """
 
 import hashlib
@@ -750,7 +752,8 @@ def app(
         """A Build's state (DR §4, D2); a switch failing a gate is 409 GATE_FAILED."""
         name = calling_projection()
         async with pool.connection() as conn:
-            answer, changed = await serving.report_build(conn, name, build_id, body)
+            interval = by_track[name].update_interval_s
+            answer, changed = await serving.report_build(conn, name, build_id, body, interval)
             # shortcut: a switch, or a resent one, refreshes every Document of both Builds inside
             # the request, move the fan-out to a worker when #99 measures it near a call's timeout.
             await status.refresh_builds(conn, name, changed)
@@ -783,6 +786,26 @@ def app(
         name = calling_projection()
         async with pool.connection() as conn:
             answer = await serving.heartbeat(conn, name, build_id, body)
+        return JSONResponse(answer.model_dump(mode="json"))
+
+    @report.put(
+        "/builds/{build_id}/repair-views/{view_id}/pages/{page}", response_model=serving.ViewAnswer
+    )
+    async def report_repair_view(
+        build_id: _BuildId,
+        view_id: Annotated[str, Path(min_length=1, max_length=64)],
+        page: Annotated[int, Path(ge=1)],
+        body: serving.ViewPage,
+    ) -> JSONResponse:
+        """A page of the Build's repair view (DR §5.4); the last one to arrive replaces the
+        mirror. 409 VIEW_DISCARDED: capture a fresh view, unless `superseded`."""
+        name = calling_projection()
+        async with pool.connection() as conn:
+            answer, installed = await serving.repair_view(conn, name, build_id, view_id, page, body)
+            if installed:
+                # shortcut: refreshes every Document of the Build inside the request, move the
+                # fan-out to a worker when #99 measures it near a call's timeout.
+                await status.refresh_builds(conn, name, [build_id])
         return JSONResponse(answer.model_dump(mode="json"))
 
     @report.post("/builds/{build_id}/status-reports", status_code=202)
