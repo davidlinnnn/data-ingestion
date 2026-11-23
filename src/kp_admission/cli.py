@@ -106,9 +106,10 @@ def main(argv: list[str] | None = None) -> int:
     run by a Job of the deployment repo with the event's number, which each such declaration
     raises (#78's runbook). Every Build not retired is asked for a repair view, and Source
     Deletion's judgment stays suspended until a view captured after the run repairs each one
-    (kp_admission.serving.writes_unrepaired). An event at or below one applied changes
-    nothing, so the Job can run again. It prints whether it applied the event and how many
-    Builds it asked, as JSON.
+    (kp_admission.serving.writes_unrepaired). EVENT is a number above every earlier
+    declaration's, kept in the deployment repo. The event applied last, run again, changes
+    nothing, so the Job can run again; an event below it fails (exit 1) and changes nothing. It
+    prints whether it applied the event and how many Builds it asked, as JSON.
 
     All log JSON lines to stderr and exit 2 without KP_ADMISSION_DATABASE_URL or on another
     configuration error."""
@@ -276,7 +277,11 @@ async def run_feed_retention(dsn: str) -> int:
 
 async def run_writes_lost(dsn: str, event: int) -> int:
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
-        builds = await serving.lose_writes(conn, event)
+        try:
+            builds = await serving.lose_writes(conn, event)
+        except ValueError as error:
+            print(error, file=sys.stderr)
+            return 1
     print(json.dumps({"applied": builds is not None, "builds": builds or 0}))
     return 0
 

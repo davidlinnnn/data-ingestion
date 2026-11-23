@@ -324,11 +324,15 @@ async def test_after_lost_writes_only_a_view_captured_later_ends_the_repair(api,
     assert (asked, repeated) == (2, None)
     assert unrepaired == [("retrieval", "b1"), ("wiki", "b1")]
     assert refusal(old_view) == (409, "VIEW_DISCARDED", {"reason": "writes_lost"})
-    assert refusal(earlier) == (409, "VIEW_DISCARDED", {"reason": "superseded"})
+    assert refusal(earlier) == (409, "VIEW_DISCARDED", {"reason": "writes_lost"})
     assert request["reason"] == "writes_lost"
     assert after.json() == {"view": "installed", "repair_requested": None}
     assert await serving.writes_unrepaired(conn) == [("wiki", "b1")]
-    assert await serving.lose_writes(conn, 2) == 2
+    erased = await build(api, "retrieval", "b3", state="building")  # one the loss erased, say
+    assert erased.json()["repair_requested"]["reason"] == "writes_lost"
+    with pytest.raises(ValueError):
+        await serving.lose_writes(conn, 0)
+    assert await serving.lose_writes(conn, 2) == 3
 
 
 async def test_a_repair_restates_live_tombstones_and_leaves_expired_ones_fencing(api, conn):

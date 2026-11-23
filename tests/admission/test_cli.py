@@ -386,11 +386,13 @@ async def test_writes_lost_applies_each_declared_event_once(conn, dsn):
     )
     env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
     outs = []
-    for event in ("1", "1"):
+    for event in ("1", "1", "0"):
         run = role("writes-lost", env, event, stdout=subprocess.PIPE)
-        outs.append((json.loads(run.communicate(timeout=30)[0]), run.returncode))
+        printed = run.communicate(timeout=30)[0]
+        outs.append((json.loads(printed) if printed else None, run.returncode))
 
-    assert outs == [({"applied": True, "builds": 1}, 0), ({"applied": False, "builds": 0}, 0)]
+    assert outs[:2] == [({"applied": True, "builds": 1}, 0), ({"applied": False, "builds": 0}, 0)]
+    assert outs[2] == (None, 1)
     assert await serving.writes_unrepaired(conn) == [("wiki", "b1")]
 
 

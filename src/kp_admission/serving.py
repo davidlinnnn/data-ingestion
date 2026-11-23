@@ -264,11 +264,14 @@ async def report_build(
     Build cannot take from where it is, 400 for a feed_position that is not one or is ahead of
     the feed."""
     async with conn.transaction():
-        await conn.execute(
+        cursor = await conn.execute(
             "INSERT INTO build (projection, build_id, state) VALUES (%s, %s, 'building')"
-            " ON CONFLICT DO NOTHING",
+            " ON CONFLICT DO NOTHING RETURNING build_id",
             (projection, build_id),
         )
+        if await cursor.fetchone() and await writes_unrepaired(conn):
+            # It may be one the loss erased, whose owner reports it again (DR §5.6, K2).
+            await _repair(conn, projection, build_id, None, "writes_lost")
         # Every Build of the projection, so two switches cannot both read the same serving one.
         cursor = await conn.execute(
             "SELECT build_id, state, switch_seq, repair_reason, repair_requested_at FROM build"
@@ -577,7 +580,9 @@ async def repair_view(
         [(current, stored, *header)] = await cursor.fetchall()
         if view_id != current:
             if header[0] is not None and page.captured_at <= header[0]:
-                stored = "superseded"
+                # Without a later view in transfer, a lost-writes request still wants a fresh one.
+                lost = stored != "incomplete" and repair and repair.reason == "writes_lost"
+                stored = "writes_lost" if lost else "superseded"
             else:
                 await _start_view(conn, projection, build_id, view_id, page)
                 stored = "incomplete"
@@ -740,13 +745,17 @@ async def _install(
 async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
     """Applies operations' declaration that the admission database lost committed writes (DR
     §5.6, K2), once per `event`, a number each declaration raises: every Build not retired is
-    asked for a repair, `writes_lost`, which replaces any earlier request, and its view in
-    transfer is discarded, so only a view captured after now ends the request. Returns how many
-    Builds were asked, or None for an event at or below one applied already."""
+    asked for a repair, `writes_lost`, which replaces any earlier request, and its last view,
+    in transfer or installed, is discarded, so only a view captured after now ends the request.
+    A Build first reported while one still carries that request starts with it (report_build).
+    Returns how many Builds were asked, or None for the event applied last, run again.
+    ValueError for an event below it: the declaration's number was not raised."""
     async with conn.transaction():
         cursor = await conn.execute("SELECT coalesce(max(event), 0) FROM writes_lost")
         [(applied,)] = await cursor.fetchall()
-        if event <= applied:
+        if event < applied:
+            raise ValueError(f"event {event} is below the last applied, {applied}")
+        if event == applied:
             return None
         cursor = await conn.execute(
             "INSERT INTO writes_lost (event) VALUES (%s) ON CONFLICT DO NOTHING RETURNING event",
@@ -774,8 +783,9 @@ async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
 
 async def writes_unrepaired(conn: AsyncConnection) -> list[tuple[str, str]]:
     """(projection, build_id) of the Builds not retired that no view captured after the last
-    loss of committed writes has repaired. While there is one, #98 makes no enforcement
-    judgment (DR §5.6, K2)."""
+    loss of committed writes has repaired. While there is one, and for the longest update
+    interval of the registered pipelines after the declaration, #98 makes no enforcement
+    judgment (DR §5.6, K2, spec §7.4)."""
     cursor = await conn.execute(
         "SELECT projection, build_id FROM build WHERE repair_reason = 'writes_lost'"
         " AND state <> 'retired' ORDER BY 1, 2"
