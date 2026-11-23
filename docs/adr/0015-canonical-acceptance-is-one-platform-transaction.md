@@ -34,8 +34,10 @@ references that hold no bucket, no Document prefix and no URL.
 Readers get the bytes of a revision's content and of the artifacts it lists
 from the platform's read API, by exact revision; no component outside the
 platform holds storage credentials, and the platform issues no presigned URL
-(user, 2026-11-22). Authorization is the platform's, storage cannot express
-which reader may read which Document, and a deletion takes effect at the
+(user, 2026-11-22). The read API admits registered services and refuses a
+deleted Document; whether a user may read is decided by the reading service
+against the platform's authorization API on each request. Storage cannot
+express which reader may read which Document, and a deletion takes effect at the
 platform's next read (a projection removes its own copy by cleanup, ADR-0014).
 
 The trade-offs: an object can be written by a run whose transaction never

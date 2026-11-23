@@ -24,7 +24,7 @@
 | projection 獨立失敗與重建 | 某個 projection 的 Build 壞了或要重建 | Canonical 這一側沒有任何變化：接受不等 projection。重建時 projection 讀文件現況，再用確切的 revision 讀內容 | consumption 設計紀錄 §4、§5；C 組。#268（讀取）、#127、#260 | E1–E7 | #127 的端到端；#83 |
 | 撤回後晚到的結果與清理 | pilot 沒有撤回（使用者 2026-11-18，[#56 的紀錄](https://github.com/davidlinnnn/data-ingestion/issues/56#issuecomment-6982506436)），拿掉一份文件的做法是 Source 刪除它。所以這一列用兩種實際存在的情況檢查：文件被刪除、方法版本被作廢 | 晚到的成功結果不形成接受，也不讓文件復活；request 照實結束。物件留到文件的清除。之後加入撤回時用同一條規則 | B4、B6.3、D 組。#251、#98、#267 | D1–D10、W2、W3、W5、W6 | `test_acceptance.py`；模擬；#267 的驗收 |
 | 破壞相容的升級演練 | 新的 Processing Profile 版本改了內容的 schema 版本 | 平台這一側是一次帶重刷範圍的採用；projection 開新的 Build（#55 的 D2、D3）。出問題時再採用舊版本並作廢新版本 | B6、B8。#261、#98、#81（schema 版本） | U10、W1–W18 | 演練是 first-adoption 的 V04，還沒執行 |
-| 撤權後的還原 | 資料庫或物件儲存從備份還原 | 遺失區間的刪除重新套用之前，停下會把文件送出去的路徑（修復、讀取、bootstrap、會發事件的工作）；已清除的物件不會留在儲存裡；授權由目前的 authz 判定，不取自備份 | F 組；#78 的 C12、C26 | V1–V3 | #99 的還原演練；PROD 的排程化在 #269 |
+| 撤權後的還原 | 資料庫或物件儲存從備份還原 | 遺失區間的刪除重新套用之前，平台的讀取面（`/read/v1/`）不對外回應；已清除的物件不會留在儲存裡；授權由目前的 authz 判定，不取自備份 | F 組；#78 的 C12、C26 | V1–V3 | #99 的還原演練；PROD 的排程化在 #269 |
 | 狀態查詢的識別一路對得上 | 一個 request 從受理到被讀取 | `request_id` 就是 Temporal 的 workflow ID；`crv_` 加上 request id 的 32 個十六進位字元是 revision 的識別；revision 紀錄帶 `document_uid`、`source_revision_id`、`request_id` 與做出它的版本；內容物件的 key 帶 `document_uid` 與 revision 的識別 | B3、C 組。#251、#97（已完成） | NS2–NS4、X1 | `tests/admission/test_status.py`、`test_acceptance.py` |
 
 ## 2. 情境目錄
