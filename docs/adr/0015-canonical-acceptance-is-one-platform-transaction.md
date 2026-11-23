@@ -35,16 +35,16 @@ Readers get the bytes of a revision's content and of the artifacts it lists
 from the platform's read API, by exact revision; no component outside the
 platform holds storage credentials, and the platform issues no presigned URL
 (user, 2026-11-22). Authorization is the platform's, storage cannot express
-which reader may read which Document, and a deletion takes effect at the next
-read.
+which reader may read which Document, and a deletion takes effect at the
+platform's next read (a projection removes its own copy by cleanup, ADR-0014).
 
 The trade-offs: an object can be written by a run whose transaction never
 commits, so storage holds objects no record points at until the Document is
 purged; a record can outlive its object when storage loses data, which the read
 API reports as its own error; and image reads pass through the platform API
 instead of going to storage directly. Rejected: writing the content into the
-database inside the acceptance transaction (56 to 348 KB measured per Document,
-larger in production; on MongoDB the commit would hold the feed counter while
+database inside the acceptance transaction (56 to 348 KB per Document estimated
+from the Processing Result, larger in production; on MongoDB the commit would hold the feed counter while
 the content replicates); a separate acceptance component between processing and
 the platform; copying adopted artifacts into a Canonical area (23 MB per
 Document at the median, 230 TB at ten million Documents); and letting readers

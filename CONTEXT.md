@@ -124,7 +124,7 @@ The outcome a versioned status rule assigns to one Enrichment item when
 processing finalizes: `failed`, `disputed`, `unverified` or `verified`.
 Canonical keeps it unchanged and consumers check it before relying on the item.
 An accepted Canonical Revision holds no `failed` item: a Document with one is
-not accepted (ADR-0011's 2026-11-23 note).
+not accepted (ADR-0011's 2026-11-23 note; built by #81).
 _Avoid_: quality acceptance, verification of source truth
 
 **Knowledge Profile**:
@@ -397,9 +397,10 @@ _Avoid_: storage, bucket, staging
 
 **Custody Purge**:
 Destruction that makes the affected retained information unrecoverable in
-platform custody, including its dependent copies. Its unit is the Document: a
-purge removes every object of a deleted Document and keeps the records'
-identifiers and times.
+platform custody, including its dependent copies. In the pilot its unit is the
+Document: a purge removes every object of a deleted Document and keeps the
+records' identifiers and times. Removing a replaced Canonical Revision of a
+live Document after its retention window is added before production (#269).
 _Avoid_: unpublication, tombstone, ordinary withdrawal
 
 ## Experience and improvement

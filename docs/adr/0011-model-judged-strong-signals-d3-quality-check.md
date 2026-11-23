@@ -69,4 +69,5 @@ service-unavailable redrive later fills in the judgement" no longer hold; the
 platform's scan reruns the request, and the exit from a long outage is a
 Processing Profile version without `d3-check`. `disputed` and `unverified` are
 results and do not block acceptance. The share of checks without a judgement
-and of Documents failed for it are metrics.
+and of Documents failed for it are metrics. The rule is built with the mapper
+(#81); until then the code keeps the degraded behaviour.

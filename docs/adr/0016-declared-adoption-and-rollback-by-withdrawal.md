@@ -5,7 +5,8 @@ platform database, the adoption record. It is no longer written by a person
 running a command: the adopted version, its refresh scope and the withdrawn
 versions are declared in the deployment repository's values and applied by a
 scheduled job after a gate (the new build is current on every task queue and a
-test workflow completed). The company's production clusters allow nobody to run
+test workflow's result is complete; a version that passed before is not tested
+again). The company's production clusters allow nobody to run
 a command inside a pod except for investigation or emergency support, so every
 operation in this design has a declared, scheduled form (user, 2026-11-22). A
 declaration carries an integer the author raises and is applied only when it is
@@ -16,7 +17,10 @@ under the version adopted now when the version that made its revision is in the
 latest adoption's scope.
 
 A method rollback in the pilot is a reprocessing, not a pointer move. The older
-version is adopted again and the faulty one is declared withdrawn. A withdrawn
+version is adopted again and the faulty one is declared withdrawn (a withdrawn
+version is not the governance withdrawal of a Document, which the pilot does
+not build); a downgrade that does not say whether the higher version is
+withdrawn or kept is not applied. A withdrawn
 version is never adopted again; a result made under it that arrives after the
 withdrawal forms no Canonical Acceptance; and the scan redoes every Document
 whose current revision it made, ahead of ordinary refreshes and whatever a
@@ -29,8 +33,9 @@ Source Revision. Confirmed in
 B8); built by #261 and #98.
 
 The trade-offs: until the scan has redone them, Documents keep serving content
-made by the withdrawn version, and at production volume that is days of
-reprocessing; moving the current revision back to the previous accepted
+made by the withdrawn version, and at production volume redoing every Document
+is months of reprocessing (ten million Documents at 50 a minute is about 139
+days); moving the current revision back to the previous accepted
 revision of the same Source Revision without reprocessing (canonical
 consumption D3) is therefore owed before production (#270). Withdrawing takes
 no lock on Documents, so a result accepted an instant before the withdrawal

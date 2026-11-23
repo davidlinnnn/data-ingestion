@@ -53,7 +53,7 @@ which builds on this graph.
 | Q10 | Processing Result and Enrichment Status are glossary terms. The result schema is a new namespace, `pdf-processing-result/v1`; `quality_accepted` is dropped. |
 | Q11 | No decision-model gate Activity in v2. Calibration runs offline in #83 on the DEV validation corpus only; PROD has no dependency on it. |
 | Q13 | An Enrichment Method is a code module plus a Processing Profile entry (id, version, parameters). No generic plugin framework or DSL; the stage graph is code. |
-| Q15 | Enrichment failure ratios are metrics with operator alerts, not `attention[]` entries. **2026-11-23** (#57 B7, B9): the ratios stay metrics, but a `failed` item now fails the request, so they count failed requests' items too. |
+| Q15 | Enrichment failure ratios are metrics with operator alerts, not `attention[]` entries. **2026-11-23** (#57 B7, B9): the ratios stay metrics, but a `failed` item now fails the request, so they must count failed requests' items too (built by #81). |
 | Q16 | The workflow input is the admission spec §10 input. `adopted_version` names the Processing Profile version; the dispatcher starts the workflow on the matching Worker Deployment Version and the workflow asserts the match. |
 | Q17 | Status reports use four coarse stages (§9); `attempt_id` is the Temporal run ID; reporting failures never fail processing. |
 | Q18 | Failures map to admission attention kinds (§6.3). |
@@ -167,7 +167,10 @@ requires when no replacement basis exists.
 > do not block. Mapping and its validation are the last step of the workflow,
 > inside `finalize`: a failed validation is a processing failure, not "a
 > Canonical Acceptance check". Section 5.1's tie-break is replaced by the
-> platform's selection (admission specification §3).
+> platform's selection (admission specification §3). The rule is built with the
+> mapper (#81); until then the code behaves as the text below says. In §10,
+> adoption is in place, with no copy, and the pilot removes nothing inside a
+> Document: attempt scratch stays until the Document's purge (#267).
 
 | Tier | Content | Rule |
 |---|---|---|
