@@ -904,7 +904,7 @@ DevOps 要準備的東西。數值與設定名稱多數還是暫定的，由 [#7
 | 項目 | 需求 | 細節在哪 |
 |---|---|---|
 | 角色 | 一個 image，三種角色：`api`（固定 2 個副本，不用 HPA）、`dispatcher`（至少 2 個副本）、CronJob（reconciler 每 5 分鐘；batch 過期與上傳清理每小時；保留期每天） | 規格 §13；第 6.1、6.3 節 |
-| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，再清理結束滿一小時的 batch 的上傳，跑一次就結束，CronJob 每小時；要物件儲存的設定）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`adopt` 與 `cancel-adoption`（設定某個檔案格式用哪個 Processing Profile 版本）。第一次宣告之前要先採用 PDF 的版本：`kp-admission adopt --tenant <tenant> application/pdf paper-pdf@1`，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。順序是：profile 版本已 release、processing worker 已部署、`adopt`、第一次宣告；`adopt` 不檢查這個版本存不存在。還沒有：redrive 與 refresh（#98）、規格 §11 的紀錄保留期（#250） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
+| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，再清理結束滿一小時的 batch 的上傳，跑一次就結束，CronJob 每小時；要物件儲存的設定）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`adopt` 與 `cancel-adoption`（設定某個檔案格式用哪個 Processing Profile 版本）、`writes-lost EVENT`（資料庫遺失已提交的寫入之後，由部署 repo 的 Job 執行，要求每個 Build 修復；同一個 `EVENT` 只套用一次，規格 §7.4 的 Lost writes）。第一次宣告之前要先採用 PDF 的版本：`kp-admission adopt --tenant <tenant> application/pdf paper-pdf@1`，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。順序是：profile 版本已 release、processing worker 已部署、`adopt`、第一次宣告；`adopt` 不檢查這個版本存不存在。還沒有：redrive 與 refresh（#98）、規格 §11 的紀錄保留期（#250） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
 | Admission DB | pilot：一個 PostgreSQL instance，放在網路磁碟的 persistent volume，不用 operator；WAL 連續歸檔，加上排程的 base backup，都放到物件儲存。版本要 17 以上；`api` 的資料庫角色要 `pg_read_all_stats`。`feed-retention` 要每天跑：它刪掉超過 90 天的 Change Feed，也預先建立之後幾個月的分區，長期沒跑的話 admission 的寫入會失敗。目前沒有套用 schema 的指令：資料表定義在 [`schema.sql`](../../src/kp_admission/schema.sql)，整份套用在空的資料庫，由誰套用、用哪個 migration 工具由 #78 決定。PROD release 之前移到公司代管的 MongoDB | 規格 §9、§13；[#137 的交接](https://github.com/davidlinnnn/data-ingestion/issues/137#issuecomment-6983041476)；第 3 節；#239 |
 | 物件儲存 | S3 相容，一個 bucket，原始檔與處理結果共用。`api` 現在要 `s3:GetObject`（finalize 用 HeadObject 確認檔案已就位）與 `s3:ListBucket` 的權限：少了 `s3:ListBucket`，storage 對不存在的物件回 `403` 而不是 `404`（[AWS HeadObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html)），finalize 會一直回 `503`。上傳另外要 `s3:PutObject` 與 `s3:AbortMultipartUpload`；`expire` 的 CronJob 要 `s3:DeleteObject`、`s3:AbortMultipartUpload` 與 `s3:ListBucketMultipartUploads`。少了任何一項，上傳會一直回 `503`，清理則每次都把 batch 留給下一次，並以 exit code 1 結束。processing worker 要讀寫。必要的行為用 `storage_probe.py` 驗證 | 規格 §10；第 6.3、6.7 節；產品由 #57 決定 |
 | Temporal | `dispatcher` 與 `reconcile` 要連得到：`TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE`。`api` 不連 Temporal，所以 Temporal 停機時照常受理，outbox 裡的 request 等它恢復 | 規格 §9 |
@@ -1129,7 +1129,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 |---|---|---|
 | pull 路徑 | 等有「檔案已在公司核准 storage」的具體來源再開 | #96 之後另開票 |
 | Temporal 連線的 TLS 與驗證 | `dispatcher`、`reconcile` 與 worker 目前只讀 `TEMPORAL_ADDRESS` 與 `TEMPORAL_NAMESPACE`，連線不加密也不帶憑證。部署的 Temporal 要求其中之一時，要先加設定與程式 | #78 |
-| PostgreSQL 的備份工具、排程與還原程序 | 規格 §9 只定了目標：WAL 連續歸檔，磁碟區毀損時最多遺失約一分鐘內受理的 request。做法與演練還沒定 | #78、#99 |
+| PostgreSQL 的備份工具、排程與還原程序 | 規格 §9 只定了目標：WAL 連續歸檔，磁碟區毀損時最多遺失約一分鐘內受理的 request。做法與演練還沒定。還原之後要執行 `kp-admission writes-lost`（規格 §7.4）；哪些事件要執行、Change Feed 與 cursor 怎麼倒回，是 #78 的 runbook | #78、#99 |
 | 大檔案的續傳 | 5 GB 以上才需要；可以用新增的端點加上，不破壞既有 client（第 7.4 節） | 不在第一版 |
 | 公司的 ingress 產品與設定值 | 第 6.2 節的數值 | #78 |
 | `KP_ADMISSION_PUBLIC_URL` 的值 | `api` 用它組 `uploads[].url`（規格 §5.1），必填，不依賴 ingress 轉送的 header；值是 ingress 的對外 origin。驗收：經 ingress 宣告，回應的 `url` 是對外網址 | #78 |
@@ -1154,8 +1154,9 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-22 | 第 7.3 節跟上 2026-11-22 的票：#251 可以開始（#57 定了受理點），新增宣告式採用（#261），#98 改等 #251、#260、#261。第 6.9 節寫明 PROD 不能由人進 pod 下指令 |
 | 2026-11-22 | #252：讀取端的回報接收實作完成：Build 狀態、寫入前登記與 B5 檢查、serving 事實、heartbeat、attempt 回報、補建完成；`readiness`、`since`、`serving` 與讀取端的 `attention` 改由這些回報算出（規格 §7.4）。修復 view 的接收拆到 #260。第 5 節更新現況：讀取端還沒開始回報（#251、#127），所以仍是 `not_ready`；第 6.8 節補上讀取端的登記 |
 | 2026-11-22 | #251：Canonical Acceptance 的記錄實作完成：成功的 request 帶 candidate 時記下 Canonical Revision、Source Revision 改成 `accepted`，較新的成為目前版本並發出 `current_revision_changed`（規格 §3）；文件已刪除、沒有 candidate、版本已作廢時不形成接受（規格 §5.5）。第 5 節的現況改成等 #81 與 #127，第 5.6 節補上 `details`，第 6.9 節補上部署順序，第 7.3 節更新 |
+| 2026-11-23 | #260：serving 事實的修復實作完成：讀取端分頁送來 repair view，到齊後一次替換 Build 的 mirror，結束修復要求並重算 readiness；view 從 capture 起 24 小時內要到齊（暫定），過期或被到期柵欄擋下就整份丟棄；遺失寫入之後由 Job 執行 `kp-admission writes-lost`（規格 §7.4）。第 6、7.1、7.3 節跟上 |
 
-### 7.3 實作狀態（2026-11-22）
+### 7.3 實作狀態（2026-11-23）
 
 進度以各票為準；這張表在票結案時更新。
 
@@ -1170,11 +1171,11 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 版本較大、檔案相同不重新處理 | 宣告與 finalize 的排序規則（規格 §6.3、§6.4） | #258 | 已完成，在 `dev` |
 | 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev` |
 | projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#81、#127）`readiness` 仍是 `not_ready` |
-| 修復 view 的接收 | 讀取端送來整份 view，一次替換 mirror | #260 | 未實作，可以開始 |
-| mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，在 #260 之後 |
+| 修復 view 的接收 | 讀取端分頁送來整份 view（`PUT /report/v1/builds/{build_id}/repair-views/{view_id}/pages/{page}`），到齊後一次替換 mirror；遺失寫入之後的 `kp-admission writes-lost` | #260 | 已完成，在 `dev` |
+| mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，可以開始 |
 | Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed`、作廢的版本、`details` 的方法版本落後 | #251 | 已完成，在 `dev`；處理端到 #81 才交出 candidate，在那之前成功的 request 不形成接受，Source Revision 留在 `pending` |
 | 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob 套用；取代手動的 `kp-admission adopt` | #261 | 未實作，可以開始；第一次部署到公司環境之前要完成 |
-| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #260、#261 之後 |
+| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #261 之後 |
 | 保留期 | batch 與 `Idempotency-Key` 到期回 `404` 並移除紀錄 | #250 | 未實作 |
 | dispatcher 與 reconciler 的 metrics | | #189 | 未實作 |
 | 驗證 | CI 層與叢集層 | #99 | 未實作，在 #98 之後；叢集層另外等 #78 |
