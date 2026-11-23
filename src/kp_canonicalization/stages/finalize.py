@@ -9,7 +9,6 @@ from functools import partial
 
 from kp_canonicalization import metrics
 from kp_canonicalization.identity import canonical_json
-from kp_canonicalization.ports.object_store import ObjectStore
 from kp_canonicalization.stages import (
     FailureInput,
     FinalizeInput,
@@ -35,9 +34,9 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     native       assembly_ref, page_groups[{pages, ref}], page_images[{page, ref, sha256}]
                  in page order (read from the group objects), picture_images[{picture_id,
                  page, bbox, ref, sha256}] (read from the assembly object)
-    inventory    ref, counts{<method_id>: {unverified, disputed, failed, no_text}} for each
-                 method with inventory items; buckets are disjoint, an item whose outcome is
-                 no_text counts under no_text only
+    inventory    ref, counts{<method_id>: {unverified, disputed, no_text}} for each method
+                 with inventory items; buckets are disjoint, an item whose outcome is no_text
+                 counts under no_text only
     enrichments  one per inventory item, in inventory order (see below)
     limitations  the profile's [{code, scope: "profile", detail}], then, when the plan
                  lists any, {code: "NO_TEXT_LAYER_PAGES", scope: "document",
@@ -61,14 +60,20 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     judges whose outcome is success takes, before the status rule, the check's outcome record
     (the OutcomeRef "<check id>:<item_id>"): a successful check's contradictions go after the
     item's own and its signals are added to the item's; a failed one adds signals {<the
-    package's SIGNAL>: {"state": "not_run", "reason": the check's}} and leaves the item's status
-    as it is. Check items are not enrichments. Each judgement is counted by
-    metrics.item_outcomes under the check's method ref: status not_run, disputed (reason: its
-    contradiction) or unverified.
+    package's SIGNAL>: {"state": "not_run", "reason": the check's}}, a missing result. Check
+    items are not enrichments.
 
-    When any enrichment has status_reason SERVICE_UNAVAILABLE, or a check did not run for
-    that reason, the redrive marker documents/{document_uid}/service-unavailable/{request_id}
-    (empty) is written first, write-once (#129; listed by service_unavailable()).
+    Every enrichment is counted by metrics.item_outcomes (method "<id>@<version>", status,
+    status_reason or ""), and each judgement under the check's method ref: status not_run,
+    disputed (reason: its contradiction) or unverified; failed requests' too.
+
+    Every item must have a result (#57 B7, B9). Before anything is written, an enrichment with
+    status failed raises ProcessingFailure(platform, ENRICHMENT_INCOMPLETE), or else a check
+    that did not run raises ProcessingFailure(platform, QUALITY_CHECK_INCOMPLETE), with
+    metadata {"failed": enrichments failed, "not_run": checks not run, "item_id": the first
+    of them}. It is retryable, category platform, when every missing result has reason
+    SERVICE_UNAVAILABLE (never registered, so a rerun asks again); otherwise not retryable,
+    category method (registered and reused, so a rerun of the version gives it again).
 
     An inventory item without an OutcomeRef, or whose outcome record is missing or differs
     from the OutcomeRef's digest, raises ProcessingFailure(platform, integrity,
@@ -89,7 +94,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     inventory = json.loads(await ports.store.get(input.inventory.ref))
     outcomes = {outcome.item_id: outcome for outcome in input.outcomes}
     quality = profile.quality_check
-    redrive = False
+    unjudged: list[tuple[str, str]] = []  # (check item_id, reason) of each check without a verdict
     enrichments = []
     judgements: list[tuple[str, ...]] = []  # metrics.item_outcomes labels, one each
     counts: dict[str, dict[str, int]] = {}
@@ -119,11 +124,11 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
             else:
                 not_run = {"state": "not_run", "reason": check["reason"]}
                 record["signals"][quality.package.SIGNAL] = not_run
-                redrive = redrive or check["reason"] == "SERVICE_UNAVAILABLE"
+                unjudged.append((judgement.item_id, check["reason"]))
                 verdict = ("not_run", check["reason"])
             judgements.append((quality.ref, *verdict))
         method_counts = counts.setdefault(
-            item["method"], {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
+            item["method"], {"unverified": 0, "disputed": 0, "no_text": 0}
         )
         entries = record["fields"].items() if "fields" in record else [(None, record)]
         for name, field in entries:
@@ -149,7 +154,21 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
                     "reused": outcome.reused,
                 }
             )
-            method_counts["no_text" if field["outcome"] == "no_text" else status] += 1
+            bucket = "no_text" if field["outcome"] == "no_text" else status
+            method_counts[bucket] = (
+                method_counts.get(bucket, 0) + 1
+            )  # failed never reaches the result
+    # Counted before the rule, so that the items of a failed request count too (#276).
+    for e in enrichments:
+        method = f"{e['method_ref']['id']}@{e['method_ref']['version']}"
+        metrics.item_outcomes.labels(method, e["status"], e["status_reason"] or "").inc()
+    for labels in judgements:
+        metrics.item_outcomes.labels(*labels).inc()
+    if failure := incomplete(
+        [(e["item_id"], e["status_reason"]) for e in enrichments if e["status"] == "failed"],
+        unjudged,
+    ):
+        raise failure
     request = {
         key: input.start[key]
         for key in (
@@ -214,17 +233,33 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         "limitations": limitations,
     }
     ref = f"requests/{input.start['request_id']}/result.json"
-    if redrive or any(item["status_reason"] == "SERVICE_UNAVAILABLE" for item in enrichments):
-        marker = (
-            f"documents/{input.start['document_uid']}/service-unavailable/"
-            f"{input.start['request_id']}"
-        )
-        await ports.store.put_if_absent(marker, b"")
     # Write-once: a retried finalize keeps the result already registered.
     await ports.store.put_if_absent(ref, canonical_json(result))
-    for labels in judgements:
-        metrics.item_outcomes.labels(*labels).inc()
     return ref
+
+
+def incomplete(
+    failed: list[tuple[str, str]], unjudged: list[tuple[str, str]]
+) -> ProcessingFailure | None:
+    """The failure of a Document with a missing result (#57 B7, B9), given (item_id, reason) of
+    each failed enrichment and of each check without a judgement; None when there is none."""
+    missing = failed or unjudged
+    if not missing:
+        return None
+    # Only an unanswered result is never registered; a rerun reuses any other and fails again.
+    transient = all(reason == "SERVICE_UNAVAILABLE" for _, reason in failed + unjudged)
+    return ProcessingFailure(
+        "platform",
+        "platform" if transient else "method",
+        "ENRICHMENT_INCOMPLETE" if failed else "QUALITY_CHECK_INCOMPLETE",
+        "An Enrichment item has no result" if failed else "A Quality Check has no judgement",
+        retryable=transient,
+        metadata={
+            "failed": str(len(failed)),
+            "not_run": str(len(unjudged)),
+            "item_id": missing[0][0],
+        },
+    )
 
 
 async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> str:
@@ -252,15 +287,3 @@ async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> st
     ref = f"requests/{input.request_id}/failure.json"
     await ports.store.put_if_absent(ref, canonical_json(report))
     return ref
-
-
-async def service_unavailable(store: ObjectStore) -> list[dict[str, str]]:
-    """Every redrive marker as {"document_uid", "request_id"}, sorted. Whether the request is
-    still its document's current revision is for #98 to decide, not this list."""
-    markers = []
-    # shortcut: scans every documents/ key; use a marker index when listing grows too slow.
-    for key in await store.list_prefix("documents/"):
-        parts = key.split("/")
-        if len(parts) == 4 and parts[1] and parts[2] == "service-unavailable" and parts[3]:
-            markers.append({"document_uid": parts[1], "request_id": parts[3]})
-    return sorted(markers, key=lambda marker: (marker["document_uid"], marker["request_id"]))

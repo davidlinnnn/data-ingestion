@@ -86,6 +86,19 @@ async def summary_enrichment(ports, runtime, input, outcome) -> dict:
     return enrichment
 
 
+async def summary_failure(ports, runtime, input, outcome) -> ProcessingFailure:
+    """The failure finalize raises for a summary without a result, after local and VLM
+    enrichment (#276)."""
+    outcomes = await enrich_local.run(enrich(input), ports, runtime)
+    outcomes += await enrich_vlm.run(enrich(input), ports, runtime)
+    final = dataclasses.replace(input, outcomes=[*outcomes, outcome])
+    with pytest.raises(ProcessingFailure) as caught:
+        await finalize.run(final, ports, runtime)
+    failure = caught.value
+    assert (failure.reason, failure.metadata["item_id"]) == ("ENRICHMENT_INCOMPLETE", ITEM_ID)
+    return failure
+
+
 def steps(transport: FakeInference) -> list[str]:
     return [step(request) for request in transport.requests]
 
@@ -327,12 +340,7 @@ async def test_no_supported_sentence_fails_the_summary_without_a_reduce(ports, r
 
     assert (record["outcome"], record["reason"]) == ("failed", "NO_SUPPORTED_SENTENCE")
     assert "reduce" not in steps(transport)
-    enrichment = await summary_enrichment(ports, runtime, input, outcome)
-    assert (enrichment["status"], enrichment["status_reason"]) == (
-        "failed",
-        "NO_SUPPORTED_SENTENCE",
-    )
-    assert await ports.store.list_prefix("documents/doc_1/service-unavailable") == []
+    assert (await summary_failure(ports, runtime, input, outcome)).retryable is False
 
 
 async def test_an_overview_sentence_without_a_valid_source_is_dropped(ports, runtime):
@@ -417,8 +425,7 @@ async def test_an_invalid_answer_is_resent_once_then_fails_the_summary(
 
     assert (record["outcome"], record["reason"]) == ("failed", reason)
     assert steps(transport).count("verify") == 2 * 2  # two sections, each sent twice
-    enrichment = await summary_enrichment(ports, runtime, input, outcome)
-    assert (enrichment["status"], enrichment["status_reason"]) == ("failed", reason)
+    assert (await summary_failure(ports, runtime, input, outcome)).retryable is False
 
 
 async def test_a_verify_answer_missing_a_verdict_is_invalid(ports, runtime):
@@ -455,11 +462,7 @@ async def test_incomplete_chunks_make_a_transient_service_unavailable_outcome(po
     assert [
         k for k in await ports.store.list_prefix("documents/") if k.endswith("outcome.json")
     ] == []
-    enrichment = await summary_enrichment(ports, runtime, input, outcome)
-    assert (enrichment["status"], enrichment["status_reason"]) == ("failed", "SERVICE_UNAVAILABLE")
-    assert await ports.store.list_prefix("documents/doc_1/service-unavailable") == [
-        "documents/doc_1/service-unavailable/req_1"
-    ]
+    assert (await summary_failure(ports, runtime, input, outcome)).retryable is True
 
 
 async def test_an_overview_out_of_budget_is_service_unavailable(ports, runtime):

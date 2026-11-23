@@ -10,7 +10,12 @@ import json
 import pytest
 from prometheus_client import REGISTRY
 
-from kp_canonicalization.ports.inference import FakeInference, ServiceUnavailable, completion
+from kp_canonicalization.ports.inference import (
+    Completion,
+    FakeInference,
+    ServiceUnavailable,
+    completion,
+)
 from kp_canonicalization.stages import (
     CheckInput,
     FinalizeInput,
@@ -137,7 +142,6 @@ SIGNAL = {
     "revision": "bd0090dd758d32ba59ef5c749910a8e87fc4391f",
     "question": "Q2",
 }
-MARKER = "documents/doc_1/service-unavailable/req_1"
 
 
 async def test_a_formula_judged_unfaithful_is_disputed_and_a_weak_signal_changes_no_status(
@@ -172,13 +176,12 @@ async def test_a_formula_judged_unfaithful_is_disputed_and_a_weak_signal_changes
         ocr["item_id"], formula["item_id"], table["item_id"],
     ]  # fmt: skip
     assert judged["picture-ocr:#/pictures/1"]["status_reason"] == "NO_TEXT"
-    zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
+    zero = {"unverified": 0, "disputed": 0, "no_text": 0}
     assert result["inventory"]["counts"]["formula"] == {**zero, "disputed": 1}
     assert result["inventory"]["counts"]["table-status"] == {**zero, "unverified": 1}
     # Check items are not enrichments, and the profile names the check.
     assert not [e for e in result["enrichments"] if e["method_ref"]["id"] == "d3-check"]
     assert result["profile"]["methods"][-1]["id"] == "d3-check"
-    assert await ports.store.head(MARKER) is None
 
 
 async def test_a_table_judged_unfaithful_is_disputed(ports, runtime):
@@ -194,9 +197,12 @@ async def test_a_table_judged_unfaithful_is_disputed(ports, runtime):
 
 def formula_answering(content: str) -> FakeInference:
     """The canned VLM, except that every formula request gets content."""
-    return FakeInference(
-        lambda r: completion(content) if schema_name(r) == "formula" else canned(r)
-    )
+    return formula_answering_with(completion(content))
+
+
+def formula_answering_with(answer: Completion | Exception) -> FakeInference:
+    """The canned VLM, except that every formula request gets answer (or raises it)."""
+    return FakeInference(lambda r: answer if schema_name(r) == "formula" else canned(r))
 
 
 async def test_the_rules_contradiction_stays_first_when_d3_contradicts_too(ports, runtime):
@@ -222,66 +228,97 @@ async def test_a_failed_item_is_not_checked(ports, runtime):
     input = await enrichment(ports, runtime, checked_paper())
 
     checks = await run_check(ports, runtime, input)
-    result = await result_of(ports, runtime, input)
 
     assert [o.item_id.split(":")[1] for o in checks] == ["picture-ocr", "table-status"]
-    formula = judged_enrichments(result)["formula"]
-    assert (formula["status"], formula["status_reason"]) == ("failed", "SCHEMA_INVALID")
-    assert "d3" not in formula["signals"]
+    (formula,) = [r for i, r in (await records(ports, input.outcomes)).items() if "formula" in i]
+    assert (formula["outcome"], formula["reason"]) == ("failed", "SCHEMA_INVALID")
 
 
-async def test_without_an_answer_the_item_keeps_its_status_and_a_redrive_fills_the_judgement_in(
+async def failure_of(ports, runtime, input: FinalizeInput, request_id: str = "req_1"):
+    """finalize.run after the check; returns the ProcessingFailure it raises."""
+    checks = await run_check(ports, runtime, input, request_id)
+    final = dataclasses.replace(input, outcomes=[*input.outcomes, *checks])
+    with pytest.raises(ProcessingFailure) as caught:
+        await finalize.run(final, ports, runtime)
+    assert await ports.store.head(f"requests/{request_id}/result.json") is None
+    return caught.value
+
+
+async def test_without_an_answer_the_request_fails_retryably_and_a_rerun_fills_the_judgement_in(
     ports, runtime
 ):
     down = dataclasses.replace(ports, d3=fake_d3(ServiceUnavailable("TIMEOUT")))
     input = await enrichment(down, runtime, checked_paper())
 
-    checks = await run_check(down, runtime, input)
-    result = await result_of(down, runtime, input)
+    failure = await failure_of(down, runtime, input)
 
     attempts = runtime.profile.runtime["retry"]["max_attempts"]
     assert len(down.d3.requests) == 3 * attempts
-    assert all(o.ref.startswith("requests/req_1/attempts/run_1/outcomes/") for o in checks)
-    not_run = {"state": "not_run", "reason": "SERVICE_UNAVAILABLE"}
-    assert {
-        e["item_id"].split(":")[0]: (e["status"], e["status_reason"], e["signals"].get("d3"))
-        for e in judged_enrichments(result).values()
-        if e["status_reason"] != "NO_TEXT"
-    } == {
-        "picture-ocr": ("unverified", None, not_run),
-        "formula": ("unverified", None, not_run),
-        "table-status": ("unverified", None, not_run),
-    }
-    assert await ports.store.head(MARKER) is not None
+    assert (failure.cause, failure.category, failure.reason, failure.retryable) == (
+        "platform", "platform", "QUALITY_CHECK_INCOMPLETE", True,
+    )  # fmt: skip
+    assert failure.metadata == {
+        "failed": "0", "not_run": "3", "item_id": "d3-check:picture-ocr:#/pictures/0",
+    }  # fmt: skip
 
-    # The redrive is a new request: every enrichment is reused and only the checks are sent.
+    # A rerun is a new request: every enrichment is reused and only the checks are sent.
     back = dataclasses.replace(ports, d3=scores(formula=0.5, table=0.99, ocr=0.99))
     again = await enrichment(back, runtime, checked_paper(), "req_2")
-    redriven = await result_of(back, runtime, again, "req_2")
+    rerun = await result_of(back, runtime, again, "req_2")
 
     assert all(o.reused for o in again.outcomes)
     assert len(back.d3.requests) == 3
-    formula = judged_enrichments(redriven)["formula"]
+    formula = judged_enrichments(rerun)["formula"]
     assert (formula["status"], formula["status_reason"]) == ("disputed", "FORMULA_D3_UNFAITHFUL")
-    assert await ports.store.head("documents/doc_1/service-unavailable/req_2") is None
 
 
-async def test_a_reply_without_a_score_is_not_run_for_good_and_waits_for_no_redrive(ports, runtime):
+async def test_a_reply_without_a_score_fails_the_request_for_good(ports, runtime):
     garbled = dataclasses.replace(ports, d3=FakeInference(lambda request: completion("{}")))
     input = await enrichment(garbled, runtime, checked_paper())
 
-    result = await result_of(garbled, runtime, input)
+    failure = await failure_of(garbled, runtime, input)
 
-    formula = judged_enrichments(result)["formula"]
-    assert (formula["status"], formula["status_reason"]) == ("unverified", None)
-    assert formula["signals"]["d3"] == {"state": "not_run", "reason": "SCHEMA_INVALID"}
-    assert await ports.store.head(MARKER) is None
+    assert (failure.category, failure.reason, failure.retryable) == (
+        "method", "QUALITY_CHECK_INCOMPLETE", False,
+    )  # fmt: skip
+    assert failure.metadata["not_run"] == "3"
 
-    # Registered like any invalid reply: the next request reuses it and asks nothing.
+    # Registered like any invalid reply: the next request reuses it, asks nothing and fails alike.
     sent = len(garbled.d3.requests)
     again = await enrichment(garbled, runtime, checked_paper(), "req_2")
-    await result_of(garbled, runtime, again, "req_2")
+    assert (await failure_of(garbled, runtime, again, "req_2")).details() == failure.details()
     assert len(garbled.d3.requests) == sent
+
+
+async def test_a_missing_result_of_another_reason_makes_an_outage_not_retryable(ports, runtime):
+    # The formula fails on its content; the other two checks find no service.
+    ports = dataclasses.replace(
+        ports,
+        vlm=formula_answering("{not json"),
+        d3=fake_d3(ServiceUnavailable("TIMEOUT")),
+    )
+    input = await enrichment(ports, runtime, checked_paper())
+
+    failure = await failure_of(ports, runtime, input)
+
+    assert (failure.reason, failure.retryable) == ("ENRICHMENT_INCOMPLETE", False)
+    assert (failure.metadata["failed"], failure.metadata["not_run"]) == ("1", "2")
+
+
+async def test_an_outage_of_both_services_is_retryable(ports, runtime):
+    ports = dataclasses.replace(
+        ports,
+        vlm=formula_answering_with(ServiceUnavailable("HTTP_5XX")),
+        d3=fake_d3(ServiceUnavailable("TIMEOUT")),
+    )
+    input = await enrichment(ports, runtime, checked_paper())
+
+    failure = await failure_of(ports, runtime, input)
+
+    assert (failure.reason, failure.category, failure.retryable) == (
+        "ENRICHMENT_INCOMPLETE", "platform", True,
+    )  # fmt: skip
+    assert (failure.metadata["failed"], failure.metadata["not_run"]) == ("1", "2")
 
 
 async def test_a_judged_item_without_its_check_outcome_fails_integrity(ports, runtime):
@@ -312,6 +349,7 @@ async def test_the_request_cap_counts_the_check_items(ports, runtime):
     failure = caught.value
     assert (failure.category, failure.reason) == ("configuration", "REQUEST_CAP_EXCEEDED")
     assert failure.metadata["limit"] == "10"
+    assert failure.retryable is False
     # Only the checks' own receipts count: the VLM's three sends of this attempt do not.
     assert len(ports.d3.requests) == 10
 
@@ -371,7 +409,6 @@ async def test_a_profile_without_the_check_judges_nothing_and_needs_no_d3_servic
     assert {(e["status"], e["status_reason"]) for e in judged_enrichments(result).values()} == {
         ("unverified", None), ("unverified", "NO_TEXT"),
     }  # fmt: skip
-    assert not await ports.store.list_prefix("documents/doc_1/service-unavailable")
 
     # The same paper under the profile with the check: all else is reused, the checks are new.
     on = dataclasses.replace(ports, d3=scores(formula=0.5, table=0.99, ocr=0.99))
@@ -389,19 +426,24 @@ async def test_a_profile_without_the_check_judges_nothing_and_needs_no_d3_servic
     )  # fmt: skip
 
 
-async def test_each_judgement_is_counted_as_an_item_outcome_of_the_check(ports, runtime):
-    def count(status: str, reason: str) -> float:
-        labels = {"method": "d3-check@1", "status": status, "reason": reason}
+async def test_every_enrichment_and_judgement_is_counted_also_when_the_request_fails(
+    ports, runtime
+):
+    def count(method: str, status: str, reason: str) -> float:
+        labels = {"method": method, "status": status, "reason": reason}
         return REGISTRY.get_sample_value("kp_canonicalization_item_outcomes_total", labels) or 0.0
 
-    series = [("disputed", "FORMULA_D3_UNFAITHFUL"), ("unverified", ""),
-              ("not_run", "SERVICE_UNAVAILABLE")]  # fmt: skip
+    series = [("d3-check@1", "disputed", "FORMULA_D3_UNFAITHFUL"),
+              ("d3-check@1", "unverified", ""),
+              ("d3-check@1", "not_run", "SERVICE_UNAVAILABLE"),
+              ("formula@1", "disputed", "FORMULA_D3_UNFAITHFUL"),
+              ("table-status@1", "unverified", "")]  # fmt: skip
     before = [count(*labels) for labels in series]
     answered = dataclasses.replace(
         ports, d3=scores(formula=0.5, table=ServiceUnavailable("TIMEOUT"), ocr=0.99)
     )
     input = await enrichment(answered, runtime, checked_paper())
 
-    await result_of(answered, runtime, input)
+    assert (await failure_of(answered, runtime, input)).reason == "QUALITY_CHECK_INCOMPLETE"
 
-    assert [count(*labels) - was for labels, was in zip(series, before, strict=True)] == [1, 1, 1]
+    assert [count(*labels) - was for labels, was in zip(series, before, strict=True)] == [1] * 5

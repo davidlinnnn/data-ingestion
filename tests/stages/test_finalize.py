@@ -11,7 +11,8 @@ import types
 import pytest
 
 from kp_canonicalization.stages import FailureInput, ProcessingFailure, error_block, finalize
-from tests.stages.test_enrich_local import counting, enriched, enriched_paper
+from tests.stages.test_check import checked_paper, formula_answering, run_check
+from tests.stages.test_enrich_local import counting, enriched, enriched_paper, enrichment
 from tests.stages.test_parse import seven_pages
 
 
@@ -70,7 +71,7 @@ async def test_the_processing_result_describes_request_profile_and_native_eviden
     # field enrichments apiece. Docling also reads the eleven-line paragraphs of some pages as
     # tables; each native table becomes a table-status item. One Document Summary per document.
     tables = len(assembly["document"]["tables"])
-    zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
+    zero = {"unverified": 0, "disputed": 0, "no_text": 0}
     assert result["inventory"] == {
         "ref": input.inventory.ref,
         "counts": {"picture-ocr": {**zero, "no_text": 2},
@@ -230,7 +231,7 @@ async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_statu
     ]
     assert enrichments[-1]["item_id"] == "document-summary:#"
     assert enrichments[-1]["target_refs"] == ["#"]
-    zero = {"unverified": 0, "disputed": 0, "failed": 0, "no_text": 0}
+    zero = {"unverified": 0, "disputed": 0, "no_text": 0}
     assert result["inventory"]["counts"] == {
         "picture-ocr": {**zero, "unverified": 1, "no_text": 1},
         "picture-interpretation": {**zero, "unverified": 8},
@@ -254,6 +255,7 @@ async def test_an_item_without_an_outcome_record_fails_integrity(ports, runtime)
         "OUTCOME_RECORD_MISSING",
     )
     assert failure.metadata["item_id"] == input.outcomes[2].item_id
+    assert failure.retryable is True  # nothing registered: a rerun writes the record again
     assert await ports.store.head("requests/req_1/result.json") is None
 
 
@@ -313,3 +315,30 @@ async def test_large_content_stays_in_the_outcome_record(ports, runtime, monkeyp
     assert contents["code"] is None
     table = next(e for e in result["enrichments"] if e["item_id"].startswith("table-status:"))
     assert json.loads(await ports.store.get(table["result_ref"]))["content"]["html"]
+
+
+# --- completeness: every item has a result (#276, #57 B7 and B9) ----------------------------
+
+
+async def finalized(ports, runtime, input):
+    """finalize.run after the check, as the workflow runs them."""
+    checks = await run_check(ports, runtime, input)
+    return await finalize.run(
+        dataclasses.replace(input, outcomes=[*input.outcomes, *checks]), ports, runtime
+    )
+
+
+async def test_a_failed_enrichment_fails_the_request_without_a_result(ports, runtime):
+    ports = dataclasses.replace(ports, vlm=formula_answering("{not json"))
+    input = await enrichment(ports, runtime, checked_paper())
+
+    with pytest.raises(ProcessingFailure) as caught:
+        await finalized(ports, runtime, input)
+
+    failure = caught.value
+    assert (failure.cause, failure.category, failure.reason, failure.retryable) == (
+        "platform", "method", "ENRICHMENT_INCOMPLETE", False,
+    )  # fmt: skip
+    (formula,) = [o.item_id for o in input.outcomes if o.item_id.startswith("formula:")]
+    assert failure.metadata == {"failed": "1", "not_run": "0", "item_id": formula}
+    assert await ports.store.head("requests/req_1/result.json") is None

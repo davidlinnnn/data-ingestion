@@ -190,7 +190,7 @@ async def register_transient(
 ) -> OutcomeRef:
     """Write a SERVICE_UNAVAILABLE outcome and its files (put_if_absent) under prefix,
     requests/{request_id}/attempts/{run_id}/outcomes/{key}, its refs naming them there, and never
-    register it: a redrive sends again instead of reusing the failure, and its own answer
+    register it: a rerun sends again instead of reusing the failure, and its own answer
     becomes the registered artifact."""
     body = enrichment_body(method, prefix, output)
     for name, data in output.files.items():
@@ -314,12 +314,14 @@ class Sends:
                                  when the next send (after its backoff) would start past the
                                  deadline
 
-        Errors (ProcessingFailure, all cause "platform", metadata {"item_id", ...}):
-          no transport for the service                    configuration METHOD_UNAVAILABLE
+        Errors (ProcessingFailure, all cause "platform", metadata {"item_id", ...}; R:
+        retryable):
+          no transport for the service                    configuration METHOD_UNAVAILABLE R
           RequestRejected(status)                         configuration INFERENCE_REQUEST_REJECTED
-                                                          (metadata also {"status"})
+                                                          (metadata also {"status"}); R for
+                                                          401, 403, 404 and 3xx
           a receipt number already taken (another worker
-          sends the same chain in this attempt)           integrity     RECEIPT_CONFLICT
+          sends the same chain in this attempt)           integrity     RECEIPT_CONFLICT R
           a send beyond the limit (the service's receipts
           in the attempt, listed before each send, so
           Activities sending at once share it)            configuration REQUEST_CAP_EXCEEDED
@@ -388,6 +390,7 @@ class Sends:
                         "integrity",
                         "RECEIPT_CONFLICT",
                         "External request receipt already exists",
+                        retryable=True,
                         metadata={"item_id": item_id},
                     )
             attempts += 1
@@ -404,6 +407,8 @@ class Sends:
                     "configuration",
                     "INFERENCE_REQUEST_REJECTED",
                     "Inference request was rejected",
+                    # Credentials, URL or model name: a deployment fix lets a rerun pass.
+                    retryable=exc.status in (401, 403, 404) or 300 <= exc.status < 400,
                     metadata={"item_id": item_id, "status": str(exc.status)},
                 ) from exc
             except MethodUnavailable as exc:

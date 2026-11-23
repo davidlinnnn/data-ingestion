@@ -9,7 +9,6 @@ the only one that loads it, vlm sends the VLM requests, summary the Document Sum
 the Quality Check's."""
 
 import asyncio
-import json
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
@@ -122,17 +121,13 @@ class Orchestration(_Activities):
     @activity.defn(name="finalize")
     async def finalize(self, input: FinalizeInput) -> str:
         ref = await self._run(finalize.run, input)
-        result = json.loads(await self.ports.store.get(ref))
-        for e in result["enrichments"]:
-            method = f"{e['method_ref']['id']}@{e['method_ref']['version']}"
-            metrics.item_outcomes.labels(method, e["status"], e["status_reason"] or "").inc()
-        metrics.document_outcomes.labels("complete", _tier()).inc()
+        metrics.document_outcomes.labels("complete", _tier(), "").inc()
         return ref
 
     @activity.defn(name="register_failure")
     async def register_failure(self, input: FailureInput) -> str:
         ref = await self._run(finalize.run_failure, input)
-        metrics.document_outcomes.labels("failed", _tier()).inc()
+        metrics.document_outcomes.labels("failed", _tier(), input.error["reason"]).inc()
         return ref
 
     @activity.defn(name="report")

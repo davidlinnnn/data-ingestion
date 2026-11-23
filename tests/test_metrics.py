@@ -91,7 +91,7 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     assert outcomes[(("method", "picture-ocr@1"), ("reason", "NO_TEXT"),
                      ("status", "unverified"))] == 2  # fmt: skip
     assert d["kp_canonicalization_document_outcomes_total"] == {
-        (("outcome", "complete"), normal): 1
+        (("outcome", "complete"), ("reason", ""), normal): 1
     }
     assert d["kp_canonicalization_queue_age_seconds_count"] == {
         (("task_queue", "paper-pdf-1.orchestration"), normal): ORCHESTRATION_ACTIVITIES,
@@ -137,8 +137,9 @@ async def test_a_processed_paper_emits_the_activity_metrics(client, ports, runti
     }
 
 
-async def test_a_failed_document_counts_as_failed(client, ports, runtime):
-    before = sample("kp_canonicalization_document_outcomes_total", outcome="failed", tier="normal")
+async def test_a_failed_document_counts_as_failed_with_its_reason(client, ports, runtime):
+    labels = {"outcome": "failed", "tier": "normal", "reason": "PASSWORD_REQUIRED"}
+    before = sample("kp_canonicalization_document_outcomes_total", **labels)
     start = await start_input(
         ports, encrypt(write_pdf(paper(2))), request_id=f"req_{uuid.uuid4().hex[:8]}"
     )
@@ -146,16 +147,17 @@ async def test_a_failed_document_counts_as_failed(client, ports, runtime):
     outcome, _ = await process(client, ports, runtime, start)
 
     assert outcome["outcome"] == "failed"
-    after = sample("kp_canonicalization_document_outcomes_total", outcome="failed", tier="normal")
+    after = sample("kp_canonicalization_document_outcomes_total", **labels)
     assert after - before == 1
 
 
 async def test_a_low_priority_request_is_measured_as_bulk_and_its_status_stages_are_timed(
     ports, runtime
 ):
+    complete_bulk = {"outcome": "complete", "tier": "bulk", "reason": ""}
     buffer = MetricBuffer(100_000)  # the SDK's own metrics share it
     temporal = Runtime(telemetry=TelemetryConfig(metrics=buffer))
-    before = sample("kp_canonicalization_document_outcomes_total", outcome="complete", tier="bulk")
+    before = sample("kp_canonicalization_document_outcomes_total", **complete_bulk)
     start = await start_input(
         ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}", priority="low"
     )
@@ -165,7 +167,7 @@ async def test_a_low_priority_request_is_measured_as_bulk_and_its_status_stages_
         outcome, _ = await process(env.client, ports, runtime, start)
 
     assert outcome["outcome"] == "complete"
-    after = sample("kp_canonicalization_document_outcomes_total", outcome="complete", tier="bulk")
+    after = sample("kp_canonicalization_document_outcomes_total", **complete_bulk)
     assert after - before == 1
     stages = [
         (u.attributes["stage"], u.attributes["tier"], u.value)

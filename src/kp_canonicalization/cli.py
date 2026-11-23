@@ -43,7 +43,7 @@ from kp_canonicalization.ports.inference import Bounded, OpenAIChat, SystemOne
 from kp_canonicalization.ports.object_store import S3ObjectStore
 from kp_canonicalization.ports.status_reporter import HttpStatusReporter
 from kp_canonicalization.profile import ProfileError, latest_profile, load_profile
-from kp_canonicalization.stages import Ports, Runtime, finalize
+from kp_canonicalization.stages import Ports, Runtime
 from kp_canonicalization.workflow import QUEUES, Queue, deployment_name, task_queue
 
 log = logging.getLogger(__name__)
@@ -79,10 +79,6 @@ def main(argv: list[str] | None = None) -> int:
     deployment values' `profiles` mapping. It logs JSON lines: what it did, then the message
     `promoter ok`; or each alarm at level ERROR, and exits 1, as does a run that raised. Values
     without a profile exit 2.
-
-    `kp-canonicalization list-service-unavailable`: one JSON line {"document_uid", "request_id"}
-    per redrive marker, for #98's redrive; it does not check that the request is still its
-    document's current revision.
     """
     parser = argparse.ArgumentParser(prog="kp-canonicalization")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -100,7 +96,6 @@ def main(argv: list[str] | None = None) -> int:
     start.add_argument("--wait", action="store_true")
     promote = commands.add_parser("promote")
     promote.add_argument("wanted", type=Path)
-    commands.add_parser("list-service-unavailable")
     args = parser.parse_args(argv)
 
     if args.command == "worker":
@@ -119,10 +114,6 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(start_request(start_input, args.wait))
     if args.command == "promote":
         return asyncio.run(run_promoter(yaml.safe_load(args.wanted.read_text())))
-    if args.command == "list-service-unavailable":
-        for marker in asyncio.run(finalize.service_unavailable(S3ObjectStore.from_env())):
-            print(json.dumps(marker))
-        return 0
     try:
         loaded = load_profile(args.path)
     except ProfileError as exc:
