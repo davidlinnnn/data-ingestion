@@ -14,7 +14,6 @@ Object keys (#129, object storage and registration):
                                                       chunk or the overview (#155)
     requests/{request_id}/attempts/{run_id}/outcomes/{key}/outcome.json
                                                       outcome records that must not be reused
-    documents/{document_uid}/service-unavailable/{request_id}  redrive marker (empty)
     requests/{request_id}/result.json | failure.json  the Processing Result or failure report
 
 Enrichment (#132): inventory lists one item per enrichment target; an enrichment Activity
@@ -68,7 +67,9 @@ class Runtime:
 
 class ProcessingFailure(Exception):
     """A failure that ends the request with a failure report. `reason` is UPPER_SNAKE_CASE;
-    `metadata` holds extra string facts (limit and actual values) for the AIP-193 block."""
+    `metadata` holds extra string facts (limit and actual values) for the AIP-193 block.
+    `retryable` is False exactly when a rerun of the same Processing Profile version must fail
+    the same way (#57 M3); #98's scan reruns such a request once per adoption."""
 
     def __init__(
         self,
@@ -229,6 +230,7 @@ def outcome_record_missing(item_id: str) -> ProcessingFailure:
         "integrity",
         "OUTCOME_RECORD_MISSING",
         "Enrichment outcome record is missing or differs from its declared digest",
+        retryable=True,
         metadata={"item_id": item_id},
     )
 
@@ -276,13 +278,15 @@ class OutcomeRef:
 
 def method_failure(item_id: str, error: Exception) -> ProcessingFailure:
     """A method's exception as the document failure: MethodUnavailable is configuration /
-    METHOD_UNAVAILABLE, anything else method / METHOD_ERROR."""
+    METHOD_UNAVAILABLE, retryable (a deployment fix cures it), anything else method /
+    METHOD_ERROR."""
     if isinstance(error, MethodUnavailable):
         return ProcessingFailure(
             "platform",
             "configuration",
             "METHOD_UNAVAILABLE",
             str(error),
+            retryable=True,
             metadata={"item_id": item_id},
         )
     return ProcessingFailure(
@@ -319,6 +323,7 @@ async def enrichment_inputs(
             "integrity",
             "INPUT_DIGEST_MISMATCH",
             "Enrichment input is missing or differs from its declared digest",
+            retryable=True,
             metadata={"item_id": item["item_id"]},
         )
 

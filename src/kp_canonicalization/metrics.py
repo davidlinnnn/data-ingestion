@@ -26,12 +26,15 @@ stage_work = Counter(
 )
 item_outcomes = Counter(
     "kp_canonicalization_item_outcomes",
-    "Enrichments by Enrichment Status and reason; a Quality Check's judgements under its own "
-    "method, with status not_run, disputed or unverified",
+    "Enrichments by Enrichment Status and reason, per finalize attempt, the failed ones "
+    "included; a Quality Check's judgements under its own method, with status not_run, "
+    "disputed or unverified",
     ["method", "status", "reason"],
 )
 document_outcomes = Counter(
-    "kp_canonicalization_document_outcomes", "Completed and failed documents", ["outcome", "tier"]
+    "kp_canonicalization_document_outcomes",
+    "Completed and failed documents; reason is a failure's reason code, empty when complete",
+    ["outcome", "tier", "reason"],
 )
 queue_age = Histogram(
     "kp_canonicalization_queue_age_seconds",

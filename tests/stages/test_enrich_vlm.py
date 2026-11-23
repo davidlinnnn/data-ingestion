@@ -1,6 +1,7 @@
 """Seam A: the VLM enrichment Activity (#133) with real docling and the in-process VLM fake:
 receipts, the retry matrix, the stage budget, the request cap, concurrency, the methods, the
-per-field enrichments and the redrive marker; V7 over hung transports and V9 receipt overhead."""
+per-field enrichments and the request failure a missing result gives; V7 over hung transports
+and V9 receipt overhead."""
 
 import asyncio
 import base64
@@ -136,6 +137,16 @@ async def finalized(ports, runtime, input: FinalizeInput, outcomes) -> dict:
     return json.loads(await ports.store.get(ref))
 
 
+async def incomplete(ports, runtime, input: FinalizeInput, outcomes) -> ProcessingFailure:
+    """finalized()'s run for VLM outcomes with a failed item: the failure finalize raises
+    (#276), with no Processing Result."""
+    with pytest.raises(ProcessingFailure) as caught:
+        await finalized(ports, runtime, input, outcomes)
+    assert caught.value.reason == "ENRICHMENT_INCOMPLETE"
+    assert await ports.store.head("requests/req_1/result.json") is None
+    return caught.value
+
+
 async def receipts(ports, item_id: str, request_id="req_1", run_id="run_1") -> list[dict]:
     prefix = f"requests/{request_id}/attempts/{run_id}/receipts/{item_id}/"
     keys = await ports.store.list_prefix(prefix)
@@ -241,29 +252,27 @@ async def test_picture_interpretation_fields_are_recorded_one_by_one(ports, runt
     assert await ports.store.get(record["provider_artifact_ref"]) == answer.body
 
 
-async def test_a_blank_field_fails_alone_in_the_result(ports, runtime):
+async def test_a_blank_field_fails_alone_and_fails_the_request(ports, runtime):
     input = await native(ports, runtime, one_picture_paper())
     blank = {**CANNED["picture-interpretation"], "caption": "  "}
     ports = dataclasses.replace(ports, vlm=answers(completion(json.dumps(blank))))
 
     outcomes = await run_vlm(ports, runtime, input.inventory)
-    result = await finalized(ports, runtime, input, outcomes)
+    failure = await incomplete(ports, runtime, input, outcomes)
 
-    fields = {e["item_id"]: (e["status"], e["status_reason"]) for e in result["enrichments"]
-              if e["method_ref"]["id"] == "picture-interpretation"}  # fmt: skip
-    assert fields == {
-        "picture-interpretation:#/pictures/0/caption": ("failed", "EMPTY_OUTPUT"),
-        "picture-interpretation:#/pictures/0/chart_values": ("unverified", None),
-        "picture-interpretation:#/pictures/0/description": ("unverified", None),
-        "picture-interpretation:#/pictures/0/figure_type": ("unverified", None),
+    fields = (await records(ports, outcomes))[outcomes[0].item_id]["fields"]
+    assert {name: (f["outcome"], f["reason"]) for name, f in fields.items()} == {
+        "caption": ("failed", "EMPTY_OUTPUT"),
+        "chart_values": ("success", None),
+        "description": ("success", None),
+        "figure_type": ("success", None),
     }
-    assert result["inventory"]["counts"]["picture-interpretation"] == {
-        "unverified": 3, "disputed": 0, "failed": 1, "no_text": 0
+    assert fields["description"]["content"] == blank["description"]
+    # Rule per field: the one blank field is the one missing result.
+    assert failure.metadata == {
+        "failed": "1", "not_run": "0", "item_id": "picture-interpretation:#/pictures/0/caption",
     }  # fmt: skip
-    description = next(e for e in result["enrichments"]
-                       if e["item_id"].endswith("/description"))  # fmt: skip
-    assert description["content"] == blank["description"]
-    assert description["result_ref"] == outcomes[0].ref
+    assert failure.retryable is False
 
 
 async def test_a_refused_picture_fails_every_field(ports, runtime):
@@ -271,11 +280,13 @@ async def test_a_refused_picture_fails_every_field(ports, runtime):
     ports = dataclasses.replace(ports, vlm=answers("REFUSE"))
 
     outcomes = await run_vlm(ports, runtime, input.inventory)
-    result = await finalized(ports, runtime, input, outcomes)
+    failure = await incomplete(ports, runtime, input, outcomes)
 
-    fields = [(e["status"], e["status_reason"]) for e in result["enrichments"]
-              if e["method_ref"]["id"] == "picture-interpretation"]  # fmt: skip
-    assert fields == [("failed", "MODEL_REFUSAL")] * 4
+    fields = (await records(ports, outcomes))[outcomes[0].item_id]["fields"]
+    assert [(f["outcome"], f["reason"]) for f in fields.values()] == [
+        ("failed", "MODEL_REFUSAL")
+    ] * 4
+    assert (failure.metadata["failed"], failure.retryable) == ("4", False)
 
 
 @pytest.mark.parametrize(
@@ -611,12 +622,21 @@ async def test_a_send_past_the_request_cap_fails_the_document(ports, runtime, ea
     )
     assert failure.metadata["limit"] == "1"
     assert failure.metadata["item_id"].startswith("picture-interpretation:")
+    # A chain stays within the cap by itself, so passing it is a defect a rerun meets again.
+    assert failure.retryable is False
     assert len(ports.vlm.requests) == 1 - earlier
 
 
-async def test_a_rejected_request_fails_the_document(ports, runtime):
+# Credentials, the URL or the model name: fixed by deployment, so a rerun can pass. Any other
+# status rejects the request's content, which the same version sends again.
+@pytest.mark.parametrize(
+    "status, retryable",
+    [(301, True), (307, True), (401, True), (403, True), (404, True),
+     (400, False), (413, False), (422, False)],
+)  # fmt: skip
+async def test_a_rejected_request_fails_the_document(ports, runtime, status, retryable):
     input = await native(ports, runtime, one_picture_paper())
-    ports = dataclasses.replace(ports, vlm=answers(RequestRejected(401)))
+    ports = dataclasses.replace(ports, vlm=answers(RequestRejected(status)))
 
     with pytest.raises(ProcessingFailure) as caught:
         await run_vlm(ports, runtime, input.inventory)
@@ -627,7 +647,10 @@ async def test_a_rejected_request_fails_the_document(ports, runtime):
         "configuration",
         "INFERENCE_REQUEST_REJECTED",
     )
-    assert failure.metadata == {"item_id": "picture-interpretation:#/pictures/0", "status": "401"}
+    assert failure.metadata == {
+        "item_id": "picture-interpretation:#/pictures/0", "status": str(status),
+    }  # fmt: skip
+    assert failure.retryable is retryable
 
 
 async def test_a_worker_without_a_transport_fails_before_any_receipt(ports, runtime):
@@ -639,7 +662,32 @@ async def test_a_worker_without_a_transport_fails_before_any_receipt(ports, runt
 
     failure = caught.value
     assert (failure.category, failure.reason) == ("configuration", "METHOD_UNAVAILABLE")
+    assert failure.retryable is True
     assert await receipts(ports, "picture-interpretation:#/pictures/0") == []
+
+
+class TakenReceipts(DictObjectStore):
+    """A store where every receipt number is already taken, as when another worker sends the
+    same chain in this attempt."""
+
+    async def put_if_absent(self, key: str, data: bytes) -> bool:
+        return False if "/receipts/" in key else await super().put_if_absent(key, data)
+
+
+async def test_a_receipt_another_worker_took_fails_the_document_retryably(ports, runtime):
+    input = await native(ports, runtime, one_picture_paper())
+    store = TakenReceipts()
+    store.objects = ports.store.objects  # type: ignore[attr-defined]
+    ports = dataclasses.replace(ports, store=store)
+
+    with pytest.raises(ProcessingFailure) as caught:
+        await run_vlm(ports, runtime, input.inventory)
+
+    failure = caught.value
+    assert (failure.category, failure.reason, failure.retryable) == (
+        "integrity", "RECEIPT_CONFLICT", True,
+    )  # fmt: skip
+    assert len(ports.vlm.requests) == 0
 
 
 # --- reuse, concurrency, heartbeat -----------------------------------------------------------
@@ -727,30 +775,24 @@ async def test_every_item_run_or_reused_sends_a_heartbeat(ports, runtime):
     assert len(beats) == 2 * len(outcomes) == 6
 
 
-# --- SERVICE_UNAVAILABLE and redrive ---------------------------------------------------------
+# --- SERVICE_UNAVAILABLE and reruns ---------------------------------------------------------
 
 
-async def test_service_unavailable_completes_the_document_and_leaves_a_redrive_marker(
+async def test_service_unavailable_is_never_registered_and_fails_the_request_retryably(
     ports, runtime
 ):
     input = await native(ports, runtime, one_picture_paper())
     ports = dataclasses.replace(ports, vlm=answers(*[unavailable()] * 3))
 
     (outcome,) = await run_vlm(ports, runtime, input.inventory)
-    result = await finalized(ports, runtime, input, [outcome])
+    failure = await incomplete(ports, runtime, input, [outcome])
 
-    assert result["outcome"] == "complete"
     assert outcome.ref.startswith("requests/req_1/attempts/run_1/outcomes/")
-    assert await ports.store.list_prefix("documents/doc_1/service-unavailable/") == [
-        "documents/doc_1/service-unavailable/req_1"
-    ]
-    assert await ports.store.get("documents/doc_1/service-unavailable/req_1") == b""
-    assert await finalize.service_unavailable(ports.store) == [
-        {"document_uid": "doc_1", "request_id": "req_1"}
-    ]
+    assert (failure.category, failure.retryable) == ("platform", True)
+    assert failure.metadata["item_id"] == "picture-interpretation:#/pictures/0/caption"
 
 
-async def test_a_redrive_sends_again_instead_of_reusing_the_failure(ports, runtime):
+async def test_a_rerun_sends_again_instead_of_reusing_the_failure(ports, runtime):
     input = await native(ports, runtime, one_picture_paper())
     down = dataclasses.replace(ports, vlm=answers(*[unavailable()] * 3))
     await run_vlm(down, runtime, input.inventory)
@@ -764,7 +806,7 @@ async def test_a_redrive_sends_again_instead_of_reusing_the_failure(ports, runti
     assert record["outcome"] == "success"
 
 
-async def test_a_redrive_registers_its_own_answer_not_the_failed_attempts(ports, runtime):
+async def test_a_rerun_registers_its_own_answer_not_the_failed_attempts(ports, runtime):
     input = await native(ports, runtime, one_picture_paper())
     down = dataclasses.replace(ports, vlm=answers("BAD", unavailable(), unavailable()))
     (failed,) = await run_vlm(down, runtime, input.inventory)
@@ -785,32 +827,13 @@ async def test_a_redrive_registers_its_own_answer_not_the_failed_attempts(ports,
     assert await ports.store.get(record["provider_artifact_ref"]) == canned(request).body
 
 
-async def test_a_document_without_service_failures_leaves_no_marker(ports, runtime):
-    input = await native(ports, runtime, one_picture_paper())
-
-    result = await finalized(ports, runtime, input, await run_vlm(ports, runtime, input.inventory))
-
-    assert result["outcome"] == "complete"
-    assert await finalize.service_unavailable(ports.store) == []
-
-
-async def test_the_redrive_list_names_every_marked_request(ports):
-    for uid, request_id in [("doc_2", "req_9"), ("doc_1", "req_3"), ("doc_1", "req_4")]:
-        await ports.store.put(f"documents/{uid}/service-unavailable/{request_id}", b"")
-    await ports.store.put("documents/doc_1/items/abc/outcome.json", b"{}")
-
-    assert await finalize.service_unavailable(ports.store) == [
-        {"document_uid": "doc_1", "request_id": "req_3"},
-        {"document_uid": "doc_1", "request_id": "req_4"},
-        {"document_uid": "doc_2", "request_id": "req_9"},
-    ]
-
-
 # --- V7: hung transports under the real adapter ----------------------------------------------
 
 
 @pytest.mark.parametrize("variant", ["silent", "headers", "drip"])
-async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports, runtime, variant):
+async def test_v7_a_hung_service_ends_the_item_and_fails_the_request_retryably(
+    ports, runtime, variant
+):
     total_s = 0.3
     hang = Hang(variant)
     chat = OpenAIChat(httpx.AsyncClient(transport=hang), "http://vlm.test/v1", {}, "gpt-6-luna",
@@ -820,7 +843,7 @@ async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports,
     item_id = "picture-interpretation:#/pictures/0"
 
     (outcome,) = await run_vlm(ports, runtime, input.inventory)
-    result = await finalized(ports, runtime, input, [outcome])
+    failure = await incomplete(ports, runtime, input, [outcome])
 
     sent = await receipts(ports, item_id)
     assert [(r["result"], r["reason"]) for r in sent] == [("unavailable", "TIMEOUT")] * 3
@@ -828,10 +851,7 @@ async def test_v7_a_hung_service_ends_the_item_and_the_document_completes(ports,
     assert hang.ended() == 3
     record = (await records(ports, [outcome]))[item_id]
     assert (record["outcome"], record["reason"]) == ("failed", "SERVICE_UNAVAILABLE")
-    assert result["outcome"] == "complete"
-    assert await finalize.service_unavailable(ports.store) == [
-        {"document_uid": "doc_1", "request_id": "req_1"}
-    ]
+    assert failure.retryable is True
 
 
 # --- #202: configured headers stay out of receipts and logs -----------------------------------

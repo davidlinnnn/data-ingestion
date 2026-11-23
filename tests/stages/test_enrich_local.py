@@ -364,7 +364,7 @@ async def test_every_item_run_or_reused_sends_a_heartbeat(ports, runtime):
     assert len(beats) == 9
 
 
-async def test_an_undecodable_picture_is_a_failed_item_and_the_document_completes(ports, runtime):
+async def test_an_undecodable_picture_is_a_failed_item_and_fails_the_request(ports, runtime):
     input = await native(ports, runtime, enriched_paper())
     items = await items_of(ports, await local_only(ports, input.inventory))
     junk = b"not a png"
@@ -374,7 +374,8 @@ async def test_an_undecodable_picture_is_a_failed_item_and_the_document_complete
 
     outcomes = await enrich_local.run(enrich_input(inv), ports, runtime)
     final = dataclasses.replace(input, inventory=inv, outcomes=outcomes)
-    ref = await finalize.run(await checked(ports, runtime, final), ports, runtime)
+    with pytest.raises(ProcessingFailure) as caught:
+        await finalize.run(await checked(ports, runtime, final), ports, runtime)
 
     record = (await records(ports, outcomes))["picture-ocr:#/pictures/0"]
     assert (record["outcome"], record["reason"], record["content"]) == (
@@ -382,13 +383,12 @@ async def test_an_undecodable_picture_is_a_failed_item_and_the_document_complete
         "RENDER_FAILED",
         None,
     )
-    result = json.loads(await ports.store.get(ref))
-    assert result["outcome"] == "complete"
-    enrichment = result["enrichments"][0]
-    assert (enrichment["status"], enrichment["status_reason"]) == ("failed", "RENDER_FAILED")
+    failure = caught.value
+    assert (failure.reason, failure.retryable) == ("ENRICHMENT_INCOMPLETE", False)
+    assert failure.metadata["item_id"] == "picture-ocr:#/pictures/0"
 
 
-async def test_a_document_whose_items_all_fail_still_completes(ports, runtime):
+async def test_a_document_whose_items_all_fail_counts_them_in_the_failure(ports, runtime):
     input = await native(ports, runtime, enriched_paper())
     items = await items_of(ports, await local_only(ports, input.inventory))
     junk = b"not a png"
@@ -402,19 +402,14 @@ async def test_a_document_whose_items_all_fail_still_completes(ports, runtime):
     inv = await with_items(ports, input.inventory, items)
 
     outcomes = await enrich_local.run(enrich_input(inv), ports, runtime)
-    ref = await finalize.run(
-        dataclasses.replace(input, inventory=inv, outcomes=outcomes), ports, runtime
-    )
+    with pytest.raises(ProcessingFailure) as caught:
+        await finalize.run(
+            dataclasses.replace(input, inventory=inv, outcomes=outcomes), ports, runtime
+        )
 
-    result = json.loads(await ports.store.get(ref))
-    assert result["outcome"] == "complete"
-    assert [(e["status"], e["status_reason"]) for e in result["enrichments"]] == [
-        ("failed", "RENDER_FAILED"),
-        ("failed", "RENDER_FAILED"),
-        ("failed", "RENDER_FAILED"),
-    ]
-    assert result["inventory"]["counts"]["picture-ocr"] == {
-        "unverified": 0, "disputed": 0, "failed": 2, "no_text": 0
+    assert {r["reason"] for r in (await records(ports, outcomes)).values()} == {"RENDER_FAILED"}
+    assert caught.value.metadata == {
+        "failed": "3", "not_run": "0", "item_id": "picture-ocr:#/pictures/0",
     }  # fmt: skip
 
 
@@ -433,6 +428,7 @@ async def test_an_input_that_differs_from_its_digest_fails_integrity(ports, runt
         "INPUT_DIGEST_MISMATCH",
     )
     assert failure.metadata["item_id"] == item["item_id"]
+    assert failure.retryable is True
 
 
 async def test_missing_ocr_weights_are_a_configuration_failure(
@@ -451,6 +447,7 @@ async def test_missing_ocr_weights_are_a_configuration_failure(
         "METHOD_UNAVAILABLE",
     )
     assert failure.metadata["item_id"] == "picture-ocr:#/pictures/0"
+    assert failure.retryable is True
 
 
 async def test_an_exception_inside_a_method_is_a_method_failure(ports, runtime, monkeypatch):

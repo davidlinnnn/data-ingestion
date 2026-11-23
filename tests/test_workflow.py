@@ -31,7 +31,7 @@ from kp_canonicalization.worker import make_worker
 from kp_canonicalization.workflow import QUEUES, WORKFLOW, activity_options, priority, task_queue
 from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
-from tests.stages.test_check import checked_paper, without_check
+from tests.stages.test_check import checked_paper, formula_answering, without_check
 from tests.stages.test_parse import seven_pages
 
 pytestmark = pytest.mark.network
@@ -572,7 +572,7 @@ async def test_an_unclassified_activity_failure_is_a_retryable_platform_error(
     }
 
 
-async def test_a_summary_past_its_budget_does_not_hold_the_document(client, ports, runtime):
+async def test_a_summary_past_its_budget_fails_the_request_retryably(client, ports, runtime):
     async def hang(request: dict):
         await asyncio.sleep(60)
         return completion("{}")
@@ -583,14 +583,34 @@ async def test_a_summary_past_its_budget_does_not_hold_the_document(client, port
 
     outcome, _ = await process(client, ports, runtime, start)
 
-    assert outcome["outcome"] == "complete"
-    result = json.loads(await ports.store.get(outcome["manifest_ref"]))
-    summary = result["enrichments"][-1]
-    assert (summary["item_id"], summary["status"], summary["status_reason"]) == (
-        "document-summary:#", "failed", "SERVICE_UNAVAILABLE",
-    )  # fmt: skip
-    marker = f"documents/doc_1/service-unavailable/{start['request_id']}"
-    assert await ports.store.head(marker) is not None
+    # The budget ends the summary, not the document's wait: the request fails, for a rerun.
+    assert outcome["outcome"] == "failed"
+    failure = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    assert failure["stage"] == "finalize"
+    error = failure["error"]
+    assert (error["reason"], error["retryable"]) == ("ENRICHMENT_INCOMPLETE", True)
+    assert error["metadata"]["item_id"] == "document-summary:#"
+    assert await ports.store.head(f"requests/{start['request_id']}/result.json") is None
+
+
+async def test_a_second_run_of_a_failed_request_fails_alike_and_writes_no_result(
+    client, ports, runtime
+):
+    # A reconciler redispatch: the same request ID, a new run, the content failure reused.
+    ports = dataclasses.replace(ports, vlm=formula_answering("{not json"))
+    start = await start_input(ports, checked_paper(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+
+    first, first_run = await process(client, ports, runtime, start)
+    sent = len(ports.vlm.requests)
+    second, second_run = await process(client, ports, runtime, start)
+
+    assert first_run != second_run
+    assert (first["outcome"], second["outcome"]) == ("failed", "failed")
+    assert [(o["error"]["reason"], o["error"]["retryable"]) for o in (first, second)] == [
+        ("ENRICHMENT_INCOMPLETE", False)
+    ] * 2
+    assert len(ports.vlm.requests) == sent  # the formula's failure was registered and reused
+    assert await ports.store.head(f"requests/{start['request_id']}/result.json") is None
 
 
 async def test_the_adoption_gate_file_completes_end_to_end(client, ports, runtime):
@@ -605,3 +625,7 @@ async def test_the_adoption_gate_file_completes_end_to_end(client, ports, runtim
     result = json.loads(await ports.store.get(outcome["manifest_ref"]))
     kinds = {e["item_id"].split(":")[0] for e in result["enrichments"]}
     assert {"picture-interpretation", "document-summary"} <= kinds
+    # The completeness rule (#276) holds on this file: no missing result, and d3 judged.
+    assert not [e for e in result["enrichments"] if e["status"] == "failed"]
+    assert not [e for e in result["enrichments"] if e["signals"].get("d3", {}).get("state")]
+    assert [e for e in result["enrichments"] if "score" in e["signals"].get("d3", {})]
