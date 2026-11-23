@@ -33,3 +33,12 @@ mandatory cross-run content comparison or merging. Without a clear replacement
 basis, retain an existing selection only while it remains eligible; otherwise
 expose unresolved selection instead of choosing by completion order. This avoids
 both duplicate versions from redelivery and an unnecessary global deduplication mechanism.
+
+**2026-11-23** ([#57](https://github.com/davidlinnnn/data-ingestion/issues/57), ADR-0015 and ADR-0016).
+Selection is now two comparisons made once by the platform in the acceptance
+transaction: a newer Source Revision, then a higher adoption sequence. "Retain
+an existing selection only while it remains eligible; otherwise expose
+unresolved selection" has no case in the pilot: nothing there makes a current
+revision ineligible. A Document whose current revision was made by a withdrawn
+version keeps serving it until its redo is accepted, also when the redo fails
+(user, 2026-11-22). Adding governance withdrawal or invalidation reopens this.
