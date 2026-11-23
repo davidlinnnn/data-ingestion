@@ -48,7 +48,8 @@ def main(argv: list[str] | None = None) -> int:
     """`kp-admission api [--metrics-port P]`: serve the platform API on KP_ADMISSION_API_PORT
     (default 8080) until SIGTERM or SIGINT; it finishes open requests, then ends by that signal, as
     uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics, and
-    kp_admission.feed's gauges, measured every OBSERVE_S seconds.
+    the gauges of kp_admission.feed, kp_admission.serving and kp_admission.adoption, measured
+    every OBSERVE_S seconds.
     KP_AUTHZ_PROVIDER selects the authz provider: `allow-all`, the only one, which it refuses
     unless KP_DEPLOYMENT is `pilot` (#113; the marker is #78's). KP_AUTHZ_PEP_CREDENTIALS registers
     the PEPs that may call the authz API, as a JSON object from the SHA-256 hex digest of each
@@ -297,6 +298,7 @@ async def observe(pool: AsyncConnectionPool[Any], pipelines: dict[str, reports.P
             async with pool.connection() as conn:
                 await feed.observe(conn)
                 await serving.silent(conn, pipelines, datetime.now(UTC))
+                await adoption.observe(conn)
         except Exception as error:  # the gauges keep their last values; the api keeps serving
             log.warning("feed and liveness metrics not measured: %s", type(error).__name__)
         await asyncio.sleep(OBSERVE_S)

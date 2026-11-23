@@ -6,6 +6,7 @@ import asyncio
 
 import psycopg
 import pytest
+from prometheus_client import REGISTRY
 
 from kp_admission import adoption
 
@@ -298,3 +299,35 @@ async def test_a_reader_waiting_on_a_declared_cancellation_sees_no_version(dsn, 
         await writer.commit()
 
         assert await waiting is None
+
+
+def sample(name: str, **labels: str) -> float | None:
+    return REGISTRY.get_sample_value(name, labels)
+
+
+async def test_each_run_is_counted_and_its_latest_result_is_a_gauge_the_api_measures(conn):
+    """The CronJob's pod ends after each run, so the api measures what it recorded (#261, the
+    2026-11-23 ruling that alerts come from metrics)."""
+    waiting = Gate(waiting="check_running")
+    await adoption.apply(conn, "t1", {PDF: entry(1)}, waiting)
+    await adoption.apply(conn, "t1", {PDF: entry(1)}, waiting)
+    await conn.execute("UPDATE adoption_status SET since = now() - interval '10 minutes'")
+    await adoption.apply(conn, "t1", {PDF: entry(1)}, Gate(waiting="check_failed"))
+    await adoption.observe(conn)
+
+    runs = "kp_admission_adoption_runs"
+    assert sample(runs, media_type=PDF, result="waiting", reason="check_running") == 2
+    assert sample(runs, media_type=PDF, result="waiting", reason="check_failed") == 1
+    status = "kp_admission_adoption_status"
+    assert sample(status, media_type=PDF, result="waiting", reason="check_failed") == 1
+    assert sample(status, media_type=PDF, result="waiting", reason="check_running") is None
+    waited = sample("kp_admission_adoption_status_seconds", media_type=PDF)
+    assert waited is not None and 600 <= waited < 700  # the wait counts across its reasons
+
+    await adoption.apply(conn, "t1", {PDF: entry(1, "paper-pdf@1", kept=["x"])}, Gate())
+    await adoption.observe(conn)
+
+    assert sample(status, media_type=PDF, result="refused", reason="bad_declaration") == 1
+    assert sample(status, media_type=PDF, result="waiting", reason="check_failed") is None
+    refused_for = sample("kp_admission_adoption_status_seconds", media_type=PDF)
+    assert refused_for is not None and 0 <= refused_for < 60  # a new result starts again

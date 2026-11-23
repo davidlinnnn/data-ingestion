@@ -404,6 +404,10 @@ async def test_writes_lost_applies_each_declared_event_once(conn, dsn):
 @pytest.mark.network
 async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(conn, dsn):
     await feed.report_cursor(conn, "wiki", await feed.head(conn))
+    await conn.execute(  # an apply-adoption run's record (#261)
+        "INSERT INTO adoption_status (tenant_id, media_type, result, reason, since)"
+        " VALUES ('t1', 'application/pdf', 'refused', 'version_withdrawn', now())"
+    )
     await conn.execute(
         "INSERT INTO build (projection, build_id, state, reported_at)"
         " VALUES ('wiki', 'b1', 'serving', now() - interval '1 hour')"
@@ -427,6 +431,10 @@ async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(
     assert 'kp_feed_consumer_lag_seconds{projection="wiki"} 0.0' in page
     assert "kp_feed_oldest_xmin_age_seconds " in page
     assert 'kp_serving_builds_without_liveness{projection="wiki"} 1.0' in page
+    assert (
+        'kp_admission_adoption_status{media_type="application/pdf",reason="version_withdrawn",'
+        'result="refused"} 1.0'
+    ) in page
 
 
 @pytest.mark.docker

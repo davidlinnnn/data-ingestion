@@ -110,7 +110,8 @@ async def test_every_admission_record_carries_a_tenant(conn):
     assert dict(await cursor.fetchall()) == dict.fromkeys(
         ["batch", "batch_item", "document", "source_revision", "request", "outbox",
          "idempotency_key", "source", "change_feed", "adoption",
-         "intake_quota", "canonical_revision", "withdrawn_version", "adoption_check"], "NO",
+         "intake_quota", "canonical_revision", "withdrawn_version", "adoption_check",
+         "adoption_run", "adoption_status"], "NO",
     ) | {
         # Platform-wide: a projection reads every tenant's feed (#126) and its Builds serve
         # them all (#252), and a repair or a loss of writes concerns a whole Build (#260).

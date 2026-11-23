@@ -361,6 +361,24 @@ CREATE TABLE adoption_check (
     UNIQUE (media_type, version, attempt)
 );
 
+-- apply-adoption's runs (#261), which the api measures into gauges: the CronJob's pod is gone.
+CREATE TABLE adoption_run (
+    tenant_id  text NOT NULL,
+    media_type text NOT NULL,
+    result     text NOT NULL,
+    reason     text NOT NULL,
+    runs       bigint NOT NULL,
+    PRIMARY KEY (media_type, result, reason)
+);
+
+CREATE TABLE adoption_status (
+    media_type text PRIMARY KEY,
+    tenant_id  text NOT NULL,
+    result     text NOT NULL,  -- of the latest run
+    reason     text NOT NULL,
+    since      timestamptz NOT NULL  -- when the result last changed
+);
+
 -- Authorization records (authorization design §5.1, #113), in their own schema so that a
 -- later provider and its database role can own them.
 CREATE SCHEMA authz;

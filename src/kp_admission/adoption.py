@@ -15,6 +15,7 @@ from typing import Annotated, Any, Literal
 
 import psycopg
 import pydantic
+from prometheus_client import Gauge
 from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
 
@@ -170,8 +171,64 @@ async def apply(
                                    "declaration": result.declaration, "version": result.version,
                                    "result": result.result, "reason": result.reason}},
         )  # fmt: skip
+        await _record(conn, tenant_id, result)
         results.append(result)
     return results
+
+
+async def _record(conn: AsyncConnection, tenant_id: str, result: "Applied") -> None:
+    values = (tenant_id, result.media_type, result.result, result.reason)
+    await conn.execute(
+        "INSERT INTO adoption_run (tenant_id, media_type, result, reason, runs)"
+        " VALUES (%s, %s, %s, %s, 1) ON CONFLICT (media_type, result, reason)"
+        " DO UPDATE SET runs = adoption_run.runs + 1",
+        values,
+    )
+    await conn.execute(
+        "INSERT INTO adoption_status (tenant_id, media_type, result, reason, since)"
+        " VALUES (%s, %s, %s, %s, now()) ON CONFLICT (media_type) DO UPDATE SET"
+        " result = EXCLUDED.result, reason = EXCLUDED.reason, since = CASE"
+        " WHEN adoption_status.result = EXCLUDED.result THEN adoption_status.since ELSE now() END",
+        values,
+    )
+
+
+runs = Gauge(
+    "kp_admission_adoption_runs",
+    "apply-adoption runs by media type, result and reason; it only rises",
+    ["media_type", "result", "reason"],
+)
+status = Gauge(
+    "kp_admission_adoption_status",
+    "1 for each media type's result and reason in the latest apply-adoption run",
+    ["media_type", "result", "reason"],
+)
+status_age = Gauge(
+    "kp_admission_adoption_status_seconds",
+    "how long each media type has had its latest result, such as waiting at the gate",
+    ["media_type"],
+)
+
+
+async def observe(conn: AsyncConnection) -> None:
+    """Sets the adoption gauges from apply-adoption's records (the api measures them)."""
+    counted = await (
+        await conn.execute("SELECT media_type, result, reason, runs FROM adoption_run")
+    ).fetchall()
+    latest = await (
+        await conn.execute(
+            "SELECT media_type, result, reason,"
+            " extract(epoch FROM now() - since)::float FROM adoption_status"
+        )
+    ).fetchall()
+    runs.clear()
+    for media_type, result, reason, n in counted:
+        runs.labels(media_type, result, reason).set(n)
+    status.clear()
+    status_age.clear()
+    for media_type, result, reason, age in latest:
+        status.labels(media_type, result, reason).set(1)
+        status_age.labels(media_type).set(age)
 
 
 async def _apply_one(

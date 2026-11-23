@@ -75,6 +75,8 @@ Logical records; the physical schema is I1's.
 | `intake_quota` | `source_id`, `tokens`, `refilled_at` | The token bucket of §11 |
 | `adoption` | `sequence`, `tenant_id`, `media_type`, `adopted_version` (none on a declared cancellation), `adopted_at`, `cancelled_at`, `declaration` (none on a row of the local `adopt` command), `refresh` | The adoption record, below. Unique (`tenant_id`, `media_type`, `declaration`) |
 | `adoption_check` | `check_id`, `tenant_id`, `media_type`, `version`, `attempt`, `started_at` | Each test workflow of the adoption gate (below). Unique (`media_type`, `version`, `attempt`) |
+| `adoption_run` | `tenant_id`, `media_type`, `result`, `reason`, `runs` | `apply-adoption`'s runs counted by result and reason, for the `api`'s gauges (below) |
+| `adoption_status` | `media_type`, `tenant_id`, `result`, `reason`, `since` | Each media type's latest result and reason, and when the result last changed |
 
 Constraints:
 
@@ -180,6 +182,15 @@ while the others go on:
 A gate that cannot answer (Temporal or storage unreachable) leaves its media type
 waiting with reason `gate_unavailable` and the run fails (exit 1); the next run
 tries again.
+
+Each run logs one line per media type (`media_type`, `declaration`, `version`,
+`result`, `reason`) and records the result in `adoption_run` and
+`adoption_status`, since the CronJob's pod is gone before any scrape. The `api`
+measures them every 15 seconds: `kp_admission_adoption_runs` (runs by media type,
+result and reason; it only rises), `kp_admission_adoption_status` (1 on each media
+type's latest result and reason) and `kp_admission_adoption_status_seconds` (how
+long that result has held, across changes of reason). Alerts on a refusal or a
+long wait use these (#78).
 
 `kp-admission adopt --tenant <tenant> [--refresh <scope>] <media_type>
 <version>` and `kp-admission cancel-adoption --tenant <tenant> <media_type>

@@ -947,6 +947,7 @@ pod 帶 mesh sidecar 時，body 上限、不先緩衝與 timeout 在 sidecar 那
 
 - 上傳 request 數與結果分布（`204`、`400`、`422`、`409`、中斷）、bytes、上傳時長分布、同時上傳數。
 - 等待清理的 batch 數與清理數；上傳失敗率與等待清理的 batch 數設告警。
+- 採用宣告（#261）：`apply-adoption` 每次執行把結果寫進資料庫，`api` 每 15 秒量成 `kp_admission_adoption_runs`（依 media type、結果、原因累計的執行次數）、`kp_admission_adoption_status`（每個 media type 最近一次的結果與原因為 1）與 `kp_admission_adoption_status_seconds`（這個結果持續了多久，原因換了不重算）。被拒絕與等確認點太久的告警用這些（#78）。
 - 這些併入 #78 的可觀測性清單；量測在 #99。dispatcher 與 reconciler 的 metrics 在 [#189](https://github.com/davidlinnnn/data-ingestion/issues/189)。
 
 ### 6.5 安全
