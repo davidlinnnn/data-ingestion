@@ -47,13 +47,13 @@ which builds on this graph.
 | Q4c | Sending content to that API needs #87 governance approval before PROD use. |
 | Q5 | Document Category never serves as an access or governance input. |
 | Q6 | Document-scope methods read only native body text and headings, never other enrichment outputs. |
-| Q7 | Two failure tiers: native extraction integrity is all-or-nothing; enrichment is per-item status (§6). Supersedes the #72 rule that a failed required picture OCR fails processing. |
-| Q8 | Three failure classes (§6). An unavailable service is retried within the #93 budget, then the item is `failed` with `SERVICE_UNAVAILABLE` and the document completes. |
+| Q7 | Two failure tiers: native extraction integrity is all-or-nothing; enrichment is per-item status (§6). Supersedes the #72 rule that a failed required picture OCR fails processing. **Superseded in part on 2026-11-23** ([#57](https://github.com/davidlinnnn/data-ingestion/issues/57), [design result](knowledge-platform-canonical-persistence.md), B7): enrichment status stays per item, but a Document with any `failed` item is not accepted; its request fails. |
+| Q8 | Three failure classes (§6). An unavailable service is retried within the #93 budget, then the item is `failed` with `SERVICE_UNAVAILABLE` and the document completes. **Superseded on 2026-11-23** (#57 B7, B9): after the retry budget the request fails with a retryable failure; the document does not complete with a `failed` item. |
 | Q9, Q14 | Finalize assigns Enrichment Status with a versioned status rule (§7). Canonical keeps the status unchanged. |
 | Q10 | Processing Result and Enrichment Status are glossary terms. The result schema is a new namespace, `pdf-processing-result/v1`; `quality_accepted` is dropped. |
 | Q11 | No decision-model gate Activity in v2. Calibration runs offline in #83 on the DEV validation corpus only; PROD has no dependency on it. |
 | Q13 | An Enrichment Method is a code module plus a Processing Profile entry (id, version, parameters). No generic plugin framework or DSL; the stage graph is code. |
-| Q15 | Enrichment failure ratios are metrics with operator alerts, not `attention[]` entries. |
+| Q15 | Enrichment failure ratios are metrics with operator alerts, not `attention[]` entries. **2026-11-23** (#57 B7, B9): the ratios stay metrics, but a `failed` item now fails the request, so they must count failed requests' items too (built by #81). |
 | Q16 | The workflow input is the admission spec §10 input. `adopted_version` names the Processing Profile version; the dispatcher starts the workflow on the matching Worker Deployment Version and the workflow asserts the match. |
 | Q17 | Status reports use four coarse stages (§9); `attempt_id` is the Temporal run ID; reporting failures never fail processing. |
 | Q18 | Failures map to admission attention kinds (§6.3). |
@@ -61,13 +61,13 @@ which builds on this graph.
 | Q20 | The Processing Result registration is the custody handoff point; only listed artifacts are adoptable (§10). |
 | Q21 | Known limitations (#84 U1) are declared per Processing Profile version and copied into every result as method declarations; no per-document detection in v1. |
 | Q22 | Reuse is scoped to one Document (`document_uid`); no cross-document reuse in v1. |
-| Q23 | Items failed with `SERVICE_UNAVAILABLE` are re-run by an operator redrive over an explicit document list that processing provides, reusing all registered work and producing a new candidate. Automatic re-run waits for observed failure rates. |
+| Q23 | Items failed with `SERVICE_UNAVAILABLE` are re-run by an operator redrive over an explicit document list that processing provides, reusing all registered work and producing a new candidate. Automatic re-run waits for observed failure rates. **Superseded on 2026-11-23** (#57 B7): there is no redrive over a document list; the platform's scan reruns a Source Revision that has no Canonical Revision (#98). |
 | Q24 | The map row "Enrichment reuse and versioning rules" is disposed by Q3a, Q12, Q22, Q23 and Canonical design Q11. |
 | Q25 | Markdown and PPTX workflows become a map Not-yet-specified row, revisited before the first non-PDF Source onboards. |
 | Q26 | Validation work V1–V6 (§11). |
 | Q27 | Retire v1 at this ticket's resolution: tag `archive/pdf-core-v1`, then remove `src/pdf_processing`, `tests/pdf_processing` and `deploy/pdf-processing` from `dev` in a separate PR that also repoints relative links to the tag. |
 | Q28 | v2 evidence: reports, case lists and hash manifests in git; raw outputs, weights and page images outside git. |
-| Q29 | Current-revision tie-break: at an equal Source Revision and adoption sequence, the accepted candidate with fewer `failed` enrichment items wins; at an equal count the existing selection stays (§5.1). |
+| Q29 | Current-revision tie-break: at an equal Source Revision and adoption sequence, the accepted candidate with fewer `failed` enrichment items wins; at an equal count the existing selection stays (§5.1). **Superseded on 2026-11-23** (#57 B5, B7): the platform selects the current revision in the acceptance transaction by Source Revision, then adoption sequence; an accepted revision has no `failed` item, so the third step is gone. |
 | Q30 | Before #87 approves, DEV may send the public arXiv validation corpus, and nothing else, to the real summary API for accuracy validation. PROD still waits for #87. |
 | Q31 | Tier 1 is extraction integrity. A page without a text layer is not a failure; it is recorded as the document limitation `NO_TEXT_LAYER_PAGES`. v1 does no body OCR. |
 | Q32 | Deployment uses Temporal Worker Versioning. The company Temporal has it ready with tested APIs on the latest Helm chart release; the platform's environment aligns with that release. No ramping: each workflow starts Pinned on the version its `adopted_version` names. |
@@ -155,6 +155,22 @@ requires when no replacement basis exists.
 ## 6. Failure semantics
 
 ### 6.1 Two tiers
+
+> **Superseded in part on 2026-11-23** ([#57](https://github.com/davidlinnnn/data-ingestion/issues/57), [design result](knowledge-platform-canonical-persistence.md); rulings B2, B7 and B9, ADR-0011's note).
+> A Document is accepted only when every Enrichment item of its Processing
+> Profile has a result. An item `failed` for any reason below, and a d3 Quality
+> Check that produced no judgement, fails the request: a retryable failure when
+> a service gave no answer, a non-retryable one for a content failure. So in
+> §6.1 "the document continues" and "never counts as incomplete required work",
+> in §6.2 the two "Completes" cells, and in §6.3 the row "Enrichment items
+> `failed` → none" no longer hold. `disputed` and `unverified` are results and
+> do not block. Mapping and its validation are the last step of the workflow,
+> inside `finalize`: a failed validation is a processing failure, not "a
+> Canonical Acceptance check". Section 5.1's tie-break is replaced by the
+> platform's selection (admission specification §3). The rule is built with the
+> mapper (#81); until then the code behaves as the text below says. In §10,
+> adoption is in place, with no copy, and the pilot removes nothing inside a
+> Document: attempt scratch stays until the Document's purge (#267).
 
 | Tier | Content | Rule |
 |---|---|---|
@@ -306,7 +322,7 @@ None of these blocks the design.
 | V1 | #80 | Worker Versioning in the platform's environment, aligned with the company Helm chart release: start a workflow Pinned on a named version, run two versions side by side, retire the old one | Running requests finish on the old version; new requests run on the version `adopted_version` names | Fails in the platform's environment → per-release task queues |
 | V2 | #80 | Activity sizing and freshness: the 64-page DGM paper, the most picture-heavy paper, and a typical pilot paper; kill a worker mid-Activity | No timeouts; recovery skips registered items; a typical paper reaches acceptance within the 10-minute first-adoption target under the #93 budgets | Timeouts → K-item batching; freshness miss → #93 budgets or method scope back to the user |
 | V3 | #80 | Independent method change: bump only Picture Interpretation | Parse, OCR and formula work fully reused; no page reparse | Unexpected recompute → fix the reuse key |
-| V4 | #80 | Failure matrix: one case per §6 class and mapping, a missing outcome record, a no-text-layer page, a redrive tie-break | Each case yields its expected outcome | — |
+| V4 | #80 | Failure matrix: one case per §6 class and mapping, a missing outcome record, a no-text-layer page, a redrive tie-break | Each case yields its expected outcome | — **2026-11-23**: the redrive tie-break case is void (Q29); the failure matrix follows the notes in §6. |
 | V5 | #83 | Document Category and Document Summary accuracy; offline decision-model calibration on the DEV corpus | Judged test sets and thresholds; summary unsupported-statement rate reported | Below threshold → stay `unverified`, report to the PM. Category waits for the PM's value sets; Summary uses the real API on the public corpus (Q30) |
 | V6 | #80 | Summary API contract test against the mock | Adapter and post-hoc evidence alignment work | Real API in PROD only after #87 approval |
 

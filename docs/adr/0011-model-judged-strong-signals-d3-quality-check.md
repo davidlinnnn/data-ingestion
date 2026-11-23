@@ -57,3 +57,17 @@ consumers no change; and calling d3 inside each judged method, which would make
 every threshold change a new version of that method and rerun its
 vision-language model. What consumers do with a `disputed` formula or table,
 and a second, more expensive judge for marked items, are not decided here.
+
+**2026-11-23, superseded in part** ([#57](https://github.com/davidlinnnn/data-ingestion/issues/57), rulings B7 and B9,
+user, 2026-11-21 and 2026-11-22). The check no longer degrades. A Document is
+accepted only when every Enrichment item of its Processing Profile has a
+result, and a Quality Check that produced no judgement is a missing result,
+with no exception: the request fails, with a retryable failure when the service
+gave no answer and a non-retryable one when its reply held no score. "The
+judged item keeps the status its own method gives it" and "the existing
+service-unavailable redrive later fills in the judgement" no longer hold; the
+platform's scan reruns the request, and the exit from a long outage is a
+Processing Profile version without `d3-check`. `disputed` and `unverified` are
+results and do not block acceptance. The share of checks without a judgement
+and of Documents failed for it are metrics. The rule is built with the mapper
+(#81); until then the code keeps the degraded behaviour.

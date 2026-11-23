@@ -123,6 +123,8 @@ _Avoid_: Canonical Revision, checkpoint, processing completion as acceptance
 The outcome a versioned status rule assigns to one Enrichment item when
 processing finalizes: `failed`, `disputed`, `unverified` or `verified`.
 Canonical keeps it unchanged and consumers check it before relying on the item.
+An accepted Canonical Revision holds no `failed` item: a Document with one is
+not accepted (ADR-0011's 2026-11-23 note; built by #81).
 _Avoid_: quality acceptance, verification of source truth
 
 **Knowledge Profile**:
@@ -141,14 +143,17 @@ _Avoid_: index, chunk store, universal knowledge graph
 A distinguishable version of canonical knowledge with traceable source inputs
 and processing origin. Once accepted, its content, structure/relationships,
 source/evidence mappings and producing-method attribution remain fixed; a changed
-result requires a new candidate and acceptance.
+result requires a new candidate and acceptance. One `process` request forms at
+most one; its identifier is opaque to readers, and its content is one write-once
+object that the revision's record points at (ADR-0015).
 
 **Canonical Acceptance**:
 In the initial document scope, a traceable determination that a complete candidate
 from one Document's Capture Package meets the applicable, versioned representation,
 evidence, quality, and governance criteria for agreed reuse as Canonical Knowledge.
 Explicitly permitted limitations may accompany acceptance, which remains subject
-to current access and lifecycle controls.
+to current access and lifecycle controls. It takes effect at the commit of one
+platform-database transaction (ADR-0015).
 _Avoid_: processing completion, projection publication, verification of source truth
 
 **Enrichment**:
@@ -392,7 +397,10 @@ _Avoid_: storage, bucket, staging
 
 **Custody Purge**:
 Destruction that makes the affected retained information unrecoverable in
-platform custody, including its dependent copies.
+platform custody, including its dependent copies. In the pilot its unit is the
+Document: a purge removes every object of a deleted Document and keeps the
+records' identifiers and times. Removing a replaced Canonical Revision of a
+live Document after its retention window is added before production (#269).
 _Avoid_: unpublication, tombstone, ordinary withdrawal
 
 ## Experience and improvement

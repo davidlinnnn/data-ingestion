@@ -1247,8 +1247,8 @@ purge of one document also covers the `requests/` prefixes of that document's
 requests (#57 owns the purge rule). Removing the files
 of one Source Revision alone first checks the document's other Source
 Revisions for references to the same objects. The key carries no tenant: a deployment serves
-one tenant. Should one serve several, #57 decides between a bucket and a key
-prefix per tenant; stored references stay valid either way.
+one tenant. Should one serve several, each tenant gets its own bucket and no
+key gains a prefix (#57 scope 6, 2026-11-22), so stored references stay valid.
 
 Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
