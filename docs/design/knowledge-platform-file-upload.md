@@ -903,11 +903,11 @@ DevOps 要準備的東西。數值與設定名稱多數還是暫定的，由 [#7
 
 | 項目 | 需求 | 細節在哪 |
 |---|---|---|
-| 角色 | 一個 image，三種角色：`api`（固定 2 個副本，不用 HPA）、`dispatcher`（至少 2 個副本）、CronJob（reconciler 每 5 分鐘；batch 過期與上傳清理每小時；保留期每天） | 規格 §13；第 6.1、6.3 節 |
-| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，再清理結束滿一小時的 batch 的上傳，跑一次就結束，CronJob 每小時；要物件儲存的設定）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`adopt` 與 `cancel-adoption`（設定某個檔案格式用哪個 Processing Profile 版本）、`writes-lost EVENT`（資料庫遺失已提交的寫入之後，例如還原或遺失提交的 failover，在刪除判定恢復之前由部署 repo 的 Job 執行，要求每個未退役的 Build 修復；在 api 恢復接收回報之後執行；`EVENT` 從 1 起，記在部署 repo，每次宣告加一，重跑同一個不改任何東西，比較小的以 exit 1 結束；第一次執行要確認輸出的 `"applied": true`；從還原到這個 Job 結束，刪除判定不能跑；之後還要等所有 Build 修復完成、而且過了最長的 `update_interval_s`，判定才恢復；規格 §7.4 的 Lost writes）。第一次宣告之前要先採用 PDF 的版本：`kp-admission adopt --tenant <tenant> application/pdf paper-pdf@1`，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。順序是：profile 版本已 release、processing worker 已部署、`adopt`、第一次宣告；`adopt` 不檢查這個版本存不存在。還沒有：redrive 與 refresh（#98）、規格 §11 的紀錄保留期（#250） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
+| 角色 | 一個 image，三種角色：`api`（固定 2 個副本，不用 HPA）、`dispatcher`（至少 2 個副本）、CronJob（reconciler 每 5 分鐘；套用採用宣告每分鐘，`concurrencyPolicy: Forbid`；batch 過期與上傳清理每小時；保留期每天） | 規格 §13；第 6.1、6.3 節 |
+| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，再清理結束滿一小時的 batch 的上傳，跑一次就結束，CronJob 每小時；要物件儲存的設定）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`apply-adoption`（CronJob 每分鐘：套用部署設定裡的採用宣告，見第 6.9 節第 7 步與規格 §3；要 Temporal 與物件儲存的設定）、`writes-lost EVENT`（資料庫遺失已提交的寫入之後，例如還原或遺失提交的 failover，在刪除判定恢復之前由部署 repo 的 Job 執行，要求每個未退役的 Build 修復；在 api 恢復接收回報之後執行；`EVENT` 從 1 起，記在部署 repo，每次宣告加一，重跑同一個不改任何東西，比較小的以 exit 1 結束；第一次執行要確認輸出的 `"applied": true`；從還原到這個 Job 結束，刪除判定不能跑；之後還要等所有 Build 修復完成、而且過了最長的 `update_interval_s`，判定才恢復；規格 §7.4 的 Lost writes）。`adopt` 與 `cancel-adoption` 只給本機開發與測試。第一次宣告之前，部署設定要採用 PDF 的版本、CronJob 已套用，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。還沒有：redrive 與 refresh（#98）、規格 §11 的紀錄保留期（#250） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
 | Admission DB | pilot：一個 PostgreSQL instance，放在網路磁碟的 persistent volume，不用 operator；WAL 連續歸檔，加上排程的 base backup，都放到物件儲存。版本要 17 以上；`api` 的資料庫角色要 `pg_read_all_stats`。`feed-retention` 要每天跑：它刪掉超過 90 天的 Change Feed，也預先建立之後幾個月的分區，長期沒跑的話 admission 的寫入會失敗。目前沒有套用 schema 的指令：資料表定義在 [`schema.sql`](../../src/kp_admission/schema.sql)，整份套用在空的資料庫，由誰套用、用哪個 migration 工具由 #78 決定。PROD release 之前移到公司代管的 MongoDB | 規格 §9、§13；[#137 的交接](https://github.com/davidlinnnn/data-ingestion/issues/137#issuecomment-6983041476)；第 3 節；#239 |
-| 物件儲存 | S3 相容，一個 bucket，原始檔與處理結果共用。`api` 現在要 `s3:GetObject`（finalize 用 HeadObject 確認檔案已就位）與 `s3:ListBucket` 的權限：少了 `s3:ListBucket`，storage 對不存在的物件回 `403` 而不是 `404`（[AWS HeadObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html)），finalize 會一直回 `503`。上傳另外要 `s3:PutObject` 與 `s3:AbortMultipartUpload`；`expire` 的 CronJob 要 `s3:DeleteObject`、`s3:AbortMultipartUpload` 與 `s3:ListBucketMultipartUploads`。少了任何一項，上傳會一直回 `503`，清理則每次都把 batch 留給下一次，並以 exit code 1 結束。processing worker 要讀寫。必要的行為用 `storage_probe.py` 驗證 | 規格 §10；第 6.3、6.7 節；產品由 #57 決定 |
-| Temporal | `dispatcher` 與 `reconcile` 要連得到：`TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE`。`api` 不連 Temporal，所以 Temporal 停機時照常受理，outbox 裡的 request 等它恢復 | 規格 §9 |
+| 物件儲存 | S3 相容，一個 bucket，原始檔與處理結果共用。`api` 現在要 `s3:GetObject`（finalize 用 HeadObject 確認檔案已就位）與 `s3:ListBucket` 的權限：少了 `s3:ListBucket`，storage 對不存在的物件回 `403` 而不是 `404`（[AWS HeadObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html)），finalize 會一直回 `503`。上傳另外要 `s3:PutObject` 與 `s3:AbortMultipartUpload`；`expire` 的 CronJob 要 `s3:DeleteObject`、`s3:AbortMultipartUpload` 與 `s3:ListBucketMultipartUploads`。`apply-adoption` 的 CronJob 要 `s3:GetObject`、`s3:ListBucket` 與 `s3:PutObject`：它把測試頁寫到 `checks/` 底下。少了任何一項，上傳會一直回 `503`，清理則每次都把 batch 留給下一次，並以 exit code 1 結束。processing worker 要讀寫。必要的行為用 `storage_probe.py` 驗證 | 規格 §10；第 6.3、6.7 節；產品由 #57 決定 |
+| Temporal | `dispatcher`、`reconcile` 與 `apply-adoption` 要連得到：`TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE`。`api` 不連 Temporal，所以 Temporal 停機時照常受理，outbox 裡的 request 等它恢復 | 規格 §9 |
 | 路由 | 對外只開放 `/v1/`。`/authz/`、`/read/`、`/report/`（處理端回報狀態）、`/healthz`、`/openapi.json` 與 metrics 不對外。上傳路徑要另外放寬 | 授權指南 §6.1；第 6.2 節 |
 | Mesh sidecar | CronJob 的 pod 可能因為 sidecar 不會自己退出而無法結束：確認是否啟用 native sidecar，沒有的話關閉注入，或在結束時停止 proxy。應用程式可能比 proxy 先啟動：`api` 會自行重連資料庫；`dispatcher` 啟動時連不上資料庫，或執行中斷了資料庫連線，會結束，由 Kubernetes 重啟。`dispatcher` 連不上 Temporal 不會結束，outbox 的 request 等它恢復。`api` 收到 SIGTERM 會先處理完進行中的 request，結束碼是 143 | [#78 的交接](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-6854292201)；第 6.2 節 |
 | 設定 | 環境變數。每個角色都要 `KP_ADMISSION_DATABASE_URL`，缺了就以 exit code 2 結束。`api` 另外必填：`KP_AUTHZ_PROVIDER=allow-all`、`KP_DEPLOYMENT=pilot`、`KP_ADMISSION_PUBLIC_URL`（Source 經 ingress 呼叫的 https origin，例如 `https://kp.example`；`uploads[].url` 用它組成，不依賴 ingress 轉送的 header。只接受 `https`、不帶路徑，DEV 也一樣），以及物件儲存的 `KP_S3_ENDPOINT`、`KP_S3_BUCKET`、`AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`；缺一個就不啟動。`api` 的其他設定：`KP_CREDENTIALS`（每個 Source credential 的 SHA-256 與權限）、`KP_AUTHZ_PEP_CREDENTIALS`（讀取端的憑證）、`KP_PIPELINES`（回報者憑證的 SHA-256 與它登記的 pipeline；沒設時 `api` 照常啟動，但每筆回報都是 `401`，規格 §7.3）、`KP_SOURCES`（每個 Source 的排序方式與預設 Resource）、`KP_MAX_FILE_SIZE`（bytes；預設是規格 §11 的 50 MB 上限，程式用 50 × 2²⁰ bytes）、`KP_PAUSE_BACKLOG`、`KP_ADMISSION_API_PORT`（預設 8080）、`AWS_REGION`（預設 `us-east-1`）。`expire` 也要物件儲存的四個設定。canonical processing 的 orchestration worker 另外要 `KP_ADMISSION_URL`（`api` 的叢集內位址）與 `KP_ADMISSION_TOKEN`（回報用的憑證，從 Secret 掛載）。改了要重啟 pod | 授權指南 §6.2；[`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
@@ -1052,8 +1052,8 @@ printf '%s' "$TOKEN" | sha256sum    # 64 個小寫的十六進位字元；creden
 | 設定 | 誰讀 | 格式與行為 |
 |---|---|---|
 | `KP_ADMISSION_DATABASE_URL` | 每個角色與每個指令 | PostgreSQL 的連線字串（libpq 格式），例如 `postgresql://<user>:<password>@<host>:5432/<db>?sslmode=verify-full` |
-| `TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE` | `dispatcher`、`reconcile` | `host:port`（預設 `localhost:7233`）與 namespace（預設 `default`）。目前只有這兩個設定：連線不加密，也不帶憑證。Temporal 要求 TLS 或驗證的話要先改程式（第 7.1 節） |
-| `KP_S3_ENDPOINT`、`KP_S3_BUCKET`、`AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、`AWS_REGION` | `api`、`expire` | endpoint 是含 scheme 的完整 URL，例如 `https://<host>:9000`；用 path-style 定址；region 預設 `us-east-1`。storage 連不上時 `api` 照常啟動，上傳與 finalize 回 `503` |
+| `TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE` | `dispatcher`、`reconcile`、`apply-adoption` | `host:port`（預設 `localhost:7233`）與 namespace（預設 `default`）。目前只有這兩個設定：連線不加密，也不帶憑證。Temporal 要求 TLS 或驗證的話要先改程式（第 7.1 節） |
+| `KP_S3_ENDPOINT`、`KP_S3_BUCKET`、`AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、`AWS_REGION` | `api`、`expire`、`apply-adoption` | endpoint 是含 scheme 的完整 URL，例如 `https://<host>:9000`；用 path-style 定址；region 預設 `us-east-1`。storage 連不上時 `api` 照常啟動，上傳與 finalize 回 `503` |
 | `KP_ADMISSION_PUBLIC_URL` | `api` | Source 呼叫的 https origin，不帶路徑，例如 `https://kp.example` |
 | `KP_MAX_FILE_SIZE` | `api` | bytes，預設 52,428,800 |
 | `KP_PAUSE_BACKLOG` | `api` | 整數；不設就永不暫停。排隊中、一般優先序的處理 request 達到這個數量時，新的宣告回 `503 ADMISSION_PAUSED`；數量降下來就自動恢復。上傳、finalize 與查詢不受影響 |
@@ -1061,6 +1061,7 @@ printf '%s' "$TOKEN" | sha256sum    # 64 個小寫的十六進位字元；creden
 | `--metrics-port`（參數） | `api` | 沒有預設值，給了才開；路徑是 `/metrics` |
 | `KP_ADMISSION_URL`、`KP_ADMISSION_TOKEN` | orchestration worker | `api` 的叢集內 base URL，例如 `http://<service>:8080`，worker 在後面接 `/report/v1/…`；token 是環境變數，值來自 Secret |
 | `KP_AUTHZ_PEP_CREDENTIALS` | `api` | JSON 物件：讀取端 credential 的 SHA-256 對它的名稱 |
+| `KP_ADOPTION` | `apply-adoption` | JSON 物件：部署設定的 `adoption` 對照表，chart 用 `toJson` 放進 ConfigMap。格式與規則在規格 §3。沒設或不是 JSON 物件時 exit code 2 |
 
 credential 本身可以是任意字串，平台只保存它的 SHA-256；建議用 32 bytes 以上的亂數。
 
@@ -1074,11 +1075,11 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 |---|---|---|
 | 1 | 建立空的 PostgreSQL 資料庫（17 以上），整份套用 [`schema.sql`](../../src/kp_admission/schema.sql)，它也建立 Change Feed 頭三個月的分區。`api` 的資料庫角色要有 `pg_read_all_stats`；跑 `feed-retention` 的角色要是 `change_feed` 資料表的擁有者，因為它建立與刪除分區 | 資料表都在 |
 | 2 | 準備 custody bucket 與 storage 的憑證（權限見第 6 節「物件儲存」一列） | [`storage_probe.py`](../validation/184/storage_probe.py) 以 exit code 0 結束。它在 repo 的開發環境執行，讀 `KP_S3_ENDPOINT`、`KP_S3_BUCKET` 與 `AWS_*`，寫在 `probe184/` 這個前綴底下，跑完自己刪掉 |
-| 3 | 確認 Temporal 的 namespace 連得到，processing worker 已部署。之後會在回報帶 `candidate` 的 worker（#81）要等接受它的 `api` 部署之後才部署，順序反了每一筆最後回報都是 `400`（規格 §13） | orchestration worker 在輪詢 `<profile>-<版本>.orchestration`；採用 `paper-pdf@1` 時是 `paper-pdf-1.orchestration` |
+| 3 | 確認 Temporal 的 namespace 連得到，processing worker 已部署。之後會在回報帶 `candidate` 的 worker（#81）要等接受它的 `api` 部署之後才部署，順序反了每一筆最後回報都是 `400`（規格 §13） | 五種 worker（orchestration、inference、vlm、summary、d3）都在輪詢 `<profile>-<版本>.<queue>`，採用 `paper-pdf@1` 時是 `paper-pdf-1.orchestration` 等；promoter 的 CronJob（`kp-canonicalization promote`，#178）在跑，把這個 build 設成 current |
 | 4 | 產生 Source credential 與回報用的 credential，把 digest 寫進 `KP_CREDENTIALS` 與 `KP_PIPELINES`（第 6.8 節）；設定第 6 節「設定」一列的必填項目 | Secret 與環境變數就緒 |
 | 5 | 啟動 `kp-admission api`（2 個副本）與 `kp-admission dispatcher`（至少 2 個副本） | `api`：叢集內 `GET /healthz` 回 `200`。`dispatcher` 沒有 HTTP 端點：pod 維持 Running、沒有重啟，log 沒有錯誤 |
 | 6 | 建立三個 CronJob：`reconcile` 每 5 分鐘、`expire` 每小時、`feed-retention` 每天 | 各跑一次，exit code 0 |
-| 7 | 採用 PDF 的處理方法版本：`kp-admission adopt --tenant <tenant> application/pdf paper-pdf@1`。用同一個 image 的 Job 跑一次，只需要 `KP_ADMISSION_DATABASE_URL`。公司的 PROD 不能由人進 pod 下指令：採用會改成寫在部署設定、由 CronJob 套用（#261），`set-profile` 等其他指令怎麼排程由 #78 決定；`<tenant>` 是 `KP_CREDENTIALS` 裡的 `tenant_id` | 印出 `adopted_version`。指令不檢查這個版本有沒有 worker：採用了沒有 worker 的版本，request 會一直是 `queued` |
+| 7 | 採用 PDF 的處理方法版本：在部署設定寫 `adoption: {application/pdf: {declaration: 1, version: paper-pdf@1, refresh: none}}`，建立 `kp-admission apply-adoption --tenant <tenant>` 的 CronJob（每分鐘，`concurrencyPolicy: Forbid`；要資料庫、Temporal、物件儲存的設定與 `KP_ADOPTION`；物件儲存多要 `s3:PutObject`）。`<tenant>` 是 `KP_CREDENTIALS` 裡的 `tenant_id`。CronJob 等五條 queue 都在 current build 上，再用一份合成的測試頁跑一次 workflow，結果是 `complete` 才套用：VLM、摘要與 d3 服務要連得到，第 10 步的回報 token 要先設好（沒設時每次測試 workflow 的回報被拒，晚一兩分鐘才結束）。`set-profile` 等其他指令怎麼排程由 #78 決定 | CronJob 的 log 有一行 `"result": "applied"`。之前每次是 `waiting`，`reason` 說在等什麼：`not_deployed`、`no_current_build`、`queues_not_polled`、`routing_in_progress`、`check_started`、`check_running`、`check_failed`（失敗的測試 workflow 十分鐘後才換新的；log 的 `check_id` 是它的 workflow ID，在 Temporal 查它為什麼失敗）、`no_check_file`（這個格式沒有測試檔，pilot 只有 PDF 有）、`gate_unavailable`（連不到 Temporal 或物件儲存，exit code 1）。`KP_ADOPTION` 沒設或不是 JSON 物件時 exit code 2。`refused` 時 exit code 1，`reason` 是違反的規則（規格 §3） |
 | 8 | 設定每個 Source 要求的讀取端：`kp-admission set-profile`（第 6.8 節），執行方式同上一步。名稱是讀取端登記的名稱，例如 `retrieval`。讀取端開始回報之前（#81、#127）這一步不影響任何結果，可以晚點做；Knowledge Profile 第一次設定時就有的讀取端直接計入 `readiness`，之後加入的要等它回報補建完成 | 印出 `profile_seq` |
 | 9 | 設定 ingress：對外只開放 `/v1/`，上傳路徑放寬 body 上限、關閉緩衝、放寬 timeout（第 6.2 節） | 從 Source 的網段連得到 `/v1/`，連不到 `/report/`、`/read/`、`/authz/` |
 | 10 | 設定 orchestration worker 的 `KP_ADMISSION_URL`（`api` 的叢集內位址）與 `KP_ADMISSION_TOKEN`，然後重啟 worker | worker 的 log 沒有 `KP_ADMISSION_TOKEN is not set` 這行 warning |
@@ -1111,7 +1112,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 每個呼叫都是 `401` | credential 的 digest 沒有寫進 `KP_CREDENTIALS`，或算 digest 時多了換行 |
 | 登記 Resource 回 `403` | 這把 credential 沒有 `manage_relations` |
 | 每個呼叫都是 `503 UNAVAILABLE` | `api` 連不到資料庫 |
-| 每個宣告的 item 都是 `UNSUPPORTED_FORMAT` | 第 7 步的 `adopt` 還沒做 |
+| 每個宣告的 item 都是 `UNSUPPORTED_FORMAT` | 第 7 步的採用還沒套用：看 `apply-adoption` 的 log 停在哪個 `reason` |
 | 每個宣告的 item 都是 `RESOURCE_NOT_FOUND` | Resource 還沒登記，或登記在另一個 Source 底下 |
 | `uploads[].url` 是錯的主機 | `KP_ADMISSION_PUBLIC_URL` 的值不是 ingress 的對外 origin |
 | 上傳回 `413`，或連線被中斷，回應沒有 `X-Trace-Id` | 被 ingress 或 sidecar 擋下：body 上限、緩衝或 timeout（第 6.2 節） |
@@ -1128,7 +1129,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 事項 | 影響 | 負責 |
 |---|---|---|
 | pull 路徑 | 等有「檔案已在公司核准 storage」的具體來源再開 | #96 之後另開票 |
-| Temporal 連線的 TLS 與驗證 | `dispatcher`、`reconcile` 與 worker 目前只讀 `TEMPORAL_ADDRESS` 與 `TEMPORAL_NAMESPACE`，連線不加密也不帶憑證。部署的 Temporal 要求其中之一時，要先加設定與程式 | #78 |
+| Temporal 連線的 TLS 與驗證 | `dispatcher`、`reconcile`、`apply-adoption` 與 worker 目前只讀 `TEMPORAL_ADDRESS` 與 `TEMPORAL_NAMESPACE`，連線不加密也不帶憑證。部署的 Temporal 要求其中之一時，要先加設定與程式 | #78 |
 | PostgreSQL 的備份工具、排程與還原程序 | 規格 §9 只定了目標：WAL 連續歸檔，磁碟區毀損時最多遺失約一分鐘內受理的 request。做法與演練還沒定。還原或遺失提交的 failover 之後，刪除判定恢復之前要執行 `kp-admission writes-lost`（規格 §7.4）；哪些事件要執行、Change Feed、cursor 與封鎖紀錄怎麼倒回、這個 Job 排在還原的哪一步，是 #78 的 runbook | #78、#99 |
 | 大檔案的續傳 | 5 GB 以上才需要；可以用新增的端點加上，不破壞既有 client（第 7.4 節） | 不在第一版 |
 | 公司的 ingress 產品與設定值 | 第 6.2 節的數值 | #78 |
@@ -1158,6 +1159,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-22 | #251：Canonical Acceptance 的記錄實作完成：成功的 request 帶 candidate 時記下 Canonical Revision、Source Revision 改成 `accepted`，較新的成為目前版本並發出 `current_revision_changed`（規格 §3）；文件已刪除、沒有 candidate、版本已作廢時不形成接受（規格 §5.5）。第 5 節的現況改成等 #81 與 #127，第 5.6 節補上 `details`，第 6.9 節補上部署順序，第 7.3 節更新 |
 | 2026-11-23 | #57 結案（Canonical 的保存與處理產物的歸屬）：第 7.1 節新增兩項，pilot 的物件儲存沒有冗餘、資料庫還原之後的放行；第 7.3 節新增 Canonical 內容的讀取（#268）與清除已刪除文件的物件（#267） |
 | 2026-11-23 | #260：serving 事實的修復實作完成：讀取端分頁送來 repair view，到齊後一次替換 Build 的 mirror，結束修復要求並重算 readiness；view 從 capture 起 24 小時內要到齊（暫定），過期或被到期柵欄擋下就整份丟棄；遺失寫入之後由 Job 執行 `kp-admission writes-lost`（規格 §7.4）。第 6、7.1、7.3 節跟上 |
+| 2026-11-23 | #261：宣告式採用實作完成：採用寫在部署設定，由 `apply-adoption` 的 CronJob 在確認點（五條 queue、測試 workflow 的結果）之後套用（規格 §3）。第 6 節的角色、指令與設定，第 6.9 節第 7 步與常見現象，第 7.3 節更新 |
 
 ### 7.3 實作狀態（2026-11-23）
 
@@ -1177,8 +1179,8 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 修復 view 的接收 | 讀取端分頁送來整份 view（`PUT /report/v1/builds/{build_id}/repair-views/{view_id}/pages/{page}`），到齊後一次替換 mirror；遺失寫入之後的 `kp-admission writes-lost` | #260 | 已完成，在 `dev` |
 | mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，可以開始 |
 | Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed`、作廢的版本、`details` 的方法版本落後 | #251 | 已完成，在 `dev`；處理端到 #81 才交出 candidate，在那之前成功的 request 不形成接受，Source Revision 留在 `pending` |
-| 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob 套用；取代手動的 `kp-admission adopt` | #261 | 未實作，可以開始；第一次部署到公司環境之前要完成 |
-| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #261 之後 |
+| 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob `apply-adoption` 在確認點之後套用；取代手動的 `kp-admission adopt` | #261 | 已完成，在 `dev` |
+| 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，可以開始 |
 | 保留期 | batch 與 `Idempotency-Key` 到期回 `404` 並移除紀錄 | #250 | 未實作 |
 | Canonical 內容的讀取 | 讀取端依確切的 revision 讀內容與它列出的圖（`/read/v1/`，不對外） | #268 | 未實作，在 #81 之後 |
 | 清除已刪除文件的物件 | 刪除套用 30 天後，CronJob 清掉這份文件在物件儲存的全部物件；資安事件的立即清除寫在部署設定 | #267 | 未實作，在 #98 之後；PROD 上線前要完成 |

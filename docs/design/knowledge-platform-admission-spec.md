@@ -73,7 +73,8 @@ Logical records; the physical schema is I1's.
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
 | `intake_quota` | `source_id`, `tokens`, `refilled_at` | The token bucket of §11 |
-| `adoption` | `sequence`, `tenant_id`, `media_type`, `adopted_version`, `adopted_at`, `cancelled_at` | The adoption record, below |
+| `adoption` | `sequence`, `tenant_id`, `media_type`, `adopted_version` (none on a declared cancellation), `adopted_at`, `cancelled_at`, `declaration` (none on a row of the local `adopt` command), `refresh` | The adoption record, below. Unique (`tenant_id`, `media_type`, `declaration`) |
+| `adoption_check` | `check_id`, `tenant_id`, `media_type`, `version`, `attempt`, `started_at` | Each test workflow of the adoption gate (below). Unique (`media_type`, `version`, `attempt`) |
 
 Constraints:
 
@@ -107,11 +108,83 @@ Constraints:
 
 The adoption record (#96) names the Processing Profile version that new
 `process` requests run, by the media type of the main file: the pilot has one
-profile per file format. A Processing Profile owner changes it with two operator
-commands, `kp-admission adopt --tenant <tenant> <media_type> <version>` and
-`kp-admission cancel-adoption --tenant <tenant> <media_type> <version>`, which
-open no request themselves (the
-refresh after an adoption is #98's command).
+profile per file format. It is declared in the deployment repository and applied
+by a CronJob (#261, ADR-0016): nobody runs a command inside a pod in the
+company's production clusters. The deployment values hold one entry per media
+type (its `declaration` number is not a batch declaration of §5.1):
+
+```yaml
+adoption:
+  application/pdf:
+    declaration: 12        # raised by one at every change
+    version: paper-pdf@3   # or none: the media type has no version
+    refresh: none          # none, all or {made_by: [paper-pdf@2]}; required
+    withdrawn: []          # versions withdrawn, for example [paper-pdf@2]
+    kept: []               # higher versions not withdrawn on a downgrade, for example [paper-pdf@4]
+```
+
+The chart passes the mapping to `kp-admission apply-adoption --tenant <tenant>`
+as JSON in `KP_ADOPTION`. Each run takes each media type in turn; a media type
+that fails a rule is refused (logged, exit 1) and nothing of it is written,
+while the others go on:
+
+1. A media type that has an adoption record but no entry is refused
+   (`media_type_missing`): a mistake in the values must not refuse every
+   submission. An entry that does not parse is refused (`bad_declaration`):
+   `refresh` is required, and a cancellation (`version: none`) takes `refresh:
+   none`.
+2. A `declaration` not above the highest one applied for the media type is
+   skipped when its version, refresh scope and withdrawn versions equal those of
+   the record in effect (the highest `sequence`) and the withdrawn versions
+   recorded; otherwise it is refused (`declaration_not_raised`). Comparing with
+   the record in effect, not the older one of the same number, refuses values
+   reverted whole. A pod that starts late with an older ConfigMap is refused
+   too, so an alert counts consecutive refusals.
+3. The rules (`version_withdrawn`, `withdrawn_removed`,
+   `downgrade_undeclared`): a withdrawn version, declared or recorded, is never
+   adopted; a recorded withdrawn version stays in the entry; a version lower than
+   one of the same profile adopted before needs each such higher version in
+   `withdrawn` or `kept`, so reverting the version line alone is refused.
+   `kept` answers this check only and is not recorded: whether that version's
+   documents are redone is the refresh scope's, and every later entry for the
+   lower version repeats it.
+4. The gate (`kp_admission.gate`), for a version, not a cancellation; until it
+   passes the run writes nothing and the next one tries again (`waiting`):
+   - The version's Worker Deployment has a current build polling all five
+     queues, and its routing change is `COMPLETED`. A change still
+     `IN_PROGRESS` ten minutes after the current build changed
+     (temporalio/temporal#11842) passes on the rest of the gate, logged with
+     reason `routing_in_progress`.
+   - For a version not adopted through the gate before (a row of the local
+     `adopt` command does not count): a test workflow of the version on that build
+     returned `outcome: complete`. Temporal reads a workflow `COMPLETED`
+     whatever its outcome, so the gate reads its result. The CronJob starts it
+     itself, with workflow ID `chk_` and 32 hex digits, a new `document_uid`
+     each time, and the synthetic page shipped with admission
+     (`kp_admission/check.pdf`), which it writes to the custody bucket under
+     `checks/` when missing. A later run reads the result; a failed one is
+     replaced by a new one ten minutes after it started (reason `check_failed`
+     until then), since each costs model calls; one version has one at a time
+     (`adoption_check`), except that two runs overlapping as one starts it may
+     start a second. The log line of each start and failure names its
+     `check_id`.
+     Admission answers the test workflow's status reports `202` and records
+     nothing. A version adopted before runs none: a rollback often happens while a
+     model service is down.
+5. One transaction locks the media type's latest adoption record, checks steps
+   2 and 3 again (a pod that waited at the gate must not apply over a newer
+   entry), then writes the adoption record with the next `sequence` of
+   the deployment, its `declaration` and `refresh`, and the new withdrawn
+   versions. A cancellation is a record with no version, cancelled when written.
+
+A gate that cannot answer (Temporal or storage unreachable) leaves its media type
+waiting with reason `gate_unavailable` and the run fails (exit 1); the next run
+tries again.
+
+`kp-admission adopt --tenant <tenant> [--refresh <scope>] <media_type>
+<version>` and `kp-admission cancel-adoption --tenant <tenant> <media_type>
+<version>` stay for local development and tests. Neither checks the gate or
+the rules above, and `--refresh` defaults to `none`.
 
 - Each adoption is a row with the next `sequence` of the deployment. A request
   copies its media type's `adopted_version` and that row's `sequence`, as its
@@ -123,24 +196,25 @@ refresh after an adoption is #98's command).
   only, for which a deployment-wide counter rises as a per-Source one would.
   When Sources select profiles, the count moves per Source.
 - A media type's adopted version is the one of its highest `sequence`, unless
-  that row is cancelled. Adopting `N+1` supersedes `N`, whose row stays as
-  history; adopting the version already adopted changes nothing. Rolling back
-  from `N+1` to `N` is adopting `N` again, which supersedes `N+1` with no gap.
-- Cancelling applies to the adopted version only, and fails for any other
-  version, changing nothing. It leaves the media type without a version: it
-  never falls back to an earlier one, whose workers may be retired. Adopting
-  again makes a new row. A cancellation waits for the declarations and
-  finalizations that read the cancelled row; no request is made under that
-  version after it returns.
-- Neither command checks that the version is released or deployed. A request
-  that names a version with no workers is not refused; it waits as backlog
-  (profiles README, P1). Retiring a version therefore also waits until no
+  that row is cancelled. Each applied entry is a new row, the same
+  version with a new refresh scope included; the `adopt` command makes none
+  for the version and scope already adopted. Rolling back from `N+1` to `N` is
+  adopting `N` again, with `N+1` withdrawn or kept, which supersedes `N+1` with
+  no gap. The refresh scope of the latest row of a Document's main-file media
+  type is the one #98's scan reads.
+- A cancellation leaves the media type without a version: it never falls back to
+  an earlier one, whose workers may be retired. Adopting again makes a new row.
+  A cancellation waits for the batch declarations and finalizations that read
+  the row it supersedes; no request is made under that version after it commits.
+- A request that names a version with no workers is not refused; it waits as
+  backlog (profiles README, P1). Retiring a version therefore also waits until no
   queued or processing request names it.
 - The record governs which version new requests run. Which accepted revision
   is a document's current one is Canonical Acceptance's selection (below).
 - A main file whose media type has no adopted version is `UNSUPPORTED_FORMAT`,
   at declaration (§6.1 rule 2) and at finalization (§6.2 step 4).
-- Before the first declaration, `paper-pdf@1` is adopted for `application/pdf`.
+- Before the first batch declaration, the values adopt `paper-pdf@1` for
+  `application/pdf` and the CronJob has applied them.
 
 **Canonical Acceptance** (#251, #57 scopes 2–4) is the commit of the
 transaction that records a `process` request `succeeded`, when that transaction
@@ -831,7 +905,7 @@ workflow back to the outbox. Only the current attempt's reports count:
 | The current attempt's, any other report: a lower `seq`, or the last `seq` with another body | `409` with `{"attempt_id", "seq"}`, the current attempt and its last `seq` |
 | Another attempt's | `409` with the current position (`seq` 0 before any report); not stored |
 | Before the dispatcher has recorded the attempt | `503` `ATTEMPT_NOT_RECORDED` with `Retry-After`: the sender retries within its report budget |
-| A request that does not exist or is not a `process` request | `404` |
+| A request that does not exist or is not a `process` request | `404`; `202`, recording nothing, for a request ID that starts with `chk_` (the adoption gate's test workflow, §3) |
 
 The `409` body is the bare position the sender reads, not an AIP-193 error; its
 trace id is in `X-Trace-Id`. A `503` `ATTEMPT_NOT_RECORDED` is the normal race
@@ -1328,7 +1402,8 @@ ended without an error block, such as terminated or timed out (§9).
 ## 13. Deployment and validation
 
 - One image, three roles: `api` (2 fixed replicas), `dispatcher` (≥ 2 replicas),
-  CronJobs (reconciler every 5 minutes, batch expiry and upload cleanup hourly,
+  CronJobs (reconciler every 5 minutes, declarative adoption every minute with
+  `concurrencyPolicy: Forbid`, batch expiry and upload cleanup hourly,
   retention daily).
 - The `api` role is FastAPI on one uvicorn worker per replica, with no HPA and no
   worker-count setting: the company sizes a fixed pod count for the peak. This
@@ -1399,8 +1474,9 @@ ended without an error block, such as terminated or timed out (§9).
 | I3a Canonical Acceptance record (#251) | `accepted`, the current Canonical Revision and its selection, `current_revision_changed`, the withdrawn versions, the candidate and `details` (§3, §5.5, §5.6, §7.3) | I3 |
 | I3b Projection report intake (#252) | the projections' reports and serving facts, readiness's serving part, `status_unverified`, `skipped` (§7) | I3 |
 | I3c Serving-fact repair (#260, done) | the repair view's intake, the replacement of a Build's mirror and the lost-writes declaration (§7.4, DR §5.4, §5.6) | I3b |
+| I2c Declarative adoption (#261) | the adoption record's declaration, refresh scope and withdrawn versions, the gate, `apply-adoption` (§3) | I3a |
 | I3d Serving-mirror retention (#264, after the pilot) | removal of a retired Build's facts, old attempts and expired tombstones (§7.4, DR §5.3) | I3c |
-| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I3, I3b, I3c, #55, #126 |
+| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I2c, I3, I3b, I3c, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
 
 The dependencies follow the tracker's edges as of 2026-11-19, when #97 was split

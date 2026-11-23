@@ -1,6 +1,7 @@
 """kp-admission command line: the api, dispatcher and reconciler roles (#95, #113, admission
 spec §13), Change Feed retention and the Knowledge Profile write point (#126), batch expiry and
-the two adoption commands (#96, admission spec §3), the upload cleanup (#194).
+the two adoption commands (#96, admission spec §3), the upload cleanup (#194), declarative
+adoption (#261).
 
 The database comes from KP_ADMISSION_DATABASE_URL; Temporal from TEMPORAL_ADDRESS (default
 localhost:7233) and TEMPORAL_NAMESPACE (default "default"), as for kp-canonicalization.
@@ -24,7 +25,7 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, batches, feed, reports, serving, status, uploads
+from kp_admission import adoption, batches, feed, gate, reports, serving, status, uploads
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -95,11 +96,22 @@ def main(argv: list[str] | None = None) -> int:
     custody bucket's settings as the api does; its credentials need s3:DeleteObject,
     s3:AbortMultipartUpload and s3:ListBucketMultipartUploads.
 
-    `kp-admission adopt --tenant T MEDIA_TYPE VERSION` and `kp-admission cancel-adoption --tenant
-    T MEDIA_TYPE VERSION`: the Processing Profile owner's adoption commands (§3). Adopting
-    supersedes the version adopted before for that media type; cancelling the adopted version
-    leaves none, and fails (exit 1) for a version that is not the adopted one. Each prints the
-    result as JSON and opens no refresh request (#98 does).
+    `kp-admission apply-adoption --tenant T`: one run of declarative adoption (#261, §3), the
+    CronJob that applies the deployment values' `adoption` mapping, given as JSON in
+    KP_ADOPTION. Each media type's declaration is applied after the gate
+    (kp_admission.gate); one JSON log line per media type carries media_type, declaration,
+    version, result (applied, skipped, waiting or refused) and reason. It fails (exit 1) when
+    any is refused, the gate raised (reason gate_unavailable) or the run raises, and exits 2
+    when KP_ADOPTION is not a JSON object. It needs Temporal, and the custody bucket's settings
+    as the api does, with s3:PutObject: a test workflow reads its file from there.
+
+    `kp-admission adopt --tenant T [--refresh SCOPE] MEDIA_TYPE VERSION` and `kp-admission
+    cancel-adoption --tenant T MEDIA_TYPE VERSION`: adoption by hand, for local development and
+    tests (§3); SCOPE is `none` (the default), `all` or a JSON object such as
+    `{"made_by": ["paper-pdf@1"]}`. Adopting supersedes the version adopted before for that
+    media type; cancelling the adopted version leaves none, and fails (exit 1) for a version
+    that is not the adopted one. Each prints the result as JSON and opens no refresh request
+    (#98 does).
 
     `kp-admission writes-lost EVENT`: operations' declaration that the admission database lost
     committed writes (a restore, a point-in-time restore, a failover that lost commits; DR §5.6),
@@ -130,6 +142,9 @@ def main(argv: list[str] | None = None) -> int:
         adopting.add_argument("--tenant", required=True)
         adopting.add_argument("media_type")
         adopting.add_argument("version")
+        if command == "adopt":
+            adopting.add_argument("--refresh", type=_refresh, default="none")
+    roles.add_parser("apply-adoption").add_argument("--tenant", required=True)
     args = parser.parse_args(argv)
     dsn = os.environ.get("KP_ADMISSION_DATABASE_URL")
     if not dsn:
@@ -217,7 +232,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.role == "set-profile":
         return asyncio.run(run_set_profile(dsn, args.tenant, args.source, args.projections))
     if args.role in ("adopt", "cancel-adoption"):
-        return asyncio.run(run_adoption(dsn, args.tenant, args.role, args.media_type, args.version))
+        refresh = getattr(args, "refresh", "none")
+        return asyncio.run(
+            run_adoption(dsn, args.tenant, args.role, args.media_type, args.version, refresh)
+        )
+    if args.role == "apply-adoption":
+        try:
+            declared = json.loads(os.environ.get("KP_ADOPTION", ""))
+        except json.JSONDecodeError:
+            declared = None
+        if not isinstance(declared, dict):
+            print("KP_ADOPTION must be a JSON object of media types", file=sys.stderr)
+            return 2
+        return asyncio.run(run_apply_adoption(dsn, args.tenant, declared)) if _storage_set() else 2
     if args.role == "writes-lost":
         return asyncio.run(run_writes_lost(dsn, args.event))
     if args.role == "expire":
@@ -330,13 +357,28 @@ async def run_expiry(dsn: str) -> int:
     return 1 if left else 0
 
 
+def _refresh(text: str) -> Any:
+    scope = text if text in ("none", "all") else json.loads(text)
+    pydantic.TypeAdapter(adoption.Refresh).validate_python(scope)
+    return scope
+
+
+async def run_apply_adoption(dsn: str, tenant_id: str, declared: dict[str, Any]) -> int:
+    client = await connect(lazy=True)  # Temporal down: each media type is gate_unavailable
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        adoption_gate = gate.TemporalGate(conn, client, S3ObjectStore.from_env(), tenant_id)
+        results = await adoption.apply(conn, tenant_id, declared, adoption_gate)
+    failed = any(r.result == "refused" or r.reason == "gate_unavailable" for r in results)
+    return 1 if failed else 0
+
+
 async def run_adoption(
-    dsn: str, tenant_id: str, command: str, media_type: str, version: str
+    dsn: str, tenant_id: str, command: str, media_type: str, version: str, refresh: Any = "none"
 ) -> int:
     async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
         if command == "adopt":
             sequence = await adoption.adopt(
-                conn, tenant_id=tenant_id, media_type=media_type, version=version
+                conn, tenant_id=tenant_id, media_type=media_type, version=version, refresh=refresh
             )
             print(json.dumps({"adopted_version": version, "adoption_sequence": sequence}))
             return 0

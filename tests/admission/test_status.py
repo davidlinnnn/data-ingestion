@@ -12,6 +12,7 @@ from psycopg.types.json import Jsonb
 from psycopg_pool import AsyncConnectionPool
 
 from kp_admission import feed, status
+from kp_admission.adoption import CHECK_PREFIX
 from kp_admission.api import SourceCredential, app
 from kp_admission.dispatcher import dispatch_due
 from kp_admission.reports import Pipeline
@@ -483,3 +484,15 @@ async def test_the_sender_and_the_receiver_agree_on_delivery_and_position(api, c
     assert (other.delivered, other.position) == (False, Position("run-a", 3))
     assert (refused.delivered, refused.position, refused.error) == (False, None, "HTTP 401")
     assert await state_of(conn, request_id) == ("processing", "3", "pending")
+
+
+async def test_a_report_of_an_adoption_test_workflow_is_taken_and_records_nothing(api, conn):
+    """The adoption gate's test workflows (#261) report like any run; admission has no request
+    for them, so a 404 would make the sender retry for its whole budget."""
+    body = report(f"{CHECK_PREFIX}{'0' * 32}", 1, "prepare", "running")
+    before = await (await conn.execute("SELECT count(*) FROM request")).fetchone()
+
+    response = await send(api, body)
+
+    assert response.status_code == 202
+    assert await (await conn.execute("SELECT count(*) FROM request")).fetchone() == before

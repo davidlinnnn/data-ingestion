@@ -9,6 +9,7 @@ import dataclasses
 import json
 import logging
 import uuid
+from importlib.resources import files
 
 import pytest
 from temporalio.api.workflowservice.v1 import DescribeWorkerDeploymentRequest
@@ -590,3 +591,17 @@ async def test_a_summary_past_its_budget_does_not_hold_the_document(client, port
     )  # fmt: skip
     marker = f"documents/doc_1/service-unavailable/{start['request_id']}"
     assert await ports.store.head(marker) is not None
+
+
+async def test_the_adoption_gate_file_completes_end_to_end(client, ports, runtime):
+    """The gate's test workflow (#261) runs this file: it must reach `complete` on a working
+    build, through every enrichment queue."""
+    data = (files("kp_admission") / "check.pdf").read_bytes()
+    start = await start_input(ports, data, request_id=f"chk_{uuid.uuid4().hex}")
+
+    outcome, _ = await process(client, ports, runtime, start)
+
+    assert outcome["outcome"] == "complete"
+    result = json.loads(await ports.store.get(outcome["manifest_ref"]))
+    kinds = {e["item_id"].split(":")[0] for e in result["enrichments"]}
+    assert {"picture-interpretation", "document-summary"} <= kinds

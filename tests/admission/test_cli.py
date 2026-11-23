@@ -347,6 +347,10 @@ async def test_the_adoption_commands_and_the_expiry_run_print_their_outcome(dsn,
         0,
         {"adopted_version": "paper-pdf@1", "adoption_sequence": 1},
     )
+    assert run("adopt", "--tenant", "t1", "--refresh", "all", "application/pdf", "paper-pdf@1") == (
+        0,
+        {"adopted_version": "paper-pdf@1", "adoption_sequence": 2},
+    )  # a new refresh scope is a new adoption
     cancel = ("cancel-adoption", "--tenant", "t1", "application/pdf")
     assert run(*cancel, "paper-pdf@2") == (1, {"cancelled": False})
     assert run(*cancel, "paper-pdf@1") == (0, {"cancelled": True})
@@ -423,3 +427,51 @@ async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(
     assert 'kp_feed_consumer_lag_seconds{projection="wiki"} 0.0' in page
     assert "kp_feed_oldest_xmin_age_seconds " in page
     assert 'kp_serving_builds_without_liveness{projection="wiki"} 1.0' in page
+
+
+@pytest.mark.docker
+async def test_apply_adoption_logs_one_line_per_media_type_and_fails_on_a_refusal(
+    dsn, conn, temporal_address
+):
+    """The CronJob of #261. Storage is unreachable: no test workflow is started here, so the
+    gate stops at Temporal, where no version is deployed."""
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn, "TEMPORAL_ADDRESS": temporal_address}
+    env |= S3
+
+    def run(declared: object, **more: str) -> tuple[int, list[dict]]:
+        done = subprocess.run(
+            [sys.executable, "-m", "kp_admission.cli", "apply-adoption", "--tenant", "t1"],
+            env=env | {"KP_ADOPTION": json.dumps(declared)} | more,
+            capture_output=True,
+            text=True,
+        )
+        lines = [json.loads(line) for line in done.stderr.splitlines()]
+        return done.returncode, [line for line in lines if "result" in line]
+
+    pdf = {"declaration": 1, "version": "paper-pdf@1", "refresh": "none"}
+    waiting, waits = run({"application/pdf": pdf})
+    down, downs = run({"application/pdf": pdf}, TEMPORAL_ADDRESS="127.0.0.1:9")
+    cancel = {"declaration": 1, "version": "none", "refresh": "none"}
+    applied, applies = run({"application/pdf": cancel})
+    refused, refusals = run({"application/pdf": cancel | {"version": "paper-pdf@1"}})
+    bad = subprocess.run(
+        [sys.executable, "-m", "kp_admission.cli", "apply-adoption", "--tenant", "t1"],
+        env=env | {"KP_ADOPTION": "[]"},
+        capture_output=True,
+    )
+
+    fields = ("media_type", "declaration", "version", "result", "reason")
+    assert (waiting, [tuple(w[f] for f in fields) for w in waits]) == (
+        0,
+        [("application/pdf", 1, "paper-pdf@1", "waiting", "not_deployed")],
+    )
+    assert (down, [(d["result"], d["reason"]) for d in downs]) == (
+        1,
+        [("waiting", "gate_unavailable")],
+    )
+    assert (applied, [a["result"] for a in applies]) == (0, ["applied"])
+    assert (refused, [(r["result"], r["reason"]) for r in refusals]) == (
+        1,
+        [("refused", "declaration_not_raised")],
+    )
+    assert bad.returncode == 2
