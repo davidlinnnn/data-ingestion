@@ -339,9 +339,44 @@ CREATE TABLE adoption (
     sequence        bigint PRIMARY KEY,  -- the adoption_sequence of the requests made under it
     tenant_id       text NOT NULL,
     media_type      text NOT NULL,
-    adopted_version text NOT NULL,
+    adopted_version text,  -- none on a declared cancellation (#261), which is cancelled at once
     adopted_at      timestamptz NOT NULL DEFAULT now(),
-    cancelled_at    timestamptz
+    cancelled_at    timestamptz,
+    -- The deployment values' declaration number (#261); none on the local adopt command's rows.
+    declaration     bigint,
+    -- The refresh scope (#98): "none", "all" or {"made_by": [version, ...]}.
+    refresh         jsonb NOT NULL DEFAULT '"none"',
+    CHECK (adopted_version IS NOT NULL OR cancelled_at IS NOT NULL),
+    UNIQUE (tenant_id, media_type, declaration)
+);
+
+-- Each test workflow of the adoption gate (#261); the unique attempt keeps one open per version.
+CREATE TABLE adoption_check (
+    check_id   text PRIMARY KEY,  -- its workflow ID
+    tenant_id  text NOT NULL,
+    media_type text NOT NULL,
+    version    text NOT NULL,
+    attempt    integer NOT NULL,
+    started_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (media_type, version, attempt)
+);
+
+-- apply-adoption's runs (#261), which the api measures into gauges: the CronJob's pod is gone.
+CREATE TABLE adoption_run (
+    tenant_id  text NOT NULL,
+    media_type text NOT NULL,
+    result     text NOT NULL,
+    reason     text NOT NULL,
+    runs       bigint NOT NULL,
+    PRIMARY KEY (media_type, result, reason)
+);
+
+CREATE TABLE adoption_status (
+    media_type text PRIMARY KEY,
+    tenant_id  text NOT NULL,
+    result     text NOT NULL,  -- of the latest run
+    reason     text NOT NULL,
+    since      timestamptz NOT NULL  -- when the result last changed
 );
 
 -- Authorization records (authorization design §5.1, #113), in their own schema so that a

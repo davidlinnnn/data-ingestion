@@ -59,7 +59,7 @@ from starlette.exceptions import HTTPException
 from starlette.requests import ClientDisconnect
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission import batches, feed, reports, resources, serving, status, uploads
+from kp_admission import adoption, batches, feed, reports, resources, serving, status, uploads
 from kp_admission.authz import PAGE_SIZE, Action, Authorizer, Decision, Operation, Outcome, Ref
 from kp_admission.errors import ErrorStatus, Refused
 from kp_admission.resources import Resource
@@ -720,6 +720,8 @@ def app(
             )
         if body.request_id != request_id:
             raise _invalid("request_id: not the request of the path")
+        if request_id.startswith(adoption.CHECK_PREFIX):
+            return Response(status_code=202)  # an adoption gate's test workflow (#261)
         async with pool.connection() as conn:
             taken = await reports.take(conn, pipeline, body)
         match taken.result:

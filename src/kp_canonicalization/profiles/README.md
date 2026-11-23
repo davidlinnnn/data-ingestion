@@ -132,11 +132,18 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
 3. Add `paper-pdf-<N+1>` to the deployment values, with that image tag as its one build and as
    `current`, and sync. The chart brings up its five Deployments and the promoter makes the build
    current once all five poll. Nothing on the Temporal side is manual.
-4. The Processing Profile owner adopts `paper-pdf@<N+1>` in admission. The platform then refreshes
-   (#98): one `process` request per affected document's current canonical revision, with
-   `initiator: platform` and that `adopted_version`. Adoption need not
-   wait for the rollout: a request started before the workers are up waits as backlog, is not
-   refused and runs when they arrive (P1).
+4. The Processing Profile owner adopts `paper-pdf@<N+1>` in the same deployment values, in the
+   `adoption` mapping (admission spec §3): raise `declaration` by one, set `version`, and state
+   `refresh` (`none`, `all` or `{made_by: [paper-pdf@<N>]}`; there is no default). The PR may
+   land with step 3's. Admission's `apply-adoption` CronJob applies it once the gate passes:
+   the build is current on all five queues and a test workflow of the version, on a synthetic
+   page, ended `complete`. Until then each run logs `waiting` with the reason, and requests keep
+   running `paper-pdf@<N>`. Once #98's scan runs, the platform then refreshes: one `process`
+   request per document in the scope, with `initiator: platform` and that `adopted_version`.
+
+   Every version deploys all five workers with their settings, `d3` included, whether or not the
+   file lists `d3-check`: the promoter and the gate both wait for five queues. A d3 worker of a
+   version without the check is never called and does not reach the d3 service at start.
 5. Only the new or changed method computes. Check the first finished document:
    - the result's `profile` section names `paper-pdf@<N+1>` and the method's `module_digest`;
    - the request's receipts (`requests/<request_id>/attempts/`) hold only that method's requests;
@@ -180,14 +187,41 @@ there, and step 1 becomes:
    switches current back within a minute. Workflows that started on the bad build stay pinned to
    it: let them finish, or terminate them and redrive the documents.
 
+## Roll a method back: adopt the older version, withdraw the faulty one
+
+A method rollback is a reprocessing, not a pointer move (ADR-0016). In the deployment values'
+`adoption` entry, in one PR: raise `declaration`, set `version` back to the older version, add
+the faulty one to `withdrawn`, and state `refresh`. The older version has been adopted before, so
+the gate runs no test workflow: a rollback often happens while a model service is down. A result
+of a withdrawn version that arrives later forms no Canonical Acceptance, and #98's scan redoes
+every Document whose current revision it made.
+
+- A downgrade must say what becomes of every higher version adopted before: in `withdrawn`, or
+  in `kept` to leave it adoptable. Otherwise the CronJob refuses it (`downgrade_undeclared`), so
+  reverting the version line alone cannot bring an old refresh scope back silently. `kept` is not
+  recorded and keeps no document by itself: whether a kept version's documents are redone is
+  `refresh`'s, so write `refresh: none` (or a scope without it) to keep them. Every later entry
+  for the lower version repeats `kept`.
+- If the older version was retired, put its deployment entry back in the same PR (Upgrade step 3).
+  Until its build is current on all five queues the CronJob logs `waiting` (`not_deployed`,
+  `no_current_build` or `queues_not_polled`).
+- **Review a change to `withdrawn` as you would a deletion.** An entry is never removed (the
+  CronJob refuses it, `withdrawn_removed`), and a withdrawn version is never adopted again. A
+  wrong entry makes every document that version made be redone.
+- **Keep `withdrawn` empty until #98's scan runs in that environment.** Without it, the results of
+  a withdrawn version are dropped and nothing redoes them. Until then, roll back with the faulty
+  version in `kept` and a `refresh` scope naming it: its documents stay as they are until the scan
+  runs, which reads the latest refresh scope then.
+
 ## Retire: one entry removed, required
 
 This step is not optional. A version that no adoption names stays current in Temporal, never
 reads `draining`, and so nothing scales it down (P5). Each of its five queues keeps at least one
 pod until the version leaves the deployment values.
 
-1. Confirm that no adoption names `paper-pdf@<N>`: the owner cancelled it, or adopted a newer
-   version. A start that still names it is not refused: it would wait on a queue with no worker
+1. Confirm that no adoption names `paper-pdf@<N>`: the deployment values' `adoption` mapping
+   adopts another version or `none`, and admission's `apply-adoption` CronJob logged it
+   `applied` or `skipped`. A start that still names it is not refused: it would wait on a queue with no worker
    (P1). Also confirm that no queued or processing admission request names it: a request keeps
    the version it was made with, and one still in the outbox is not yet a workflow (admission
    spec §3).

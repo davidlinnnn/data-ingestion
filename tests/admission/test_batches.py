@@ -504,10 +504,27 @@ async def test_a_document_another_batch_created_meanwhile_is_a_stale_declaration
     assert stale.json()["items"][0]["error"]["reason"] == "STALE_DECLARATION"
 
 
+async def passed(media_type: str, version: str, adopted_before: bool) -> tuple[bool, str]:
+    return True, ""
+
+
+async def declare_version(conn, version: str) -> int:
+    """Declarative adoption (#261) of `version` for PDF, past a gate that passes."""
+    entries = {PDF: {"declaration": 1, "version": version, "refresh": "none"},
+               MD: {"declaration": 1, "version": "md-standard@1", "refresh": "none"}}  # fmt: skip
+    results = await adoption.apply(conn, "t1", entries, passed)
+    assert {r.result for r in results} == {"applied"}
+    return next(r.sequence for r in results if r.media_type == PDF and r.sequence)
+
+
+@pytest.mark.parametrize("by", ["command", "declaration"])
 async def test_a_finalized_request_runs_the_adopted_version_with_its_sequence_and_trace_id(
-    platform, api, store, conn
+    platform, api, store, conn, by
 ):
-    sequence = await adoption.adopt(conn, tenant_id="t1", media_type=PDF, version="paper-pdf@2")
+    if by == "command":
+        sequence = await adoption.adopt(conn, tenant_id="t1", media_type=PDF, version="paper-pdf@2")
+    else:
+        sequence = await declare_version(conn, "paper-pdf@2")
     trace = "4bf92f3577b34da6a3ce929d0e0e4736"
     async with api() as hr:
         declared = (await hr.post("/v1/batches", json={"items": [A]})).json()
@@ -526,13 +543,25 @@ async def test_a_finalized_request_runs_the_adopted_version_with_its_sequence_an
     assert row == ("paper-pdf@2", sequence, trace, declared["batch_id"], "source")
 
 
+async def declared_cancel(conn) -> None:
+    """A declared cancellation (#261): `version: none`."""
+    entries = {PDF: {"declaration": 1, "version": "none", "refresh": "none"},
+               MD: {"declaration": 1, "version": "md-standard@1", "refresh": "none"}}  # fmt: skip
+    results = await adoption.apply(conn, "t1", entries, passed)
+    assert {r.result for r in results} == {"applied"}
+
+
+@pytest.mark.parametrize("by", ["command", "declaration"])
 async def test_without_an_adopted_version_the_format_is_unsupported_at_finalize(
-    platform, api, store, conn
+    platform, api, store, conn, by
 ):
     async with api() as hr:
         declared = (await hr.post("/v1/batches", json={"items": [A, fresh("B")]})).json()
         upload(store, declared, [A, fresh("B")])
-        await adoption.cancel(conn, media_type=PDF, version="paper-pdf@1")
+        if by == "command":
+            await adoption.cancel(conn, media_type=PDF, version="paper-pdf@1")
+        else:
+            await declared_cancel(conn)
         finalized = await hr.post(f"/v1/batches/{declared['batch_id']}/finalize")
         after = await hr.post("/v1/batches", json={"items": [fresh("C")]})
 
