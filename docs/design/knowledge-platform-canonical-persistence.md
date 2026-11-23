@@ -223,7 +223,7 @@ flowchart LR
 放行的條件，兩個都要：
 
 1. 遺失區間的刪除已由 Source 重送並套用。
-2. 每個 projection 的 cursor 已退回到 T 或更早（C12）。feed 的位置是交易編號加序號，還原之後交易編號從 T 接著算，新事件的位置會落在 projection 已經讀過的範圍裡；feed 只回 cursor 之後的事件，偵測不到這件事。不退回的話，reconciler 補記的接受與重送的刪除都會被跳過。對所有 Build 的修復（C12）在這之後。這是從程式與 PostgreSQL 的文件推得的，沒有實測。
+2. 每個 projection 的 cursor 已退回到 T 或更早（C12）。feed 的位置是交易編號加序號，還原之後交易編號從 T 接著算，新事件的位置會落在 projection 已經讀過的範圍裡；feed 只回 cursor 之後的事件，偵測不到這件事。不退回的話，reconciler 補記的接受與重送的刪除都會被跳過。對所有 Build 的修復（C12）在這之後。這是從程式與 PostgreSQL 的文件推得的，沒有實測。PROD 的 MongoDB feed（#239）位置是 epoch 加序號，還原之後兩者一樣回到 T 的值，所以條件相同；還原時把 epoch 往前推能不能取代退回，由 #239 確認。reader 怎麼退回由 #127 提供。
 
 - 寫入面照常：交件、狀態回報、reconciler、掃描都繼續。reconciler 要把遺失的接受補回來；這段時間產生的事件留在 feed 裡。放行之後 projection 讀到事件會再讀現況，那時現況已經是刪除過的。
 - projection 既有的索引照常服務，但它向平台拿的內容與圖在這段時間拿不到（第 8 節）。
