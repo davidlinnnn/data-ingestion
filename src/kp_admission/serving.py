@@ -20,6 +20,8 @@ Metrics:
   of the view that ended it (DR §9's repair latency).
 - `kp_serving_late_landings_total` (count) by `projection`: an `included` fact recorded for a
   Document that Source Deletion already applies to.
+- `kp_serving_builds_writes_lost` (gauge) by `projection`: its Builds not retired that a
+  lost-writes declaration asked to repair and no view has repaired since (DR §5.6).
 - `kp_serving_builds_without_liveness` (gauge) by `projection`: its Builds not retired whose last
   report is older than the pipeline's update interval.
 """
@@ -57,6 +59,11 @@ repair_latency = Histogram(
     "from a repair request to the view that ended it",
     ["projection"],
     buckets=(10, 30, 60, 300, 900, 1800, 3600, 7200, 21600, 86400),
+)
+writes_lost_builds = Gauge(
+    "kp_serving_builds_writes_lost",
+    "Builds not retired a lost-writes declaration asked to repair",
+    ["projection"],
 )
 without_liveness = Gauge(
     "kp_serving_builds_without_liveness",
@@ -252,7 +259,11 @@ class _Row:
 
 
 async def report_build(
-    conn: AsyncConnection, projection: str, build_id: str, report: BuildReport
+    conn: AsyncConnection,
+    projection: str,
+    build_id: str,
+    report: BuildReport,
+    update_interval_s: int = 0,
 ) -> tuple[BuildAnswer, list[str]]:
     """Takes a Build's state report (DR §4, D2), in one transaction, and returns the Builds whose
     Documents' readiness it may have changed. A Build starts `building`. `serving` is a switch:
@@ -262,16 +273,16 @@ async def report_build(
     the caller finishes a refresh the first call did not. Refused: 409 GATE_FAILED naming the
     gate (replaces, caught_up, coverage, removed_documents), 409 BUILD_STATE for a state the
     Build cannot take from where it is, 400 for a feed_position that is not one or is ahead of
-    the feed."""
+    the feed. A Build first reported within `update_interval_s`, its pipeline's, of a lost-writes
+    declaration may be one the loss erased: it starts asked for a view captured after it."""
     async with conn.transaction():
         cursor = await conn.execute(
             "INSERT INTO build (projection, build_id, state) VALUES (%s, %s, 'building')"
             " ON CONFLICT DO NOTHING RETURNING build_id",
             (projection, build_id),
         )
-        if await cursor.fetchone() and await writes_unrepaired(conn):
-            # It may be one the loss erased, whose owner reports it again (DR §5.6, K2).
-            await _repair(conn, projection, build_id, None, "writes_lost")
+        if await cursor.fetchone():
+            await _maybe_erased(conn, projection, build_id, update_interval_s)
         # Every Build of the projection, so two switches cannot both read the same serving one.
         cursor = await conn.execute(
             "SELECT build_id, state, switch_seq, repair_reason, repair_requested_at FROM build"
@@ -332,6 +343,22 @@ async def report_build(
     _log(logging.INFO, "build state", projection, build_id, state=state, reported=report.state)
     repair = Repair(reason=reason, requested_at=requested_at) if reason else None
     return BuildAnswer(state=state, repair_requested=repair), changed
+
+
+async def _maybe_erased(
+    conn: AsyncConnection, projection: str, build_id: str, update_interval_s: int
+) -> None:
+    """A new Build reported within its pipeline's update interval of the last lost-writes
+    declaration may be one the loss erased, reported again by its owner (DR §5.6, K2): it is
+    asked for a repair and, as the Builds the declaration asked, refuses views captured before."""
+    cursor = await conn.execute("SELECT max(applied_at) FROM writes_lost")
+    [(declared,)] = await cursor.fetchall()
+    if declared and datetime.now(UTC) - declared < timedelta(seconds=update_interval_s):
+        await conn.execute(
+            "UPDATE build SET view_captured_at = %s WHERE projection = %s AND build_id = %s",
+            (declared, projection, build_id),
+        )
+        await _repair(conn, projection, build_id, None, "writes_lost")
 
 
 async def _switch(
@@ -785,12 +812,16 @@ async def writes_unrepaired(conn: AsyncConnection) -> list[tuple[str, str]]:
     """(projection, build_id) of the Builds not retired that no view captured after the last
     loss of committed writes has repaired. While there is one, and for the longest update
     interval of the registered pipelines after the declaration, #98 makes no enforcement
-    judgment (DR §5.6, K2, spec §7.4)."""
+    judgment (DR §5.6, K2, spec §7.4). Sets kp_serving_builds_writes_lost."""
     cursor = await conn.execute(
         "SELECT projection, build_id FROM build WHERE repair_reason = 'writes_lost'"
         " AND state <> 'retired' ORDER BY 1, 2"
     )
-    return await cursor.fetchall()
+    found = await cursor.fetchall()
+    writes_lost_builds.clear()
+    for projection, _ in found:
+        writes_lost_builds.labels(projection).inc()
+    return found
 
 
 async def take_attempt(
@@ -1012,7 +1043,6 @@ async def _reported(conn: AsyncConnection, projection: str, build_id: str) -> Re
     # A view whose pages stopped coming is discarded by the Build's next report (DR §5.4).
     if view_state == "incomplete" and captured_at + VIEW_LIFETIME <= datetime.now(UTC):
         await _end_view(conn, projection, build_id, "expired")
-        views.labels(projection, "expired").inc()
         repair = await _repair(conn, projection, build_id, repair, "view_expired")
     return repair
 

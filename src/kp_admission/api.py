@@ -752,7 +752,8 @@ def app(
         """A Build's state (DR §4, D2); a switch failing a gate is 409 GATE_FAILED."""
         name = calling_projection()
         async with pool.connection() as conn:
-            answer, changed = await serving.report_build(conn, name, build_id, body)
+            interval = by_track[name].update_interval_s
+            answer, changed = await serving.report_build(conn, name, build_id, body, interval)
             # shortcut: a switch, or a resent one, refreshes every Document of both Builds inside
             # the request, move the fan-out to a worker when #99 measures it near a call's timeout.
             await status.refresh_builds(conn, name, changed)

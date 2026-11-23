@@ -308,7 +308,7 @@ async def test_after_lost_writes_only_a_view_captured_later_ends_the_repair(api,
     stored = [(a, RESOURCE, "crv_1"), (b, RESOURCE, "crv_1")]
     await conn.execute("UPDATE serving_fact SET canonical_revision_id = 'crv_0'")
     await beat(api, "retrieval", *stored)  # a heartbeat_mismatch request, then the loss
-    before = datetime.now(UTC)
+    before = datetime.now(UTC) - timedelta(minutes=1)  # the database has its own clock
     await page(api, "retrieval", 1, 2, 2, entry(a, srv_a, 1), captured_at=before)
 
     asked = await serving.lose_writes(conn, 1)
@@ -385,3 +385,27 @@ async def test_a_view_captured_ahead_of_the_clock_or_past_its_lifetime_is_refuse
     assert refused.status_code == 400
     assert refusal(stale) == (409, "VIEW_DISCARDED", {"reason": "expired"})
     assert (await page(api, "retrieval", 1, 1, 0)).json()["view"] == "installed"
+
+
+async def test_a_build_reported_soon_after_lost_writes_may_be_an_erased_one(api, conn):
+    """DR §5.6, K2: the loss erased a Build; its owner reports it again within its pipeline's
+    update interval of the declaration. It is asked for a view captured after the declaration,
+    even when no surviving Build is left to repair; a Build reported later is not."""
+    uid, srv = await document(conn)
+    await profile(conn, "retrieval")
+    before = datetime.now(UTC) - timedelta(minutes=1)  # the database's clock is another one
+    assert await serving.lose_writes(conn, 1) == 0  # every Build was erased
+
+    again = await build(api, "retrieval", "b1", state="building")
+    stale = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1), captured_at=before)
+    unrepaired = await serving.writes_unrepaired(conn)
+    fresh = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1), view_id="v2")
+    await conn.execute("UPDATE writes_lost SET applied_at = now() - interval '601 seconds'")
+    later = await build(api, "retrieval", "b2", state="building")
+
+    assert again.json()["repair_requested"]["reason"] == "writes_lost"
+    assert refusal(stale) == (409, "VIEW_DISCARDED", {"reason": "writes_lost"})
+    assert unrepaired == [("retrieval", "b1")]
+    assert fresh.json() == {"view": "installed", "repair_requested": None}
+    assert later.json()["repair_requested"] is None
+    assert await serving.writes_unrepaired(conn) == []

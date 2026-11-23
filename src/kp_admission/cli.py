@@ -106,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     run by a Job of the deployment repo with the event's number, which each such declaration
     raises (#78's runbook). Every Build not retired is asked for a repair view, and Source
     Deletion's judgment stays suspended until a view captured after the run repairs each one
-    (kp_admission.serving.writes_unrepaired). EVENT is a number above every earlier
+    (kp_admission.serving.writes_unrepaired). EVENT is a number from 1, above every earlier
     declaration's, kept in the deployment repo. The event applied last, run again, changes
     nothing, so the Job can run again; an event below it fails (exit 1) and changes nothing. It
     prints whether it applied the event and how many Builds it asked, as JSON.
@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
     profile.add_argument("source")
     profile.add_argument("projections", nargs="*")
     roles.add_parser("expire")
-    roles.add_parser("writes-lost").add_argument("event", type=int)
+    roles.add_parser("writes-lost").add_argument("event", type=_positive)
     for command in ("adopt", "cancel-adoption"):
         adopting = roles.add_parser(command)
         adopting.add_argument("--tenant", required=True)
@@ -225,6 +225,12 @@ def main(argv: list[str] | None = None) -> int:
     return asyncio.run(run_dispatcher(dsn) if args.role == "dispatcher" else run_reconciler(dsn))
 
 
+def _positive(value: str) -> int:
+    if not value.isdecimal() or int(value) < 1:
+        raise argparse.ArgumentTypeError("a number from 1")
+    return int(value)
+
+
 def _storage_set() -> bool:
     storage = ("KP_S3_ENDPOINT", "KP_S3_BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
     if all(os.environ.get(k) for k in storage):
@@ -264,6 +270,7 @@ async def observe(pool: AsyncConnectionPool[Any], pipelines: dict[str, reports.P
             async with pool.connection() as conn:
                 await feed.observe(conn)
                 await serving.silent(conn, pipelines, datetime.now(UTC))
+                await serving.writes_unrepaired(conn)  # for its gauge
         except Exception as error:  # the gauges keep their last values; the api keeps serving
             log.warning("feed and liveness metrics not measured: %s", type(error).__name__)
         await asyncio.sleep(OBSERVE_S)
