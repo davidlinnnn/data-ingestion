@@ -293,7 +293,9 @@ inventory:  ref to the partial inventory and registered work, when any
   Processing Result or the failure report.
 - Redrive (Q23): processing lists the Documents whose current revision has
   `SERVICE_UNAVAILABLE` items; the operator passes that list to the #98 redrive.
-  Admission never reads the result.
+  Admission never reads the result. **Superseded on 2026-11-23** (#57 B7, built
+  by #276): there is no list; such a request fails retryably and the platform's
+  scan reruns it (#98).
 
 ## 10. Custody handoff and limitations
 
