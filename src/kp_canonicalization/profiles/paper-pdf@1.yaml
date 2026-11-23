@@ -29,9 +29,10 @@ methods:
     components:
       - company-vlm/Qwen3.8-27B
   # The d3 Quality Check (ADR-0011, #161) judges formulas, tables and picture OCR. This entry
-  # is its only switch. On: keep it, and deploy `kp-canonicalization worker --queue d3` with
-  # KP_D3_BASE_URL (ConfigMap) and KP_D3_API_KEY (Secret). Off: remove it; no d3 worker or
-  # variable is needed then, and results are what they were without it.
+  # is its only switch: keep it, or remove it and nothing is checked. Every version deploys
+  # `kp-canonicalization worker --queue d3` with KP_D3_BASE_URL (ConfigMap) and KP_D3_API_KEY
+  # (Secret) either way: the promoter and the adoption gate need all five queues polled (#261).
+  # A check without a judgement fails the request (#57 B9, #276).
   d3-check@1:
     components:
       - company-d3/vllm-sr/d3-mini@bd0090dd

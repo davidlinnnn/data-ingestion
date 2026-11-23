@@ -3,14 +3,18 @@
 its image, and gives the judged item a signal and, for formulas and tables, a contradiction.
 
 Operating it. The Processing Profile is the only switch:
-  on   list `d3-check@1` in the profile and deploy `kp-canonicalization worker --queue d3` with
-       KP_D3_BASE_URL (the service root, from the ConfigMap) and KP_D3_API_KEY (its bearer key,
-       from the Secret); the worker refuses to start without the URL
-  off  leave `d3-check@1` out of the profile: nothing is checked, no d3 worker or variable is
-       needed, and results are what they were without it
-When the service gives no answer after the retries, the judged item keeps the status its own
-method gives it, with signals {"d3": {"state": "not_run", "reason"}}, and the redrive marker is
-written.
+  on   list `d3-check@1` in the profile
+  off  leave `d3-check@1` out of the profile: nothing is checked
+Either way, every version deploys `kp-canonicalization worker --queue d3` with KP_D3_BASE_URL
+(the service root, from the ConfigMap) and KP_D3_API_KEY (its bearer key, from the Secret): the
+promoter and the adoption gate need a worker polling each of the five queues (#261). The worker
+refuses to start without the URL, does not connect at start, and gets no request without check
+items.
+A check without a judgement is a missing result (#57 B9): the judged item gets signals {"d3":
+{"state": "not_run", "reason"}} and finalize fails the request with QUALITY_CHECK_INCOMPLETE,
+retryable when the service gave no answer (SERVICE_UNAVAILABLE, never registered), not when its
+reply held no score (SCHEMA_INVALID, registered and reused). The exit from a long outage is a
+Processing Profile version without `d3-check`.
 
 The request and the constants are #153's measurement (tag research/153-d3-quality-check):
 questions.json (Q2), prepare_inputs.py (state, image size) and selection/d3-mini.json

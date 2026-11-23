@@ -123,8 +123,9 @@ _Avoid_: Canonical Revision, checkpoint, processing completion as acceptance
 The outcome a versioned status rule assigns to one Enrichment item when
 processing finalizes: `failed`, `disputed`, `unverified` or `verified`.
 Canonical keeps it unchanged and consumers check it before relying on the item.
-An accepted Canonical Revision holds no `failed` item: a Document with one is
-not accepted (ADR-0011's 2026-11-23 note; built by #81).
+A successful Processing Result, and so an accepted Canonical Revision, holds no
+`failed` item: a Document with one fails its request (ADR-0011's 2026-11-23
+note; built by #276).
 _Avoid_: quality acceptance, verification of source truth
 
 **Knowledge Profile**:
