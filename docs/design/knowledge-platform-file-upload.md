@@ -125,7 +125,7 @@ presigned URL 本來就是「讓 client 不拿 storage 憑證也能直接寫」�
 | 網路 | storage 留在內部，只有平台連得到 | storage 要開放給所有 client 的網段 |
 | 檔案落地前的檢查 | 傳輸中就能擋下大小、型別、未知 batch、超出配額，並同時算 SHA-256 | policy 能限制 prefix，但文件裡沒有可限制上傳大小的條件；只能等 finalize 才發現並清掉 |
 | client 的開發 | 一般的 HTTP PUT | S3 SDK 與 endpoint 設定 |
-| 與 storage 產品的耦合 | client 看不到 storage；#57 尚未選定產品，之後怎麼選都不影響 client | client 綁定 S3 API 與該產品的憑證機制 |
+| 與 storage 產品的耦合 | client 看不到 storage；pilot 用 MinIO，PROD 用公司的託管儲存服務（#57），換產品不影響 client | client 綁定 S3 API 與該產品的憑證機制 |
 | 稽核 | 上傳紀錄集中在平台 | 分散在 storage 與平台兩邊 |
 | 公司政策 | 多半合規 | 風險最高：發給 client 的暫時憑證比 presigned URL 權限更大，很可能遇到同樣的反對 |
 
@@ -1133,6 +1133,8 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 大檔案的續傳 | 5 GB 以上才需要；可以用新增的端點加上，不破壞既有 client（第 7.4 節） | 不在第一版 |
 | 公司的 ingress 產品與設定值 | 第 6.2 節的數值 | #78 |
 | `KP_ADMISSION_PUBLIC_URL` 的值 | `api` 用它組 `uploads[].url`（規格 §5.1），必填，不依賴 ingress 轉送的 header；值是 ingress 的對外 origin。驗收：經 ingress 宣告，回應的 `url` 是對外網址 | #78 |
+| pilot 的物件儲存沒有冗餘 | 使用者 2026-11-23 裁決接受這個風險：MinIO 遺失已受理的內容時，平台沒有第二份，也沒有自動的修復。Source 要刪除文件後重交，`document_id` 不變，`document_uid` 會換掉，全部重新處理；同樣內容直接重交沒有用（回 `unchanged`）。刪除（#98）完成之前只能整套重置。PROD 用公司的託管儲存服務，不適用（[設計結果](knowledge-platform-canonical-persistence.md)第 7 節） | pilot 的 MinIO 怎麼部署：#137；不用 Source 動手的修復：#269，PROD 上線前 |
+| 資料庫還原之後的放行 | 資料庫從備份還原後，遺失區間的請求（包含刪除）要請 Source 重送。在遺失的刪除重新套用、各讀取端的 cursor 退回之前，`/read/v1/` 不回應，`/v1/` 照常：這段時間新交的文件不會進到搜尋。怎麼關與開、由誰宣告條件成立還沒定（[設計結果](knowledge-platform-canonical-persistence.md)第 7.2 節） | #78 |
 
 ### 7.2 變更紀錄
 
@@ -1154,6 +1156,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-22 | 第 7.3 節跟上 2026-11-22 的票：#251 可以開始（#57 定了受理點），新增宣告式採用（#261），#98 改等 #251、#260、#261。第 6.9 節寫明 PROD 不能由人進 pod 下指令 |
 | 2026-11-22 | #252：讀取端的回報接收實作完成：Build 狀態、寫入前登記與 B5 檢查、serving 事實、heartbeat、attempt 回報、補建完成；`readiness`、`since`、`serving` 與讀取端的 `attention` 改由這些回報算出（規格 §7.4）。修復 view 的接收拆到 #260。第 5 節更新現況：讀取端還沒開始回報（#251、#127），所以仍是 `not_ready`；第 6.8 節補上讀取端的登記 |
 | 2026-11-22 | #251：Canonical Acceptance 的記錄實作完成：成功的 request 帶 candidate 時記下 Canonical Revision、Source Revision 改成 `accepted`，較新的成為目前版本並發出 `current_revision_changed`（規格 §3）；文件已刪除、沒有 candidate、版本已作廢時不形成接受（規格 §5.5）。第 5 節的現況改成等 #81 與 #127，第 5.6 節補上 `details`，第 6.9 節補上部署順序，第 7.3 節更新 |
+| 2026-11-23 | #57 結案（Canonical 的保存與處理產物的歸屬）：第 7.1 節新增兩項，pilot 的物件儲存沒有冗餘、資料庫還原之後的放行；第 7.3 節新增 Canonical 內容的讀取（#268）與清除已刪除文件的物件（#267） |
 
 ### 7.3 實作狀態（2026-11-22）
 
@@ -1176,6 +1179,8 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob 套用；取代手動的 `kp-admission adopt` | #261 | 未實作，可以開始；第一次部署到公司環境之前要完成 |
 | 刪除、重送、重跑 | `DELETE /v1/documents/{document_id}`、redrive、refresh | #98 | 未實作，在 #260、#261 之後 |
 | 保留期 | batch 與 `Idempotency-Key` 到期回 `404` 並移除紀錄 | #250 | 未實作 |
+| Canonical 內容的讀取 | 讀取端依確切的 revision 讀內容與它列出的圖（`/read/v1/`，不對外） | #268 | 未實作，在 #81 之後 |
+| 清除已刪除文件的物件 | 刪除套用 30 天後，CronJob 清掉這份文件在物件儲存的全部物件；資安事件的立即清除寫在部署設定 | #267 | 未實作，在 #98 之後；PROD 上線前要完成 |
 | dispatcher 與 reconciler 的 metrics | | #189 | 未實作 |
 | 驗證 | CI 層與叢集層 | #99 | 未實作，在 #98 之後；叢集層另外等 #78 |
 | admission 的 image、依賴拆分 | | #207 | 未實作 |
