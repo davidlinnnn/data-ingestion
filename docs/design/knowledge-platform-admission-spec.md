@@ -1034,8 +1034,9 @@ ahead of the platform's clock.
 **Lost writes.** When the admission database loses committed writes (a
 restore, a point-in-time restore, or a failover that loses commits; DR §5.6,
 K2), operations declare it with `kp-admission writes-lost EVENT`, run by a Job
-of the deployment repo after the database is back and before the api and Source
-Deletion's judgment run on it again. `EVENT` is a number above every earlier
+of the deployment repo after the database is back and before Source Deletion's
+judgment runs on it again; where it falls among the restore's other steps, such
+as reopening the read surface (#57 scope 7), is #78's runbook. `EVENT` is a number above every earlier
 declaration's, kept in the deployment repo (the database's own record of it may
 be among the lost writes). The last declaration applied, run again, changes
 nothing and exits 0; one with a lower number changes nothing and exits 1. It
@@ -1198,8 +1199,8 @@ is not counted); and the gauge above.
     action.
   - The volume is lost: the database is restored from the archive. Requests
     acknowledged within the archive interval (target: one minute) may be lost,
-    and their Sources submit them again. Operations then declare the loss
-    (§7.4, Lost writes) before the api serves again.
+    and their Sources submit them again. Operations declare the loss (§7.4,
+    Lost writes) before Source Deletion's judgment runs again.
   - Restore time is *unmeasured* until the restore drill (§13).
 
   Replication inside the cluster is a later deployment change and needs no code
