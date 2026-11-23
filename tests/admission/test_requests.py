@@ -113,9 +113,10 @@ async def test_every_admission_record_carries_a_tenant(conn):
          "intake_quota", "canonical_revision", "withdrawn_version"], "NO",
     ) | {
         # Platform-wide: a projection reads every tenant's feed (#126) and its Builds serve
-        # them all (#252).
+        # them all (#252), and a repair or a loss of writes concerns a whole Build (#260).
         "consumer_cursor": None, "change_feed_horizon": None,
         "build": None, "serving_fact": None, "projection_attempt": None,
+        "repair_page": None, "writes_lost": None,
     }  # fmt: skip
 
 

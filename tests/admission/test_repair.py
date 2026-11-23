@@ -250,6 +250,9 @@ async def test_a_view_the_expiry_fence_stops_is_discarded_whole(api, conn):
     asked = await beat(api, "retrieval", (other, RESOURCE, "crv_1"))
 
     assert refusal(fenced) == (409, "VIEW_DISCARDED", {"reason": "fenced"})
+    assert refusal(await page(api, "retrieval", 1, 1, 6, *view, captured_at=captured)) == (
+        409, "VIEW_DISCARDED", {"reason": "fenced"}
+    )  # fmt: skip
     assert await serving.held(conn, uid) == []
     assert asked.json()["repair_requested"]["reason"] == "view_fenced"
 
@@ -278,10 +281,7 @@ async def test_a_query_during_the_replacement_sees_it_whole(api, conn, pool):
     async def watch() -> None:
         async with pool.connection() as reader:
             while not done.is_set():
-                cursor = await reader.execute(
-                    "SELECT count(*) FROM serving_fact WHERE state = 'included'"
-                )
-                seen_counts.add((await cursor.fetchone())[0])
+                seen_counts.add(len(await serving.served(reader, uids)))  # one statement
 
     watcher = asyncio.create_task(watch())
     await asyncio.sleep(0.05)
@@ -350,3 +350,34 @@ async def test_a_repair_restates_live_tombstones_and_leaves_expired_ones_fencing
     assert behind.json()["fenced"] == []
     assert await serving.held(conn, live) == []
     assert fenced.json()["fenced"] == [{"document_uid": old, "resource_id": RESOURCE}]
+
+
+async def test_a_view_whose_pages_stopped_is_discarded_by_the_next_report(api, conn):
+    """DR §5.4 step 2: the owner crashed after a page; its next heartbeat past the lifetime
+    learns the view is gone and a fresh one is asked."""
+    uid, srv = await document(conn)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    captured = datetime.now(UTC) - serving.VIEW_LIFETIME + timedelta(seconds=1)
+    await page(api, "retrieval", 1, 2, 1, entry(uid, srv, 1), captured_at=captured)
+    await asyncio.sleep(1)
+
+    asked = await beat(api, "retrieval")
+    rest = await page(api, "retrieval", 2, 2, 1, captured_at=captured)
+
+    assert asked.json()["repair_requested"]["reason"] == "view_expired"
+    assert refusal(rest) == (409, "VIEW_DISCARDED", {"reason": "expired"})
+
+
+async def test_a_view_captured_ahead_of_the_clock_or_past_its_lifetime_is_refused(api, conn):
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    ahead = datetime.now(UTC) + serving.CLOCK_SKEW + timedelta(seconds=30)
+
+    refused = await page(api, "retrieval", 1, 1, 0, captured_at=ahead)
+    long_ago = datetime.now(UTC) - serving.VIEW_LIFETIME - timedelta(minutes=1)
+    stale = await page(api, "retrieval", 1, 1, 0, view_id="v0", captured_at=long_ago)
+
+    assert refused.status_code == 400
+    assert refusal(stale) == (409, "VIEW_DISCARDED", {"reason": "expired"})
+    assert (await page(api, "retrieval", 1, 1, 0)).json()["view"] == "installed"
