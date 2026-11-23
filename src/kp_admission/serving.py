@@ -560,7 +560,7 @@ async def repair_view(
     if number > page.pages:
         raise Refused(400, "INVALID_ARGUMENT", "INVALID_ARGUMENT", "page: beyond pages")
     now = datetime.now(UTC)
-    if False:
+    if page.captured_at > now + CLOCK_SKEW:
         raise Refused(
             400,
             "INVALID_ARGUMENT",
