@@ -1037,7 +1037,8 @@ ahead of the platform's clock.
 **Lost writes.** When the admission database loses committed writes (a
 restore, a point-in-time restore, or a failover that loses commits; DR §5.6,
 K2), operations declare it with `kp-admission writes-lost EVENT`, run by a Job
-of the deployment repo after the database is back. Until the Job has run, the
+of the deployment repo once the api takes reports again: the window for erased
+Builds, below, counts from the declaration. Until the Job has run, the
 restored database carries no sign of the loss, so the runbook keeps Source
 Deletion's judgment from running (for example, its CronJob stays suspended)
 from the restore until the Job ends; where the Job falls among the restore's
@@ -1045,29 +1046,32 @@ other steps, such as reopening the read surface ([#57 scope 7](https://github.co
 is #78's runbook too. `EVENT` is a number from 1, above every earlier
 declaration's, kept in the deployment repo (the database's own record of it may
 be among the lost writes). The last declaration applied, run again, changes
-nothing and exits 0; one with a lower number changes nothing and exits 1. It
+nothing and exits 0; one with a lower number changes nothing and exits 1, and
+an `EVENT` that is not a number from 1 exits 2. It
 prints `{"applied", "builds"}`, whether it applied and how many Builds it asked,
 and its log lines; the runbook checks `"applied": true` on its first run. The
 gauge `kp_serving_builds_writes_lost` counts, per projection, the Builds still
-asked.
+asked; with two api pods each reports it, so it is read with `max`.
 
 - It asks every Build not retired for a repair, `writes_lost`, and discards the
   Build's last view, in transfer or installed: that view's pages answer `409`
   `VIEW_DISCARDED` `writes_lost`, and so does a view captured at or before the
-  declaration, by the platform's clock. A `writes_lost` request is answered by a
-  view captured after its `requested_at`; every other request is answered by
+  declaration, by the platform's clock. A `writes_lost` request is answered only
+  by a view captured after the declaration; every other request is answered by
   the view in transfer.
 - The loss can erase Builds and reports. A Build first reported within its
   pipeline's `update_interval_s` after the declaration may be one it erased: it
   starts with a `writes_lost` request and refuses views captured at or before
   the declaration, as the Builds the declaration asked. An owner that reads a
   `writes_lost` request, or a `404` for a Build it reported, puts its Builds
-  back in this order: it reports `retired` each Build retired since the restore
-  point, and `building` each Build the platform no longer knows; it sends each
-  Build not retired a view; then it sends again a switch the platform does not
-  show, with a `feed_position` read after its cursor was rewound (#78), and
-  retries one that answers `400` or `GATE_FAILED` once it has caught up. It
-  reports its backfill completions again.
+  back in this order: it reports `building` each Build the platform no longer
+  knows; it sends each Build it holds and has not retired a view; it sends
+  again, in `switch_seq` order, each switch the platform does not show, with a
+  `feed_position` read after its cursor was rewound (#78), and retries one that
+  answers `400` or `GATE_FAILED` once it has caught up; only then it reports
+  `retired` each Build retired since the restore point, so a switch sent again
+  still names in `replaces` the Build the platform serves. It reports its
+  backfill completions again.
 - Source Deletion's judgment stays suspended until no Build not retired carries
   `writes_lost`, and for at least the longest `update_interval_s` of the
   registered projections' pipelines after the declaration, so an owner whose
@@ -1111,7 +1115,8 @@ repair view instead (Repair views, above). The
 recompute after a Build's state report, a backfill report or an installed
 repair view, a heartbeat's comparison, and a repair view's replacement of the
 mirror, run inside the call and grow with the Build or the Source. The
-replacement is one transaction, which the database ends at 60 seconds: a Build
+replacement is one transaction, which the database ends at 60 seconds, or at
+30 seconds idle while the platform merges the view: a Build
 too large for it never installs a view, and resending repeats the same
 transaction; after lost writes that keeps Source Deletion's judgment suspended.
 The sign is repair requests with no `kp_serving_repair_seconds` observation and

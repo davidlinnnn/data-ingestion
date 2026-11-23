@@ -406,7 +406,7 @@ async def test_a_build_reported_soon_after_lost_writes_may_be_an_erased_one(api,
     stale = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1), captured_at=before)
     unrepaired = await serving.writes_unrepaired(conn)
     fresh = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1), view_id="v2")
-    await conn.execute("UPDATE writes_lost SET applied_at = now() - interval '601 seconds'")
+    await conn.execute("UPDATE writes_lost SET applied_at = applied_at - interval '11 minutes'")
     later = await build(api, "retrieval", "b2", state="building")
 
     assert again.json()["repair_requested"]["reason"] == "writes_lost"
@@ -417,26 +417,33 @@ async def test_a_build_reported_soon_after_lost_writes_may_be_an_erased_one(api,
     assert await serving.writes_unrepaired(conn) == []
 
 
-async def test_an_owner_puts_an_erased_serving_build_back_in_order(api, conn):
-    """Spec §7.4 Lost writes: the loss erased the serving Build and its facts. Its owner reports
-    it `building`, sends its view, then the switch again, which passes the gates."""
+async def test_an_owner_puts_erased_builds_back_in_order(api, conn):
+    """Spec §7.4 Lost writes: the restore point is before b2 replaced b1 and b1 was retired, so
+    the platform serves b1 and does not know b2. Its owner reports b2 `building`, sends b2's
+    view, sends the switch again, then retires b1: the switch passes the gates."""
     uid, srv = await document(conn)
     await profile(conn, "retrieval")
     await build(api, "retrieval")
     await included(api, "retrieval", fact(uid, srv, 1))
-    for table in ("serving_fact", "build"):  # the restore point is before the Build existed
-        await conn.execute(f"DELETE FROM {table}")
     await serving.lose_writes(conn, 1)
+    pipelines = {p.track: p for p in test_serving.PIPELINES.values()}
+    await serving.silent(conn, pipelines, datetime.now(UTC))
+    counted = REGISTRY.get_sample_value("kp_serving_builds_writes_lost", LABELS)
 
-    unknown = await beat(api, "retrieval", (uid, RESOURCE, "crv_1"))
-    created = await build(api, "retrieval", state="building")
-    viewed = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1))
-    switched = await build(api, "retrieval")  # switch_seq 1, a feed position read now
+    unknown = await beat(api, "retrieval", (uid, RESOURCE, "crv_1"), build_id="b2")
+    created = await build(api, "retrieval", "b2", state="building")
+    viewed = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1), build_id="b2")
+    switched = await build(api, "retrieval", "b2", switch_seq=2, replaces="b1")
+    retired = await build(api, "retrieval", "b1", state="retired")
+    await serving.silent(conn, pipelines, datetime.now(UTC))
 
     assert unknown.status_code == 404
+    assert counted == 1  # b1
     assert created.json()["repair_requested"]["reason"] == "writes_lost"
     assert viewed.json() == {"view": "installed", "repair_requested": None}
     assert switched.json() == {"state": "serving", "repair_requested": None}
-    assert await serving.held(conn, uid) == [("retrieval", "b1", RESOURCE, "included")]
+    assert retired.status_code == 200
+    assert await serving.held(conn, uid) == [("retrieval", "b2", RESOURCE, "included")]
     assert (await seen(api))["readiness"] == "ready"
     assert await serving.writes_unrepaired(conn) == []
+    assert REGISTRY.get_sample_value("kp_serving_builds_writes_lost", LABELS) == 0

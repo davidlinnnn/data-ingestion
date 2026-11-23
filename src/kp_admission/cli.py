@@ -270,7 +270,6 @@ async def observe(pool: AsyncConnectionPool[Any], pipelines: dict[str, reports.P
             async with pool.connection() as conn:
                 await feed.observe(conn)
                 await serving.silent(conn, pipelines, datetime.now(UTC))
-                await serving.writes_unrepaired(conn)  # for its gauge
         except Exception as error:  # the gauges keep their last values; the api keeps serving
             log.warning("feed and liveness metrics not measured: %s", type(error).__name__)
         await asyncio.sleep(OBSERVE_S)

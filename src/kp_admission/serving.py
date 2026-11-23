@@ -729,7 +729,8 @@ async def _install(
         return "fenced"
     rows = [(projection, build_id, *row) for row in merged]
     # shortcut: rewrites the whole Build in one transaction while it holds the Build's row, which
-    # the database ends at 60 s; write only the keys that change when #99 measures a large Build.
+    # the database ends at 60 s, or at 30 s idle while the merge runs; write only the keys that
+    # change when #99 measures a large Build.
     async with conn.cursor() as cur:
         await cur.executemany(
             "INSERT INTO serving_fact (projection, build_id, document_uid, resource_id, state,"
@@ -792,9 +793,11 @@ async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
     §5.6, K2), once per `event`, a number each declaration raises: every Build not retired is
     asked for a repair, `writes_lost`, which replaces any earlier request, and its last view,
     in transfer or installed, is discarded, so only a view captured after now ends the request.
-    A Build first reported while one still carries that request starts with it (report_build).
-    Returns how many Builds were asked, or None for the event applied last, run again.
+    Now is the platform's clock, as the api's: a Build first reported within its pipeline's
+    update interval of it starts with the request too (report_build). Returns how many Builds
+    were asked, or None for the event applied last, run again.
     ValueError for an event below it: the declaration's number was not raised."""
+    now = datetime.now(UTC)
     async with conn.transaction():
         cursor = await conn.execute("SELECT coalesce(max(event), 0) FROM writes_lost")
         [(applied,)] = await cursor.fetchall()
@@ -803,8 +806,9 @@ async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
         if event == applied:
             return None
         cursor = await conn.execute(
-            "INSERT INTO writes_lost (event) VALUES (%s) ON CONFLICT DO NOTHING RETURNING event",
-            (event,),
+            "INSERT INTO writes_lost (event, applied_at) VALUES (%s, %s)"
+            " ON CONFLICT DO NOTHING RETURNING event",
+            (event, now),
         )
         if await cursor.fetchone() is None:
             return None  # a concurrent run applied it
@@ -813,10 +817,11 @@ async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
             "SELECT 1 FROM build WHERE state <> 'retired' ORDER BY projection, build_id FOR UPDATE"
         )
         cursor = await conn.execute(
-            "UPDATE build SET repair_reason = 'writes_lost', repair_requested_at = now(),"
-            " view_captured_at = now(),"
+            "UPDATE build SET repair_reason = 'writes_lost', repair_requested_at = %s,"
+            " view_captured_at = %s,"
             " view_state = CASE WHEN view_id IS NULL THEN NULL ELSE 'writes_lost' END"
-            " WHERE state <> 'retired' RETURNING projection, build_id"
+            " WHERE state <> 'retired' RETURNING projection, build_id",
+            (now, now),
         )
         builds = await cursor.fetchall()
         await conn.execute("DELETE FROM repair_page")  # pages are only of views in transfer
@@ -830,16 +835,12 @@ async def writes_unrepaired(conn: AsyncConnection) -> list[tuple[str, str]]:
     """(projection, build_id) of the Builds not retired that no view captured after the last
     loss of committed writes has repaired. While there is one, and for the longest update
     interval of the registered pipelines after the declaration, #98 makes no enforcement
-    judgment (DR §5.6, K2, spec §7.4). Sets kp_serving_builds_writes_lost."""
+    judgment (DR §5.6, K2, spec §7.4)."""
     cursor = await conn.execute(
         "SELECT projection, build_id FROM build WHERE repair_reason = 'writes_lost'"
         " AND state <> 'retired' ORDER BY 1, 2"
     )
-    found = await cursor.fetchall()
-    writes_lost_builds.clear()
-    for projection, _ in found:
-        writes_lost_builds.labels(projection).inc()
-    return found
+    return await cursor.fetchall()
 
 
 async def take_attempt(
@@ -1022,18 +1023,25 @@ async def silent(
 ) -> list[tuple[str, str]]:
     """(projection, build_id) of the Builds not retired without liveness: no report within the
     update interval of the projection's pipeline, `pipelines` by track. While there is one, #98
-    makes no enforcement judgment (R-c). Sets kp_serving_builds_without_liveness."""
+    makes no enforcement judgment (R-c). Sets kp_serving_builds_without_liveness, and
+    kp_serving_builds_writes_lost from the same read."""
     cursor = await conn.execute(
-        "SELECT projection, build_id, reported_at FROM build WHERE state <> 'retired' ORDER BY 1, 2"
+        "SELECT projection, build_id, reported_at, repair_reason FROM build"
+        " WHERE state <> 'retired' ORDER BY 1, 2"
     )
+    rows = await cursor.fetchall()
     found = [
         (projection, build_id)
-        for projection, build_id, at in await cursor.fetchall()
+        for projection, build_id, at, _ in rows
         if (p := pipelines.get(projection)) and at + timedelta(seconds=p.update_interval_s) < now
     ]
-    without_liveness.clear()
+    # Every projection is set on each pass, so the series are never cleared: a scrape between a
+    # clear and the sets would read them missing.
     for projection in pipelines.keys() - {"canonical"}:
         without_liveness.labels(projection).set(sum(p == projection for p, _ in found))
+        writes_lost_builds.labels(projection).set(
+            sum(p == projection and reason == "writes_lost" for p, _, _, reason in rows)
+        )
     return found
 
 
