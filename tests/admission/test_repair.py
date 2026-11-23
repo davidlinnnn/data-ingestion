@@ -136,8 +136,9 @@ async def test_pages_out_of_order_or_repeated_install_the_same_mirror(api, conn)
 
 
 async def test_a_write_retried_across_a_repair_converges(api, conn):
-    """SC21: a registration's write is delayed; another key's report passes it; the view is
-    captured before the write lands, and the write's confirmation comes after the view."""
+    """SC21: a registration's write is delayed and another key's report passes it; the view is
+    captured before the write lands, and the write's confirmation, at a fresh version, arrives
+    while the view is in transfer."""
     a, srv_a = await document(conn, "A")
     b, srv_b = await document(conn, "B")
     await accepted(conn, a, srv_a)
@@ -147,16 +148,14 @@ async def test_a_write_retried_across_a_repair_converges(api, conn):
     await included(api, "retrieval", fact(b, srv_b, 28))
     captured = datetime.now(UTC)
 
-    await page(api, "retrieval", 1, 1, 28, entry(a, srv_a, 27, "pending"), entry(b, srv_b, 28),
-               captured_at=captured)  # fmt: skip
-    retried = await page(api, "retrieval", 1, 1, 28, entry(a, srv_a, 27, "pending"),
-                         entry(b, srv_b, 28), captured_at=captured)  # fmt: skip
-    stale = await included(api, "retrieval", fact(a, srv_a, 27))  # the registration's version
+    await page(api, "retrieval", 1, 2, 28, entry(a, srv_a, 27, "pending"), captured_at=captured)
     landed = await included(api, "retrieval", fact(a, srv_a, 29))  # the confirmation, fresh
+    last = await page(api, "retrieval", 2, 2, 28, entry(b, srv_b, 28), captured_at=captured)
+    stale = await included(api, "retrieval", fact(a, srv_a, 27))  # the registration's version
 
-    assert retried.json()["view"] == "installed"
-    assert stale.json() == {"fenced": [], "repair_requested": None}
     assert landed.json() == {"fenced": [], "repair_requested": None}
+    assert last.json()["view"] == "installed"
+    assert stale.json() == {"fenced": [], "repair_requested": None}
     assert await serving.held(conn, a) == [("retrieval", "b1", RESOURCE, "included")]
     stored = [(a, RESOURCE, "crv_1"), (b, RESOURCE, "crv_1")]
     assert (await beat(api, "retrieval", *stored)).json() == {"repair_requested": None}
@@ -261,7 +260,7 @@ async def test_a_key_stored_and_registered_is_pending_and_keeps_serving(api, con
     await profile(conn, "retrieval")
     await build(api, "retrieval")
 
-    await page(api, "retrieval", 1, 1, 2, entry(uid, srv, 2, "pending"), entry(uid, srv, 1))
+    await page(api, "retrieval", 1, 1, 2, entry(uid, srv, 1), entry(uid, srv, 2, "pending"))
 
     assert await serving.held(conn, uid) == [("retrieval", "b1", RESOURCE, "pending")]
     assert (await seen(api))["readiness"] == "ready"
@@ -330,3 +329,24 @@ async def test_after_lost_writes_only_a_view_captured_later_ends_the_repair(api,
     assert after.json() == {"view": "installed", "repair_requested": None}
     assert await serving.writes_unrepaired(conn) == [("wiki", "b1")]
     assert await serving.lose_writes(conn, 2) == 2
+
+
+async def test_a_repair_restates_live_tombstones_and_leaves_expired_ones_fencing(api, conn):
+    """A key the view lacks becomes a tombstone stamped with the watermark, so a report it
+    reflected stays out; an expired tombstone keeps fencing as it did (DR §5.3, #264)."""
+    live, srv_live = await document(conn, "A")
+    old, srv_old = await document(conn, "B")
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    await included(api, "retrieval", fact(live, srv_live, 5, state="removed"),
+                   fact(old, srv_old, 6, state="removed"))  # fmt: skip
+    await aged(conn, old, "31 days")
+    long_ago = (datetime.now(UTC) - timedelta(days=40)).isoformat()
+
+    await page(api, "retrieval", 1, 1, 10)
+    behind = await included(api, "retrieval", fact(live, srv_live, 7))
+    fenced = await included(api, "retrieval", fact(old, srv_old, 6, issued_at=long_ago))
+
+    assert behind.json()["fenced"] == []
+    assert await serving.held(conn, live) == []
+    assert fenced.json()["fenced"] == [{"document_uid": old, "resource_id": RESOURCE}]
