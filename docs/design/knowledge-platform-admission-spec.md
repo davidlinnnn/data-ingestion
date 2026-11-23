@@ -981,9 +981,11 @@ must exceed the longest write, a liveness pause included.
 **Repair views.** A repair view is the Build's whole state captured at one
 moment (DR §5.4): every store entry as `included` and every registration whose
 write has not completed as `pending`, a key with both listed both ways. The
-owner may send one at any time; it sends one when `repair_requested` is set,
-and before it reports a Build `serving` (DR §5.4, review m8), which the platform
-does not check. It sends the view in pages numbered from 1. Each page carries
+owner may send one at any time; it sends one when `repair_requested` is set
+and no view of the Build is in transfer, and before it reports a Build `serving`
+(DR §5.4, review m8), which the platform does not check. A request is answered
+by the view in transfer, except `writes_lost` (Lost writes, below): an owner
+captures again only after a `409` `VIEW_DISCARDED` other than `superseded`. It sends the view in pages numbered from 1. Each page carries
 the view's `captured_at` (RFC 3339 with a zone, by a clock within a minute of
 the platform's), `watermark` (the highest `fact_version`
 allocated in the Build at capture, 0 for none), `pages` (how many pages the view
@@ -1009,7 +1011,8 @@ ahead of the platform's clock.
 - A view must be complete within 24 hours of `captured_at` (provisional until
   #127 measures a transfer; below the tombstones' 30 days). After that the
   view is discarded, by its next page, which answers `409` `VIEW_DISCARDED`
-  `expired`, or by the Build's next report of any kind, and a repair is
+  `expired`, or by the Build's next registration, fact, heartbeat or status
+  report, and a repair is
   requested, `view_expired`. The owner keeps its report retries within the same
   24 hours, from the report's `issued_at`, and then sends a repair view instead.
 - When the last page arrives, each key's entry passes the expiry fence with its
@@ -1034,31 +1037,45 @@ ahead of the platform's clock.
 **Lost writes.** When the admission database loses committed writes (a
 restore, a point-in-time restore, or a failover that loses commits; DR §5.6,
 K2), operations declare it with `kp-admission writes-lost EVENT`, run by a Job
-of the deployment repo after the database is back and before Source Deletion's
-judgment runs on it again; where it falls among the restore's other steps, such
-as reopening the read surface (#57 scope 7), is #78's runbook. `EVENT` is a number above every earlier
+of the deployment repo after the database is back. Until the Job has run, the
+restored database carries no sign of the loss, so the runbook keeps Source
+Deletion's judgment from running (for example, its CronJob stays suspended)
+from the restore until the Job ends; where the Job falls among the restore's
+other steps, such as reopening the read surface ([#57 scope 7](https://github.com/davidlinnnn/data-ingestion/issues/78#issuecomment-7086864591)),
+is #78's runbook too. `EVENT` is a number from 1, above every earlier
 declaration's, kept in the deployment repo (the database's own record of it may
 be among the lost writes). The last declaration applied, run again, changes
 nothing and exits 0; one with a lower number changes nothing and exits 1. It
-prints `{"applied", "builds"}`: whether it applied, and how many Builds it
+prints `{"applied", "builds"}`, whether it applied and how many Builds it asked,
+and its log lines; the runbook checks `"applied": true` on its first run. The
+gauge `kp_serving_builds_writes_lost` counts, per projection, the Builds still
 asked.
 
 - It asks every Build not retired for a repair, `writes_lost`, and discards the
   Build's last view, in transfer or installed: that view's pages answer `409`
   `VIEW_DISCARDED` `writes_lost`, and so does a view captured at or before the
-  declaration, by the platform's clock. An owner that reads a `writes_lost`
-  request captures its view after reading it.
-- The loss can erase Builds and reports. An owner that reads a `writes_lost`
-  request, or a `404` for a Build it reported, reports each of its Builds'
-  states again (a switch with its `switch_seq`; a Build the platform no longer
-  knows is created again) and its backfill completions, then sends each Build a
-  view. A Build first reported while any Build still carries `writes_lost`
-  starts with that request too.
+  declaration, by the platform's clock. A `writes_lost` request is answered by a
+  view captured after its `requested_at`; every other request is answered by
+  the view in transfer.
+- The loss can erase Builds and reports. A Build first reported within its
+  pipeline's `update_interval_s` after the declaration may be one it erased: it
+  starts with a `writes_lost` request and refuses views captured at or before
+  the declaration, as the Builds the declaration asked. An owner that reads a
+  `writes_lost` request, or a `404` for a Build it reported, puts its Builds
+  back in this order: it reports `retired` each Build retired since the restore
+  point, and `building` each Build the platform no longer knows; it sends each
+  Build not retired a view; then it sends again a switch the platform does not
+  show, with a `feed_position` read after its cursor was rewound (#78), and
+  retries one that answers `400` or `GATE_FAILED` once it has caught up. It
+  reports its backfill completions again.
 - Source Deletion's judgment stays suspended until no Build not retired carries
   `writes_lost`, and for at least the longest `update_interval_s` of the
-  registered pipelines after the declaration, so an owner whose Builds were
-  erased has reported them again (#98). Which events trigger the declaration,
-  and the feed, cursor and block rewinds that come with it, are #78's runbook.
+  registered projections' pipelines after the declaration, so an owner whose
+  Builds were erased has reported them again (#98). A projection leaves
+  `KP_PIPELINES` only once its Builds are retired (Liveness, below); a Build of
+  one that left keeps the suspension until it is retired. Which events trigger
+  the declaration, and the feed, cursor and block rewinds that come with it, are
+  #78's runbook.
 
 **Attempts.** A projection's attempt is for one unit: (Build, `document_uid`,
 `canonical_revision_id`) (DR C4). Its report carries the fields of §7.3 without
@@ -1096,7 +1113,9 @@ repair view, a heartbeat's comparison, and a repair view's replacement of the
 mirror, run inside the call and grow with the Build or the Source. The
 replacement is one transaction, which the database ends at 60 seconds: a Build
 too large for it never installs a view, and resending repeats the same
-transaction. Their duration is not measured: #99 measures it, and until then a
+transaction; after lost writes that keeps Source Deletion's judgment suspended.
+The sign is repair requests with no `kp_serving_repair_seconds` observation and
+`503` answers to the view's last page (#99 measures it). Their duration is not measured: #99 measures it, and until then a
 caller allows for a call that outlasts its timeout and resends. The
 reports of one Build are taken one at a time. The readiness a query answers is
 computed when it answers; only `since` comes from the stored moment.
@@ -1128,7 +1147,8 @@ never an error message. Metrics: `kp_api_calls_total` by operation and status
 `projection` of the time from a repair request to the installed view that
 ended it (DR §9's repair latency); `kp_serving_late_landings_total` by `projection`, an
 `included` fact report recorded for a deleted Document (DR §9; a repair view
-is not counted); and the gauge above.
+is not counted); the gauge `kp_serving_builds_writes_lost` (Lost writes); and
+the gauge above.
 
 ## 8. Source Deletion
 
@@ -1361,7 +1381,7 @@ ended without an error block, such as terminated or timed out (§9).
   return; deletion meets its `applied` and `enforced` targets. The restore drill
   is the one exception to "no loss": it passes when the lost interval is within
   the archive interval, and the lost-writes declaration (§7.4) has run and every
-  Build has installed a view after it.
+  Build not retired has installed a view after it.
 
 ## 14. Implementation tickets
 
