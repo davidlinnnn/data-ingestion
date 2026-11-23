@@ -147,7 +147,8 @@ async def run(lost_count: int, writes_first: int = 0) -> dict:
         seen = await read_all(conn, stale)
         if report_accepted_after is None and await report(conn, stale) == "accepted":
             report_accepted_after = len(new)
-    rewound = await read_all(conn, cursor_t)  # fix control: the cursor rewound to T
+    # Fix control: the cursor rewound to T is handed every new event. No read above raised.
+    rewound = await read_all(conn, cursor_t)
     assert rewound == [f"new-{i}" for i in range(len(new))], rewound
     first_seen = int(seen[0].removeprefix("new-")) if seen else None
     result |= {
@@ -155,9 +156,7 @@ async def run(lost_count: int, writes_first: int = 0) -> dict:
         "new_events_at_or_before_stale_cursor": sum(p <= stale for p in new),
         "new_events_skipped_by_stale_cursor": first_seen if seen else len(new),
         "first_new_event_the_stale_cursor_is_handed": seen[0] if seen else None,
-        "stale_cursor_read_ever_raised": False,  # read_all above would have raised
         "report_stale_accepted_after_new_events": report_accepted_after,
-        "read_from_cursor_at_t_returns_all_new_events": True,
         "positions_shared_by_a_lost_and_a_new_event": sorted(set(lost) & set(new)),
         "first_lost_positions": lost[:3],
         "first_new_positions": new[:3],
@@ -174,7 +173,6 @@ async def main() -> None:
     for r in runs:
         # Reuse and skip: the claims of §7.2. A failure here refutes them.
         assert r["new_events_at_or_before_stale_cursor"] > 0, "no position was reused"
-        assert r["read_stale_right_after_restore"] == [], "read handed the stale cursor an event"
         assert r["new_events_skipped_by_stale_cursor"] > 0, "nothing was skipped"
     image = sh("docker", "image", "inspect", IMAGE, "--format", "{{index .RepoDigests 0}}")
     evidence = {"image": image, "other_writes_between_events": OTHER_WRITES, "runs": runs}

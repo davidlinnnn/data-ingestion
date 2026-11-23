@@ -27,12 +27,14 @@ run commits 120 such transactions before its first new event. Readings are in
 Controls, in every run: before the restore, a read from the cursor at T returned exactly the events
 appended after it (the harness sees new events); after the restore, a read from the cursor at T
 returned every new event (the rewind works); a read from the feed's start returned only the three
-events before T (the restore lost the rest).
+events before T (the restore lost the rest). The script asserts the controls and that no read
+raised; they are not fields of the evidence file.
 
 ## What this settles
 
-- **Transaction IDs are handed out again.** In runs 1 and 2 the new events got the very IDs of the
-  lost ones (`2f3`, `2f7`, `2fb`, …).
+- **Transaction IDs are handed out again.** In runs 1 and 2, where the workload after the restore
+  repeats the one before it, the new events got the very IDs of the lost ones (`2f3`, `2f7`,
+  `2fb`, …); in run 3 the same IDs came back 30 events later.
 - **A stale cursor skips the new events, and nothing says so.** `feed.read` returned an empty page
   and raised nothing. Every new event at or before the stale cursor is never handed to it: 4 of 5
   and 39 of 40. A projection is handed events again only once the counter passes its cursor, that
@@ -43,7 +45,8 @@ events before T (the restore lost the rest).
   different new one.
 - **The cursor report notices, for a while.** Reporting the stale cursor was refused (`ValueError:
   position ahead of the feed`, which the API answers `400`, `api.py`) until the counter passed it,
-  then accepted. The read is never refused.
+  then accepted. The read is never refused. In run 3 the report was accepted after 10 new events,
+  all of them skipped: an accepted report does not mean nothing was missed.
 - **The platform's own record of the cursor goes back by itself.** `consumer_cursor` held the
   position reported at T after the restore.
 
