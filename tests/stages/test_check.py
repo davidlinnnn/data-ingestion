@@ -142,7 +142,6 @@ SIGNAL = {
     "revision": "bd0090dd758d32ba59ef5c749910a8e87fc4391f",
     "question": "Q2",
 }
-MARKER = "documents/doc_1/service-unavailable/req_1"
 
 
 async def test_a_formula_judged_unfaithful_is_disputed_and_a_weak_signal_changes_no_status(
@@ -183,7 +182,6 @@ async def test_a_formula_judged_unfaithful_is_disputed_and_a_weak_signal_changes
     # Check items are not enrichments, and the profile names the check.
     assert not [e for e in result["enrichments"] if e["method_ref"]["id"] == "d3-check"]
     assert result["profile"]["methods"][-1]["id"] == "d3-check"
-    assert await ports.store.head(MARKER) is None
 
 
 async def test_a_table_judged_unfaithful_is_disputed(ports, runtime):
@@ -236,7 +234,7 @@ async def test_a_failed_item_is_not_checked(ports, runtime):
     assert (formula["outcome"], formula["reason"]) == ("failed", "SCHEMA_INVALID")
 
 
-async def finalized(ports, runtime, input: FinalizeInput, request_id: str = "req_1"):
+async def failure_of(ports, runtime, input: FinalizeInput, request_id: str = "req_1"):
     """finalize.run after the check; returns the ProcessingFailure it raises."""
     checks = await run_check(ports, runtime, input, request_id)
     final = dataclasses.replace(input, outcomes=[*input.outcomes, *checks])
@@ -252,7 +250,7 @@ async def test_without_an_answer_the_request_fails_retryably_and_a_rerun_fills_t
     down = dataclasses.replace(ports, d3=fake_d3(ServiceUnavailable("TIMEOUT")))
     input = await enrichment(down, runtime, checked_paper())
 
-    failure = await finalized(down, runtime, input)
+    failure = await failure_of(down, runtime, input)
 
     attempts = runtime.profile.runtime["retry"]["max_attempts"]
     assert len(down.d3.requests) == 3 * attempts
@@ -278,7 +276,7 @@ async def test_a_reply_without_a_score_fails_the_request_for_good(ports, runtime
     garbled = dataclasses.replace(ports, d3=FakeInference(lambda request: completion("{}")))
     input = await enrichment(garbled, runtime, checked_paper())
 
-    failure = await finalized(garbled, runtime, input)
+    failure = await failure_of(garbled, runtime, input)
 
     assert (failure.category, failure.reason, failure.retryable) == (
         "method", "QUALITY_CHECK_INCOMPLETE", False,
@@ -288,7 +286,7 @@ async def test_a_reply_without_a_score_fails_the_request_for_good(ports, runtime
     # Registered like any invalid reply: the next request reuses it, asks nothing and fails alike.
     sent = len(garbled.d3.requests)
     again = await enrichment(garbled, runtime, checked_paper(), "req_2")
-    assert (await finalized(garbled, runtime, again, "req_2")).details() == failure.details()
+    assert (await failure_of(garbled, runtime, again, "req_2")).details() == failure.details()
     assert len(garbled.d3.requests) == sent
 
 
@@ -301,7 +299,7 @@ async def test_a_missing_result_of_another_reason_makes_an_outage_not_retryable(
     )
     input = await enrichment(ports, runtime, checked_paper())
 
-    failure = await finalized(ports, runtime, input)
+    failure = await failure_of(ports, runtime, input)
 
     assert (failure.reason, failure.retryable) == ("ENRICHMENT_INCOMPLETE", False)
     assert (failure.metadata["failed"], failure.metadata["not_run"]) == ("1", "2")
@@ -315,7 +313,7 @@ async def test_an_outage_of_both_services_is_retryable(ports, runtime):
     )
     input = await enrichment(ports, runtime, checked_paper())
 
-    failure = await finalized(ports, runtime, input)
+    failure = await failure_of(ports, runtime, input)
 
     assert (failure.reason, failure.category, failure.retryable) == (
         "ENRICHMENT_INCOMPLETE", "platform", True,
@@ -411,7 +409,6 @@ async def test_a_profile_without_the_check_judges_nothing_and_needs_no_d3_servic
     assert {(e["status"], e["status_reason"]) for e in judged_enrichments(result).values()} == {
         ("unverified", None), ("unverified", "NO_TEXT"),
     }  # fmt: skip
-    assert not await ports.store.list_prefix("documents/doc_1/service-unavailable")
 
     # The same paper under the profile with the check: all else is reused, the checks are new.
     on = dataclasses.replace(ports, d3=scores(formula=0.5, table=0.99, ocr=0.99))
@@ -447,6 +444,6 @@ async def test_every_enrichment_and_judgement_is_counted_also_when_the_request_f
     )
     input = await enrichment(answered, runtime, checked_paper())
 
-    assert (await finalized(answered, runtime, input)).reason == "QUALITY_CHECK_INCOMPLETE"
+    assert (await failure_of(answered, runtime, input)).reason == "QUALITY_CHECK_INCOMPLETE"
 
     assert [count(*labels) - was for labels, was in zip(series, before, strict=True)] == [1] * 5

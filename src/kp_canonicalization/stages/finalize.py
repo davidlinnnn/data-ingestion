@@ -155,7 +155,9 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
                 }
             )
             bucket = "no_text" if field["outcome"] == "no_text" else status
-            method_counts[bucket] = method_counts.get(bucket, 0) + 1  # failed: the rule raises
+            method_counts[bucket] = (
+                method_counts.get(bucket, 0) + 1
+            )  # failed never reaches the result
     # Counted before the rule, so that the items of a failed request count too (#276).
     for e in enrichments:
         method = f"{e['method_ref']['id']}@{e['method_ref']['version']}"
@@ -244,8 +246,7 @@ def incomplete(
     missing = failed or unjudged
     if not missing:
         return None
-    # Only an unanswered service heals on a rerun; any other missing result is registered and
-    # reused, so the same version gives it again.
+    # Only an unanswered result is never registered; a rerun reuses any other and fails again.
     transient = all(reason == "SERVICE_UNAVAILABLE" for _, reason in failed + unjudged)
     return ProcessingFailure(
         "platform",

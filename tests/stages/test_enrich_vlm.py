@@ -137,7 +137,7 @@ async def finalized(ports, runtime, input: FinalizeInput, outcomes) -> dict:
     return json.loads(await ports.store.get(ref))
 
 
-async def incomplete(ports, runtime, input: FinalizeInput, outcomes) -> ProcessingFailure:
+async def failure_of(ports, runtime, input: FinalizeInput, outcomes) -> ProcessingFailure:
     """finalized()'s run for VLM outcomes with a failed item: the failure finalize raises
     (#276), with no Processing Result."""
     with pytest.raises(ProcessingFailure) as caught:
@@ -258,7 +258,7 @@ async def test_a_blank_field_fails_alone_and_fails_the_request(ports, runtime):
     ports = dataclasses.replace(ports, vlm=answers(completion(json.dumps(blank))))
 
     outcomes = await run_vlm(ports, runtime, input.inventory)
-    failure = await incomplete(ports, runtime, input, outcomes)
+    failure = await failure_of(ports, runtime, input, outcomes)
 
     fields = (await records(ports, outcomes))[outcomes[0].item_id]["fields"]
     assert {name: (f["outcome"], f["reason"]) for name, f in fields.items()} == {
@@ -280,7 +280,7 @@ async def test_a_refused_picture_fails_every_field(ports, runtime):
     ports = dataclasses.replace(ports, vlm=answers("REFUSE"))
 
     outcomes = await run_vlm(ports, runtime, input.inventory)
-    failure = await incomplete(ports, runtime, input, outcomes)
+    failure = await failure_of(ports, runtime, input, outcomes)
 
     fields = (await records(ports, outcomes))[outcomes[0].item_id]["fields"]
     assert [(f["outcome"], f["reason"]) for f in fields.values()] == [
@@ -627,8 +627,7 @@ async def test_a_send_past_the_request_cap_fails_the_document(ports, runtime, ea
     assert len(ports.vlm.requests) == 1 - earlier
 
 
-# Credentials, the URL or the model name: fixed by deployment, so a rerun can pass. Any other
-# status rejects the request's content, which the same version sends again.
+# 401, 403, 404, 3xx: a deployment fix lets a rerun pass; other statuses reject the content.
 @pytest.mark.parametrize(
     "status, retryable",
     [(301, True), (307, True), (401, True), (403, True), (404, True),
@@ -671,14 +670,15 @@ class TakenReceipts(DictObjectStore):
     same chain in this attempt."""
 
     async def put_if_absent(self, key: str, data: bytes) -> bool:
-        return False if "/receipts/" in key else await super().put_if_absent(key, data)
+        if "/receipts/" in key:
+            self.objects[key] = b"{}"  # the other worker's receipt
+            return False
+        return await super().put_if_absent(key, data)
 
 
 async def test_a_receipt_another_worker_took_fails_the_document_retryably(ports, runtime):
+    ports = dataclasses.replace(ports, store=TakenReceipts())
     input = await native(ports, runtime, one_picture_paper())
-    store = TakenReceipts()
-    store.objects = ports.store.objects  # type: ignore[attr-defined]
-    ports = dataclasses.replace(ports, store=store)
 
     with pytest.raises(ProcessingFailure) as caught:
         await run_vlm(ports, runtime, input.inventory)
@@ -785,7 +785,7 @@ async def test_service_unavailable_is_never_registered_and_fails_the_request_ret
     ports = dataclasses.replace(ports, vlm=answers(*[unavailable()] * 3))
 
     (outcome,) = await run_vlm(ports, runtime, input.inventory)
-    failure = await incomplete(ports, runtime, input, [outcome])
+    failure = await failure_of(ports, runtime, input, [outcome])
 
     assert outcome.ref.startswith("requests/req_1/attempts/run_1/outcomes/")
     assert (failure.category, failure.retryable) == ("platform", True)
@@ -843,7 +843,7 @@ async def test_v7_a_hung_service_ends_the_item_and_fails_the_request_retryably(
     item_id = "picture-interpretation:#/pictures/0"
 
     (outcome,) = await run_vlm(ports, runtime, input.inventory)
-    failure = await incomplete(ports, runtime, input, [outcome])
+    failure = await failure_of(ports, runtime, input, [outcome])
 
     sent = await receipts(ports, item_id)
     assert [(r["result"], r["reason"]) for r in sent] == [("unavailable", "TIMEOUT")] * 3

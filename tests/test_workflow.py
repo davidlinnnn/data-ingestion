@@ -33,6 +33,7 @@ from tests.pdfs import Page, encrypt, paper, write_pdf
 from tests.stages.conftest import start_input, with_runtime
 from tests.stages.test_check import checked_paper, formula_answering, without_check
 from tests.stages.test_parse import seven_pages
+from tests.vlm import canned
 
 pytestmark = pytest.mark.network
 
@@ -400,7 +401,7 @@ async def test_a_request_runs_pinned_to_the_current_build_of_its_adopted_version
 
     async def hold(request):
         await held.wait()
-        return completion("A plot.")
+        return canned(request)  # a valid answer: a failed item would fail the request (#276)
 
     ports = dataclasses.replace(ports, vlm=FakeInference(hold))
     pdf = write_pdf(paper(1, picture_on=(1,)))

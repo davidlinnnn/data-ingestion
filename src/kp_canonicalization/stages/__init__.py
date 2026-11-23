@@ -69,7 +69,7 @@ class ProcessingFailure(Exception):
     """A failure that ends the request with a failure report. `reason` is UPPER_SNAKE_CASE;
     `metadata` holds extra string facts (limit and actual values) for the AIP-193 block.
     `retryable` is False exactly when a rerun of the same Processing Profile version must fail
-    the same way (#57 M3); #98's scan reruns such a request once per adoption."""
+    the same way (#57 M3)."""
 
     def __init__(
         self,
