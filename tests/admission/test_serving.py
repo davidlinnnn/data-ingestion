@@ -810,7 +810,7 @@ async def test_a_resent_switch_finishes_the_refresh_a_crash_cut_short(api, conn)
     switch = {"state": "serving", "switch_seq": 2, "replaces": "b1", "feed_position": head}
 
     # The switch commits and the api stops before it recomputed the Documents.
-    await serving.report_build(conn, "retrieval", "b2", serving.BuildReport(**switch))
+    await serving.report_build(conn, "retrieval", "b2", serving.BuildReport(**switch), 600)
     cut = await seen(api, "A"), await seen(api, "B")
     resent = await build(api, "retrieval", "b2", **switch)
     done = await seen(api, "A"), await seen(api, "B")

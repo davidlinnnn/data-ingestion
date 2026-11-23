@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
+from prometheus_client import REGISTRY
 
 from kp_admission import serving
 from tests.admission import test_serving
@@ -27,6 +28,7 @@ from tests.admission.test_serving import (
 api, pool = test_serving.api, test_serving.pool  # its fixtures
 
 pytestmark = pytest.mark.docker
+LABELS = {"projection": "retrieval"}
 
 
 def entry(uid: str, srv: str, version: int, state: str = "included", **fields: Any):
@@ -77,6 +79,7 @@ async def test_a_complete_view_replaces_the_mirror_and_ends_the_request(api, con
     asked = (await beat(api, "retrieval", *stored)).json()["repair_requested"]
     captured = datetime.now(UTC)
 
+    timed = REGISTRY.get_sample_value("kp_serving_repair_seconds_count", LABELS) or 0.0
     last = await page(api, "retrieval", 2, 2, 2, entry(other, srv_other, 2), captured_at=captured)
     first = await page(api, "retrieval", 1, 2, 2, entry(uid, srv, 1), captured_at=captured)
     after = await beat(api, "retrieval", *stored)
@@ -86,6 +89,7 @@ async def test_a_complete_view_replaces_the_mirror_and_ends_the_request(api, con
     assert last.json() == {"view": "incomplete", "repair_requested": asked}
     assert first.json() == {"view": "installed", "repair_requested": None}
     assert after.json() == {"repair_requested": None}
+    assert REGISTRY.get_sample_value("kp_serving_repair_seconds_count", LABELS) == timed + 1
 
 
 async def test_a_pending_fact_whose_confirmation_was_lost_is_repaired_to_included(api, conn):
@@ -362,9 +366,11 @@ async def test_a_view_whose_pages_stopped_is_discarded_by_the_next_report(api, c
     uid, srv = await document(conn)
     await profile(conn, "retrieval")
     await build(api, "retrieval")
-    captured = datetime.now(UTC) - serving.VIEW_LIFETIME + timedelta(seconds=1)
+    captured = datetime.now(UTC) - serving.VIEW_LIFETIME + timedelta(minutes=5)
     await page(api, "retrieval", 1, 2, 1, entry(uid, srv, 1), captured_at=captured)
-    await asyncio.sleep(1)
+    await conn.execute(  # ten minutes later
+        "UPDATE build SET view_captured_at = view_captured_at - interval '10 minutes'"
+    )
 
     asked = await beat(api, "retrieval")
     rest = await page(api, "retrieval", 2, 2, 1, captured_at=captured)
@@ -408,4 +414,29 @@ async def test_a_build_reported_soon_after_lost_writes_may_be_an_erased_one(api,
     assert unrepaired == [("retrieval", "b1")]
     assert fresh.json() == {"view": "installed", "repair_requested": None}
     assert later.json()["repair_requested"] is None
+    assert await serving.writes_unrepaired(conn) == []
+
+
+async def test_an_owner_puts_an_erased_serving_build_back_in_order(api, conn):
+    """Spec §7.4 Lost writes: the loss erased the serving Build and its facts. Its owner reports
+    it `building`, sends its view, then the switch again, which passes the gates."""
+    uid, srv = await document(conn)
+    await profile(conn, "retrieval")
+    await build(api, "retrieval")
+    await included(api, "retrieval", fact(uid, srv, 1))
+    for table in ("serving_fact", "build"):  # the restore point is before the Build existed
+        await conn.execute(f"DELETE FROM {table}")
+    await serving.lose_writes(conn, 1)
+
+    unknown = await beat(api, "retrieval", (uid, RESOURCE, "crv_1"))
+    created = await build(api, "retrieval", state="building")
+    viewed = await page(api, "retrieval", 1, 1, 1, entry(uid, srv, 1))
+    switched = await build(api, "retrieval")  # switch_seq 1, a feed position read now
+
+    assert unknown.status_code == 404
+    assert created.json()["repair_requested"]["reason"] == "writes_lost"
+    assert viewed.json() == {"view": "installed", "repair_requested": None}
+    assert switched.json() == {"state": "serving", "repair_requested": None}
+    assert await serving.held(conn, uid) == [("retrieval", "b1", RESOURCE, "included")]
+    assert (await seen(api))["readiness"] == "ready"
     assert await serving.writes_unrepaired(conn) == []

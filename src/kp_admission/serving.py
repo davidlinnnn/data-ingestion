@@ -263,7 +263,7 @@ async def report_build(
     projection: str,
     build_id: str,
     report: BuildReport,
-    update_interval_s: int = 0,
+    update_interval_s: int,
 ) -> tuple[BuildAnswer, list[str]]:
     """Takes a Build's state report (DR §4, D2), in one transaction, and returns the Builds whose
     Documents' readiness it may have changed. A Build starts `building`. `serving` is a switch:
@@ -282,6 +282,9 @@ async def report_build(
             (projection, build_id),
         )
         if await cursor.fetchone():
+            # shortcut: a Build created while a lost-writes Job's transaction is open sees no
+            # declaration, nor the Job it, and only its owner's view repairs it; have both lock
+            # one shared row if that window matters.
             await _maybe_erased(conn, projection, build_id, update_interval_s)
         # Every Build of the projection, so two switches cannot both read the same serving one.
         cursor = await conn.execute(
@@ -713,39 +716,18 @@ async def _install(
         "SELECT entries FROM repair_page WHERE projection = %s AND build_id = %s ORDER BY page",
         (projection, build_id),
     )
-    view: dict[tuple[str, str], dict[str, Any]] = {}
-    served: dict[tuple[str, str], str] = {}
-    for (entries,) in await cursor.fetchall():
-        for e in entries:
-            key = (e["document_uid"], e["resource_id"])
-            if e["state"] == "included":
-                served[key] = e["source_revision_id"]
-            if key not in view or e["state"] == "pending":
-                view[key] = e
+    pages = [entries for (entries,) in await cursor.fetchall()]
     cursor = await conn.execute(
         "SELECT document_uid, resource_id, state, source_revision_id, canonical_revision_id,"
         " fact_version, recorded_at FROM serving_fact WHERE projection = %s AND build_id = %s",
         (projection, build_id),
     )
     mirror = {(row[0], row[1]): _Row(*row[2:]) for row in await cursor.fetchall()}
-    for key, e in view.items():
-        if (held := mirror.get(key)) and _fences(
-            (held.state, held.version, held.recorded_at), e["fact_version"], page.captured_at, now
-        ):
-            return "fenced"
-    rows = []
-    for key in mirror.keys() | view.keys():
-        held = mirror.get(key)
-        if held and held.version > page.watermark:
-            continue
-        if e := view.get(key):
-            state, srv, crv = e["state"], e["source_revision_id"], e["canonical_revision_id"]
-        elif held and (held.state != "removed" or held.recorded_at + TOMBSTONE > now):
-            state, srv, crv = "removed", held.srv, held.crv
-        else:
-            continue  # an expired tombstone stays as it is: it still fences (DR §5.3)
-        kept = served.get(key) if state == "pending" else None
-        rows.append((projection, build_id, *key, state, srv, crv, page.watermark, kept))
+    # A whole Build's merge, off the event loop, as the heartbeat's digest.
+    merged = await asyncio.to_thread(_merge, pages, mirror, page, now)
+    if merged is None:
+        return "fenced"
+    rows = [(projection, build_id, *row) for row in merged]
     # shortcut: rewrites the whole Build in one transaction while it holds the Build's row, which
     # the database ends at 60 s; write only the keys that change when #99 measures a large Build.
     async with conn.cursor() as cur:
@@ -767,6 +749,42 @@ async def _install(
         (projection, build_id),
     )
     return "installed"
+
+
+def _merge(
+    pages: list[list[dict[str, Any]]], mirror: Mapping[tuple[str, str], _Row], page: ViewPage,
+    now: datetime,
+) -> list[tuple[Any, ...]] | None:  # fmt: skip
+    """The facts a complete view writes, (document_uid, resource_id, state, revisions,
+    fact_version, served revision) each, or None when the expiry fence stops an entry."""
+    view: dict[tuple[str, str], dict[str, Any]] = {}
+    served: dict[tuple[str, str], str] = {}
+    for entries in pages:
+        for e in entries:
+            key = (e["document_uid"], e["resource_id"])
+            if e["state"] == "included":
+                served[key] = e["source_revision_id"]
+            if key not in view or e["state"] == "pending":
+                view[key] = e
+    for key, e in view.items():
+        if (held := mirror.get(key)) and _fences(
+            (held.state, held.version, held.recorded_at), e["fact_version"], page.captured_at, now
+        ):
+            return None
+    rows = []
+    for key in mirror.keys() | view.keys():
+        held = mirror.get(key)
+        if held and held.version > page.watermark:
+            continue
+        if e := view.get(key):
+            state, srv, crv = e["state"], e["source_revision_id"], e["canonical_revision_id"]
+        elif held and (held.state != "removed" or held.recorded_at + TOMBSTONE > now):
+            state, srv, crv = "removed", held.srv, held.crv
+        else:
+            continue  # an expired tombstone stays as it is: it still fences (DR §5.3)
+        kept = served.get(key) if state == "pending" else None
+        rows.append((*key, state, srv, crv, page.watermark, kept))
+    return rows
 
 
 async def lose_writes(conn: AsyncConnection, event: int) -> int | None:
