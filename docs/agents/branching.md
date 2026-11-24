@@ -42,7 +42,7 @@ Leave out `<issue>-` only when the work has no ticket.
   cd ~/work/data-ingestion-<task> && uv sync --frozen
   ```
 
-- A patch changes nothing under `src/kp_canonicalization/methods/` and no released profile file: `scripts/check-method-versions` refuses both. A new Processing Profile version is released on `dev`, never on a release branch.
+- A patch changes nothing under `src/kp_canonicalization/methods/`, in `stages/finalize.py` or `status_rules/` (they decide the Canonical content, #81), and no released profile file: `scripts/check-method-versions` refuses both. A new Processing Profile version is released on `dev`, never on a release branch.
 - Open a second pull request that carries the same fix into `dev`. Without it the next Processing Profile version ships without the fix.
 
 ## Parallel agent sessions

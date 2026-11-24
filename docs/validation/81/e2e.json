@@ -1,0 +1,417 @@
+{
+ "profile_differs_from_released": {
+  "components": {
+   "picture-interpretation@1": [
+    [
+     "company-vlm/Qwen3.8-27B"
+    ],
+    [
+     "anthropic/claude-sonnet-5-5"
+    ]
+   ],
+   "formula@1": [
+    [
+     "company-vlm/Qwen3.8-27B"
+    ],
+    [
+     "anthropic/claude-sonnet-5-5"
+    ]
+   ],
+   "code@1": [
+    [
+     "company-vlm/Qwen3.8-27B"
+    ],
+    [
+     "anthropic/claude-sonnet-5-5"
+    ]
+   ],
+   "document-summary@2": [
+    [
+     "company-vlm/Qwen3.8-27B"
+    ],
+    [
+     "anthropic/claude-sonnet-5-5"
+    ]
+   ],
+   "d3-check@1": [
+    [
+     "company-d3/vllm-sr/d3-mini@bd0090dd"
+    ],
+    [
+     "d3-server/vllm-sr/d3-mini@bd0090dd"
+    ]
+   ]
+  },
+  "runtime": {
+   "d3_concurrency_per_document": [
+    4,
+    1
+   ]
+  }
+ },
+ "d3_server": {
+  "health": {
+   "status": "ready",
+   "model": "d3-mini",
+   "max_input_tokens": null,
+   "modalities": [
+    "text",
+    "image",
+    "video"
+   ],
+   "authentication": true
+  },
+  "models": [
+   {
+    "name": "d3-mini",
+    "description": "Typed decisions with a probability for every option",
+    "max_input_tokens": null,
+    "modalities": [
+     "text",
+     "image",
+     "video"
+    ],
+    "image_max_pixels": 1638400,
+    "video": {
+     "fps": 2.0,
+     "max_frames": 32,
+     "max_pixels_per_frame": 200704,
+     "max_tokens_per_request": 16384,
+     "max_bytes": 32000000
+    }
+   }
+  ]
+ },
+ "papers": {
+  "w2": {
+   "pass": true,
+   "state": "succeeded",
+   "seconds": 50.2,
+   "services": "stand-ins",
+   "paper_sha256": "e951bbb8557e172a99b56ae82aae8f37108b5dea31c3606c8539a3d98023b5ca",
+   "source_revision_outcome": "accepted",
+   "not_accepted_delta": 0,
+   "finalize_activity_s": [
+    0.31126
+   ],
+   "stored_matches_row": true,
+   "content": {
+    "schema": "canonical-content/v1",
+    "pages": 14,
+    "blocks": 219,
+    "artifacts": 54,
+    "tables_html": 0,
+    "processing": {
+     "methods": [
+      {
+       "components": [
+        "docling-slim@2.132.0",
+        "layout-heron@8f39ad3c",
+        "tableformer-accurate@v1",
+        "rapidocr-ppocrv6-small"
+       ],
+       "id": "docling-parse",
+       "module_digest": "57a4415f5e622634606e1633129e8d157e50a8e1390c4558477c1593743c91d8",
+       "version": 1
+      },
+      {
+       "components": [
+        "rapidocr-ppocrv6-small"
+       ],
+       "id": "picture-ocr",
+       "module_digest": "c6685e3ddab6faac25b98d51dd381754be091090dafcedf2b85273fdaaf5d094",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "picture-interpretation",
+       "module_digest": "dbbd23a66a4261ff342d6f57fdae7e63e3e05a09892873e53108d12405774092",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "formula",
+       "module_digest": "6e8f644c0acfd40b4cb47aefd5f95b04dbca0343d464568bcb9a0cc93d83f422",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "code",
+       "module_digest": "c43e9fcaf398c38c05c1ae95d3c6062ef49a454b5298a93c311b79e03e6141c8",
+       "version": 1
+      },
+      {
+       "components": [],
+       "id": "table-status",
+       "module_digest": "8d2bc5ee2d84872ab2b6cac2fba7185e07814b7cda9fd8bce62a51fe5b79d2d8",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "document-summary",
+       "module_digest": "d379a3a0efb78dbe712d6283eec972e88cc7c2eb1b1d6dfb5fdd595a51560162",
+       "version": 2
+      },
+      {
+       "components": [
+        "d3-server/vllm-sr/d3-mini@bd0090dd"
+       ],
+       "id": "d3-check",
+       "module_digest": "455d990303a7db5f7beb81d25ca3e41c98667ae6fe0b41926237ac68b9e20a23",
+       "version": 1
+      },
+      {
+       "components": [],
+       "id": "canonical-mapping",
+       "module_digest": "4c830ec453a45365a58b97875e30edf43cf7dafc94e56ea8695516ce6735a898",
+       "version": 1
+      }
+     ],
+     "profile": "paper-pdf@1",
+     "runtime_identity": {
+      "build_id": "dev",
+      "docling_slim": "2.132.0",
+      "python": "3.12.13"
+     },
+     "status_rule": "v1"
+    }
+   },
+   "feed_kinds": [
+    "current_revision_changed"
+   ],
+   "current": {
+    "source_revision_id": "srv_0f201346f7254303b1d16f2d18737f5b",
+    "canonical_revision_id": "crv_4af519b80aaf402386e52a183c206256"
+   },
+   "candidate_ref_form": true
+  },
+  "8": {
+   "pass": true,
+   "state": "succeeded",
+   "seconds": 45.2,
+   "services": "providers",
+   "paper_sha256": "44d8abc99ec95a804c7635fefcb8ca85da6b1ede3ad88640b8917722df18d7c7",
+   "source_revision_outcome": "accepted",
+   "not_accepted_delta": 0,
+   "finalize_activity_s": [
+    0.214978
+   ],
+   "stored_matches_row": true,
+   "content": {
+    "schema": "canonical-content/v1",
+    "pages": 12,
+    "blocks": 146,
+    "artifacts": 19,
+    "tables_html": 1,
+    "processing": {
+     "methods": [
+      {
+       "components": [
+        "docling-slim@2.132.0",
+        "layout-heron@8f39ad3c",
+        "tableformer-accurate@v1",
+        "rapidocr-ppocrv6-small"
+       ],
+       "id": "docling-parse",
+       "module_digest": "57a4415f5e622634606e1633129e8d157e50a8e1390c4558477c1593743c91d8",
+       "version": 1
+      },
+      {
+       "components": [
+        "rapidocr-ppocrv6-small"
+       ],
+       "id": "picture-ocr",
+       "module_digest": "c6685e3ddab6faac25b98d51dd381754be091090dafcedf2b85273fdaaf5d094",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "picture-interpretation",
+       "module_digest": "dbbd23a66a4261ff342d6f57fdae7e63e3e05a09892873e53108d12405774092",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "formula",
+       "module_digest": "6e8f644c0acfd40b4cb47aefd5f95b04dbca0343d464568bcb9a0cc93d83f422",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "code",
+       "module_digest": "c43e9fcaf398c38c05c1ae95d3c6062ef49a454b5298a93c311b79e03e6141c8",
+       "version": 1
+      },
+      {
+       "components": [],
+       "id": "table-status",
+       "module_digest": "8d2bc5ee2d84872ab2b6cac2fba7185e07814b7cda9fd8bce62a51fe5b79d2d8",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "document-summary",
+       "module_digest": "d379a3a0efb78dbe712d6283eec972e88cc7c2eb1b1d6dfb5fdd595a51560162",
+       "version": 2
+      },
+      {
+       "components": [
+        "d3-server/vllm-sr/d3-mini@bd0090dd"
+       ],
+       "id": "d3-check",
+       "module_digest": "455d990303a7db5f7beb81d25ca3e41c98667ae6fe0b41926237ac68b9e20a23",
+       "version": 1
+      },
+      {
+       "components": [],
+       "id": "canonical-mapping",
+       "module_digest": "4c830ec453a45365a58b97875e30edf43cf7dafc94e56ea8695516ce6735a898",
+       "version": 1
+      }
+     ],
+     "profile": "paper-pdf@1",
+     "runtime_identity": {
+      "build_id": "dev",
+      "docling_slim": "2.132.0",
+      "python": "3.12.13"
+     },
+     "status_rule": "v1"
+    }
+   },
+   "feed_kinds": [
+    "current_revision_changed"
+   ],
+   "current": {
+    "source_revision_id": "srv_21f711838e824b64be1c3646985ed243",
+    "canonical_revision_id": "crv_72f8f13be4b245419af69584dc14347e"
+   },
+   "candidate_ref_form": true
+  },
+  "7": {
+   "pass": true,
+   "state": "succeeded",
+   "seconds": 50.1,
+   "services": "providers",
+   "paper_sha256": "97781b82ed43a330f491a35f772360bc3a9e7b47c5817e8889a0e1fec1115a15",
+   "source_revision_outcome": "accepted",
+   "not_accepted_delta": 0,
+   "finalize_activity_s": [
+    0.246899
+   ],
+   "stored_matches_row": true,
+   "content": {
+    "schema": "canonical-content/v1",
+    "pages": 18,
+    "blocks": 212,
+    "artifacts": 27,
+    "tables_html": 1,
+    "processing": {
+     "methods": [
+      {
+       "components": [
+        "docling-slim@2.132.0",
+        "layout-heron@8f39ad3c",
+        "tableformer-accurate@v1",
+        "rapidocr-ppocrv6-small"
+       ],
+       "id": "docling-parse",
+       "module_digest": "57a4415f5e622634606e1633129e8d157e50a8e1390c4558477c1593743c91d8",
+       "version": 1
+      },
+      {
+       "components": [
+        "rapidocr-ppocrv6-small"
+       ],
+       "id": "picture-ocr",
+       "module_digest": "c6685e3ddab6faac25b98d51dd381754be091090dafcedf2b85273fdaaf5d094",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "picture-interpretation",
+       "module_digest": "dbbd23a66a4261ff342d6f57fdae7e63e3e05a09892873e53108d12405774092",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "formula",
+       "module_digest": "6e8f644c0acfd40b4cb47aefd5f95b04dbca0343d464568bcb9a0cc93d83f422",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "code",
+       "module_digest": "c43e9fcaf398c38c05c1ae95d3c6062ef49a454b5298a93c311b79e03e6141c8",
+       "version": 1
+      },
+      {
+       "components": [],
+       "id": "table-status",
+       "module_digest": "8d2bc5ee2d84872ab2b6cac2fba7185e07814b7cda9fd8bce62a51fe5b79d2d8",
+       "version": 1
+      },
+      {
+       "components": [
+        "anthropic/claude-sonnet-5-5"
+       ],
+       "id": "document-summary",
+       "module_digest": "d379a3a0efb78dbe712d6283eec972e88cc7c2eb1b1d6dfb5fdd595a51560162",
+       "version": 2
+      },
+      {
+       "components": [
+        "d3-server/vllm-sr/d3-mini@bd0090dd"
+       ],
+       "id": "d3-check",
+       "module_digest": "455d990303a7db5f7beb81d25ca3e41c98667ae6fe0b41926237ac68b9e20a23",
+       "version": 1
+      },
+      {
+       "components": [],
+       "id": "canonical-mapping",
+       "module_digest": "4c830ec453a45365a58b97875e30edf43cf7dafc94e56ea8695516ce6735a898",
+       "version": 1
+      }
+     ],
+     "profile": "paper-pdf@1",
+     "runtime_identity": {
+      "build_id": "dev",
+      "docling_slim": "2.132.0",
+      "python": "3.12.13"
+     },
+     "status_rule": "v1"
+    }
+   },
+   "feed_kinds": [
+    "current_revision_changed"
+   ],
+   "current": {
+    "source_revision_id": "srv_b77f24a533fb4661b7574bcf41f8cc07",
+    "canonical_revision_id": "crv_61073ee4ed74405db2ef9ec068fec72e"
+   },
+   "candidate_ref_form": true
+  }
+ }
+}

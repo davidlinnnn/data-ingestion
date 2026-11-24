@@ -410,6 +410,12 @@ class FinalizeInput:
 
 
 @dataclass(frozen=True)
+class Finalized:
+    ref: str  # requests/{request_id}/result.json, the Processing Result
+    candidate: dict[str, Any]  # {"ref", "sha256", "size"} of the stored content object (§7.3)
+
+
+@dataclass(frozen=True)
 class FailureInput:
     request_id: str  # the workflow ID; the start input may be too malformed to hold it
     start: Any  # admission may send anything; prepare validates

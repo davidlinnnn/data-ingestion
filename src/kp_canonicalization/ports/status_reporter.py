@@ -31,10 +31,16 @@ class StatusReport:
     manifest_ref: str | None
     observed_at: str  # RFC 3339 UTC
     error: dict[str, Any] | None  # AIP-193 block: domain, reason, message, ...
+    # {"ref", "sha256", "size"} on the last success only (#81; admission spec §7.3)
+    candidate: dict[str, Any] | None = None
 
     def to_json(self) -> dict[str, Any]:
-        """All twelve fields, nulls kept; progress as {done, total, unit} or null."""
-        return asdict(self)
+        """The twelve fields, nulls kept, progress as {done, total, unit} or null; and candidate
+        only when set, so that an api that predates it still takes every other report."""
+        body = asdict(self)
+        if body["candidate"] is None:
+            del body["candidate"]
+        return body
 
 
 @dataclass(frozen=True)

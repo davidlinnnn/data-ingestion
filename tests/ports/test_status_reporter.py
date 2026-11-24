@@ -90,6 +90,17 @@ def test_report_json_has_the_round_3_fields():
     }
 
 
+def test_only_the_last_success_carries_the_candidate_as_a_thirteenth_field():
+    """An api that predates the candidate still takes every report without one (spec §7.3)."""
+    candidate = {"ref": "documents/d/revisions/crv_1.json", "sha256": "0" * 64, "size": 9}
+
+    last = report(stage="finalize", state="succeeded", candidate=candidate).to_json()
+
+    assert last["candidate"] == candidate
+    assert len(last) == 13
+    assert "candidate" not in report().to_json()
+
+
 async def test_recording_fake_keeps_reports_in_order():
     fake = RecordingStatusReporter()
 

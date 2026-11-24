@@ -30,6 +30,7 @@ from kp_canonicalization.stages import (
     ChunkInput,
     EnrichInput,
     FailureInput,
+    Finalized,
     FinalizeInput,
     GroupInput,
     GroupRef,
@@ -119,10 +120,10 @@ class Orchestration(_Activities):
         return await self._run(inventory.run, input)
 
     @activity.defn(name="finalize")
-    async def finalize(self, input: FinalizeInput) -> str:
-        ref = await self._run(finalize.run, input)
+    async def finalize(self, input: FinalizeInput) -> Finalized:
+        done = await self._run(finalize.run, input)
         metrics.document_outcomes.labels("complete", _tier(), "").inc()
-        return ref
+        return done
 
     @activity.defn(name="register_failure")
     async def register_failure(self, input: FailureInput) -> str:

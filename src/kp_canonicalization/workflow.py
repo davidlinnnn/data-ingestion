@@ -24,6 +24,7 @@ with workflow.unsafe.imports_passed_through():
         CheckInput,
         EnrichInput,
         FailureInput,
+        Finalized,
         FinalizeInput,
         GroupInput,
         GroupRef,
@@ -152,8 +153,9 @@ class PaperPdfWorkflow:
 
     @workflow.run
     async def run(self, start: Any) -> dict[str, Any]:
-        """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}, and
-        on failure "error", the failed status report's error block."""
+        """Returns {"outcome": "complete" | "failed", "manifest_ref": result or failure key}, with
+        "candidate" (admission spec §7.3) when complete and "error", the failed status report's
+        error block, when failed."""
         info = workflow.info()
         self._start = start
         stage: Stage = "prepare"
@@ -208,9 +210,9 @@ class PaperPdfWorkflow:
             stage = "finalize"
             self._report("finalize", "running")
             finalize_input = FinalizeInput(start, plan, groups, assembly, inventory, outcomes)
-            ref = await self._call("finalize", finalize_input, str, orchestration)
-            self._report("finalize", "succeeded", manifest_ref=ref)
-            outcome = {"outcome": "complete", "manifest_ref": ref}
+            done = await self._call("finalize", finalize_input, Finalized, orchestration)
+            self._report("finalize", "succeeded", manifest_ref=done.ref, candidate=done.candidate)
+            outcome = {"outcome": "complete", "manifest_ref": done.ref, "candidate": done.candidate}
         except ActivityError as err:
             details = _failure_details(err)
             error = error_block(
@@ -239,6 +241,7 @@ class PaperPdfWorkflow:
         progress: Progress | None = None,
         manifest_ref: str | None = None,
         error: dict[str, Any] | None = None,
+        candidate: dict[str, Any] | None = None,
     ) -> None:
         """Build the report here (seq, workflow time) so that every resend is identical, and
         queue it behind the previous one so that reports leave in seq order."""
@@ -274,6 +277,7 @@ class PaperPdfWorkflow:
             manifest_ref=manifest_ref,
             observed_at=_rfc3339(workflow.now()),
             error=error,
+            candidate=candidate,
         )
         self._sending = asyncio.ensure_future(self._send(self._sending, report))
 

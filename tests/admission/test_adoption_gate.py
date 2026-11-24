@@ -31,7 +31,8 @@ pytestmark = pytest.mark.docker
 
 PDF = "application/pdf"
 STARTS: list[dict[str, Any]] = []
-OUTCOME = {"outcome": "complete"}
+CANDIDATE = {"ref": "documents/doc_c/revisions/crv_c.json", "sha256": "0" * 64, "size": 2}
+OUTCOME: dict[str, Any] = {"outcome": "complete", "candidate": CANDIDATE}
 
 
 @workflow.defn(name=WORKFLOW)
@@ -197,6 +198,20 @@ async def test_a_test_workflow_whose_result_is_failed_blocks_and_is_replaced_by_
     assert len(starts) == 2
     assert len({s["document_uid"] for s in starts}) == 2  # a new document each time
     assert len({s["request_id"] for s in starts}) == 2
+
+
+async def test_a_test_workflow_complete_without_a_candidate_blocks(
+    make_gate, temporal, version, monkeypatch
+):
+    """A version that completes without a candidate would form no acceptance (#81, #261)."""
+    monkeypatch.setitem(OUTCOME, "outcome", "complete")
+    monkeypatch.delitem(OUTCOME, "candidate")
+    check = make_gate()
+    async with build(temporal, version, "r1"):
+        await check(PDF, version, False)
+        blocked = await settled(check, version)
+
+    assert blocked == (False, "check_failed")
 
 
 async def test_a_pass_on_an_older_build_does_not_count_for_the_current_one(

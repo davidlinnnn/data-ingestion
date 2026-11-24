@@ -133,7 +133,7 @@ async def finalized(ports, runtime, input: FinalizeInput, outcomes) -> dict:
     local = await enrich_local.run(item_input, ports, runtime)
     local += await summarize_all(ports, runtime, item_input)
     final = dataclasses.replace(input, outcomes=[*local, *outcomes])
-    ref = await finalize.run(await checked(ports, runtime, final), ports, runtime)
+    ref = (await finalize.run(await checked(ports, runtime, final), ports, runtime)).ref
     return json.loads(await ports.store.get(ref))
 
 

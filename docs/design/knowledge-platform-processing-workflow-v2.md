@@ -201,8 +201,11 @@ Guards between the tiers:
 | Service unavailable | Service down, timeout, rate-limited beyond budget | Retry within the #93 budget, then item `failed` with `SERVICE_UNAVAILABLE` | Completes |
 | Platform or integrity | Tier-1 failure, missing outcome record, configuration, method or integrity error, storage unavailable after retries | Processing fails | Fails |
 
-The #84 U1 rule that native omissions or duplications block acceptance is a
-Canonical Acceptance check, not a processing failure.
+The #84 U1 rule that native omissions or duplications block acceptance is
+checked in `finalize`, with the rest of the mapping validation: a candidate that
+fails it fails the request (2026-11-24 note, #81: superseded by #57 B2; the
+checks and reasons are in the
+[Canonical content specification](knowledge-platform-canonical-content-spec.md) §6).
 
 ### 6.3 Mapping to admission status
 
@@ -253,9 +256,10 @@ limitations[]: declared by the Processing Profile version (method declarations),
                plus document facts such as NO_TEXT_LAYER_PAGES
 ```
 
-The enrichment fields follow the canonical contract's Enrichment group. `status`,
-`signals` and `provider_artifact_ref` are additions that #81 carries into the
-canonical contract. A document-scope result targets the whole candidate.
+The enrichment fields follow the canonical contract's Enrichment group. #81
+carries `status` and `signals` into the Canonical content and leaves
+`provider_artifact_ref` in the Processing Result only (2026-11-24 note; the
+[Canonical content specification](knowledge-platform-canonical-content-spec.md) §3.3). A document-scope result targets the whole candidate.
 Profile-declared limitations state what the method can get wrong; they are not
 evidence that this document shows the defect.
 

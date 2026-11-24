@@ -100,6 +100,8 @@ Here "build" means a Worker Deployment version, not a Published View's Build.
   same diff. CI rule 1 refuses it otherwise.
 - A pull request into a release branch changes nothing under `methods/`, a raised `VERSION`
   included (CI rule 3): a patch build must reuse what its version registered.
+- `stages/finalize.py` and `status_rules/` count as part of the `canonical-mapping` package for
+  rules 1 and 3: they decide the Canonical content (#81, content spec §8).
 - Drafts live only in the DEV Processing Profile (`tests/profiles/paper-pdf-dev.yaml`), which is
   not under these rules.
 - One worker image loads one Processing Profile. Once a method's `VERSION` rises on `dev`, `dev` can

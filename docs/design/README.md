@@ -23,6 +23,7 @@ four kinds, and says which in a status line at its top:
 | [Admission design notes](knowledge-platform-admission.md) | Design record | #31 | Rounds 1–5 and their reasons |
 | [Authorization](knowledge-platform-authorization.md) | Design result | #85 | Decision interface, model and pilot provider |
 | [Authorization guide](knowledge-platform-authorization-guide.md) (zh-TW) | Contract | #204, #114, #127 | The authz API contract; system diagram with the provider options; sequence diagrams for ingestion, Retrieval and LLM-Wiki; guide for PEP implementers and operators |
+| [Canonical content specification](knowledge-platform-canonical-content-spec.md) | Contract | #81; read by #268 | The content object of a paper-PDF Canonical Revision: fields, blocks and Markdown, enrichments and tables, references and the artifact manifest, validation, schema and mapper versions |
 | [Canonical persistence](knowledge-platform-canonical-persistence.md) (zh-TW) | Design result | #57 | Database, the acceptance point, content and artifact custody, retention and purge, tenant, recovery, exact-revision reads; with the [scenario table](knowledge-platform-canonical-persistence-scenarios.md) |
 | [Canonical consumption](knowledge-platform-canonical-consumption.md) | Design result | #55 | Canonical consumption and publication for Wiki and Retrieval |
 | [Data security](knowledge-platform-data-security.md) (zh-TW) | Design result | #87 | Data-security governance principles and the Agent Platform boundary |

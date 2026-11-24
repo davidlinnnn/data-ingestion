@@ -19,7 +19,7 @@ def variant(tmp_path: Path, old: str, new: str) -> Path:
     return path
 
 
-def test_the_latest_paper_pdf_lists_its_eight_methods_with_declared_components():
+def test_the_latest_paper_pdf_lists_its_nine_methods_with_declared_components():
     p = load_profile(LATEST)
 
     assert p.id == "paper-pdf@1"
@@ -33,6 +33,7 @@ def test_the_latest_paper_pdf_lists_its_eight_methods_with_declared_components()
         "table-status@1",
         "document-summary@2",
         "d3-check@1",
+        "canonical-mapping@1",
     ]
     assert p.methods["docling-parse"].components == (
         "docling-slim@2.132.0",
@@ -41,6 +42,7 @@ def test_the_latest_paper_pdf_lists_its_eight_methods_with_declared_components()
         "rapidocr-ppocrv6-small",
     )
     assert p.methods["table-status"].components == ()
+    assert p.methods["canonical-mapping"].components == ()
     assert [lim.code for lim in p.limitations] == [
         "READING_ORDER_DEFECTS",
         "CAPTION_INTERRUPTS_BODY",
