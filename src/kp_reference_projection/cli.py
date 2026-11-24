@@ -1,4 +1,4 @@
-"""`kp-reference-projection`: the reference projection's one long-running process (#127): the
+"""`kp-reference-projection`: the reference projection's reader process (#127): the
 Change Feed reader, its workers and the heartbeat of its Build, until SIGTERM or SIGINT.
 
 Environment:
@@ -32,15 +32,17 @@ the platform's `kp_feed_consumer_lag_seconds{projection}`. Log lines carry `proj
 """
 
 import asyncio
+import json
 import logging
 import os
 import signal
 
 import prometheus_client
 import psycopg
+import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_reference_projection import SCHEMA
+from kp_reference_projection import SCHEMA, query
 from kp_reference_projection.projection import Expired, Projection
 from kp_sdk.projection import ProjectionClient
 
@@ -111,3 +113,48 @@ async def run(
         finally:
             await sdk.aclose()
     return 1 if expired else 0
+
+
+def query_main() -> int:
+    """`kp-reference-projection-query`: the query API (#279), the second role, in its own
+    process (DR A7); any number of replicas. It reads the store the reader's process writes and
+    never applies the schema.
+
+    Environment: KP_PLATFORM_URL; KP_PROJECTION_CREDENTIAL, registered in
+    KP_AUTHZ_PEP_CREDENTIALS for the authz API; KP_PROJECTION_DATABASE_URL, the reader's
+    database; KP_QUERY_USERS, a JSON object from the SHA-256 hex of each user's bearer token to
+    the user id (shortcut: a fixed list instead of the identity component of guide §5.1; the
+    real query entry is #76's and #125's); KP_QUERY_PORT (default 8080) and
+    KP_QUERY_METRICS_PORT (default 9101). Exit 2 for a missing or malformed setting."""
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    try:
+        url, credential = os.environ["KP_PLATFORM_URL"], os.environ["KP_PROJECTION_CREDENTIAL"]
+        dsn = os.environ["KP_PROJECTION_DATABASE_URL"]
+        users = json.loads(os.environ["KP_QUERY_USERS"])
+        port = int(os.environ.get("KP_QUERY_PORT", "8080"))
+        metrics_port = int(os.environ.get("KP_QUERY_METRICS_PORT", "9101"))
+    except KeyError as missing:
+        log.error("setting missing: %s", missing.args[0])
+        return 2
+    except ValueError:
+        log.error("KP_QUERY_USERS is not JSON, or a port is not a number")
+        return 2
+    if not isinstance(users, dict) or not all(isinstance(v, str) for v in users.values()):
+        log.error("KP_QUERY_USERS is not an object of user ids")
+        return 2
+    prometheus_client.start_http_server(metrics_port)
+
+    async def serve() -> None:
+        sdk = ProjectionClient(url, credential, os.environ.get("KP_PROJECTION_NAME", "retrieval"))
+        try:
+            async with AsyncConnectionPool(
+                dsn, kwargs={"autocommit": True}, min_size=1, max_size=4, timeout=2
+            ) as pool:
+                config = uvicorn.Config(query.app(sdk, pool, users), host="0.0.0.0", port=port)
+                await uvicorn.Server(config).serve()
+        finally:
+            await sdk.aclose()
+
+    asyncio.run(serve())
+    return 0

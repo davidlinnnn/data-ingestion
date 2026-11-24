@@ -6,7 +6,7 @@ goal. It lives in the pilot only: in PROD the real Retrieval owner replaces it (
 2026-11-24).
 
 It talks to the platform through kp_sdk.projection only, over HTTP; it imports nothing of the
-platform's packages.
+platform's packages. Its query side (`query`, #279) is a second process over the same store.
 """
 
 from pathlib import Path

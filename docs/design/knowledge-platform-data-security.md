@@ -106,7 +106,7 @@
 | 摘要 API（Document Summary） | 別的 team | 原生正文和標題 | 四個條件已確認（2026-10-26） |
 | d3 決策模型（vLLM Semantic Router 上的 `vllm-sr/d3-mini`） | LLM/d3 provider team | Quality Check（[ADR-0011](../adr/0011-model-judged-strong-signals-d3-quality-check.md)、#161）：公式和表格的裁圖、含文字的圖片，以及要判讀的重建文字（LaTeX、表格的 Markdown、OCR 文字） | 尚未登錄：四個條件由 #137 向 provider team 確認。確認前只在 DEV 用公開論文執行；`paper-pdf@1`（草稿）列有 `d3-check`，登錄完成前不在 PROD 啟用 |
 | 以 Docling 為基礎的 OCR 和解析 | 平台內 | 不送出平台 | 不適用 |
-| embedding 服務 | 未選定 | chunk 文字 | 選定前要先登錄並符合條件；選型由 #55 負責 |
+| embedding 服務 | 未選定 | chunk 文字 | 選定前要先登錄並符合條件。2026-11-24 註記（#279）：原負責票 #55 已結案；pilot 的 reference projection 用關鍵字搜尋，不呼叫 embedding 服務（使用者裁決，[#127 的紀錄](https://github.com/davidlinnnn/data-ingestion/issues/127#issuecomment-7132133550)）。真正的 Retrieval owner 在選定時登錄 |
 | 篩檢模型（#105 的候選，例如 Prompt Guard 2、d3-mini；#121 的候選） | 未選定 | 文字或影像 | 由 #108 採用時登錄 |
 | 雲端服務（OpenAI、Azure Prompt Shields 等） | 外部 | 不得在公司任何環境使用 | 只能在公司網路外、以 property 級資料做研究對照（B3） |
 
