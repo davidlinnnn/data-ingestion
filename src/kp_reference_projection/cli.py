@@ -16,10 +16,11 @@ Environment:
 
 Exit codes: 0 after SIGTERM or SIGINT (the run in progress finishes first; a run cut short is
 taken again at the next start); 1 on a failure, such as an expired cursor, which needs a
-bootstrap (#280, #281); 2 for a missing or malformed setting; 3 when another process already
-runs against the same database. One process per database, so its Deployment uses the
-`Recreate` strategy; a run in progress may take up to 600 s, so a shorter termination grace
-period only means that run is taken again at the next start.
+bootstrap (#280, #281), or a Build the platform already serves started on a new database,
+which needs a new KP_PROJECTION_BUILD_ID; 2 for a missing or malformed setting; 3 when
+another process already runs against the same database. One process per database, so its
+Deployment uses the `Recreate` strategy; a run in progress may take up to 600 s, so a shorter
+termination grace period only means that run is taken again at the next start.
 
 Metrics, for alerts (CODING_STANDARDS § Logs and metrics): `kp_projection_write_seconds` (a
 registration to its confirmation), `kp_projection_removal_seconds` (a narrowing event to its
@@ -49,6 +50,7 @@ LOCK = 127_127  # the advisory lock that keeps one process per database
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # a line per poll otherwise
     try:
         settings = {
             "url": os.environ["KP_PLATFORM_URL"],
@@ -97,7 +99,9 @@ async def run(
         sdk = ProjectionClient(url, credential, projection)
         expired = False
         try:
-            async with AsyncConnectionPool(dsn, kwargs={"autocommit": True}, max_size=size) as pool:
+            async with AsyncConnectionPool(
+                dsn, kwargs={"autocommit": True}, min_size=1, max_size=size
+            ) as pool:
                 await Projection(sdk, pool, build_id).run(
                     stop, workers, narrowing_workers, heartbeat_s
                 )

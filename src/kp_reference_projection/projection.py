@@ -277,6 +277,7 @@ class Projection:
         self, uid: str, at_least: str | None = None, narrowed_at: datetime | None = None
     ) -> None:
         """Brings the store's entries of `uid` to the Document's current state."""
+        dropped = None
         for _ in range(3):
             async with self.reports.window():
                 await self._flush(uid, narrowed_at)
@@ -295,8 +296,11 @@ class Projection:
                 return
             if await self._served(uid, keep, current["canonical_revision_id"]):
                 return
+            if dropped == (keep, current["canonical_revision_id"]):
+                break  # the state did not move: the next run tries again after retry_s
             if await self._write(uid, keep, current):
                 return
+            dropped = (keep, current["canonical_revision_id"])
         raise Unsettled
 
     async def _held(self, uid: str) -> set[str]:

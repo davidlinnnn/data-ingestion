@@ -6,7 +6,11 @@ builds, answer from fixtures. Each test drives the reader and the workers step b
 import asyncio
 import json
 import logging
+import os
 import re
+import signal
+import socket
+import sys
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
@@ -14,6 +18,7 @@ from datetime import UTC, datetime
 import httpx
 import psycopg
 import pytest
+import uvicorn
 from prometheus_client import REGISTRY, generate_latest
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
@@ -178,6 +183,10 @@ async def delete(conn, document_id: str = "A") -> None:
     )
 
 
+def sample(name: str, **labels: str) -> float:
+    return REGISTRY.get_sample_value(name, labels) or 0.0
+
+
 async def ready_document(conn, platform, reader, document_id: str = "A") -> tuple[str, str]:
     uid, srv = await document(conn, document_id)
     platform.contents[f"crv_{document_id.lower()}1"] = [f"# {document_id}", "body"]
@@ -190,11 +199,13 @@ async def test_an_accepted_document_is_written_confirmed_and_ready(conn, platfor
     uid, srv = await document(conn)
     platform.contents["crv_1"] = ["# Travel", "Rules for trips."]
     before = await readiness(platform)
+    writes = sample("kp_projection_write_seconds_count")
 
     await accepted(conn, uid, srv, "crv_1")
     await settle(reader)
 
     assert (before, await readiness(platform)) == ("not_ready", "ready")
+    assert sample("kp_projection_write_seconds_count") - writes == 1
     assert await entries(store) == [(uid, "s1/hr-all", "crv_1", "# Travel\n\nRules for trips.")]
     assert await mirror(conn) == [(uid, "s1/hr-all", "included", "crv_1")]
     assert (await reader.heartbeat())["repair_requested"] is None
@@ -225,10 +236,12 @@ async def test_a_deletion_is_removed_and_then_judged_enforced(conn, platform, st
     await ready_document(conn, platform, reader)
     await delete(conn)
     held = await enforce(conn)
+    removals = sample("kp_projection_removal_seconds_count")
 
     await settle(reader)
 
     assert held == {"held": 1}
+    assert sample("kp_projection_removal_seconds_count") - removals == 1
     assert await enforce(conn) == {"enforced": 1}
     assert await entries(store) == []
     assert (await reader.heartbeat())["repair_requested"] is None
@@ -586,7 +599,9 @@ async def test_a_content_outage_keeps_the_entry_and_a_refused_read_reports_the_s
     uid, _ = await ready_document(conn, platform, reader)
     await revised(conn, uid, "srv_2")
     platform.contents["crv_2"] = ["# A2"]
-    answer = httpx.Response(503, json={"error": {"status": "UNAVAILABLE"}})
+    error = {"code": 503, "status": "UNAVAILABLE", "message": "m"}
+    reason = [{"reason": "STORAGE_UNAVAILABLE"}]  # #268 names its reasons
+    answer = httpx.Response(503, json={"error": error | {"details": reason}})
 
     async def storage(request: httpx.Request) -> httpx.Response | None:
         return answer if request.url.path.endswith("/revisions/crv_2") else None
@@ -594,8 +609,11 @@ async def test_a_content_outage_keeps_the_entry_and_a_refused_read_reports_the_s
     platform.hooks.append(storage)
     await accepted(conn, uid, "srv_2", "crv_2")
     await reader.read_once()
+    failed = sample("kp_projection_failures_total", step="reconcile", reason="STORAGE_UNAVAILABLE")
     assert await reader.work_once()  # the run fails and is retried
     outage = (await entries(store), await mirror(conn))
+    counted = sample("kp_projection_failures_total", step="reconcile", reason="STORAGE_UNAVAILABLE")
+    assert counted - failed == 1
     answer = httpx.Response(410, json={"error": {"status": "FAILED_PRECONDITION"}})
     assert await reader.work_once()  # the read is refused: the write is dropped
     refused = await mirror(conn)
@@ -648,3 +666,60 @@ async def test_a_switch_sent_but_not_recorded_before_a_crash_is_sent_again_with_
     async with store.connection() as projection_conn:
         [(serving,)] = await (await projection_conn.execute("SELECT serving FROM build")).fetchall()
     assert serving
+
+
+@pytest.mark.network
+async def test_the_process_switches_its_build_reports_its_cursor_and_ends_0_on_sigterm(
+    conn, pool, store
+):
+    await profile(conn, "retrieval")
+    ports = []
+    for _ in range(2):
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            ports.append(probe.getsockname()[1])
+    api_port, metrics_port = ports
+    application = app(
+        FakeAuthorizer(),
+        {digest("retrieval"): "retrieval"},
+        {},
+        pool,
+        INTAKE,
+        pipelines={digest("retrieval"): PIPELINES["retrieval"]},
+    )
+    server = uvicorn.Server(uvicorn.Config(application, port=api_port, log_config=None))
+    serving = asyncio.create_task(server.serve())
+    while not server.started and not serving.done():
+        await asyncio.sleep(0.05)
+    env = os.environ | {
+        "KP_PLATFORM_URL": f"http://127.0.0.1:{api_port}",
+        "KP_PROJECTION_CREDENTIAL": "retrieval",
+        "KP_PROJECTION_DATABASE_URL": store.conninfo,
+        "KP_PROJECTION_WORKERS": "1",
+        "KP_PROJECTION_NARROWING_WORKERS": "0",
+        "KP_PROJECTION_HEARTBEAT_S": "1",
+        "KP_PROJECTION_METRICS_PORT": str(metrics_port),
+    }
+    code = "import sys; from kp_reference_projection.cli import main; sys.exit(main())"
+    process = await asyncio.create_subprocess_exec(
+        sys.executable, "-c", code, env=env, stderr=asyncio.subprocess.PIPE
+    )
+    try:
+        state = None
+        for _ in range(100):
+            row = await (await conn.execute("SELECT state FROM build")).fetchone()
+            if (state := row and row[0]) == "serving":
+                break
+            await asyncio.sleep(0.1)
+        async with httpx.AsyncClient() as scraper:
+            metrics = (await scraper.get(f"http://127.0.0.1:{metrics_port}/metrics")).text
+        cursor = await (await conn.execute("SELECT 1 FROM consumer_cursor")).fetchone()
+    finally:
+        process.send_signal(signal.SIGTERM)
+        _, stderr = await asyncio.wait_for(process.communicate(), 10)
+        server.should_exit = True
+        await serving
+
+    assert (state, cursor) == ("serving", (1,))
+    assert "kp_projection_backlog" in metrics
+    assert process.returncode == 0, stderr.decode()[-2000:]
