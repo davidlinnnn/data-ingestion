@@ -52,3 +52,11 @@ async def test_a_report_missing_a_field_is_rejected(base_url):
         )
 
     assert response.status_code == 400
+
+
+async def test_the_last_success_with_its_candidate_is_accepted(base_url):
+    candidate = {"ref": "documents/doc_1/revisions/crv_01.json", "sha256": "0" * 64, "size": 2}
+    async with httpx.AsyncClient() as client:
+        reporter = HttpStatusReporter(client, base_url)
+
+        assert (await reporter.report(report(seq=1, candidate=candidate))).delivered

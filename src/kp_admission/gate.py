@@ -4,9 +4,11 @@ routes it and, for a version not adopted before, a test workflow of it completed
 1. Its Worker Deployment has a current build polling all five queues, and the routing change
    is COMPLETED. A state stuck IN_PROGRESS (temporalio/temporal#11842) falls back after
    ROUTING_LIMIT on the five queues alone, reason `routing_in_progress`.
-2. A test workflow on that build returned outcome `complete`: Temporal reads a workflow
-   `COMPLETED` whatever its outcome, so the gate reads the result. Each test is a new document,
-   so no registered result is reused; a failed one is replaced CHECK_RETRY after it started. A
+2. A test workflow on that build returned outcome `complete` with a well-formed `candidate`
+   (spec §7.3; #81): Temporal reads a workflow `COMPLETED` whatever its outcome, so the gate
+   reads the result, and a version that completes without a candidate forms no acceptance.
+   Each test is a new document, so no registered result is reused; a failed one is replaced
+   CHECK_RETRY after it started. A
    version adopted through the gate before is not tested again (#57 B6): a rollback often
    happens while a model service is down.
 
@@ -23,6 +25,7 @@ from typing import Any, Literal
 
 import psycopg
 from psycopg import AsyncConnection
+from pydantic import ValidationError
 from temporalio.api.deployment.v1 import WorkerDeploymentInfo, WorkerDeploymentVersion
 from temporalio.api.enums.v1 import RoutingConfigUpdateState
 from temporalio.api.workflowservice.v1 import (
@@ -34,6 +37,7 @@ from temporalio.service import RPCError, RPCStatusCode
 
 from kp_admission.adoption import CHECK_PREFIX
 from kp_admission.dispatcher import temporal_start
+from kp_admission.requests import Candidate
 from kp_admission.storage import ObjectStore
 from kp_canonicalization.workflow import QUEUES, deployment_name, task_queue
 
@@ -136,10 +140,15 @@ class TemporalGate:
             if described and described.status == WorkflowExecutionStatus.COMPLETED:
                 versioning = described.raw_description.workflow_execution_info.versioning_info
                 ran_on = versioning.deployment_version.build_id
-                outcome = (await handle.result()).get("outcome")
-                if outcome == "complete" and ran_on == build_id:
+                result = await handle.result()
+                try:
+                    Candidate.model_validate(result.get("candidate"))
+                    complete = result.get("outcome") == "complete"
+                except ValidationError:
+                    complete = False
+                if complete and ran_on == build_id:
                     return True, fallback
-                failed = outcome != "complete"
+                failed = not complete
             else:
                 failed = described is not None
             if failed:

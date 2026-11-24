@@ -2,6 +2,7 @@
 and the real local enrichment."""
 
 import dataclasses
+import hashlib
 import importlib.metadata
 import json
 import platform
@@ -23,7 +24,7 @@ async def native(ports, runtime):
 async def test_the_processing_result_describes_request_profile_and_native_evidence(ports, runtime):
     input = await native(ports, runtime)
 
-    ref = await finalize.run(input, ports, runtime)
+    ref = (await finalize.run(input, ports, runtime)).ref
 
     assert ref == "requests/req_1/result.json"
     result = json.loads(await ports.store.get(ref))
@@ -160,7 +161,7 @@ async def test_a_retried_finalize_keeps_the_result_already_registered(ports, run
     input = await native(ports, runtime)
     await ports.store.put_if_absent("requests/req_1/result.json", b"first")
 
-    ref = await finalize.run(input, ports, runtime)
+    ref = (await finalize.run(input, ports, runtime)).ref
 
     assert await ports.store.get(ref) == b"first"
 
@@ -186,7 +187,7 @@ async def test_a_retried_failure_report_keeps_the_first(ports, runtime):
 async def test_each_enrichment_joins_its_inventory_item_outcome_record_and_status(ports, runtime):
     input = await enriched(ports, runtime, enriched_paper())
 
-    result = json.loads(await ports.store.get(await finalize.run(input, ports, runtime)))
+    result = json.loads(await ports.store.get((await finalize.run(input, ports, runtime)).ref))
 
     items = json.loads(await ports.store.get(input.inventory.ref))["items"]
     outcomes = {o.item_id: o for o in input.outcomes}
@@ -280,7 +281,7 @@ async def test_a_new_status_rule_reruns_only_finalize(ports, runtime, monkeypatc
     runtime = dataclasses.replace(runtime, profile=profile)
 
     second = await enriched(ports, runtime, enriched_paper(), request_id="req_2")
-    result = json.loads(await ports.store.get(await finalize.run(second, ports, runtime)))
+    result = json.loads(await ports.store.get((await finalize.run(second, ports, runtime)).ref))
 
     assert len(calls) == ocr_calls
     assert all(o.reused for o in second.outcomes)
@@ -308,7 +309,7 @@ async def test_large_content_stays_in_the_outcome_record(ports, runtime, monkeyp
     input = await enriched(ports, runtime, enriched_paper())
     monkeypatch.setattr(finalize, "CONTENT_INLINE_MAX", 40)
 
-    result = json.loads(await ports.store.get(await finalize.run(input, ports, runtime)))
+    result = json.loads(await ports.store.get((await finalize.run(input, ports, runtime)).ref))
 
     contents = {e["item_id"].split(":")[0]: e["content"] for e in result["enrichments"]}
     assert contents["table-status"] is None  # HTML and grid exceed 40 bytes
@@ -342,3 +343,48 @@ async def test_a_failed_enrichment_fails_the_request_without_a_result(ports, run
     (formula,) = [o.item_id for o in input.outcomes if o.item_id.startswith("formula:")]
     assert failure.metadata == {"failed": "1", "not_run": "0", "item_id": formula}
     assert await ports.store.head("requests/req_1/result.json") is None
+
+
+# --- Canonical content and its candidate (#81) -----------------------------------------------
+
+CONTENT_KEY = "documents/doc_1/revisions/crv_1.json"
+
+
+async def test_finalize_writes_the_content_object_and_hands_over_its_candidate(ports, runtime):
+    input = await native(ports, runtime)
+
+    finalized = await finalize.run(input, ports, runtime)
+
+    stored = await ports.store.get(CONTENT_KEY)
+    assert finalized.ref == "requests/req_1/result.json"
+    assert finalized.candidate == {
+        "ref": CONTENT_KEY,
+        "sha256": hashlib.sha256(stored).hexdigest(),
+        "size": len(stored),
+    }
+    content = json.loads(stored)
+    assert content["schema"] == "canonical-content/v1"
+    assert content["revision"] == {
+        "canonical_revision_id": "crv_1",
+        "document_uid": "doc_1",
+        "source_revision_id": "srv_1",
+        "request_id": "req_1",
+        "adopted_version": "paper-pdf@1",
+        "adoption_sequence": 1,
+    }
+
+
+async def test_a_retried_finalize_keeps_the_content_object_and_reports_the_stored_one(
+    ports, runtime
+):
+    input = await native(ports, runtime)
+    await ports.store.put_if_absent(CONTENT_KEY, b'{"first": true}')
+
+    finalized = await finalize.run(input, ports, runtime)
+
+    assert await ports.store.get(CONTENT_KEY) == b'{"first": true}'
+    assert finalized.candidate == {
+        "ref": CONTENT_KEY,
+        "sha256": hashlib.sha256(b'{"first": true}').hexdigest(),
+        "size": 15,
+    }

@@ -81,7 +81,7 @@ async def summary_enrichment(ports, runtime, input, outcome) -> dict:
     outcomes = await enrich_local.run(enrich(input), ports, runtime)
     outcomes += await enrich_vlm.run(enrich(input), ports, runtime)
     final = dataclasses.replace(input, outcomes=[*outcomes, outcome])
-    result = json.loads(await ports.store.get(await finalize.run(final, ports, runtime)))
+    result = json.loads(await ports.store.get((await finalize.run(final, ports, runtime)).ref))
     (enrichment,) = [e for e in result["enrichments"] if e["item_id"] == ITEM_ID]
     return enrichment
 

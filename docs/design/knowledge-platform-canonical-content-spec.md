@@ -80,13 +80,14 @@ blocks' `markdown` joined by a blank line (`"\n\n"`).
 | `ref` | The node's docling reference (`#/texts/3`, `#/tables/0`, `#/pictures/1`), unique in the revision. Enrichments, summary evidence and Projections name a block by it, together with the `canonical_revision_id` (Canonical contract Q25) |
 | `kind` | The docling label: `title`, `section_header`, `text`, `list_item`, `caption`, `footnote`, `formula`, `code`, `table`, `picture`, `document_index`, … |
 | `locators` | `[{page, bbox}]`, one per docling provenance: `page` is the physical page from 1; `bbox` is `{l, t, r, b, coord_origin, unit}` with `coord_origin` `BOTTOMLEFT` or `TOPLEFT` as docling gives it and `unit` `"pt"` (PDF points on that page) |
-| `text` | *Text nodes only.* The native text layer's text: docling's `text`, or its `orig` when `text` is empty |
+| `text` | *Text nodes (`#/texts/…`) only.* The native text layer's text: docling's `text`, or its `orig` when `text` is empty |
 | `role_uncertain` | *Text nodes only.* `true` when `text` came from `orig` (#84: docling emptied `text`, so the role it gave the node is not trusted); otherwise `false` |
-| `image` | *Pictures only.* The reference of the picture image (§4) |
+| `image` | *Picture nodes (`#/pictures/…`) only.* The reference of the picture image (§4) |
 | `native_text` | *Pictures only.* `[{ref, text, role_uncertain, locators}]`: the text nodes docling placed inside the picture (text-dense figures), native text of the source, kept apart from the picture's generated supplement (§3.3) and not in `markdown` |
 | `markdown` | The block's part of the body Markdown, by kind below |
 
-Markdown by kind:
+Markdown by kind; a table or picture is told by docling's collection (`#/tables/…`,
+`#/pictures/…`), whatever its label (docling may label a table `document_index`):
 
 | Kind | `markdown` |
 |---|---|
@@ -95,8 +96,8 @@ Markdown by kind:
 | `list_item` | `- ` + text |
 | `formula` | `$$`, newline, the formula item's LaTeX (its enrichment's `content`), newline, `$$`; the native `text` stays in `text`. Without a formula enrichment, the native text in the same fence |
 | `code` | ```` ``` ````, newline, the code item's `content`, newline, ```` ``` ````. The code method prefers the native text layer with indentation from coordinates and asks a model only where the box has no text layer (#84 F14) |
-| `table` | A simple table as a Markdown table; a complex table (any cell spans more than one row or column) as docling's HTML export, because the Markdown export repeats a spanning cell and drops a parent header out of the table (#84 F21). Either way a merged cell appears once |
-| `picture` | `![](` + the picture image's reference + `)` |
+| a table | A simple table as a Markdown table; a complex table (any cell spans more than one row or column) as docling's HTML export, because the Markdown export repeats a spanning cell and drops a parent header out of the table (#84 F21). Either way a merged cell appears once |
+| a picture | `![](` + the picture image's reference + `)` |
 | any other | text |
 
 Inline math and inline code inside a paragraph keep the text layer's characters; nothing
@@ -118,7 +119,7 @@ is one entry per output field: `item_id` `<item>/caption`, `/description`, `/fig
 | `method_ref` | `{id, version, digest}` of the producing method |
 | `scope` | `item` or `document` |
 | `origin` | `reconstruction` or `interpretation` |
-| `target_refs` | `[block ref]` for an item, `["#"]` (the whole document) for a document-scope result |
+| `target_refs` | `[ref]` for an item: a block's ref, or the ref of a picture's `native_text` entry (a code or formula node docling placed inside a picture, such as a boxed prompt, stays the picture's native text and its reconstruction targets it there); `["#"]` (the whole document) for a document-scope result |
 | `content` | The method's output, whole (never cut to a size, unlike the Processing Result's inline copy) |
 | `evidence_refs` | References (§4) of the evidence files the method registered, such as a table or formula crop |
 | `status` | `unverified` or `disputed`, unchanged from processing; v1 assigns no `verified` (#84 D4, ADR-0011), and an accepted revision has no `failed` item (#57 B7, B9) |
@@ -220,7 +221,7 @@ defect cannot pass by construction.
 | `SCHEMA` | The content has exactly the fields of §3 with their types and values: `schema` is `canonical-content/v1`, every `status` is `unverified` or `disputed` | `CANONICAL_INVALID` |
 | `REFERENCE_FORM` | Every reference (page `image`, picture `image`, `evidence_refs`, manifest `ref`) matches §4's pattern | `CANONICAL_INVALID` |
 | `REFERENCE_UNLISTED` | Every reference used outside the manifest is in it, and every manifest entry is used | `CANONICAL_INVALID` |
-| `REFERENCE_UNRESOLVED` | Every `target_refs` entry is a block ref or `#`; every summary `section_id` is a block ref or `#/body`; block refs are unique; every table and picture block is the target of at least one enrichment, so its status can be found | `CANONICAL_INVALID` |
+| `REFERENCE_UNRESOLVED` | Every `target_refs` entry is a block ref, a picture's `native_text` ref or `#`; every summary `section_id` is a block ref or `#/body`; block refs are unique; every table and picture block is the target of at least one enrichment, so its status can be found | `CANONICAL_INVALID` |
 | `COVERAGE` | Every text, table and picture node of the assembly document is delivered once or listed in `omitted` under a rule of §3.4, and not both; each delivered text equals the node's `text`, or its `orig` when `text` is empty (#84 U1) | `CANONICAL_INVALID` |
 | `ARTIFACT` | Every manifest entry's object exists with that sha256 and size; for a page or picture image, that sha256 is also the one its group or the assembly declared | `ARTIFACT_MISMATCH` |
 

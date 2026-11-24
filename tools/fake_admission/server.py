@@ -35,7 +35,9 @@ class Receiver:
         self.log_path = log_path
 
     def accept(self, request_id: str, report: dict[str, Any]) -> tuple[int, dict[str, Any]]:
-        if set(report) != FIELDS or report["request_id"] != request_id:
+        # candidate rides only on the last success (#81); every other field is always sent.
+        sent = set(report)
+        if not FIELDS - {"candidate"} <= sent <= FIELDS or report["request_id"] != request_id:
             return 400, {"error": "report fields or request_id do not match"}
         key = (request_id, report["attempt_id"])
         with self.lock:

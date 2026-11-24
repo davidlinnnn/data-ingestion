@@ -122,3 +122,32 @@ def test_released_lists_the_ids_of_the_profiles_released_at_a_revision(repo):
     )
 
     assert (listed.returncode, listed.stdout.split()) == (0, ["demo@1"])
+
+
+def test_changing_the_canonical_mapping_of_a_released_profile_without_a_bump_fails(repo):
+    """#81, spec §8: the mapper, its validation and the completeness rule are a method package."""
+    mapping = "src/kp_canonicalization/methods/canonical_mapping/__init__.py"
+    write(repo, PROFILE, "profile: demo@1\nreleased: true\nmethods:\n  canonical-mapping@1: {}\n")
+    write(repo, mapping, 'ID = "canonical-mapping"\nVERSION = 1\nRULE = 1\n')
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "release with the mapper")
+    git(repo, "branch", "-f", "dev")
+    write(repo, mapping, 'ID = "canonical-mapping"\nVERSION = 1\nRULE = 2\n')
+
+    result = check(repo)
+
+    assert result.returncode == 1
+    assert "canonical_mapping" in result.stdout
+
+
+def test_every_shipped_profile_lists_the_canonical_mapping_that_holds_the_rules():
+    from kp_canonicalization.profile import PROFILES_DIR, load_profile
+    from kp_canonicalization.stages import finalize
+
+    for path in [
+        *PROFILES_DIR.glob("*.yaml"),
+        Path(__file__).parent / "profiles/paper-pdf-dev.yaml",
+    ]:
+        package = load_profile(path).methods["canonical-mapping"].package
+        assert all(hasattr(package, name) for name in ("incomplete", "build", "validate"))
+    assert not hasattr(finalize, "incomplete")  # no copy of the rule outside the package

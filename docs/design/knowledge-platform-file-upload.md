@@ -312,7 +312,7 @@ sequenceDiagram
 
 ## 5. 使用指南：給 Source 開發者
 
-本節依契約寫，不是現況。`dev` 上能呼叫的是 Resource 登記、宣告、上傳、finalize、`GET /v1/batches/{batch_id}`、狀態查詢與刪除，進度見第 7.3 節。讀取端的回報接收（#252）與 Canonical Acceptance 的記錄（#251）已經接上，但還沒有讀取端會送回報：處理端要到 Canonical mapping（#81）才交出 Canonical 內容，讀取端要等 consumer SDK 與 reference projection（#127）。在那之前每份未刪除的文件的 `readiness` 都是 `not_ready`；這段期間用 request 的 `state` 追蹤一次提交（規格 §5.6）。
+本節依契約寫，不是現況。`dev` 上能呼叫的是 Resource 登記、宣告、上傳、finalize、`GET /v1/batches/{batch_id}`、狀態查詢與刪除，進度見第 7.3 節。讀取端的回報接收（#252）與 Canonical Acceptance 的記錄（#251）已經接上，但還沒有讀取端會送回報：處理端從 #81 起交出 Canonical 內容與 candidate，成功的 request 形成 Canonical Acceptance、文件有目前版本；讀取端要等 consumer SDK 與 reference projection（#127）。在那之前每份未刪除的文件的 `readiness` 都是 `not_ready`；這段期間用 request 的 `state` 追蹤一次提交（規格 §5.6）。
 
 ### Quick start：一份文件、一個 PDF
 
@@ -578,7 +578,7 @@ request 的 `succeeded` 只代表處理完成；文件是否可被讀到，看 `
 | `ready` | 每個讀取端都是最新版 |
 | `deleted` | 已刪除 |
 
-**現況（2026-11-22）：** 讀取端的回報接收（#252）與 Canonical Acceptance 的記錄（#251）已經完成，但還沒有讀取端會送回報：處理端要到 Canonical mapping（#81）才交出 Canonical 內容，讀取端要等 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。讀取端寫入新的一版時，在確認完成之前仍算提供著原本那一版：文件是 `ready_stale`，不會變回 `not_ready`（規格 §7.4）。規格還有 `withdrawn` 這個值，pilot 不會出現。
+**現況（2026-11-22）：** 讀取端的回報接收（#252）與 Canonical Acceptance 的記錄（#251）已經完成，但還沒有讀取端會送回報：處理端從 #81 起交出 Canonical 內容與 candidate，讀取端要等 consumer SDK 與 reference projection（#127），所以每份未刪除的文件仍是 `not_ready`，`serving` 是空陣列。在那之前，一次提交成功與否只看 request 的 `state`。之後新加進 Knowledge Profile 的讀取端，要等它回報補建完成才計入 `readiness`，在那之前它在 `serving` 的那一列是 `building`。讀取端寫入新的一版時，在確認完成之前仍算提供著原本那一版：文件是 `ready_stale`，不會變回 `not_ready`（規格 §7.4）。規格還有 `withdrawn` 這個值，pilot 不會出現。
 
 `attention` 列出需要有人處理的事，沒有就是空陣列。`action_owner` 是 `source` 時輪到 Source 處理：
 
@@ -1078,7 +1078,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 |---|---|---|
 | 1 | 建立空的 PostgreSQL 資料庫（17 以上），整份套用 [`schema.sql`](../../src/kp_admission/schema.sql)，它也建立 Change Feed 頭三個月的分區。`api` 的資料庫角色要有 `pg_read_all_stats`；跑 `feed-retention` 的角色要是 `change_feed` 資料表的擁有者，因為它建立與刪除分區 | 資料表都在 |
 | 2 | 準備 custody bucket 與 storage 的憑證（權限見第 6 節「物件儲存」一列） | [`storage_probe.py`](../validation/184/storage_probe.py) 以 exit code 0 結束。它在 repo 的開發環境執行，讀 `KP_S3_ENDPOINT`、`KP_S3_BUCKET` 與 `AWS_*`，寫在 `probe184/` 這個前綴底下，跑完自己刪掉 |
-| 3 | 確認 Temporal 的 namespace 連得到，processing worker 已部署。之後會在回報帶 `candidate` 的 worker（#81）要等接受它的 `api` 部署之後才部署，順序反了每一筆最後回報都是 `400`（規格 §13） | 五種 worker（orchestration、inference、vlm、summary、d3）都在輪詢 `<profile>-<版本>.<queue>`，採用 `paper-pdf@1` 時是 `paper-pdf-1.orchestration` 等；promoter 的 CronJob（`kp-canonicalization promote`，#178）在跑，把這個 build 設成 current |
+| 3 | 確認 Temporal 的 namespace 連得到，processing worker 已部署。回報帶 `candidate` 的 worker（#81 起的每個 build）要等接受它的 `api`（#251 起）部署之後才部署，順序反了每一筆最後回報都是 `400`（規格 §13） | 五種 worker（orchestration、inference、vlm、summary、d3）都在輪詢 `<profile>-<版本>.<queue>`，採用 `paper-pdf@1` 時是 `paper-pdf-1.orchestration` 等；promoter 的 CronJob（`kp-canonicalization promote`，#178）在跑，把這個 build 設成 current |
 | 4 | 產生 Source credential 與回報用的 credential，把 digest 寫進 `KP_CREDENTIALS` 與 `KP_PIPELINES`（第 6.8 節）；設定第 6 節「設定」一列的必填項目 | Secret 與環境變數就緒 |
 | 5 | 啟動 `kp-admission api`（2 個副本）與 `kp-admission dispatcher`（至少 2 個副本） | `api`：叢集內 `GET /healthz` 回 `200`。`dispatcher` 沒有 HTTP 端點：pod 維持 Running、沒有重啟，log 沒有錯誤 |
 | 6 | 建立三個 CronJob：`reconcile` 每 5 分鐘、`expire` 每小時、`feed-retention` 每天 | 各跑一次，exit code 0 |
@@ -1164,6 +1164,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-23 | #57 結案（Canonical 的保存與處理產物的歸屬）：第 7.1 節新增兩項，pilot 的物件儲存沒有冗餘、資料庫還原之後的放行；第 7.3 節新增 Canonical 內容的讀取（#268）與清除已刪除文件的物件（#267） |
 | 2026-11-23 | #260：serving 事實的修復實作完成：讀取端分頁送來 repair view，到齊後一次替換 Build 的 mirror，結束修復要求並重算 readiness；view 從 capture 起 24 小時內要到齊（暫定），過期或被到期柵欄擋下就整份丟棄；遺失寫入之後由 Job 執行 `kp-admission writes-lost`（規格 §7.4）。第 6、7.1、7.3 節跟上 |
 | 2026-11-23 | #261：宣告式採用實作完成：採用寫在部署設定，由 `apply-adoption` 的 CronJob 在確認點（五條 queue、測試 workflow 的結果）之後套用（規格 §3）。第 6 節的角色、指令與設定，第 6.9 節第 7 步與常見現象，第 7.3 節更新 |
+| 2026-11-24 | #81：處理端交出 Canonical 內容與 candidate，成功的 request 形成 Canonical Acceptance。新的 Contract 文件「Canonical 內容規格」；驗證沒過的兩個原因碼；採用的確認點要求 candidate。第 5 節開頭、第 6.9 節第 3 步與第 7.3 節更新 |
 | 2026-11-24 | #98：刪除、重送與掃描實作完成。`DELETE /v1/documents/{document_id}` 在呼叫的 transaction 裡套用刪除，回 `applied`（規格 §5.8 原本寫 `received`；ADR-0014 之後兩者之間沒有事要做），還沒開始的 request 以 `DOCUMENT_DELETED` 結束；CronJob `enforce` 判定 `enforced`（規格 §8）。不可重試的失敗用相同內容重送回 `unchanged`，被拒絕與不可重試的失敗之後的相同內容重送不扣配額（規格 §6.4）。CronJob `scan` 取代 redrive 與 refresh 的指令：重跑沒有結果的內容、重刷範圍內與作廢版本做的 Canonical Revision（規格 §9）；作廢版本的 request 以 `VERSION_WITHDRAWN` 結束。交件暫停只算 Source 交的 request。第 5 節開頭、第 5.2、5.6、6 節與第 7.1、7.3 節更新 |
 
 ### 7.3 實作狀態（2026-11-24）
@@ -1183,11 +1184,12 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#81、#127）`readiness` 仍是 `not_ready` |
 | 修復 view 的接收 | 讀取端分頁送來整份 view（`PUT /report/v1/builds/{build_id}/repair-views/{view_id}/pages/{page}`），到齊後一次替換 mirror；遺失寫入之後的 `kp-admission writes-lost` | #260 | 已完成，在 `dev` |
 | mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，可以開始 |
-| Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed`、作廢的版本、`details` 的方法版本落後 | #251 | 已完成，在 `dev`；處理端到 #81 才交出 candidate，在那之前成功的 request 不形成接受，Source Revision 留在 `pending` |
+| Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed`、作廢的版本、`details` 的方法版本落後 | #251 | 已完成，在 `dev` |
+| Canonical 內容與 candidate | 處理端把 Processing Result 對應成 Canonical 內容、驗證、寫成每個 revision 一個的物件，在最後一筆成功回報與 workflow 結果交出 candidate（[Canonical 內容規格](knowledge-platform-canonical-content-spec.md)）；驗證沒過是 request `failed`，原因 `CANONICAL_INVALID` 或 `ARTIFACT_MISMATCH`；採用的確認點要求結果帶 candidate | #81 | 已完成，在 `dev` |
 | 宣告式採用 | 採用的版本、重刷範圍與作廢的版本寫在部署設定，由 CronJob `apply-adoption` 在確認點之後套用；取代手動的 `kp-admission adopt` | #261 | 已完成，在 `dev` |
 | 刪除、重送、掃描 | `DELETE /v1/documents/{document_id}` 與 CronJob `enforce`；相同內容的重送；CronJob `scan`（重跑、重刷、作廢版本的重做） | #98 | 已完成，在 `dev`；改綁 Resource 不存在，所以沒有移出的判定 |
 | 保留期 | batch 與 `Idempotency-Key` 到期回 `404` 並移除紀錄 | #250 | 未實作 |
-| Canonical 內容的讀取 | 讀取端依確切的 revision 讀內容與它列出的圖（`/read/v1/`，不對外） | #268 | 未實作，在 #81 之後 |
+| Canonical 內容的讀取 | 讀取端依確切的 revision 讀內容與它列出的圖（`/read/v1/`，不對外） | #268 | 未實作，可以開始（清單格式在 Canonical 內容規格 §4） |
 | 清除已刪除文件的物件 | 刪除套用 30 天後，CronJob 清掉這份文件在物件儲存的全部物件；資安事件的立即清除寫在部署設定 | #267 | 未實作，可以開始；PROD 上線前要完成 |
 | dispatcher 與 reconciler 的 metrics | | #189 | 未實作 |
 | 驗證 | CI 層與叢集層 | #99 | 未實作；叢集層等 #78 |

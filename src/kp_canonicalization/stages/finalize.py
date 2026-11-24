@@ -11,19 +11,26 @@ from kp_canonicalization import metrics
 from kp_canonicalization.identity import canonical_json
 from kp_canonicalization.stages import (
     FailureInput,
+    Finalized,
     FinalizeInput,
     Ports,
     ProcessingFailure,
     Runtime,
     outcome_record_missing,
     read_verified,
+    sha256,
 )
 
 CONTENT_INLINE_MAX = 16384  # bytes of compact JSON; larger content stays in the outcome record
 
 
-async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
-    """Write requests/{request_id}/result.json once (a retry keeps the first) and return its key:
+async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> Finalized:
+    """Map, validate and write the Canonical content, then the Processing Result, and return
+    Finalized(the result's key, the candidate). The order is the spec's §1
+    (docs/design/knowledge-platform-canonical-content-spec.md): the completeness rule, then the
+    profile's canonical-mapping build and validate (whose failures raise its ProcessingFailure),
+    then the content object at its key, written once (a retry keeps it, and the candidate is the
+    stored object's sha256 and size), then requests/{request_id}/result.json, written once:
 
     schema       "pdf-processing-result/v1"
     request      request_id, document_uid, source_revision_id, adopted_version,
@@ -48,8 +55,8 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         item_id, result_ref (the outcome record), method_ref, scope, origin (from the record),
         target_refs [target_ref], input_refs [the item's input refs], content (the record's
         content when its compact JSON is at most CONTENT_INLINE_MAX bytes, else null: read
-        result_ref), evidence_refs, status, status_reason (from the rule), signals,
-        provider_artifact_ref, reused (from the OutcomeRef)
+        result_ref; the mapping gets it whole), evidence_refs, status, status_reason (from the
+        rule), signals, provider_artifact_ref, reused (from the OutcomeRef)
 
     An outcome record with "fields" yields one enrichment per field instead, in the record's
     key order: item_id "<item_id>/<field>", content, signals, status and status_reason from
@@ -67,7 +74,8 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
     status_reason or ""), and each judgement under the check's method ref: status not_run,
     disputed (reason: its contradiction) or unverified; failed requests' too.
 
-    Every item must have a result (#57 B7, B9). Before anything is written, an enrichment with
+    Every item must have a result (#57 B7, B9: canonical-mapping's incomplete()). Before anything
+    is written, an enrichment with
     status failed raises ProcessingFailure(platform, ENRICHMENT_INCOMPLETE), or else a check
     that did not run raises ProcessingFailure(platform, QUALITY_CHECK_INCOMPLETE), with
     metadata {"failed": enrichments failed, "not_run": checks not run, "item_id": the first
@@ -133,9 +141,6 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         entries = record["fields"].items() if "fields" in record else [(None, record)]
         for name, field in entries:
             status, reason = rule.assign(field)
-            content = field["content"]
-            if len(canonical_json(content)) > CONTENT_INLINE_MAX:
-                content = None
             enrichments.append(
                 {
                     "item_id": f"{item['item_id']}/{name}" if name is not None else item["item_id"],
@@ -145,7 +150,7 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
                     "origin": record["origin"],
                     "target_refs": [item["target_ref"]],
                     "input_refs": [source["ref"] for source in item["input_refs"]],
-                    "content": content,
+                    "content": field["content"],
                     "evidence_refs": record["evidence_refs"],
                     "status": status,
                     "status_reason": reason,
@@ -164,7 +169,8 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         metrics.item_outcomes.labels(method, e["status"], e["status_reason"] or "").inc()
     for labels in judgements:
         metrics.item_outcomes.labels(*labels).inc()
-    if failure := incomplete(
+    mapping = profile.methods["canonical-mapping"].package
+    if failure := mapping.incomplete(
         [(e["item_id"], e["status_reason"]) for e in enrichments if e["status"] == "failed"],
         unjudged,
     ):
@@ -232,34 +238,23 @@ async def run(input: FinalizeInput, ports: Ports, runtime: Runtime) -> str:
         "enrichments": enrichments,
         "limitations": limitations,
     }
-    ref = f"requests/{input.start['request_id']}/result.json"
+    document = assembly["document"]
+    content = await mapping.build(result, document, ports.store)
+    await mapping.validate(content, result, document, ports.store)
+    key = mapping.content_key(request["document_uid"], request["request_id"])
+    body = canonical_json(content)
+    # Write-once: a retry keeps the stored object, and the candidate is that object's (#57).
+    if not await ports.store.put_if_absent(key, body):
+        body = await ports.store.get(key)
+    # The inline copy of a large content is cut; the outcome record keeps it whole.
+    result["enrichments"] = [
+        {**e, "content": None} if len(canonical_json(e["content"])) > CONTENT_INLINE_MAX else e
+        for e in enrichments
+    ]
+    ref = f"requests/{request['request_id']}/result.json"
     # Write-once: a retried finalize keeps the result already registered.
     await ports.store.put_if_absent(ref, canonical_json(result))
-    return ref
-
-
-def incomplete(
-    failed: list[tuple[str, str]], unjudged: list[tuple[str, str]]
-) -> ProcessingFailure | None:
-    """The failure of a Document with a missing result (#57 B7, B9), given (item_id, reason) of
-    each failed enrichment and of each check without a judgement; None when there is none."""
-    missing = failed or unjudged
-    if not missing:
-        return None
-    # Only an unanswered result is never registered; a rerun reuses any other and fails again.
-    transient = all(reason == "SERVICE_UNAVAILABLE" for _, reason in failed + unjudged)
-    return ProcessingFailure(
-        "platform",
-        "platform" if transient else "method",
-        "ENRICHMENT_INCOMPLETE" if failed else "QUALITY_CHECK_INCOMPLETE",
-        "An Enrichment item has no result" if failed else "A Quality Check has no judgement",
-        retryable=transient,
-        metadata={
-            "failed": str(len(failed)),
-            "not_run": str(len(unjudged)),
-            "item_id": missing[0][0],
-        },
-    )
+    return Finalized(ref, {"ref": key, "sha256": sha256(body), "size": len(body)})
 
 
 async def run_failure(input: FailureInput, ports: Ports, runtime: Runtime) -> str:

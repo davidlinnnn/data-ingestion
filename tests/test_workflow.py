@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import copy
 import dataclasses
+import hashlib
 import json
 import logging
 import uuid
@@ -88,7 +89,10 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
     outcome, run_id = await process(client, ports, runtime, start)
 
     ref = f"requests/{start['request_id']}/result.json"
-    assert outcome == {"outcome": "complete", "manifest_ref": ref}
+    key = f"documents/doc_1/revisions/crv_{start['request_id'].removeprefix('req_')}.json"
+    stored = await ports.store.get(key)
+    candidate = {"ref": key, "sha256": hashlib.sha256(stored).hexdigest(), "size": len(stored)}
+    assert outcome == {"outcome": "complete", "manifest_ref": ref, "candidate": candidate}
     result = json.loads(await ports.store.get(ref))
     assert result["outcome"] == "complete"
     # Two pictures without text, OCR'd on the inference worker and interpreted on the vlm
@@ -134,6 +138,7 @@ async def test_a_paper_runs_end_to_end_and_reports_four_stages(client, ports, ru
         (start["request_id"], run_id, "paper-pdf@1", "1")
     }
     assert [r.manifest_ref for r in reports][-1] == ref
+    assert [r.candidate for r in reports] == [None] * 9 + [candidate]  # the last success only
     assert all(r.error is None for r in reports)
 
 
@@ -195,12 +200,15 @@ async def test_a_second_request_for_the_same_document_reuses_every_registered_it
     first = await start_input(ports, pdf, request_id=f"req_{uuid.uuid4().hex[:8]}")
     second = {**first, "request_id": f"req_{uuid.uuid4().hex[:8]}"}
     await process(client, ports, runtime, first)
-    items = {k for k in ports.store.objects if k.startswith("documents/")}  # type: ignore[attr-defined]
+    items = {k for k in ports.store.objects if k.startswith("documents/doc_1/items/")}  # type: ignore[attr-defined]
 
     outcome, _ = await process(client, ports, runtime, second)
 
     assert outcome["outcome"] == "complete"
-    assert {k for k in ports.store.objects if k.startswith("documents/")} == items  # type: ignore[attr-defined]
+    assert {k for k in ports.store.objects if k.startswith("documents/doc_1/items/")} == items  # type: ignore[attr-defined]
+    # Each request's content object is its own (#81); the items it references are shared.
+    first_ref = f"documents/doc_1/revisions/crv_{first['request_id'][4:]}.json"
+    assert outcome["candidate"]["ref"] != first_ref
     one, two = [
         json.loads(await ports.store.get(f"requests/{s['request_id']}/result.json"))
         for s in (first, second)
@@ -630,3 +638,6 @@ async def test_the_adoption_gate_file_completes_end_to_end(client, ports, runtim
     assert not [e for e in result["enrichments"] if e["status"] == "failed"]
     assert not [e for e in result["enrichments"] if e["signals"].get("d3", {}).get("state")]
     assert [e for e in result["enrichments"] if "score" in e["signals"].get("d3", {})]
+    # The gate also wants a candidate (#81): the file maps and validates.
+    stored = await ports.store.get(outcome["candidate"]["ref"])
+    assert outcome["candidate"]["sha256"] == hashlib.sha256(stored).hexdigest()

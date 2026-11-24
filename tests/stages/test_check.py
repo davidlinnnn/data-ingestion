@@ -119,7 +119,7 @@ async def result_of(ports, runtime, input: FinalizeInput, request_id: str = "req
     """The Processing Result after the check and finalize."""
     checks = await run_check(ports, runtime, input, request_id)
     final = dataclasses.replace(input, outcomes=[*input.outcomes, *checks])
-    return json.loads(await ports.store.get(await finalize.run(final, ports, runtime)))
+    return json.loads(await ports.store.get((await finalize.run(final, ports, runtime)).ref))
 
 
 def scores(**by_category: float | Exception):
@@ -181,7 +181,7 @@ async def test_a_formula_judged_unfaithful_is_disputed_and_a_weak_signal_changes
     assert result["inventory"]["counts"]["table-status"] == {**zero, "unverified": 1}
     # Check items are not enrichments, and the profile names the check.
     assert not [e for e in result["enrichments"] if e["method_ref"]["id"] == "d3-check"]
-    assert result["profile"]["methods"][-1]["id"] == "d3-check"
+    assert "d3-check" in [m["id"] for m in result["profile"]["methods"]]
 
 
 async def test_a_table_judged_unfaithful_is_disputed(ports, runtime):
@@ -401,7 +401,7 @@ async def test_a_profile_without_the_check_judges_nothing_and_needs_no_d3_servic
     ports = dataclasses.replace(ports, d3=None)
     input = await enrichment(ports, off, checked_paper())
 
-    result = json.loads(await ports.store.get(await finalize.run(input, ports, off)))
+    result = json.loads(await ports.store.get((await finalize.run(input, ports, off)).ref))
 
     assert input.plan.check is False
     assert [m["id"] for m in result["profile"]["methods"]] == [m for m in off.profile.methods]
