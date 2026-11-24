@@ -29,7 +29,7 @@ from pydantic import (
 )
 
 from kp_canonicalization.ports.object_store import ObjectNotFound, ObjectStore
-from kp_canonicalization.stages import ProcessingFailure, sha256
+from kp_canonicalization.stages import ProcessingFailure, in_thread, sha256
 
 ID = "canonical-mapping"
 VERSION = 1
@@ -37,10 +37,10 @@ SCHEMA = "canonical-content/v1"
 REFERENCE = re.compile(r"[0-9a-f]{64}(/[A-Za-z0-9_-][A-Za-z0-9._-]*)+")  # spec §4
 MEDIA_TYPES = {".png": "image/png", ".json": "application/json"}
 NATIVE = ("texts", "tables", "pictures", "key_value_items", "form_items")  # every native node
-OMITTED = {"furniture": "FURNITURE"}
+OMITTED = {"furniture": "FURNITURE"}  # a content layer -> its reason in `omitted` (§3.4)
 KEPT = ("item_id", "method_ref", "scope", "origin", "target_refs", "content", "status", "signals")
 REVISION = ("document_uid", "source_revision_id", "request_id", "adopted_version",
-            "adoption_sequence")  # fmt: skip  # content layer -> the §3.4 rule that leaves it out
+            "adoption_sequence")  # fmt: skip
 
 
 def incomplete(
@@ -115,6 +115,29 @@ def _native_text(node: dict[str, Any]) -> tuple[str, bool]:
     return node.get("orig") or "", bool(node.get("orig"))
 
 
+def _layer(node: dict[str, Any]) -> str:
+    return node.get("content_layer", "body")
+
+
+def _inside(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The native_text entries of every picture block."""
+    return [entry for block in blocks for entry in block.get("native_text", [])]
+
+
+def _tables(document: dict[str, Any]) -> dict[str, str]:
+    """Each table's Markdown, or docling's HTML when a cell spans (spec §3.2). CPU-bound."""
+    docling = DoclingDocument.model_validate(document)
+    rendered = {}
+    for table in docling.tables:
+        # Its captions and footnotes are blocks of their own; exported here they would repeat.
+        bare = table.model_copy(update={"captions": [], "footnotes": []})
+        spans = any(c.row_span > 1 or c.col_span > 1 for c in table.data.table_cells)
+        rendered[table.self_ref] = (
+            bare.export_to_html(docling) if spans else bare.export_to_markdown(docling)
+        )
+    return rendered
+
+
 def _locators(node: dict[str, Any]) -> list[dict[str, Any]]:
     return [{"page": p["page_no"], "bbox": {**p["bbox"], "unit": "pt"}} for p in node["prov"]]
 
@@ -150,16 +173,7 @@ async def build(result: dict[str, Any], document: dict[str, Any], store: ObjectS
         for target in e["target_refs"]:
             targeting[f"{target} {e['method_ref']['id']}"] = e["content"]
     pictures = {p["picture_id"]: p for p in native["picture_images"]}
-    docling: list[DoclingDocument] = []  # parsed once, only for a document with tables
-
-    def table_markdown(ref: str) -> str:
-        if not docling:
-            docling.append(DoclingDocument.model_validate(document))
-        table = docling[0].tables[int(ref.rsplit("/", 1)[1])]
-        # Its captions and footnotes are blocks of their own; exported here they would repeat.
-        bare = table.model_copy(update={"captions": [], "footnotes": []})
-        spans = any(c.row_span > 1 or c.col_span > 1 for c in table.data.table_cells)
-        return bare.export_to_html(docling[0]) if spans else bare.export_to_markdown(docling[0])
+    tables = await in_thread(_tables, document) if document.get("tables") else {}
 
     def text_markdown(ref: str, node: dict[str, Any], text: str) -> str:
         match node["label"]:
@@ -177,12 +191,9 @@ async def build(result: dict[str, Any], document: dict[str, Any], store: ObjectS
 
     blocks: list[dict[str, Any]] = []
 
-    def body(node: dict[str, Any]) -> bool:
-        return node.get("content_layer", "body") == "body"
-
     async def visit(ref: str) -> None:
         node = _resolve(document, ref)
-        if not body(node):
+        if _layer(node) != "body":
             return  # listed in omitted
         collection = _collection(ref)
         later = [child["$ref"] for child in node.get("children", [])]
@@ -196,7 +207,7 @@ async def build(result: dict[str, Any], document: dict[str, Any], store: ObjectS
             block |= {"text": text, "role_uncertain": uncertain,
                       "markdown": text_markdown(ref, node, text)}  # fmt: skip
         elif collection == "tables":
-            block["markdown"] = table_markdown(ref)
+            block["markdown"] = tables[ref]
         elif collection == "pictures":
             picture = pictures.get(ref)
             image = None
@@ -210,7 +221,7 @@ async def build(result: dict[str, Any], document: dict[str, Any], store: ObjectS
             def collect(child: str) -> None:
                 found = _resolve(document, child)
                 own = _collection(child) in ("tables", "pictures")
-                if child in attached or own or not body(found):
+                if child in attached or own or _layer(found) != "body":
                     later.append(child)
                     return
                 if _collection(child) == "texts":
@@ -271,7 +282,7 @@ async def build(result: dict[str, Any], document: dict[str, Any], store: ObjectS
             {"ref": node["self_ref"], "reason": OMITTED[layer]}
             for collection in NATIVE
             for node in document.get(collection, [])
-            if (layer := node.get("content_layer", "body")) in OMITTED
+            if (layer := _layer(node)) in OMITTED
         ],
         "artifacts": sorted(artifacts.values(), key=lambda a: a["ref"]),
     }
@@ -421,6 +432,54 @@ class _Content(_Model):
     artifacts: list[_Artifact]
 
 
+class _Cell(_Model):
+    row: StrictInt = Field(ge=0)
+    col: StrictInt = Field(ge=0)
+    row_span: StrictInt = Field(ge=1)
+    col_span: StrictInt = Field(ge=1)
+    text: StrictStr
+    column_header: StrictBool
+    row_header: StrictBool
+
+
+class _Grid(_Model):
+    num_rows: StrictInt = Field(ge=0)
+    num_cols: StrictInt = Field(ge=0)
+    cells: list[_Cell]
+
+
+class _Table(_Model):
+    html: StrictStr
+    grid: _Grid
+
+
+class _SectionRef(_Model):
+    section_id: StrictStr
+
+
+class _Overview(_Model):
+    text: StrictStr
+    evidence: list[_SectionRef]
+
+
+class _Sentence(_Model):
+    text: StrictStr
+
+
+class _Section(_Model):
+    section_id: StrictStr
+    heading: StrictStr
+    sentences: list[_Sentence]
+
+
+class _Summary(_Model):
+    overview: list[_Overview]
+    sections: list[_Section]
+
+
+CONTENT_OF = {"table-status": _Table, "document-summary": _Summary}  # spec §3.3
+
+
 # --- validation (spec §6) -----------------------------------------------------------------
 
 
@@ -430,8 +489,21 @@ async def validate(
     """Spec §6, in its order. Reads the content, the docling document and the stored objects,
     never the mapper's intermediate values. Raises ProcessingFailure CANONICAL_INVALID, or
     ARTIFACT_MISMATCH for the ARTIFACT check."""
-    try:
+
+    def schema() -> None:
         _Content.model_validate(content)
+        for i, e in enumerate(content["enrichments"]):
+            if model := CONTENT_OF.get(e["method_ref"]["id"]):
+                try:
+                    model.model_validate(e["content"])
+                except ValidationError as exc:
+                    raise _invalid("SCHEMA", ".".join(
+                        ["enrichments", str(i), "content"]
+                        + [str(part) for part in exc.errors()[0]["loc"]]
+                    )) from None  # fmt: skip
+
+    try:
+        await in_thread(schema)
     except ValidationError as exc:
         location = ".".join(str(part) for part in exc.errors()[0]["loc"])
         raise _invalid("SCHEMA", location) from None
@@ -452,12 +524,12 @@ async def validate(
         raise _invalid("REFERENCE_UNRESOLVED", "a block ref repeats")
     targets = {target for e in enrichments for target in e["target_refs"]}
     # A code or formula docling placed inside a picture stays the picture's native text.
-    inner = {i["ref"] for block in blocks for i in block.get("native_text", [])}
-    if unknown := targets - set(refs) - inner - {"#"}:
+    inside = _inside(blocks)
+    if unknown := targets - set(refs) - {i["ref"] for i in inside} - {"#"}:
         raise _invalid("REFERENCE_UNRESOLVED", min(unknown))
     sections = set()
     for e in enrichments:
-        if e["method_ref"]["id"] == "document-summary" and isinstance(e["content"], dict):
+        if e["method_ref"]["id"] == "document-summary":
             sections |= {s["section_id"] for s in e["content"]["sections"]}
             sections |= {x["section_id"] for o in e["content"]["overview"] for x in o["evidence"]}
     if unknown := sections - set(refs) - {"#/body"}:
@@ -466,8 +538,8 @@ async def validate(
         raise _invalid("REFERENCE_UNRESOLVED", min(untargeted))
 
     delivered = {block["ref"]: block for block in blocks}
-    delivered |= {inner["ref"]: inner for block in blocks for inner in block.get("native_text", [])}
-    count = Counter(refs + [i["ref"] for b in blocks for i in b.get("native_text", [])])
+    delivered |= {entry["ref"]: entry for entry in inside}
+    count = Counter(refs + [entry["ref"] for entry in inside])
     if twice := [ref for ref, n in count.items() if n > 1]:
         raise _invalid("COVERAGE", min(twice))
     nodes = {n["self_ref"]: n for c in NATIVE for n in document.get(c, [])}
@@ -475,7 +547,7 @@ async def validate(
     for ref, node in nodes.items():
         if (ref in delivered) == (ref in omitted):
             raise _invalid("COVERAGE", ref)
-        if ref in omitted and OMITTED.get(node.get("content_layer", "body")) != omitted[ref]:
+        if ref in omitted and OMITTED.get(_layer(node)) != omitted[ref]:
             raise _invalid("COVERAGE", ref)
         if ref in delivered and _collection(ref) == "texts":
             if delivered[ref]["text"] != _native_text(node)[0]:

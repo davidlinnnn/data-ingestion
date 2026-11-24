@@ -71,6 +71,23 @@ def document() -> dict:
     return doc.export_to_dict()
 
 
+def table(*rows: tuple[str, ...]) -> dict:
+    """table-status content (spec §3.3): docling's HTML and the native grid, first row a header."""
+    cells = [
+        {"row": r, "col": c, "row_span": 1, "col_span": 1, "text": text,
+         "column_header": r == 0, "row_header": False}
+        for r, row in enumerate(rows) for c, text in enumerate(row)
+    ]  # fmt: skip
+    grid = {"num_rows": len(rows), "num_cols": len(rows[0]), "cells": cells}
+    return {"html": "<table>…</table>", "grid": grid}
+
+
+# The scores read under the wrong model: d3 judged the table unfaithful to its page (#84 U2).
+WRONGLY_ASSOCIATED = table(("Model", "Score"), ("A", "0.9"), ("B", "0.4"))
+D3_SIGNALS = {"d3": {"question": "Q2", "score": 0.14, "p": 0.012, "t_d": 0.31,
+                     "model": "vllm-sr/d3-mini", "revision": "bd0090dd"}}  # fmt: skip
+
+
 def enrichment(item_id: str, method: str, target: str, content, **fields) -> dict:
     return {
         "item_id": item_id,
@@ -160,16 +177,16 @@ def result() -> dict:
                 "table-status:#/tables/0",
                 "table-status",
                 "#/tables/0",
-                {"html": "<table/>", "grid": {"num_rows": 2}},
+                WRONGLY_ASSOCIATED,
                 status="disputed",
-                status_reason="D3_UNFAITHFUL",
-                signals={"d3": {"score": 0.1}},
+                status_reason="TABLE_D3_UNFAITHFUL",
+                signals=D3_SIGNALS,
             ),
             enrichment(
                 "table-status:#/tables/1",
                 "table-status",
                 "#/tables/1",
-                {"html": "<table/>", "grid": {"num_rows": 2}},
+                table(("k", "v"), ("a", "1")),
             ),
             enrichment(
                 "formula:#/texts/7",
@@ -281,7 +298,7 @@ async def test_formula_and_code_take_their_enrichment_and_keep_the_native_text(s
     assert block(content, "#/texts/8")["markdown"] == "```\nfor i in x:\n    f(i)\n```"
 
 
-async def test_enrichments_keep_status_signals_and_whole_content_without_full_keys(store):
+async def test_a_table_known_to_be_wrongly_associated_keeps_its_grid_status_and_signals(store):
     content = await built(store)
 
     table = next(e for e in content["enrichments"] if e["item_id"] == "table-status:#/tables/0")
@@ -291,12 +308,17 @@ async def test_enrichments_keep_status_signals_and_whole_content_without_full_ke
         "scope": "item",
         "origin": "reconstruction",
         "target_refs": ["#/tables/0"],
-        "content": {"html": "<table/>", "grid": {"num_rows": 2}},
+        "content": WRONGLY_ASSOCIATED,  # the grid only: no model, metric or value association
         "evidence_refs": [],
         "status": "disputed",  # delivered all the same (#84 U2)
-        "status_reason": "D3_UNFAITHFUL",
-        "signals": {"d3": {"score": 0.1}},
+        "status_reason": "TABLE_D3_UNFAITHFUL",
+        "signals": D3_SIGNALS,
     }
+
+
+async def test_evidence_is_a_reference_and_no_full_key_is_in_the_content(store):
+    content = await built(store)
+
     formula = next(e for e in content["enrichments"] if e["item_id"] == "formula:#/texts/7")
     assert formula["evidence_refs"] == [f"{CROP_KEY}/crop.png"]
     assert "documents/" not in json.dumps(content)
@@ -351,6 +373,9 @@ CHANGES = {
         lambda c: c["enrichments"][0].update(status="verified"),
         lambda c: block(c, "#/tables/0").update(text="cells"),
         lambda c: block(c, "#/pictures/0").update(image=None),  # a picture without its image
+        lambda c: c["enrichments"][2]["content"].update(association={"A": "0.9"}),
+        lambda c: c["enrichments"][2]["content"]["grid"]["cells"][0].pop("row_span"),
+        lambda c: c["enrichments"][-1]["content"]["sections"][0]["sentences"][0].pop("text"),
     ],
     "REFERENCE_FORM": [
         lambda c: [a.update(ref=ITEMS + a["ref"]) for a in c["artifacts"]]
