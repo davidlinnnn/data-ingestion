@@ -1,4 +1,4 @@
-"""`kp-reference-projection`: the reference projection's one long-running process (#127): the
+"""`kp-reference-projection`: the reference projection's reader process (#127): the
 Change Feed reader, its workers and the heartbeat of its Build, until SIGTERM or SIGINT.
 
 Environment:
@@ -149,7 +149,7 @@ def query_main() -> int:
         sdk = ProjectionClient(url, credential, os.environ.get("KP_PROJECTION_NAME", "retrieval"))
         try:
             async with AsyncConnectionPool(
-                dsn, kwargs={"autocommit": True}, min_size=1, max_size=4
+                dsn, kwargs={"autocommit": True}, min_size=1, max_size=4, timeout=2
             ) as pool:
                 config = uvicorn.Config(query.app(sdk, pool, users), host="0.0.0.0", port=port)
                 await uvicorn.Server(config).serve()

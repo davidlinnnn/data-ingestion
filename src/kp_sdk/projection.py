@@ -25,7 +25,6 @@ from kp_sdk import PlatformError, _refused
 
 log = logging.getLogger(__name__)
 
-# shortcut: #268 names the content routes; these are provisional until it merges.
 CONTENT = "/read/v1/documents/{uid}/revisions/{crv}"
 ARTIFACT = "/read/v1/documents/{uid}/revisions/{crv}/artifacts/{reference}"
 AUTHZ_TIMEOUT_S = 1.0  # above the platform's 500 ms, so its 503 comes first (guide §5.12)

@@ -1423,8 +1423,8 @@ How the pilot does it (#98):
   1000 calls; one `enforce` run judged 1001 deletions in 0.8 s. The projections'
   share, measured with the reference projection on 2026-11-24
   (`docs/validation/279`): from the commit of the deletion to the first query
-  that no longer finds the Document, p50 1.0 s and max 1.7 s over 20 deletions
-  (20 rebinds: max 1.05 s). The reader's 1-second feed poll is most of it, and
+  that no longer finds the Document, p50 1.02 s and max 1.03 s over 20 deletions
+  (20 rebinds, their event appended as #205 will record it: max 1.04 s). The reader's 1-second feed poll is most of it, and
   the removal is reported in the same run. Not cluster numbers: #99 measures
   them, and another projection's share is its owner's.
 - **Rebind.** No move between Resources exists in the pilot, so there is no
