@@ -20,7 +20,7 @@ import logging
 import re
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from prometheus_client import Counter
@@ -149,7 +149,7 @@ async def _record(pool: AsyncConnectionPool[Any], read: _Read) -> dict[str, Any]
             "deleted",
             Refused(410, "FAILED_PRECONDITION", "DOCUMENT_DELETED", "The Document is deleted."),
         )
-    return record
+    return record | {"created_at": record["created_at"].astimezone(UTC)}
 
 
 async def _open(store: ObjectStore, read: _Read, key: str) -> AsyncIterator[bytes]:

@@ -22,7 +22,8 @@ validation (§13) measures them.
 
 In scope: document submission through batches, file upload through the
 platform, durable admission, dispatch to Temporal, request and document status, Source Deletion,
-application retry and the platform scan, retention, and the validation plan.
+application retry and the platform scan, the exact-revision content reads, retention, and the
+validation plan.
 
 Out of scope here, with owners:
 
@@ -66,9 +67,9 @@ Logical records; the physical schema is I1's.
 | `batch` | `batch_id`, `source_id`, `state` (`open`, `finalized`, `expired`), `created_at`, `expires_at`, `finalized_at`, `cleaned_at` (its upload cleanup done, §6.2) | The history of one submission |
 | `batch_item` | `batch_id`, `index`, `document_id`, `document_uid`, `status`, `request_id`, `source_revision_id`, `error`, the item as declared (files with lowercase `sha256`, catalog fields, the Resource's full identifier, whether the document is new, and each carried-over file's `custody_ref`), the placement decisions at declaration and at finalization (`decision_id`, `evaluated_at`, a deny's `reason`) | §5.1 statuses. A file to upload is one not carried over |
 | `document` | `document_uid`, `source_id`, `document_id`, `resource_id`, `title`, `source_url`, `metadata`, `deleted_at`, `delete_request_id`, `latest_source_revision_id`, `created_at`, the current Canonical Revision (`current_source_revision_id`, `current_canonical_revision_id`; the two values selection compares, `current_source_revision_sequence` and `current_adoption_sequence`; and `current_adopted_version`, the version that made it), `acceptance_version` | Unique (`source_id`, `document_id`) among documents not deleted. The latest Source Revision of §6.3 and §6.4 is the one finalization created last. The current Canonical Revision is Canonical Acceptance's (below) |
-| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `sequence` (1, 2, … per document in finalization order, unique per document), `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`) | One per change of content from the latest Source Revision (§6.3). Under `ordering: source_version`, its `source_version` is the highest submitted while it is the latest (§6.4) |
+| `source_revision` | `source_revision_id`, `document_uid`, `source_version`, `sequence` (1, 2, … per document in finalization order, unique per document), `files` (`path` → `custody_ref` (§10), `sha256`, `size`, `media_type`, `role`), `outcome` (`pending`, `accepted`, `rejected`, `failed`), `created_at` (when finalization created it; §6.4 leaves it, §5.9) | One per change of content from the latest Source Revision (§6.3). Under `ordering: source_version`, its `source_version` is the highest submitted while it is the latest (§6.4) |
 | `request` | `request_id`, `kind` (`process`, `delete`), `document_uid`, `source_revision_id`, `state`, `initiator` (`source`, `operator`, `platform`), `retry_of`, `batch_id`, `priority`, `adopted_version`, `adoption_sequence`, `trace_id`, timestamps, `error`, `attempt_id` (the current attempt, §7.3), `last_report` and `reported_at` (the current attempt's last report taken, and when) | `request_id` equals the Temporal workflow ID |
-| `canonical_revision` | `canonical_revision_id` (`crv_` and the request id's 32 hex digits), `document_uid`, `source_revision_id`, `request_id`, `adopted_version`, `adoption_sequence`, `content_ref`, `content_sha256`, `content_size`, `accepted_at` | An accepted Canonical Revision, one per request, fixed once written (ADR-0003). `content_ref` is the candidate's `ref`, checked to be the revision's own key (§7.3) |
+| `canonical_revision` | `canonical_revision_id` (`crv_` and the request id's 32 hex digits), `document_uid`, `source_revision_id`, `request_id`, `adopted_version`, `adoption_sequence`, `content_ref`, `content_sha256`, `content_size`, `accepted_at`, `purged_at` | An accepted Canonical Revision, one per request, fixed once written (ADR-0003) except for `purged_at`. `content_ref` is the candidate's `ref`, checked to be the revision's own key (§7.3). `purged_at` is set when the revision's objects are purged (#267 sets it on every revision of the Document, #269 on a replaced revision); the reads then answer `CONTENT_NOT_RETAINED` and never read `content_ref` (§5.9) |
 | `withdrawn_version` | `media_type`, `version`, `withdrawn_at` | Processing Profile versions withdrawn per main-file media type (#57 B6); written by declarative adoption (#261) |
 | `outbox` | `request_id`, `available_at`, `attempts`, `dispatched_at` | Written in the same transaction as the request |
 | `idempotency_key` | (`source_id`, key), body hash, stored HTTP status and response, `created_at` | 24 hours |
@@ -649,7 +650,7 @@ not Source-facing: like the other governed reads under `/read/v1/` (canonical
 consumption DR §3) they answer only the registered service identities, and a
 call without one gets `401`. Such an identity reads any Document's revisions;
 deciding whether a user may see the result is the reader's own job (authorization
-guide).
+guide §5).
 
 - **Content:** `GET /read/v1/documents/{document_uid}/revisions/{canonical_revision_id}`
   returns the revision's content object as it was accepted (content spec §2),
@@ -657,8 +658,9 @@ guide).
 - **Artifact:** `GET /read/v1/documents/{document_uid}/revisions/{canonical_revision_id}/artifacts/{reference}`
   returns one artifact that the revision's manifest `artifacts` lists, with the
   manifest's `media_type` as its `Content-Type`. `{reference}` is a reference
-  of content spec §4, which fits one or more path segments without escaping. A
-  reference the manifest does not list is `404`, even when an object exists
+  of content spec §4, which fits one or more path segments without escaping; it
+  may also travel as one segment with each `/` sent as `%2F`, as the consumer SDK
+  sends it. A reference the manifest does not list is `404`, even when an object exists
   under it, such as a provider's raw output. Page images too are read one at a
   time; there is no batch read.
 
@@ -669,44 +671,54 @@ platform does not compute a digest on a read:
 |---|---|
 | `Content-Length` | The recorded size: the revision record's for the content, the manifest entry's for an artifact |
 | `X-Content-SHA256` | The recorded SHA-256, lowercase hex, from the same place |
-| `X-Source-Revision-Created-At` | When finalization created the revision's Source Revision (§6.2), RFC 3339 |
+| `X-Source-Revision-Created-At` | When finalization created the revision's Source Revision (§6.2), RFC 3339 UTC |
 
 The Source Revision time is the one a reader's results carry (consumption DR
 B6, E4). It is not when the revision was accepted, and a version recorded on
 the latest Source Revision (§6.4) does not change it. The Document state read
 (`GET /read/v1/documents/{document_uid}/state`) gives the same value as
-`current.source_revision_created_at`.
+`current.source_revision_created_at`, present whenever `current` is.
 
 A revision is read by its exact identifier (ADR-0003), current or not: one
-replaced by a later revision, one recorded without becoming current (an older
-or equal candidate, §3), and one made by a withdrawn version (#57 B6.4) are
-served alike.
+replaced by a later revision, one recorded without becoming current (a lower
+or equal candidate, §3), and one made by a withdrawn Processing Profile version
+(#57 B6.4) are served alike. Withdrawing a Document (#56) does not exist in the
+pilot.
 
 The platform finds each object from the revision record alone: the content at
 the record's `content_ref`, an artifact at
 `documents/{document_uid}/items/{reference}` with the record's `document_uid`,
 in the bucket the deployment names. The path's `document_uid` only confirms
-that the revision is that Document's.
+that the revision is that Document's. An artifact read first reads the content
+object for its manifest, so it answers the content object's errors too, and
+each artifact read also reads the whole content object from storage (up to
+1.1 MB in #81's corpus; #99 measures the cost). The reads need `GetObject` on
+`documents/*/revisions/*` and `documents/*/items/*` (#78); storage that refuses
+it answers `403`, which counts as `STORAGE_UNAVAILABLE`, not as lost data.
 
-| Situation | Response |
-|---|---|
-| The Document has the revision and storage holds the object | `200` with the bytes |
-| No such Document or revision, or the revision is another Document's | `404 REVISION_NOT_FOUND` |
-| `{reference}` is not of the §4 form (a `..` segment, a full key, a URL), or the manifest does not list it | `404 ARTIFACT_NOT_FOUND`; a reference of the wrong form reaches neither the database nor storage |
-| Source Deletion applied (§8), not purged | `410 DOCUMENT_DELETED`. A reader that has seen `document_deleted` stops reading the Document |
-| The revision's objects are purged: the Document's Custody Purge (#267), or a replaced revision past retention (#269) | `410 CONTENT_NOT_RETAINED`, also for a deleted Document |
-| The record names an object that storage answers does not exist | `503 CONTENT_MISSING` with `Retry-After: 3600`. Storage lost data (#57 scope 7). In the pilot nothing repairs it, so it lasts until the Source deletes the Document and sends it again: a reader does not retry it in a loop |
-| Storage does not answer | `503 STORAGE_UNAVAILABLE` with `Retry-After`: retry |
+| Situation | Response | Reader |
+|---|---|---|
+| The Document has the revision and storage holds the object | `200` with the bytes | Checks the size and SHA-256 against the headers: a short body is read again; a full-length body whose SHA-256 differs is handled as `CONTENT_MISSING` |
+| No such Document or revision, or the revision is another Document's | `404 REVISION_NOT_FOUND` | — |
+| `{reference}` is not of the §4 form (a `..` segment, a full key, a URL), or the manifest does not list it | `404 ARTIFACT_NOT_FOUND`. A reference of the wrong form reaches neither the database nor storage, so it answers this before any other row | — |
+| Source Deletion applied (§8), not purged | `410 DOCUMENT_DELETED` | Stops reading the Document, as after `document_deleted` |
+| The revision is purged: `canonical_revision.purged_at` is set (§3), by the Document's Custody Purge (#267) or for a replaced revision past retention (#269) | `410 CONTENT_NOT_RETAINED`, also for a deleted Document | Reads the Document state again and follows `current` |
+| The record names an object that storage answers does not exist | `503 CONTENT_MISSING` with `Retry-After: 3600`. Storage lost data (#57 scope 7). In the pilot nothing repairs it: it lasts until the Source deletes the Document and sends it again | Records the Document as not served and reads it again on its next `current_revision_changed`, not in a retry loop |
+| Storage does not answer | `503 STORAGE_UNAVAILABLE` with `Retry-After` | Retries |
+| The database does not answer | `503 UNAVAILABLE` with `Retry-After` | Retries |
+
+After a database restore the whole of `/read/v1/`, these reads included, stays
+closed until the release (canonical persistence §7.2).
 
 The bytes stream from storage as they are read, with no `Range` support. When
-storage fails part way, the response ends short of `Content-Length`; the reader
-reads again.
+storage fails part way, the response ends short of `Content-Length`.
 
 Metrics: `kp_canonical_reads_total` by `kind` (`content`, `artifact`) and
 `result` (`served`, `not_found`, `deleted`, `not_retained`, `missing`,
-`unavailable`, `interrupted`); `kp_canonical_read_bytes_total` by `kind`, the
-bytes sent. A `missing` read is the lost-data signal; an `unavailable` one is
-not counted with it. Each read writes one log line with `document_uid`,
+`unavailable`, or `interrupted`: the stream stopped before its end, through
+storage or the client); `kp_canonical_read_bytes_total` by `kind`, the bytes
+sent. A `missing` read is the lost-data signal; an `unavailable` one is not
+counted with it. Each answered read writes one log line with `document_uid`,
 `canonical_revision_id`, `kind`, the bytes sent and the result, and never the
 content.
 

@@ -201,7 +201,7 @@ async def document_state(
         Current(
             source_revision_id=source_revision,
             canonical_revision_id=canonical_revision,
-            source_revision_created_at=created_at,
+            source_revision_created_at=created_at and created_at.astimezone(UTC),
         )
         if canonical_revision
         else None

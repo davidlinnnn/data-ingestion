@@ -59,7 +59,9 @@ class Store(FakeObjectStore):
 
 @pytest.fixture
 async def pool(dsn):
-    async with AsyncConnectionPool(dsn, kwargs={"autocommit": True}) as connections:
+    # Not UTC, so a time the database gives in its session zone shows unless converted.
+    kwargs = {"autocommit": True, "options": "-c TimeZone=Asia/Taipei"}
+    async with AsyncConnectionPool(dsn, kwargs=kwargs) as connections:
         yield connections
 
 
@@ -141,6 +143,7 @@ async def test_the_content_read_returns_the_recorded_bytes_with_sha256_size_and_
     assert len(read.content) == recorded_size == int(read.headers["content-length"])
     created = read.headers["x-source-revision-created-at"]
     assert created == state.json()["current"]["source_revision_created_at"]
+    assert created.endswith("Z")  # RFC 3339 UTC (spec §4)
     assert start - timedelta(seconds=1) <= datetime.fromisoformat(created) <= datetime.now(UTC)
 
 
