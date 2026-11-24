@@ -23,6 +23,7 @@ from kp_admission.api import app
 from kp_admission.batches import Intake
 from kp_admission.requests import Candidate, record_outcome
 from kp_admission.storage import FakeObjectStore, ObjectStore, S3ObjectStore
+from kp_sdk.projection import ProjectionClient
 from tests.admission.authz_fake import FakeAuthorizer
 from tests.admission.support import request, revision
 from tests.admission.test_api import PEPS, TOKEN
@@ -164,6 +165,21 @@ async def test_a_reference_sent_as_one_encoded_segment_is_the_same_artifact(conn
         page = await api.get(f"/v1/documents/{uid}/revisions/{crv}/artifacts/{encoded}")
 
     assert (page.status_code, page.content) == (200, PNG)
+
+
+async def test_the_sdk_reads_both_through_the_real_routes(conn, pool, store):
+    uid, srv = await revision(conn)
+    crv = await accept(conn, store, uid, srv)
+    transport = httpx.ASGITransport(app(FakeAuthorizer(), PEPS, {}, pool, Intake(store)))
+    sdk = ProjectionClient("http://api", TOKEN, "retrieval", transport=transport)
+    try:
+        content = json.loads(await sdk.content(uid, crv))
+        page = await sdk.artifact(uid, crv, PAGE[0])
+    finally:
+        await sdk.aclose()
+
+    assert content["revision"]["canonical_revision_id"] == crv
+    assert page == PNG
 
 
 async def test_objects_are_found_at_the_location_the_record_holds(conn, pool, store):
