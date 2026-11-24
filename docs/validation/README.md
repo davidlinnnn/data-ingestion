@@ -41,5 +41,6 @@ Under [80/](80/), one folder per build ticket. "Seam B" runs this repo's code on
 |---|---|
 | [113](113/README.md) | Decision latency of the allow-all authorization provider against `authz_timeout` |
 | [57](57/README.md) | Change Feed positions after a point-in-time restore: transaction IDs are handed out again and a stale cursor skips the new events without an error |
+| [98](98/README.md) | Source Deletion: time to `applied` (the call itself) and the platform's share of `enforced` against the targets of spec §11 |
 | [178](178/README.md) | The Temporal side of Worker Deployments per Processing Profile version |
 | [184](184/storage_probe.py) | The storage behaviour the upload design relies on (a probe; results in the file upload design, section 6.7) |
