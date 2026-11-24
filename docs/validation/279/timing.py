@@ -130,8 +130,14 @@ def main() -> int:
             conn.execute(SCHEMA)
         readings = asyncio.run(measure(admission, store))
     checks = {
-        "deletion within the target": readings["deletion"]["max_s"] < TARGET_S,
-        "rebind within the target": readings["rebind"]["max_s"] < TARGET_S,
+        "deletion within the target": 0
+        <= readings["deletion"]["min_s"]
+        <= readings["deletion"]["max_s"]
+        <= TARGET_S,
+        "rebind within the target": 0
+        <= readings["rebind"]["min_s"]
+        <= readings["rebind"]["max_s"]
+        <= TARGET_S,
         "the control is still found": readings["control_found"],
     }
     evidence = {"readings": readings, "checks": checks}

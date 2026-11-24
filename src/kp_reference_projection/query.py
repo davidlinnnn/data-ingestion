@@ -20,10 +20,11 @@ contract of canonical consumption DR E4. A second role: it never runs in the rea
 - **The snippet** quotes the entry's `cited` text, which withholds every block a `disputed`
   enrichment targets (LaTeX of a formula, a table's values); the search still matches them.
 
-The query is in a POST body, so no access log holds it. Log lines carry the user id, counts,
-status codes, reason codes and trace ids; never the query or content. The metric
-`kp_projection_queries_total{outcome}` counts queries `served`, `unauthenticated` and
-`no_decision`; latency and status codes are the mesh's.
+The query is in a POST body, so no access log holds it. Log lines carry the user id, the
+actor, counts, status codes, reason codes and trace ids; never the query or content. The
+metric `kp_projection_queries_total{outcome}` counts queries `served`, `unauthenticated`,
+`no_decision` and `store_unavailable` (both `503`); latency and status codes are the mesh's.
+`/healthz` answers on the event loop.
 """
 
 import hashlib
@@ -31,7 +32,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from fastapi import FastAPI, Request
+import psycopg
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_client import Counter
 from psycopg_pool import AsyncConnectionPool
@@ -72,6 +74,10 @@ def app(sdk: ProjectionClient, pool: AsyncConnectionPool[Any], users: dict[str, 
     the SHA-256 hex of each user's bearer token to the user id."""
     api = FastAPI(title="Reference projection query")
 
+    @api.get("/healthz")
+    async def healthz() -> Response:
+        return Response()
+
     @api.post("/v1/entries:search", response_model=Results)
     async def search_entries(body: Search, request: Request) -> Results | JSONResponse:
         token = request.headers.get("authorization", "").removeprefix("Bearer ")
@@ -80,19 +86,33 @@ def app(sdk: ProjectionClient, pool: AsyncConnectionPool[Any], users: dict[str, 
             queries.labels("unauthenticated").inc()
             return _error(401, "UNAUTHENTICATED", "A registered bearer token is required.")
         forwarded = {name: value for name in FORWARDED if (value := request.headers.get(name))}
+        actor = request.headers.get("x-actor-id")
         try:
-            readable = await sdk.readable(user, request.headers.get("x-actor-id"), forwarded)
+            readable = await sdk.readable(user, actor, forwarded)
         except PlatformError as error:
             queries.labels("no_decision").inc()
             log.warning(
-                "no decision: user=%s status=%s reason=%s trace_id=%s",
+                "no decision: user=%s actor=%s status=%s reason=%s trace_id=%s",
                 user,
+                actor,
                 error.status,
                 error.reason,
                 error.trace_id,
             )
             return _error(503, "UNAVAILABLE", "No decision could be made.")
-        hits = await search(pool, body.query, readable, body.latest_only, body.limit)
+        try:
+            hits = await search(pool, body.query, readable, body.latest_only, body.limit)
+        except psycopg.Error as error:  # its text may quote the query: the type only
+            queries.labels("store_unavailable").inc()
+            parts = forwarded.get("traceparent", "").split("-")
+            log.warning(
+                "store unavailable: user=%s actor=%s reason=%s trace_id=%s",
+                user,
+                actor,
+                type(error).__name__,
+                parts[1] if len(parts) == 4 else None,
+            )
+            return _error(503, "UNAVAILABLE", "The store cannot be read.")
         queries.labels("served").inc()
         log.info("search served: user=%s resources=%s hits=%s", user, len(readable), len(hits))
         return Results(results=hits)
@@ -110,11 +130,13 @@ async def search(
         rows = await conn.execute(
             "SELECT e.document_uid, e.resource_id, e.source_revision_id,"
             " e.source_revision_created_at, e.canonical_revision_id, s.stale,"
-            " ts_headline('simple', e.cited, q,"
+            # An entry written before `cited` existed quotes nothing until it is written again.
+            " ts_headline('simple', coalesce(e.cited, ''), q,"
             " 'StartSel=**, StopSel=**, MaxWords=30, MinWords=10, MaxFragments=2')"
             " FROM entry e JOIN build b ON b.build_id = e.build_id AND b.serving,"
             " websearch_to_tsquery('simple', %(text)s) q,"
-            # A registration of a newer write always has its work row: a run ends either.
+            # No registration is needed here: a run that registers holds the work row until
+            # it ends the registration.
             " LATERAL (SELECT EXISTS (SELECT 1 FROM work w WHERE w.document_uid = e.document_uid)"
             " AS stale) s"
             " WHERE e.markdown IS NOT NULL AND e.resource_id = ANY(%(readable)s)"

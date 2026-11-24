@@ -8,7 +8,8 @@ from datetime import datetime
 
 import httpx
 import pytest
-from prometheus_client import generate_latest
+from prometheus_client import REGISTRY, generate_latest
+from psycopg_pool import AsyncConnectionPool
 
 from kp_admission import deletion, feed, status
 from kp_admission.api import app
@@ -376,3 +377,42 @@ def test_the_query_process_exits_2_on_a_missing_or_malformed_setting(
         assert cli.query_main() == 2
     finally:
         httpx_log.setLevel(level)  # query_main() quiets httpx for the whole process
+
+
+@pytest.mark.parametrize(
+    "listing", [{"outcome": "deny"}, {"pages": ((), ())}], ids=["deny", "all pages empty"]
+)
+async def test_a_denied_or_empty_listing_finds_nothing(
+    conn, platform, reader, client, authorizer, listing
+):
+    await written(conn, platform, reader, "A", "hr-all", ["Rules for trips."])
+    for name, value in listing.items():
+        setattr(authorizer, name, value)
+
+    assert await found(client, "trips") == []
+
+
+async def test_an_unreadable_store_gives_no_content_and_is_counted(platform, reader):
+    broken = AsyncConnectionPool("postgresql://nobody@127.0.0.1:1/none", open=False, timeout=0.2)
+    await broken.open(wait=False)
+    sdk = ProjectionClient(
+        "http://api", "retrieval", "retrieval", transport=platform, sleep=no_wait
+    )
+    before = (
+        REGISTRY.get_sample_value("kp_projection_queries_total", {"outcome": "store_unavailable"})
+        or 0.0
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(query.app(sdk, broken, USERS)), base_url="http://query"
+    ) as http:
+        health = await http.get("/healthz")
+        response = await search(http, "trips")
+    await broken.close()
+    await sdk.aclose()
+
+    assert (health.status_code, response.status_code) == (200, 503)
+    assert "results" not in response.json()
+    after = REGISTRY.get_sample_value(
+        "kp_projection_queries_total", {"outcome": "store_unavailable"}
+    )
+    assert after == before + 1

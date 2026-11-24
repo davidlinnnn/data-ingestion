@@ -128,8 +128,8 @@ class ProjectionClient:
             except PlatformError as error:
                 if attempt == 2:
                     raise
-                log.warning("list_resources: %s %s; from the first page again", error.status,
-                            error.reason)  # fmt: skip
+                log.warning("list_resources: %s %s (trace_id %s); from the first page again",
+                            error.status, error.reason, error.trace_id)  # fmt: skip
         raise AssertionError("unreachable")
 
     async def _list_all(self, body: dict[str, Any], headers: dict[str, str]) -> list[str]:
