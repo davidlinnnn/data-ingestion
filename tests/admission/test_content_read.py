@@ -485,7 +485,8 @@ async def test_light_requests_are_answered_while_a_large_object_streams(conn, po
     gaps = await health_while_reading(conn, pool)
 
     assert len(gaps) >= 10  # the read took at least 3 chunks of 0.3 s
-    assert 0 <= max(gaps) <= 0.1
+    # The first gap also holds the read's own start (its database query); a stall is >= 0.3 s.
+    assert 0 <= max(gaps) <= 0.2
 
 
 async def test_control_a_body_read_on_the_event_loop_delays_them(conn, pool, monkeypatch):
