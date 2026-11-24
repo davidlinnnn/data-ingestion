@@ -59,7 +59,17 @@ from starlette.exceptions import HTTPException
 from starlette.requests import ClientDisconnect
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from kp_admission import adoption, batches, feed, reports, resources, serving, status, uploads
+from kp_admission import (
+    adoption,
+    batches,
+    deletion,
+    feed,
+    reports,
+    resources,
+    serving,
+    status,
+    uploads,
+)
 from kp_admission.authz import PAGE_SIZE, Action, Authorizer, Decision, Operation, Outcome, Ref
 from kp_admission.errors import ErrorStatus, Refused
 from kp_admission.resources import Resource
@@ -664,6 +674,23 @@ def app(
         if found is None:
             raise Refused(404, "NOT_FOUND", "NOT_FOUND", "The Source has no such document.")
         return JSONResponse(found)
+
+    @v1.delete("/documents/{document_id}", status_code=202)
+    async def delete_document(document_id: Annotated[str, Path(max_length=256)]) -> JSONResponse:
+        """Source Deletion (admission spec §5.8, §8), applied when it returns; a repeated call
+        returns the same request while the deleted generation is visible."""
+        source = _source("submit")
+        async with pool.connection() as conn:
+            found = await deletion.delete(
+                conn,
+                tenant_id=source.tenant_id,
+                source_id=source.source_id,
+                document_id=document_id,
+                trace_id=trace_id(),
+            )
+        if found is None:
+            raise Refused(404, "NOT_FOUND", "NOT_FOUND", "The Source has no such document.")
+        return JSONResponse(found, status_code=202)
 
     @v1.get("/documents", response_model=DocumentList)
     async def list_documents_of_source(

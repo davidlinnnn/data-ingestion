@@ -477,9 +477,7 @@ async def test_14_an_item_declared_before_a_deletion_is_rejected_and_a_new_c_is_
         before = (await hr.post("/v1/batches", json={"items": [c2]})).json()
         upload(store, before, [c2])
         old_uid = of(before, "C")["document_uid"]
-        await conn.execute(  # Source Deletion applied (§8, #98)
-            "UPDATE document SET deleted_at = now() WHERE document_uid = %s", (old_uid,)
-        )
+        assert (await hr.delete("/v1/documents/C")).status_code == 202  # §8
         rejected = await hr.post(f"/v1/batches/{before['batch_id']}/finalize")
         assert rejected.json()["items"][0]["error"]["reason"] == "DOCUMENT_DELETED"
 

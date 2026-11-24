@@ -843,6 +843,13 @@ async def writes_unrepaired(conn: AsyncConnection) -> list[tuple[str, str]]:
     return await cursor.fetchall()
 
 
+async def writes_lost_at(conn: AsyncConnection) -> datetime | None:
+    """When the last loss of committed writes was declared (lose_writes); None before any."""
+    cursor = await conn.execute("SELECT max(applied_at) FROM writes_lost")
+    [(at,)] = await cursor.fetchall()
+    return at
+
+
 async def take_attempt(
     conn: AsyncConnection, pipeline: Pipeline, build_id: str, report: AttemptReport
 ) -> Literal["recorded", "repeated"] | AttemptPosition:
