@@ -131,6 +131,7 @@ class _Outcome:
     reason: str | None = None
     request_id: str | None = None
     source_revision_id: str | None = None
+    free: bool = False  # its intake token is returned (§6.4, #98)
 
     @classmethod
     def rejected(cls, reason: str) -> "_Outcome":
@@ -197,6 +198,15 @@ async def _backlog(conn: AsyncConnection) -> int:
         )
     ).fetchone()
     return row[0] if row else 0
+
+
+async def _return_quota(conn: AsyncConnection, caller: Caller, items: int) -> None:
+    """Gives back `items` tokens that _take_quota took in this transaction."""
+    await conn.execute(
+        "UPDATE intake_quota SET tokens = least(tokens + %s, %s)"
+        " WHERE tenant_id = %s AND source_id = %s",
+        (items, QUOTA_ITEMS, caller.tenant_id, caller.source_id),
+    )
 
 
 async def _take_quota(conn: AsyncConnection, caller: Caller, items: int) -> float:
@@ -636,7 +646,9 @@ async def _same_content(
             retry_of=failed[0],
         )
         return _Outcome("queued", request_id=request_id, source_revision_id=srv)
-    return _Outcome("unchanged", source_revision_id=srv)
+    # Rerunning it could only end as before: the resend costs no token (#98).
+    settled = latest["outcome"] == "rejected" or (latest["outcome"] == "failed" and bool(failed))
+    return _Outcome("unchanged", source_revision_id=srv, free=settled)
 
 
 def _record(decision: Decision) -> dict[str, Any]:
@@ -822,6 +834,8 @@ async def _declare_once(
             response |= {"request_id": outcome.request_id, "error": _error(outcome)}
             rows.append((stored, uid, outcome, placement, response))
 
+        if free := sum(row[2].free for row in rows):
+            await _return_quota(conn, caller, free)
         rows.sort(key=lambda row: row[0]["index"])
         listed = [{k: v for k, v in row[4].items() if v is not None} for row in rows]
         if all(row[2].status == "rejected" for row in rows):

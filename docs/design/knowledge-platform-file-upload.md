@@ -536,14 +536,16 @@ curl https://kp.example/v1/requests/req_01J… -H "Authorization: Bearer $KP_TOK
 | `queued` | 已受理，還沒開始處理。`202` 之後立刻查就是這個值 | 繼續查 |
 | `processing` | 處理中 | 繼續查 |
 | `succeeded` | 處理完成 | 結束。文件讀不讀得到，看 document 的 `readiness` |
-| `failed`，且 `error.metadata.cause` 是 `source` | 這一版的內容無法處理，例如 PDF 有密碼 | 看 `error.reason` 與 `error.message`，修正檔案後重新宣告。`source_version` 可以沿用被拒的那一版，也可以用更大的 |
-| `failed`，其他情況 | 平台這一側的失敗，平台的負責人會收到告警。`error.message` 是一句固定的英文，不帶原始的錯誤內容 | 檔案不用改，平台會自己重跑：`error.retryable` 是 `true` 時，間隔從 10 分鐘逐次拉長到 1 小時，直到成功；是 `false` 時，平台採用下一個處理方法版本之後重跑一次（規格 §9）。要提早重試，就重新宣告相同的內容：可重試的失敗，那個 item 的 `status` 是 `queued`，帶一個新的 `request_id`；不可重試的失敗回 `unchanged`，因為同一個版本重跑還是會失敗。回報問題時附上 `error.support_ref` |
+| `failed`，`error.reason` 是 `DOCUMENT_DELETED` | 文件在處理開始前被刪除了 | 結束，不要重新宣告：重新宣告會建立一份新的文件 |
+| `failed`，`error.reason` 是 `VERSION_WITHDRAWN` | 平台作廢了處理它的方法版本 | 不用做事，也不用重送。平台下一次掃描（5 分鐘內）用採用中的版本重跑 |
+| `failed`，其他原因，且 `error.metadata.cause` 是 `source` | 這一版的內容無法處理，例如 PDF 有密碼 | 看 `error.reason` 與 `error.message`，修正檔案後重新宣告。`source_version` 可以沿用被拒的那一版，也可以用更大的 |
+| `failed`，其他情況 | 平台這一側的失敗，平台的負責人會收到告警。`error.message` 是一句固定的英文，不帶原始的錯誤內容 | 檔案不用改，平台會自己重跑：`error.retryable` 是 `true` 時，間隔從 10 分鐘逐次拉長到 1 小時，直到成功；是 `false` 時，平台採用下一個處理方法版本之後重跑一次（規格 §9）。要提早重試，就重新宣告相同的內容：可重試的失敗，那個 item 的 `status` 是 `queued`，帶一個新的 `request_id`；不可重試的失敗回 `unchanged`，不扣配額，因為同一個版本重跑還是會失敗。平台重跑時開的是新的 request：看 document 的 `latest.request_id` 追蹤它。回報問題時附上 `error.support_ref` |
 
 - `succeeded` 不保證內容會被讀到。文件在處理完成前已刪除、處理端沒有交出內容，或做它的處理方法版本已作廢時，平台不接受這次結果：document 維持原本的 `readiness` 與 `serving`，也沒有 `attention`。這不需要 Source 處理，平台會自己重跑（已刪除的不重跑；規格 §5.5）。
 - 查詢的間隔契約沒有規定。建議從幾秒開始，逐次拉長到 30 秒左右；這是建議，不是量測出來的值。
 - 處理要多久沒有承諾值。尖峰時一份文件可能等到大約 25 分鐘才處理完（規格 §7.3 的估計，不是量測），所以輪詢的總時限要留得夠長。進行中的 request 不會過期。
-- 查詢不扣進件配額；配額只算宣告的 item（第 5.4 節）。
-- request 結束滿 30 天後回 `404`。
+- 查詢不扣進件配額；配額只算宣告的 item（第 5.4 節），被拒絕或不可重試地失敗之後、內容相同而回 `unchanged` 的 item 除外。
+- request 結束滿 30 天後回 `404`；刪除的 request 是刪除套用滿 30 天後，不論是否已 `enforced`。
 
 文件的現況用 `document_id` 查：
 
@@ -895,7 +897,7 @@ item 被拒的原因（`error.reason`）。「階段」是它出現在宣告還�
 
 **刪除文件：`DELETE /v1/documents/{document_id}`**
 
-回 `202` 與 `{ "request_id": "req_…", "kind": "delete", "state": "applied" }`，要 `submit` 權限。刪除在這次呼叫的 transaction 裡套用；重複呼叫回同一個 request 與它當下的 `state`，直到刪除套用滿 30 天；之後，以及這個 Source 沒有這份文件時，回 `404`（規格 §5.8、§8）。之後再提交同一個 `document_id` 是新的一份文件。
+回 `202` 與 `{ "request_id": "req_…", "kind": "delete", "state": "applied" }`，要 `submit` 權限。刪除在這次呼叫的 transaction 裡套用；重複呼叫回同一個 request 與它當下的 `state`，直到刪除套用滿 30 天；之後，以及這個 Source 沒有這份文件時，回 `404`（規格 §5.8、§8）。之後再提交同一個 `document_id` 是新的一份文件，這時再呼叫 `DELETE` 會刪除這份新的：逾時後重試刪除，要在重新宣告之前。
 
 ## 6. 部署與維運需求
 
@@ -904,7 +906,7 @@ DevOps 要準備的東西。數值與設定名稱多數還是暫定的，由 [#7
 | 項目 | 需求 | 細節在哪 |
 |---|---|---|
 | 角色 | 一個 image，三種角色：`api`（固定 2 個副本，不用 HPA）、`dispatcher`（至少 2 個副本）、CronJob（reconciler 每 5 分鐘；套用採用宣告每分鐘，`concurrencyPolicy: Forbid`；刪除判定每分鐘、掃描每 5 分鐘，都是 `concurrencyPolicy: Forbid`；batch 過期與上傳清理每小時；保留期每天） | 規格 §13；第 6.1、6.3 節 |
-| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，再清理結束滿一小時的 batch 的上傳，跑一次就結束，CronJob 每小時；要物件儲存的設定）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`apply-adoption`（CronJob 每分鐘：套用部署設定裡的採用宣告，見第 6.9 節第 7 步與規格 §3；要 Temporal 與物件儲存的設定）、`writes-lost EVENT`（資料庫遺失已提交的寫入之後，例如還原或遺失提交的 failover，在刪除判定恢復之前由部署 repo 的 Job 執行，要求每個未退役的 Build 修復；在 api 恢復接收回報之後執行；`EVENT` 從 1 起，記在部署 repo，每次宣告加一，重跑同一個不改任何東西，比較小的以 exit 1 結束；第一次執行要確認輸出的 `"applied": true`；從還原到這個 Job 結束，刪除判定不能跑；之後還要等所有 Build 修復完成、而且過了最長的 `update_interval_s`，判定才恢復；規格 §7.4 的 Lost writes）。`enforce`（刪除判定，CronJob 每分鐘：沒有任何 Build 還持有的已刪除文件改成 `enforced`；要和 `api` 相同的 `KP_PIPELINES`，用來判斷讀取端是否還在回報；從資料庫還原到 `writes-lost` 的 Job 結束，部署 repo 要讓它停著；規格 §8）、`scan`（掃描，CronJob 每 5 分鐘：重跑沒有結果的內容、重刷與重做 Canonical Revision；規格 §9）。兩者印出各類的數量（JSON）；`enforce` 的 `KP_PIPELINES` 不合格式時以 exit code 2 結束。`adopt` 與 `cancel-adoption` 只給本機開發與測試。第一次宣告之前，部署設定要採用 PDF 的版本、CronJob 已套用，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。還沒有：規格 §11 的紀錄保留期（#250） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
+| 指令 | 已有：`kp-admission api`、`dispatcher`、`reconcile`（跑一次就結束，CronJob 每 5 分鐘）、`expire`（把逾期的 batch 標為過期，再清理結束滿一小時的 batch 的上傳，跑一次就結束，CronJob 每小時；要物件儲存的設定）、`feed-retention`（CronJob 每天，見下一列）、`set-profile`（設定 Source 要求的 projection）、`apply-adoption`（CronJob 每分鐘：套用部署設定裡的採用宣告，見第 6.9 節第 7 步與規格 §3；要 Temporal 與物件儲存的設定）、`writes-lost EVENT`（資料庫遺失已提交的寫入之後，例如還原或遺失提交的 failover，在刪除判定恢復之前由部署 repo 的 Job 執行，要求每個未退役的 Build 修復；在 api 恢復接收回報之後執行；`EVENT` 從 1 起，記在部署 repo，每次宣告加一，重跑同一個不改任何東西，比較小的以 exit 1 結束；第一次執行要確認輸出的 `"applied": true`；從還原到這個 Job 結束，刪除判定不能跑；之後還要等所有 Build 修復完成、而且過了最長的 `update_interval_s`，判定才恢復；規格 §7.4 的 Lost writes）。`enforce`（刪除判定，CronJob 每分鐘：沒有任何 Build 還持有的已刪除文件改成 `enforced`；要和 `api` 相同的 `KP_PIPELINES`，用來判斷讀取端是否還在回報；從資料庫還原到 `writes-lost` 的 Job 結束，部署 repo 要讓它停著；規格 §8）、`scan`（掃描，CronJob 每 5 分鐘：重跑沒有結果的內容、重刷與重做 Canonical Revision；規格 §9）。兩者印出各類的數量（JSON）；`enforce` 的 `KP_PIPELINES` 沒設、是空的或不合格式時以 exit code 2 結束。`adopt` 與 `cancel-adoption` 只給本機開發與測試。第一次宣告之前，部署設定要採用 PDF 的版本、CronJob 已套用，否則每個宣告都是 `UNSUPPORTED_FORMAT`（規格 §3）。還沒有：規格 §11 的紀錄保留期（#250） | [`kp_admission/cli.py`](../../src/kp_admission/cli.py) |
 | Admission DB | pilot：一個 PostgreSQL instance，放在網路磁碟的 persistent volume，不用 operator；WAL 連續歸檔，加上排程的 base backup，都放到物件儲存。版本要 17 以上；`api` 的資料庫角色要 `pg_read_all_stats`。`feed-retention` 要每天跑：它刪掉超過 90 天的 Change Feed，也預先建立之後幾個月的分區，長期沒跑的話 admission 的寫入會失敗。目前沒有套用 schema 的指令：資料表定義在 [`schema.sql`](../../src/kp_admission/schema.sql)，整份套用在空的資料庫，由誰套用、用哪個 migration 工具由 #78 決定。PROD release 之前移到公司代管的 MongoDB | 規格 §9、§13；[#137 的交接](https://github.com/davidlinnnn/data-ingestion/issues/137#issuecomment-6983041476)；第 3 節；#239 |
 | 物件儲存 | S3 相容，一個 bucket，原始檔與處理結果共用。`api` 現在要 `s3:GetObject`（finalize 用 HeadObject 確認檔案已就位）與 `s3:ListBucket` 的權限：少了 `s3:ListBucket`，storage 對不存在的物件回 `403` 而不是 `404`（[AWS HeadObject](https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html)），finalize 會一直回 `503`。上傳另外要 `s3:PutObject` 與 `s3:AbortMultipartUpload`；`expire` 的 CronJob 要 `s3:DeleteObject`、`s3:AbortMultipartUpload` 與 `s3:ListBucketMultipartUploads`。`apply-adoption` 的 CronJob 要 `s3:GetObject`、`s3:ListBucket` 與 `s3:PutObject`：它把測試頁寫到 `checks/` 底下。少了任何一項，上傳會一直回 `503`，清理則每次都把 batch 留給下一次，並以 exit code 1 結束。processing worker 要讀寫。必要的行為用 `storage_probe.py` 驗證 | 規格 §10；第 6.3、6.7 節；產品由 #57 決定 |
 | Temporal | `dispatcher`、`reconcile` 與 `apply-adoption` 要連得到：`TEMPORAL_ADDRESS`、`TEMPORAL_NAMESPACE`。`api` 不連 Temporal，所以 Temporal 停機時照常受理，outbox 裡的 request 等它恢復 | 規格 §9 |
@@ -1090,8 +1092,8 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 - `GET /healthz` 不讀資料庫，資料庫停機時仍回 `200`。拿它當 liveness 與 startup probe，pod 不會因為資料庫停機被重啟；它不能代表「資料庫連得到」。
 - 資料庫連線數：每個 `api` pod 最多 5 條，等不到連線 2 秒後那個呼叫回 `503`；每個 `dispatcher` 1 條；CronJob 每次執行 1 條。
 - 進件配額存在資料庫，所有 `api` pod 共用一份。
-- `reconcile` 連不到 Temporal 時以非 0 結束；`expire` 有 batch 沒清完時以 exit code 1 結束，下一次接著清。兩者重跑都安全，`enforce` 與 `scan` 也是。
-- `enforce` 與 `scan` 的 pod 跑完就結束，所以它們把量到的值寫進資料庫，由 `api` 的 metrics port 匯出：`kp_admission_deletions_unenforced{reason}`（刪除套用超過 10 分鐘還沒 `enforced`）、`kp_admission_reruns_retrying{reason}`（連續可重試地失敗 5 次以上）、`kp_admission_reruns_stopped{reason}`（等下一次採用）、`kp_admission_documents_on_withdrawn{version}`、`kp_admission_documents_without_current{source_id}`、`kp_admission_requests_overdue{adopted_version}`，以及每個 CronJob 最後一次跑完的時間 `kp_admission_job_last_run_timestamp_seconds{job}`。告警規則由 #78 彙整。建議 CronJob 設 `concurrencyPolicy: Forbid`；兩次執行重疊的情況沒有測過。
+- `reconcile` 連不到 Temporal 時以非 0 結束；`expire` 有 batch 沒清完時以 exit code 1 結束，下一次接著清。兩者重跑都安全，`enforce` 與 `scan` 也是。建議 CronJob 設 `concurrencyPolicy: Forbid`；兩次執行重疊的情況沒有測過。
+- `enforce` 與 `scan` 的 pod 跑完就結束，所以它們把量到的值寫進資料庫，由 `api` 的 metrics port 匯出：`kp_admission_deletions_unenforced{reason}`（刪除套用超過 10 分鐘還沒 `enforced`）、`kp_admission_reruns_retrying{reason}`（連續可重試地失敗 5 次以上）、`kp_admission_reruns_stopped{reason}`（等下一次採用）、`kp_admission_documents_on_withdrawn{version}`、`kp_admission_documents_without_current{source_id}`（建立超過 1 小時）、`kp_admission_requests_overdue{adopted_version}`（派送超過 1 小時還沒結束），以及每個 CronJob 最後一次跑完的時間 `kp_admission_job_last_run_timestamp_seconds{job}`。CronJob 沒跑時其他值不會更新，用最後一次跑完的時間判斷它們是否過時。數量降到 0 的 label 會消失而不是回 0，例如退版做完後 `documents_on_withdrawn` 就沒有那個 `version`。告警規則由 #78 彙整。
 - batch 過期是呼叫當下依 `expires_at` 判斷的，不等 `expire` 跑；`expire` 沒跑只會讓沒受理的檔案留在 bucket。
 - `feed-retention` 每次建立當月與之後兩個月的分區。連續兩個月沒跑，admission 的寫入會開始失敗。
 
@@ -1162,7 +1164,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-23 | #57 結案（Canonical 的保存與處理產物的歸屬）：第 7.1 節新增兩項，pilot 的物件儲存沒有冗餘、資料庫還原之後的放行；第 7.3 節新增 Canonical 內容的讀取（#268）與清除已刪除文件的物件（#267） |
 | 2026-11-23 | #260：serving 事實的修復實作完成：讀取端分頁送來 repair view，到齊後一次替換 Build 的 mirror，結束修復要求並重算 readiness；view 從 capture 起 24 小時內要到齊（暫定），過期或被到期柵欄擋下就整份丟棄；遺失寫入之後由 Job 執行 `kp-admission writes-lost`（規格 §7.4）。第 6、7.1、7.3 節跟上 |
 | 2026-11-23 | #261：宣告式採用實作完成：採用寫在部署設定，由 `apply-adoption` 的 CronJob 在確認點（五條 queue、測試 workflow 的結果）之後套用（規格 §3）。第 6 節的角色、指令與設定，第 6.9 節第 7 步與常見現象，第 7.3 節更新 |
-| 2026-11-24 | #98：刪除、重送與掃描實作完成。`DELETE /v1/documents/{document_id}` 在呼叫的 transaction 裡套用刪除，回 `applied`（規格 §5.8 原本寫 `received`；ADR-0014 之後兩者之間沒有事要做），還沒開始的 request 以 `DOCUMENT_DELETED` 結束；CronJob `enforce` 判定 `enforced`（規格 §8）。不可重試的失敗用相同內容重送回 `unchanged`（規格 §6.4）。CronJob `scan` 取代 redrive 與 refresh 的指令：重跑沒有結果的內容、重刷範圍內與作廢版本做的 Canonical Revision（規格 §9）；作廢版本的 request 以 `VERSION_WITHDRAWN` 結束。交件暫停只算 Source 交的 request。第 5.2、5.6、6 節與第 7.3 節更新 |
+| 2026-11-24 | #98：刪除、重送與掃描實作完成。`DELETE /v1/documents/{document_id}` 在呼叫的 transaction 裡套用刪除，回 `applied`（規格 §5.8 原本寫 `received`；ADR-0014 之後兩者之間沒有事要做），還沒開始的 request 以 `DOCUMENT_DELETED` 結束；CronJob `enforce` 判定 `enforced`（規格 §8）。不可重試的失敗用相同內容重送回 `unchanged`，被拒絕與不可重試的失敗之後的相同內容重送不扣配額（規格 §6.4）。CronJob `scan` 取代 redrive 與 refresh 的指令：重跑沒有結果的內容、重刷範圍內與作廢版本做的 Canonical Revision（規格 §9）；作廢版本的 request 以 `VERSION_WITHDRAWN` 結束。交件暫停只算 Source 交的 request。第 5 節開頭、第 5.2、5.6、6 節與第 7.1、7.3 節更新 |
 
 ### 7.3 實作狀態（2026-11-24）
 

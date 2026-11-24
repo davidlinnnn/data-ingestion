@@ -128,9 +128,9 @@ def main(argv: list[str] | None = None) -> int:
 
     `kp-admission enforce`: one run of Source Deletion's enforcement judgment (#98, §8), the
     CronJob that marks each applied deletion enforced once no Build holds its Document
-    (kp_admission.deletion.enforce). It needs KP_PIPELINES as the api does, for liveness; the
-    deployment repo stops it from a database restore until the writes-lost Job has run. It
-    prints how many deletions went each way, as JSON.
+    (kp_admission.deletion.enforce). It needs KP_PIPELINES as the api does, for liveness, and
+    exits 2 without it; the deployment repo stops it from a database restore until the
+    writes-lost Job has run. It prints how many deletions went each way, as JSON.
 
     `kp-admission scan`: one run of the scan (#98, §9), the CronJob, every 5 minutes, that reruns
     content without a result, refreshes and redoes Canonical Revisions under the adopted version
@@ -242,6 +242,9 @@ def main(argv: list[str] | None = None) -> int:
     log_json_lines()
     if args.role == "enforce":
         if (pipelines := _pipelines()) is None:
+            return 2
+        if not pipelines:  # with no projection, no silent Build would suspend the judgment
+            print("enforce needs KP_PIPELINES", file=sys.stderr)
             return 2
         return asyncio.run(run_enforce(dsn, {p.track: p for p in pipelines.values()}))
     if args.role == "scan":

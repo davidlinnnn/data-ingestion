@@ -105,13 +105,23 @@ SELECT count(*) FROM request r JOIN outbox o USING (request_id)
 WHERE r.initiator <> 'source' AND r.state = 'queued' AND o.dispatched_at IS NULL
 """
 
+# A redo of a withdrawn version's revision still waiting or running (ADR-0016: redos go first).
+_REDOING = """
+SELECT EXISTS (
+    SELECT 1 FROM request r JOIN document d USING (document_uid)
+    WHERE r.initiator = 'platform' AND r.state IN ('queued', 'processing')
+      AND d.deleted_at IS NULL
+      AND d.current_adopted_version IN (SELECT version FROM withdrawn_version))
+"""
+
 log = logging.getLogger(__name__)
 
 
 async def run(conn: AsyncConnection, now: datetime, pace: int = PACE) -> Counter[str]:
     """One run of the scan on an autocommit connection, each Document read on its own and each
     request opened in a transaction that locks its Document first. It opens reruns, then redos,
-    then refreshes, while fewer than `pace` requests it made wait for dispatch. Records its
+    then refreshes, while fewer than `pace` requests it made wait for dispatch; no refresh while
+    a redo of a withdrawn version is planned or in flight. Records its
     gauges and returns how many requests it opened of each kind: rerun, redo, refresh."""
     plans: list[tuple[int, str]] = []
     stopped: Counter[str] = Counter()
@@ -128,6 +138,11 @@ async def run(conn: AsyncConnection, now: datetime, pace: int = PACE) -> Counter
             if limit and limit.retrying:
                 retrying[limit.retrying] += 1
     [(waiting,)] = await (await conn.execute(_WAITING)).fetchall()
+    # Both are low priority, so the dispatcher cannot tell a redo from a refresh: no refresh
+    # opens while a redo is planned or in flight, and the redos of a rollback go first.
+    [(redoing,)] = await (await conn.execute(_REDOING)).fetchall()
+    if redoing or any(rank == 1 for rank, _ in plans):
+        plans = [p for p in plans if p[0] != 2]
     opened: Counter[str] = Counter()
     trace_id = uuid.uuid4().hex
     for _, uid in sorted(plans):

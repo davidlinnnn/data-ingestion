@@ -320,8 +320,25 @@ async def test_the_pace_opens_reruns_then_redos_then_refreshes(conn):
         assert len(await run(conn, pace=1)) == 1
         order.append((await opened(conn))[-1][0])
         assert await dispatch_due(conn, started) == 1  # dispatched: no longer waiting
+        await accept_opened(conn)
 
     assert order == [rerun[0], redo[0], refresh[0]]
+
+
+async def test_no_refresh_opens_while_a_redo_of_a_withdrawn_version_waits_or_runs(conn):
+    """ADR-0016: redos go ahead of refreshes, which the dispatcher cannot tell apart (both low)."""
+    two = await adopt(conn, "paper-pdf@2")
+    refresh, redo = [await document(conn, name) for name in ("A", "B")]
+    await ran(conn, *refresh, two, "accepted")
+    await ran(conn, *redo, await adopt(conn, "paper-pdf@3"), "accepted")
+    await withdraw(conn, "paper-pdf@3")
+    await adopt(conn, "paper-pdf@4", {"made_by": ["paper-pdf@2"]})
+
+    assert await run(conn) == {"redo": 1}
+    assert await dispatch_due(conn, started) == 1
+    assert await run(conn) == {}  # the redo runs
+    await accept_opened(conn)
+    assert await run(conn) == {"refresh": 1}
 
 
 async def test_the_documents_and_requests_gauges(conn):

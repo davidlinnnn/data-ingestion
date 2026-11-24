@@ -97,8 +97,8 @@ Constraints:
 
   | The request ends | `source_revision.outcome` |
   |---|---|
-  | `failed`, `error.metadata.cause` is `source` | `rejected` |
   | `failed` with `VERSION_WITHDRAWN` (§9) or `DOCUMENT_DELETED` (§8) | unchanged: neither says anything of the revision |
+  | `failed`, any other error whose `error.metadata.cause` is `source` | `rejected` |
   | `failed`, any other error, `WORKFLOW_ENDED_WITHOUT_RESULT` included | `failed` |
   | `succeeded` | `pending`; `accepted` in the same transaction when it forms Canonical Acceptance (below) |
 
@@ -628,8 +628,12 @@ deletions with this list.
 
 `202` with `{ "request_id": "req_…", "kind": "delete", "state": "applied" }`.
 Requires the submit permission. A repeated call returns the same request, in
-its state then, while the deleted generation is visible (§11); after that, and
-for a `document_id` the Source never had, `404`. §8 describes the stages.
+its state then, while no later generation of the `document_id` exists and the
+deleted one is visible (§11); after that, and for a `document_id` the Source
+never had, `404`. Once the `document_id` is declared again, a call deletes that
+new generation: a client that retries a timed-out deletion does so before it
+declares the Document again. The delete request is `404` 30 days after the
+deletion was applied, `enforced` or not. §8 describes the stages.
 
 - The deletion is applied in the transaction that records it, so the call
   returns `applied`, and `received` is never observed. A client follows the
@@ -733,8 +737,11 @@ The last failure is the newest failed request of the Source Revision that is not
 a platform refresh; it is retryable unless its `error.retryable` is `false`.
 Added on 2026-11-24 (#98): a failure that is not retryable fails again under the
 same Processing Profile version, so resending it opened a request that could
-only fail. The scan (§9) runs it once under each later adoption. As every item,
-an `unchanged` one takes its intake token (§11); it opens no request.
+only fail. The scan (§9) runs it once under each later adoption. Such a resend,
+and one of rejected content, costs no intake token: the declaration takes one per
+item (§11) and returns it when the item is `unchanged` for either reason (#98,
+R4 of the canonical persistence scenarios). A declaration with too few tokens is
+still `429`, as the tokens are counted before any item is decided.
 
 `title`, `source_url` and `metadata` apply in all three cases.
 
@@ -1321,13 +1328,17 @@ How the pilot does it (#98):
   of the projection pipelines has passed since the last lost-writes
   declaration (§7.4, Lost writes). The run then judges none and says why. The
   deployment repo stops the CronJob from a database restore until the
-  `writes-lost` Job has run (#78).
+  `writes-lost` Job has run (#78). The CronJob reads the `api`'s
+  `KP_PIPELINES` and exits 2 when it names no pipeline: with none, no silent
+  Build could suspend the judgment.
 - **Alerting.** `kp_admission_deletions_unenforced{reason}` counts the
   deletions applied more than 10 minutes ago and not yet `enforced`: `held`
   (a Build still holds the Document), `liveness` or `writes_lost` (the judgment
   is suspended). Each held deletion past that time is logged with the
-  projections and Builds that hold it. The CronJob writes the value to the database, and the `api`
-  exports it, as with the adoption gauges (§3).
+  projections and Builds that hold it. The CronJob writes the value to the
+  database, and the `api` exports it, as with the adoption gauges (§3). While the
+  CronJob does not run, the value is stale; a rule on
+  `kp_admission_job_last_run_timestamp_seconds{job="enforce"}` (§9) shows it.
 - **Measured** on 2026-11-24 (`docs/validation/98`): `applied` within 35 ms of
   1000 calls; one `enforce` run judged 1001 deletions in 0.8 s. The projections'
   share of `enforced` is not measured yet (#127).
@@ -1359,7 +1370,8 @@ How the pilot does it (#98):
   refreshes and redoes Documents under the version adopted for their main
   file's media type. It replaces the redrive command and the refresh opened at
   each adoption (#57, 2026-11-22: nobody runs commands in a PROD pod). It skips
-  a Document that is deleted, has an active request, or has no adopted version.
+  a Document that is deleted, has an active request, or has no adopted version
+  or a withdrawn one.
   For the others the first rule that holds decides:
 
   | # | The Document | The scan opens |
@@ -1367,7 +1379,7 @@ How the pilot does it (#98):
   | 1 | The latest Source Revision's Canonical Revision is current, and the adopted version made it | Nothing |
   | 2 | It is current, another version made it, that version is withdrawn or in the latest adoption's refresh scope, and the latest Source Revision may be reopened | A request for it: `initiator: platform`, `low` |
   | 3 | The latest Source Revision has no Canonical Revision and may be reopened | A request for it: `initiator: operator`, `normal`, whatever the scope |
-  | 4 | As 3 but it may not be reopened; the current revision, of an earlier Source Revision, is a withdrawn version's or in the scope; that Source Revision may be reopened | A request for that Source Revision: `initiator: platform`, `low` |
+  | 4 | As 3 but it may not be reopened; the current revision, of an earlier Source Revision whose main file has the same media type, is a withdrawn version's or in the scope; that Source Revision may be reopened | A request for that Source Revision: `initiator: platform`, `low` |
   | 5 | Otherwise | Nothing; the current revision, if any, is still served |
 
   Whether a Source Revision may be reopened follows from the last request of it
@@ -1387,8 +1399,13 @@ How the pilot does it (#98):
     `none` stops refreshes only.
   - A run opens rule 3 first, then the redos of withdrawn versions, then
     refreshes, while fewer than 500 of the scan's requests wait for a
-    dispatcher. The dispatcher's in-flight budgets then pace them, and within one
-    priority it takes the oldest first.
+    dispatcher. The dispatcher's in-flight budgets then pace them; within one
+    priority it takes the Source with the fewest in flight, then the oldest. A
+    redo and a refresh are both `low`, so no refresh opens while a redo of a
+    withdrawn version is planned or has not ended (ADR-0016: redos go first).
+    Refreshes already queued when a version is withdrawn are not held back.
+  - Every run reads each live Document, about five queries each. Its time at
+    PROD volume is *unmeasured* (#99, #239).
   - Each request carries the adoption it was opened under. A platform request's
     end leaves the Source Revision's outcome (§3); no scan request counts
     against a quota.
@@ -1472,7 +1489,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Item | Value |
 |---|---|
 | Items per declaration | 50 (provisional) |
-| Intake quota per Source | Token bucket of 50 declared items, refilled at 50 per minute (provisional). A declaration takes one token per item when it commits; with too few it is `429` and `Retry-After` is when there will be enough |
+| Intake quota per Source | Token bucket of 50 declared items, refilled at 50 per minute (provisional). A declaration takes one token per item when it commits, and returns those of the items §6.4 answers `unchanged` after a rejection or a failure that is not retryable; with too few it is `429` and `Retry-After` is when there will be enough |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
 | Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |

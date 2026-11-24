@@ -510,3 +510,4 @@ async def test_enforce_and_scan_are_one_shot_runs_that_print_their_counts(conn, 
     assert run("scan") == (0, {})  # its request is active
     assert run("enforce", KP_PIPELINES=json.dumps({"d1": wiki})) == (0, {})
     assert run("enforce", KP_PIPELINES="[]") == (2, None)
+    assert run("enforce") == (2, None)  # unset: no liveness to suspend on

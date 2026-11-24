@@ -640,15 +640,21 @@ async def test_a_platform_failed_revision_declared_again_is_retried_without_uplo
 
 async def test_a_revision_failed_for_good_declared_again_is_unchanged(platform, api, store, conn):
     """A failure that is not retryable fails again under the same version: resending it opens no
-    request (#98)."""
+    request and costs no intake token (#98), as resending rejected content does."""
+    tokens = "SELECT tokens FROM intake_quota"
     async with api() as hr:
-        _, finalized = await submit(hr, store, [A])
+        _, finalized = await submit(hr, store, [A, C1])
         await processed(conn, of(finalized.json(), "A")["request_id"], "failed_for_good")
-        resent = (await hr.post("/v1/batches", json={"items": [A]})).json()
+        await processed(conn, of(finalized.json(), "C")["request_id"], "rejected")
+        before = await (await conn.execute(tokens)).fetchone()
+        resent = (await hr.post("/v1/batches", json={"items": [A, C1]})).json()
+        after = await (await conn.execute(tokens)).fetchone()
     requests = await (await conn.execute("SELECT count(*) FROM request")).fetchone()
 
-    assert of(resent, "A")["status"] == "unchanged" and "request_id" not in of(resent, "A")
-    assert requests == (1,)
+    assert [of(resent, d)["status"] for d in "AC"] == ["unchanged", "unchanged"]
+    assert "request_id" not in of(resent, "A")
+    assert requests == (2,)
+    assert before and after and after[0] >= before[0]  # neither item took a token (refill aside)
 
 
 async def test_concurrent_finalizations_of_one_new_document_admit_one(platform, api, store, conn):
