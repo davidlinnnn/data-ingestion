@@ -9,7 +9,14 @@ import pytest
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from kp_admission.storage import FakeObjectStore, S3ObjectStore, StorageUnavailable, source_key
+from kp_admission.storage import (
+    CHUNK,
+    FakeObjectStore,
+    ObjectMissing,
+    S3ObjectStore,
+    StorageUnavailable,
+    source_key,
+)
 
 
 @pytest.fixture(params=["fake", pytest.param("s3", marks=pytest.mark.s3)])
@@ -31,11 +38,12 @@ def store(kind):
     return store
 
 
-def place(store, key: str) -> None:
+def place(store, key: str, body: bytes = b"%PDF-1.7") -> None:
     if isinstance(store, FakeObjectStore):
         store.keys.add(key)
+        store.content[key] = body
     else:
-        store.client.put_object(Bucket=store.bucket, Key=key, Body=b"%PDF-1.7")
+        store.client.put_object(Bucket=store.bucket, Key=key, Body=body)
 
 
 def unreachable(store):
@@ -68,6 +76,36 @@ async def test_head_finds_a_placed_object_and_not_an_absent_one(store):
 async def test_head_raises_when_storage_cannot_answer(store):
     with pytest.raises(StorageUnavailable):
         await unreachable(store).head(key())
+
+
+async def test_open_streams_a_placed_object_in_chunks_of_at_most_the_chunk_size(store):
+    placed, body = key(), os.urandom(CHUNK + 5)
+    place(store, placed, body)
+
+    chunks = [chunk async for chunk in await store.open(placed)]
+
+    assert b"".join(chunks) == body
+    assert 0 < max(map(len, chunks)) <= CHUNK
+
+
+async def test_open_tells_an_absent_object_from_storage_that_cannot_answer(store):
+    with pytest.raises(ObjectMissing):
+        await store.open(key())
+    with pytest.raises(StorageUnavailable) as unavailable:
+        await unreachable(store).open(key())
+    assert not isinstance(unavailable.value, ObjectMissing)
+
+
+@pytest.mark.s3
+async def test_a_bucket_that_does_not_exist_is_unavailable_not_a_missing_object(kind):
+    if kind == "fake":
+        pytest.skip("only S3 has buckets")
+    store = S3ObjectStore.from_env()
+    elsewhere = S3ObjectStore(store.client, f"kp-absent-{uuid.uuid4().hex[:8]}")
+
+    with pytest.raises(StorageUnavailable) as unavailable:
+        await elsewhere.open(key())
+    assert not isinstance(unavailable.value, ObjectMissing)
 
 
 def stored(store, key: str) -> bytes | None:

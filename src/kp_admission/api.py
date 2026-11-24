@@ -41,6 +41,7 @@ import time
 import uuid
 from collections.abc import Awaitable, Mapping
 from contextvars import ContextVar
+from datetime import datetime
 from types import MappingProxyType
 from typing import Annotated, Any, Literal
 
@@ -48,7 +49,7 @@ import psycopg
 from fastapi import APIRouter, Depends, FastAPI, Header, Path, Query, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import JSONResponse, PlainTextResponse, Response, StreamingResponse
 from fastapi.security import HTTPBearer
 from prometheus_client import Counter, Histogram
 from psycopg_pool import AsyncConnectionPool
@@ -62,6 +63,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from kp_admission import (
     adoption,
     batches,
+    content,
     deletion,
     feed,
     reports,
@@ -863,7 +865,11 @@ def app(
         responses={
             "200": traced,
             "4XX": error | {"description": "400, 401, 403, 404, 409 or 410"},
-            "503": error | {"description": "STATE_BEHIND or UNAVAILABLE: retry"},
+            "503": error
+            | {
+                "description": "STATE_BEHIND, STORAGE_UNAVAILABLE or UNAVAILABLE: retry;"
+                " CONTENT_MISSING: storage lost the object, no retry repairs it"
+            },
         },
     )
 
@@ -931,6 +937,32 @@ def app(
         if state is None:
             raise Refused(404, "NOT_FOUND", "DOCUMENT_NOT_FOUND", "No such Document.")
         return state
+
+    @read.get(
+        "/documents/{document_uid}/revisions/{canonical_revision_id}",
+        response_class=StreamingResponse,
+        responses={"200": _served("application/json", "The content object, as accepted")},
+    )
+    async def read_content(document_uid: str, canonical_revision_id: str) -> StreamingResponse:
+        """The Canonical Revision's content object (admission spec §5.9), current or not."""
+        return _stream(
+            await content.read_content(pool, intake.store, document_uid, canonical_revision_id)
+        )
+
+    @read.get(
+        "/documents/{document_uid}/revisions/{canonical_revision_id}/artifacts/{reference:path}",
+        response_class=StreamingResponse,
+        responses={"200": _served("application/octet-stream", "The artifact")},
+    )
+    async def read_artifact(
+        document_uid: str, canonical_revision_id: str, reference: str
+    ) -> StreamingResponse:
+        """One artifact the revision's manifest lists, with the manifest's media type (§5.9)."""
+        return _stream(
+            await content.read_artifact(
+                pool, intake.store, document_uid, canonical_revision_id, reference
+            )
+        )
 
     @read.get("/sources", response_model=SourceList)
     async def list_sources() -> SourceList:
@@ -1075,6 +1107,35 @@ def _error(
     return JSONResponse(
         body.model_dump(by_alias=True, exclude_none=True), status_code=code, headers=retry
     )
+
+
+_TIME = TypeAdapter(datetime)
+
+
+def _stream(served: content.Served) -> StreamingResponse:
+    """The served bytes, with the recorded size and digest, which the reader checks."""
+    headers = {
+        "Content-Length": str(served.size),
+        "X-Content-SHA256": served.sha256,
+        "X-Source-Revision-Created-At": _TIME.dump_python(
+            served.source_revision_created_at, mode="json"
+        ),
+    }
+    return StreamingResponse(served.body, media_type=served.media_type, headers=headers)
+
+
+def _served(media_type: str, description: str) -> dict[str, Any]:
+    text = {"schema": {"type": "string"}}
+    return {
+        "description": description,
+        "content": {media_type: {"schema": {"type": "string", "format": "binary"}}},
+        "headers": {
+            "X-Trace-Id": text | {"description": "trace_id"},
+            "X-Content-SHA256": text | {"description": "the recorded SHA-256, lowercase hex"},
+            "X-Source-Revision-Created-At": text
+            | {"description": "when finalization created the Source Revision (RFC 3339)"},
+        },
+    }
 
 
 def _caller() -> batches.Caller:

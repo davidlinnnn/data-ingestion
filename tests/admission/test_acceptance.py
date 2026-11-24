@@ -114,9 +114,15 @@ async def test_an_acceptance_makes_the_revision_current_with_one_event(conn):
     request_id = await run(conn, uid, srv)
 
     assert await outcomes(conn, request_id) == ("succeeded", "accepted")
-    assert await feed.document_state(conn, uid, None) == feed.State(
+    state = await feed.document_state(conn, uid, None)
+    assert state and state.current and state.current.source_revision_created_at
+    assert state == feed.State(
         resource_id="res_1",
-        current=feed.Current(source_revision_id=srv, canonical_revision_id=crv(request_id)),
+        current=feed.Current(
+            source_revision_id=srv,
+            canonical_revision_id=crv(request_id),
+            source_revision_created_at=state.current.source_revision_created_at,
+        ),
         status="active",
     )
     assert await events(conn, start) == [("current_revision_changed", uid, "normal")]

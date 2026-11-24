@@ -18,7 +18,7 @@ import psycopg
 import pytest
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, scan
+from kp_admission import adoption, feed, scan
 from kp_admission.api import SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake, SourceSettings, expire
@@ -705,17 +705,22 @@ async def test_concurrent_declarations_with_one_key_create_one_batch(platform, a
 C2 = C1 | {"source_version": "2", "title": "Renamed", "metadata": {"km_folder": "HR"}}
 
 
-async def test_a_higher_version_of_processed_content_is_unchanged_and_recorded(seeded, api):
+async def test_a_higher_version_of_processed_content_is_unchanged_and_recorded(seeded, api, conn):
     async with api() as hr:
         before = (await hr.get("/v1/documents/C")).json()
+        state = await feed.document_state(conn, before["document_uid"], None)
         declared = await hr.post("/v1/batches", json={"items": [C2]})
         after = (await hr.get("/v1/documents/C")).json()
+        state_after = await feed.document_state(conn, before["document_uid"], None)
 
     entry = of(declared.json(), "C")
     assert entry["status"] == "unchanged" and "uploads" not in entry and "request_id" not in entry
     assert declared.json()["state"] == "finalized"
     assert after["latest"] == before["latest"] | {"source_version": "2"}
     assert (after["title"], after["metadata"]) == ("Renamed", {"km_folder": "HR"})
+    # The time is the Source Revision's creation, which a version rewrite does not move (#268).
+    assert state and state.current and state.current.source_revision_created_at is not None
+    assert state_after == state
 
 
 async def resent_higher(api, store, conn, outcome: str | None) -> tuple[dict, str, dict]:
