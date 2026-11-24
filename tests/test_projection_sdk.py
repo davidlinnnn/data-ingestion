@@ -1,5 +1,5 @@
 """The consumer SDK (#127) at its HTTP seam: what each call sends, which answers it repeats and
-what it returns or raises. The end-to-end tests in tests/reference_projection run it against the
+what it returns or raises. tests/admission/test_reference_projection.py runs it against the
 real api."""
 
 import json
@@ -52,12 +52,16 @@ async def test_a_lost_answer_or_a_5xx_is_sent_again_with_the_same_body():
 
 
 async def test_a_refusal_raises_its_reason_and_an_unknown_document_reads_as_none():
-    sdk, _ = client(error(409, "SUPERSEDED"), error(404, "DOCUMENT_NOT_FOUND"))
+    sdk, _ = client(
+        error(409, "SUPERSEDED"), error(404, "DOCUMENT_NOT_FOUND"), httpx.Response(404, text="no")
+    )
 
     with pytest.raises(PlatformError) as refused:
         await sdk.register("b1", [{"document_uid": "doc_1"}])
     assert (refused.value.status, refused.value.reason) == (409, "SUPERSEDED")
     assert await sdk.document_state("doc_1", at_least="0" * 32) is None
+    with pytest.raises(PlatformError):  # a 404 from a wrong route is not an unknown Document
+        await sdk.document_state("doc_1")
 
 
 async def test_an_out_of_order_attempt_report_returns_the_position_and_a_retired_build_raises():

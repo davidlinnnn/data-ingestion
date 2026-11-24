@@ -75,7 +75,7 @@ class ProjectionClient:
         try:
             response = await self._call("GET", f"/read/v1/documents/{_q(uid)}/state", params=params)
         except PlatformError as error:
-            if error.status == 404:
+            if error.reason == "DOCUMENT_NOT_FOUND":
                 return None
             raise
         return response.json()

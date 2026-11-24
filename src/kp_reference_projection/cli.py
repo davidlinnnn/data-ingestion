@@ -17,7 +17,17 @@ Environment:
 Exit codes: 0 after SIGTERM or SIGINT (the run in progress finishes first; a run cut short is
 taken again at the next start); 1 on a failure, such as an expired cursor, which needs a
 bootstrap (#280, #281); 2 for a missing or malformed setting; 3 when another process already
-runs against the same database.
+runs against the same database. One process per database, so its Deployment uses the
+`Recreate` strategy; a run in progress may take up to 600 s, so a shorter termination grace
+period only means that run is taken again at the next start.
+
+Metrics, for alerts (CODING_STANDARDS § Logs and metrics): `kp_projection_write_seconds` (a
+registration to its confirmation), `kp_projection_removal_seconds` (a narrowing event to its
+removal taken), `kp_projection_failures_total{step, reason}` (feed reads, cursor reports, runs,
+switches and heartbeats that failed) and `kp_projection_backlog{priority}`; the reader's lag is
+the platform's `kp_feed_consumer_lag_seconds{projection}`. Log lines carry `build_id`,
+`document_uid`, `resource_id`, `fact_version`, `state`, `kind`, `position` and `reason` as they
+apply, never content or an error's message.
 """
 
 import asyncio

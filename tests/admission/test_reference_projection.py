@@ -534,7 +534,8 @@ async def test_a_canary_in_the_content_stays_out_of_logs_reports_and_metrics(
     assert canary not in caplog.text
     assert canary.encode() not in sent
     assert canary.encode() not in generate_latest(REGISTRY)
-    assert canary in stored[0][3]  # positive control: it did pass through the projection
+    assert canary in stored[0][3]  # it did pass through the projection
+    assert uid in caplog.text and uid.encode() in sent  # and each sink sees what it is given
 
 
 async def _cursor(store) -> str:
@@ -577,3 +578,73 @@ async def test_the_running_process_serves_a_document_and_stops_on_its_signal(con
     assert await readiness(platform) == "ready"
     beats = [r for r in platform.sent if r.url.path.endswith("/heartbeats")]
     assert beats and (await running.heartbeat())["repair_requested"] is None
+
+
+async def test_a_content_outage_keeps_the_entry_and_a_refused_read_reports_the_stored_revision(
+    conn, platform, store, reader
+):
+    uid, _ = await ready_document(conn, platform, reader)
+    await revised(conn, uid, "srv_2")
+    platform.contents["crv_2"] = ["# A2"]
+    answer = httpx.Response(503, json={"error": {"status": "UNAVAILABLE"}})
+
+    async def storage(request: httpx.Request) -> httpx.Response | None:
+        return answer if request.url.path.endswith("/revisions/crv_2") else None
+
+    platform.hooks.append(storage)
+    await accepted(conn, uid, "srv_2", "crv_2")
+    await reader.read_once()
+    assert await reader.work_once()  # the run fails and is retried
+    outage = (await entries(store), await mirror(conn))
+    answer = httpx.Response(410, json={"error": {"status": "FAILED_PRECONDITION"}})
+    assert await reader.work_once()  # the read is refused: the write is dropped
+    refused = await mirror(conn)
+
+    assert outage == (
+        [(uid, "s1/hr-all", "crv_a1", "# A\n\nbody")],
+        [(uid, "s1/hr-all", "pending", "crv_2")],
+    )
+    assert refused == [(uid, "s1/hr-all", "included", "crv_a1")]  # what the store holds
+
+
+async def test_an_active_document_without_a_current_revision_is_removed(
+    conn, platform, store, reader
+):
+    uid, _ = await ready_document(conn, platform, reader)
+    async with conn.transaction():  # DR §6: invalidated after acceptance
+        await conn.execute(
+            "UPDATE document SET current_source_revision_id = NULL,"
+            " current_canonical_revision_id = NULL WHERE document_uid = %s",
+            (uid,),
+        )
+        await feed.append(
+            conn,
+            "current_revision_changed",
+            tenant_id="t1",
+            source_id="s1",
+            document_uid=uid,
+            priority="narrowing",
+        )
+
+    await settle(reader)
+
+    assert await entries(store) == []
+    assert await mirror(conn) == [(uid, "s1/hr-all", "removed", "crv_a1")]
+
+
+async def test_a_switch_sent_but_not_recorded_before_a_crash_is_sent_again_with_its_number(
+    conn, platform, store, reader
+):
+    async with store.connection() as projection_conn:
+        await projection_conn.execute("UPDATE build SET serving = false")
+    restarted = projection(platform, store)
+
+    await restarted.start()
+    await settle(restarted)
+
+    builds = [r for r in platform.sent if r.method == "PUT" and "/builds/" in r.url.path]
+    assert [json.loads(r.content)["state"] for r in builds] == ["building", "serving", "serving"]
+    assert len({json.loads(r.content)["switch_seq"] for r in builds[1:]}) == 1
+    async with store.connection() as projection_conn:
+        [(serving,)] = await (await projection_conn.execute("SELECT serving FROM build")).fetchall()
+    assert serving

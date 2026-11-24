@@ -8,6 +8,8 @@
   is one uid, so runs of a uid are serialised and its backlog runs once; an event that comes
   during a run bumps `requested`, and the run then leaves the row for one more run (DR A9).
   Coalescing keeps a row's highest priority, so a deletion is never demoted behind an update.
+  A merged run never spans a deletion (DR A3): a run reads the state after the newest event it
+  merged, so it sees the deletion, and a resubmitted Document gets a new `document_uid`.
 - `reconcile_doc` converges on the Document's current state, whatever order its events came
   in: it removes what the state no longer allows, registers before it writes, confirms after,
   and reports what its store holds when it drops a write (DR §5.2, spec §7.4).
@@ -35,7 +37,6 @@ log = logging.getLogger(__name__)
 PRIORITY = {"narrowing": 0, "normal": 1, "background": 2}
 STAGES = ["write"]  # what KP_PIPELINES registers for this projection (spec §7.3)
 METHOD_VERSION = "reference-projection@1"
-ZERO = "0" * 64
 
 write_seconds = Histogram(
     "kp_projection_write_seconds",
@@ -128,6 +129,7 @@ class Projection:
         async with self.pool.connection() as conn:
             await conn.execute("UPDATE work SET claimed = false WHERE claimed")
             saved = await (await conn.execute("SELECT 1 FROM reader")).fetchone()
+            # A recorded switch, sent or not, means the Build was reported `building` before.
             switched = await (
                 await conn.execute("SELECT 1 FROM build WHERE build_id = %s", (self.build_id,))
             ).fetchone()
@@ -196,11 +198,19 @@ class Projection:
 
     async def _switch(self, feed_position: str) -> None:
         async with self.pool.connection() as conn:
-            if await (
-                await conn.execute("SELECT 1 FROM build WHERE build_id = %s", (self.build_id,))
-            ).fetchone():
-                return
-            [(switch_seq,)] = await (await conn.execute("SELECT nextval('switch_seq')")).fetchall()
+            # Recorded before it is sent, so a resend after a crash carries the same number.
+            await conn.execute(
+                "INSERT INTO build (build_id, switch_seq) VALUES (%s, nextval('switch_seq'))"
+                " ON CONFLICT DO NOTHING",
+                (self.build_id,),
+            )
+            [(switch_seq, serving)] = await (
+                await conn.execute(
+                    "SELECT switch_seq, serving FROM build WHERE build_id = %s", (self.build_id,)
+                )
+            ).fetchall()
+        if serving:
+            return
         report = {
             "state": "serving",
             "switch_seq": switch_seq,
@@ -215,8 +225,7 @@ class Projection:
             return
         async with self.pool.connection() as conn:
             await conn.execute(
-                "INSERT INTO build (build_id, switch_seq) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                (self.build_id, switch_seq),
+                "UPDATE build SET serving = true WHERE build_id = %s", (self.build_id,)
             )
         log.info("build serving: build_id=%s switch_seq=%s", self.build_id, switch_seq)
 
@@ -269,19 +278,20 @@ class Projection:
     ) -> None:
         """Brings the store's entries of `uid` to the Document's current state."""
         for _ in range(3):
-            await self._flush(uid)
+            async with self.reports.window():
+                await self._flush(uid, narrowed_at)
             state = await self.sdk.document_state(uid, at_least)
-            # Not active (deleted, later withdrawn) or no longer known: nothing may be served.
-            active = state is not None and state["status"] == "active"
-            keep = state["resource_id"] if state and active else None
+            # Not active (deleted, later withdrawn), no longer known, or no current revision
+            # (DR §6): nothing may be served.
+            current = state["current"] if state and state["status"] == "active" else None
+            keep = state["resource_id"] if state and current else None
             for resource_id in await self._held(uid):
                 if resource_id != keep:  # gone, or rebound to another Resource
                     async with self.reports.window():
-                        await self._drop(uid, resource_id, keep_content=False)
-                    if narrowed_at:
-                        removal_seconds.observe((datetime.now(UTC) - narrowed_at).total_seconds())
-            current = state["current"] if state and active else None
-            if keep is None or current is None:  # DR §6: nothing accepted, nothing written
+                        await self._drop(
+                            uid, resource_id, keep_content=False, narrowed_at=narrowed_at
+                        )
+            if keep is None or current is None:
                 return
             if await self._served(uid, keep, current["canonical_revision_id"]):
                 return
@@ -392,7 +402,9 @@ class Projection:
                 (self.build_id, uid, resource_id, srv, crv, markdown),
             )
 
-    async def _drop(self, uid: str, resource_id: str, *, keep_content: bool) -> None:
+    async def _drop(
+        self, uid: str, resource_id: str, *, keep_content: bool, narrowed_at: datetime | None = None
+    ) -> None:
         """Ends the key's registration and reports, under a new fact_version, what the store
         holds: its stored revisions `included` when `keep_content` and it has them, else
         `removed`. The caller holds a report window."""
@@ -418,10 +430,11 @@ class Projection:
                     " VALUES (%s, %s, %s, %s, %s, NULL, nextval('fact_version'), now())",
                     (*key, *registered),
                 )
-        await self._flush(uid)
+        await self._flush(uid, narrowed_at)
 
-    async def _flush(self, uid: str) -> None:
-        """Sends the facts of `uid` the platform has not taken yet, as first issued."""
+    async def _flush(self, uid: str, narrowed_at: datetime | None = None) -> None:
+        """Sends the facts of `uid` the platform has not taken yet, as first issued; a removal
+        taken counts toward the time since `narrowed_at`, the narrowing event's."""
         async with self.pool.connection() as conn:
             rows = await (
                 await conn.execute(
@@ -458,6 +471,8 @@ class Projection:
                 fact["state"],
                 fact["fact_version"],
             )
+            if narrowed_at and fact["state"] == "removed":
+                removal_seconds.observe((datetime.now(UTC) - narrowed_at).total_seconds())
         if answer["repair_requested"]:
             log.warning("repair requested: reason=%s", answer["repair_requested"]["reason"])
 
@@ -480,6 +495,14 @@ class Projection:
         """Sends the count and digest of the store entries and unfinished registrations, a
         registration winning for a key with both (spec §7.4), with no report in flight."""
         async with self.reports.quiet():
+            async with self.pool.connection() as conn:
+                unsent = await conn.execute(
+                    "SELECT DISTINCT document_uid FROM entry WHERE build_id = %s AND NOT reported",
+                    (self.build_id,),
+                )
+                uids = [uid for (uid,) in await unsent.fetchall()]
+            for uid in uids:  # a fact a failed report left behind is sent before it is counted
+                await self._flush(uid)
             async with self.pool.connection() as conn:
                 rows = await (
                     await conn.execute(

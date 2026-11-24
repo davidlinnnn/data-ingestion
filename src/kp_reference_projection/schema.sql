@@ -1,5 +1,4 @@
--- The reference projection's own database (#127). Pilot only, so PostgreSQL-only mechanisms are
--- fine (user ruling 2026-11-24). Applied at every start; every statement is idempotent.
+-- The reference projection's own database (#127), applied at every start, so idempotent.
 
 -- The feed position read to; work and cursor commit together (DR A3).
 CREATE TABLE IF NOT EXISTS reader (
@@ -19,14 +18,14 @@ CREATE TABLE IF NOT EXISTS work (
     narrowed_at  timestamptz         -- the earliest narrowing event not handled yet
 );
 
--- The Build's switch, once reported (spec §7.4).
+-- The Build's switch (spec §7.4), recorded before it is sent so a resend keeps its number.
 CREATE TABLE IF NOT EXISTS build (
     build_id   text PRIMARY KEY,
-    switch_seq bigint NOT NULL
+    switch_seq bigint NOT NULL,
+    serving    boolean NOT NULL DEFAULT false
 );
 
--- The store: one row per key (Build, document_uid, resource_id). A null markdown is a removal.
--- `reported` is false until the platform took the row's fact_version: a run sends it again.
+-- The store, one row per key; a null markdown is a removal, `reported` false until it is taken.
 CREATE TABLE IF NOT EXISTS entry (
     build_id              text NOT NULL,
     document_uid          text NOT NULL,
