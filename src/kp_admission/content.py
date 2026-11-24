@@ -24,12 +24,16 @@ from datetime import datetime
 from typing import Any, Literal
 
 from prometheus_client import Counter
+from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from kp_admission.errors import Refused
-from kp_admission.storage import ObjectMissing, ObjectStore, StorageUnavailable
+from kp_admission.storage import ObjectMissing, ObjectStore, StorageUnavailable, item_key
 
 Kind = Literal["content", "artifact"]
+Result = Literal[
+    "served", "not_found", "deleted", "not_retained", "missing", "unavailable", "interrupted"
+]
 
 # Content spec §4: no bucket, no prefix, no `.` or `..` segment.
 REFERENCE = re.compile(r"[0-9a-f]{64}(/[A-Za-z0-9_-][A-Za-z0-9._-]*)+")
@@ -66,7 +70,7 @@ class _Read:
     document_uid: str
     canonical_revision_id: str
 
-    def done(self, result: str, count: int = 0) -> None:
+    def done(self, result: Result, count: int = 0) -> None:
         reads.labels(self.kind, result).inc()
         correlation = {
             "document_uid": self.document_uid,
@@ -77,7 +81,7 @@ class _Read:
         }
         log.info("canonical read %s", result, extra={"correlation": correlation})
 
-    def refuse(self, result: str, refused: Refused) -> Refused:
+    def refuse(self, result: Result, refused: Refused) -> Refused:
         self.done(result)
         return refused
 
@@ -106,13 +110,12 @@ async def read_artifact(
     if not REFERENCE.fullmatch(reference):
         raise read.refuse("not_found", _NO_ARTIFACT)
     record = await _record(pool, read)
-    # shortcut: every artifact read reads and parses the whole content object (up to 1.1 MB in
-    # #81's corpus); cache manifests by revision if #99 measures it costly.
+    # shortcut: each artifact read parses the whole content (<= 1.1 MB, #81), cache it if #99 asks.
     content = await _whole(read, await _open(store, read, record["content_ref"]))
     manifest = await asyncio.to_thread(_manifest, content)
     if (entry := manifest.get(reference)) is None:
         raise read.refuse("not_found", _NO_ARTIFACT)
-    body = await _open(store, read, f"documents/{record['document_uid']}/items/{reference}")
+    body = await _open(store, read, item_key(record["document_uid"], reference))
     return Served(
         entry["media_type"],
         entry["sha256"],
@@ -123,16 +126,14 @@ async def read_artifact(
 
 
 async def _record(pool: AsyncConnectionPool[Any], read: _Read) -> dict[str, Any]:
-    async with pool.connection() as conn:
-        cursor = await conn.execute(_REVISION, (read.canonical_revision_id, read.document_uid))
-        row = await cursor.fetchone()
-        names = [column.name for column in cursor.description or []]
-    if row is None:
+    async with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+        await cursor.execute(_REVISION, (read.canonical_revision_id, read.document_uid))
+        record = await cursor.fetchone()
+    if record is None:
         raise read.refuse(
             "not_found",
             Refused(404, "NOT_FOUND", "REVISION_NOT_FOUND", "The Document has no such revision."),
         )
-    record = dict(zip(names, row, strict=True))
     if record["purged_at"] is not None:  # first: a purged Document is a deleted one too
         raise read.refuse(
             "not_retained",

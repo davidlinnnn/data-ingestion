@@ -155,6 +155,37 @@ async def test_an_artifact_the_manifest_lists_is_served_with_its_media_type(conn
     assert (crop.status_code, crop.headers["content-type"]) == (200, "application/json")
 
 
+async def test_a_reference_sent_as_one_encoded_segment_is_the_same_artifact(conn, pool, store):
+    """The SDK sends a reference's `/` as `%2F` (#127)."""
+    uid, srv = await revision(conn)
+    crv = await accept(conn, store, uid, srv)
+    encoded = PAGE[0].replace("/", "%2F")
+    async with client(pool, store) as api:
+        page = await api.get(f"/v1/documents/{uid}/revisions/{crv}/artifacts/{encoded}")
+
+    assert (page.status_code, page.content) == (200, PNG)
+
+
+async def test_objects_are_found_at_the_location_the_record_holds(conn, pool, store):
+    """Not at a key built from the path's uid: a copy's revision (#120) lives under another
+    Document's prefix."""
+    uid, srv = await revision(conn)
+    crv = await accept(conn, store, uid, srv)
+    elsewhere = f"documents/doc_original/revisions/{crv}.json"
+    store.put(elsewhere, store.content.pop(f"documents/{uid}/revisions/{crv}.json"))
+    store.keys.discard(f"documents/{uid}/revisions/{crv}.json")
+    await conn.execute(
+        "UPDATE canonical_revision SET content_ref = %s WHERE canonical_revision_id = %s",
+        (elsewhere, crv),
+    )
+    async with client(pool, store) as api:
+        read = await api.get(f"/v1/documents/{uid}/revisions/{crv}")
+        page = await api.get(f"/v1/documents/{uid}/revisions/{crv}/artifacts/{PAGE[0]}")
+
+    assert (read.status_code, page.status_code) == (200, 200)
+    assert store.opened == [elsewhere, elsewhere, f"documents/{uid}/items/{PAGE[0]}"]
+
+
 async def test_an_object_of_the_document_the_manifest_does_not_list_is_404_and_never_read(
     conn, pool, store
 ):
@@ -370,8 +401,11 @@ async def test_the_openapi_document_has_both_reads_with_their_media_types(pool, 
     assert "x-content-sha256" in {h.lower() for h in content["responses"]["200"]["headers"]}
     assert "application/octet-stream" in artifact["responses"]["200"]["content"]
     for operation in (content, artifact):
-        assert {"200", "4XX", "503"} <= set(operation["responses"])
+        assert {"200", "4XX", "404", "410", "503"} <= set(operation["responses"])
+        assert "REVISION_NOT_FOUND" in operation["responses"]["404"]["description"]
+        assert "CONTENT_NOT_RETAINED" in operation["responses"]["410"]["description"]
         assert "CONTENT_MISSING" in operation["responses"]["503"]["description"]
+    assert "ARTIFACT_NOT_FOUND" in artifact["responses"]["404"]["description"]
 
 
 class SlowS3:

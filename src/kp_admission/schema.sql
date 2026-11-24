@@ -61,8 +61,7 @@ CREATE TABLE source_revision (
     files              jsonb NOT NULL,
     outcome            text NOT NULL DEFAULT 'pending'
                        CHECK (outcome IN ('pending', 'accepted', 'rejected', 'failed')),
-    -- When finalization created it: the time a reader's results carry (#268); a version
-    -- rewrite (§6.4) leaves it.
+    -- When finalization made it, the time a reader's results carry; §6.4 leaves it (#268).
     created_at         timestamptz NOT NULL DEFAULT now(),
     UNIQUE (document_uid, sequence)
 );
@@ -117,8 +116,7 @@ CREATE TABLE canonical_revision (
     content_sha256     text NOT NULL,
     content_size       bigint NOT NULL,
     accepted_at        timestamptz NOT NULL DEFAULT now(),
-    -- Set when its objects are purged (#267, #269); the content reads then answer
-    -- CONTENT_NOT_RETAINED and never read the location (#268).
+    -- Set by a purge (#267, #269); the reads then answer CONTENT_NOT_RETAINED (#268).
     purged_at          timestamptz
 );
 

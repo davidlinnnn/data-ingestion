@@ -74,6 +74,11 @@ def source_key(document_uid: str, batch_id: str, index: int, sha256: str) -> str
     return f"documents/{document_uid}/files/{batch_id}/{index}/{sha256}"
 
 
+def item_key(document_uid: str, reference: str) -> str:
+    """The key of a registered artifact a Canonical content reference names (content spec §4)."""
+    return f"documents/{document_uid}/items/{reference}"
+
+
 class FakeObjectStore:
     """In-process fake for tests: `keys` exist, those completed through an upload with their
     `content`; `parts` records the size of every part stored; nothing answers while `down`."""

@@ -938,10 +938,16 @@ def app(
             raise Refused(404, "NOT_FOUND", "DOCUMENT_NOT_FOUND", "No such Document.")
         return state
 
+    gone = error | {"description": "DOCUMENT_DELETED, or CONTENT_NOT_RETAINED once purged"}
+
     @read.get(
         "/documents/{document_uid}/revisions/{canonical_revision_id}",
         response_class=StreamingResponse,
-        responses={"200": _served("application/json", "The content object, as accepted")},
+        responses={
+            "200": _served("application/json", "The content object, as accepted"),
+            "404": error | {"description": "REVISION_NOT_FOUND"},
+            "410": gone,
+        },
     )
     async def read_content(document_uid: str, canonical_revision_id: str) -> StreamingResponse:
         """The Canonical Revision's content object (admission spec §5.9), current or not."""
@@ -952,7 +958,11 @@ def app(
     @read.get(
         "/documents/{document_uid}/revisions/{canonical_revision_id}/artifacts/{reference:path}",
         response_class=StreamingResponse,
-        responses={"200": _served("application/octet-stream", "The artifact")},
+        responses={
+            "200": _served("application/octet-stream", "The artifact"),
+            "404": error | {"description": "REVISION_NOT_FOUND or ARTIFACT_NOT_FOUND"},
+            "410": gone,
+        },
     )
     async def read_artifact(
         document_uid: str, canonical_revision_id: str, reference: str
