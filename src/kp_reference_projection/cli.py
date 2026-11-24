@@ -26,9 +26,9 @@ Metrics, for alerts (CODING_STANDARDS § Logs and metrics): `kp_projection_write
 registration to its confirmation), `kp_projection_removal_seconds` (a narrowing event to its
 removal taken), `kp_projection_failures_total{step, reason}` (feed reads, cursor reports, runs,
 switches and heartbeats that failed) and `kp_projection_backlog{priority}`; the reader's lag is
-the platform's `kp_feed_consumer_lag_seconds{projection}`. Log lines carry `build_id`,
-`document_uid`, `resource_id`, `fact_version`, `state`, `kind`, `position` and `reason` as they
-apply, never content or an error's message.
+the platform's `kp_feed_consumer_lag_seconds{projection}`. Log lines carry `projection`,
+`build_id`, `switch_seq`, `document_uid`, `resource_id`, `fact_version`, `state`, `attempt_no`,
+`kind`, `position` and `reason` as they apply, never content or an error's message.
 """
 
 import asyncio

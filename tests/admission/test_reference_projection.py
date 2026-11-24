@@ -349,6 +349,16 @@ async def test_a_heartbeat_waits_for_a_report_in_flight(conn, platform, store, r
     assert (await reader.heartbeat())["repair_requested"] is None
 
 
+async def test_a_source_profile_change_read_from_the_feed_is_skipped_and_the_cursor_moves(
+    conn, reader
+):
+    await profile(conn, "retrieval", "wiki")  # after the reader started: an event without a uid
+
+    read = await reader.read_once()
+
+    assert (read, await reader.work_once(), await reader.read_once()) == (1, False, 0)
+
+
 async def test_an_unknown_kind_with_a_document_is_reconciled_and_one_without_is_skipped(
     conn, platform, store, reader
 ):
