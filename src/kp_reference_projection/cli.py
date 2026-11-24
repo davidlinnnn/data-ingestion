@@ -33,8 +33,8 @@ start.
 Metrics, for alerts (CODING_STANDARDS § Logs and metrics): `kp_projection_write_seconds` (a
 registration to its confirmation), `kp_projection_removal_seconds` (a narrowing event to its
 removal taken), `kp_projection_failures_total{step, reason}` (feed reads, cursor reports, runs,
-source passes, switches, retirements and heartbeats that failed: `read_feed`, `report_cursor`,
-`reconcile`, `reconcile_source`, `switch`, `retire`, `heartbeat`),
+source passes, switches, backfill reports, retirements and heartbeats that failed: `read_feed`,
+`report_cursor`, `reconcile`, `reconcile_source`, `switch`, `backfill`, `retire`, `heartbeat`),
 `kp_projection_backlog{priority}` (a new Build's first reads are `background`) and
 `kp_projection_source_passes`; the reader's lag is the platform's
 `kp_feed_consumer_lag_seconds{projection}`. Log lines carry `projection`, `build_id`,

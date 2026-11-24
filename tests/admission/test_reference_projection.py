@@ -581,8 +581,11 @@ async def test_a_first_build_reads_the_documents_accepted_before_it_started(conn
     started = projection(platform, store)
 
     await started.start()
+    await started.read_once()  # nothing new on the feed, but the Sources are not read yet
+    early = await (await conn.execute("SELECT state FROM build")).fetchall()
     await settle(started)
 
+    assert early == [("building",)]
     assert await readiness(platform) == "ready"
     assert await found(store, "Before") == [uid]
 

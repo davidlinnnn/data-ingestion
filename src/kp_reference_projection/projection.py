@@ -97,7 +97,8 @@ CLAIM_SOURCE = (
     " AND NOT EXISTS (SELECT 1 FROM work w WHERE (w.build_id, w.source_id)"
     " = (s.build_id, s.source_id))"
     " ORDER BY s.build_id, s.source_id LIMIT 1 FOR UPDATE OF s SKIP LOCKED FOR SHARE OF b)"
-    " RETURNING build_id, source_id, requested, started, profile_seq, listed, after, enumerated"
+    " RETURNING build_id, source_id, requested, pass_requested, profile_seq, listed, after,"
+    " enumerated"
 )
 QUEUE = (
     "INSERT INTO work (build_id, document_uid, source_id, priority, at_least, narrowed_at)"
@@ -180,7 +181,7 @@ class Projection:
             page,
         )
         self.retention_s = retention_s
-        self.refs = {"approval_ref": approval_ref, "evidence_ref": evidence_ref}
+        self.approval_ref, self.evidence_ref = approval_ref, evidence_ref
         self.reports = _Reports()
 
     # The Builds
@@ -206,11 +207,32 @@ class Projection:
             raise Retired(self.build_id)
         for other, other_state in builds.items():
             if other != self.build_id and other_state in ("building", "retiring"):
-                await self._retire(other)  # a candidate given up, or a retirement cut short
+                await self._give_up(other)  # a candidate given up, or a retirement cut short
         if state is None:
             await self._create()
         if state in (None, "building") and not switched:
             await self.sdk.report_build(self.build_id, {"state": "building"})
+
+    async def _give_up(self, build_id: str) -> None:
+        """Retires a Build no longer named, unless the platform took its switch before a crash
+        kept the local record from it: that Build serves, and stays."""
+        async with self.pool.connection() as conn:
+            pending = await (
+                await conn.execute(
+                    "SELECT switch_seq FROM switch WHERE build_id = %s AND taken_at IS NULL",
+                    (build_id,),
+                )
+            ).fetchone()
+        if pending:
+            try:
+                await self.sdk.report_build(build_id, {"state": "building"})
+            except PlatformError as error:
+                if error.reason != "BUILD_STATE":
+                    raise
+                if error.metadata.get("state") == "serving":
+                    await self._took(build_id, pending[0])
+                    return
+        await self._retire(build_id)
 
     async def _create(self) -> None:
         """A new Build follows the feed from the reader's saved position and reconciles every
@@ -229,9 +251,10 @@ class Projection:
         log.info("build created: build_id=%s count=%s", self.build_id, len(sources))
 
     async def _switch(self, feed_position: str) -> None:
-        """Switches `build_id` to `serving` once its own checks pass: every Source reconciled and
-        no Document waiting, the read having found no more events. The platform runs the gates
-        again (spec §7.4); a refusal is tried again after the next read."""
+        """Switches `build_id` to `serving` once its own checks pass: every Source reconciled, no
+        Document waiting (the read having found no more events) and no fewer entries than the
+        serving Build. The platform runs every gate again from its mirror (spec §7.4), which alone
+        knows the deleted Documents; a refusal is tried again after the next read."""
         async with self.pool.connection() as conn, conn.transaction():
             [(state, waiting)] = await (
                 await conn.execute(
@@ -241,18 +264,25 @@ class Projection:
                     (self.build_id,),
                 )
             ).fetchall()
-            if state == "serving" or waiting:
+            if state not in ("building", "retained") or waiting:
                 return
-            row = await (
-                await conn.execute("SELECT build_id FROM build WHERE state = 'serving'")
-            ).fetchone()
-            replaces = row and row[0]
+            [(own, replaced, replaces)] = await (
+                await conn.execute(
+                    "SELECT count(*) FILTER (WHERE e.build_id = %s),"
+                    " count(*) FILTER (WHERE b.state = 'serving'),"
+                    " (SELECT build_id FROM build WHERE state = 'serving')"
+                    " FROM entry e JOIN build b USING (build_id) WHERE e.markdown IS NOT NULL",
+                    (self.build_id,),
+                )
+            ).fetchall()
+            if own < replaced:  # D2's coverage gate, as this store counts it
+                return
             # Recorded before it is sent, so a resend after a crash carries the same number.
             await conn.execute(
                 "INSERT INTO switch (switch_seq, build_id, evidence_position, approval_ref,"
                 " evidence_ref) SELECT nextval('switch_seq'), %s, %s, %s, %s WHERE NOT EXISTS"
                 " (SELECT 1 FROM switch WHERE build_id = %s AND taken_at IS NULL)",
-                (self.build_id, feed_position, *self.refs.values(), self.build_id),
+                (self.build_id, feed_position, self.approval_ref, self.evidence_ref, self.build_id),
             )
             [(switch_seq, approval_ref, evidence_ref)] = await (
                 await conn.execute(
@@ -280,39 +310,39 @@ class Projection:
                 error.metadata.get("gate"),
             )
             return
-        async with self.pool.connection() as conn, conn.transaction():
-            if answer["state"] != "serving":  # a number the platform had already passed
+        if answer["state"] != "serving":  # a number the platform had already passed
+            async with self.pool.connection() as conn:
                 await conn.execute("DELETE FROM switch WHERE switch_seq = %s", (switch_seq,))
-                log.warning("switch late: build_id=%s switch_seq=%s", self.build_id, switch_seq)
-                return
+            log.warning("switch late: build_id=%s switch_seq=%s", self.build_id, switch_seq)
+            return
+        await self._took(self.build_id, switch_seq)
+
+    async def _took(self, build_id: str, switch_seq: int) -> None:
+        """Records the switch the platform took: the Build serves, the one it replaced is
+        `retained` from now (DR D2)."""
+        async with self.pool.connection() as conn, conn.transaction():
             # Two statements: one Build serves at any moment, and a query sees both or neither.
             await conn.execute(
                 "UPDATE build SET state = 'retained', retained_at = now() WHERE state = 'serving'"
             )
             await conn.execute(
                 "UPDATE build SET state = 'serving', retained_at = NULL WHERE build_id = %s",
-                (self.build_id,),
+                (build_id,),
             )
             await conn.execute(
                 "UPDATE switch SET taken_at = now() WHERE switch_seq = %s", (switch_seq,)
             )
-        log.info(
-            "build serving: build_id=%s switch_seq=%s replaces=%s position=%s",
-            self.build_id,
-            switch_seq,
-            replaces,
-            feed_position,
-        )
-        await self._report_backfills(self.build_id)
+        log.info("build serving: build_id=%s switch_seq=%s", build_id, switch_seq)
 
     async def retire_expired(self) -> None:
-        """Retires each retained Build past its retention, and finishes a retirement waiting
-        for its runs to end (DR D2)."""
+        """Retires each retained Build past its retention, except `build_id`, which a rollback
+        is switching to, and finishes a retirement waiting for its runs to end (DR D2)."""
         async with self.pool.connection() as conn:
             rows = await conn.execute(
-                "SELECT build_id FROM build WHERE state = 'retiring' OR (state = 'retained'"
-                " AND retained_at < now() - make_interval(secs => %s)) ORDER BY build_id",
-                (self.retention_s,),
+                "SELECT build_id FROM build WHERE build_id <> %s AND (state = 'retiring' OR"
+                " (state = 'retained' AND retained_at < now() - make_interval(secs => %s)))"
+                " ORDER BY build_id",
+                (self.build_id, self.retention_s),
             )
             expired = [build_id for (build_id,) in await rows.fetchall()]
         for build_id in expired:
@@ -343,17 +373,29 @@ class Projection:
             )
         log.info("build retired: build_id=%s", build_id)
 
-    async def _report_backfills(self, build_id: str) -> None:
-        """Reports each backfill the Build completed (spec §7.4); the platform keeps the latest."""
+    async def report_backfills(self) -> None:
+        """Reports each backfill the serving Build completed and has not reported (spec §7.4):
+        recorded first, so a failed report is sent again on the next call."""
         async with self.pool.connection() as conn:
             rows = await (
                 await conn.execute(
-                    "SELECT source_id, profile_seq FROM backfilled WHERE build_id = %s",
-                    (build_id,),
+                    "SELECT build_id, source_id, profile_seq FROM backfilled JOIN build"
+                    " USING (build_id) WHERE state = 'serving' AND NOT reported"
                 )
             ).fetchall()
-        for source_id, profile_seq in rows:
-            await self.sdk.report_backfill(source_id, profile_seq)
+        for build_id, source_id, profile_seq in rows:
+            try:
+                await self.sdk.report_backfill(source_id, profile_seq)
+            except PlatformError as error:
+                failures.labels("backfill", error.reason).inc()
+                log.warning("backfill refused: source_id=%s reason=%s", source_id, error.reason)
+                return
+            async with self.pool.connection() as conn:
+                await conn.execute(
+                    "UPDATE backfilled SET reported = true WHERE build_id = %s AND source_id = %s"
+                    " AND profile_seq = %s",
+                    (build_id, source_id, profile_seq),
+                )
             log.info(
                 "backfill reported: build_id=%s source_id=%s profile_seq=%s",
                 build_id,
@@ -365,7 +407,8 @@ class Projection:
 
     async def read_once(self) -> int:
         """Reads one page after the saved cursor, queues its events and reports the cursor;
-        tries the switch of `build_id` once a read finds no more. Returns the events read."""
+        once a read finds no more, tries the switch of `build_id` and reports the backfills
+        not reported yet. Returns the events read."""
         async with self.pool.connection() as conn:
             [(cursor,)] = await (await conn.execute("SELECT cursor FROM reader")).fetchall()
         try:
@@ -384,6 +427,7 @@ class Projection:
             )
         if not page["events"]:
             await self._switch(page["next_cursor"])
+            await self.report_backfills()
         return len(page["events"])
 
     async def enqueue(self, events: list[dict[str, Any]], next_cursor: str) -> None:
@@ -394,7 +438,10 @@ class Projection:
         2026-11-22)."""
         async with self.pool.connection() as conn, conn.transaction():
             live = await (
-                await conn.execute("SELECT build_id FROM build WHERE state = ANY(%s)", (LIVE,))
+                # Shared: a retirement waits for this transaction, or this one sees it.
+                await conn.execute(
+                    "SELECT build_id FROM build WHERE state = ANY(%s) FOR SHARE", (LIVE,)
+                )
             ).fetchall()
             for event in events:
                 uid = event.get("document_uid")
@@ -493,7 +540,7 @@ class Projection:
         build_id: str,
         source_id: str,
         requested: int,
-        started: int | None,
+        pass_requested: int | None,
         profile_seq: str | None,
         listed: bool | None,
         after: str | None,
@@ -503,10 +550,10 @@ class Projection:
         page of Documents, and once every Document queued has run it ends; a request that came
         during the pass begins another (DR A9)."""
         key = (build_id, source_id)
-        if started is None:
+        if pass_requested is None:
             profile = await self.sdk.source_profile(source_id)
-            started, after = requested, None
-            listed = bool(profile) and self.sdk.projection in profile["projections"]
+            pass_requested, after = requested, None
+            listed = _lists(profile, self.sdk.projection)
             profile_seq = profile["profile_seq"] if profile else None
         if not enumerated:
             page = await self.sdk.source_documents(source_id, after, self.page)
@@ -516,11 +563,11 @@ class Projection:
                         QUEUE, (build_id, uid, source_id, PRIORITY["background"], None, None)
                     )
                 await conn.execute(
-                    "UPDATE source_work SET claimed = false, started = %s, profile_seq = %s,"
+                    "UPDATE source_work SET claimed = false, pass_requested = %s, profile_seq = %s,"
                     " listed = %s, after = %s, enumerated = %s"
                     " WHERE build_id = %s AND source_id = %s",
                     (
-                        started,
+                        pass_requested,
                         profile_seq,
                         listed,
                         page["next_after"],
@@ -534,22 +581,19 @@ class Projection:
                 await conn.execute(
                     "INSERT INTO backfilled (build_id, source_id, profile_seq) VALUES (%s, %s, %s)"
                     " ON CONFLICT (build_id, source_id) DO UPDATE SET"
-                    " profile_seq = excluded.profile_seq",
+                    " profile_seq = excluded.profile_seq, reported = false",
                     (*key, profile_seq),
                 )
             done = await conn.execute(
                 "DELETE FROM source_work WHERE build_id = %s AND source_id = %s AND requested = %s",
-                (*key, started),
+                (*key, pass_requested),
             )
             if not done.rowcount:  # requested again during the pass: one more
                 await conn.execute(
-                    "UPDATE source_work SET claimed = false, started = NULL, enumerated = false"
-                    " WHERE build_id = %s AND source_id = %s",
+                    "UPDATE source_work SET claimed = false, pass_requested = NULL,"
+                    " enumerated = false WHERE build_id = %s AND source_id = %s",
                     key,
                 )
-            [(state,)] = await (
-                await conn.execute("SELECT state FROM build WHERE build_id = %s", (build_id,))
-            ).fetchall()
         log.info(
             "source reconciled: build_id=%s source_id=%s profile_seq=%s listed=%s",
             build_id,
@@ -557,14 +601,6 @@ class Projection:
             profile_seq,
             listed,
         )
-        if listed and profile_seq and state == "serving":
-            await self.sdk.report_backfill(source_id, profile_seq)
-            log.info(
-                "backfill reported: build_id=%s source_id=%s profile_seq=%s",
-                build_id,
-                source_id,
-                profile_seq,
-            )
 
     # reconcile_doc
 
@@ -583,11 +619,8 @@ class Projection:
             async with self.reports.window():
                 await self._flush(build_id, uid, narrowed_at)
             state = await self.sdk.document_state(uid, at_least)
-            profile = await self.sdk.source_profile(source_id)
-            # Not active (deleted, later withdrawn), no longer known, no current revision (DR
-            # §6), or of a Source whose profile does not list this projection (DR B1, D1):
-            # nothing may be served.
-            listed = bool(profile) and self.sdk.projection in profile["projections"]
+            listed = _lists(await self.sdk.source_profile(source_id), self.sdk.projection)
+            # Served only when active, current (DR §6) and in a profile that lists us (B1, D1).
             current = state["current"] if state and state["status"] == "active" else None
             keep = state["resource_id"] if state and current and listed else None
             for resource_id in await self._held(build_id, uid):
@@ -839,7 +872,11 @@ class Projection:
                 )
                 builds = [build_id for (build_id,) in await rows.fetchall()]
             for build_id in builds:
-                answers[build_id] = await self._beat(build_id)
+                try:  # one Build's failure does not cost the others their liveness
+                    answers[build_id] = await self._beat(build_id)
+                except PlatformError as error:
+                    failures.labels("heartbeat", error.reason).inc()
+                    log.warning("heartbeat failed: build_id=%s reason=%s", build_id, error.reason)
         for build_id, answer in answers.items():
             if answer["repair_requested"]:
                 log.warning(
@@ -1007,6 +1044,10 @@ def _texts(content: dict[str, Any]) -> tuple[str, str]:
         WITHHELD if block["ref"] in disputed else block["markdown"] for block in blocks
     )
     return markdown, cited
+
+
+def _lists(profile: dict[str, Any] | None, projection: str) -> bool:
+    return bool(profile) and projection in profile["projections"]
 
 
 def _reason(error: BaseException) -> str:

@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS source_work (
     requested   bigint NOT NULL DEFAULT 1,
     claimed     boolean NOT NULL DEFAULT false,
     not_before  timestamptz NOT NULL DEFAULT now(),
-    started     bigint,   -- `requested` when the pass began; null before it begins
+    pass_requested bigint,  -- `requested` when the pass began; null before it begins
     profile_seq text,     -- the profile the pass read; null for a Source without one
     listed      boolean,  -- whether that profile lists this projection
     after       text,     -- the last Document queued
@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS backfilled (
     build_id    text NOT NULL,
     source_id   text NOT NULL,
     profile_seq text NOT NULL,
+    reported    boolean NOT NULL DEFAULT false,
     PRIMARY KEY (build_id, source_id)
 );
 

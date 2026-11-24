@@ -429,3 +429,81 @@ async def test_a_retirement_waits_for_the_run_in_progress_of_that_build(
     assert during["b1"] == "retained"
     assert await platform_builds(conn) == {"b1": "retired", "b2": "serving"}
     assert await local(store, "SELECT count(*) FROM entry WHERE build_id = 'b1'") == [(0,)]
+
+
+async def test_a_rollback_target_past_its_retention_is_not_retired_while_it_switches_back(
+    conn, platform, store, reader
+):
+    await ready_document(conn, platform, reader)
+    b2 = projection(platform, store, "b2")
+    await b2.start()
+    await settle(b2)
+    back = projection(platform, store, "b1", retention_s=0)  # b1's retention is over
+
+    await back.start()
+    await back.retire_expired()
+    await settle(back)
+
+    assert await platform_builds(conn) == {"b1": "serving", "b2": "retained"}
+
+
+async def test_a_backfill_report_that_fails_is_sent_again(conn, platform, store):
+    await profile(conn)
+    uid, srv = await document(conn)
+    platform.contents["crv_1"] = ["# Later"]
+    await accepted(conn, uid, srv, "crv_1")
+    p = projection(platform, store)
+    await p.start()
+    await settle(p)
+    failing = [True]
+
+    async def fail_once(request: httpx.Request) -> httpx.Response | None:
+        if request.url.path.endswith("/sources/s1/backfill") and failing:
+            return httpx.Response(503)  # both attempts of the call
+        return None
+
+    platform.hooks.append(fail_once)
+    await profile(conn, "retrieval")
+    await settle(p)
+    before = await readiness(platform)
+    failing.clear()
+    await p.read_once()
+
+    assert (before, await readiness(platform)) == ("not_ready", "ready")
+
+
+async def test_a_build_whose_switch_was_taken_before_a_crash_is_not_given_up(
+    conn, platform, store, reader
+):
+    await ready_document(conn, platform, reader)
+    b2 = projection(platform, store, "b2")
+    await b2.start()
+    await settle(b2)
+    async with store.connection() as projection_conn:  # the crash came before the local record
+        await projection_conn.execute("UPDATE build SET state = 'building' WHERE build_id = 'b2'")
+        await projection_conn.execute("UPDATE build SET state = 'serving' WHERE build_id = 'b1'")
+        await projection_conn.execute("UPDATE switch SET taken_at = NULL WHERE build_id = 'b2'")
+
+    b3 = projection(platform, store, "b3")
+    await b3.start()
+    await settle(b3)
+
+    assert await platform_builds(conn) == {"b1": "retained", "b2": "retained", "b3": "serving"}
+    assert await local(store, "SELECT count(*) FROM entry WHERE build_id = 'b2'") == [(1,)]
+
+
+async def test_a_heartbeat_that_fails_for_one_build_is_still_sent_for_the_others(
+    conn, platform, store, reader
+):
+    await ready_document(conn, platform, reader)
+    b2 = projection(platform, store, "b2")
+    await b2.start()
+
+    async def b1_down(request: httpx.Request) -> httpx.Response | None:
+        return httpx.Response(503) if "/builds/b1/heartbeats" in request.url.path else None
+
+    platform.hooks.append(b1_down)
+    answers = await b2.heartbeat()
+
+    assert list(answers) == ["b2"]
+    assert sample("kp_projection_failures_total", step="heartbeat", reason="UNKNOWN") >= 1
