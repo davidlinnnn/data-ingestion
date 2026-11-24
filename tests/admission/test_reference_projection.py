@@ -14,6 +14,7 @@ import sys
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 import psycopg
@@ -27,7 +28,7 @@ from psycopg_pool import AsyncConnectionPool
 from kp_admission import deletion, feed, status
 from kp_admission.api import app
 from kp_admission.reports import Pipeline
-from kp_reference_projection import SCHEMA, cli
+from kp_reference_projection import SCHEMA, cli, query
 from kp_reference_projection.projection import STAGES, Projection
 from kp_sdk.projection import ProjectionClient
 from tests.admission.authz_fake import FakeAuthorizer
@@ -60,6 +61,7 @@ class Platform(httpx.AsyncBaseTransport):
         self.contents: dict[str, list[str]] = {}
         self.hooks: list[Hook] = []
         self.sent: list[httpx.Request] = []
+        self.answered: list[httpx.Response] = []  # kept by a hook that asks for them
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         await request.aread()
@@ -119,11 +121,13 @@ async def no_wait(_: float) -> None:
     pass
 
 
-def projection(platform: Platform, store) -> Projection:
+def projection(platform: Platform, store, build_id: str = "b1", **options: Any) -> Projection:
+    """The projection process asked to serve `build_id` (KP_PROJECTION_BUILD_ID)."""
     sdk = ProjectionClient(
         "http://api", "retrieval", "retrieval", transport=platform, sleep=no_wait, attempts=2
     )
-    return Projection(sdk, store, "b1", retry_s=0)
+    options.setdefault("retry_s", 0)
+    return Projection(sdk, store, build_id, **options)
 
 
 @pytest.fixture
@@ -208,7 +212,7 @@ async def test_an_accepted_document_is_written_confirmed_and_ready(conn, platfor
     assert sample("kp_projection_write_seconds_count") - writes == 1
     assert await entries(store) == [(uid, "s1/hr-all", "crv_1", "# Travel\n\nRules for trips.")]
     assert await mirror(conn) == [(uid, "s1/hr-all", "included", "crv_1")]
-    assert (await reader.heartbeat())["repair_requested"] is None
+    assert (await reader.heartbeat())["b1"]["repair_requested"] is None
 
 
 async def test_an_update_reads_ready_stale_while_it_is_written_then_ready(
@@ -229,7 +233,7 @@ async def test_an_update_reads_ready_stale_while_it_is_written_then_ready(
 
     assert (during, await readiness(platform)) == (["ready_stale"], "ready")
     assert await entries(store) == [(uid, "s1/hr-all", "crv_2", "# Travel v2")]
-    assert (await reader.heartbeat())["repair_requested"] is None
+    assert (await reader.heartbeat())["b1"]["repair_requested"] is None
 
 
 async def test_a_deletion_is_removed_and_then_judged_enforced(conn, platform, store, reader):
@@ -244,7 +248,7 @@ async def test_a_deletion_is_removed_and_then_judged_enforced(conn, platform, st
     assert sample("kp_projection_removal_seconds_count") - removals == 1
     assert await enforce(conn) == {"enforced": 1}
     assert await entries(store) == []
-    assert (await reader.heartbeat())["repair_requested"] is None
+    assert (await reader.heartbeat())["b1"]["repair_requested"] is None
 
 
 async def test_a_rebind_removes_the_old_resource_and_includes_the_new(
@@ -296,7 +300,7 @@ async def test_a_superseded_registration_writes_nothing_and_converges_on_the_new
     assert await entries(store) == [(uid, "s1/hr-all", "crv_2", "# new")]
     assert await mirror(conn) == [(uid, "s1/hr-all", "included", "crv_2")]
     assert await readiness(platform) == "ready"
-    assert (await reader.heartbeat())["repair_requested"] is None
+    assert (await reader.heartbeat())["b1"]["repair_requested"] is None
 
 
 async def test_a_registration_recorded_before_a_deletion_is_reported_removed_after_superseded(
@@ -345,18 +349,21 @@ async def test_a_heartbeat_waits_for_a_report_in_flight(conn, platform, store, r
     await run
 
     assert waited
-    assert (await beat)["repair_requested"] is None
-    assert (await reader.heartbeat())["repair_requested"] is None
+    assert (await beat)["b1"]["repair_requested"] is None
+    assert (await reader.heartbeat())["b1"]["repair_requested"] is None
 
 
-async def test_a_source_profile_change_read_from_the_feed_is_skipped_and_the_cursor_moves(
-    conn, reader
+async def test_a_source_profile_change_read_from_the_feed_starts_one_pass_over_the_source(
+    conn, platform, reader
 ):
     await profile(conn, "retrieval", "wiki")  # after the reader started: an event without a uid
+    listed = len([r for r in platform.sent if r.url.path.endswith("/sources/s1/documents")])
 
     read = await reader.read_once()
+    await settle(reader)
 
-    assert (read, await reader.work_once(), await reader.read_once()) == (1, False, 0)
+    pages = len([r for r in platform.sent if r.url.path.endswith("/sources/s1/documents")])
+    assert (read, pages - listed, await reader.read_once()) == (1, 1, 0)
 
 
 async def test_an_unknown_kind_with_a_document_is_reconciled_and_one_without_is_skipped(
@@ -490,8 +497,8 @@ async def test_the_heartbeat_at_rest_matches_the_mirror_and_a_tampered_store_doe
 
     tampered = await reader.heartbeat()
 
-    assert at_rest["repair_requested"] is None
-    assert tampered["repair_requested"]["reason"] == "heartbeat_mismatch"
+    assert at_rest["b1"]["repair_requested"] is None
+    assert tampered["b1"]["repair_requested"]["reason"] == "heartbeat_mismatch"
 
 
 async def test_the_cursor_is_reported_without_new_events_and_lag_is_measured(
@@ -536,7 +543,7 @@ async def test_a_restarted_reader_continues_from_its_saved_position(conn, platfo
 
     assert [e[0] for e in await entries(store)] == sorted([uid, later])
     assert (await readiness(platform, "A"), await readiness(platform, "B")) == ("ready", "ready")
-    assert (await restarted.heartbeat())["repair_requested"] is None
+    assert (await restarted.heartbeat())["b1"]["repair_requested"] is None
 
 
 async def test_a_canary_in_the_content_stays_out_of_logs_reports_and_metrics(
@@ -559,6 +566,25 @@ async def test_a_canary_in_the_content_stays_out_of_logs_reports_and_metrics(
     assert canary.encode() not in generate_latest(REGISTRY)
     assert canary in stored[0][3]  # it did pass through the projection
     assert uid in caplog.text and uid.encode() in sent  # and each sink sees what it is given
+
+
+async def found(store, text: str) -> list[str]:
+    """The Documents #279's search finds for `text` in the serving Build, in Resource s1/hr-all."""
+    return [hit.document_uid for hit in await query.search(store, text, ["s1/hr-all"], False, 10)]
+
+
+async def test_a_first_build_reads_the_documents_accepted_before_it_started(conn, platform, store):
+    await profile(conn, "retrieval")
+    uid, srv = await document(conn)
+    platform.contents["crv_1"] = ["# Before"]
+    await accepted(conn, uid, srv, "crv_1")
+    started = projection(platform, store)
+
+    await started.start()
+    await settle(started)
+
+    assert await readiness(platform) == "ready"
+    assert await found(store, "Before") == [uid]
 
 
 async def _cursor(store) -> str:
@@ -604,7 +630,7 @@ async def test_the_running_process_serves_a_document_and_stops_on_its_signal(con
 
     assert await readiness(platform) == "ready"
     beats = [r for r in platform.sent if r.url.path.endswith("/heartbeats")]
-    assert beats and (await running.heartbeat())["repair_requested"] is None
+    assert beats and (await running.heartbeat())["b1"]["repair_requested"] is None
 
 
 async def test_a_content_outage_keeps_the_entry_and_a_refused_read_reports_the_stored_revision(
@@ -667,8 +693,9 @@ async def test_an_active_document_without_a_current_revision_is_removed(
 async def test_a_switch_sent_but_not_recorded_before_a_crash_is_sent_again_with_its_number(
     conn, platform, store, reader
 ):
-    async with store.connection() as projection_conn:
-        await projection_conn.execute("UPDATE build SET serving = false")
+    async with store.connection() as projection_conn:  # the platform took it; the crash came first
+        await projection_conn.execute("UPDATE build SET state = 'building'")
+        await projection_conn.execute("UPDATE switch SET taken_at = NULL")
     restarted = projection(platform, store)
 
     await restarted.start()
@@ -678,8 +705,8 @@ async def test_a_switch_sent_but_not_recorded_before_a_crash_is_sent_again_with_
     assert [json.loads(r.content)["state"] for r in builds] == ["building", "serving", "serving"]
     assert len({json.loads(r.content)["switch_seq"] for r in builds[1:]}) == 1
     async with store.connection() as projection_conn:
-        [(serving,)] = await (await projection_conn.execute("SELECT serving FROM build")).fetchall()
-    assert serving
+        [(state,)] = await (await projection_conn.execute("SELECT state FROM build")).fetchall()
+    assert state == "serving"
 
 
 @pytest.mark.network

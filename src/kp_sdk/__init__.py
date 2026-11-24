@@ -37,10 +37,12 @@ class PlatformError(Exception):
         message: str,
         trace_id: str | None,
         items: list[dict[str, Any]] | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> None:
         super().__init__(f"{status} {reason}: {message} (trace_id {trace_id})")
         self.status, self.reason, self.message, self.trace_id = status, reason, message, trace_id
         self.items = items
+        self.metadata = metadata or {}  # the ErrorInfo's, such as the failed `gate` (§7.4)
 
 
 class Client:
@@ -141,17 +143,18 @@ class Client:
 
 
 def _refused(response: httpx.Response, trace_id: str | None) -> PlatformError:
-    items = None
+    items, metadata = None, None
     try:
         body = response.json()
         error, items = body["error"], body.get("items")
-        reason = (error.get("details") or [{}])[0].get("reason", error["status"])
+        info = (error.get("details") or [{}])[0]
+        reason, metadata = info.get("reason", error["status"]), info.get("metadata")
         message = error["message"]
     except (ValueError, KeyError, TypeError, IndexError, AttributeError):
         reason, message = "UNKNOWN", response.reason_phrase
     # The URL names a file path, which stays out of the log.
     log.warning("refused: %s %s (trace_id %s)", response.status_code, reason, trace_id)
-    return PlatformError(response.status_code, reason, message, trace_id, items)
+    return PlatformError(response.status_code, reason, message, trace_id, items, metadata)
 
 
 def _measure(path: Path) -> dict[str, Any]:
