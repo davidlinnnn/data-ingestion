@@ -356,10 +356,10 @@ class Projection:
                     await self._drop(uid, resource_id, keep_content=True)
                 await attempt.report("failed", "CONTENT_REFUSED")
                 return False
-            blocks = json.loads(content)["blocks"]
-            markdown = "\n\n".join(block["markdown"] for block in blocks)  # content spec §3.2
+            markdown, cited = _texts(json.loads(content))
+            created_at = current.get("source_revision_created_at")  # in the state from #268
             async with self.reports.window():
-                await self._store(uid, resource_id, srv, crv, markdown)
+                await self._store(uid, resource_id, srv, crv, markdown, cited, created_at)
                 await self._flush(uid)
         except Exception as error:
             with suppress(PlatformError):
@@ -386,7 +386,16 @@ class Projection:
             ).fetchall()
         return _fact(uid, resource_id, srv, crv, version, issued_at)
 
-    async def _store(self, uid: str, resource_id: str, srv: str, crv: str, markdown: str) -> None:
+    async def _store(
+        self,
+        uid: str,
+        resource_id: str,
+        srv: str,
+        crv: str,
+        markdown: str,
+        cited: str,
+        created_at: str | None,
+    ) -> None:
         """The write and the end of its registration, in one transaction; `included` follows."""
         async with self.pool.connection() as conn, conn.transaction():
             await conn.execute(
@@ -396,14 +405,17 @@ class Projection:
             )
             await conn.execute(
                 "INSERT INTO entry (build_id, document_uid, resource_id, source_revision_id,"
-                " canonical_revision_id, markdown, fact_version, issued_at) VALUES"
-                " (%s, %s, %s, %s, %s, %s, nextval('fact_version'), now())"
+                " canonical_revision_id, markdown, cited, source_revision_created_at,"
+                " fact_version, issued_at) VALUES"
+                " (%s, %s, %s, %s, %s, %s, %s, %s, nextval('fact_version'), now())"
                 " ON CONFLICT (build_id, document_uid, resource_id) DO UPDATE SET"
                 " source_revision_id = excluded.source_revision_id,"
                 " canonical_revision_id = excluded.canonical_revision_id,"
-                " markdown = excluded.markdown, fact_version = excluded.fact_version,"
-                " issued_at = excluded.issued_at, reported = false",
-                (self.build_id, uid, resource_id, srv, crv, markdown),
+                " markdown = excluded.markdown, cited = excluded.cited,"
+                " source_revision_created_at = excluded.source_revision_created_at,"
+                " fact_version = excluded.fact_version, issued_at = excluded.issued_at,"
+                " reported = false",
+                (self.build_id, uid, resource_id, srv, crv, markdown, cited, created_at),
             )
 
     async def _drop(
@@ -423,9 +435,10 @@ class Projection:
             ).fetchone()
             updated = await conn.execute(
                 "UPDATE entry SET fact_version = nextval('fact_version'), issued_at = now(),"
-                " reported = false, markdown = CASE WHEN %s THEN markdown END"
+                " reported = false, markdown = CASE WHEN %s THEN markdown END,"
+                " cited = CASE WHEN %s THEN cited END"
                 " WHERE build_id = %s AND document_uid = %s AND resource_id = %s",
-                (keep_content, *key),
+                (keep_content, keep_content, *key),
             )
             if not updated.rowcount and registered:
                 await conn.execute(
@@ -617,6 +630,27 @@ def _fact(uid: str, res: str, srv: str, crv: str, version: int, issued_at: datet
         "fact_version": version,
         "issued_at": issued_at.isoformat(),
     }
+
+
+WITHHELD = "[withheld: disputed]"
+
+
+def _texts(content: dict[str, Any]) -> tuple[str, str]:
+    """The body Markdown (content spec §3.2) and the same with each block a `disputed`
+    enrichment targets withheld, for snippets (#279). A figure's OCR text is not in the body,
+    so the d3 signal that its `unverified` lacks is never needed here."""
+    disputed = {
+        ref
+        for item in content.get("enrichments", [])
+        if item["status"] == "disputed"
+        for ref in item["target_refs"]
+    }
+    blocks = content["blocks"]
+    markdown = "\n\n".join(block["markdown"] for block in blocks)
+    cited = "\n\n".join(
+        WITHHELD if block["ref"] in disputed else block["markdown"] for block in blocks
+    )
+    return markdown, cited
 
 
 def _reason(error: BaseException) -> str:

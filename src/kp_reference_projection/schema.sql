@@ -39,6 +39,12 @@ CREATE TABLE IF NOT EXISTS entry (
     PRIMARY KEY (build_id, document_uid, resource_id)
 );
 
+-- The query side (#279): the Markdown a snippet may quote (blocks a `disputed` enrichment
+-- targets withheld), the served Source Revision's time, and the search index.
+ALTER TABLE entry ADD COLUMN IF NOT EXISTS cited text;
+ALTER TABLE entry ADD COLUMN IF NOT EXISTS source_revision_created_at timestamptz;
+CREATE INDEX IF NOT EXISTS entry_search ON entry USING gin (to_tsvector('simple', markdown));
+
 -- Registrations whose write has not completed (DR §5.2), kept across crashes.
 CREATE TABLE IF NOT EXISTS registration (
     build_id              text NOT NULL,
