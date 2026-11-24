@@ -1169,6 +1169,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 2026-11-24 | #127：consumer SDK（`kp_sdk.projection`）與 reference projection（`kp-reference-projection`）實作完成：reader 把事件收進自己資料庫的工作表，每份文件收斂到現況，寫入前登記、寫完確認、刪除與改綁時移除，heartbeat 與 attempt 回報。它讀內容的端點（#268）還沒有，部署單位由 #78 定，所以 `readiness` 仍是 `not_ready`。第 5 節開頭、第 5.2、6.9 與 7.3 節更新 |
 | 2026-11-24 | #268：Canonical 內容的讀取實作完成：讀取端依確切的 revision 讀內容物件與它清單列出的產物（規格 §5.9），回應帶紀錄的 SHA-256、大小與 Source Revision 建立的時間；文件現況的 `current` 也帶這個時間。reference projection 現在等的只剩部署單位（#78）。第 5 節開頭與 Quick start、第 5.2、6.9 與 7.3 節更新 |
 | 2026-11-24 | #279：reference projection 的查詢端點實作完成：第二個 process `kp-reference-projection-query`，在 serving 的 Build 裡做關鍵字搜尋，先用 `list_resources` 的所有頁限定範圍，沒有判定就不給內容；結果帶 `document_uid`、served Source Revision 與它的時間、stale 旗標，支援 `latest_only`；`disputed` 的公式與表格不進片段。從刪除寫入到查不到約 1 秒（規格 §8）。第 7.3 節更新 |
+| 2026-11-24 | #280：reference projection 的 Build 生命週期實作完成：`KP_PROJECTION_BUILD_ID` 是應該在 serving 的 Build，換成新的 ID 就從 reader 目前的位置建一個新 Build、讀完每個 Source、通過 gate 後切換，舊的保留 7 天並繼續跟 feed，換回舊的 ID 就是 rollback；第一個 Build 也會讀完既有的文件，所以 reader 不必在第一份文件被接受之前啟動。Knowledge Profile 沒列這個 projection 的 Source 不寫入，拿掉時移除；後來才加入的 Source 補完後回報 backfill。第 7.3 節更新 |
 
 ### 7.3 實作狀態（2026-11-24）
 
@@ -1185,7 +1186,7 @@ credential 本身可以是任意字串，平台只保存它的 SHA-256；建議�
 | 版本較大、檔案相同不重新處理 | 宣告與 finalize 的排序規則（規格 §6.3、§6.4） | #258 | 已完成，在 `dev` |
 | 狀態查詢 | `GET /v1/requests/{request_id}`、`GET /v1/documents/{document_id}`、`GET /v1/documents`；canonical processing 的回報接收（`/report/v1/`，不對外） | #97 | 已完成，在 `dev` |
 | projection 的回報接收 | Build 狀態、登記、serving 事實、heartbeat 與修復要求、attempt、補建完成；`readiness` 的 serving 部分 | #252 | 已完成，在 `dev`；讀取端開始回報之前（#78）`readiness` 仍是 `not_ready` |
-| consumer SDK 與 reference projection | `kp_sdk.projection`（讀取、內容讀取、回報的包裝）；`kp-reference-projection`：讀 Change Feed、每份文件收斂到現況、寫入前登記、確認、移除、heartbeat | #127 | 已完成，在 `dev`；部署單位等 #78；查詢端點 `kp-reference-projection-query`（#279）已完成；Build 生命週期 #280、修復 #281、合成產物 #282 |
+| consumer SDK 與 reference projection | `kp_sdk.projection`（讀取、內容讀取、回報的包裝）；`kp-reference-projection`：讀 Change Feed、每份文件收斂到現況、寫入前登記、確認、移除、heartbeat | #127 | 已完成，在 `dev`；部署單位等 #78；查詢端點 `kp-reference-projection-query`（#279）與 Build 生命週期（#280）已完成；修復 #281、合成產物 #282 |
 | 修復 view 的接收 | 讀取端分頁送來整份 view（`PUT /report/v1/builds/{build_id}/repair-views/{view_id}/pages/{page}`），到齊後一次替換 mirror；遺失寫入之後的 `kp-admission writes-lost` | #260 | 已完成，在 `dev` |
 | mirror 的保留 | 移除已退役 Build 的事實、舊的 attempt 與過期的 tombstone | #264 | 未實作，pilot 之後，可以開始 |
 | Canonical Acceptance 的記錄 | `accepted`、目前的 Canonical Revision、`current_revision_changed`、作廢的版本、`details` 的方法版本落後 | #251 | 已完成，在 `dev` |
