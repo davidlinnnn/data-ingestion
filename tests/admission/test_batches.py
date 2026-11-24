@@ -10,6 +10,7 @@ belong to other tickets (processing outcomes, Source Deletion) are written to th
 
 import asyncio
 import hashlib
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -17,7 +18,7 @@ import psycopg
 import pytest
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption
+from kp_admission import adoption, scan
 from kp_admission.api import SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake, SourceSettings, expire
@@ -858,3 +859,26 @@ async def test_concurrent_finalizations_of_one_document_admit_one_and_keep_the_h
     # v2 first: v3 is §6.4 and returns v2's request. v3 first: v2 is stale.
     assert {e.get("request_id") for e in entries} - {None} == {latest["request_id"]}
     assert latest["source_version"] == "3"
+
+
+async def test_a_resend_and_the_scan_at_once_leave_one_active_request(
+    platform, api, store, conn, dsn
+):
+    async with api() as hr:
+        _, finalized = await submit(hr, store, [A])
+        srv = of(finalized.json(), "A")["source_revision_id"]
+        for _ in range(5):
+            [(active,)] = await (
+                await conn.execute("SELECT request_id FROM request WHERE state = 'queued'")
+            ).fetchall()
+            await processed(conn, active, "failed")  # retryable
+            await conn.execute("UPDATE request SET terminal_at = now() - interval '1 hour'")
+            async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as other:
+                await asyncio.gather(
+                    hr.post("/v1/batches", json={"items": [A]}), scan.run(other, datetime.now(UTC))
+                )
+            cursor = await conn.execute(
+                "SELECT count(*) FROM request WHERE source_revision_id = %s AND state = 'queued'",
+                (srv,),
+            )
+            assert await cursor.fetchone() == (1,)
