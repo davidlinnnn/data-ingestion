@@ -75,8 +75,8 @@ class SourceSettings(BaseModel, frozen=True, extra="forbid"):
 @dataclass(frozen=True)
 class Intake:
     """The deployment's settings of the batch API. Declarations pause while at least
-    `pause_backlog` normal-priority process requests are queued (§9), never without it: a
-    platform refresh's low-priority backlog never pauses intake. `public_url` is the origin
+    `pause_backlog` process requests a Source made are queued (§9), never without it: the
+    scan's reruns and refreshes never pause intake. `public_url` is the origin
     Sources call, which every upload URL names (§5.1); without it, the URL the request reached."""
 
     store: ObjectStore
@@ -193,7 +193,7 @@ async def _backlog(conn: AsyncConnection) -> int:
     row = await (
         await conn.execute(
             "SELECT count(*) FROM request"
-            " WHERE kind = 'process' AND state = 'queued' AND priority = 'normal'"
+            " WHERE kind = 'process' AND state = 'queued' AND initiator = 'source'"
         )
     ).fetchone()
     return row[0] if row else 0
@@ -282,15 +282,20 @@ async def _active_request(conn: AsyncConnection, uid: str, srv: str) -> str | No
     return row[0] if row else None
 
 
-async def _last_failed_request(conn: AsyncConnection, uid: str, srv: str) -> str | None:
+async def _last_failed_request(
+    conn: AsyncConnection, uid: str, srv: str
+) -> tuple[str, bool] | None:
+    """The last failed request that set the revision's outcome, a refresh's never does, and
+    whether its failure is retryable; one without the flag counts as retryable."""
     row = await (
         await conn.execute(
-            "SELECT request_id FROM request WHERE document_uid = %s AND source_revision_id = %s"
-            " AND kind = 'process' AND state = 'failed' ORDER BY created_at DESC LIMIT 1",
+            "SELECT request_id, coalesce((error ->> 'retryable')::boolean, true) FROM request"
+            " WHERE document_uid = %s AND source_revision_id = %s AND kind = 'process'"
+            " AND state = 'failed' AND initiator <> 'platform' ORDER BY created_at DESC LIMIT 1",
             (uid, srv),
         )
     ).fetchone()
-    return row[0] if row else None
+    return (row[0], row[1]) if row else None
 
 
 async def _apply_catalog(conn: AsyncConnection, uid: str, item: dict[str, Any]) -> None:
@@ -613,7 +618,9 @@ async def _same_content(
         await _record_version(conn, srv, item["source_version"])
     if active := await _active_request(conn, document.uid, srv):
         return _Outcome("queued", request_id=active, source_revision_id=srv)
-    if latest["outcome"] == "failed":
+    failed = await _last_failed_request(conn, document.uid, srv)
+    # A failure that is not retryable fails again under the same version (#98).
+    if latest["outcome"] == "failed" and failed and failed[1]:
         request_id, _ = await create_process_request(
             conn,
             tenant_id=caller.tenant_id,
@@ -625,7 +632,7 @@ async def _same_content(
             adoption_sequence=adopted[1],
             trace_id=caller.trace_id,
             batch_id=batch_id,
-            retry_of=await _last_failed_request(conn, document.uid, srv),
+            retry_of=failed[0],
         )
         return _Outcome("queued", request_id=request_id, source_revision_id=srv)
     return _Outcome("unchanged", source_revision_id=srv)

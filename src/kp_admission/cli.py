@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     AWS_* credentials, as for the processing workers; the credentials need s3:ListBucket, without
     which S3 answers a missing object with 403.
     KP_MAX_FILE_SIZE is the maximum file size in bytes (default 50 MB); with KP_PAUSE_BACKLOG,
-    declarations are refused while that many normal-priority process requests are queued.
+    declarations are refused while that many process requests that Sources made are queued.
     KP_ADMISSION_PUBLIC_URL is the https origin Sources call through the ingress, such as
     https://kp.example: every upload URL a declaration returns names it (§5.1), whatever headers
     the ingress forwards. The api also writes uploads (§5.2), so its storage credentials need

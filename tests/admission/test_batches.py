@@ -147,8 +147,9 @@ async def submit(client: httpx.AsyncClient, store, items: list[dict], **headers:
 
 
 async def processed(conn, request_id: str, outcome: str) -> None:
-    """Canonical processing's outcome: rejected (content) or failed (platform) as status reports
-    and the reconciler record it (#97), accepted by Canonical Acceptance (#251)."""
+    """Canonical processing's outcome: rejected (content), failed (platform, retryable) or
+    failed_for_good (platform, not retryable) as status reports and the reconciler record it
+    (#97), accepted by Canonical Acceptance (#251)."""
     if outcome == "accepted":
         [(uid,)] = await (
             await conn.execute(
@@ -160,8 +161,8 @@ async def processed(conn, request_id: str, outcome: str) -> None:
         )
         return
     cause = "source" if outcome == "rejected" else "platform"
-    error = {"domain": "kp-canonicalization", "reason": "R", "message": "m", "retryable": False,
-             "metadata": {"cause": cause}}  # fmt: skip
+    error = {"domain": "kp-canonicalization", "reason": "R", "message": "m",
+             "retryable": outcome == "failed", "metadata": {"cause": cause}}  # fmt: skip
     assert await record_outcome(conn, request_id, "failed", error, None)
 
 
@@ -333,7 +334,9 @@ async def test_7_too_many_items_is_400_and_too_frequent_declarations_429(platfor
 async def test_8_a_pause_refuses_declarations_and_still_finalizes_open_batches(
     platform, api, store, conn
 ):
-    await request(conn, *await revision(conn), priority="low")  # a refresh's: never a backlog
+    # The scan's requests are never a backlog, of either priority (#98).
+    await request(conn, *await revision(conn), initiator="platform", priority="low")
+    await request(conn, *await revision(conn), initiator="operator", priority="normal")
     async with api() as hr, api(pause_backlog=1) as paused:
         declared = (await paused.post("/v1/batches", json={"items": [A]})).json()
         upload(store, declared, [A])
@@ -632,6 +635,19 @@ async def test_a_platform_failed_revision_declared_again_is_retried_without_uplo
         )
     ).fetchone()
     assert retry_of == (failed,)
+
+
+async def test_a_revision_failed_for_good_declared_again_is_unchanged(platform, api, store, conn):
+    """A failure that is not retryable fails again under the same version: resending it opens no
+    request (#98)."""
+    async with api() as hr:
+        _, finalized = await submit(hr, store, [A])
+        await processed(conn, of(finalized.json(), "A")["request_id"], "failed_for_good")
+        resent = (await hr.post("/v1/batches", json={"items": [A]})).json()
+    requests = await (await conn.execute("SELECT count(*) FROM request")).fetchone()
+
+    assert of(resent, "A")["status"] == "unchanged" and "request_id" not in of(resent, "A")
+    assert requests == (1,)
 
 
 async def test_concurrent_finalizations_of_one_new_document_admit_one(platform, api, store, conn):
