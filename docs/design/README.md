@@ -18,7 +18,7 @@ four kinds, and says which in a status line at its top:
 
 | Document | Kind | Ticket | Covers |
 |---|---|---|---|
-| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99, #194 | Batch API, admission rules, status, deletion, dispatch and durability, limits, error reasons |
+| [Admission specification](knowledge-platform-admission-spec.md) | Contract | #31; built by #95–#99, #194, #268 | Batch API, admission rules, status, deletion, exact-revision content reads, dispatch and durability, limits, error reasons |
 | [Document submission guide](knowledge-platform-file-upload.md) (zh-TW) | Contract companion | #96, #194, #184 | The one document to read on how a Source hands documents to the platform: design and decisions, why the API has these calls, architecture and sequence diagrams, failure table, quick start and field tables for Source developers, deployment needs for DevOps, implementation status, the large-file assessment |
 | [Admission design notes](knowledge-platform-admission.md) | Design record | #31 | Rounds 1–5 and their reasons |
 | [Authorization](knowledge-platform-authorization.md) | Design result | #85 | Decision interface, model and pilot provider |
