@@ -133,12 +133,12 @@ async def search(
             # An entry written before `cited` existed quotes nothing until it is written again.
             " ts_headline('simple', coalesce(e.cited, ''), q,"
             " 'StartSel=**, StopSel=**, MaxWords=30, MinWords=10, MaxFragments=2')"
-            " FROM entry e JOIN build b ON b.build_id = e.build_id AND b.serving,"
+            " FROM entry e JOIN build b ON b.build_id = e.build_id AND b.state = 'serving',"
             " websearch_to_tsquery('simple', %(text)s) q,"
             # No registration is needed here: a run that registers holds the work row until
-            # it ends the registration.
-            " LATERAL (SELECT EXISTS (SELECT 1 FROM work w WHERE w.document_uid = e.document_uid)"
-            " AS stale) s"
+            # it ends the registration. Another Build's backlog, a candidate's, is not ours.
+            " LATERAL (SELECT EXISTS (SELECT 1 FROM work w WHERE w.document_uid = e.document_uid"
+            " AND w.build_id = e.build_id) AS stale) s"
             " WHERE e.markdown IS NOT NULL AND e.resource_id = ANY(%(readable)s)"
             " AND to_tsvector('simple', e.markdown) @@ q AND NOT (%(latest_only)s AND s.stale)"
             " ORDER BY ts_rank(to_tsvector('simple', e.markdown), q) DESC, e.document_uid"

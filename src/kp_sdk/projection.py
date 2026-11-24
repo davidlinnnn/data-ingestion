@@ -85,8 +85,15 @@ class ProjectionClient:
     async def sources(self) -> list[str]:
         return (await self._call("GET", "/read/v1/sources")).json()["source_ids"]
 
-    async def source_profile(self, source_id: str) -> dict[str, Any]:
-        return (await self._call("GET", f"/read/v1/sources/{_q(source_id)}/profile")).json()
+    async def source_profile(self, source_id: str) -> dict[str, Any] | None:
+        """`{"source_id", "projections", "profile_seq"}`; None for a Source without one."""
+        try:
+            response = await self._call("GET", f"/read/v1/sources/{_q(source_id)}/profile")
+        except PlatformError as error:
+            if error.reason == "SOURCE_NOT_FOUND":
+                return None
+            raise
+        return response.json()
 
     async def source_documents(
         self, source_id: str, after: str | None = None, limit: int = 100
