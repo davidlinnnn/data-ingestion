@@ -14,8 +14,8 @@ from psycopg.types.json import Jsonb
 
 from kp_admission import feed, gauges, serving
 from kp_admission.reports import Pipeline
+from kp_admission.requests import ERROR_DOMAIN
 
-ERROR_DOMAIN = "admission.knowledge-platform"
 TARGET = timedelta(minutes=10)  # spec §11's enforced target; #56 sets the cleanup time limit
 
 # A queued request ended by the deletion: the Source's own act, so its message is shown.

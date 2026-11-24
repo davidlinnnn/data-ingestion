@@ -16,12 +16,12 @@ from temporalio.client import (
 )
 from temporalio.service import RPCError, RPCStatusCode
 
-from kp_admission.requests import Candidate, record_outcome
-
-ERROR_DOMAIN = "admission.knowledge-platform"
+from kp_admission import adoption
+from kp_admission.requests import ERROR_DOMAIN, Candidate, end_withdrawn, record_outcome
 
 _UNSETTLED = """
-SELECT request_id FROM outbox JOIN request USING (request_id)
+SELECT request_id, adopted_version, files FROM outbox JOIN request USING (request_id)
+JOIN source_revision USING (source_revision_id)
 WHERE dispatched_at IS NOT NULL AND kind = 'process' AND state IN ('queued', 'processing')
 """
 
@@ -43,11 +43,13 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
     processing: a running workflow is left alone; an ended one records the request's outcome,
     succeeded with its result's candidate, or failed with the workflow's error block, as
     requests.record_outcome does; a missing one goes back to the outbox, due now under the same
-    request ID, with the reason in redispatch_reason and no current attempt. Returns how many
-    requests went each way: running, recorded, redispatched. An unreachable Temporal or a
+    request ID, with the reason in redispatch_reason and no current attempt. A running workflow of
+    a version withdrawn for its media type is terminated and its request ends failed with
+    VERSION_WITHDRAWN (#98). Returns how many requests went each way: running, recorded,
+    redispatched, withdrawn. An unreachable Temporal or a
     missing namespace raises."""
     actions: Counter[str] = Counter()
-    for (request_id,) in await (await conn.execute(_UNSETTLED)).fetchall():
+    for request_id, version, files in await (await conn.execute(_UNSETTLED)).fetchall():
         handle = client.get_workflow_handle(request_id)
         try:
             described = await handle.describe()
@@ -65,13 +67,29 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
             actions["redispatched"] += 1
             continue
         if described.status == WorkflowExecutionStatus.RUNNING:
-            actions["running"] += 1
-            continue
+            if version not in await adoption.withdrawn(conn, _media_type(files)):
+                actions["running"] += 1
+                continue
+            # It would block its revision's rerun (#98): a withdrawn version's result is discarded.
+            try:
+                await handle.terminate("Processing Profile version withdrawn")
+            except RPCError as err:
+                if err.status != RPCStatusCode.NOT_FOUND:  # NOT_FOUND: it ended meanwhile
+                    raise
+            described = await handle.describe()
+            if described.status == WorkflowExecutionStatus.TERMINATED:
+                await end_withdrawn(conn, request_id)
+                actions["withdrawn"] += 1
+                continue
         state, error, candidate = await _outcome(handle, described)
         # An outcome that status reports (#97) recorded meanwhile stays.
         await record_outcome(conn, request_id, state, error, described.close_time, candidate)
         actions["recorded"] += 1
     return actions
+
+
+def _media_type(files: list[dict[str, Any]]) -> str:
+    return next(f["media_type"] for f in files if f["role"] == "main")
 
 
 async def _outcome(
