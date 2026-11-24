@@ -622,6 +622,23 @@ async def test_a_second_run_of_a_failed_request_fails_alike_and_writes_no_result
     assert await ports.store.head(f"requests/{start['request_id']}/result.json") is None
 
 
+async def test_a_second_run_of_a_succeeded_request_keeps_the_content_object_and_its_candidate(
+    client, ports, runtime
+):
+    # A reconciler redispatch: the same request ID, a new run, the content object written once.
+    start = await start_input(ports, seven_pages(), request_id=f"req_{uuid.uuid4().hex[:8]}")
+    first, first_run = await process(client, ports, runtime, start)
+    key = first["candidate"]["ref"]
+    stored = await ports.store.get(key)
+
+    second, second_run = await process(client, ports, runtime, start)
+
+    assert first_run != second_run
+    assert second["candidate"] == first["candidate"]
+    assert await ports.store.get(key) == stored
+    assert hashlib.sha256(stored).hexdigest() == first["candidate"]["sha256"]
+
+
 async def test_the_adoption_gate_file_completes_end_to_end(client, ports, runtime):
     """The gate's test workflow (#261) runs this file: it must reach `complete` on a working
     build, through every enrichment queue."""
