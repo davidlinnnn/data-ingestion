@@ -1,13 +1,15 @@
 """The consumer SDK for projections (#127): the governed reads under `/read/v1/` (#126, canonical
-consumption DR §3), the two Canonical content reads (#268) and the projection reports under
-`/report/v1/` (admission spec §7.4). Every obligation of the protocol is met over HTTP; this
-wraps the calls and leaves the protocol to its caller.
+consumption DR §3), the two Canonical content reads (#268), the projection reports under
+`/report/v1/` (admission spec §7.4) and, for a projection's query side, the Resources a user
+may read (`readable`, authorization guide §5). Every obligation of the protocol is met over
+HTTP; this wraps the calls and leaves the protocol to its caller.
 
 Cursors, feed positions, `crv_` revision IDs, `resource_id` and the image references inside
 content are opaque strings: nothing here parses them.
 
 Every call is safe to repeat, so a lost connection, a 429 or a 5xx is sent again, after its
-Retry-After when it has one; what is still refused raises kp_sdk.PlatformError. It depends on
+Retry-After when it has one; what is still refused raises kp_sdk.PlatformError. `readable` is
+the exception: the guide allows it one more listing from the first page. It depends on
 httpx and the standard library only.
 """
 

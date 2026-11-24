@@ -14,9 +14,9 @@ contract of canonical consumption DR E4. A second role: it never runs in the rea
   goal (`search` is the one place to change it).
 - **A result** carries `document_uid`, `resource_id`, the served Source and Canonical Revisions,
   the Source Revision's time, `stale` and a snippet. `stale` is what this projection knows at
-  query time: an event of the Document is not handled yet, or a newer revision's write is in
-  progress. An event the reader has not read yet does not show. `latest_only` leaves stale
-  results out.
+  query time: the reader has queued an event of the Document that no run has finished, such
+  as a newer revision being written. An event the reader has not read yet does not show.
+  `latest_only` leaves stale results out.
 - **The snippet** quotes the entry's `cited` text, which withholds every block a `disputed`
   enrichment targets (LaTeX of a formula, a table's values); the search still matches them.
 
@@ -114,9 +114,9 @@ async def search(
             " 'StartSel=**, StopSel=**, MaxWords=30, MinWords=10, MaxFragments=2')"
             " FROM entry e JOIN build b ON b.build_id = e.build_id AND b.serving,"
             " websearch_to_tsquery('simple', %(text)s) q,"
+            # A registration of a newer write always has its work row: a run ends either.
             " LATERAL (SELECT EXISTS (SELECT 1 FROM work w WHERE w.document_uid = e.document_uid)"
-            " OR EXISTS (SELECT 1 FROM registration r WHERE (r.build_id, r.document_uid,"
-            " r.resource_id) = (e.build_id, e.document_uid, e.resource_id)) AS stale) s"
+            " AS stale) s"
             " WHERE e.markdown IS NOT NULL AND e.resource_id = ANY(%(readable)s)"
             " AND to_tsvector('simple', e.markdown) @@ q AND NOT (%(latest_only)s AND s.stale)"
             " ORDER BY ts_rank(to_tsvector('simple', e.markdown), q) DESC, e.document_uid"
