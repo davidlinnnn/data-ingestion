@@ -4,6 +4,7 @@ over HTTP. Each test drives the reader step by step, then searches as a user."""
 
 import json
 import logging
+from datetime import datetime
 
 import httpx
 import pytest
@@ -264,11 +265,13 @@ async def test_a_result_names_its_served_revision_and_latest_only_leaves_out_a_s
     await settle(reader)
     [fresh] = (await search(client, "trips", latest_only=True)).json()["results"]
 
+    times = dict(await (await conn.execute(
+        "SELECT source_revision_id, created_at FROM source_revision")).fetchall())  # fmt: skip
     assert hit == {
         "document_uid": uid,
         "resource_id": "s1/hr-all",
         "source_revision_id": "srv_s1_A",
-        "source_revision_created_at": None,  # until #268's state gives it
+        "source_revision_created_at": times["srv_s1_A"].isoformat().replace("+00:00", "Z"),
         "canonical_revision_id": "crv_a1",
         "stale": True,
         "snippet": "Rules for **trips**",
@@ -279,6 +282,7 @@ async def test_a_result_names_its_served_revision_and_latest_only_leaves_out_a_s
         "crv_a2",
         False,
     )
+    assert datetime.fromisoformat(fresh["source_revision_created_at"]) == times["srv_2"]
 
 
 def enriched(crv: str, canary: str = "") -> dict:
@@ -355,7 +359,9 @@ async def test_no_canary_reaches_the_logs_or_the_metrics(conn, platform, reader,
 
 
 @pytest.mark.parametrize("users", [None, "not json", '["alice"]'])
-def test_the_query_process_exits_2_on_a_missing_or_malformed_setting(monkeypatch, users):
+def test_the_query_process_exits_2_on_a_missing_or_malformed_setting(
+    monkeypatch, root_logging, users
+):
     for name, value in {"KP_PLATFORM_URL": "http://api", "KP_PROJECTION_CREDENTIAL": "c",
                         "KP_PROJECTION_DATABASE_URL": "postgresql://x"}.items():  # fmt: skip
         monkeypatch.setenv(name, value)
@@ -364,4 +370,9 @@ def test_the_query_process_exits_2_on_a_missing_or_malformed_setting(monkeypatch
     else:
         monkeypatch.setenv("KP_QUERY_USERS", users)
 
-    assert cli.query_main() == 2
+    httpx_log = logging.getLogger("httpx")
+    level = httpx_log.level
+    try:
+        assert cli.query_main() == 2
+    finally:
+        httpx_log.setLevel(level)  # query_main() quiets httpx for the whole process
