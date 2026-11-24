@@ -1,7 +1,7 @@
 """kp-admission command line: the api, dispatcher and reconciler roles (#95, #113, admission
 spec §13), Change Feed retention and the Knowledge Profile write point (#126), batch expiry and
 the two adoption commands (#96, admission spec §3), the upload cleanup (#194), declarative
-adoption (#261).
+adoption (#261), the enforcement judgment and the scan (#98).
 
 The database comes from KP_ADMISSION_DATABASE_URL; Temporal from TEMPORAL_ADDRESS (default
 localhost:7233) and TEMPORAL_NAMESPACE (default "default"), as for kp-canonicalization.
@@ -25,7 +25,19 @@ import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, batches, feed, gate, reports, serving, status, uploads
+from kp_admission import (
+    adoption,
+    batches,
+    deletion,
+    feed,
+    gate,
+    gauges,
+    reports,
+    scan,
+    serving,
+    status,
+    uploads,
+)
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.dispatcher import dispatch_due, temporal_start
@@ -48,8 +60,8 @@ def main(argv: list[str] | None = None) -> int:
     """`kp-admission api [--metrics-port P]`: serve the platform API on KP_ADMISSION_API_PORT
     (default 8080) until SIGTERM or SIGINT; it finishes open requests, then ends by that signal, as
     uvicorn does. With P it serves kp_admission.api's metrics at http://0.0.0.0:P/metrics, and
-    the gauges of kp_admission.feed, kp_admission.serving and kp_admission.adoption, measured
-    every OBSERVE_S seconds.
+    the gauges of kp_admission.feed, kp_admission.serving, kp_admission.adoption and the CronJobs'
+    (kp_admission.gauges), measured every OBSERVE_S seconds.
     KP_AUTHZ_PROVIDER selects the authz provider: `allow-all`, the only one, which it refuses
     unless KP_DEPLOYMENT is `pilot` (#113; the marker is #78's). KP_AUTHZ_PEP_CREDENTIALS registers
     the PEPs that may call the authz API, as a JSON object from the SHA-256 hex digest of each
@@ -114,6 +126,16 @@ def main(argv: list[str] | None = None) -> int:
     that is not the adopted one. Each prints the result as JSON and opens no refresh request
     (#98 does).
 
+    `kp-admission enforce`: one run of Source Deletion's enforcement judgment (#98, §8), the
+    CronJob that marks each applied deletion enforced once no Build holds its Document
+    (kp_admission.deletion.enforce). It needs KP_PIPELINES as the api does, for liveness; the
+    deployment repo stops it from a database restore until the writes-lost Job has run. It
+    prints how many deletions went each way, as JSON.
+
+    `kp-admission scan`: one run of the scan (#98, §9), the CronJob, every 5 minutes, that reruns
+    content without a result, refreshes and redoes Canonical Revisions under the adopted version
+    (kp_admission.scan). It prints how many requests it opened of each kind, as JSON.
+
     `kp-admission writes-lost EVENT`: operations' declaration that the admission database lost
     committed writes (a restore, a point-in-time restore, a failover that lost commits; DR §5.6),
     run by a Job of the deployment repo with the event's number, which each such declaration
@@ -137,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
     profile.add_argument("source")
     profile.add_argument("projections", nargs="*")
     roles.add_parser("expire")
+    roles.add_parser("enforce")
+    roles.add_parser("scan")
     roles.add_parser("writes-lost").add_argument("event", type=_positive)
     for command in ("adopt", "cancel-adoption"):
         adopting = roles.add_parser(command)
@@ -176,19 +200,7 @@ def main(argv: list[str] | None = None) -> int:
         if len(set(ids)) < len(ids) or len(tenants) > 1:
             print("KP_CREDENTIALS needs distinct credential_ids and one tenant_id", file=sys.stderr)
             return 2
-        try:
-            pipelines = PIPELINES.validate_json(os.environ.get("KP_PIPELINES", "{}"))
-        except pydantic.ValidationError:
-            pipelines = None
-        # Several credentials may name one pipeline, to rotate them, with one registration.
-        by_id = {p.pipeline_id: p for p in (pipelines or {}).values()}
-        tracks = [p.track for p in by_id.values()]
-        if (
-            pipelines is None
-            or any(by_id[p.pipeline_id] != p for p in pipelines.values())
-            or len(set(tracks)) < len(tracks)
-        ):
-            print("KP_PIPELINES is not valid", file=sys.stderr)
+        if (pipelines := _pipelines()) is None:
             return 2
         port = os.environ.get("KP_ADMISSION_API_PORT", "8080")
         if not port.isdecimal():
@@ -228,6 +240,12 @@ def main(argv: list[str] | None = None) -> int:
             prometheus_client.start_http_server(args.metrics_port)
         return asyncio.run(run_api(dsn, peps, credentials, intake, int(port), pipelines))
     log_json_lines()
+    if args.role == "enforce":
+        if (pipelines := _pipelines()) is None:
+            return 2
+        return asyncio.run(run_enforce(dsn, {p.track: p for p in pipelines.values()}))
+    if args.role == "scan":
+        return asyncio.run(run_scan(dsn))
     if args.role == "feed-retention":
         return asyncio.run(run_feed_retention(dsn))
     if args.role == "set-profile":
@@ -257,6 +275,25 @@ def _positive(value: str) -> int:
     if not value.isdecimal() or int(value) < 1:
         raise argparse.ArgumentTypeError("a number from 1")
     return int(value)
+
+
+def _pipelines() -> dict[str, reports.Pipeline] | None:
+    """KP_PIPELINES by credential digest, or None, said on stderr, when it is not valid."""
+    try:
+        pipelines = PIPELINES.validate_json(os.environ.get("KP_PIPELINES", "{}"))
+    except pydantic.ValidationError:
+        pipelines = None
+    # Several credentials may name one pipeline, to rotate them, with one registration.
+    by_id = {p.pipeline_id: p for p in (pipelines or {}).values()}
+    tracks = [p.track for p in by_id.values()]
+    if (
+        pipelines is None
+        or any(by_id[p.pipeline_id] != p for p in pipelines.values())
+        or len(set(tracks)) < len(tracks)
+    ):
+        print("KP_PIPELINES is not valid", file=sys.stderr)
+        return None
+    return pipelines
 
 
 def _storage_set() -> bool:
@@ -299,9 +336,22 @@ async def observe(pool: AsyncConnectionPool[Any], pipelines: dict[str, reports.P
                 await feed.observe(conn)
                 await serving.silent(conn, pipelines, datetime.now(UTC))
                 await adoption.observe(conn)
+                await gauges.observe(conn)
         except Exception as error:  # the gauges keep their last values; the api keeps serving
             log.warning("feed and liveness metrics not measured: %s", type(error).__name__)
         await asyncio.sleep(OBSERVE_S)
+
+
+async def run_enforce(dsn: str, pipelines: dict[str, reports.Pipeline]) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        print(json.dumps(await deletion.enforce(conn, pipelines, datetime.now(UTC))))
+    return 0
+
+
+async def run_scan(dsn: str) -> int:
+    async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as conn:
+        print(json.dumps(await scan.run(conn, datetime.now(UTC))))
+    return 0
 
 
 async def run_feed_retention(dsn: str) -> int:

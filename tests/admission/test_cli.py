@@ -14,7 +14,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from kp_admission import feed, serving
+from kp_admission import adoption, feed, serving
 from kp_admission.cli import main
 from tests.admission.support import request, resource, revision, runs
 
@@ -404,6 +404,10 @@ async def test_writes_lost_applies_each_declared_event_once(conn, dsn):
 @pytest.mark.network
 async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(conn, dsn):
     await feed.report_cursor(conn, "wiki", await feed.head(conn))
+    await conn.execute(  # an enforce run's record (#98)
+        "INSERT INTO job_gauge (name, label, value)"
+        " VALUES ('kp_admission_deletions_unenforced', 'held', 2)"
+    )
     await conn.execute(  # an apply-adoption run's record (#261)
         "INSERT INTO adoption_status (tenant_id, media_type, result, reason, since)"
         " VALUES ('t1', 'application/pdf', 'refused', 'version_withdrawn', now())"
@@ -435,6 +439,7 @@ async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(
         'kp_admission_adoption_status{media_type="application/pdf",reason="version_withdrawn",'
         'result="refused"} 1.0'
     ) in page
+    assert 'kp_admission_deletions_unenforced{reason="held"} 2.0' in page
 
 
 @pytest.mark.docker
@@ -483,3 +488,25 @@ async def test_apply_adoption_logs_one_line_per_media_type_and_fails_on_a_refusa
         [("refused", "declaration_not_raised")],
     )
     assert bad.returncode == 2
+
+
+@pytest.mark.docker
+async def test_enforce_and_scan_are_one_shot_runs_that_print_their_counts(conn, dsn):
+    """#98: the deployment repo's CronJobs; enforce reads KP_PIPELINES as the api does."""
+    uid, srv = await revision(conn)
+    await conn.execute(
+        "UPDATE document SET latest_source_revision_id = %s WHERE document_uid = %s", (srv, uid)
+    )
+    await adoption.adopt(conn, tenant_id="t1", media_type="application/pdf", version="paper-pdf@1")
+    env = os.environ | {"KP_ADMISSION_DATABASE_URL": dsn}
+    wiki = PIPELINE | {"pipeline_id": "kp-wiki", "track": "wiki", "update_interval_s": 600}
+
+    def run(command: str, **more: str) -> tuple[int, object]:
+        process = role(command, env | more, stdout=subprocess.PIPE)
+        printed = process.communicate(timeout=60)[0]
+        return process.returncode, json.loads(printed) if printed else None
+
+    assert run("scan") == (0, {"rerun": 1})
+    assert run("scan") == (0, {})  # its request is active
+    assert run("enforce", KP_PIPELINES=json.dumps({"d1": wiki})) == (0, {})
+    assert run("enforce", KP_PIPELINES="[]") == (2, None)
