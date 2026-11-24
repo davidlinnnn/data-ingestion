@@ -10,6 +10,7 @@ belong to other tickets (processing outcomes, Source Deletion) are written to th
 
 import asyncio
 import hashlib
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -17,7 +18,7 @@ import psycopg
 import pytest
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption
+from kp_admission import adoption, scan
 from kp_admission.api import SourceCredential, app
 from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake, SourceSettings, expire
@@ -147,8 +148,9 @@ async def submit(client: httpx.AsyncClient, store, items: list[dict], **headers:
 
 
 async def processed(conn, request_id: str, outcome: str) -> None:
-    """Canonical processing's outcome: rejected (content) or failed (platform) as status reports
-    and the reconciler record it (#97), accepted by Canonical Acceptance (#251)."""
+    """Canonical processing's outcome: rejected (content), failed (platform, retryable) or
+    failed_for_good (platform, not retryable) as status reports and the reconciler record it
+    (#97), accepted by Canonical Acceptance (#251)."""
     if outcome == "accepted":
         [(uid,)] = await (
             await conn.execute(
@@ -160,8 +162,8 @@ async def processed(conn, request_id: str, outcome: str) -> None:
         )
         return
     cause = "source" if outcome == "rejected" else "platform"
-    error = {"domain": "kp-canonicalization", "reason": "R", "message": "m", "retryable": False,
-             "metadata": {"cause": cause}}  # fmt: skip
+    error = {"domain": "kp-canonicalization", "reason": "R", "message": "m",
+             "retryable": outcome == "failed", "metadata": {"cause": cause}}  # fmt: skip
     assert await record_outcome(conn, request_id, "failed", error, None)
 
 
@@ -333,7 +335,9 @@ async def test_7_too_many_items_is_400_and_too_frequent_declarations_429(platfor
 async def test_8_a_pause_refuses_declarations_and_still_finalizes_open_batches(
     platform, api, store, conn
 ):
-    await request(conn, *await revision(conn), priority="low")  # a refresh's: never a backlog
+    # The scan's requests are never a backlog, of either priority (#98).
+    await request(conn, *await revision(conn), initiator="platform", priority="low")
+    await request(conn, *await revision(conn), initiator="operator", priority="normal")
     async with api() as hr, api(pause_backlog=1) as paused:
         declared = (await paused.post("/v1/batches", json={"items": [A]})).json()
         upload(store, declared, [A])
@@ -477,9 +481,7 @@ async def test_14_an_item_declared_before_a_deletion_is_rejected_and_a_new_c_is_
         before = (await hr.post("/v1/batches", json={"items": [c2]})).json()
         upload(store, before, [c2])
         old_uid = of(before, "C")["document_uid"]
-        await conn.execute(  # Source Deletion applied (§8, #98)
-            "UPDATE document SET deleted_at = now() WHERE document_uid = %s", (old_uid,)
-        )
+        assert (await hr.delete("/v1/documents/C")).status_code == 202  # §8
         rejected = await hr.post(f"/v1/batches/{before['batch_id']}/finalize")
         assert rejected.json()["items"][0]["error"]["reason"] == "DOCUMENT_DELETED"
 
@@ -634,6 +636,25 @@ async def test_a_platform_failed_revision_declared_again_is_retried_without_uplo
         )
     ).fetchone()
     assert retry_of == (failed,)
+
+
+async def test_a_revision_failed_for_good_declared_again_is_unchanged(platform, api, store, conn):
+    """A failure that is not retryable fails again under the same version: resending it opens no
+    request and costs no intake token (#98), as resending rejected content does."""
+    tokens = "SELECT tokens FROM intake_quota"
+    async with api() as hr:
+        _, finalized = await submit(hr, store, [A, C1])
+        await processed(conn, of(finalized.json(), "A")["request_id"], "failed_for_good")
+        await processed(conn, of(finalized.json(), "C")["request_id"], "rejected")
+        before = await (await conn.execute(tokens)).fetchone()
+        resent = (await hr.post("/v1/batches", json={"items": [A, C1]})).json()
+        after = await (await conn.execute(tokens)).fetchone()
+    requests = await (await conn.execute("SELECT count(*) FROM request")).fetchone()
+
+    assert [of(resent, d)["status"] for d in "AC"] == ["unchanged", "unchanged"]
+    assert "request_id" not in of(resent, "A")
+    assert requests == (2,)
+    assert before and after and after[0] >= before[0]  # neither item took a token (refill aside)
 
 
 async def test_concurrent_finalizations_of_one_new_document_admit_one(platform, api, store, conn):
@@ -844,3 +865,26 @@ async def test_concurrent_finalizations_of_one_document_admit_one_and_keep_the_h
     # v2 first: v3 is §6.4 and returns v2's request. v3 first: v2 is stale.
     assert {e.get("request_id") for e in entries} - {None} == {latest["request_id"]}
     assert latest["source_version"] == "3"
+
+
+async def test_a_resend_and_the_scan_at_once_leave_one_active_request(
+    platform, api, store, conn, dsn
+):
+    async with api() as hr:
+        _, finalized = await submit(hr, store, [A])
+        srv = of(finalized.json(), "A")["source_revision_id"]
+        for _ in range(5):
+            [(active,)] = await (
+                await conn.execute("SELECT request_id FROM request WHERE state = 'queued'")
+            ).fetchall()
+            await processed(conn, active, "failed")  # retryable
+            await conn.execute("UPDATE request SET terminal_at = now() - interval '1 hour'")
+            async with await psycopg.AsyncConnection.connect(dsn, autocommit=True) as other:
+                await asyncio.gather(
+                    hr.post("/v1/batches", json={"items": [A]}), scan.run(other, datetime.now(UTC))
+                )
+            cursor = await conn.execute(
+                "SELECT count(*) FROM request WHERE source_revision_id = %s AND state = 'queued'",
+                (srv,),
+            )
+            assert await cursor.fetchone() == (1,)

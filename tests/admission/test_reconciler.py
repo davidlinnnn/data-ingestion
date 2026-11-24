@@ -7,7 +7,7 @@ import pytest
 from temporalio import workflow
 from temporalio.api.common.v1 import WorkflowExecution
 from temporalio.api.workflowservice.v1 import DeleteWorkflowExecutionRequest
-from temporalio.client import Client
+from temporalio.client import Client, WorkflowExecutionStatus
 from temporalio.service import RPCError, RPCStatusCode
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
@@ -186,3 +186,27 @@ async def test_a_missing_namespace_raises_and_sends_nothing_back(conn, temporal,
     assert raised.value.status == RPCStatusCode.NOT_FOUND
     cursor = await conn.execute("SELECT dispatched_at IS NOT NULL, redispatch_reason FROM outbox")
     assert await cursor.fetchone() == (True, None)
+
+
+async def test_the_reconciler_terminates_a_running_workflow_of_a_withdrawn_version(conn, temporal):
+    """#98: the workflow of a withdrawn version would block its revision's rerun; it ends as
+    VERSION_WITHDRAWN and the revision's outcome stays."""
+    withdrawn = (await request(conn, *await revision(conn), adopted_version="paper-pdf@8"))[0]
+    running = (await request(conn, *await revision(conn), adopted_version="paper-pdf@9"))[0]
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 2  # no worker polls
+    await conn.execute(
+        "INSERT INTO withdrawn_version (tenant_id, media_type, version)"
+        " VALUES ('t1', 'application/pdf', 'paper-pdf@8')"
+    )
+
+    assert await reconcile(conn, temporal) == Counter(withdrawn=1, running=1)
+
+    described = await temporal.get_workflow_handle(withdrawn).describe()
+    cursor = await conn.execute(
+        "SELECT request_id, state, error ->> 'reason', outcome"
+        " FROM request JOIN source_revision USING (source_revision_id)"
+    )
+    by_id = {row[0]: row[1:] for row in await cursor.fetchall()}
+    assert described.status == WorkflowExecutionStatus.TERMINATED
+    assert by_id[withdrawn] == ("failed", "VERSION_WITHDRAWN", "pending")
+    assert by_id[running] == ("queued", None, "pending")

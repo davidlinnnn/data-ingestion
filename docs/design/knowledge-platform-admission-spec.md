@@ -22,7 +22,7 @@ validation (§13) measures them.
 
 In scope: document submission through batches, file upload through the
 platform, durable admission, dispatch to Temporal, request and document status, Source Deletion,
-application retry and platform redrive, retention, and the validation plan.
+application retry and the platform scan, retention, and the validation plan.
 
 Out of scope here, with owners:
 
@@ -97,7 +97,8 @@ Constraints:
 
   | The request ends | `source_revision.outcome` |
   |---|---|
-  | `failed`, `error.metadata.cause` is `source` | `rejected` |
+  | `failed` with `VERSION_WITHDRAWN` (§9) or `DOCUMENT_DELETED` (§8) | unchanged: neither says anything of the revision |
+  | `failed`, any other error whose `error.metadata.cause` is `source` | `rejected` |
   | `failed`, any other error, `WORKFLOW_ENDED_WITHOUT_RESULT` included | `failed` |
   | `succeeded` | `pending`; `accepted` in the same transaction when it forms Canonical Acceptance (below) |
 
@@ -499,7 +500,8 @@ document's current state.
 
 Process states: `queued`, `processing`, `succeeded` (processing completed;
 Canonical Acceptance, when it forms, commits with it, §3), `failed`. Delete states: `received`, `applied`,
-`enforced`. Visible immediately after `202`, before any workflow exists.
+`enforced`; a delete request is recorded `applied` (§8). Visible immediately after `202`, before
+any workflow exists.
 
 - A `process` request becomes `processing` with the first report of its current
   attempt (§7.3), and ends with the failure, or success at the last registered
@@ -524,7 +526,8 @@ Canonical Acceptance, when it forms, commits with it, §3), `failed`. Delete sta
   report; it is internal: do not use it for status decisions.
 - A Source sees the requests of its own Documents, platform refreshes included;
   another Source's request is `404`. A request is `404` 30 days after its
-  `terminal_at` (§11); an active one never expires. The record stays: removal is
+  `terminal_at` (§11), a delete request 30 days after its deletion was applied
+  (§8); an active `process` request never expires. The record stays: removal is
   not built. Requires the submit permission, as §5.6 and §5.7 do.
 
 ### 5.6 Document: `GET /v1/documents/{document_id}`
@@ -553,7 +556,7 @@ Returns the current generation (Q10.1f):
 
 - The current generation is the Document not deleted; when every generation of
   the `document_id` is deleted, the one deleted last, with readiness `deleted`.
-  Its `404` 30 days after deletion is #98's. Another Source's Document is `404`.
+  It is `404` 30 days after its deletion was applied (§11). Another Source's Document is `404`.
 - `resource_id` is the Source's own key of the Resource (ADR-0013).
 - `details` is internal: do not use it for status decisions. It is `null`
   except for a method-version lag of a Document not deleted, when the
@@ -623,9 +626,21 @@ deletions with this list.
 
 ### 5.8 Delete: `DELETE /v1/documents/{document_id}`
 
-`202` with `{ "request_id": "req_…", "kind": "delete", "state": "received" }`.
-Requires the submit permission. A repeated call returns the same request. §8
-describes the stages.
+`202` with `{ "request_id": "req_…", "kind": "delete", "state": "applied" }`.
+Requires the submit permission. A repeated call returns the same request, in
+its state then, while no later generation of the `document_id` exists and the
+deleted one is visible (§11); after that, and for a `document_id` the Source
+never had, `404`. Once the `document_id` is declared again, a call deletes that
+new generation: a client that retries a timed-out deletion does so before it
+declares the Document again. The delete request is `404` 30 days after the
+deletion was applied, `enforced` or not. §8 describes the stages.
+
+- The deletion is applied in the transaction that records it, so the call
+  returns `applied`, and `received` is never observed. A client follows the
+  request to `enforced` with `GET /v1/requests/{request_id}` (§5.5), and
+  treats any state it does not know as not yet `enforced`.
+- Changed on 2026-11-24 (#98): the response showed `received`. ADR-0014 left
+  nothing between recording the deletion and applying it.
 
 ## 6. Admission rules
 
@@ -715,8 +730,18 @@ another document are never merged.
 | Latest Source Revision | Result |
 |---|---|
 | Has an active `process` request | `queued` with that request (Q10.1h) |
-| Outcome `failed` (platform cause) and no active request | New `process` request for the same Source Revision: `initiator: source`, `retry_of` the last failed request, no upload, counted against quota |
-| Any other outcome | `unchanged` |
+| Outcome `failed` (platform cause), its last failure retryable, and no active request | New `process` request for the same Source Revision: `initiator: source`, `retry_of` the last failed request, no upload, counted against quota |
+| Any other outcome, a failure that is not retryable included | `unchanged` |
+
+The last failure is the newest failed request of the Source Revision that is not
+a platform refresh; it is retryable unless its `error.retryable` is `false`.
+Added on 2026-11-24 (#98): a failure that is not retryable fails again under the
+same Processing Profile version, so resending it opened a request that could
+only fail. The scan (§9) runs it once under each later adoption. Such a resend,
+and one of rejected content, costs no intake token: the declaration takes one per
+item (§11) and returns it when the item is `unchanged` for either reason (#98,
+R4 of the canonical persistence scenarios). A declaration with too few tokens is
+still `429`, as the tokens are counted before any item is decided.
 
 `title`, `source_url` and `metadata` apply in all three cases.
 
@@ -1244,7 +1269,7 @@ the gauge above.
 
 | Stage | Meaning | Who | Target |
 |---|---|---|---|
-| `received` | Durable fact committed, `202` returned | #31 | Same call |
+| `received` | Durable fact committed, `202` returned (the pilot records `applied` in the same transaction, §5.8) | #31 | Same call |
 | `applied` | Agents can no longer find, read or cite the document's own content; readiness `deleted` | Serving-time block keyed by `document_uid` (#56, #76), recorded by #31 | 1 minute, *unmeasured* |
 | `enforced` | Every required projection has removed the document and adjusted products derived from it (for example LLM-wiki pages) | Projection owners via #55; judged by #31 from their reports and serving facts | 10 minutes, *unmeasured* |
 
@@ -1280,6 +1305,47 @@ the gauge above.
   the application deletes the document and the security team requests an
   immediate purge through the #56 governance path.
 
+How the pilot does it (#98):
+
+- **`applied`, in the call.** One transaction locks the live Document, records
+  the delete request `applied`, sets `deleted_at` (the time a Custody Purge,
+  #267, counts from) and `delete_request_id`, clears `title`, `source_url` and
+  `metadata`, and appends a `document_deleted` event of priority `narrowing`.
+  It also ends each `process` request of the Document that no dispatcher has
+  started: `failed`, `DOCUMENT_DELETED`, whose `cause` is `source`, so its
+  message is shown. A request already started runs on and forms no acceptance
+  (§3). A request whose outbox row a dispatcher holds at that moment counts as
+  started; when that start fails, the dispatcher ends it the same way when it is
+  next due.
+- **`enforced`, by a CronJob.** `kp-admission enforce` runs every minute. For
+  each applied deletion it locks the Document, as registration does (§7.4), and
+  reads the facts that Builds not retired hold of it. With no `included` or
+  `pending` fact left, the request becomes `enforced`, and `terminal_at` is that
+  time. A registration either committed its `pending` fact before this read, or
+  it finds the Document deleted and is refused (`409 SUPERSEDED`).
+- **No judgment** while any Build not retired lacks liveness (§7.4), while
+  `writes_unrepaired` lists a Build, or until the longest `update_interval_s`
+  of the projection pipelines has passed since the last lost-writes
+  declaration (§7.4, Lost writes). The run then judges none and says why. The
+  deployment repo stops the CronJob from a database restore until the
+  `writes-lost` Job has run (#78). The CronJob reads the `api`'s
+  `KP_PIPELINES` and exits 2 when it names no pipeline: with none, no silent
+  Build could suspend the judgment.
+- **Alerting.** `kp_admission_deletions_unenforced{reason}` counts the
+  deletions applied more than 10 minutes ago and not yet `enforced`: `held`
+  (a Build still holds the Document), `liveness` or `writes_lost` (the judgment
+  is suspended). Each held deletion past that time is logged with the
+  projections and Builds that hold it. The CronJob writes the value to the
+  database, and the `api` exports it, as with the adoption gauges (§3). While the
+  CronJob does not run, the value is stale; a rule on
+  `kp_admission_job_last_run_timestamp_seconds{job="enforce"}` (§9) shows it.
+- **Measured** on 2026-11-24 (`docs/validation/98`): `applied` within 35 ms of
+  1000 calls; one `enforce` run judged 1001 deletions in 0.8 s. The projections'
+  share of `enforced` is not measured yet (#127).
+- **Rebind.** No move between Resources exists in the pilot, so there is no
+  move-out to judge. The rule for it is C3's: complete when no fact names the
+  old Resource (`serving.held`).
+
 ## 9. Dispatch and durability
 
 - The request and its outbox row commit in one transaction before `201` or
@@ -1295,12 +1361,67 @@ the gauge above.
   outcome: running → left alone; closed → outcome recorded (§3); missing →
   re-dispatched with the same ID, the reason recorded and the current attempt
   cleared.
-- Redrive (operator command): for every document whose latest Source Revision is
-  platform-failed with no active request, create a `process` request with
-  `initiator: operator`, low priority, no quota.
-- Platform refresh after an owner adopts a version: one `process` request per
-  affected document's current canonical revision, `initiator: platform`, the
-  adoption sequence recorded, low priority, no quota.
+- A request of a withdrawn version (§3) does not wait for a result that would be
+  discarded. A dispatcher that claims a queued one ends it, `failed` with
+  `VERSION_WITHDRAWN`, and takes it out of the outbox. The reconciler
+  terminates a running workflow of one and records the same. Neither changes the
+  Source Revision's outcome, so the scan reruns it at once.
+- **The scan** (`kp-admission scan`, a CronJob every 5 minutes, #98) reruns,
+  refreshes and redoes Documents under the version adopted for their main
+  file's media type. It replaces the redrive command and the refresh opened at
+  each adoption (#57, 2026-11-22: nobody runs commands in a PROD pod). It skips
+  a Document that is deleted, has an active request, or has no adopted version
+  or a withdrawn one.
+  For the others the first rule that holds decides:
+
+  | # | The Document | The scan opens |
+  |---|---|---|
+  | 1 | The latest Source Revision's Canonical Revision is current, and the adopted version made it | Nothing |
+  | 2 | It is current, another version made it, that version is withdrawn or in the latest adoption's refresh scope, and the latest Source Revision may be reopened | A request for it: `initiator: platform`, `low` |
+  | 3 | The latest Source Revision has no Canonical Revision and may be reopened | A request for it: `initiator: operator`, `normal`, whatever the scope |
+  | 4 | As 3 but it may not be reopened; the current revision, of an earlier Source Revision whose main file has the same media type, is a withdrawn version's or in the scope; that Source Revision may be reopened | A request for that Source Revision: `initiator: platform`, `low` |
+  | 5 | Otherwise | Nothing; the current revision, if any, is still served |
+
+  Whether a Source Revision may be reopened follows from the last request of it
+  under the latest adoption, whoever made it. No state is kept besides the
+  requests:
+
+  | That request | Reopened |
+  |---|---|
+  | None | Yes |
+  | Failed, retryable | When the interval since it ended has passed: 10 minutes after the first retryable failure in a row, 20 after the second, 40 after the third, 1 hour after each later one, with no count that stops it |
+  | Failed with `VERSION_WITHDRAWN` | Yes, at once |
+  | Failed, not retryable; rejected (`cause` `source`); succeeded with no Canonical Revision | Not before the next adoption |
+
+  - The version that made the current revision is the Document's
+    `current_adopted_version`. A withdrawn version's revisions are redone
+    whatever a later scope says, until no Document is served by one. A scope of
+    `none` stops refreshes only.
+  - A run opens rule 3 first, then the redos of withdrawn versions, then
+    refreshes, while fewer than 500 of the scan's requests wait for a
+    dispatcher. The dispatcher's in-flight budgets then pace them; within one
+    priority it takes the Source with the fewest in flight, then the oldest. A
+    redo and a refresh are both `low`, so no refresh opens while a redo of a
+    withdrawn version is planned or has not ended (ADR-0016: redos go first).
+    Refreshes already queued when a version is withdrawn are not held back.
+  - Every run reads each live Document, about five queries each. Its time at
+    PROD volume is *unmeasured* (#99, #239).
+  - Each request carries the adoption it was opened under. A platform request's
+    end leaves the Source Revision's outcome (§3); no scan request counts
+    against a quota.
+  - The gauges, written by the CronJob and exported by the `api`:
+    `kp_admission_reruns_retrying{reason}` (latest Source Revisions with at
+    least 5 retryable failures in a row, by the last failure's reason, so that
+    `PLATFORM_ERROR` and `WORKFLOW_ENDED_WITHOUT_RESULT` show apart from a
+    service outage), `kp_admission_reruns_stopped{reason}` (those waiting for the
+    next adoption), `kp_admission_documents_on_withdrawn{version}`,
+    `kp_admission_documents_without_current{source_id}` (created more than an
+    hour ago), `kp_admission_requests_overdue{adopted_version}` (dispatched
+    more than an hour ago and not ended), and
+    `kp_admission_job_last_run_timestamp_seconds{job}`. Alert rules are #78's.
+  - A refresh scope that lists Documents (only those that used an affected
+    component, from a run manifest) is not built: nothing produces such a list
+    for a CronJob to read. `made_by` is the narrowest scope.
 - Durability: the admission database is one PostgreSQL instance on a
   network-backed persistent volume, with its write-ahead log archived
   continuously to storage outside that volume (a pilot go-live condition).
@@ -1315,10 +1436,10 @@ the gauge above.
 
   Replication inside the cluster is a later deployment change and needs no code
   change. DEV/POC may run without the archive and is marked as not meeting this.
-- Pilot pause: triggered by backlog depth, while the queued `normal`-priority
-  `process` requests number at least the deployment's threshold (none by
-  default), so a platform refresh's backlog never pauses intake; rejects new
-  declarations only.
+- Pilot pause: triggered by backlog depth, while the queued `process` requests
+  that Sources made (`initiator: source`) number at least the deployment's
+  threshold (none by default), so the scan's backlog never pauses intake;
+  rejects new declarations only.
 
 ## 10. Workflow start input
 
@@ -1343,7 +1464,7 @@ Defined here, implemented by #80, aligned with the #91 manifest v2:
 `custody_ref` is `s3://{bucket}/{key}`; the bucket is the processing worker's
 object store bucket, so source files and processing results share it.
 Admission records it once, at finalization (§6.2), for the object the upload
-wrote. Carried-over files, retries, redrive, refresh and the start input copy
+wrote. Carried-over files, retries, the scan's requests and the start input copy
 it unchanged. Readers split it into bucket and key and derive nothing from the
 key.
 
@@ -1368,7 +1489,7 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 | Item | Value |
 |---|---|
 | Items per declaration | 50 (provisional) |
-| Intake quota per Source | Token bucket of 50 declared items, refilled at 50 per minute (provisional). A declaration takes one token per item when it commits; with too few it is `429` and `Retry-After` is when there will be enough |
+| Intake quota per Source | Token bucket of 50 declared items, refilled at 50 per minute (provisional). A declaration takes one token per item when it commits, and returns those of the items §6.4 answers `unchanged` after a rejection or a failure that is not retryable; with too few it is `429` and `Retry-After` is when there will be enough |
 | `document_id` | 1–256 characters, `[A-Za-z0-9-_.~:]`, case-sensitive |
 | `metadata` | ≤ 50 keys; key 1–64 of `[A-Za-z0-9_.-]`; value ≤ 512 characters; ≤ 8 KB total |
 | Files per item, open batches per Source | Set in I2 configuration, *unmeasured* |
@@ -1408,14 +1529,21 @@ that arrives before the dispatcher has recorded its attempt (§7.3).
 retryable) is a failed request's `error` when the reconciler finds its workflow
 ended without an error block, such as terminated or timed out (§9).
 
+Two more `error` reasons of that domain end a `process` request without changing
+its Source Revision's outcome (§3): `DOCUMENT_DELETED` (not retryable,
+`cause` `source`) when the deletion ended it before it started (§8), and
+`VERSION_WITHDRAWN` (retryable) when its version was withdrawn before it ended
+(§9).
+
 `RESOURCE_NOT_EMPTY` (`409`) belongs to the Resource API (#85).
 
 ## 13. Deployment and validation
 
 - One image, three roles: `api` (2 fixed replicas), `dispatcher` (≥ 2 replicas),
   CronJobs (reconciler every 5 minutes, declarative adoption every minute with
-  `concurrencyPolicy: Forbid`, batch expiry and upload cleanup hourly,
-  retention daily).
+  `concurrencyPolicy: Forbid`, deletion enforcement every minute and the scan
+  every 5 minutes, both with `concurrencyPolicy: Forbid`, batch expiry and
+  upload cleanup hourly, retention daily).
 - The `api` role is FastAPI on one uvicorn worker per replica, with no HPA and no
   worker-count setting: the company sizes a fixed pod count for the peak. This
   role's peak is the sum of its Sources' intake quotas (§11), estimated at a few
@@ -1487,7 +1615,7 @@ ended without an error block, such as terminated or timed out (§9).
 | I3c Serving-fact repair (#260, done) | the repair view's intake, the replacement of a Build's mirror and the lost-writes declaration (§7.4, DR §5.4, §5.6) | I3b |
 | I2c Declarative adoption (#261) | the adoption record's declaration, refresh scope and withdrawn versions, the gate, `apply-adoption` (§3) | I3a |
 | I3d Serving-mirror retention (#264, after the pilot) | removal of a retired Build's facts, old attempts and expired tombstones (§7.4, DR §5.3) | I3c |
-| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), redrive and refresh commands (§9) | I1, I2, I2c, I3, I3b, I3c, #55, #126 |
+| I4 Deletion and retry (#98) | §5.8, §8, retry (§6.4), the scan and the withdrawn version's requests (§9) | I1, I2, I2c, I3, I3b, I3c, #55, #126 |
 | I5 Validation harness (#99) | §13 tiers | I1–I4, #78 |
 
 The dependencies follow the tracker's edges as of 2026-11-19, when #97 was split

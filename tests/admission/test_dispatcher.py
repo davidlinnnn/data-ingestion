@@ -216,3 +216,25 @@ async def test_normal_priority_goes_before_low_and_the_global_budget_holds(conn,
 
     assert await dispatch_order(conn) == normal
     assert low not in await dispatch_order(conn)
+
+
+async def test_a_queued_request_of_a_withdrawn_version_ends_instead_of_starting(conn, temporal):
+    """#98: VERSION_WITHDRAWN, the revision's outcome left as it was, so the scan reruns it."""
+    withdrawn = await request(conn, *await revision(conn), adopted_version="paper-pdf@2")
+    kept = await request(conn, *await revision(conn))
+    await conn.execute(
+        "INSERT INTO withdrawn_version (tenant_id, media_type, version)"
+        " VALUES ('t1', 'application/pdf', 'paper-pdf@2')"
+    )
+
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 1
+
+    cursor = await conn.execute(
+        "SELECT request_id, state, error ->> 'reason', outcome, terminal_at IS NOT NULL"
+        " FROM request JOIN source_revision USING (source_revision_id)"
+    )
+    by_id = {row[0]: row[1:] for row in await cursor.fetchall()}
+    assert by_id[withdrawn[0]] == ("failed", "VERSION_WITHDRAWN", "pending", True)
+    assert by_id[kept[0]][:2] == ("queued", None)
+    assert await runs(temporal, withdrawn[0]) == 0
+    assert await dispatch_due(conn, temporal_start(temporal, queue)) == 0

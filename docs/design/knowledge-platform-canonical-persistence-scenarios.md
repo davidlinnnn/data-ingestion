@@ -55,7 +55,7 @@
 | R1 | 同樣內容再交一次，最新的 Source Revision 已接受 | 規格 §6.4 | `unchanged` | 涵蓋 | |
 | R2 | 同樣內容，較高的 `source_version` | #258 | 版本號寫到最新的 Source Revision 上；不重新處理，B5 的序號不動 | 涵蓋 | |
 | R3 | 同樣內容，最新的因平台原因失敗、可重試 | 規格 §6.4、B7 | 新 request，`retry_of` 指向失敗的那次，計入額度。掃描可能先開；唯一索引保證只有一筆 | 涵蓋 | |
-| R4 | 同樣內容，最新的失敗且不可重試（已登錄的內容失敗） | B7 | 現在：開新 request、立刻重用失敗、扣額度。紀錄寫回 `unchanged`；#98 列為「本票要決定的」 | 矛盾 | L1f |
+| R4 | 同樣內容，最新的失敗且不可重試（已登錄的內容失敗） | B7 | #98 起回 `unchanged`，不開 request、不扣額度（規格 §6.4）；掃描在下一次採用後重跑一次 | 涵蓋 | L1f |
 | R5 | 同樣內容，最新的 Source Revision `pending` 且沒有進行中的 request（成功但沒有形成接受） | B4 B6.3 | `unchanged`：Source 開不了重跑，只有掃描能 | 交接 | |
 | R6 | 舊的 Source Revision 還在處理時，新內容到了 | B5 | 兩個都跑。不論到達順序，新的 Source Revision 成為目前版本。一或兩筆事件 | 涵蓋 | |
 | R7 | 新內容失敗（可重試），已有舊的 revision | B7 B9 | 舊 revision 繼續提供。Source 看到 `processing_failed`，屬平台。掃描照逐次拉長的間隔重跑，超過次數警示 | 交接 | |

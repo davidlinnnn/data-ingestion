@@ -1,0 +1,31 @@
+{
+  "documents": 1001,
+  "delete_one_at_a_time": {
+    "calls": 500,
+    "p50_ms": 1.55,
+    "p99_ms": 2.52,
+    "max_ms": 3.96
+  },
+  "delete_32_at_once": {
+    "calls": 500,
+    "p50_ms": 17.73,
+    "p99_ms": 33.49,
+    "max_ms": 35.34
+  },
+  "removal_report_s": 0.896,
+  "enforce_run_s": 0.772,
+  "judged": {
+    "enforced": 1000,
+    "held": 1
+  },
+  "delete_requests_by_state": {
+    "applied": 1,
+    "enforced": 1000
+  },
+  "checks": {
+    "every deletion is applied within its target": true,
+    "one run judges every removed Document enforced": true,
+    "control: the Document still included stays applied": true,
+    "the platform's share of enforced is within its target": true
+  }
+}

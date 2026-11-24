@@ -3,7 +3,7 @@
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from prometheus_client import Counter
@@ -110,6 +110,18 @@ UPDATE document SET current_source_revision_id = %(srv)s, current_canonical_revi
 WHERE document_uid = %(uid)s
 """
 
+ERROR_DOMAIN = "admission.knowledge-platform"
+
+# A request of a version withdrawn before it ended (#57 B6): no run of it is accepted, so it ends
+# and the scan reruns its revision under the adopted version at once.
+VERSION_WITHDRAWN = {
+    "domain": ERROR_DOMAIN,
+    "reason": "VERSION_WITHDRAWN",
+    "message": "The Processing Profile version was withdrawn before the request ended.",
+    "retryable": True,
+    "metadata": {"cause": "platform"},
+}
+
 not_accepted = Counter(
     "kp_admission_not_accepted", "successful process requests that formed no acceptance", ["reason"]
 )
@@ -162,7 +174,8 @@ async def record_outcome(
         if ended is None:
             return False
         initiator, srv, uid, adopted_version, adoption_sequence = ended
-        if initiator != "platform":
+        # A withdrawal says nothing of the revision, as a discarded result does not (#251).
+        if initiator != "platform" and not is_withdrawn(error):
             await conn.execute(_OUTCOME, (revision_outcome(state, error), srv))
         if state == "succeeded":
             await _accept(
@@ -191,8 +204,7 @@ async def _accept(
     ).fetchone()
     assert revision
     sequence, files = revision
-    main = next(f for f in files if f["role"] == "main")
-    withdrawn = await adoption.withdrawn(conn, main["media_type"])
+    withdrawn = await adoption.withdrawn(conn, main_media_type(files))
     crv = f"crv_{request_id.removeprefix('req_')}"
     reason = None
     if deleted:  # a late result does not bring a deleted Document back (§8)
@@ -242,6 +254,26 @@ async def _accept(
         document_uid=uid,
         priority="background" if initiator == "platform" and not rollback else "normal",
     )
+
+
+def is_withdrawn(error: dict[str, Any] | None) -> bool:
+    """Whether a request ended because its version was withdrawn (§9)."""
+    error = error or {}
+    return (error.get("domain"), error.get("reason")) == (ERROR_DOMAIN, "VERSION_WITHDRAWN")
+
+
+def main_media_type(files: list[dict[str, Any]]) -> str:
+    """The media type of a Source Revision's main file, which selects its adopted version."""
+    return next(f["media_type"] for f in files if f["role"] == "main")
+
+
+async def end_withdrawn(conn: AsyncConnection, request_id: str) -> bool:
+    """Ends a queued or processing request whose version is withdrawn, failed with
+    VERSION_WITHDRAWN, leaving its Source Revision's outcome; False when it had ended."""
+    error = VERSION_WITHDRAWN | {
+        "occurred_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    }
+    return await record_outcome(conn, request_id, "failed", error, datetime.now(UTC))
 
 
 def revision_outcome(state: str, error: dict[str, Any] | None) -> str:

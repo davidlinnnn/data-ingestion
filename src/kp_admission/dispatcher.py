@@ -13,6 +13,8 @@ from temporalio.client import Client
 from temporalio.common import SearchAttributePair, TypedSearchAttributes, WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
+from kp_admission import adoption, deletion
+from kp_admission.requests import end_withdrawn, main_media_type
 from kp_canonicalization.workflow import SEARCH_ATTRIBUTES, WORKFLOW, priority
 
 StartWorkflow = Callable[[dict[str, Any]], Awaitable[str]]
@@ -42,7 +44,7 @@ WITH in_flight AS (
     GROUP BY d.tenant_id, d.source_id
 )
 SELECT r.request_id, r.document_uid, r.source_revision_id, s.files, r.adopted_version,
-       r.adoption_sequence, r.initiator, r.priority, r.trace_id
+       r.adoption_sequence, r.initiator, r.priority, r.trace_id, d.deleted_at IS NOT NULL AS deleted
 FROM outbox o
 JOIN request r ON r.request_id = o.request_id
 JOIN source_revision s ON s.source_revision_id = r.source_revision_id
@@ -88,7 +90,9 @@ async def dispatch_due(
     connection, while fewer than in_flight dispatched requests, and fewer than per_source of the
     row's Source, are still queued or processing; a request leaves the budgets when its outcome is
     recorded. Normal priority goes first; then the Source with the fewest requests in flight, so
-    Sources take turns; then the oldest row. Returns how many rows it recorded as dispatched. It
+    Sources take turns; then the oldest row. A request whose version is withdrawn for its media
+    type is not started: it ends failed with VERSION_WITHDRAWN (#98) and leaves the outbox.
+    Returns how many rows it recorded as dispatched. It
     stops at the first start that fails: that row is due again 1, 2, 4, … seconds after its 1st,
     2nd, 3rd, … failure, at most BACKOFF_CAP_S, and the others keep their place."""
     budgets = {"in_flight": in_flight, "per_source": per_source}
@@ -100,6 +104,22 @@ async def dispatch_due(
             if start_input is None:
                 return dispatched
             request_id = start_input["request_id"]
+            if start_input.pop("deleted"):
+                # The deletion skipped this row while a dispatcher held it (deletion._UNSTARTED),
+                # and that start failed: nothing of a deleted Document starts (§8).
+                await deletion.end_unstarted(conn, [request_id])
+                await conn.execute("DELETE FROM outbox WHERE request_id = %s", (request_id,))
+                log.info("request %s of a deleted Document ended", request_id)
+                continue
+            media_type = main_media_type(start_input["files"])
+            if start_input["adopted_version"] in await adoption.withdrawn(conn, media_type):
+                # Its result would be discarded (#251): it ends, and the scan reruns it at once.
+                # This locks the Document after the outbox row, against the order of §3; a
+                # deletion skips a held outbox row (deletion._UNSTARTED), so neither waits.
+                await end_withdrawn(conn, request_id)
+                await conn.execute("DELETE FROM outbox WHERE request_id = %s", (request_id,))
+                log.info("request %s of a withdrawn version ended", request_id)
+                continue
             try:
                 run_id = await start(start_input)
             except Exception:

@@ -42,7 +42,7 @@ measurements. They are not SLOs and not qualified capacity claims.
 | Q4 | Three-layer hard timeout: an in-code per-request deadline that force-cancels and closes the connection (the #84 dead-socket lesson), a heartbeat timeout that catches a hung worker, and start-to-close as the final backstop. |
 | Q5 | Billing receipts: a durable per-attempt receipt is written **before** each outbound request; retries read receipts first, so attempt counts survive Activity reschedules and the same item is never blindly re-billed. Temporal heartbeat details are a best-effort resume hint only, never the ledger. |
 | Q6 | Retry matrix by failure class with a stage budget derived from the 10-minute searchability target (§3.4). Refusals are never retried. |
-| Q7 | Priority tiers align with the admission `priority` field: `normal` (everything a Source submits, **including the initial batch**) and `bulk` = admission `low` (platform-generated work: operator redrive, platform refresh — method-upgrade reprocessing and full rebuild). Normal capacity is reserved and never consumed by bulk; bulk capacity is elastic, scaled per planned event and sized against the event target. No preemption, no dynamic scheduling, no admission-contract change. Replaces the round-1 classification that put the initial batch in bulk, which the independent review showed breaks the 1-hour initial-batch target. |
+| Q7 | Priority tiers align with the admission `priority` field: `normal` (everything a Source submits, **including the initial batch**) and `bulk` = admission `low` (platform-generated work: operator redrive, platform refresh — method-upgrade reprocessing and full rebuild). Normal capacity is reserved and never consumed by bulk; bulk capacity is elastic, scaled per planned event and sized against the event target. No preemption, no dynamic scheduling, no admission-contract change. Replaces the round-1 classification that put the initial batch in bulk, which the independent review showed breaks the 1-hour initial-batch target. *Superseded in part on 2026-11-22 (#57, #98): the scan's reruns of content never accepted are `normal`; its refreshes and redos stay `low`.* |
 | Q8 | Cost caps: a per-document external-request cap derived from the inventory (= 3 × items + 20); exceeding it is a `configuration` platform error (it indicates a bug) and fails the document. The deployment-level daily quota only alerts, never auto-blocks. |
 | Q9 | The capacity model is a parameterized formula set in this document with two anchor points (pilot and PROD) plus a worst-case latency decomposition against the 10-minute target; #88 numbers substitute directly. |
 | Q10 | Metric labels are low-cardinality only (stage, method, status, reason, service, tier). `request_id`, `document_uid`, `trace_id` live in structured logs and Temporal search attributes, never in metric labels. |
@@ -366,8 +366,8 @@ revisable through a Processing Profile version.
   quota): user statements, 2026-10-22
 - Company VLM model page: <https://huggingface.co/Qwen/Qwen3.8-27B>
   (verified 2026-10-23)
-- Admission `priority` values (`normal`; `low` for operator redrive and
-  platform refresh): [admission spec](knowledge-platform-admission-spec.md)
+- Admission `priority` values (`normal`, the scan's reruns included; `low` for
+  the scan's refreshes and redos): [admission spec](knowledge-platform-admission-spec.md)
   §3, §9, §10; [admission notes](knowledge-platform-admission.md)
 - Temporal worker tuning (activity slots, task-queue rate limit) and
   heartbeat throttling: <https://docs.temporal.io/develop/worker-performance>,

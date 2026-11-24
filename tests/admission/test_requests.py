@@ -114,10 +114,11 @@ async def test_every_admission_record_carries_a_tenant(conn):
          "adoption_run", "adoption_status"], "NO",
     ) | {
         # Platform-wide: a projection reads every tenant's feed (#126) and its Builds serve
-        # them all (#252), and a repair or a loss of writes concerns a whole Build (#260).
+        # them all (#252), a repair or a loss of writes concerns a whole Build (#260), and the
+        # enforce and scan CronJobs measure every tenant (#98).
         "consumer_cursor": None, "change_feed_horizon": None,
         "build": None, "serving_fact": None, "projection_attempt": None,
-        "repair_page": None, "writes_lost": None,
+        "repair_page": None, "writes_lost": None, "job_gauge": None,
     }  # fmt: skip
 
 

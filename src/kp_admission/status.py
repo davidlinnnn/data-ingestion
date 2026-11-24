@@ -24,7 +24,8 @@ SELECT r.request_id, r.kind, r.state, d.document_id, r.document_uid, r.source_re
        r.trace_id, r.last_report
 FROM request r JOIN document d ON d.document_uid = r.document_uid
 WHERE r.request_id = %s AND d.tenant_id = %s AND d.source_id = %s
-  AND (r.terminal_at IS NULL OR r.terminal_at > now() - interval '30 days')
+  AND CASE WHEN r.kind = 'delete' THEN d.deleted_at > now() - interval '30 days'
+           ELSE r.terminal_at IS NULL OR r.terminal_at > now() - interval '30 days' END
 """
 
 
@@ -32,7 +33,8 @@ async def request(
     conn: AsyncConnection, tenant_id: str, source_id: str, request_id: str
 ) -> dict[str, Any] | None:
     """The request (§5.5) when it is of one of the Source's Documents, until 30 days after its
-    terminal outcome (§11); an active request never expires."""
+    terminal outcome (§11), a delete request until 30 days after the deletion was applied (§8);
+    an active process request never expires."""
     cursor = conn.cursor(row_factory=dict_row)
     row = await (await cursor.execute(_REQUEST, (request_id, tenant_id, source_id))).fetchone()
     if row is None:
@@ -77,9 +79,13 @@ async def document(
     document_id: str,
     pipelines: Mapping[str, Pipeline],
 ) -> dict[str, Any] | None:
-    """The Source's Document (§5.6): its current generation, else the one deleted last.
-    `pipelines` are the registered ones by track."""
-    tail = "d.document_id = %(document_id)s ORDER BY d.deleted_at IS NOT NULL, d.deleted_at DESC"
+    """The Source's Document (§5.6): its current generation, else the one deleted last, for 30
+    days after its deletion was applied (§11). `pipelines` are the registered ones by track."""
+    tail = (
+        "d.document_id = %(document_id)s"
+        " AND (d.deleted_at IS NULL OR d.deleted_at > now() - interval '30 days')"
+        " ORDER BY d.deleted_at IS NOT NULL, d.deleted_at DESC"
+    )
     params = {"tenant_id": tenant_id, "source_id": source_id, "document_id": document_id}
     rows = await _rows(conn, tail + " LIMIT 1", params)
     if not rows:

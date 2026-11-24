@@ -379,6 +379,15 @@ CREATE TABLE adoption_status (
     since      timestamptz NOT NULL  -- when the result last changed
 );
 
+-- The gauges each run of the enforce and scan CronJobs measured (#98), which the api exports
+-- (kp_admission.gauges): the CronJob's pod is gone.
+CREATE TABLE job_gauge (
+    name  text NOT NULL,
+    label text NOT NULL,
+    value double precision NOT NULL,
+    PRIMARY KEY (name, label)
+);
+
 -- Authorization records (authorization design §5.1, #113), in their own schema so that a
 -- later provider and its database role can own them.
 CREATE SCHEMA authz;
