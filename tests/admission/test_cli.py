@@ -425,7 +425,8 @@ async def test_the_api_exports_the_feed_and_liveness_gauges_on_its_metrics_port(
             for _ in range(100):
                 with contextlib.suppress(httpx.ConnectError):
                     page = (await http.get("/metrics")).text
-                    if 'kp_feed_consumer_lag_seconds{projection="wiki"}' in page:
+                    # The gauge the observe loop sets last: a scrape mid-loop lacks the rest.
+                    if 'kp_admission_deletions_unenforced{reason="held"}' in page:
                         break
                 await asyncio.sleep(0.1)
     finally:

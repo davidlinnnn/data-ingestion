@@ -127,6 +127,8 @@ async def test_every_governed_read_refuses_a_caller_without_a_registered_identit
         ("GET", "/v1/sources"),
         ("GET", "/v1/sources/s1/profile"),
         ("GET", "/v1/sources/s1/documents"),
+        ("GET", "/v1/documents/doc_1/revisions/crv_1"),
+        ("GET", f"/v1/documents/doc_1/revisions/crv_1/artifacts/{'a' * 64}/pages/1.png"),
     ]
     async with client(pool, token="another-credential") as api:
         responses = [await api.request(method, path, json={}) for method, path in calls]
@@ -157,7 +159,9 @@ async def test_a_cursor_report_that_steps_back_gets_409_with_the_platform_positi
 async def test_document_state_answers_its_fields_404_for_an_unknown_uid_and_503_when_behind(
     conn, pool
 ):
+    start = datetime.now(UTC)
     uid, srv = await revision(conn)
+    created = datetime.now(UTC)
     await conn.execute(
         "UPDATE document SET current_source_revision_id = %s,"
         " current_canonical_revision_id = 'crv_1' WHERE document_uid = %s",
@@ -177,7 +181,10 @@ async def test_document_state_answers_its_fields_404_for_an_unknown_uid_and_503_
         waiting = await api.get(f"/v1/documents/{uid}/state", params={"at_least": behind})
 
     assert state.status_code == 200
-    assert state.json() == {
+    answer = state.json()
+    at = datetime.fromisoformat(answer["current"].pop("source_revision_created_at"))
+    assert start - timedelta(seconds=1) <= at <= created + timedelta(seconds=1)  # clock skew
+    assert answer == {
         "resource_id": "res_1",
         "current": {"source_revision_id": srv, "canonical_revision_id": "crv_1"},
         "status": "active",

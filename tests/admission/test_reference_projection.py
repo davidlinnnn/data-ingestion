@@ -566,10 +566,14 @@ async def test_the_process_refuses_to_start_beside_another_on_the_same_database(
     assert code == 3
 
 
-def test_a_missing_setting_exits_2(monkeypatch):
+def test_a_missing_setting_exits_2(monkeypatch, root_logging):
     monkeypatch.delenv("KP_PLATFORM_URL", raising=False)
-
-    assert cli.main() == 2
+    httpx_log = logging.getLogger("httpx")
+    level = httpx_log.level
+    try:
+        assert cli.main() == 2
+    finally:
+        httpx_log.setLevel(level)  # main() quiets httpx for the whole process
 
 
 async def test_the_running_process_serves_a_document_and_stops_on_its_signal(conn, platform, store):

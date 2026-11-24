@@ -54,6 +54,8 @@ class Event(BaseModel, frozen=True):
 class Current(BaseModel, frozen=True):
     source_revision_id: str | None
     canonical_revision_id: str
+    # When finalization created the Source Revision, not when it was accepted (#268).
+    source_revision_created_at: datetime | None
 
 
 class State(BaseModel, frozen=True):
@@ -181,11 +183,14 @@ async def document_state(
     # One statement, so the xmin and the row come from one snapshot.
     cursor = await conn.execute(
         "SELECT pg_snapshot_xmin(pg_current_snapshot())::text, d.resource_id, d.deleted_at,"
-        " d.current_source_revision_id, d.current_canonical_revision_id"
-        " FROM (VALUES (1)) one LEFT JOIN document d ON d.document_uid = %s",
+        " d.current_source_revision_id, d.current_canonical_revision_id, s.created_at"
+        " FROM (VALUES (1)) one LEFT JOIN document d ON d.document_uid = %s"
+        " LEFT JOIN source_revision s ON s.source_revision_id = d.current_source_revision_id",
         (document_uid,),
     )
-    [(xmin, resource_id, deleted_at, source_revision, canonical_revision)] = await cursor.fetchall()
+    [
+        (xmin, resource_id, deleted_at, source_revision, canonical_revision, created_at)
+    ] = await cursor.fetchall()
     if at_least is not None and at_least > _position(xmin, 0):
         raise Behind
     if resource_id is None:
@@ -193,7 +198,11 @@ async def document_state(
     if deleted_at is not None:
         return State(resource_id=resource_id, current=None, status="deleted")
     current = (
-        Current(source_revision_id=source_revision, canonical_revision_id=canonical_revision)
+        Current(
+            source_revision_id=source_revision,
+            canonical_revision_id=canonical_revision,
+            source_revision_created_at=created_at and created_at.astimezone(UTC),
+        )
         if canonical_revision
         else None
     )

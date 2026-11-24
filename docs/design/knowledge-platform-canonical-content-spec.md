@@ -214,7 +214,7 @@ scopes 3, 4 and 6):
 
 Everything a reader is to see is in the manifest: every page image, every picture image and
 every evidence file an enrichment names. Elsewhere the content uses references only. The read
-endpoint (#268) serves exactly the manifest's artifacts of a revision.
+endpoint (#268, admission spec §5.9) serves exactly the manifest's artifacts of a revision.
 
 ## 5. The candidate
 

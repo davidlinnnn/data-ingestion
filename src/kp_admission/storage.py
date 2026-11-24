@@ -1,22 +1,28 @@
 """Admission's object store operations on the custody bucket (admission spec §10, ADR-0012):
-`head` for finalization (§6.2 step 3), multipart uploads for the upload endpoint (§5.2), and
-delete and abort for the upload cleanup (§6.2). They rely only on the behaviours the document
-submission guide §6.7 marks required. The S3 adapter and the fake both pass
-tests/admission/test_storage_contract.py."""
+`head` for finalization (§6.2 step 3), multipart uploads for the upload endpoint (§5.2),
+delete and abort for the upload cleanup (§6.2), and `open` for the content reads (§5.9). They
+rely only on the behaviours the document submission guide §6.7 marks required. The S3 adapter
+and the fake both pass tests/admission/test_storage_contract.py."""
 
 import asyncio
 import os
 import uuid
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from typing import Any, Protocol
 
 import boto3
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
+CHUNK = 2**20  # the most bytes `open` yields at once
+
 
 class StorageUnavailable(Exception):
     """Storage did not perform the operation, or could not say whether the object exists."""
+
+
+class ObjectMissing(Exception):
+    """Storage answered that the object does not exist."""
 
 
 class ObjectStore(Protocol):
@@ -26,6 +32,12 @@ class ObjectStore(Protocol):
 
     async def head(self, key: str) -> bool:
         """Whether the object exists."""
+        ...
+
+    async def open(self, key: str) -> AsyncIterator[bytes]:
+        """The object's bytes, in chunks of at most CHUNK. Raises ObjectMissing when storage
+        answers that it does not exist, before any chunk; a failure while reading raises
+        StorageUnavailable from the iterator."""
         ...
 
     async def create_upload(self, key: str) -> str:
@@ -62,6 +74,11 @@ def source_key(document_uid: str, batch_id: str, index: int, sha256: str) -> str
     return f"documents/{document_uid}/files/{batch_id}/{index}/{sha256}"
 
 
+def item_key(document_uid: str, reference: str) -> str:
+    """The key of a registered artifact a Canonical content reference names (content spec §4)."""
+    return f"documents/{document_uid}/items/{reference}"
+
+
 class FakeObjectStore:
     """In-process fake for tests: `keys` exist, those completed through an upload with their
     `content`; `parts` records the size of every part stored; nothing answers while `down`."""
@@ -81,6 +98,12 @@ class FakeObjectStore:
     async def head(self, key: str) -> bool:
         self._raise_if_down(key)
         return key in self.keys
+
+    async def open(self, key: str) -> AsyncIterator[bytes]:
+        self._raise_if_down(key)
+        if key not in self.keys:
+            raise ObjectMissing(key)
+        return _chunks(self.content.get(key, b""))
 
     async def create_upload(self, key: str) -> str:
         self._raise_if_down(key)
@@ -157,6 +180,17 @@ class S3ObjectStore:
                 return False
             raise
 
+    async def open(self, key: str) -> AsyncIterator[bytes]:
+        try:
+            answer = await self._call(self.client.get_object, key)
+        except StorageUnavailable as unavailable:
+            error = unavailable.__cause__
+            # By code: a bucket that does not exist is a 404 too, and it is no lost object.
+            if isinstance(error, ClientError) and error.response["Error"]["Code"] == "NoSuchKey":
+                raise ObjectMissing(key) from error
+            raise
+        return _body(answer["Body"], key)
+
     async def create_upload(self, key: str) -> str:
         return (await self._call(self.client.create_multipart_upload, key))["UploadId"]
 
@@ -196,3 +230,19 @@ class S3ObjectStore:
 
 def _status(error: ClientError) -> int | None:
     return error.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+
+async def _chunks(data: bytes) -> AsyncIterator[bytes]:
+    for start in range(0, len(data), CHUNK):
+        yield data[start : start + CHUNK]
+
+
+async def _body(body: Any, key: str) -> AsyncIterator[bytes]:
+    """A boto3 streaming body, each read in a thread."""
+    try:
+        while chunk := await asyncio.to_thread(body.read, CHUNK):
+            yield chunk
+    except (ClientError, BotoCoreError) as error:
+        raise StorageUnavailable(key) from error
+    finally:
+        body.close()
