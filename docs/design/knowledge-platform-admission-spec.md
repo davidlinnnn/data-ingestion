@@ -1,7 +1,7 @@
 # Knowledge Platform admission specification
 
 **Status:** current contract, kept up to date when a decision changes. The implementation
-tickets #95–#99, #194, #251 and #252 build from this document.
+tickets #95–#99, #194, #251, #252 and #268 build from this document.
 
 The buildable contract for
 [Design ingestion admission, task status, and infrastructure integration](https://github.com/davidlinnnn/data-ingestion/issues/31).
@@ -641,6 +641,74 @@ deletion was applied, `enforced` or not. §8 describes the stages.
   treats any state it does not know as not yet `enforced`.
 - Changed on 2026-11-24 (#98): the response showed `received`. ADR-0014 left
   nothing between recording the deletion and applying it.
+
+### 5.9 Content reads: `GET /read/v1/documents/{document_uid}/revisions/{canonical_revision_id}`
+
+Two exact-revision reads (#268, canonical persistence §4.1 and §8.1). They are
+not Source-facing: like the other governed reads under `/read/v1/` (canonical
+consumption DR §3) they answer only the registered service identities, and a
+call without one gets `401`. Such an identity reads any Document's revisions;
+deciding whether a user may see the result is the reader's own job (authorization
+guide).
+
+- **Content:** `GET /read/v1/documents/{document_uid}/revisions/{canonical_revision_id}`
+  returns the revision's content object as it was accepted (content spec §2),
+  `Content-Type: application/json`.
+- **Artifact:** `GET /read/v1/documents/{document_uid}/revisions/{canonical_revision_id}/artifacts/{reference}`
+  returns one artifact that the revision's manifest `artifacts` lists, with the
+  manifest's `media_type` as its `Content-Type`. `{reference}` is a reference
+  of content spec §4, which fits one or more path segments without escaping. A
+  reference the manifest does not list is `404`, even when an object exists
+  under it, such as a provider's raw output. Page images too are read one at a
+  time; there is no batch read.
+
+Both answers carry these headers, so the reader checks what it received; the
+platform does not compute a digest on a read:
+
+| Header | Value |
+|---|---|
+| `Content-Length` | The recorded size: the revision record's for the content, the manifest entry's for an artifact |
+| `X-Content-SHA256` | The recorded SHA-256, lowercase hex, from the same place |
+| `X-Source-Revision-Created-At` | When finalization created the revision's Source Revision (§6.2), RFC 3339 |
+
+The Source Revision time is the one a reader's results carry (consumption DR
+B6, E4). It is not when the revision was accepted, and a version recorded on
+the latest Source Revision (§6.4) does not change it. The Document state read
+(`GET /read/v1/documents/{document_uid}/state`) gives the same value as
+`current.source_revision_created_at`.
+
+A revision is read by its exact identifier (ADR-0003), current or not: one
+replaced by a later revision, one recorded without becoming current (an older
+or equal candidate, §3), and one made by a withdrawn version (#57 B6.4) are
+served alike.
+
+The platform finds each object from the revision record alone: the content at
+the record's `content_ref`, an artifact at
+`documents/{document_uid}/items/{reference}` with the record's `document_uid`,
+in the bucket the deployment names. The path's `document_uid` only confirms
+that the revision is that Document's.
+
+| Situation | Response |
+|---|---|
+| The Document has the revision and storage holds the object | `200` with the bytes |
+| No such Document or revision, or the revision is another Document's | `404 REVISION_NOT_FOUND` |
+| `{reference}` is not of the §4 form (a `..` segment, a full key, a URL), or the manifest does not list it | `404 ARTIFACT_NOT_FOUND`; a reference of the wrong form reaches neither the database nor storage |
+| Source Deletion applied (§8), not purged | `410 DOCUMENT_DELETED`. A reader that has seen `document_deleted` stops reading the Document |
+| The revision's objects are purged: the Document's Custody Purge (#267), or a replaced revision past retention (#269) | `410 CONTENT_NOT_RETAINED`, also for a deleted Document |
+| The record names an object that storage answers does not exist | `503 CONTENT_MISSING` with `Retry-After: 3600`. Storage lost data (#57 scope 7). In the pilot nothing repairs it, so it lasts until the Source deletes the Document and sends it again: a reader does not retry it in a loop |
+| Storage does not answer | `503 STORAGE_UNAVAILABLE` with `Retry-After`: retry |
+
+The bytes stream from storage as they are read, with no `Range` support. When
+storage fails part way, the response ends short of `Content-Length`; the reader
+reads again.
+
+Metrics: `kp_canonical_reads_total` by `kind` (`content`, `artifact`) and
+`result` (`served`, `not_found`, `deleted`, `not_retained`, `missing`,
+`unavailable`, `interrupted`); `kp_canonical_read_bytes_total` by `kind`, the
+bytes sent. A `missing` read is the lost-data signal; an `unavailable` one is
+not counted with it. Each read writes one log line with `document_uid`,
+`canonical_revision_id`, `kind`, the bytes sent and the result, and never the
+content.
 
 ## 6. Admission rules
 
@@ -1521,6 +1589,10 @@ Processing side effects must be safe to repeat (the reconciler may re-dispatch).
 
 `SIZE_MISMATCH`, `LENGTH_REQUIRED`, `DIGEST_MISMATCH`, `MEDIA_TYPE_MISMATCH` and
 `BATCH_FINALIZED` are returned by the upload endpoint (§5.2).
+
+The content reads (§5.9) answer `REVISION_NOT_FOUND` and `ARTIFACT_NOT_FOUND`
+(`404`), `DOCUMENT_DELETED` and `CONTENT_NOT_RETAINED` (`410`), and
+`CONTENT_MISSING` and `STORAGE_UNAVAILABLE` (`503`).
 
 `ATTEMPT_NOT_RECORDED` (`503`) is the status report intake's answer to a report
 that arrives before the dispatcher has recorded its attempt (§7.3).
