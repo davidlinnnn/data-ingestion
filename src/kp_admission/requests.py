@@ -175,7 +175,7 @@ async def record_outcome(
             return False
         initiator, srv, uid, adopted_version, adoption_sequence = ended
         # A withdrawal says nothing of the revision, as a discarded result does not (#251).
-        if initiator != "platform" and not _withdrawn(error):
+        if initiator != "platform" and not is_withdrawn(error):
             await conn.execute(_OUTCOME, (revision_outcome(state, error), srv))
         if state == "succeeded":
             await _accept(
@@ -204,8 +204,7 @@ async def _accept(
     ).fetchone()
     assert revision
     sequence, files = revision
-    main = next(f for f in files if f["role"] == "main")
-    withdrawn = await adoption.withdrawn(conn, main["media_type"])
+    withdrawn = await adoption.withdrawn(conn, main_media_type(files))
     crv = f"crv_{request_id.removeprefix('req_')}"
     reason = None
     if deleted:  # a late result does not bring a deleted Document back (§8)
@@ -257,8 +256,15 @@ async def _accept(
     )
 
 
-def _withdrawn(error: dict[str, Any] | None) -> bool:
-    return bool(error) and (error["domain"], error["reason"]) == (ERROR_DOMAIN, "VERSION_WITHDRAWN")
+def is_withdrawn(error: dict[str, Any] | None) -> bool:
+    """Whether a request ended because its version was withdrawn (§9)."""
+    error = error or {}
+    return (error.get("domain"), error.get("reason")) == (ERROR_DOMAIN, "VERSION_WITHDRAWN")
+
+
+def main_media_type(files: list[dict[str, Any]]) -> str:
+    """The media type of a Source Revision's main file, which selects its adopted version."""
+    return next(f["media_type"] for f in files if f["role"] == "main")
 
 
 async def end_withdrawn(conn: AsyncConnection, request_id: str) -> bool:

@@ -88,8 +88,7 @@ async def delete(
         await conn.execute(_INSERT, (request_id, tenant_id, uid, trace_id))
         await conn.execute(_APPLY, (request_id, uid))
         ended = [r for (r,) in await (await conn.execute(_UNSTARTED, (uid,))).fetchall()]
-        if ended:
-            await conn.execute(_END, (Jsonb(DOCUMENT_DELETED), ended))
+        await end_unstarted(conn, ended)
         await feed.append(
             conn,
             "document_deleted",
@@ -104,6 +103,13 @@ async def delete(
                                "requests_ended": len(ended)}},
     )  # fmt: skip
     return _view(request_id, "applied")
+
+
+async def end_unstarted(conn: AsyncConnection, request_ids: list[str]) -> None:
+    """Ends process requests of a deleted Document that no dispatcher started, failed with
+    DOCUMENT_DELETED; their outbox rows are the caller's to delete."""
+    if request_ids:
+        await conn.execute(_END, (Jsonb(DOCUMENT_DELETED), request_ids))
 
 
 def _view(request_id: str, state: str) -> dict[str, Any]:
@@ -129,6 +135,7 @@ async def enforce(
     )
     overdue: Counter[str] = Counter()
     for request_id, uid, applied_at in await cursor.fetchall():
+        holders: list[tuple[str, str, str, str]] = []
         if suspended:
             judged[f"suspended_{suspended}"] += 1
             reason = suspended
@@ -139,7 +146,7 @@ async def enforce(
                 await conn.execute(
                     "SELECT 1 FROM document WHERE document_uid = %s FOR UPDATE", (uid,)
                 )
-                if await serving.held(conn, uid):
+                if holders := await serving.held(conn, uid):
                     reason = "held"
                 else:
                     await conn.execute(
@@ -157,6 +164,12 @@ async def enforce(
                 continue
         if now - applied_at > TARGET:
             overdue[reason] += 1
+            if reason == "held":  # the alert's cause: which projection still serves it
+                log.warning(
+                    "deletion past its target, still held",
+                    extra={"correlation": {"request_id": request_id, "document_uid": uid,
+                                           "held_by": sorted({(p, b) for p, b, *_ in holders})}},
+                )  # fmt: skip
     await gauges.record(
         conn,
         "enforce",

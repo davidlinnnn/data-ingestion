@@ -17,7 +17,13 @@ from temporalio.client import (
 from temporalio.service import RPCError, RPCStatusCode
 
 from kp_admission import adoption
-from kp_admission.requests import ERROR_DOMAIN, Candidate, end_withdrawn, record_outcome
+from kp_admission.requests import (
+    ERROR_DOMAIN,
+    Candidate,
+    end_withdrawn,
+    main_media_type,
+    record_outcome,
+)
 
 _UNSETTLED = """
 SELECT request_id, adopted_version, files FROM outbox JOIN request USING (request_id)
@@ -67,7 +73,7 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
             actions["redispatched"] += 1
             continue
         if described.status == WorkflowExecutionStatus.RUNNING:
-            if version not in await adoption.withdrawn(conn, _media_type(files)):
+            if version not in await adoption.withdrawn(conn, main_media_type(files)):
                 actions["running"] += 1
                 continue
             # It would block its revision's rerun (#98): a withdrawn version's result is discarded.
@@ -86,10 +92,6 @@ async def reconcile(conn: AsyncConnection, client: Client) -> Counter[str]:
         await record_outcome(conn, request_id, state, error, described.close_time, candidate)
         actions["recorded"] += 1
     return actions
-
-
-def _media_type(files: list[dict[str, Any]]) -> str:
-    return next(f["media_type"] for f in files if f["role"] == "main")
 
 
 async def _outcome(

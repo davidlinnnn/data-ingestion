@@ -32,7 +32,7 @@ from typing import Any, Literal
 from psycopg import AsyncConnection
 
 from kp_admission import adoption, gauges
-from kp_admission.requests import ERROR_DOMAIN, create_process_request
+from kp_admission.requests import create_process_request, is_withdrawn, main_media_type
 
 # The retry interval after the nth retryable failure of a Source Revision under an adoption:
 # RETRY_FIRST * 2^(n-1), at most RETRY_CAP, so the documents an outage left are rerun within an
@@ -187,7 +187,7 @@ async def _decide(
     tenant_id, deleted, latest, current, made_by, latest_files, current_files, active = row
     if deleted or active:
         return None, None
-    media_type = _media_type(latest_files)
+    media_type = main_media_type(latest_files)
     adopted = await adoption.current(conn, media_type)
     withdrawn = await adoption.withdrawn(conn, media_type)
     # A withdrawn version is not adopted again (#261); if it were, every run would open and end.
@@ -212,7 +212,7 @@ async def _decide(
     if (
         current
         and redo
-        and _media_type(current_files) == media_type
+        and main_media_type(current_files) == media_type
         and (await _limit(conn, current, adopted[1], now)).open
     ):
         return plan(current, "platform", rank), limit  # rule 4
@@ -230,13 +230,13 @@ async def _limit(conn: AsyncConnection, srv: str, adoption_sequence: int, now: d
         return Limit(False, stopped=None if accepted else "NO_CANDIDATE")
     error = error or {}
     reason = error.get("reason") or "UNKNOWN"
-    if _withdrawn(error):
+    if is_withdrawn(error):
         return Limit(True)
     if (error.get("metadata") or {}).get("cause") == "source" or error.get("retryable") is False:
         return Limit(False, stopped=reason)
     failures = 0
     for s, e, _, _ in rows:  # the retryable failures in a row, the last one first
-        if s != "failed" or (e or {}).get("retryable") is False or _withdrawn(e or {}):
+        if s != "failed" or (e or {}).get("retryable") is False or is_withdrawn(e):
             break
         failures += 1
     wait = min(RETRY_FIRST * 2 ** min(failures - 1, 10), RETRY_CAP)  # 2^10 is past the cap
@@ -244,18 +244,10 @@ async def _limit(conn: AsyncConnection, srv: str, adoption_sequence: int, now: d
     return Limit(due, retrying=reason if failures >= WARN_AFTER else None)
 
 
-def _withdrawn(error: dict[str, Any]) -> bool:
-    return (error.get("domain"), error.get("reason")) == (ERROR_DOMAIN, "VERSION_WITHDRAWN")
-
-
 def _in_scope(version: str, scope: Any) -> bool:
     if scope == "all":
         return True
     return isinstance(scope, dict) and version in scope.get("made_by", [])
-
-
-def _media_type(files: list[dict[str, Any]]) -> str:
-    return next(f["media_type"] for f in files if f["role"] == "main")
 
 
 _ON_WITHDRAWN = """

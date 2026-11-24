@@ -285,8 +285,9 @@ async def _active_request(conn: AsyncConnection, uid: str, srv: str) -> str | No
 async def _last_failed_request(
     conn: AsyncConnection, uid: str, srv: str
 ) -> tuple[str, bool] | None:
-    """The last failed request that set the revision's outcome, a refresh's never does, and
-    whether its failure is retryable; one without the flag counts as retryable."""
+    """The revision's newest failed request that is not a platform refresh (§6.4), and whether
+    its failure is retryable; one without the flag counts as retryable. A VERSION_WITHDRAWN one
+    counts: it is retryable, as the scan's rerun of it is at once."""
     row = await (
         await conn.execute(
             "SELECT request_id, coalesce((error ->> 'retryable')::boolean, true) FROM request"

@@ -7,9 +7,11 @@ serving-time block, so the call applies the deletion and the Document reads `del
 (scenario 14's "still ready after received" step has no counterpart), and the delete request's
 last stage is `enforced`, not `succeeded`. Scenario 19's batch 404 is #250's retention."""
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import httpx
+import psycopg
 import pytest
 from prometheus_client import REGISTRY
 from psycopg_pool import AsyncConnectionPool
@@ -169,6 +171,31 @@ async def test_a_deletion_ends_its_requests_not_dispatched_and_leaves_a_dispatch
     assert (ended["state"], ended["error"]["reason"]) == ("failed", "DOCUMENT_DELETED")
     assert ended["error"]["message"] == deletion.DOCUMENT_DELETED["message"]
     assert starts == 0  # nothing of the deleted Document is started
+
+
+async def test_a_deletion_does_not_wait_for_a_request_a_dispatcher_holds(
+    platform, api, store, conn, dsn
+):
+    """The dispatcher locks an outbox row before the Document; the deletion skips that row, so the
+    two lock orders cannot wait on each other, and the held request counts as started."""
+    async with api() as hr:
+        _, waiting = await submit(hr, store, [A])
+        request_id = of(waiting.json(), "A")["request_id"]
+        async with await psycopg.AsyncConnection.connect(dsn) as dispatcher:
+            await dispatcher.execute(
+                "SELECT 1 FROM outbox WHERE request_id = %s FOR UPDATE", (request_id,)
+            )
+            deleted = await asyncio.wait_for(hr.delete("/v1/documents/A"), timeout=5)
+        held = (await hr.get(f"/v1/requests/{request_id}")).json()
+
+    assert deleted.json()["state"] == "applied"
+    assert held["state"] == "queued"
+    # Had that start failed, the row is due again: it ends instead of starting.
+    assert await dispatch_due(conn, started) == 0
+    async with api() as hr:
+        ended = (await hr.get(f"/v1/requests/{request_id}")).json()
+    assert (ended["state"], ended["error"]["reason"]) == ("failed", "DOCUMENT_DELETED")
+    assert not await (await conn.execute("SELECT 1 FROM outbox")).fetchall()
 
 
 async def test_15_a_late_success_of_a_deleted_document_does_not_restore_it(
