@@ -567,8 +567,7 @@ Returns the current generation (Q10.1f):
   `{"method_version_lag": {"canonical_revision_id", "processing_profile_version",
   "adopted_version"}}`. A lag affects neither readiness nor attention.
 - Readiness reads the projections' serving facts (§7.4); until a projection
-  reports, which needs canonical processing's candidate (#81) and #127's reader
-  of `current_revision_changed`, every
+  reports, which needs #127's reader deployed with the content read of #268, every
   Document not deleted is `not_ready`, so an application follows a submission
   by its request's `state` (§5.5).
 - `latest` is the Source Revision that finalization created last
