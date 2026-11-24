@@ -1,6 +1,6 @@
 """Source Deletion (#98, admission spec §5.8, §8): the admission rules prototype's scenarios 14, 15
 and 19 as acceptance tests over the platform API, and the enforcement judgment (C3) with the #55
-handoff's SC15, SC16 and SC20r.
+handoff's SC15, SC16 and SC20r; and scenario 4, a resend beside the scan.
 
 Where the prototype differs from the current spec, the spec wins: since ADR-0014 there is no
 serving-time block, so the call applies the deletion and the Document reads `deleted` at once
@@ -14,7 +14,7 @@ import pytest
 from prometheus_client import REGISTRY
 from psycopg_pool import AsyncConnectionPool
 
-from kp_admission import adoption, deletion, feed, gauges, serving
+from kp_admission import adoption, deletion, feed, gauges, scan, serving
 from kp_admission.api import app
 from kp_admission.authz import AllowAll
 from kp_admission.batches import Intake
@@ -285,3 +285,32 @@ async def test_deletions_past_the_target_are_measured_by_why_they_wait(api, conn
     assert REGISTRY.get_sample_value(
         "kp_admission_job_last_run_timestamp_seconds", {"job": "enforce"}
     )
+
+
+async def test_4_a_platform_failure_resent_and_scanned_has_one_rerun_at_a_time(
+    platform, api, store, conn
+):
+    await feed.set_profile(conn, tenant_id="t1", source_id="hr-km", projections=["retrieval"])
+    async with api() as hr:
+        declared, finalized = await submit(hr, store, [A])
+        uid, failed = of(declared, "A")["document_uid"], of(finalized.json(), "A")["request_id"]
+        await processed(conn, failed, "failed")
+        seen = (await hr.get("/v1/documents/A")).json()
+        retry = of((await hr.post("/v1/batches", json={"items": [A]})).json(), "A")
+        again = of((await hr.post("/v1/batches", json={"items": [A]})).json(), "A")
+        scanned = await scan.run(conn, datetime.now(UTC) + timedelta(hours=2))
+        await processed(conn, retry["request_id"], "accepted")
+        await build(api, "retrieval")
+        crv = "crv_" + retry["request_id"].removeprefix("req_")
+        srv = of(finalized.json(), "A")["source_revision_id"]
+        published = fact(uid, srv, 1, resource_id="hr-km/hr-all", canonical_revision_id=crv)
+        await included(api, "retrieval", published)
+        ready = (await hr.get("/v1/documents/A")).json()
+
+    assert seen["readiness"] == "not_ready"
+    assert seen["attention"][0]["kind"] == "processing_failed"
+    assert retry["status"] == "queued" and retry["request_id"] != failed
+    assert "uploads" not in retry
+    assert again["request_id"] == retry["request_id"]
+    assert scanned == {}  # the resend's request is active
+    assert (ready["readiness"], ready["attention"]) == ("ready", [])
