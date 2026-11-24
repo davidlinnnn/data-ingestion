@@ -22,9 +22,12 @@ Document's current revision (admission spec §3; #57 B5).
 
 ```mermaid
 flowchart LR
-  R[Processing Result<br>+ outcome records<br>+ assembly document] --> M[map]
+  R[Processing Result<br>+ outcome records<br>+ assembly document] --> K{completeness<br>rule}
+  K -- an item has no result --> F[request failed<br>no object, no candidate]
+  K -- passes --> M[map]
+  M -- an artifact is missing --> F
   M --> V{validate<br>§6}
-  V -- fails --> F[request failed<br>no object, no candidate]
+  V -- fails --> F
   V -- passes --> W[write once<br>documents/uid/revisions/crv.json]
   W --> C[candidate in the last report<br>and the workflow result]
   C --> A[admission: Canonical Acceptance]
@@ -32,8 +35,9 @@ flowchart LR
 
 Order inside `finalize`, each step only when the one before passed: the completeness rule
 (#57 B7, B9; #276), mapping, validation, the content object, the Processing Result
-(`requests/{request_id}/result.json`), then the candidate. A request that fails any of them
-leaves no content object, no candidate and no result with `"outcome": "complete"`.
+(`requests/{request_id}/result.json`), then the candidate. A request that fails any step before the content object leaves none; one
+that fails after it (writing the Processing Result) leaves the object (§2). Either way it
+leaves no candidate and no result with `"outcome": "complete"`.
 
 ## 2. The content object
 
@@ -44,6 +48,8 @@ leaves no content object, no candidate and no result with `"outcome": "complete"
   candidate reports the stored object's sha256 and size, not those of the bytes it computed
   this time (the two can differ when a later build ran, for example in `runtime_identity`).
 - **Bytes:** compact JSON with sorted keys, UTF-8.
+- The candidate (§5) names the object by this key. "Reference" in this document means only
+  an artifact reference (§4), which never carries the `documents/` prefix.
 - An object written for a request that then forms no acceptance stays; the Document's custody
   purge (#267) removes it with the rest of the Document.
 - No artifact is moved or copied: the content names artifacts where processing registered
@@ -120,11 +126,11 @@ is one entry per output field: `item_id` `<item>/caption`, `/description`, `/fig
 | `scope` | `item` or `document` |
 | `origin` | `reconstruction` or `interpretation` |
 | `target_refs` | `[ref]` for an item: a block's ref, or the ref of a picture's `native_text` entry (a code or formula node docling placed inside a picture, such as a boxed prompt, stays the picture's native text and its reconstruction targets it there); `["#"]` (the whole document) for a document-scope result |
-| `content` | The method's output, whole (never cut to a size, unlike the Processing Result's inline copy) |
+| `content` | The method's output, whole (never cut to a size, unlike the Processing Result's inline copy). An item whose method found no text to work on (outcome `no_text`, `status_reason` `NO_TEXT` under status rule `v1`), such as a Document Summary of a short document or Picture OCR of a picture without text, has `content` `""` |
 | `evidence_refs` | References (§4) of the evidence files the method registered, such as a table or formula crop |
 | `status` | `unverified` or `disputed`, unchanged from processing; v1 assigns no `verified` (#84 D4, ADR-0011), and an accepted revision has no `failed` item (#57 B7, B9) |
 | `status_reason` | The status rule's reason code, or `""` |
-| `signals` | The item's signals, unchanged, including the Quality Check's judgement |
+| `signals` | The item's signals, unchanged, including the Quality Check's judgement. `table-status` emits none of its own, so a table's signals are the Quality Check's only |
 
 **Supplement.** The enrichments whose target is a picture (Picture OCR and Picture
 Interpretation) are that picture's supplement, keyed by `target_refs`. Generated content
@@ -133,7 +139,9 @@ Interpretation) are that picture's supplement, keyed by `target_refs`. Generated
 
 **Tables.** The `table-status` entry of a table carries `content` `{html, grid}`: docling's HTML
 export, and the native grid `{num_rows, num_cols, cells: [{row, col, row_span, col_span, text,
-column_header, row_header}]}`. Its `status` and `signals` are the table's own state; every
+column_header, row_header}]}`, with `row` and `col` counted from 0 (docling's offsets). The
+`html` includes the table's caption; the table block's `markdown` does not, since the caption
+is its own block (§3.2). Its `status` and `signals` are the table's own state; every
 table is delivered with it, whatever its accuracy (#84 U2). The mapper adds no field beyond
 the grid, such as a model, metric or value association. A reader checks the status before
 relying on a table; what it does then is #82's.
@@ -141,22 +149,30 @@ relying on a table; what it does then is #82's.
 **Document Summary.** `content` is `{overview: [{text, evidence: [{section_id}]}], sections:
 [{section_id, heading, sentences: [{text}]}]}`. A `section_id` is the block ref of the
 section's heading, or `#/body` for the text before the first heading. An overview sentence's
-evidence is the sections it names; a section sentence's evidence is its own section.
+evidence is the sections it names; a section sentence's evidence is its own section. This is
+the method's own shape (`document-summary@2`), delivered unchanged: every sentence has its
+evidence, though not in a per-sentence `evidence_refs` field as #81's scope table worded it.
 
 Left in the Processing Result only (it is not in the content): each item's outcome record
-key, its input keys and `provider_artifact_ref`, the raw provider output. They are full
+key, its input keys, `provider_artifact_ref` (the raw provider output) and `reused`. They are full
 object keys, and a reader of the content has no use for the raw output that the content's
 own fields do not already give.
 
 ### 3.4 Omitted native nodes
 
-Every text, table and picture node of the docling document is delivered exactly once, as a
-block or as a picture's `native_text` (#84 U1: no native text omitted, none delivered
-twice), except these, each listed in `omitted` with its reason:
+Every native node of the docling document (texts, tables, pictures, key-value items and form
+items) is delivered exactly once, as a block or as a picture's `native_text` (#84 U1: no native
+text omitted, none delivered twice), except these, each listed in `omitted` with its reason:
 
 | `reason` | Nodes | Why |
 |---|---|---|
 | `FURNITURE` | Nodes on docling's furniture layer: page headers, page footers, page numbers | Repeated page furniture, not body content |
+
+Anything else fails the request `CANONICAL_INVALID` rather than be delivered short (§6), none
+of it seen in the 21-paper corpus: a node on another docling layer (`background`,
+`invisible`, `notes`) fails `COVERAGE`; a key-value or form item in the body, which v1 does not
+map, fails `COVERAGE` while the mapper builds; an Enrichment item on a furniture node fails
+`REFERENCE_UNRESOLVED`.
 
 ### 3.5 Limitations
 
@@ -183,7 +199,8 @@ scopes 3, 4 and 6):
   without escaping and has no `.` or `..` segment.
 - The platform resolves it from the revision record, the reference and the deployment's
   storage settings alone: `documents/{document_uid}/items/{reference}` in the bucket the
-  deployment names.
+  deployment names, with `document_uid` the revision record's (`canonical_revision.document_uid`,
+  the content's `revision.document_uid`).
 
 `artifacts` is the manifest, one entry per referenced artifact, sorted by `ref`:
 
@@ -208,17 +225,20 @@ to `"outcome": "complete"`, where the reconciler reads it when a report was lost
 other than that one leave the field out.
 
 Deployment order: the `api` that takes `candidate` (#251) is deployed before a worker that
-sends it; the other way round, the `api` answers every last report `400` (admission spec §7.3).
+sends it; the other way round, the `api` answers every last report `400` and the reconciler
+ends each request with no candidate (admission spec §13). The adoption gate's test workflow
+passes only with a well-formed `candidate` in its result (admission spec §3, #261).
 
 ## 6. Validation
 
 The whole candidate is validated, never a fragment (Canonical contract §5). Each check reads
-the content and the stored objects, not the mapper's own intermediate values, so a mapper
-defect cannot pass by construction.
+the content, the docling document and the stored objects, not the mapper's own intermediate
+values. The checks share with the mapper only the rules they hold it to (the `orig` rule and
+the omission rules of §3.4), so a defect in one of those is not caught here.
 
 | Check | Passes when | On failure |
 |---|---|---|
-| `SCHEMA` | The content has exactly the fields of §3 with their types and values: `schema` is `canonical-content/v1`, every `status` is `unverified` or `disputed` | `CANONICAL_INVALID` |
+| `SCHEMA` | The content has exactly the fields of §3 with their types and values: `schema` is `canonical-content/v1`, every `status` is `unverified` or `disputed`; a `table-status` and a Document Summary `content` has exactly its §3.3 fields, or is `""` (no text) (other methods' `content` is their own) | `CANONICAL_INVALID` |
 | `REFERENCE_FORM` | Every reference (page `image`, picture `image`, `evidence_refs`, manifest `ref`) matches §4's pattern | `CANONICAL_INVALID` |
 | `REFERENCE_UNLISTED` | Every reference used outside the manifest is in it, and every manifest entry is used | `CANONICAL_INVALID` |
 | `REFERENCE_UNRESOLVED` | Every `target_refs` entry is a block ref, a picture's `native_text` ref or `#`; every summary `section_id` is a block ref or `#/body`; block refs are unique; every table and picture block is the target of at least one enrichment, so its status can be found | `CANONICAL_INVALID` |
@@ -230,13 +250,21 @@ the completeness rule) are not repeated here. An evidence file has no digest dec
 the content, so for it the `ARTIFACT` check shows that the object is still there unchanged.
 
 A failure ends the request `failed`, with an error block of domain `kp-canonicalization`,
-`metadata.cause` `platform` and `metadata.check` naming the check:
+`metadata.cause` `platform`, `metadata.check` naming the check and `metadata.detail` the first
+offending location or reference (at most 200 characters; it reaches the Source with the
+error block, admission spec §5.5):
 
 - `CANONICAL_INVALID`: category `method`, **not retryable**. The inputs are registered and
-  reused, so a rerun of the same Processing Profile version fails the same way (#57 M3). The
-  exit is a fixed mapper in a new version.
-- `ARTIFACT_MISMATCH`: category `integrity`, **retryable**, like `OUTCOME_RECORD_MISSING`: a
-  repaired store passes on a rerun (#57 M3).
+  reused, so a rerun of the same Processing Profile version fails the same way ([#57
+  M3](https://github.com/davidlinnnn/data-ingestion/issues/81#issuecomment-7080528720)). The exit is a fixed mapper in a new version.
+- `ARTIFACT_MISMATCH`: category `integrity`, **retryable**, like `OUTCOME_RECORD_MISSING`.
+  #81's text and M3's table call every validation failure not retryable; M3 defines not
+  retryable as "a rerun of the same version is sure to fail alike", which a missing or changed
+  stored object is not, and the same correction made `integrity` failures retryable. A
+  repaired store passes on a rerun. Until then the scan reruns the request with backoff and
+  `kp_admission_reruns_retrying` counts it after five failures in a row (admission spec §9);
+  the pilot keeps no second copy of an artifact (Canonical persistence §7.1), so what an
+  operator does with one that cannot be restored is #78's.
 
 Neither writes the content object, hands over a candidate or leaves a `complete` result. Both
 count in `kp_canonicalization_document_outcomes{reason}`.
@@ -246,10 +274,14 @@ count in `kp_canonicalization_document_outcomes{reason}`.
 `schema` is `canonical-content/v1`. A change that a reader of v1 cannot read (a field removed,
 renamed or given another meaning) is a new schema version, rolled out by expand and contract
 (#55 D3): readers learn v2 before any writer produces it, and v1 content stays readable. A
-field added that a v1 reader may ignore is not a new version.
+field added that a v1 reader may ignore is not a new version, so a reader ignores keys it does
+not know (§6's `SCHEMA` holds the writer to §3, not the reader). A new value in a closed set
+(`status`, an artifact `kind`, an `omitted` `reason`) is a new version. An enrichment's
+`content` is its method's (`method_ref`), except the two shapes §3.3 fixes, which change only
+with a new schema version.
 
 Nothing checks today that the downstream readers support a schema before a version producing
-it is adopted (#57 L11). The rule binds from the first schema change; that change adds the
+it is adopted ([#57 L11](https://github.com/davidlinnnn/data-ingestion/issues/81#issuecomment-7080528720)). The rule binds from the first schema change; that change adds the
 check.
 
 ## 8. The mapper's version
@@ -257,11 +289,18 @@ check.
 The mapper, the validation of §6 and the completeness rule (#57 B7, B9) are the method package
 `canonical-mapping` (`src/kp_canonicalization/methods/canonical_mapping/`), listed by the
 Processing Profile like any method (`canonical-mapping@1` in `paper-pdf@1`). It has no
-inventory items, as `docling-parse` has none. So `scripts/check-method-versions` holds it as it
-holds every method: once a profile is released, a change to the package without a higher
-`VERSION` fails CI, a higher `VERSION` needs a new profile file (the released one cannot load
-it), and a release branch takes no change to it (#57 M2). Its `module_digest` is in
-`processing.methods`, so two revisions mapped differently never share a profile version.
+inventory items, as `docling-parse` has none. Two files outside it also decide the content:
+`stages/finalize.py` assembles the mapper's input and gathers what the completeness rule
+judges, and `status_rules/` sets each item's status. `scripts/check-method-versions` counts
+both as part of the package ([#57 M2](https://github.com/davidlinnnn/data-ingestion/issues/81#issuecomment-7080528720)), and holds the package as it holds every method
+(ADR-0010): once a profile is released, a change to it without a higher `VERSION` fails CI, a
+higher `VERSION` needs a new profile file (the released one cannot load it), and a release
+branch takes no change to it. Its `module_digest` is in `processing.methods`.
 
-The rule binds from the release of `paper-pdf@1` (`released: true`); until then `@1` changes in
-place (the 2026-11-11 ruling).
+So once a profile is released, two revisions mapped differently do not share its version,
+with one residue that ADR-0010 keeps out of a method's identity: the installed docling-core,
+whose Markdown and HTML export a table block uses. `runtime_identity` names the docling-slim
+version, not docling-core's.
+
+The rule binds from the release of `paper-pdf@1` (the merge of #186, after which the check
+counts that profile as released); until then `@1` changes in place (the 2026-11-11 ruling).

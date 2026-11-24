@@ -37,6 +37,7 @@ SCHEMA = "canonical-content/v1"
 REFERENCE = re.compile(r"[0-9a-f]{64}(/[A-Za-z0-9_-][A-Za-z0-9._-]*)+")  # spec §4
 MEDIA_TYPES = {".png": "image/png", ".json": "application/json"}
 NATIVE = ("texts", "tables", "pictures", "key_value_items", "form_items")  # every native node
+DETAIL_MAX = 200  # metadata.detail reaches the Source (admission spec §5.5): bounded
 OMITTED = {"furniture": "FURNITURE"}  # a content layer -> its reason in `omitted` (§3.4)
 KEPT = ("item_id", "method_ref", "scope", "origin", "target_refs", "content", "status", "signals")
 REVISION = ("document_uid", "source_revision_id", "request_id", "adopted_version",
@@ -83,7 +84,7 @@ def _invalid(check: str, detail: str) -> ProcessingFailure:
         "method",
         "CANONICAL_INVALID",
         f"Canonical content failed its {check} check",
-        metadata={"check": check, "detail": detail},
+        metadata={"check": check, "detail": detail[:DETAIL_MAX]},
     )
 
 
@@ -235,8 +236,8 @@ async def build(result: dict[str, Any], document: dict[str, Any], store: ObjectS
                 collect(child["$ref"])
             block |= {"image": image, "native_text": inside,
                       "markdown": f"![]({image})" if image else ""}  # fmt: skip
-        else:
-            block["markdown"] = ""
+        else:  # key-value and form regions: no v1 mapping, so never delivered empty (spec §3.4)
+            raise _invalid("COVERAGE", ref)
         blocks.append(block)
         for child in later:
             await visit(child)
@@ -493,6 +494,8 @@ async def validate(
     def schema() -> None:
         _Content.model_validate(content)
         for i, e in enumerate(content["enrichments"]):
+            if e["content"] == "":
+                continue  # a method's no_text outcome (§3.3): nothing to read, delivered empty
             if model := CONTENT_OF.get(e["method_ref"]["id"]):
                 try:
                     model.model_validate(e["content"])
@@ -529,7 +532,7 @@ async def validate(
         raise _invalid("REFERENCE_UNRESOLVED", min(unknown))
     sections = set()
     for e in enrichments:
-        if e["method_ref"]["id"] == "document-summary":
+        if e["method_ref"]["id"] == "document-summary" and e["content"]:
             sections |= {s["section_id"] for s in e["content"]["sections"]}
             sections |= {x["section_id"] for o in e["content"]["overview"] for x in o["evidence"]}
     if unknown := sections - set(refs) - {"#/body"}:

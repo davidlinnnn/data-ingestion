@@ -360,6 +360,34 @@ async def test_the_built_content_passes_validation(store):
     await mapping.validate(await built(store), result(), document(), store)
 
 
+async def test_a_summary_with_no_text_is_delivered_empty_and_passes(store):
+    # A short document, such as the adoption gate's test file: no section reaches the target.
+    short = result()
+    short["enrichments"][-1] |= {"content": "", "status_reason": "NO_TEXT"}
+    content = json.loads(json.dumps(await mapping.build(short, document(), store)))
+
+    await mapping.validate(content, short, document(), store)
+
+    assert content["enrichments"][-1]["content"] == ""
+
+
+async def test_a_body_node_v1_does_not_map_fails_coverage_before_any_content(store):
+    # docling's key-value and form regions: not produced for paper-pdf@1, never delivered empty.
+    doc = document()
+    region = {"self_ref": "#/key_value_items/0", "parent": {"$ref": "#/body"}, "children": [],
+              "content_layer": "body", "label": "key_value_region", "prov": [],
+              "graph": {"cells": [], "links": []}}  # fmt: skip
+    doc["key_value_items"] = [region]
+    doc["body"]["children"].append({"$ref": "#/key_value_items/0"})
+
+    with pytest.raises(ProcessingFailure) as failed:
+        await mapping.build(result(), doc, store)
+
+    assert (failed.value.reason, failed.value.metadata) == (
+        "CANONICAL_INVALID", {"check": "COVERAGE", "detail": "#/key_value_items/0"},
+    )  # fmt: skip
+
+
 def broken(content: dict, change) -> dict:
     copied = copy.deepcopy(content)
     change(copied)

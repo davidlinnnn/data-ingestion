@@ -160,7 +160,8 @@ while the others go on:
      reason `routing_in_progress`.
    - For a version not adopted through the gate before (a row of the local
      `adopt` command does not count): a test workflow of the version on that build
-     returned `outcome: complete`. Temporal reads a workflow `COMPLETED`
+     returned `outcome: complete` with a well-formed `candidate` (§7.3; required
+     from #81). Temporal reads a workflow `COMPLETED`
      whatever its outcome, so the gate reads its result. The CronJob starts it
      itself, with workflow ID `chk_` and 32 hex digits, a new `document_uid`
      each time, and the synthetic page shipped with admission
