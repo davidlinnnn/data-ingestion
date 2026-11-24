@@ -1308,7 +1308,8 @@ How the pilot does it (#98):
   started: `failed`, `DOCUMENT_DELETED`, whose `cause` is `source`, so its
   message is shown. A request already started runs on and forms no acceptance
   (§3). A request whose outbox row a dispatcher holds at that moment counts as
-  started.
+  started; when that start fails, the dispatcher ends it the same way when it is
+  next due.
 - **`enforced`, by a CronJob.** `kp-admission enforce` runs every minute. For
   each applied deletion it locks the Document, as registration does (§7.4), and
   reads the facts that Builds not retired hold of it. With no `included` or
@@ -1324,7 +1325,8 @@ How the pilot does it (#98):
 - **Alerting.** `kp_admission_deletions_unenforced{reason}` counts the
   deletions applied more than 10 minutes ago and not yet `enforced`: `held`
   (a Build still holds the Document), `liveness` or `writes_lost` (the judgment
-  is suspended). The CronJob writes the value to the database, and the `api`
+  is suspended). Each held deletion past that time is logged with the
+  projections and Builds that hold it. The CronJob writes the value to the database, and the `api`
   exports it, as with the adoption gauges (§3).
 - **Measured** on 2026-11-24 (`docs/validation/98`): `applied` within 35 ms of
   1000 calls; one `enforce` run judged 1001 deletions in 0.8 s. The projections'
