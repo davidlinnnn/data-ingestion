@@ -5,7 +5,9 @@ import asyncio
 import json
 import subprocess
 import sys
+import uuid
 from datetime import timedelta
+from importlib.resources import files
 from pathlib import Path
 
 import psycopg
@@ -13,12 +15,36 @@ import pytest
 from temporalio.common import WorkflowIDReusePolicy
 from temporalio.service import RPCError, RPCStatusCode
 
-from kp_admission.dispatcher import BACKOFF_CAP_S, dispatch_due, temporal_start
-from kp_canonicalization.workflow import SEARCH_ATTRIBUTES
+from kp_admission.dispatcher import (
+    BACKOFF_CAP_S,
+    SEARCH_ATTRIBUTES,
+    dispatch_due,
+    task_queue,
+    temporal_start,
+)
 from tests.admission.crash import CRASHED
 from tests.admission.support import FILES, queue, request, revision, runs
 
 pytestmark = pytest.mark.docker
+EXAMPLE = json.loads((files("kp_admission") / "workflow_start.json").read_text())
+
+
+async def test_the_start_is_the_one_the_contract_example_describes(temporal):
+    start_input = {**EXAMPLE["input"], "request_id": f"req_{uuid.uuid4().hex}"}
+
+    await temporal_start(temporal, task_queue)(start_input)
+
+    handle = temporal.get_workflow_handle(start_input["request_id"])
+    described = await handle.describe()
+    assert (described.workflow_type, described.task_queue) == (
+        EXAMPLE["workflow"], EXAMPLE["task_queue"],
+    )  # fmt: skip
+    priority_key = EXAMPLE["priority_keys"][start_input["priority"]]
+    assert described.raw_info.priority.priority_key == priority_key
+    assert {key.name: described.typed_search_attributes.get(key)
+            for key in SEARCH_ATTRIBUTES.values()} == EXAMPLE["search_attributes"]  # fmt: skip
+    started = (await handle.fetch_history()).events[0].workflow_execution_started_event_attributes
+    assert json.loads(started.input.payloads[0].data) == start_input
 
 
 async def test_the_dispatcher_starts_the_canonical_workflow_with_the_start_input(conn, temporal):
@@ -36,6 +62,7 @@ async def test_the_dispatcher_starts_the_canonical_workflow_with_the_start_input
         "DocumentUid": uid, "SourceRevisionId": srv, "TraceId": "4bf92f3577b34da6",
     }  # fmt: skip
     started = (await handle.fetch_history()).events[0].workflow_execution_started_event_attributes
+    assert set(json.loads(started.input.payloads[0].data)) == set(EXAMPLE["input"])
     assert json.loads(started.input.payloads[0].data) == {
         "request_id": request_id,
         "document_uid": uid,

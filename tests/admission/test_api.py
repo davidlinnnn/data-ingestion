@@ -13,7 +13,7 @@ from psycopg_pool import AsyncConnectionPool
 
 from kp_admission.api import RequestLog, app
 from kp_admission.authz import AllowAll
-from kp_canonicalization.cli import JsonFormatter
+from kp_admission.cli import JsonFormatter
 from tests.admission.authz_fake import FakeAuthorizer
 from tests.admission.support import INTAKE
 

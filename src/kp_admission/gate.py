@@ -36,10 +36,9 @@ from temporalio.client import Client, WorkflowExecutionStatus
 from temporalio.service import RPCError, RPCStatusCode
 
 from kp_admission.adoption import CHECK_PREFIX
-from kp_admission.dispatcher import temporal_start
+from kp_admission.dispatcher import QUEUES, deployment_name, task_queue, temporal_start
 from kp_admission.requests import Candidate
 from kp_admission.storage import ObjectStore
-from kp_canonicalization.workflow import QUEUES, deployment_name, task_queue
 
 log = logging.getLogger(__name__)
 ROUTING_LIMIT = timedelta(minutes=10)  # as the promoter's alarm (#178)

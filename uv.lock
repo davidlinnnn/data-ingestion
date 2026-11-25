@@ -528,26 +528,28 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
-    { name = "docling-core" },
-    { name = "docling-slim", extra = ["convert-core", "feat-ocr-rapidocr-onnx", "format-pdf", "models-local"] },
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "onnxruntime" },
     { name = "prometheus-client" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic" },
-    { name = "pypdfium2" },
-    { name = "pyyaml" },
-    { name = "rapidocr" },
     { name = "temporalio" },
-    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-    { name = "torchvision", version = "0.29.2", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torchvision", version = "0.29.2+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
     { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
+canonicalization = [
+    { name = "docling-core" },
+    { name = "docling-slim", extra = ["convert-core", "feat-ocr-rapidocr-onnx", "format-pdf", "models-local"] },
+    { name = "onnxruntime" },
+    { name = "pypdfium2" },
+    { name = "pyyaml" },
+    { name = "rapidocr" },
+    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "torchvision", version = "0.29.2", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torchvision", version = "0.29.2+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+]
 dev = [
     { name = "pypdf" },
     { name = "pyright" },
@@ -561,24 +563,26 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "boto3" },
-    { name = "docling-core", specifier = "==2.99.0" },
-    { name = "docling-slim", extras = ["convert-core", "format-pdf", "models-local", "feat-ocr-rapidocr-onnx"], specifier = "==2.132.0" },
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "onnxruntime" },
     { name = "prometheus-client" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.6" },
     { name = "pydantic" },
-    { name = "pypdfium2", specifier = ">=5,<6" },
-    { name = "pyyaml" },
-    { name = "rapidocr", specifier = "==3.9.2" },
     { name = "temporalio", specifier = "==1.34.0" },
-    { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "torchvision", index = "https://download.pytorch.org/whl/cpu" },
     { name = "uvicorn" },
 ]
 
 [package.metadata.requires-dev]
+canonicalization = [
+    { name = "docling-core", specifier = "==2.99.0" },
+    { name = "docling-slim", extras = ["convert-core", "format-pdf", "models-local", "feat-ocr-rapidocr-onnx"], specifier = "==2.132.0" },
+    { name = "onnxruntime" },
+    { name = "pypdfium2", specifier = ">=5,<6" },
+    { name = "pyyaml" },
+    { name = "rapidocr", specifier = "==3.9.2" },
+    { name = "torch", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torchvision", index = "https://download.pytorch.org/whl/cpu" },
+]
 dev = [
     { name = "pypdf", specifier = ">=6.21.4" },
     { name = "pyright" },

@@ -15,6 +15,7 @@ import logging
 import os
 import signal
 import sys
+import traceback
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlsplit
@@ -24,6 +25,7 @@ import psycopg
 import pydantic
 import uvicorn
 from psycopg_pool import AsyncConnectionPool
+from temporalio.client import Client
 
 from kp_admission import (
     adoption,
@@ -40,11 +42,9 @@ from kp_admission import (
 )
 from kp_admission.api import CREDENTIALS, Credential, RequestLog, SourceCredential, app
 from kp_admission.authz import AllowAll
-from kp_admission.dispatcher import dispatch_due, temporal_start
+from kp_admission.dispatcher import dispatch_due, task_queue, temporal_start
 from kp_admission.reconciler import reconcile
 from kp_admission.storage import S3ObjectStore
-from kp_canonicalization.cli import connect, log_json_lines
-from kp_canonicalization.workflow import task_queue
 
 POLL_S = 1.0
 POOL_SIZE = 5  # per api pod; the connection budget (#78 C14) counts it
@@ -54,6 +54,50 @@ OBSERVE_S = 15.0
 log = logging.getLogger(__name__)
 SOURCES = pydantic.TypeAdapter(dict[str, batches.SourceSettings])
 PIPELINES = pydantic.TypeAdapter(dict[str, reports.Pipeline])
+
+
+class JsonFormatter(logging.Formatter):
+    """One JSON object per log line, with the fields of a record's `correlation` extra. An
+    exception is logged as the types and stack frames of its chain, without the messages: their
+    text can quote a request body or a credential."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        line: dict[str, Any] = {
+            "time": datetime.fromtimestamp(record.created, UTC).isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }  # fmt: skip
+        line.update(getattr(record, "correlation", None) or {})
+        error, chain = record.exc_info[1] if record.exc_info else None, []
+        while error and error not in chain:
+            chain.append(error)
+            error = error.__cause__ or (None if error.__suppress_context__ else error.__context__)
+        if chain:
+            line["exception"] = "caused by ".join(
+                f"{type(error).__qualname__}\n{''.join(traceback.format_tb(error.__traceback__))}"
+                for error in chain
+            )
+        return json.dumps(line)
+
+
+def log_json_lines(*filters: logging.Filter) -> None:
+    """Make the root logger write JsonFormatter lines at INFO and above to stderr, each record
+    passed through `filters` first."""
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    for each in filters:
+        handler.addFilter(each)
+    logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
+
+
+async def connect(lazy: bool = False) -> Client:
+    return await Client.connect(
+        os.environ.get("TEMPORAL_ADDRESS", "localhost:7233"),
+        namespace=os.environ.get("TEMPORAL_NAMESPACE", "default"),
+        lazy=lazy,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

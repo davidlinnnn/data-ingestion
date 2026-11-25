@@ -23,9 +23,9 @@ from temporalio.service import RPCError
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker, WorkerDeploymentConfig
 
 from kp_admission import adoption, gate
+from kp_admission.dispatcher import QUEUES, WORKFLOW, deployment_name
 from kp_admission.storage import FakeObjectStore
 from kp_canonicalization.promoter import promote
-from kp_canonicalization.workflow import QUEUES, WORKFLOW, deployment_name
 
 pytestmark = pytest.mark.docker
 

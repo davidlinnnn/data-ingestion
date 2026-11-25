@@ -40,6 +40,7 @@ with workflow.unsafe.imports_passed_through():
     from kp_canonicalization.summarize import summarize
 
 T = TypeVar("T")
+# Start contract, mirrored by admission (#207): add optional fields only; see workflow_start.json.
 WORKFLOW = "paper-pdf"
 STAGES_VERSION = "1"
 
