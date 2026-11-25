@@ -5,7 +5,7 @@ import ast
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-OTHER = {"kp_admission": "kp_canonicalization", "kp_canonicalization": "kp_admission"}
+COUNTERPART = {"kp_admission": "kp_canonicalization", "kp_canonicalization": "kp_admission"}
 
 
 def imported(source: str) -> set[str]:
@@ -19,13 +19,11 @@ def imported(source: str) -> set[str]:
     return names
 
 
-def importers(paths: list[Path], package: str) -> set[str]:
-    return {str(path.relative_to(REPO)) for path in paths if package in imported(path.read_text())}
-
-
 def test_neither_package_imports_the_other():
-    for package, other in OTHER.items():
-        assert importers(sorted((REPO / "src" / package).rglob("*.py")), other) == set()
+    for package, other in COUNTERPART.items():
+        paths = sorted((REPO / "src" / package).rglob("*.py"))
+        assert paths, package
+        assert [str(p.relative_to(REPO)) for p in paths if other in imported(p.read_text())] == []
 
 
 def test_control_an_import_inside_a_function_is_seen():
@@ -51,25 +49,22 @@ def crossing() -> set[str]:
     return {
         str(path.relative_to(REPO))
         for path in sorted((REPO / "tests").rglob("*.py"))
-        if set(OTHER) <= used(path.read_text())
+        if set(COUNTERPART) <= used(path.read_text())
     }
 
 
 def test_both_packages_keep_the_same_contract_example():
-    copies = {(REPO / "src" / package / "workflow_start.json").read_bytes() for package in OTHER}
+    copies = {
+        (REPO / "src" / package / "workflow_start.json").read_bytes() for package in COUNTERPART
+    }
     assert len(copies) == 1
 
 
 # The tests that use both packages, and the repo each goes to when #208 splits them.
 CROSSING = {
-    # Report intake fed by the workers' HttpStatusReporter: after the split, a report posted
-    # from admission's own test client.
-    "tests/admission/test_status.py": "kp-admission",
-    # The gate against deployments the workers' promoter set current: after the split, set by
-    # the Temporal SDK calls promote makes.
-    "tests/admission/test_adoption_gate.py": "kp-admission",
-    # The gate's test file through a real worker: after the split, a copy of check.pdf.
-    "tests/test_workflow.py": "kp-canonicalization",
+    "tests/admission/test_status.py": "kp-admission",  # posts with the workers' reporter
+    "tests/admission/test_adoption_gate.py": "kp-admission",  # the workers' promoter sets builds
+    "tests/test_workflow.py": "kp-canonicalization",  # runs the gate's check.pdf
 }
 
 

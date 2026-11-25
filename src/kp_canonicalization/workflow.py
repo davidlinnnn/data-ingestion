@@ -40,9 +40,7 @@ with workflow.unsafe.imports_passed_through():
     from kp_canonicalization.summarize import summarize
 
 T = TypeVar("T")
-# The workers' side of the start contract with admission, which keeps its own copy (#207):
-# WORKFLOW, QUEUES, deployment_name, task_queue, priority and SEARCH_ATTRIBUTES must match
-# workflow_start.json. Builds of several versions run at once: keep every running build working.
+# Start contract, mirrored by admission (#207): add optional fields only; see workflow_start.json.
 WORKFLOW = "paper-pdf"
 STAGES_VERSION = "1"
 

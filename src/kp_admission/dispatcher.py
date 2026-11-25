@@ -22,9 +22,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from kp_admission import adoption, deletion
 from kp_admission.requests import end_withdrawn, main_media_type
 
-# Admission's side of the start contract with the processing workers, which keep their own copy
-# (#207). Both must match workflow_start.json; workers of several builds run at once, so a
-# change keeps every running build working: add input fields, never rename or remove one.
+# Start contract, mirrored by the workers (#207): add optional fields only; see workflow_start.json.
 WORKFLOW = "paper-pdf"
 Queue = Literal["orchestration", "inference", "vlm", "summary", "d3"]
 QUEUES: tuple[Queue, ...] = ("orchestration", "inference", "vlm", "summary", "d3")

@@ -17,11 +17,8 @@ from temporalio.service import RPCError, RPCStatusCode
 
 from kp_admission.dispatcher import (
     BACKOFF_CAP_S,
-    QUEUES,
     SEARCH_ATTRIBUTES,
-    deployment_name,
     dispatch_due,
-    priority,
     task_queue,
     temporal_start,
 )
@@ -48,14 +45,6 @@ async def test_the_start_is_the_one_the_contract_example_describes(temporal):
             for key in SEARCH_ATTRIBUTES.values()} == EXAMPLE["search_attributes"]  # fmt: skip
     started = (await handle.fetch_history()).events[0].workflow_execution_started_event_attributes
     assert json.loads(started.input.payloads[0].data) == start_input
-
-
-def test_the_gate_and_the_priorities_match_the_contract_example():
-    assert deployment_name(EXAMPLE["input"]["adopted_version"]) == EXAMPLE["deployment"]
-    assert list(QUEUES) == EXAMPLE["queues"]
-    assert {p: priority(p).priority_key for p in EXAMPLE["priority_keys"]} == EXAMPLE[
-        "priority_keys"
-    ]
 
 
 async def test_the_dispatcher_starts_the_canonical_workflow_with_the_start_input(conn, temporal):

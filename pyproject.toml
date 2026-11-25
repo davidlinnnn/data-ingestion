@@ -3,9 +3,7 @@ name = "kp-canonicalization"
 version = "0.1.0"
 description = "Knowledge Platform processing workers (the paper-pdf Processing Profile) and the admission core"
 requires-python = "==3.12.*"
-# What kp_admission needs, and kp_sdk and kp_reference_projection with it (httpx); the workers'
-# own dependencies are the canonicalization group (#207). `uv sync --no-default-groups --frozen`
-# installs these alone.
+# Admission's set (#207), with httpx for kp_sdk; the workers' own are the canonicalization group.
 dependencies = [
     "temporalio==1.34.0",
     "httpx",
