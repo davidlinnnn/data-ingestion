@@ -5,17 +5,50 @@ holds."""
 import logging
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
-from typing import Any
+from typing import Any, Literal
 
 from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 from temporalio.client import Client
-from temporalio.common import SearchAttributePair, TypedSearchAttributes, WorkflowIDReusePolicy
+from temporalio.common import (
+    Priority,
+    SearchAttributeKey,
+    SearchAttributePair,
+    TypedSearchAttributes,
+    WorkflowIDReusePolicy,
+)
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from kp_admission import adoption, deletion
 from kp_admission.requests import end_withdrawn, main_media_type
-from kp_canonicalization.workflow import SEARCH_ATTRIBUTES, WORKFLOW, priority
+
+# Admission's side of the start contract with the processing workers, which keep their own copy
+# (#207). Both must match workflow_start.json; workers of several builds run at once, so a
+# change keeps every running build working: add input fields, never rename or remove one.
+WORKFLOW = "paper-pdf"
+Queue = Literal["orchestration", "inference", "vlm", "summary", "d3"]
+QUEUES: tuple[Queue, ...] = ("orchestration", "inference", "vlm", "summary", "d3")
+SEARCH_ATTRIBUTES = {
+    "document_uid": SearchAttributeKey.for_keyword("DocumentUid"),
+    "source_revision_id": SearchAttributeKey.for_keyword("SourceRevisionId"),
+    "trace_id": SearchAttributeKey.for_keyword("TraceId"),
+}
+
+
+def deployment_name(profile_id: str) -> str:
+    """The Worker Deployment of a Processing Profile version: `paper-pdf-2` for `paper-pdf@2`."""
+    return profile_id.replace("@", "-")
+
+
+def task_queue(profile_id: str, queue: Queue = "orchestration") -> str:
+    """A task queue of a Processing Profile version, `paper-pdf-2.orchestration`."""
+    return f"{deployment_name(profile_id)}.{queue}"
+
+
+def priority(admission_priority: str) -> Priority:
+    """Admission priority low waits behind normal; Temporal priority keys run 1 (first) to 5."""
+    return Priority(priority_key=4 if admission_priority == "low" else 2)
+
 
 StartWorkflow = Callable[[dict[str, Any]], Awaitable[str]]
 """Starts the workflow of a §10 start input with workflow ID = its request_id and returns its run

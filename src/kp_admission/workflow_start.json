@@ -1,0 +1,33 @@
+{
+  "about": "One start of the canonical workflow, admission spec §10 (#207). kp_admission and kp_canonicalization each keep an identical copy; each side's tests check its own constants against it. Workers of several builds run at once: a change keeps every running build working.",
+  "workflow": "paper-pdf",
+  "deployment": "paper-pdf-1",
+  "task_queue": "paper-pdf-1.orchestration",
+  "queues": ["orchestration", "inference", "vlm", "summary", "d3"],
+  "priority_keys": {"normal": 2, "low": 4},
+  "search_attributes": {
+    "DocumentUid": "doc_7f3a9c2e",
+    "SourceRevisionId": "srv_3",
+    "TraceId": "4bf92f3577b34da6"
+  },
+  "input": {
+    "request_id": "req_01JD3XK7Q2V8N5M4R6T9W0Y1Z2",
+    "document_uid": "doc_7f3a9c2e",
+    "source_revision_id": "srv_3",
+    "files": [
+      {
+        "path": "policy.pdf",
+        "role": "main",
+        "custody_ref": "s3://kp-dev/documents/doc_7f3a9c2e/files/bat_01JD3XJ0/0/9f2c4e8a1b3d5f7091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708",
+        "sha256": "9f2c4e8a1b3d5f7091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708",
+        "size": 18342,
+        "media_type": "application/pdf"
+      }
+    ],
+    "adopted_version": "paper-pdf@1",
+    "adoption_sequence": 7,
+    "initiator": "source",
+    "priority": "normal",
+    "trace_id": "4bf92f3577b34da6"
+  }
+}

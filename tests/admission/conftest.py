@@ -14,7 +14,7 @@ from testcontainers.community.postgres import PostgresContainer
 from testcontainers.core.container import DockerContainer
 
 from kp_admission import SCHEMA
-from kp_canonicalization.workflow import SEARCH_ATTRIBUTES
+from kp_admission.dispatcher import SEARCH_ATTRIBUTES
 
 TEMPLATE = "admission_template"
 

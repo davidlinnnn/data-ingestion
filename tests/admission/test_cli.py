@@ -4,7 +4,9 @@ import asyncio
 import contextlib
 import hashlib
 import json
+import logging
 import os
+import re
 import signal
 import socket
 import subprocess
@@ -15,7 +17,7 @@ import httpx
 import pytest
 
 from kp_admission import adoption, feed, serving
-from kp_admission.cli import main
+from kp_admission.cli import JsonFormatter, main
 from tests.admission.support import request, resource, revision, runs
 
 CHECK = {
@@ -512,3 +514,32 @@ async def test_enforce_and_scan_are_one_shot_runs_that_print_their_counts(conn, 
     assert run("enforce", KP_PIPELINES=json.dumps({"d1": wiki})) == (0, {})
     assert run("enforce", KP_PIPELINES="[]") == (2, None)
     assert run("enforce") == (2, None)  # unset: no liveness to suspend on
+
+
+def test_a_logged_exception_keeps_its_types_and_frames_and_drops_every_message():
+    secret, body = "s3cr3t", "Q3 revenue"
+
+    def check():
+        raise ValueError(f"credential: {secret}")
+
+    try:
+        try:
+            check()
+        except ValueError as cause:
+            raise RuntimeError(f"body: {body}") from cause
+    except RuntimeError:
+        record = logging.LogRecord(
+            "kp_admission.api", logging.WARNING, __file__, 1, "call failed", None, sys.exc_info()
+        )
+    record.correlation = {"trace_id": "4bf92f3577b34da6"}
+
+    line = json.loads(JsonFormatter().format(record))
+
+    assert re.fullmatch(
+        r'RuntimeError\n  File ".*test_cli.py", line \d+, in test_a_logged_.*\n.*\n'
+        r'caused by ValueError\n  File ".*test_cli.py", line \d+, in test_a_logged_.*\n.*\n'
+        r'  File ".*test_cli.py", line \d+, in check\n.*\n',
+        line["exception"],
+    )
+    assert line["trace_id"] == "4bf92f3577b34da6"
+    assert "s3cr3t" not in json.dumps(line) and "revenue" not in json.dumps(line)

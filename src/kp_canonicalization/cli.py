@@ -28,7 +28,7 @@ import re
 import signal
 import sys
 import traceback
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +36,8 @@ import httpx
 import prometheus_client
 import yaml
 from temporalio.client import Client, WorkflowFailureError
+from temporalio.common import SearchAttributePair, TypedSearchAttributes, WorkflowIDReusePolicy
+from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.runtime import PrometheusConfig, TelemetryConfig
 from temporalio.runtime import Runtime as TemporalRuntime
 
@@ -44,7 +46,15 @@ from kp_canonicalization.ports.object_store import S3ObjectStore
 from kp_canonicalization.ports.status_reporter import HttpStatusReporter
 from kp_canonicalization.profile import ProfileError, latest_profile, load_profile
 from kp_canonicalization.stages import Ports, Runtime
-from kp_canonicalization.workflow import QUEUES, Queue, deployment_name, task_queue
+from kp_canonicalization.workflow import (
+    QUEUES,
+    SEARCH_ATTRIBUTES,
+    WORKFLOW,
+    Queue,
+    deployment_name,
+    priority,
+    task_queue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -70,10 +80,10 @@ def main(argv: list[str] | None = None) -> int:
     its port.
 
     `kp-canonicalization start-request START.json [--wait]`: start the workflow for an
-    admission spec §10 start input as admission's dispatcher does, on the orchestration queue of
-    its adopted_version and with the workflow ID set to its request_id. Starting a request that
-    already exists counts as success; an input without a field the start needs exits 2. --wait
-    prints the workflow's outcome.
+    admission spec §10 start input as admission's dispatcher does (workflow_start.json, #207), on
+    the orchestration queue of its adopted_version and with the workflow ID set to its request_id.
+    Starting a request that already exists counts as success; an input without a field the start
+    needs exits 2. --wait prints the workflow's outcome.
 
     `kp-canonicalization promote WANTED.yaml`: one promoter run (promoter.promote) over the
     deployment values' `profiles` mapping. It logs JSON lines: what it did, then the message
@@ -316,16 +326,26 @@ async def run_worker(
 
 
 async def start_request(start: dict[str, Any], wait: bool) -> int:
-    # Admission's own start, so the two cannot drift; imported here to keep workers off psycopg.
-    from kp_admission.dispatcher import temporal_start
-
     client = await connect(lazy=True)  # a bad input is refused before anything connects
     try:
-        await temporal_start(client, task_queue)(start)
+        request_id = start["request_id"]
+        await client.start_workflow(
+            WORKFLOW,
+            start,
+            id=request_id,
+            task_queue=task_queue(start["adopted_version"]),
+            priority=priority(start["priority"]),
+            search_attributes=TypedSearchAttributes(
+                [SearchAttributePair(key, start[field]) for field, key in SEARCH_ATTRIBUTES.items()]
+            ),
+            id_reuse_policy=WorkflowIDReusePolicy.REJECT_DUPLICATE,
+            rpc_timeout=timedelta(seconds=10),
+        )
     except (KeyError, TypeError) as exc:
         print(f"not a start input: {exc!r}", file=sys.stderr)
         return 2
-    request_id = start["request_id"]
+    except WorkflowAlreadyStartedError:
+        pass
     print(f"started {request_id}")
     if wait:
         try:
